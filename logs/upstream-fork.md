@@ -54,8 +54,14 @@
   test).
 - Needs owner verification: the baseline on your Linux box (after unit 0.3); a skim of the COPYING.md
   §1.1 wording (licensing is a judgement call).
-- Follow-ups: unit 0.3 codifies ADR 0008 and gives you a one-command local run. The first Phase 3
-  unit strips non-free assets. Unit 0.4 adds the CLAUDE.md files, which neutralise `lila/AGENTS.md`.
+- Follow-ups:
+  - Unit 0.3 codifies ADR 0008 and gives you a one-command local run.
+  - The first Phase 3 unit strips non-free assets (by directory, including inline logos, branded
+    flair and Unsplash montages) and needs a free default sound set (your decision then).
+  - Unit 0.4 adds the CLAUDE.md files, which neutralise `lila/AGENTS.md`.
+  - The rebrand unit (0.7) repoints the AGPL §13 source links to LiGo's repo.
+  - The "Li-" naming question gets checked before any public demo.
+  - A second review pass (44 agents) found only documentation gaps, all fixed before the PR.
 
 ### 2026-09-26 · unit 0.2 · Import upstream snapshots + baseline build (IN PROGRESS, blocked)
 - Did: imported lila @ b3f190be (2026-09-25) and lila-ws @ 24053fc0 (2026-09-22) as squashed snapshots via `git archive` (owner chose squashed over full history). Recorded SHAs in docs/UPSTREAM.md. Installed sbt 2.0.9 (official GitHub release tarball) and Node 24.20.0 (nodejs.org, checksum verified) + pnpm via corepack. Pulled mongo:7.0.28 from Docker Hub.

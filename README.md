@@ -9,8 +9,8 @@ minimal, lichess-style interface. It is not a business and not a competitor to
 [OGS](https://online-go.com). If it works well, the code, designs and lessons may be offered to the
 OGS developers.
 
-> **Status:** Phase 0 (project setup). The unmodified lichess code is imported and builds and runs;
-> no Go yet. See [`docs/STATUS.md`](docs/STATUS.md).
+> **Status:** Phase 0 (project setup). The lichess code is imported (unmodified apart from one
+> git attribute) and builds and runs in a cloud session; no Go yet. See [`docs/STATUS.md`](docs/STATUS.md).
 
 ## Documents
 
@@ -30,4 +30,5 @@ each is confirmed by a build-vs-buy review.
 
 ## Licence
 
-lila-derived code is AGPL-3.0-or-later; LiGo's own code is MIT. See [`COPYING.md`](COPYING.md).
+`lila/` is AGPL-3.0-or-later and `lila-ws/` is AGPL-3.0 (as upstream ships them); LiGo's own code is
+MIT; some imported upstream assets are not free. See [`COPYING.md`](COPYING.md).

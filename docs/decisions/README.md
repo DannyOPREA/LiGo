@@ -1,8 +1,9 @@
 # Architecture Decision Records
 
 Every major decision (see [PLAN §7](../PLAN.md#7-working-agreement)) is recorded here once the owner
-approves it. ADRs are numbered and **immutable once Accepted**: to change one, write a new ADR that
-supersedes it and set the old one's status to `Superseded by NNNN` (the only edit allowed).
+approves it. ADRs are numbered and **immutable once Accepted and merged to `main`**: to change one,
+write a new ADR that supersedes it and set the old one's status to `Superseded by NNNN` (the only
+edit allowed). While the PR that introduces an ADR is still open, its wording may be corrected.
 
 | # | Title | Status | Date |
 |---|---|---|---|

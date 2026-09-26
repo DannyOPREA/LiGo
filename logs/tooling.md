@@ -19,10 +19,10 @@
 - Did: installed sbt 2.0.9 (official tarball), Node 24.20.0 (nodejs.org, SHASUMS256 verified) + pnpm via corepack; configured `~/.sbt/repositories` (Google Central mirror + jitpack + lila-maven ×2 + central.sonatype.com snapshots + sbt plugin releases) and `~/.config/coursier/mirror.properties`; ran the ab-stub tarball workaround; ran the verification workflow.
 - Worked: everything built and ran (details in upstream-fork.md); mirror cross-check 918/918.
 - Didn't work / dead ends: coursier's native `cs` ignores the proxy truststore; its JVM launcher broke on skipped (429) jars; `pnpm store add` doesn't satisfy GitHub-hosted deps (they're keyed by URL, not integrity); a verifier agent's `git lfs install` in the real repo (cleaned up: 4 hooks, the `[lfs]` config section, `.git/lfs`).
-- Decisions: ADR 0008 (owner approved).
-- Verified by Claude: tool versions and checksums; the repo's `.git/hooks` and config restored and a push dry-run works. Needs owner verification: n/a.
+- Lessons: promoted to the Lessons section (GitHub proxy, mirror cross-check, sbt 2 server, agent cwd reset).
+- Decisions: ADR 0008 (owner approved, after first use).
+- Verified by Claude: tool versions and checksums; the repo's `.git/hooks` and config restored and a push dry-run works. Claude's own LFS before/after test (cloning from the repo path) recreated an empty `.git/lfs`, which was removed again. Needs owner verification: none, since these are cloud-only environment steps.
 - Follow-ups: unit 0.3 turns all of this into `dev/cloud-setup.sh` + a SessionStart hook.
-
 
 ### 2026-09-26 · unit 0.1 · Repo bootstrap
 - Did: LICENSE (AGPL-3.0 text taken from lila's repo), LICENSE-MIT, COPYING.md (AGPL for lila-derived, MIT for our own code), README, .gitignore, docs skeleton (STATUS, UPSTREAM, glossary, ADRs 0001–0006, build-vs-buy/rules/research READMEs), logs/ skeleton with path → log map, PR template, PLAN/CLAUDE_SETUP status updates.

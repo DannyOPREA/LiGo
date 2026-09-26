@@ -16,7 +16,10 @@ upstream lila, recorded in `docs/UPSTREAM.md`. The pointer files stay as plain t
 removes the chess-only lifat assets.
 
 ## Consequences
-- Clones work everywhere; verified with git-lfs 3.7.1 enabled (exit 0 after, 128 before).
+- Checking out commit 6479d55 or later works with git-lfs installed. Verified with git-lfs 3.7.1 on
+  a local clone: exit 0 after the change, 128 before. Earlier branch commits still carry the
+  attributes and need `GIT_LFS_SKIP_SMUDGE=1`; whether they reach `main`'s history depends on the
+  PR merge method (owner's choice).
 - Features that load lifat assets (backgrounds, local engine nets, voice input) receive pointer text
   instead of data. They already did before this change, and all are chess-only or cosmetic.
 

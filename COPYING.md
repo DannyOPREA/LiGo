@@ -8,7 +8,9 @@ See [ADR 0006](docs/decisions/0006-mit-for-own-code.md) and
 
 - `lila/` is a fork of [lichess-org/lila](https://github.com/lichess-org/lila), copyright (c) the lila
   authors, licensed under the GNU Affero General Public License version 3 **or (at your option) any
-  later version**, as upstream states in `lila/COPYING.md`.
+  later version**, as upstream states in `lila/COPYING.md`, **except the files that file lists as
+  exceptions, which keep their own licences**. The free ones include fonts (OFL, Apache-2.0), flags
+  and several piece sets (MIT, GPLv2+, CC BY/BY-SA, CC0, MPL-2.0); the non-free/NC ones are in §1.1.
 - `lila-ws/` is a fork of [lichess-org/lila-ws](https://github.com/lichess-org/lila-ws), copyright
   (c) its authors, which upstream ships under **AGPL-3.0** (`lila-ws/LICENSE`) with no "or later"
   statement. We can't widen that grant.
@@ -19,19 +21,34 @@ See [`LICENSE`](LICENSE) for the licence text. Every change LiGo makes to upstre
 
 ### 1.1 Upstream assets kept temporarily (not covered by LiGo's licences)
 
-The imported snapshot still contains every asset lichess ships, exactly as upstream publishes it.
-Some of these are **not free software** and are not licensed by us at all. They remain under their
-own terms, as listed in `lila/COPYING.md`:
+The imported snapshot still contains every asset lichess keeps in git (its Git LFS objects were
+never imported; see `docs/UPSTREAM.md`), exactly as upstream publishes it. Some of these are **not
+free software** and are not licensed by us at all. They remain under their own terms:
 
-- **"Exceptions (non-free)"**: the lichess logo and favicons ("only use to refer to lichess.org"),
-  piece sets that are "personal non commercial use", "freeware", no-derivatives or of unknown
-  licence (alpha, chess7, companion, leipzig, reillycraig, riohacha, Staunton 3D, shahi-ivory-brown),
-  and "the other sounds in public/sound" and "the other artwork in public/images".
-- **Non-commercial "free" exceptions**: every set listed there as CC BY-NC-SA 4.0 (e.g. horsey,
-  california, caliente, maestro, fresca, cardinal, icpieces, gioco, tatiana, staunty).
+- **Upstream "Exceptions (non-free)"** (`lila/COPYING.md`):
+  - the lichess logo and favicons (`public/logo`, `public/favicon.ico`,
+    `public/apple-touch-icon.png`: "only use to refer to lichess.org");
+  - piece sets that are "personal non commercial use", "freeware", no-derivatives or of blank/unknown
+    licence: alpha, chess7, companion, leipzig, reillycraig, riohacha,
+    `public/images/staunton/piece/Staunton`, shahi-ivory-brown;
+  - totoy and papercut, which upstream marks CC BY 4.0 but files as non-free;
+  - "the other sounds in public/sound" (this includes the default sound set) and "the other artwork
+    in public/images".
+- **Upstream non-commercial entries** (CC BY-NC-SA, any version): piece sets horsey, california,
+  caliente, maestro, fresca, cardinal, icpieces, gioco, tatiana, staunty, dubrovny, anarcandy,
+  disguised, cooke, monarchy, minimal-warmth, xkcd (2.5); `public/images/emoji/horsey.webp`; and the
+  lisp sound set (`public/sound/lisp`; upstream's table says `public/sounds/lisp`).
+- **Not in upstream's tables, found by LiGo's audit:**
+  - the lichess logo inlined in code (`modules/web/src/main/ui/bits.scala`,
+    `modules/web/src/main/ui/layout.scala`, `ui/lobby/css/app/_app.scss`);
+  - lichess-branded art such as `public/flair/img/activity.lichess*.webp` and lichess images under
+    `public/images/`;
+  - the Unsplash-licensed background montages `public/lifat/background/montage{Dark,Light}{2,4}.webp`
+    (see the Licensing section of `lila/public/lifat/README.md`; the Unsplash licence is not free).
 
 They are kept only because the snapshot is an unmodified import. LiGo doesn't use them for Go, and
-they are removed in the **first unit of Phase 3** ([ADR 0007](docs/decisions/0007-licensing-corrections-after-import.md)).
+they are removed in the **first unit of Phase 3**, which audits by directory rather than trusting
+upstream's table rows ([ADR 0007](docs/decisions/0007-licensing-corrections-after-import.md)).
 Removing them won't erase them from git history, which only ever contains upstream's own publicly
 distributed copies.
 
@@ -64,7 +81,8 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 
 | Component | Where | Licence | Notes |
 |---|---|---|---|
-| _none yet — added by each unit that introduces one_ | | | |
+| Assets imported with lila (fonts, flags, piece sets, sounds, images) | `lila/public/` | various | Per `lila/COPYING.md` and COPYING §1.1 |
+| _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they
 ship one.

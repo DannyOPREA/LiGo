@@ -12,6 +12,9 @@ Building lila in Claude Code cloud sessions hit three environment problems (unit
 - The session's GitHub proxy refuses `codeload.github.com` tarball downloads for repos not attached
   to the session, and lila's UI depends on the GitHub-hosted npm stub `lichess-org/ab-stub`.
 
+These workarounds were first used during unit 0.2 to unblock the build, before the owner had approved
+them. The owner reviewed and approved them afterwards, together with the verification results below.
+
 ## Decision
 In **cloud sessions only** (your own machine uses the normal sources):
 1. Resolve Maven Central through **Google's Maven Central mirror**

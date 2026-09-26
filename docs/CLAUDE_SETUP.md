@@ -432,7 +432,10 @@ Deliberately skipped:
 - **Setup script** (versioned as `dev/cloud-setup.sh`; must exit 0 within 5 min; snapshotted for about
   7 days):
   - Node 24 + pnpm (corepack);
-  - coursier → sbt 2.x + scalafmt;
+  - sbt 2.x from the official GitHub release tarball (coursier's launchers fail behind the proxy;
+    see logs/tooling.md) + scalafmt;
+  - ADR 0008's dependency sources: `~/.sbt/repositories` + coursier `mirror.properties` (Google
+    Central mirror), the origin SHA-1 cross-check, and the ab-stub tarball built from a git clone;
   - `docker pull` of the lila-docker service images;
   - a KataGo Eigen CPU binary + small network, downloaded in the background;
   - a warm coursier cache.

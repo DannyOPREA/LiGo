@@ -1,5 +1,5 @@
 /lila       text eol=lf
 /ui/build   text eol=lf
-# LiGo: upstream's Git LFS rules for public/lifat/** were removed (ADR 0009). LiGo's snapshot
-# contains only the LFS pointer files, not the objects, so the filter made clones fail on
-# machines with git-lfs installed. The chess-only lifat assets are removed in Phase 3.
+# LiGo: upstream's 8 Git LFS rules for public/lifat (nnue, maia, vosk, bots, background
+# galleries) were removed (ADR 0009). The snapshot holds only the LFS pointer files, so the filter
+# made checkouts fail wherever git-lfs is installed. The lifat pointer files go in Phase 3.

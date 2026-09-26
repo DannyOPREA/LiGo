@@ -17,7 +17,11 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Then 0.4 Claude config · 0.5 environments · 0.6 CI · 0.7 dry run.
 
 ## Waiting on owner
-- Review and merge the unit 0.2 PR.
+- Review the unit 0.2 PR: skim COPYING.md §1.1 (licensing is a judgement call) and ADRs 0007–0009.
+- **Choose the merge method** for it. *Squash* (recommended) keeps `main` free of the earlier branch
+  commits, which still carry the LFS attributes, and UPSTREAM.md still records the upstream SHAs and
+  tree ids. A *merge commit* keeps the separate import commit, but checking out those older commits
+  then needs `GIT_LFS_SKIP_SMUDGE=1` wherever git-lfs is installed.
 - GitHub: add "Require a pull request before merging" to the `main` ruleset (it currently blocks
   only deletion and force-push). Status checks come after CI (unit 0.6).
 - Approve the next unit.
@@ -27,8 +31,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Known caveats
 - Until unit 0.4, `lila/AGENTS.md` (lichess's contributor guide) auto-loads for any Claude session
-  reading `lila/`. LiGo's rules win on any conflict: frozen lockfile, never `bin/deploy`, ask when
-  unsure.
+  reading `lila/`. It says "trust these instructions" and suggests non-frozen `pnpm install`,
+  `sbt clean` and `bin/deploy`. LiGo's rules win on any conflict: frozen lockfile, never
+  `bin/deploy`, ask when unsure.
 - Upstream non-free/NC assets remain in the tree until the first Phase 3 unit (COPYING.md §1.1).
 
 ## Phase progress
