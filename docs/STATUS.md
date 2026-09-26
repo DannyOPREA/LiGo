@@ -5,26 +5,22 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
   - Unit 0.1 (repo bootstrap): merged (PR #1).
-  - Unit 0.2 (import + baseline): done on branch `claude/unit-0.2-import-upstream`, PR open for
-    review. The unmodified lichess builds and runs in a cloud session (see
-    `logs/upstream-fork.md`).
+  - Unit 0.2 (import + baseline): merged (PR #2, squash).
+  - Unit 0.3 (dev tooling): PR open for review. `dev/ligo` runs the stack in one command:
+    docker mode on your machine (a trimmed copy of lila-docker, ADR 0010), native mode in cloud
+    sessions. `dev/cloud-setup.sh` codifies ADR 0008. The baseline runs on your Linux box in
+    docker mode (owner-verified 2026-09-26). See `logs/tooling.md`.
 
 ## Next
-- Unit 0.3 (needs your approval): `dev/` tooling on lila-docker, the `ligo` CLI, doctor, and the
-  cloud setup script codifying ADR 0008. It ends with you running the baseline on your Linux box.
-  Consider running unit 0.4 (CLAUDE.md files) first or alongside it: until it lands, Claude Code
-  auto-loads lichess's `lila/AGENTS.md`, which doesn't govern LiGo.
-- Then 0.4 Claude config · 0.5 environments · 0.6 CI · 0.7 dry run.
+- Unit 0.4 Claude config: CLAUDE.md files (which also neutralise `lila/AGENTS.md`), rules,
+  settings, hooks (including a SessionStart hook that runs `dev/ligo deps`), agents, skills.
+- Then 0.5 environments (KataGo moves here) · 0.6 CI · 0.7 dry run.
 
 ## Waiting on owner
-- Review the unit 0.2 PR: skim COPYING.md §1.1 (licensing is a judgement call) and ADRs 0007–0009.
-- **Choose the merge method** for it. *Squash* (recommended) keeps `main` free of the earlier branch
-  commits, which still carry the LFS attributes, and UPSTREAM.md still records the upstream SHAs and
-  tree ids. A *merge commit* keeps the separate import commit, but checking out those older commits
-  then needs `GIT_LFS_SKIP_SMUDGE=1` wherever git-lfs is installed.
+- Review the unit 0.3 PR.
+- Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings).
 - GitHub: add "Require a pull request before merging" to the `main` ruleset (it currently blocks
   only deletion and force-push). Status checks come after CI (unit 0.6).
-- Approve the next unit.
 
 ## Blockers
 - None.
@@ -39,5 +35,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Phase progress
 | Phase | State |
 |---|---|
-| 0. Claude setup + baseline | in progress (0.1 merged, 0.2 in review) |
+| 0. Claude setup + baseline | in progress (0.1, 0.2 merged; 0.3 in review) |
 | 1–9 | not started |

@@ -1,0 +1,129 @@
+---
+# Trimmed from lichess-org/lila-docker @ cbba92c7 (compose.yml + compose-lila-ws-build.yml).
+# Every change from upstream is listed in README.md next to this file. Used by `dev/ligo` in
+# docker mode (your Linux box). Paths point at LiGo's own lila/ and lila-ws/ instead of repos/.
+name: ligo
+
+services:
+  mongodb:
+    image: mongo:7.0.28-jammy
+    restart: unless-stopped
+    command: mongod --bind_ip_all --replSet rs0
+    healthcheck:
+      test: mongosh --quiet /scripts/replica-set.js
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      retries: 30
+    volumes:
+      - ../../lila:/lila
+      - ./scripts:/scripts
+      - mongo-data:/data/db
+  mongodb_secondary:
+    image: mongo:7.0.28-jammy
+    restart: unless-stopped
+    command: mongod --bind_ip_all --replSet rs0
+    volumes:
+      - mongo-secondary-data:/data/db
+  redis:
+    image: redis:8.0.3-alpine3.21
+    restart: unless-stopped
+  lila:
+    build:
+      context: docker
+      args:
+        USER_ID: ${USER_ID:-}
+        GROUP_ID: ${GROUP_ID:-}
+      dockerfile: sbt.Dockerfile
+    user: ${USER_ID:-}:${GROUP_ID:-}
+    working_dir: /lila
+    entrypoint: ./lila.sh run
+    restart: unless-stopped
+    environment:
+      - LILA_DOMAIN=${LILA_DOMAIN:-localhost:8080}
+      - LILA_URL=${LILA_URL:-http://localhost:8080}
+      - MOCK_EMAIL=${MOCK_EMAIL:-true}
+      - ENABLE_MONITORING=${ENABLE_MONITORING:-false}
+      - ENABLE_RATE_LIMITING=${ENABLE_RATE_LIMITING:-true}
+    volumes:
+      - ../../lila:/lila
+      - ./conf/lila.conf:/lila/conf/application.conf
+    depends_on:
+      - mongodb
+      - redis
+  lila_ws:
+    build:
+      context: docker
+      args:
+        USER_ID: ${USER_ID:-}
+        GROUP_ID: ${GROUP_ID:-}
+      dockerfile: sbt.Dockerfile
+    user: ${USER_ID:-}:${GROUP_ID:-}
+    working_dir: /lila-ws
+    entrypoint: sbt run
+    restart: unless-stopped
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dconfig.file=/lila-ws.conf
+      - LILA_URL=${LILA_URL:-http://localhost:8080}
+      - ENABLE_MONITORING=${ENABLE_MONITORING:-false}
+    volumes:
+      - ../../lila-ws:/lila-ws
+      - ./conf/lila-ws.conf:/lila-ws.conf
+    depends_on:
+      - mongodb
+      - redis
+  caddy:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    ports:
+      - 8080:80
+    environment:
+      - LILA_DOMAIN=${LILA_DOMAIN:-localhost:8080}
+      - LILA_URL=${LILA_URL:-http://localhost:8080}
+    volumes:
+      - ./conf/Caddyfile:/etc/caddy/Caddyfile
+      - ../../lila/public:/lila/public
+      - ./static:/static
+  ui:
+    build:
+      context: docker
+      args:
+        USER_ID: ${USER_ID:-}
+        GROUP_ID: ${GROUP_ID:-}
+      dockerfile: ui.Dockerfile
+    user: ${USER_ID:-}:${GROUP_ID:-}
+    environment:
+      - CI=1  # to disable pnpm install prompts (and make installs frozen)
+      # LiGo: lila/ isn't a git repo of its own here, but ui/build runs `git rev-parse HEAD`.
+      # Point git at the monorepo's .git (read-only) and trust it whatever its owner.
+      - GIT_DIR=/ligo.git
+      - GIT_CONFIG_COUNT=1
+      - GIT_CONFIG_KEY_0=safe.directory
+      - GIT_CONFIG_VALUE_0=*
+    volumes:
+      - ../../lila:/lila
+      - ../../.git:/ligo.git:ro
+      - ./.pnpm-store:/.pnpm-store
+    profiles:
+      - utils
+  mongo_express:
+    image: mongo-express:1.0.2-20-alpine3.19
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      - ME_CONFIG_BASICAUTH=false
+      - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+    profiles:
+      - mongo-express
+
+volumes:
+  mongo-data:
+  mongo-secondary-data:
+
+networks:
+  default:
+    name: ligo-network
+    driver: bridge

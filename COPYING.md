@@ -14,7 +14,12 @@ See [ADR 0006](docs/decisions/0006-mit-for-own-code.md) and
 - `lila-ws/` is a fork of [lichess-org/lila-ws](https://github.com/lichess-org/lila-ws), copyright
   (c) its authors, which upstream ships under **AGPL-3.0** (`lila-ws/LICENSE`) with no "or later"
   statement. We can't widen that grant.
-- LiGo's own modifications to either directory are offered under AGPL-3.0-or-later.
+- `dev/lila-docker/` is a trimmed copy of [lichess-org/lila-docker](https://github.com/lichess-org/lila-docker),
+  copyright (c) its authors, which upstream ships under **AGPL-3.0** (its `LICENSE`, the same text
+  as ours) with no "or later" statement. `compose.native.yml` in that folder is LiGo's own addition
+  and MIT. Its changes are listed in `dev/lila-docker/README.md`
+  ([ADR 0010](docs/decisions/0010-dev-tooling-on-lila-docker.md)).
+- LiGo's own modifications to these directories are offered under AGPL-3.0-or-later.
 
 See [`LICENSE`](LICENSE) for the licence text. Every change LiGo makes to upstream files is listed in
 [`docs/UPSTREAM.md`](docs/UPSTREAM.md) (AGPL §5(a) modification notices).
@@ -58,7 +63,7 @@ Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MI
 says otherwise. That covers:
 
 - `libs/` (e.g. the rules adapter, the board adapter, conformance fixtures)
-- `services/`, `tools/`, `dev/`
+- `services/`, `tools/`, `dev/` (except `dev/lila-docker/`, above)
 - `.claude/`, `.github/`, `docs/`, `logs/`, and top-level project files other than `LICENSE`
 
 **Exception, screenshots:** screenshots of lila or LiGo (e.g. `docs/research/baseline/`) depict
