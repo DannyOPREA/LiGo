@@ -8,7 +8,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 0.2 (import + baseline): merged (PR #2, squash).
   - Unit 0.3 (dev tooling): PR open for review. `dev/ligo` runs the stack in one command:
     docker mode on your machine (a trimmed copy of lila-docker, ADR 0010), native mode in cloud
-    sessions. `dev/cloud-setup.sh` codifies ADR 0008. See `logs/tooling.md`.
+    sessions. `dev/cloud-setup.sh` codifies ADR 0008. The baseline runs on your Linux box in
+    docker mode (owner-verified 2026-09-26). See `logs/tooling.md`.
 
 ## Next
 - Unit 0.4 Claude config: CLAUDE.md files (which also neutralise `lila/AGENTS.md`), rules,
@@ -17,8 +18,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Waiting on owner
 - Review the unit 0.3 PR.
-- Run the baseline on your Linux box: `dev/ligo doctor`, `dev/ligo up`, `dev/ligo e2e`
-  (steps in the PR).
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings).
 - GitHub: add "Require a pull request before merging" to the `main` ruleset (it currently blocks
   only deletion and force-push). Status checks come after CI (unit 0.6).

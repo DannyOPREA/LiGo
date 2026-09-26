@@ -15,9 +15,26 @@
 - Starting `dockerd` from a script: detach it fully (`setsid nohup … </dev/null &`), or it holds the script's stdout open and the caller hangs after the script ends (2026-09-26, unit 0.3).
 - Containers in cloud sessions can't use the egress proxy (its certificate isn't trusted inside them), so anything that downloads inside a container (sbt, pnpm, apt) fails there. That's why `dev/ligo` uses native mode in the cloud (ADR 0010) (2026-09-26, unit 0.3).
 - `setsid` forks when the caller leads a process group, so `$!` is not the new session's pid. Have the child write `$$` to the pid file instead (2026-09-26, unit 0.3).
+- Upstream lila tooling assumes `lila/` is its own git repo (e.g. `ui/build` runs `git rev-parse HEAD`). In containers, mount the monorepo's `.git` read-only and set `GIT_DIR` (2026-09-26, unit 0.3).
 - There's no official Scala LSP plugin; Metals needs a custom `.lsp.json` plugin (2026-09-25, planning).
 
 ## Entries (newest first)
+### 2026-09-26 · unit 0.3 · Owner's baseline run on the Linux box (docker mode)
+- Did: the owner ran `dev/ligo up` then `dev/ligo e2e` on his Fedora box, in docker mode, from a
+  path containing a space (`~/VScode Projects/LiGo`).
+- Worked: after one fix (below), `up` completed, lila booted (log ends with Mongo connections and
+  "Done tagging 0 puzzles"), `e2e` passed and the lichess home page showed on http://localhost:8080.
+- Didn't work / dead ends: the first `up` failed in the ui container: `ui/build` runs
+  `git rev-parse HEAD`, and `lila/` has no `.git` of its own in the monorepo. Fixed by mounting the
+  repo's `.git` read-only with `GIT_DIR` set (commit 3e12835). `up` also now treats the UI as
+  built only once `public/compiled/manifest.json` exists, so a half-finished build is redone.
+- Lessons: promoted (upstream tools that assume lila is its own git repo).
+- Decisions: none.
+- Verified by Claude: the fix's git lookup from outside the repo and `dev/tests/run.sh` (16 passed);
+  the container itself was verified by the owner. Needs owner verification: pasting
+  `dev/cloud-setup.sh` into the cloud environment's Setup script.
+- Follow-ups: none new.
+
 ### 2026-09-26 · unit 0.3 · dev/ tooling: ligo, doctor, cloud setup, trimmed lila-docker
 - Did:
   - `dev/lila-docker/`: trimmed copy of lichess-org/lila-docker @ cbba92c7 (compose, Dockerfiles,
