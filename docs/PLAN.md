@@ -65,7 +65,7 @@ These came out of the requirements interview. Changing any of them needs your ap
 | Intent | **Non-commercial proof of concept**; not competing with OGS; may be **donated to OGS** | Prefer OGS-compatible technology and licences (§8); build a handoff package into the final phase; no growth, monetisation or marketing work |
 | Core pain | OGS's **game-finding**, specifically a **confusing lobby** | The lobby is the showcase of the POC, with its own phase and a player test (§4) |
 | Hosting | **Local-only for now** | No public infrastructure or UK compliance work unless you later decide to run a public demo (§8) |
-| Funding | Self-funded | No payments or entitlements. Open source: AGPL-3.0 for lila-derived code, MIT for our own ([ADR 0006](decisions/0006-mit-for-own-code.md)) |
+| Funding | Self-funded | No payments or entitlements. Open source: AGPL-3.0 for lila-derived code, MIT for our own ([ADR 0007](decisions/0007-licensing-corrections-after-import.md)) |
 | Name | **LiGo** | Brand strings sit behind one config/i18n layer |
 | Team | **Solo, Claude-heavy, new to Scala**, **< 5 h/week** | Heavy automation, unit-sized work, plain-English PR walkthroughs (§7) |
 | Tooling | Claude **Max 5x**; **Claude Code web + local CLI**; local box **Linux, 32 GB+, AMD CPU + AMD GPU** | Remote Control on your box is the main mode, with cloud sessions for parallel work; KataGo runs on OpenCL |
@@ -339,7 +339,7 @@ is the scarce resource.
 | **0. Claude setup + baseline** | Everything in [`CLAUDE_SETUP.md`](CLAUDE_SETUP.md), including `logs/`; unmodified lila builds and runs locally and in the cloud; CI green | A dry-run unit (rebrand to LiGo) goes through `/next` → `/ship` → merge, logged, in < 15 min of your time | 8–12 |
 | **1. Build-vs-buy + rules integration** | A build-vs-buy memo for each §3.1 component (**you approve each**); the rules spec (**you approve**); conformance fixtures (existing suites first); `go-rules` adapter over strategygames; goban-engine in a test harness; parity CI; nightly KataGo differential test | Both engines pass every fixture; 1,000 random differential games agree with KataGo; SGF round-trips | 6–10 |
 | **2. Board integration** | `libs/board` adapter around the goban renderer, playground page, touch-confirm setting | You play both colours in the playground on your phone and desktop; visual snapshots pass | 3–5 |
-| **3. Fork & de-chess** | Removed modules gone, go-rules swapped in, core types migrated, round UI uses `libs/board`, lila-ws adapted | Two browsers play a casual 9×9 Fischer game to resignation | 15–25 |
+| **3. Fork & de-chess** | **First unit: strip upstream non-free/NC assets, inline lichess logos and branded art, with free replacements where needed, e.g. a default sound set (ADR 0007).** Then: removed modules gone, go-rules swapped in, core types migrated, round UI uses `libs/board`, lila-ws adapted | Two browsers play a casual 9×9 Fischer game to resignation | 15–25 |
 | **4. Go-native game** | Byo-yomi, komi, rules choice, pass, **scoring phase + `services/scoring`**, timeouts, results, SGF export | A 19×19 Japanese byo-yomi game ends with an accepted AI proposal; a disputed game resumes; the SGF opens in Sabaki; autoscore agrees ≥ 97% on a benchmark of finished games | 6–10 |
 | **5. Accounts & ratings** | Signup with self-declared rank, kyu/dan display, provisional "?", handicap-adjusted rating, profile + rank graph, guest casual play | 5k and 1d accounts play a rated handicap game and both ranks move sensibly | 5–8 |
 | **6. The lobby** | Quick-pair grid, pools with auto-handicap, custom game, open challenges, direct challenge, waiting UX, mobile layout | One click to a game; the player test is done and its findings are addressed | 6–10 |
@@ -435,10 +435,13 @@ it says so and hands that check to you.
 
 ## 8. Licensing, handoff and legal
 
-- **Licence:**
-  - lila-derived code is AGPL-3.0-or-later, keeping lichess's notices.
+- **Licence ([ADR 0007](decisions/0007-licensing-corrections-after-import.md)):**
+  - `lila/` is AGPL-3.0-or-later (except upstream's listed asset exceptions); `lila-ws/` is AGPL-3.0
+    as upstream ships it; LiGo's own changes to both are AGPL-3.0-or-later, listed in
+    `docs/UPSTREAM.md`.
   - `COPYING.md` lists third-party code (Apache-2.0 NOTICE for goban, MIT notices for strategygames,
-    scalashogi, scalachess and goscorer).
+    scalashogi, scalachess and goscorer) and the non-free upstream assets kept until the first
+    Phase 3 unit strips them.
 - **Handing the work to OGS:**
   - The OGS frontend is AGPL-3.0 and `goban` is Apache-2.0, so AGPL-licensed LiGo code is
     licence-compatible with OGS's frontend. Anything OGS adopts from the lila-derived server would

@@ -1,0 +1,5 @@
+/lila       text eol=lf
+/ui/build   text eol=lf
+# LiGo: upstream's 8 Git LFS rules for public/lifat (nnue, maia, vosk, bots, background
+# galleries) were removed (ADR 0009). The snapshot holds only the LFS pointer files, so the filter
+# made checkouts fail wherever git-lfs is installed. The lifat pointer files go in Phase 3.

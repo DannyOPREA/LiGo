@@ -1,5 +1,5 @@
 # 0006. MIT for LiGo's own code
-- Status: Accepted
+- Status: Superseded by 0007
 - Date: 2026-09-26
 - Decided by: owner, on Claude's recommendation
 
