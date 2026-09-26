@@ -5,9 +5,9 @@
 > It is not a business and not a competitor to OGS. If it works well, the code, designs and lessons
 > may be **given to the OGS developers for free** to help improve OGS.
 >
-> Status: **Proposed** · Written 2026-09-25 after a requirements interview with the owner, revised the
-> same day to add the reuse-first principle, the logging requirement, the project's intent and the
-> working agreement.
+> Status: **Approved** 2026-09-26 (with the proposed defaults: ADRs 0003–0005; MIT for LiGo's own code:
+> ADR 0006) · Written 2026-09-25 after a requirements interview with the owner, revised the same day to
+> add the reuse-first principle, the logging requirement, the project's intent and the working agreement.
 > Companion document: [`CLAUDE_SETUP.md`](CLAUDE_SETUP.md), covering Phase 0: the Claude Code setup,
 > built before any feature work.
 
@@ -65,7 +65,7 @@ These came out of the requirements interview. Changing any of them needs your ap
 | Intent | **Non-commercial proof of concept**; not competing with OGS; may be **donated to OGS** | Prefer OGS-compatible technology and licences (§8); build a handoff package into the final phase; no growth, monetisation or marketing work |
 | Core pain | OGS's **game-finding**, specifically a **confusing lobby** | The lobby is the showcase of the POC, with its own phase and a player test (§4) |
 | Hosting | **Local-only for now** | No public infrastructure or UK compliance work unless you later decide to run a public demo (§8) |
-| Funding | Self-funded | No payments or entitlements. Open source (AGPL-3.0 for the lila-derived code) |
+| Funding | Self-funded | No payments or entitlements. Open source: AGPL-3.0 for lila-derived code, MIT for our own ([ADR 0006](decisions/0006-mit-for-own-code.md)) |
 | Name | **LiGo** | Brand strings sit behind one config/i18n layer |
 | Team | **Solo, Claude-heavy, new to Scala**, **< 5 h/week** | Heavy automation, unit-sized work, plain-English PR walkthroughs (§7) |
 | Tooling | Claude **Max 5x**; **Claude Code web + local CLI**; local box **Linux, 32 GB+, AMD CPU + AMD GPU** | Remote Control on your box is the main mode, with cloud sessions for parallel work; KataGo runs on OpenCL |
@@ -216,8 +216,8 @@ way to catch them disagreeing:
   legality, captures and final area score.
 - **The rules spec** in `docs/rules/` is written by the `go-rules-expert` agent and **approved by
   you**.
-  - **Proposed default for your decision:** situational superko in both rulesets, so games can't loop
-    forever.
+  - **Decided ([ADR 0003](decisions/0003-superko-in-both-rulesets.md)):** situational superko in both
+    rulesets, so games can't loop forever.
   - **Proposed division of scoring work:** the final score is computed by goscorer in
     `services/scoring`, so we never re-implement Japanese territory counting in Scala.
 
@@ -267,7 +267,7 @@ way to catch them disagreeing:
 ### 3.7 Ratings, ranks and handicap
 
 - **One overall pool:** Glicko-2 from scalachess, covering both sizes and every speed.
-- **Rating → rank:** **proposal for your decision:** adopt OGS's published curve
+- **Rating → rank ([ADR 0004](decisions/0004-ogs-rank-curve.md)):** adopt OGS's published curve
   (`rank = ln(rating/525) × 23.15`, verify against `goratings`), so ranks match what OGS players know
   and a later handoff is easier. A rank shows "?" while rating deviation is high.
 - **Self-declared start:** the chosen rank maps to a starting rating through the inverse curve, with
@@ -301,8 +301,8 @@ way to catch them disagreeing:
 see at a glance which games suit you. **We start from lila's lobby and pool UI as-is** and change
 only what Go needs.
 
-- **The landing view is a quick-pair grid.** Each tile is one click and shows live counts. Proposed
-  presets, for your decision and tuned in the player test:
+- **The landing view is a quick-pair grid.** Each tile is one click and shows live counts. Initial
+  presets ([ADR 0005](decisions/0005-initial-lobby-presets.md)), to be tuned in the player test:
 
   | 9×9 | 19×19 | Correspondence |
   |---|---|---|
@@ -449,9 +449,9 @@ it says so and hands that check to you.
     - rules fixtures;
     - the logs and lessons;
     - improvements upstreamed to `goban`.
-  - **Decision for you, deferred:** license LiGo's *own new* code that isn't derived from lila
-    (the adapters, fixtures, docs) under a permissive licence (MIT/Apache-2.0) to make donation
-    easier.
+  - **Decided ([ADR 0006](decisions/0006-mit-for-own-code.md)):** LiGo's own code that isn't derived
+    from lila (the adapters, fixtures, docs) is MIT-licensed, to make donation easier. See
+    [`COPYING.md`](../COPYING.md).
   - **Contacting OGS is your call and yours to make**; Claude never does it.
 - **Brand:** remove lichess's logo and lichess-only / CC BY-NC-SA assets; credit lichess, lishogi,
   PlayStrategy, OGS and KataGo on a credits page.
@@ -488,11 +488,10 @@ it says so and hands that check to you.
 | Decision | Trigger |
 |---|---|
 | Each component's build-vs-buy choice (§3.1) | Phase 1 memos |
-| Rules spec, including superko in Japanese rules | Phase 1 |
-| Rank curve and 9×9 stone value | Phase 5 |
-| Lobby presets | Phase 6 player test |
+| Rules spec details (superko already decided, ADR 0003) | Phase 1 |
+| 9×9 stone value (rank curve decided, ADR 0004) | Phase 5 |
+| Changes to the initial lobby presets (ADR 0005) | Phase 6 player test |
 | Tsumego content sources | Phase 8 memo |
-| Permissive licence for LiGo's own non-lila code | Before Phase 2 (affects `libs/board`) |
 | Offering the work to OGS, running a public demo, or neither | POC complete |
 
 ---

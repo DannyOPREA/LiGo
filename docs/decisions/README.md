@@ -1,0 +1,28 @@
+# Architecture Decision Records
+
+Every major decision (see [PLAN §7](../PLAN.md#7-working-agreement)) is recorded here once the owner
+approves it. ADRs are numbered and **immutable once Accepted**: to change one, write a new ADR that
+supersedes it and set the old one's status to `Superseded by NNNN` (the only edit allowed).
+
+| # | Title | Status | Date |
+|---|---|---|---|
+| 0001 | [Fork current upstream lila](0001-fork-current-lila.md) | Accepted | 2026-09-26 |
+| 0002 | [Reuse before build](0002-reuse-first.md) | Accepted | 2026-09-26 |
+| 0003 | [Situational superko in both rulesets](0003-superko-in-both-rulesets.md) | Accepted | 2026-09-26 |
+| 0004 | [OGS rank curve for kyu/dan display](0004-ogs-rank-curve.md) | Accepted | 2026-09-26 |
+| 0005 | [Initial lobby presets](0005-initial-lobby-presets.md) | Accepted | 2026-09-26 |
+| 0006 | [MIT for LiGo's own code](0006-mit-for-own-code.md) | Accepted | 2026-09-26 |
+
+## Template
+
+```markdown
+# NNNN. Title
+- Status: Proposed | Accepted | Superseded by NNNN
+- Date: YYYY-MM-DD
+- Decided by: owner (on Claude's recommendation | own initiative)
+
+## Context
+## Decision
+## Consequences
+## Alternatives considered
+```
