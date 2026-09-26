@@ -1,69 +1,93 @@
 # LiGo — Project Plan
 
-> A lichess-grade Go (Baduk/Weiqi) server for Western players, built as a hard fork of
-> [lichess-org/lila](https://github.com/lichess-org/lila) — the way lishogi.org did for shogi.
+> A **non-commercial proof of concept**: a lichess-style Go (Baduk/Weiqi) server, built as a hard fork
+> of [lichess-org/lila](https://github.com/lichess-org/lila) the way lishogi.org did for shogi.
+> It is not a business and not a competitor to OGS. If it works well, the code, designs and lessons
+> may be **given to the OGS developers for free** to help improve OGS.
 >
-> Status: **Proposed** · Written 2026-09-25 after a requirements interview with the owner.
-> Companion document: [`CLAUDE_SETUP.md`](CLAUDE_SETUP.md) (Phase 0: the Claude Code setup,
-> built before any feature work).
+> Status: **Proposed** · Written 2026-09-25 after a requirements interview with the owner, revised the
+> same day to add the reuse-first principle, the logging requirement, the project's intent and the
+> working agreement.
+> Companion document: [`CLAUDE_SETUP.md`](CLAUDE_SETUP.md), covering Phase 0: the Claude Code setup,
+> built before any feature work.
 
 ---
 
 ## 0. Summary
 
-- **Problem.** There's no great Western Go server. OGS is the best available, but its interface
-  is weak — above all, **finding a game is confusing** (the lobby).
-- **Bet.** Lichess's interface — fast, minimal, one click to play — applied to Go, with Go-native
-  concepts (ranks, handicap, komi, byo-yomi, a scoring phase) treated as first-class rather than
-  bolted on.
-- **Goal for the next 12–18 months:** a **proof of concept (POC)** that runs locally and shows a
-  lichess-style Go server is viable and nicer than OGS, especially its lobby.
-- **How.** Fork *current* lila (Scala 3.8 / sbt 2 / Pekko / MongoDB / Redis + TypeScript/snabbdom UI).
-  Port the Go pieces that already exist under permissive licences: PlayStrategy's Go rules (MIT),
-  lishogi's byo-yomi clock design (MIT), OGS's KataGo autoscore approach (Apache-2.0), and
-  lightvector's `goscorer` (MIT).
-- **Who builds it.** You direct and review for under 5 hours a week; Claude writes most of the code.
-  Because you're new to Scala, correctness is enforced by **automated gates** (conformance tests,
-  CI, an independent reviewer agent, play-test screenshots) rather than by line-by-line review.
-- **Order of work.** Phase 0 Claude setup → rules libraries → board component → fork and remove chess →
-  playable Go games → accounts and ratings → **the lobby** → correspondence, SGF and analysis board →
-  tsumego → PWA polish → POC demo.
+- **Problem.** There's no great Western Go server. OGS is the best available, but its interface is
+  weak. Above all, **finding a game is confusing**.
+- **Purpose.** Show, in working code, how much better Go matchmaking and play can feel with a
+  lichess-style interface: fast, minimal, one click to play. Ranks, handicap, komi, byo-yomi and
+  scoring are treated as core concepts. What we learn and build should be easy to hand to OGS.
+- **Not the purpose.** Profit, a user base, or competing with OGS.
+- **Reuse before build.** Existing software is used wherever it fits, and custom code is limited to
+  glue. The main pieces:
+  - lichess's `lila` and `lila-ws` as the application;
+  - PlayStrategy's Go rules for the server;
+  - **OGS's own `goban` library** for the board, the client-side rules and autoscore. This also makes
+    a later handoff to OGS natural;
+  - KataGo, plus lightvector's `goscorer`, for scoring;
+  - lichess's Glicko-2 for ratings.
+- **Working agreement.**
+  - Claude does most of the work, with wide latitude.
+  - You approve every unit of work before it starts and review it when it's done.
+  - You're consulted on every major decision.
+  - Claude stops and asks whenever it's unsure.
+  - Autonomy never lowers the testing bar: Claude verifies everything it can, and hands you what it
+    can't verify (§7).
+- **Everything is logged.** What was done, what worked and what didn't goes into `logs/`, split by
+  area so an agent only reads what's relevant ([`CLAUDE_SETUP.md` §9](CLAUDE_SETUP.md)).
+- **Order of work:**
+  1. Phase 0: Claude setup.
+  2. Build-vs-buy checks and rules integration.
+  3. Board integration.
+  4. Fork lila and remove chess.
+  5. Playable Go games.
+  6. Accounts and ratings.
+  7. The lobby.
+  8. Correspondence, SGF and the analysis board.
+  9. Tsumego.
+  10. PWA polish.
+  11. POC demo and a handoff package.
 
 ---
 
 ## 1. Requirements record
 
-Everything below was decided in the requirements interview. Changing any of it needs an ADR in
+These came out of the requirements interview. Changing any of them needs your approval and an ADR in
 `docs/decisions/`.
 
-### 1.1 Product and context
+### 1.1 Intent, context and ways of working
 
 | Topic | Decision | Consequence for the plan |
 |---|---|---|
-| Core pain | OGS's **game-finding**, specifically a **confusing lobby** | The lobby is the headline feature of the POC and gets its own design phase and user test (§4) |
-| Ambition | **Proof of concept** | Scope stays narrow. Production concerns (scale, anti-cheat, moderation) are designed for but not built |
-| Hosting | **Local-only for now** | No public infrastructure, domain or UK compliance work until the POC is demo-ready (§8) |
-| Funding | Self-funded, decide later | No payments or entitlements. Everything stays open source (AGPL-3.0) |
-| Name | **LiGo** (kept despite the LIGO observatory name clash) | Brand strings sit behind one config/i18n layer anyway |
-| Team | **Solo, Claude-heavy, new to Scala**, **< 5 h/week** | Heavy automation, PR-sized increments, plain-English PR walkthroughs, a weekly rhythm (§7) |
-| Tooling | Claude **Max 5x**, both **Claude Code web and local CLI**. Local box: **Linux, 32 GB+, AMD CPU + AMD GPU** | Remote Control on your box is the main mode; cloud sessions run parallel work. KataGo runs on its OpenCL backend (§5.7) |
-| Autonomy | **Claude opens PRs, gates must pass, you merge** | Enforced by branch protection, deny rules and hooks |
-| Claude in CI | **No** (reviews run locally inside sessions) | CI is plain GitHub Actions; review is the `reviewer` subagent plus built-in `/code-review` |
-| Upstream | **Hard fork + monthly cherry-pick review** | An `upstream-scout` agent and an `/upstream-port` skill handle it (see CLAUDE_SETUP.md) |
-| Plan location | Repo markdown | This file, `CLAUDE_SETUP.md`, and later `STATUS.md` and ADRs |
+| Intent | **Non-commercial proof of concept**; not competing with OGS; may be **donated to OGS** | Prefer OGS-compatible technology and licences (§8); build a handoff package into the final phase; no growth, monetisation or marketing work |
+| Core pain | OGS's **game-finding**, specifically a **confusing lobby** | The lobby is the showcase of the POC, with its own phase and a player test (§4) |
+| Hosting | **Local-only for now** | No public infrastructure or UK compliance work unless you later decide to run a public demo (§8) |
+| Funding | Self-funded | No payments or entitlements. Open source (AGPL-3.0 for the lila-derived code) |
+| Name | **LiGo** | Brand strings sit behind one config/i18n layer |
+| Team | **Solo, Claude-heavy, new to Scala**, **< 5 h/week** | Heavy automation, unit-sized work, plain-English PR walkthroughs (§7) |
+| Tooling | Claude **Max 5x**; **Claude Code web + local CLI**; local box **Linux, 32 GB+, AMD CPU + AMD GPU** | Remote Control on your box is the main mode, with cloud sessions for parallel work; KataGo runs on OpenCL |
+| **Reuse first** | **Pre-built software over custom software, whenever possible**, for you and for every Claude agent | A build-vs-buy check with your approval before any component is built (§2.2); the `reuse-scout` agent; the reviewer flags any reinvented wheel |
+| **Logging** | Everything that happens is logged in markdown under `logs/`, **split by area** | One log file per workstream, each with a short curated "Lessons" section so agents read only what's relevant (`CLAUDE_SETUP.md` §9) |
+| **Working agreement** | Claude has wide latitude; you stay in the loop **unit by unit**; you're consulted on **all major decisions**; Claude **stops and asks when unsure**; autonomy never lowers review and testing rigour | Encoded in `CLAUDE.md`, the `/next` and `/ship` checkpoints, permission prompts for dependency changes, and the PR template (§7) |
+| Merging | Claude opens PRs; you merge | Branch protection, deny rules and hooks |
+| Claude in CI | No | CI is plain GitHub Actions; reviews happen inside sessions |
+| Upstream | Hard fork + monthly cherry-pick review | `upstream-scout` agent + `/upstream-port` skill |
 
 ### 1.2 Game
 
 | Topic | Decision |
 |---|---|
-| Board sizes | **19×19 and 9×9** (the engine takes any N×N, so adding 13×13 later is cheap) |
-| Rulesets | **Japanese** (territory) **and Chinese** (area), chosen per game |
-| End of game | Two consecutive passes → **scoring phase: KataGo proposes dead stones and the score; both players confirm, adjust, or resume play** |
-| Clocks | **Japanese byo-yomi** and **Fischer**, plus correspondence (days per move) |
-| Ratings | **Glicko-2, displayed as kyu/dan**, **one overall pool** across sizes and speeds |
-| Handicap | **Auto-handicap in quick-pair, and rated** (the rating maths adjusts for handicap) |
-| New players | **Self-declared starting rank** at signup, with high rating uncertainty |
-| Guests | **Anonymous casual games allowed**; an account is required for rated games |
+| Board sizes | **19×19 and 9×9** (13×13 later) |
+| Rulesets | **Japanese** (territory) and **Chinese** (area), chosen per game |
+| End of game | Two passes → **KataGo proposes dead stones and the score; both players confirm, adjust, or resume play** |
+| Clocks | **Japanese byo-yomi** and **Fischer**, plus correspondence |
+| Ratings | **Glicko-2 displayed as kyu/dan**, **one overall pool** |
+| Handicap | **Auto-handicap in quick-pair, and rated** |
+| New players | **Self-declared starting rank** |
+| Guests | Anonymous casual games allowed; rated games need an account |
 
 ### 1.3 POC scope
 
@@ -71,237 +95,214 @@ Everything below was decided in the requirements interview. Changing any of it n
 SGF import/export and an analysis board (no engine) · tsumego trainer · accounts, ratings and
 profiles · guest play · responsive web + installable PWA · English only, with i18n kept ready.
 
-**Out (later phases, in rough priority order):** public hosting · KataGo post-game review ·
-play-vs-AI bots and a bot API · tournaments (arena → Swiss/McMahon) · studies/shared reviews · social
-layer (chat, DMs, forum, teams) · 13×13 · more rulesets (AGA, Korean, NZ, Ing) and clocks (Canadian,
-absolute) · other languages · native mobile app.
+**Out (possible later phases, your call):** KataGo post-game review · bots and a bot API ·
+tournaments · studies/reviews · social layer · 13×13 · more rulesets and clocks · other languages ·
+native app · public hosting.
 
 ---
 
-## 2. Product principles
+## 2. Principles
 
-1. **One click to play.** Every choice has a sensible default; advanced options sit one click away,
-   never in the way.
-2. **Go-native, not chess with stones.** Ranks, handicap, komi, byo-yomi and scoring are core
-   concepts in the data model and the UI.
-3. **Mobile-first board.** On touch devices a tap shows a ghost stone, and a second tap (or a confirm
-   button) places it; this can be turned off. The board fills the screen width.
-4. **Lichess speed and calm.** Minimal chrome, fast pages, no clutter. It should feel like lichess,
-   not like OGS with a new skin.
-5. **Honest scoring.** The AI *proposes* and people *decide*, with anti-stalling timeouts and a
-   one-tap "resume play".
+### 2.1 Product
+
+1. **One click to play.** Every choice has a sensible default; advanced options sit one click away.
+2. **Go-native, not chess with stones.** Ranks, handicap, komi, byo-yomi and scoring are core concepts.
+3. **Mobile-first board.** Tap to preview a stone, tap again (or confirm) to place it; this can be
+   turned off.
+4. **Lichess speed and calm.** Minimal chrome, fast pages, no clutter.
+5. **Honest scoring.** The AI proposes, people decide, and anti-stalling timeouts keep games moving.
+
+### 2.2 Engineering: reuse before build
+
+This applies to you and to every Claude agent. For any capability, go down this ladder and stop at the
+first rung that works:
+
+1. **Use existing software as-is** (a dependency, a service, or an existing lila feature).
+2. **Configure or extend it** through its supported extension points.
+3. **Wrap it** with a thin adapter (e.g. to fit lila's snabbdom UI).
+4. **Vendor or fork it minimally**: copy it in, change as little as possible, and record where it came
+   from so fixes can be pulled in later.
+5. **Port it**, when the logic exists in another language and there's no way to call it.
+6. **Build it custom**, only as glue or when nothing suitable exists.
+
+Rules:
+- **Any custom build beyond small glue needs a build-vs-buy memo.** The `reuse-scout` agent produces
+  it (candidates, licence, maintenance status, fit, recommendation), and you approve it before work
+  starts. The decision is recorded as an ADR.
+- **Adding, removing or swapping a dependency is a major decision**, so you're consulted. Claude Code
+  enforces this with a permission prompt on dependency manifests.
+- **Only licences compatible with AGPL-3.0 are acceptable** (MIT, BSD, Apache-2.0, LGPL, GPL-3.0,
+  AGPL-3.0). Non-commercial and unclear licences are rejected.
+- **The reviewer agent checks every PR for reinvented wheels.**
 
 ---
 
 ## 3. Architecture
 
-### 3.1 Starting point and reuse
+### 3.1 Components: what we reuse, and the thin glue we write
 
-**Fork base: current upstream `lila` and `lila-ws`**, pinned to SHAs taken *after* lichess's June 2026
-sbt 2 / liplay migration and recorded in `docs/UPSTREAM.md`. We rejected the alternatives:
+**Fork base: current upstream `lila` and `lila-ws`**, pinned to SHAs after lichess's June 2026
+sbt 2 / liplay migration and recorded in `docs/UPSTREAM.md`. We rejected lishogi (frozen on Scala
+2.13/Akka) and PlayStrategy's lila fork (a 2021 base, about 20 other games, and a chess board bent into
+a Go board). We still reuse PlayStrategy's Go *rules library*.
 
-- **lishogi** is frozen on Scala 2.13 / Akka / Play 2.9.
-- **PlayStrategy** has Go, but sits on a May-2021 lila with Akka / Play 2.8 and about 20 other games
-  behind generic abstractions. It also draws the Go board by bending the chess board component, and
-  its Scala 3 port is still causing regressions.
+Every "first choice" below is **proposed**. Phase 1 checks each one with a small spike and a
+build-vs-buy memo, and **you approve the result** before integration starts.
 
-What we reuse (all licences compatible with AGPL-3.0):
+| Capability | First choice (reuse) | Fallbacks | Glue we write |
+|---|---|---|---|
+| App server, accounts, security, lobby/pool, round, correspondence, analysis board, puzzle trainer, i18n, UI shell | **lila** (AGPL-3.0), hard fork | — | Go-specific adaptations inside lila |
+| Websocket server | **lila-ws** (AGPL-3.0), hard fork | — | Go message payloads |
+| Dev environment | **lila-docker** (lichess's official dev setup) | Plain docker compose | Monorepo paths, KataGo service |
+| Server-side Go rules (legality, captures, superko, handicap placement, byo-yomi clock) | **PlayStrategy `strategygames`** (MIT, pure Scala since Aug 2026), used **as a dependency** if its Go package can be consumed without pulling in the other games | Vendor only its Go package into `libs/go-rules` with minimal changes; then scalashogi's clock (MIT) for byo-yomi | Adapter from strategygames types to lila's game model |
+| Client-side rules + SGF (analysis board, move hints, puzzles) | **OGS `goban` engine** (`goban-engine`, Apache-2.0; supports JP/CN rules, SGF, time systems) | `@sabaki/go-board` + `@sabaki/sgf` (MIT) | — |
+| Board rendering | **OGS `goban` renderer** (SVG), wrapped for snabbdom | Sabaki `Shudan` (MIT, Preact) | `libs/board`: a thin adapter exposing a chessground-like API to lila's UI |
+| Dead-stone proposal | **KataGo analysis engine** (MIT) + **`goban`'s autoscore** (the dual ownership-map method) | goban's heuristic estimator when no KataGo is available | `services/scoring`: a small Node process that connects Redis ⇄ KataGo ⇄ goban-engine |
+| Score counting given dead stones (territory/area, seki) | **`goscorer`** (MIT; already bundled in goban), running in `services/scoring` | Port goscorer to Scala only if calling the service turns out to be unworkable | — |
+| Ratings | **scalachess Glicko-2** (MIT) | — | OGS's published rank curve and handicap adjustment (a few formulas from `goratings`) |
+| Tsumego trainer | **lila puzzle module + UI** | — | Go puzzle format |
+| Tsumego content | Existing licensed collections and generators, found by `reuse-scout` | Positions KataGo generates from game records with verified licences; our own transcriptions of public-domain classics | `tools/puzzles` import scripts |
+| PWA | lila's existing manifest and service worker | — | Install prompt and touch settings |
+| CI | lila's existing GitHub workflows | — | Monorepo paths, rules parity job |
+| Load testing (Phase 6+) | An existing tool (e.g. k6 or Artillery) | — | A game-script scenario |
 
-| Source | Licence | What we take |
-|---|---|---|
-| lichess `lila`, `lila-ws` | AGPL-3.0 | The whole app and websocket server: accounts, security, lobby/pool, round, correspondence, analysis board, puzzle trainer, i18n, UI shell |
-| `scalachess` (rating module) | MIT | Glicko-2 implementation |
-| PlayStrategy `strategygames` (Go package, pure Scala since Aug 2026) | MIT | Seed for `scalago`: capture logic, situational superko, handicap placements, dead-stone agreement flow. Their bug history (early game end on repetition, infinite games, dead-stone expiry) becomes test cases |
-| `scalashogi` `Clock.scala` | MIT | Byo-yomi clock design (`periods`, `spentPeriods`, `periodsInUse`) |
-| OGS `goban` (`autoscore.ts`) | Apache-2.0 | The autoscore algorithm (two KataGo ownership maps; remove stones above 0.7, flag points below 0.3 as needing sealing). Also a reference for rules and time-system edge cases |
-| lightvector `goscorer` | MIT | Territory and area scoring with seki detection once dead stones are marked |
-| KataGo v1.18.x | MIT (code); network licence to verify | Scoring now; review and human-like bots later (`b18c384nbt-humanv0`) |
-| Sabaki `Shudan` | MIT | Reference for board rendering |
+**Handoff bonus:** OGS's frontend already uses `goban`. A lila-style UI built on the same board library
+means our UX work is directly portable to OGS.
 
-**Avoid:** jgoboard (CC BY-NC), lichess's logo and CC BY-NC-SA assets, GoGoD/Go4Go game
-collections, tsumego from modern books, and OGS joseki data (unless OGS grants permission).
+**Avoid:** jgoboard (CC BY-NC); lichess's logo and CC BY-NC-SA assets; the GoGoD and Go4Go game
+collections; tsumego from modern books; OGS's joseki data (unless OGS permits it).
 
 ### 3.2 Repository layout (monorepo)
 
 ```
 LiGo/
-  lila/                      hard fork of lichess-org/lila (app server + ui/)
-  lila-ws/                   hard fork of lichess-org/lila-ws (websocket server)
+  lila/                 hard fork of lichess-org/lila (app server + ui/)
+  lila-ws/              hard fork of lichess-org/lila-ws
   libs/
-    scalago/                 Scala 3, MIT: rules, scoring, handicap, SGF, clocks, rank maths
-    goops/                   TypeScript: client rules + SGF (the same behaviour as scalago)
-    goground/                TypeScript: board UI component (chessground-style API, SVG)
-    conformance/             JSON rules fixtures consumed by BOTH engines
-  services/katago-worker/    TypeScript/Node: KataGo analysis-engine bridge (scoring proposals)
-  tools/puzzles/             TypeScript: tsumego import and generation pipeline
-  dev/                       docker-compose, `ligo` CLI, doctor, cloud setup script
-  docs/                      PLAN, CLAUDE_SETUP, STATUS, UPSTREAM, rules spec, ADRs, glossary
+    go-rules/           adapter to strategygames' Go package (or a minimal vendored copy of it)
+    board/              thin snabbdom adapter around OGS goban (renderer + client engine)
+    conformance/        shared rules fixtures, run against BOTH server and client engines
+  services/scoring/     Node glue: KataGo analysis engine + goban autoscore + goscorer
+  tools/puzzles/        tsumego import/generation scripts
+  dev/                  lila-docker-based environment, `ligo` CLI, doctor, cloud setup script
+  logs/                 work logs, one file per area (CLAUDE_SETUP.md §9)
+  docs/                 PLAN, CLAUDE_SETUP, STATUS, UPSTREAM, rules spec, ADRs, build-vs-buy memos, research
   .claude/ .mcp.json CLAUDE.md
 ```
 
-**Why a monorepo:** a single change can touch rules, server and UI in one PR, with one CI run and one
-set of Claude instructions. That suits a solo developer; lichess's many repos serve its scale, not
-ours.
+**Why a monorepo:** one PR can touch rules, server and UI together, with one CI and one set of Claude
+instructions. That's the simplest setup for a solo developer.
 
-**Why only two languages (Scala + TypeScript):** the worker and the puzzle pipeline are TypeScript,
-so they can reuse `goscorer` (JS) and port `autoscore.ts` directly, and you never have to review a
-third language.
+**Languages:** Scala (lila) and TypeScript (UI and scoring service) only, both inherited from reused
+software.
 
 **How the pieces connect:**
-- `scalago` is an sbt subproject that both lila and lila-ws depend on. It replaces the `scalachess`
-  dependency.
-- `goops` and `goground` are pnpm workspace packages consumed by `lila/ui`.
-- Data flows `lila ⇄ Redis ⇄ lila-ws ⇄ browser` and `lila ⇄ Redis ⇄ katago-worker`.
-- **MongoDB 7** and **Redis** are required; Elasticsearch (game search) is left out of the POC.
+- `lila ⇄ Redis ⇄ lila-ws ⇄ browser`.
+- `lila ⇄ Redis ⇄ services/scoring ⇄ KataGo`.
+- **MongoDB 7** and **Redis** are required; Elasticsearch is not needed for the POC.
 
-### 3.3 `libs/scalago` — the authoritative engine
+### 3.3 Two rules engines, one truth: `libs/conformance`
 
-- **Board:** N×N (9 and 19 in the POC), flat arrays + union-find groups/liberties, Zobrist hashing
-  for superko.
-- **Moves:** `Place(point)` | `Pass`. Resign, timeouts and abort are game events, not moves.
-- **Rules:** a `Ruleset` data type (Japanese, Chinese) that fixes ko handling, suicide, scoring
-  method, default komi, and how handicap stones are compensated. The exact rules are written down in
-  `docs/rules/` by the `go-rules-expert` agent during Phase 1. **Proposed default for you to approve:**
-  situational superko in both rulesets, so games can't loop forever (a deliberate simplification of
-  traditional Japanese "no result" cycles, recorded as an ADR).
-- **Scoring:** given a set of dead stones, compute territory or area score, prisoners, seki and komi.
-  Port goscorer's logic so the server's result is authoritative.
-- **Handicap:** fixed star-point placements (19×19: 2–9 stones; 9×9: 2–5), komi 0.5 in handicap
-  games, handicap compensation per ruleset.
-- **SGF (FF[4]):** read/write moves, setup (AB/AW), HA, KM, RU, RE, TM/OT, PB/PW/BR/WR, C,
-  variations; tolerant of OGS/KGS/Fox quirks.
-- **Clocks:** `GoClock = Fischer(limit, inc) | ByoYomi(main, periods, periodTime)` (extensible to
-  Canadian), with lag compensation that works with periods.
-- **Rank maths:** Glicko-2 (from scalachess), rating ⇄ rank mapping, and handicap-adjusted expected
-  score (§3.9).
+The server (strategygames) and the client (goban-engine) are different codebases, so the plan needs a
+way to catch them disagreeing:
 
-### 3.4 `libs/goops` + `libs/conformance`
+- **Shared JSON fixtures** (`size, rules, komi, setup, moves, expect{legal, board, captures, koPoint,
+  deadStones → score}`) are replayed by both engines in CI.
+- **Fixtures come first from existing test suites** (goban's, strategygames', KataGo's rules tests)
+  before we write any new ones. New cases cover PlayStrategy's known bug classes (early game end on
+  repetition, infinite games, dead-stone expiry) and the classic traps (seki, bent-four, snapback,
+  triple ko, sending-two-returning-one, suicide, handicap compensation).
+- A **nightly differential test** plays random games and compares the server engine with KataGo on
+  legality, captures and final area score.
+- **The rules spec** in `docs/rules/` is written by the `go-rules-expert` agent and **approved by
+  you**.
+  - **Proposed default for your decision:** situational superko in both rulesets, so games can't loop
+    forever.
+  - **Proposed division of scoring work:** the final score is computed by goscorer in
+    `services/scoring`, so we never re-implement Japanese territory counting in Scala.
 
-- `goops` implements the same rules and SGF handling in TypeScript for the client: legal-move hints,
-  the analysis board, SGF viewing, and puzzles.
-- **Conformance fixtures** are the single source of truth. Each fixture is a JSON case
-  (`size, rules, komi, setup, moves, expect{legal, board, captures, koPoint, deadStones → score}`).
-  Both engines replay every fixture in CI (the "parity" gate).
-- Target: ≥ 150 fixtures by the end of Phase 1, including every PlayStrategy bug class and every
-  classic trap (seki, bent-four, snapback, triple ko, sending-two-returning-one, suicide attempts,
-  handicap compensation).
-- A nightly **differential test** plays random games and compares `scalago` against KataGo's own
-  rules implementation (over GTP) on legality, captures and final area score.
+### 3.4 `lila` fork — keep, adapt, remove
 
-### 3.5 `libs/goground` — the board component
-
-A new component, **not** a chessground fork, because chessground is built around square cells and
-pieces. It keeps chessground's *API shape* (config → state → events → redraw, plain DOM so snabbdom
-hosts it), which makes wiring it into `ui/round` and `ui/analyse` feel native to lila.
-
-- Renders the board as SVG, crisp at any size, with coordinates (A–T, skipping I).
-- Placing stones: a ghost stone on hover, and **tap-to-preview + confirm on touch** (a user setting).
-- Markers: last move, move numbers, circle/triangle/square/X/labels (SGF), variation hints.
-- **Scoring overlay:** territory shading, dead-stone marking, tap a group to toggle it dead/alive.
-- Themes: kaya, light wood, flat, dark; stones: slate-and-shell and flat; our own stone sounds (not
-  lichess's sound sets).
-- Tests: Playwright visual snapshots on desktop and phone viewports; a standalone playground page.
-
-### 3.6 `lila` fork — keep, adapt, remove
-
-- **Keep and adapt (POC core):**
-  - Play and matchmaking: `game`, `round`, `lobby`, `pool` (quick pairing), `setup`, `challenge`,
-    `playban`.
+- **Keep and adapt:**
+  - Play and matchmaking: `game`, `round`, `lobby`, `pool`, `setup`, `challenge`, `playban`.
   - Accounts and prefs: `user`, `security`, `pref`, `rating`, `history`.
   - Boards and puzzles: `analyse` (board only), `importer` (SGF), `puzzle` (becomes tsumego).
-  - Shared infrastructure: `socket`, `i18n`, the `site` shell and the core/common modules.
-- **Keep dormant (needed before a public launch):** `report`, `mod`, `shutup`, kid mode,
-  `PersonalDataExport` and account closure.
-- **Remove in the POC:** tournament, swiss, simul, study, relay, fishnet, evalCache, opening/explorer,
-  insight, tutor, coach, streamer, forum, ublog, team, msg, video, practice, learn, storm, racer,
-  streak, bot/botPlay, and all chess-specific UI packages. Removals are deletions; git history is the
-  archive.
-- **"Quarantine, then replace" order, where every step compiles and is its own PR:**
-  1. Cut routes, UI entry points and `Env` wiring for the modules being removed.
+  - Shared infrastructure: `socket`, `i18n`, `site` and the core modules.
+- **Keep dormant:** `report`, `mod`, `shutup`, kid mode, personal-data export and account closure.
+  They're reused as-is if a public demo ever happens.
+- **Remove:** tournament, swiss, simul, study, relay, fishnet, evalCache, opening/explorer, insight,
+  tutor, coach, streamer, forum, ublog, team, msg, video, practice, learn, storm, racer, streak,
+  bot/botPlay, and the chess-only UI packages.
+- **Order: "quarantine, then replace"**, where every step compiles and is its own unit:
+  1. Cut routes and `Env` wiring for the removed modules.
   2. Delete those modules.
-  3. Add `scalago` alongside `scalachess`.
+  3. Add the `go-rules` adapter alongside scalachess.
   4. Migrate the core types: Game, Board, Move, Variant → (BoardSize, Ruleset), PerfType → a single
      `go` perf, Clock.
-  5. Remove the `scalachess` dependency.
-  6. Replace the chess UI in `ui/round` and `ui/analyse` with `goground`.
+  5. Drop scalachess, keeping its Glicko-2 module.
+  6. Swap the chess board for `libs/board`.
 
-### 3.7 `lila-ws` fork
+### 3.5 `lila-ws` fork
 
-- Round messages carry Go moves (point | pass) and byo-yomi clock state (main time left, periods left).
+- Round messages carry Go moves (point | pass) and byo-yomi clock state.
 - New scoring-phase messages: `scoreProposal`, `toggleGroup`, `accept`, `resume`.
 - Lobby and pool messages carry rank, handicap preference and live pool counts.
-- Replace the scalachess-based move computation for the analysis board with scalago.
 
-### 3.8 `services/katago-worker` — AI-assisted scoring
+### 3.6 `services/scoring`
 
-- **Protocol:** lila pushes `{gameId, size, rules, komi, handicap, moves}` to a Redis queue. The
-  worker runs KataGo's **JSON analysis engine** twice, once with black to move and once with white,
-  asking for ownership maps.
-- It then runs the ported autoscore logic to pick dead stones, and goscorer to compute the score.
-  It publishes `{deadStones, territory, score, confidence}`, which lila forwards to both players.
-- **Hardware:** on your box KataGo uses **OpenCL on the AMD GPU** (tuned via `katago benchmark`). In
-  cloud sessions and CI it uses the **Eigen CPU** backend with a small network and low visits;
-  that's slow but enough for scoring tests.
-- **Fallback:** if no worker answers within a timeout, the scoring phase opens with goscorer's
-  heuristic proposal and manual marking, so a game can never get stuck.
-- **Built to move later:** the queue boundary means that once LiGo is hosted publicly, your home GPU
-  can connect *out* to the server as a worker, the way lichess's fishnet volunteers do, with no
-  ports opened at home.
+- **Protocol:**
+  1. lila queues `{gameId, size, rules, komi, handicap, moves}` in Redis.
+  2. The service asks KataGo's analysis engine for ownership maps, once with black to move and once
+     with white.
+  3. goban's autoscore picks the dead stones and goscorer counts the score.
+  4. The service publishes `{deadStones, territory, score}` back through Redis.
+- **Also the score authority:** when players change the dead stones, the service recounts with
+  goscorer, and lila stores the result.
+- **Hardware:** KataGo uses **OpenCL on your AMD GPU** locally, and the **Eigen CPU** backend (small
+  network, few visits) in the cloud and CI.
+- **No stuck games:** without KataGo, the proposal falls back to goban's estimator plus manual marking.
+- **Portable:** the queue boundary means a remote GPU worker (fishnet-style) could be added later
+  without redesign.
 
-### 3.9 Ratings, ranks and handicap
+### 3.7 Ratings, ranks and handicap
 
-- **One overall Glicko-2 pool** covering both sizes and every speed, using scalachess's implementation.
-- **Rating → rank:** a non-linear mapping, not a flat 100 points per rank, because one stone of
-  difference means a different rating gap at different strengths. **Proposal:** adopt OGS's published
-  curve (`rank = ln(rating/525) × 23.15`, 30k … 9d; verify against `goratings`) so LiGo ranks line up
-  with what Western players already know. A rank shows "?" (provisional) while rating deviation is high.
-- **Self-declared start:** at signup, choose from "New to Go / ~25k / ~20k / … / ~1d / 3d+". Each
-  maps to a starting rating through the inverse curve, with high deviation so it converges quickly.
-- **Handicap in ratings (OGS's approach):** the weaker player's *effective* rating is shifted by the
-  handicap's stone value, which depends on board size and ruleset; the expected score uses that
-  effective rating. Stone values for 9×9 come from `goratings` research in Phase 5.
-- **Auto-handicap:** stones = rank difference (capped at 9 on 19×19, lower on 9×9), with komi set
-  by the ruleset spec. Players choose "Even only" or "Handicap OK" once, as a preference.
-- **Guests** play casual games only and have no rating.
-- **Deferred to an ADR once there's data:** whether 9×9 results should count less than 19×19 in the
-  overall rating.
+- **One overall pool:** Glicko-2 from scalachess, covering both sizes and every speed.
+- **Rating → rank:** **proposal for your decision:** adopt OGS's published curve
+  (`rank = ln(rating/525) × 23.15`, verify against `goratings`), so ranks match what OGS players know
+  and a later handoff is easier. A rank shows "?" while rating deviation is high.
+- **Self-declared start:** the chosen rank maps to a starting rating through the inverse curve, with
+  high deviation.
+- **Handicap:** the weaker player's effective rating is shifted by the handicap's stone value, which
+  depends on board size and ruleset (OGS's approach). Auto-handicap stones = rank difference, capped;
+  komi comes from the rules spec.
+- **Guests:** casual games only.
 
-### 3.10 Game flows
+### 3.8 Game flows
 
-1. **Play:** moves go over websocket and the server validates them with scalago. Clocks, pass,
-   resign, abort (first moves), and undo requests (casual games only by default).
+1. **Play:** moves go over websocket and the server validates them. Clocks, pass, resign, abort, and
+   undo requests (casual only by default).
 2. **Scoring phase:**
-   - After two passes the board shows KataGo's proposal: dead stones marked, territory shaded, a
-     live score.
-   - Either player can tap groups to toggle them; each change clears both acceptances and is shown
-     to the opponent instantly.
-   - When both accept, the result is final. **Resume play** returns to the game (under Chinese rules,
-     playing it out always settles a dispute).
-   - The scoring phase has its **own timeout** (e.g. 3 min live, 1 day correspondence). When it
-     expires, the current proposal is accepted automatically. Leaving during scoring counts as
-     abandonment, using lila's existing logic.
-3. **Correspondence:** lila's days-per-move infrastructure, in-site notifications, and a
-   correspondence scoring timeout.
-4. **SGF:** any game downloads as SGF; SGF import opens in the analysis board and can be saved as an
-   imported game.
-5. **Analysis board:** navigate moves and variations, add variations, load/save SGF. The engine hook
-   stays stubbed for later KataGo review.
-6. **Tsumego:** lila's puzzle trainer adapted to Go. Puzzles have their own Glicko-2 rating,
-   themes (life and death, tesuji, capturing race, ko, endgame), answer trees with refutations of
-   wrong moves, and a provenance record for each puzzle.
+   - After two passes, the board shows the KataGo proposal (dead stones, territory, live score).
+   - Either player can toggle groups; each change resets both acceptances.
+   - When both accept, the result is final. **Resume play** is always available.
+   - The phase has its own timeout (e.g. 3 min live, 1 day correspondence); when it expires, the
+     current proposal is accepted automatically. Leaving counts as abandonment.
+3. **Correspondence:** lila's days-per-move infrastructure and in-site notifications.
+4. **SGF:** download any game as SGF; import SGF into the analysis board (goban-engine's SGF support).
+5. **Analysis board:** moves, variations, load/save SGF; the engine hook stays stubbed for later.
+6. **Tsumego:** lila's puzzle trainer with its own Glicko-2 rating, themes, refutation trees, and a
+   provenance record for each puzzle.
 
 ---
 
-## 4. The lobby — the headline feature
+## 4. The lobby — the showcase
 
 **The problem you named:** OGS's lobby is confusing — hard to read and hard to filter, and you can't
-see at a glance which games suit you.
+see at a glance which games suit you. **We start from lila's lobby and pool UI as-is** and change
+only what Go needs.
 
-**Design:**
-
-- **The landing view is a quick-pair grid.** Each tile is one click and shows live counts
-  ("12 playing · 3 waiting"). The *proposed* presets below get tuned in Phase 6 and validated with
-  real players:
+- **The landing view is a quick-pair grid.** Each tile is one click and shows live counts. Proposed
+  presets, for your decision and tuned in the player test:
 
   | 9×9 | 19×19 | Correspondence |
   |---|---|---|
@@ -310,110 +311,157 @@ see at a glance which games suit you.
   | 3+2 Fischer | 20 min + 5×30 s | |
   | | 10+10 Fischer | |
 
-- **One persistent chip row above the grid:** `Rated / Casual` · `Handicap OK / Even only`.
-  Rules default to Japanese, komi to the ruleset's default; changing them goes through a custom game.
-- **Custom game** is a single modal with every field pre-filled; advanced options (rules, komi, fixed
-  handicap, byo-yomi details) are collapsed.
-- **Open challenges** is a readable table: player + rank · board · time · rules · even/handicap ·
-  rated.
-  - Games that suit you (within rank range and compatible preferences) are listed first.
-  - Incompatible games are greyed out, never hidden without explanation.
-  - Filter chips replace a settings form; phones get cards instead of a table.
-- **While waiting:** show the pool size, the rank range being searched (which visibly widens over
-  time), the elapsed time, and a Cancel button. Never a blank spinner.
-- **Direct challenge** from any profile, with the same defaults.
+- **One persistent chip row:** `Rated / Casual` · `Handicap OK / Even only`.
+- **Custom game** is a single pre-filled modal, with advanced options collapsed.
+- **Open challenges** is a readable table (player + rank · board · time · rules · even/handicap ·
+  rated). Games that suit you come first; incompatible ones are greyed out. Filter chips replace a
+  settings form; phones get cards.
+- **While waiting:** show the pool size, a visibly widening rank range, the elapsed time, and a Cancel
+  button.
+- **Direct challenge** from any profile.
 
-**How we'll know it beats OGS:**
-- Clicks from landing page to a game: **1**.
-- Time to the first move once there are players: **< 10 s**.
-- A think-aloud test with ≥ 3 Western Go players doing the same tasks on OGS and LiGo, recorded in
-  `docs/research/`.
+**How we'll know it improves on OGS's lobby:**
+- One click from landing page to a game.
+- Under 10 s to the first move once there are players.
+- A think-aloud test where at least 3 Western Go players do the same tasks on both, written up in
+  `docs/research/` so it's useful to OGS whatever happens to LiGo.
 
 ---
 
 ## 5. Roadmap
 
-Every phase ends with a **demo you can click** and has explicit acceptance criteria. Sizes are in PRs,
-because your review time is the scarce resource, not Claude's coding time.
+Each phase ends with a **demo you can click**. A phase is made of **units**: one issue becomes one PR,
+and you approve each unit before it starts (§7). Sizes are counted in units, because your review time
+is the scarce resource.
 
-| Phase | Deliverable | Demo / acceptance | Size |
+| Phase | Deliverable | Demo / acceptance | Units |
 |---|---|---|---|
-| **0. Claude setup + baseline** | Everything in [`CLAUDE_SETUP.md`](CLAUDE_SETUP.md); unmodified lila builds and runs locally and in the cloud; CI green | A dry-run PR (rebrand to LiGo) goes through `/next` → `/ship` → merge in < 15 min of your time | 8–12 PRs |
-| **1. Rules foundation** | `docs/rules` spec (JP + CN), ≥ 150 fixtures, `scalago` + `goops` (board, ko/superko, scoring given dead stones, handicap, SGF, clocks), parity CI, nightly KataGo differential test | Both engines pass every fixture; 1,000 random differential games agree with KataGo; SGF round-trips losslessly | 10–14 PRs |
-| **2. Board component** | `goground` + playground page | You play both colours on the playground on your phone (tap + confirm) and desktop; visual snapshots pass | 5–8 PRs |
-| **3. Fork & de-chess** | Modules removed, scalago swapped in, core types migrated, round UI uses goground, lila-ws adapted | Two browsers on localhost play a casual 9×9 Fischer game to resignation; no chess code left in the running paths | 15–25 PRs |
-| **4. Go-native game** | Byo-yomi, komi, rules choice, pass, **scoring phase + katago-worker** (OpenCL/CPU), scoring timeouts, results, SGF export | A 19×19 Japanese byo-yomi game ends in an AI-proposed score that both players accept; a disputed game resumes and ends correctly; the SGF opens in Sabaki; autoscore agrees ≥ 97% with human results on a benchmark of finished games | 8–12 PRs |
-| **5. Accounts & ratings** | Signup with self-declared rank, Glicko-2 shown as kyu/dan, provisional "?", handicap-adjusted rating, profile + rank graph, game history, guest casual play | Two accounts (5k and 1d) play a rated auto-handicap game and both ranks move sensibly; a guest plays a casual game | 6–9 PRs |
-| **6. The lobby** | Quick-pair grid, pools with auto-handicap, custom game modal, open-challenges table, direct challenge, waiting UX, mobile layout | Landing → game in one click; the think-aloud comparison with OGS is done and its findings are fixed | 6–10 PRs |
-| **7. Correspondence, SGF, analysis** | Correspondence games + notifications, analysis board with variations, SGF import/export | Import a pro-game SGF, explore and export variations; finish a correspondence game across days | 5–8 PRs |
-| **8. Tsumego** | Puzzle sourcing policy, `tools/puzzles` pipeline, trainer UI, puzzle rating | ≥ 200 puzzles with recorded provenance, playable on a phone | 5–8 PRs |
-| **9. PWA & POC polish** | Installable PWA, touch settings, sounds, themes, accessibility basics, performance budget, onboarding copy, credits page | A POC demo to a Go club (e.g. via a temporary tunnel), with feedback captured | 4–6 PRs |
+| **0. Claude setup + baseline** | Everything in [`CLAUDE_SETUP.md`](CLAUDE_SETUP.md), including `logs/`; unmodified lila builds and runs locally and in the cloud; CI green | A dry-run unit (rebrand to LiGo) goes through `/next` → `/ship` → merge, logged, in < 15 min of your time | 8–12 |
+| **1. Build-vs-buy + rules integration** | A build-vs-buy memo for each §3.1 component (**you approve each**); the rules spec (**you approve**); conformance fixtures (existing suites first); `go-rules` adapter over strategygames; goban-engine in a test harness; parity CI; nightly KataGo differential test | Both engines pass every fixture; 1,000 random differential games agree with KataGo; SGF round-trips | 6–10 |
+| **2. Board integration** | `libs/board` adapter around the goban renderer, playground page, touch-confirm setting | You play both colours in the playground on your phone and desktop; visual snapshots pass | 3–5 |
+| **3. Fork & de-chess** | Removed modules gone, go-rules swapped in, core types migrated, round UI uses `libs/board`, lila-ws adapted | Two browsers play a casual 9×9 Fischer game to resignation | 15–25 |
+| **4. Go-native game** | Byo-yomi, komi, rules choice, pass, **scoring phase + `services/scoring`**, timeouts, results, SGF export | A 19×19 Japanese byo-yomi game ends with an accepted AI proposal; a disputed game resumes; the SGF opens in Sabaki; autoscore agrees ≥ 97% on a benchmark of finished games | 6–10 |
+| **5. Accounts & ratings** | Signup with self-declared rank, kyu/dan display, provisional "?", handicap-adjusted rating, profile + rank graph, guest casual play | 5k and 1d accounts play a rated handicap game and both ranks move sensibly | 5–8 |
+| **6. The lobby** | Quick-pair grid, pools with auto-handicap, custom game, open challenges, direct challenge, waiting UX, mobile layout | One click to a game; the player test is done and its findings are addressed | 6–10 |
+| **7. Correspondence, SGF, analysis** | Correspondence games, analysis board with variations, SGF import/export | Import a pro-game SGF, explore and export it; finish a correspondence game | 4–7 |
+| **8. Tsumego** | Content sourcing (build-vs-buy + licence check, **you approve**), import pipeline, trainer, puzzle rating | ≥ 200 puzzles with recorded provenance, playable on a phone | 5–8 |
+| **9. PWA, polish & handoff** | Installable PWA, sounds, themes, accessibility basics, performance budget, credits page; a **handoff package** (write-up, demo video, lobby research, logs digest, how to run it) | A demo to a Go club and, if you choose, to the OGS developers | 4–6 |
 
-**Total: roughly 70–110 PRs.** Reviewing 2–3 PRs a week in under 5 hours, the POC is realistically
-**8–14 months** away. Phase 3 is the long pole. The ranges are rough estimates, not commitments; we'll
-re-estimate at the end of each phase in `STATUS.md`.
+**Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
+away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
+`STATUS.md`.
 
-**After the POC, in likely order of value:** public hosting (a small VPS + your home GPU worker) and UK
-compliance (§8) → KataGo post-game review → bots at graded strengths (human-imitation network) + a bot
-API → tournaments → studies/reviews → social layer with kid mode → 13×13 → more rulesets and clocks →
-i18n via Crowdin → native app.
+**After the POC (all your decisions):** hand it to OGS; keep improving it as a demo; or pick up the
+later features in §1.3.
 
 ---
 
 ## 6. Quality strategy
 
+**Autonomy never lowers the bar.** Every unit is tested and reviewed by Claude as thoroughly as
+possible. What Claude can't verify goes to you, explicitly listed in the PR (§7).
+
 | Layer | What | Gate |
 |---|---|---|
-| Rules | Conformance fixtures, property tests (ScalaCheck / fast-check: stones conserved, no zero-liberty groups after a legal move, superko invariants, SGF round-trip), nightly differential test vs KataGo, SGF corpus replay | CI required; fixtures editable only by `go-rules-expert` (hook-enforced) |
-| Scoring | A benchmark of finished positions with agreed results; autoscore accuracy tracked over time | ≥ 97% agreement before Phase 4 closes |
-| Clocks | Deterministic-time tests: byo-yomi period use, resets, lag compensation, timeouts inside byo-yomi | CI required |
-| Server | Module unit tests; Mongo/Redis integration tests via docker compose | CI required |
-| UI | vitest units; goground visual snapshots; Playwright two-player E2E on desktop and phone viewports | CI (E2E on labelled PRs + nightly) |
-| Review | `reviewer` subagent on every PR; built-in `/security-review` for auth, session and websocket changes; `/code-review` as a second opinion on large PRs | Findings resolved before the PR opens |
-| Human check | A plain-English walkthrough and a ≤ 5-minute "how to test" in every PR | You, before merging |
-| Performance (Phase 6+) | A scripted load of ~200 concurrent bot games against local lila-ws | A regression budget recorded in `STATUS.md` |
+| Rules | Conformance fixtures, property tests (stones conserved, no zero-liberty groups after legal moves, superko invariants, SGF round-trip), nightly KataGo differential test | CI required; only `go-rules-expert` may edit fixtures (hook-enforced) |
+| Scoring | Benchmark of finished positions with agreed results | ≥ 97% agreement before Phase 4 closes |
+| Clocks | Deterministic-time tests (byo-yomi periods, resets, lag compensation, timeouts inside byo-yomi) | CI required |
+| Server | Module tests; Mongo/Redis integration tests | CI required |
+| UI | Unit tests; board visual snapshots; Playwright two-player E2E on desktop and phone viewports | CI (E2E on labelled PRs + nightly) |
+| Review | `reviewer` subagent on every unit (including a reuse check and a log check); `/security-review` on auth, session and websocket changes; `/code-review` as a second opinion on large units | Blocking findings fixed before the PR opens |
+| Human check | The PR's "Needs your verification" list (UX feel, real-device touch, Go judgement calls, anything Claude couldn't run) plus a ≤ 5-minute test | You, before merging |
 
 ---
 
-## 7. Your weekly rhythm (< 5 h)
+## 7. Working agreement
 
-- **Session A (~1 h, e.g. at the weekend):**
-  - Run `/status` to catch up, then `/next` to approve 2–3 issues.
-  - Start `/ship` on each: the heavy full-stack one in Remote Control on your box, the self-contained
-    ones in cloud sessions in parallel.
-- **While Claude works:** nothing. Notifications reach your phone; answer questions only when asked.
-- **Session B (~1–2 h, midweek):** for each PR, read the walkthrough, look at the screenshots, run the
-  5-minute test, then merge or leave comments for Claude to address.
-- **Monthly (~30 min):** read the `upstream-scout` report, decide which upstream fixes to port, and
-  re-check this plan.
+**Claude's latitude.** Within an approved unit, Claude chooses the implementation, writes the tests,
+runs the tools, fixes what it finds, and opens the PR — without asking permission for routine steps.
+
+**You're in the loop at the unit level:**
+1. **Before a unit starts,** `/next` presents it for your approval: goal, acceptance criteria, test
+   plan, reuse plan (what existing software it uses), and the decisions it expects to need.
+   Nothing starts without your OK.
+2. **During a unit,** Claude stops and asks you (not guesses) when it hits a major decision or is
+   unsure.
+3. **After a unit,** the PR shows:
+   - what was done and why;
+   - a plain-English walkthrough;
+   - what Claude verified, with real output;
+   - **what needs your verification**;
+   - decisions made or needed;
+   - the log entry.
+
+   You merge or send it back.
+
+**Major decisions: always consult you:**
+- Build-vs-buy choices; adding, removing or swapping any dependency.
+- Architecture, data model / Mongo schema, websocket protocol.
+- Go rules interpretations; rating, rank and handicap maths.
+- UX flows and visual direction.
+- Licensing and content provenance.
+- Deviating from this plan, or changing scope or order.
+- Removing functionality beyond what the plan lists.
+- Anything irreversible or outward-facing (publishing, contacting anyone including OGS, other repos).
+- Security-sensitive choices.
+
+**"Unsure" means stop and ask.** Examples:
+- The requirement is ambiguous.
+- Two reasonable approaches have different trade-offs.
+- A fix would require changing a test or fixture.
+- The rules interpretation is uncertain.
+- Tests can't show whether behaviour is right.
+- Something surprising happened.
+- Claude is about to rely on a fact it hasn't verified.
+
+When Claude stops, it sends you a notification. While waiting for your answer, it only does work that
+doesn't depend on it.
+
+**Rigour is not traded for speed.** Claude runs every relevant gate itself, never reports "should work",
+and never hides a failing or skipped check. When its own verification can't settle a question (how the
+board feels on your phone, whether a scoring proposal is sensible Go, performance on your hardware),
+it says so and hands that check to you.
+
+**Weekly rhythm (< 5 h):**
+- **Session A (~1 h):** `/status`; approve 2–3 units via `/next`; start `/ship` on them (Remote
+  Control for full-stack work, cloud sessions for self-contained work).
+- **Between sessions:** answer Claude's questions when notified.
+- **Session B (~1–2 h):** review each PR's walkthrough, screenshots and "needs your verification"
+  list; run the 5-minute test; merge or comment.
+- **Monthly (~30 min):** the upstream-scout report, plus a skim of each log's Lessons section, then
+  adjust the plan.
 
 ---
 
-## 8. Licensing, brand and legal
+## 8. Licensing, handoff and legal
 
-- **Licence:** AGPL-3.0-or-later for the fork, keeping lichess's copyright notices.
-  `COPYING.md` lists third-party code, including Apache-2.0 NOTICE text for anything derived from
-  `goban` and MIT notices for strategygames, scalashogi, scalachess and goscorer. Once LiGo is public,
-  a footer links to the source, as the AGPL requires.
-- **Brand:** remove lichess's logo and lichess-only or CC BY-NC-SA assets. Credit lichess, lishogi,
-  PlayStrategy, OGS and KataGo prominently on a credits page.
-- **KataGo networks:** confirm the kata1 network licence before public use (the code is MIT).
-- **Tsumego provenance:** every puzzle records its source.
-  - Allowed: (a) positions generated by KataGo from game records whose licence we've verified
-    (candidates: KataGo's published self-play and rating games, and later LiGo's own games);
-    (b) our own transcriptions of public-domain classical collections (Gokyo Shumyo, Igo Hatsuyoron,
-    Xuanxuan Qijing), made from original or public-domain sources rather than modern datasets,
-    because the UK/EU database right can protect those datasets.
-  - Never: problems from modern books.
-- **UK Online Safety Act and UK GDPR:** not triggered while LiGo runs locally. **Before any public
-  launch:**
+- **Licence:**
+  - lila-derived code is AGPL-3.0-or-later, keeping lichess's notices.
+  - `COPYING.md` lists third-party code (Apache-2.0 NOTICE for goban, MIT notices for strategygames,
+    scalashogi, scalachess and goscorer).
+- **Handing the work to OGS:**
+  - The OGS frontend is AGPL-3.0 and `goban` is Apache-2.0, so AGPL-licensed LiGo code is
+    licence-compatible with OGS's frontend. Anything OGS adopts from the lila-derived server would
+    need to stay AGPL.
+  - The most portable parts are:
+    - UX designs and player research;
+    - the `libs/board` adapter;
+    - rules fixtures;
+    - the logs and lessons;
+    - improvements upstreamed to `goban`.
+  - **Decision for you, deferred:** license LiGo's *own new* code that isn't derived from lila
+    (the adapters, fixtures, docs) under a permissive licence (MIT/Apache-2.0) to make donation
+    easier.
+  - **Contacting OGS is your call and yours to make**; Claude never does it.
+- **Brand:** remove lichess's logo and lichess-only / CC BY-NC-SA assets; credit lichess, lishogi,
+  PlayStrategy, OGS and KataGo on a credits page.
+- **KataGo networks:** confirm the network licence before any public use.
+- **Tsumego provenance:** every puzzle records its source; no problems from modern books.
+- **UK Online Safety Act and GDPR:** not triggered while LiGo runs locally. If you ever run a *public*
+  demo, you'd first need:
   - an illegal-content risk assessment and a children's-access assessment;
-  - ICO registration, a privacy notice and a subject-access-request process;
-  - the Children's Code review;
-  - re-enabling lila's kid mode, report, mod and shutup modules, with DMs off by default for minors
-    when a social layer arrives. Go has many young players, so this matters.
-- **Name:** LiGo shares its name with the LIGO observatory. Pick a distinctive domain and page titles
-  ("LiGo — play Go online") when going public.
+  - ICO registration and a privacy notice;
+  - lila's kid mode and report/mod modules re-enabled.
 
 ---
 
@@ -421,16 +469,17 @@ i18n via Crowdin → native app.
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| lila is huge and you can't review Scala in depth | High | Gates (§6), small PRs, plain-English walkthroughs, `/explain`, and a reviewer agent that learns recurring mistakes |
-| Removing chess (Phase 3) drags on | High | The "quarantine then replace" order: every PR compiles, deletions are split from logic changes, and the demo target is deliberately small (9×9 casual Fischer) |
-| Your time dips below 5 h/week | Medium | Phases are independent demos; state lives in `STATUS.md`, so restarting costs minutes; Claude can batch work into fewer, larger-but-mechanical PRs |
-| Cloud VM (16 GB) can't compile lila reliably | Medium | Run Mongo with a small cache, compile module subsets, and route full-stack work to Remote Control on your 32 GB box |
-| KataGo on the AMD GPU (OpenCL) is flaky | Low–Med | The CPU Eigen fallback always works for scoring; the queue boundary allows a remote worker later |
-| Autoscore marks stones wrongly | Medium | Players confirm; toggling is live; resume play; accuracy benchmark as a gate; conservative thresholds (the OGS dual-map method) |
-| Scoring-phase griefing or stalling | Medium | A scoring timeout with auto-accept, abandonment rules, and PlayStrategy's bug classes as tests |
-| Missing upstream security fixes | Medium | The monthly `upstream-scout` report, with security fixes ported first |
-| Licence contamination (tsumego, assets) | Low | The provenance rule, a licence check in CI (`meta.yml`), and a list of assets to avoid |
-| Claude usage limits (Max 5x) slow things down | Medium | Sonnet for bulk work, Opus only for judgement; review agent usage after two weeks |
+| lila is huge and you can't review Scala in depth | High | Gates (§6), unit-sized work, plain-English walkthroughs, `/explain`, a reviewer that learns, and the per-area logs |
+| Reused components don't fit lila's architecture (e.g. goban renderer vs snabbdom, strategygames' generic abstractions) | Medium | A Phase 1 spike for each component before committing; a fallback ladder (§2.2); your approval per memo |
+| Removing chess (Phase 3) drags on | High | Quarantine-then-replace order; each unit compiles; a small demo target |
+| Your time dips | Medium | Independent phases; `STATUS.md` + logs make restarts cheap; Claude only queues units you've approved |
+| Too many questions slow progress | Medium | Questions are batched per unit where possible; Claude keeps working on anything that doesn't depend on the answer; the major-decision list keeps routine choices off your plate |
+| Cloud VM (16 GB) can't compile lila | Medium | Per-module compiles in the cloud; full-stack work via Remote Control on your 32 GB box |
+| KataGo on AMD OpenCL is flaky | Low–Med | CPU fallback; the goban estimator fallback |
+| Autoscore mistakes | Medium | Players confirm or toggle; resume play; accuracy benchmark gate |
+| Logs grow until nobody reads them | Medium | One file per area, a curated Lessons section on top, archiving (`CLAUDE_SETUP.md` §9) |
+| Missing upstream security fixes | Medium | Monthly `upstream-scout` report |
+| Licence contamination | Low | The reuse-scout licence check, a CI licence check, provenance records |
 
 ---
 
@@ -438,22 +487,21 @@ i18n via Crowdin → native app.
 
 | Decision | Trigger |
 |---|---|
-| Japanese ko/cycle handling beyond superko | Phase 1 rules spec (the `go-rules-expert` proposes, you approve) |
-| 9×9 stone value, and whether 9×9 counts less in the overall rating | Phase 5, then revisited after ~1,000 rated games |
-| Final lobby presets | Phase 6 user test |
-| Hosting provider, domain, public launch | POC demo complete |
-| Funding model | After the POC |
-| Publishing `scalago` / `goground` as standalone packages | After Phase 3 |
-| In-browser KataGo (WebGPU/ONNX) for free local analysis | When post-game review is scheduled |
+| Each component's build-vs-buy choice (§3.1) | Phase 1 memos |
+| Rules spec, including superko in Japanese rules | Phase 1 |
+| Rank curve and 9×9 stone value | Phase 5 |
+| Lobby presets | Phase 6 player test |
+| Tsumego content sources | Phase 8 memo |
+| Permissive licence for LiGo's own non-lila code | Before Phase 2 (affects `libs/board`) |
+| Offering the work to OGS, running a public demo, or neither | POC complete |
 
 ---
 
 ## 11. Immediate next steps
 
-1. **You:** read this plan and `CLAUDE_SETUP.md`, and comment on anything you'd change, especially
-   the proposed defaults in §3.3 (superko everywhere), §3.9 (OGS rank curve) and §4 (lobby presets).
-2. **Claude, once you approve:** implement Phase 0 in the order given in `CLAUDE_SETUP.md` §13,
-   ending with the dry-run PR.
-3. **You, in parallel:** create the claude.ai cloud environment (the setup script comes from
-   `dev/cloud-setup.sh` during Phase 0), install Claude Code on your Linux box, and enable Remote
-   Control.
+1. **You:** read this plan and `CLAUDE_SETUP.md` and comment, especially on the proposed defaults
+   (§3.3 superko, §3.7 rank curve, §4 presets) and the working agreement (§7).
+2. **Claude, after your approval:** Phase 0, in the order given in `CLAUDE_SETUP.md` §14. Each step is
+   a unit you approve, ending with the dry-run unit.
+3. **You, in parallel:** create the claude.ai cloud environment, install Claude Code on your Linux box,
+   and enable Remote Control.

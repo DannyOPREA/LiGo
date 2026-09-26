@@ -1,35 +1,51 @@
 # LiGo — Claude Code setup (Phase 0)
 
-> Companion to [`PLAN.md`](PLAN.md). Everything in this document is built and verified
-> **before** any Go feature work starts. Facts about Claude Code were checked against
-> code.claude.com docs on 2026-09-25; re-verify anything marked *(verify)* while implementing.
+> Companion to [`PLAN.md`](PLAN.md). Everything in this document is built and verified **before** any
+> Go feature work starts. Each numbered step in §14 is a unit you approve.
+> Claude Code facts were checked against code.claude.com docs on 2026-09-25; re-verify anything marked
+> *(verify)* while implementing.
 
 ---
 
 ## 1. Design principles
 
-1. **Everything lives in the repo.** Cloud sessions start from a fresh clone and ignore your
-   `~/.claude/` config, auto-memory is machine-local, and cloud sessions **do not install plugins
-   or start LSP servers**. So every agent, skill, hook, rule and MCP server that matters is committed
-   under `.claude/`, `.mcp.json` and `CLAUDE.md` files. Plugins are strictly local-only extras.
-2. **Gates beat trust.** You are new to Scala and have < 5 h/week, so you cannot be the line-by-line
-   reviewer. Correctness is enforced by machines, in layers:
-   shared rules conformance fixtures → unit/property tests → CI required checks → an independent
-   `reviewer` subagent → a Playwright play-test with screenshots attached to every UI PR →
-   a plain-English "what changed and how to check it" section you can verify in 5 minutes.
-3. **Tests are the spec, and implementers can't edit the spec.** Rules fixtures under
-   `libs/conformance/` may only be changed by the `go-rules-expert` agent (enforced by a hook), so an
-   implementer can never "fix" a failing rules test by changing the expected answer.
-4. **Small context, loaded on demand.** Root `CLAUDE.md` stays under ~150 lines. Detail lives in
-   nested `CLAUDE.md` files (loaded when Claude reads files in that directory), path-scoped
-   `.claude/rules/`, and skills (loaded only when relevant).
-5. **State lives in files, not in heads.** `docs/STATUS.md` (where we are), GitHub Issues (backlog),
-   `docs/decisions/` ADRs (why). Any session, cloud or local, can pick up cold in one minute —
-   essential when you work in short bursts.
-6. **One PR = one reviewable unit.** Aim for ≤ ~400 lines of hand-written change. Mechanical
-   deletions (e.g. removing chess modules) go in their own PRs so they can be skimmed.
-7. **You merge; Claude never does.** Branch protection on `main`, deny rules and a guard hook make
-   this physically impossible to get wrong.
+1. **The working agreement is built into the tooling** ([PLAN §7](PLAN.md#7-working-agreement)):
+   - Claude has wide latitude inside an approved unit.
+   - You approve every unit before it starts and review it after.
+   - You're consulted on every major decision.
+   - Claude **stops and asks when unsure**.
+   - Autonomy never lowers the testing bar.
+
+   It lives in `CLAUDE.md`, in the checkpoints of `/next` and `/ship`, in permission prompts on
+   dependency changes, in the reviewer's checklist and in the PR template, rather than depending on
+   Claude remembering it.
+2. **Reuse before build** ([PLAN §2.2](PLAN.md#22-engineering-reuse-before-build)).
+   - Every agent follows the ladder: use as-is → configure → wrap → vendor minimally → port → build
+     custom.
+   - A custom build beyond small glue needs a build-vs-buy memo from the `reuse-scout` agent, and your
+     approval.
+   - The same applies to this setup itself: we use Claude Code's built-in skills and official plugins
+     where they fit, and write our own only where nothing exists.
+3. **Everything is logged, in the right place.** Every unit adds an entry to the matching `logs/` file:
+   what was done, what worked, what didn't. Logs are split by area and headed by a short curated
+   "Lessons" section, so an agent reads only what's relevant (§9).
+4. **Everything lives in the repo.** Cloud sessions start from a fresh clone, ignore `~/.claude/`,
+   keep no auto-memory across machines, and **don't install plugins or start LSP servers**. So every
+   agent, skill, hook, rule, MCP server and log is committed. Plugins are local-only extras.
+5. **Gates beat trust.** Correctness comes from machines first, then from you for what machines can't
+   judge. The layers:
+   - conformance fixtures;
+   - unit and property tests;
+   - CI;
+   - the independent `reviewer` agent;
+   - Playwright play-tests with screenshots;
+   - an explicit "needs your verification" list.
+6. **Tests are the spec, and implementers can't edit the spec.** Only the `go-rules-expert` agent may
+   change rules fixtures (hook-enforced), and a fixture change is a major decision that needs your
+   approval.
+7. **Small context, loaded on demand.** The root `CLAUDE.md` stays under ~150 lines. Detail lives in
+   nested `CLAUDE.md` files, path-scoped `.claude/rules/`, skills, and the Lessons sections of the logs.
+8. **You merge; Claude never does.** Branch protection, deny rules and a guard hook enforce this.
 
 ---
 
@@ -37,128 +53,131 @@
 
 | Mode | Use it for | Notes |
 |---|---|---|
-| **Remote Control on your Linux box** (primary) — `claude --remote-control "LiGo"` inside `tmux` | Full-stack work: lila + lila-ws + Mongo + Redis + KataGo on your AMD GPU, E2E play-tests, anything touching several services | You steer from the Claude mobile app or claude.ai/code, execution stays on your 32 GB machine. Local plugins (TypeScript LSP, Metals) work here. Best fit for "< 5 h/week, both web + local". |
-| **Cloud sessions** (claude.ai/code, `claude --cloud`) | Parallel, self-contained tasks: rules engines, `goground`, UI components, docs, tests, puzzle pipeline, targeted lila module compiles | VM = 4 vCPU / 16 GB RAM / 30 GB disk, Ubuntu 24.04, JDK 21, Node 20–22, Docker, Redis preinstalled; **no sbt, no MongoDB, no Node 24 (lila's UI needs it), no plugins/LSP** — the setup script adds what's missing. lila says it needs ~12 GB to build (its `.sbtopts` uses `-Xmx8g`), so a full compile fits only with Mongo's cache capped and nothing else heavy running; prefer per-module compiles here. KataGo runs CPU-only. |
-| **Local terminal** | Interactive debugging, manual play-testing in your own browser | Same config as Remote Control. |
+| **Remote Control on your Linux box** (primary): `claude --remote-control "LiGo"` inside `tmux` | Full-stack work: lila + lila-ws + Mongo + Redis + KataGo on your AMD GPU, E2E play-tests | You steer from the Claude app or claude.ai/code; execution stays on your 32 GB machine; local plugins work. Questions and notifications reach your phone. |
+| **Cloud sessions** (claude.ai/code, `claude --cloud`) | Parallel, self-contained units: rules integration, board adapter, UI components, docs, tests, puzzle scripts, per-module lila compiles | VM: 4 vCPU / 16 GB / 30 GB, Ubuntu 24.04, JDK 21, Node 20–22, Docker, Redis. **No sbt, MongoDB, Node 24, plugins or LSP**; the setup script adds what's missing. lila needs ~12 GB to build (`.sbtopts` `-Xmx8g`), so prefer per-module compiles here. KataGo runs on CPU. |
+| **Local terminal** | Interactive debugging, manual play-testing | Same config as Remote Control. |
 
 ---
 
 ## 3. What gets created (file tree)
 
 ```
-CLAUDE.md                          # root: mission, map, commands, workflow, gates (<150 lines)
+CLAUDE.md                          # root: mission, working agreement, reuse-first, logging, map, commands (<150 lines)
 .mcp.json                          # Playwright, MongoDB (read-only), context7
 .claude/
-  settings.json                    # permissions, hooks, env, local-marketplace declaration
-  settings.local.json.example      # what you copy to settings.local.json on your box
+  settings.json                    # permissions (incl. "ask" on dependency changes), hooks, status line
+  settings.local.json.example      # per-machine: plugins, local overrides
   rules/                           # path-scoped rules (frontmatter `paths:`)
-    scala.md  typescript.md  styles.md  tests.md  mongo.md  i18n.md  security.md
+    scala.md  typescript.md  styles.md  tests.md  mongo.md  i18n.md  security.md  dependencies.md
   agents/
-    go-rules-expert.md  lila-backend.md  lila-frontend.md  test-engineer.md
-    reviewer.md  katago-engineer.md  upstream-scout.md
+    reuse-scout.md  go-rules-expert.md  lila-backend.md  lila-frontend.md
+    test-engineer.md  reviewer.md  scoring-engineer.md  upstream-scout.md
   skills/
-    next/  ship/  verify/  play-test/  explain/  status/  adr/  upstream-port/  katago-setup/   # workflows
-    lila-backend/  lila-ui/  go-rules/  sgf/                                             # knowledge
+    next/ ship/ verify/ build-vs-buy/ ask/ log/ play-test/ explain/ status/ adr/ upstream-port/ katago-setup/
+    lila-backend/ lila-ui/ go-rules/ sgf/
   hooks/
     session-start.sh  guard-bash.sh  guard-paths.sh  format.sh
-    goops-related-tests.sh  stop-gate.sh  notify.sh  statusline.sh
-    tests/                         # bats tests for every hook (hooks are code too)
-  agent-memory/                    # committed: reviewer / rules-expert learnings (memory: project)
-  state/                           # gitignored: verify stamps, caches
+    conformance-related-tests.sh  stop-gate.sh  notify.sh  statusline.sh
+    tests/                         # bats tests for every hook
+  agent-memory/                    # committed: reviewer / rules-expert / reuse-scout learnings
+  state/                           # gitignored: verify stamps, session markers
 tools/claude-plugins/              # repo-local marketplace for local-only plugins
   .claude-plugin/marketplace.json
-  ligo-metals/                     # Scala LSP (Metals) wrapper: .claude-plugin/plugin.json + .lsp.json
+  ligo-metals/                     # Scala LSP (Metals): .claude-plugin/plugin.json + .lsp.json
 dev/
-  ligo                             # one CLI for humans and Claude: up/down/compile/test/e2e/doctor
-  docker-compose.yml               # mongo, redis (+ optional katago-worker)
+  ligo                             # one CLI: up/down/compile/test/e2e/doctor (wraps lila-docker)
   cloud-setup.sh                   # versioned copy of the cloud environment setup script
-  doctor.sh                        # checks toolchain, services, KataGo, disk, RAM
+  doctor.sh
+logs/                              # §9: one file per area + README index + archive/
 docs/
   PLAN.md  CLAUDE_SETUP.md  STATUS.md  UPSTREAM.md  glossary.md
-  decisions/0001-*.md …            # ADRs
-  rules/                           # the authoritative LiGo rules spec (JP + CN), human-readable
+  decisions/                       # ADRs (incl. every approved build-vs-buy choice)
+  build-vs-buy/                    # reuse-scout memos
+  rules/                           # the approved LiGo rules spec
+  research/                        # player tests, benchmarks
 lila/CLAUDE.md  lila/ui/CLAUDE.md  lila-ws/CLAUDE.md
-libs/scalago/CLAUDE.md  libs/goops/CLAUDE.md  libs/goground/CLAUDE.md
-services/katago-worker/CLAUDE.md  tools/puzzles/CLAUDE.md
+libs/go-rules/CLAUDE.md  libs/board/CLAUDE.md  libs/conformance/CLAUDE.md
+services/scoring/CLAUDE.md  tools/puzzles/CLAUDE.md
 .github/
-  pull_request_template.md         # What/Why · Plain-English walkthrough · How to test (≤5 min) · Screenshots · Risks
-  workflows/                       # §12
+  pull_request_template.md
+  workflows/                       # §13
 ```
 
 ---
 
 ## 4. CLAUDE.md hierarchy
 
-### 4.1 Root `CLAUDE.md` (draft outline, keep < 150 lines)
+### 4.1 Root `CLAUDE.md` (draft, keep < 150 lines)
 
 ```markdown
-# LiGo — a lichess-style Go server (hard fork of lichess-org/lila)
+# LiGo — lichess-style Go server (non-commercial proof of concept)
 
-Owner: solo product owner, new to Scala — explain Scala/FP choices in plain English in PR descriptions.
-Current phase and next steps: @docs/STATUS.md
-Plan: `docs/PLAN.md` · Claude setup: `docs/CLAUDE_SETUP.md` · Go glossary: `docs/glossary.md`
+Hard fork of lichess-org/lila. Not a business, not competing with OGS; the work may be donated to OGS.
+Owner: solo product owner, new to Scala, < 5 h/week — explain Scala/FP choices in plain English in PRs.
+Now / next / blockers: @docs/STATUS.md
+Plan: `docs/PLAN.md` · Setup: `docs/CLAUDE_SETUP.md` · Glossary: `docs/glossary.md` · Logs: `logs/README.md`
+
+## Working agreement (non-negotiable)
+- Work only on units the owner approved (via /next). Deliver each unit as one PR via /ship.
+- Consult the owner on EVERY major decision (list: docs/PLAN.md §7): build-vs-buy, any dependency
+  change, architecture/schema/protocol, Go rules or rating maths, UX direction, licensing,
+  deviating from the plan, removals beyond plan, anything irreversible or outward-facing, security.
+- If unsure, STOP and ask (use the /ask skill). Never guess, never paper over. Keep doing only
+  work that doesn't depend on the answer.
+- Autonomy never lowers rigour: test and review everything you can; run /verify; paste real
+  output; never say "should work". List what you could NOT verify under "Needs your verification".
+- Never push to main, force-push, or merge.
+
+## Reuse before build
+Ladder: use as-is → configure → wrap → vendor minimally → port → custom (glue only).
+Before writing any non-trivial component, run /build-vs-buy and wait for the owner's approval.
+Prefer lila's existing features, OGS goban, strategygames, KataGo, goscorer (see PLAN §3.1).
+
+## Logging
+Every unit appends an entry to the matching logs/<area>.md (map in logs/README.md) via /log:
+what was done, what worked, what didn't, lessons, decisions. Read only the Lessons section
++ latest entries of the logs relevant to your task — never whole logs, never unrelated logs.
 
 ## Repo map
-- lila/            app server (Scala 3, Play, MongoDB) + lila/ui (TypeScript, snabbdom, SCSS)
-- lila-ws/         websocket server (Scala 3)
-- libs/scalago     authoritative Go rules, SGF, scoring (Scala 3)
-- libs/goops       client Go rules + SGF (TypeScript) — must agree with scalago
-- libs/goground    board UI library (TypeScript)
-- libs/conformance shared rules fixtures (JSON) consumed by BOTH engines
-- services/katago-worker  KataGo bridge for dead-stone/score proposals
-- tools/puzzles    tsumego import + generation pipeline
-- dev/ligo         the ONLY way to build/run/test — prefer it over raw commands
+lila/ (app + ui/) · lila-ws/ · libs/go-rules (server rules adapter) · libs/board (goban adapter)
+libs/conformance (fixtures for BOTH engines) · services/scoring (KataGo + goban autoscore + goscorer)
+tools/puzzles · dev/ligo (the only way to build/run/test)
 
 ## Commands
 ./dev/ligo up | down | compile [module] | test [path] | e2e [spec] | doctor
 
-## Non-negotiables
-- Never push to main, never force-push, never merge. Work on a branch; open a PR.
-- Run /verify before claiming anything works. Paste real output, never "should work".
-- Rules behaviour is defined by libs/conformance fixtures + docs/rules. If code and
-  fixture disagree, the code is wrong — escalate to the go-rules-expert agent.
-- No new chess-isms: board size, rules, komi, handicap and clocks come from the game, never constants.
-- Every PR description has: What/Why · Plain-English walkthrough · How to test (≤5 min) · Screenshots (UI) · Risks.
-- Update docs/STATUS.md at the end of a session (/status).
-
 ## Domain in one breath
-Moves are intersections or pass; captures by liberties; ko/superko per ruleset;
-game ends on two consecutive passes → scoring phase (KataGo proposes dead stones,
-both players accept or resume). Rulesets: Japanese (territory) and Chinese (area).
-Clocks: byo-yomi and Fischer. Ratings: Glicko-2 displayed as kyu/dan; one overall pool.
+Moves: intersection or pass. Two passes → scoring phase (KataGo proposes dead stones; both players
+accept, adjust or resume). Rulesets: Japanese, Chinese. Clocks: byo-yomi, Fischer, correspondence.
+Ratings: Glicko-2 shown as kyu/dan, one pool; rated auto-handicap. Fixtures + docs/rules define truth.
 ```
 
 ### 4.2 Nested `CLAUDE.md` files (loaded on demand)
 
 | File | Contents |
 |---|---|
-| `lila/CLAUDE.md` | lila architecture primer (modules + `Env` wiring, `Fu`/`Funit`, BSON handlers, routes, scalatags views, i18n keys), which chess modules are removed / quarantined / pending, compile tips (`SBT_OPTS`, compiling one module) |
-| `lila/ui/CLAUDE.md` | ui build, package layout, snabbdom patterns, SCSS themes/variables, how `goground` is wired into `ui/round` and `ui/analyse`, websocket client |
-| `lila-ws/CLAUDE.md` | message protocol, where round/lobby messages flow, load considerations |
-| `libs/scalago/CLAUDE.md`, `libs/goops/CLAUDE.md` | "conformance first" workflow, API shape, performance notes (bitboards/union-find), SGF |
-| `libs/goground/CLAUDE.md` | chessground-style API (config/state/events/redraw), rendering model, touch rules |
-| `services/katago-worker/CLAUDE.md` | TypeScript/Node worker: KataGo analysis-engine JSON protocol, the ported OGS autoscore + goscorer, OpenCL vs CPU configs, Redis queue protocol, accuracy benchmark |
+| `lila/CLAUDE.md` | lila architecture primer (modules + `Env` wiring, `Fu`/`Funit`, BSON, routes, scalatags, i18n); which modules are removed, dormant or adapted; compile tips; relevant logs: `backend.md`, `upstream-fork.md` |
+| `lila/ui/CLAUDE.md` | ui build, packages, snabbdom patterns, SCSS themes, how `libs/board` is wired into round/analyse; relevant logs: `frontend.md`, `lobby.md` |
+| `lila-ws/CLAUDE.md` | message protocol, round/lobby/scoring message flow |
+| `libs/go-rules/CLAUDE.md` | "we adapt strategygames, we don't rewrite it"; how to pull upstream strategygames fixes; relevant log: `rules-engine.md` |
+| `libs/board/CLAUDE.md` | "thin adapter over OGS goban; upstream improvements to goban rather than patching locally"; relevant log: `board-ui.md` |
+| `libs/conformance/CLAUDE.md` | fixture format; where each fixture came from (existing suites first); only `go-rules-expert` edits |
+| `services/scoring/CLAUDE.md` | KataGo analysis-engine protocol, goban autoscore + goscorer usage, OpenCL/CPU configs, Redis protocol, benchmark; relevant log: `scoring.md` |
 
-### 4.3 Path-scoped rules (`.claude/rules/*.md`)
+### 4.3 Path-scoped rules (`.claude/rules/*.md`, with `paths:` frontmatter)
 
-Each file has `paths:` frontmatter so it only loads when Claude touches matching files. Example:
-
-```markdown
----
-paths:
-  - "**/*.scala"
----
-# Scala rules
-- Scala 3 syntax consistent with surrounding lila code (indentation-based where lila uses it).
-- No `null`, no `var` in domain code, no blocking in request paths; use Fu/Funit like lila.
-- New Mongo fields need a BSON handler, a default for old documents, and a note in docs/STATUS.md.
-- Explain any non-obvious Scala feature (givens, opaque types, extension methods) in the PR walkthrough.
-```
-
-Planned rule files: `scala.md`, `typescript.md` (strict TS, no `any`, snabbdom idioms), `styles.md`
-(SCSS variables/themes, mobile-first, touch targets ≥ 44 px), `tests.md` (test naming, fixtures,
-no sleeps in E2E), `mongo.md` (indexes, migrations), `i18n.md` (English source strings via i18n keys,
-never hard-coded), `security.md` (CSRF, auth checks, rate limits on new endpoints, no secrets in logs).
+- `scala.md`: follow surrounding lila idioms; no `null` or blocking; explain non-obvious Scala in the
+  PR walkthrough.
+- `typescript.md`: strict TS, snabbdom idioms, no reimplementing what goban provides.
+- `styles.md`: lila SCSS variables and themes, mobile-first, 44 px touch targets.
+- `tests.md`: naming, fixtures, no sleeps in E2E, never weaken an assertion to make a test pass
+  (that's an "ask" situation).
+- `mongo.md`: indexes; a schema change is a major decision.
+- `i18n.md`: English source strings via i18n keys.
+- `security.md`: CSRF, auth checks, rate limits, no secrets in logs.
+- `dependencies.md` (paths: `**/package.json`, `**/build.sbt`, `**/project/*.scala`,
+  `pnpm-workspace.yaml`): a dependency change needs an approved build-vs-buy memo, a licence check
+  (AGPL-compatible only), and a `COPYING.md` update.
 
 ---
 
@@ -168,9 +187,9 @@ never hard-coded), `security.md` (CSRF, auth checks, rate limits on new endpoint
 {
   "permissions": {
     "allow": [
-      "Bash(./dev/ligo *)",
-      "Bash(sbt *)", "Bash(pnpm *)", "Bash(npx vitest *)", "Bash(npx playwright *)",
-      "Bash(docker compose *)", "Bash(scalafmt *)", "Bash(oxfmt *)", "Bash(oxlint *)", "Bash(stylelint *)",
+      "Bash(./dev/ligo *)", "Bash(sbt *)", "Bash(pnpm run *)", "Bash(pnpm test*)", "Bash(pnpm install --frozen-lockfile*)",
+      "Bash(npx vitest *)", "Bash(npx playwright *)", "Bash(docker compose *)",
+      "Bash(scalafmt *)", "Bash(oxfmt *)", "Bash(oxlint *)", "Bash(stylelint *)",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
       "Bash(git switch *)", "Bash(git checkout -b *)", "Bash(git add *)", "Bash(git commit *)",
       "Bash(git push -u origin claude/*)", "Bash(git push -u origin feat/*)",
@@ -178,8 +197,12 @@ never hard-coded), `security.md` (CSRF, auth checks, rate limits on new endpoint
       "mcp__playwright", "mcp__mongodb"
     ],
     "ask": [
-      "Bash(git push *)", "Bash(docker system prune*)", "Bash(sbt clean*)",
-      "Edit(./.github/workflows/**)", "Edit(./LICENSE*)", "Edit(./COPYING*)"
+      "Edit(./**/package.json)", "Edit(./**/build.sbt)", "Edit(./**/project/*.scala)",
+      "Edit(./pnpm-workspace.yaml)", "Edit(./**/pnpm-lock.yaml)",
+      "Bash(pnpm add *)", "Bash(pnpm remove *)", "Bash(npm install *)", "Bash(cs install *)",
+      "Edit(./libs/conformance/fixtures/**)", "Edit(./docs/rules/**)",
+      "Edit(./.github/workflows/**)", "Edit(./LICENSE*)", "Edit(./COPYING*)",
+      "Bash(git push *)", "Bash(docker system prune*)", "Bash(sbt clean*)"
     ],
     "deny": [
       "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push origin main*)",
@@ -196,263 +219,292 @@ never hard-coded), `security.md` (CSRF, auth checks, rate limits on new endpoint
 ```
 
 Notes:
-- Permission prefix rules are convenient but not airtight; the `guard-bash.sh` hook (§6) is the real
-  enforcement for dangerous git/Mongo/file operations.
-- `auto` permission mode **cannot** be set from project settings. On your Linux box put
-  `"permissions": {"defaultMode": "auto"}` in `~/.claude/settings.json` (fall back to
-  `acceptEdits` if auto mode isn't available); cloud sessions honour `auto`/`acceptEdits`.
-- Plugins are enabled per machine in `.claude/settings.local.json` (see §10), not here, because
-  cloud sessions ignore them anyway.
-- JVM memory comes from lila's own `.sbtopts` (`-Xmx8g`), not from settings; the cloud setup caps
-  MongoDB's cache instead of shrinking the heap.
-- The optional status line shows: branch · current phase (from `STATUS.md`) · last `/verify` result ·
-  open PR number, so you can see state at a glance on any surface.
+- **The `ask` rules are how the working agreement is enforced.** Dependency manifests, fixtures, the
+  rules spec, CI and licence files always prompt you, even in `auto` mode. That puts you in the loop
+  for those major decisions. Deny rules block in every mode.
+- Permission prefix rules aren't airtight; `guard-bash.sh` and `guard-paths.sh` (§6) are the real
+  enforcement.
+- `auto` mode can't be set from project settings. On your box put `"defaultMode": "auto"` in
+  `~/.claude/settings.json` (or use `acceptEdits`).
+- JVM memory comes from lila's `.sbtopts`. The status line shows branch · phase · unit · last
+  `/verify` result · pending questions.
 
 ---
 
 ## 6. Hooks
 
-All hook scripts live in `.claude/hooks/`, are referenced via `"$CLAUDE_PROJECT_DIR"/.claude/hooks/…`,
-are idempotent, finish fast, and have bats tests in `.claude/hooks/tests/` run in CI.
+Scripts live in `.claude/hooks/`, are idempotent and fast, and have bats tests run in CI.
 
 | Event (matcher) | Script | What it does | Why |
 |---|---|---|---|
-| `SessionStart` (`startup\|resume`) | `session-start.sh` | Detects cloud (`$CLAUDE_CODE_REMOTE=true`) vs local. Ensures sbt/scalafmt exist (installs via coursier if the cloud cache is stale), starts Mongo + Redis with `docker compose up -d` (idempotent), runs `pnpm install --frozen-lockfile` only if the lockfile hash changed. Prints the "Now / Next / Blockers" section of `docs/STATUS.md`, current branch and any open PR for it — stdout becomes Claude's context. | Every session, cloud or local, starts ready and oriented in < 1 min of your time. |
-| `SessionStart` (`compact`) | `session-start.sh --after-compact` | Re-injects STATUS "Now" + the active task's acceptance criteria. | Long sessions don't lose the plot after compaction. |
-| `PreToolUse` (`Bash`) | `guard-bash.sh` | Blocks (exit 2 + reason): force pushes; any push/merge targeting `main`; `git reset --hard` / `git clean -fdx` on `main`; `rm -rf` outside the repo or scratch dirs; dropping any Mongo database except `ligo_test*`; `sbt clean` in cloud sessions (costs ~10 min). | Hard guarantees that don't depend on the model obeying `CLAUDE.md`. |
-| `PreToolUse` (`Edit\|Write`) | `guard-paths.sh` | Reads `agent_type` from the hook input. Denies edits to `libs/conformance/fixtures/**` and `docs/rules/**` unless `agent_type == go-rules-expert`; denies edits to ADRs whose status is `Accepted` (supersede instead); denies edits under `lila/public/compiled/**` and other generated output. | Protects the spec from the implementer; keeps history honest. |
-| `PostToolUse` (`Edit\|Write`) | `format.sh` | Formats only the touched file with the formatter lila already configures: `scalafmt` (native binary, not sbt) for `.scala`, `oxfmt` + `oxlint` for `.ts`, `stylelint --fix` for `.scss`. Exit 2 with the remaining errors on stderr so Claude sees and fixes them. | Formatting and trivial lint never reach review or CI. |
-| `PostToolUse` (`Edit\|Write`, async + `asyncRewake`) | `goops-related-tests.sh` | When a file under `libs/goops/` or `libs/conformance/` changes, runs `vitest related --run` in the background; exit 2 wakes Claude with failures. | Instant rules feedback without blocking edits. |
-| `Stop` | `stop-gate.sh` | If code changed since the last successful `/verify` stamp in `.claude/state/`, blocks the stop once with "run /verify (or state why it isn't needed)". Respects `stop_hook_active` to avoid loops. | Stops "done!" claims without evidence. |
-| `Notification` | `notify.sh` | Local only: `notify-send` (and Remote Control already pushes to your phone). No-op in cloud. | You don't babysit the terminal. |
-
-`settings.json` hooks block (shape):
-
-```json
-"hooks": {
-  "SessionStart": [
-    { "matcher": "startup|resume", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh" }] },
-    { "matcher": "compact", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh --after-compact" }] }
-  ],
-  "PreToolUse": [
-    { "matcher": "Bash", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-bash.sh" }] },
-    { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-paths.sh" }] }
-  ],
-  "PostToolUse": [
-    { "matcher": "Edit|Write", "hooks": [
-      { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format.sh" },
-      { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/goops-related-tests.sh", "async": true, "asyncRewake": true }
-    ]}
-  ],
-  "Stop": [ { "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-gate.sh" }] } ],
-  "Notification": [ { "hooks": [{ "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify.sh" }] } ]
-}
-```
+| `SessionStart` (`startup\|resume`) | `session-start.sh` | Detects cloud vs local. Makes sure sbt/scalafmt and Node 24 exist. Starts Mongo + Redis (lila-docker-based, idempotent). Runs `pnpm install --frozen-lockfile` only if the lockfile changed. Prints: STATUS "Now/Next/Blockers", the current unit and its approval, **open questions awaiting you**, and the **names** of the log files relevant to the current unit (not their contents). | Every session starts ready and oriented, without flooding the context. |
+| `SessionStart` (`compact`) | `session-start.sh --after-compact` | Re-injects the unit's acceptance criteria, open questions and relevant log names. | Nothing is lost after compaction. |
+| `PreToolUse` (`Bash`) | `guard-bash.sh` | Blocks force pushes, any push or merge to `main`, destructive git on `main`, `rm -rf` outside the repo or scratch, dropping Mongo DBs other than `ligo_test*`, `sbt clean` in the cloud. | Hard guarantees. |
+| `PreToolUse` (`Edit\|Write`) | `guard-paths.sh` | Reads `agent_type`. Only `go-rules-expert` may touch `libs/conformance/fixtures/**` and `docs/rules/**` (and still triggers your `ask` prompt). Accepted ADRs are immutable. Generated output is never hand-edited. **Log files are append-only below the Lessons section**, so past entries can't be rewritten. | Protects the spec and the history. |
+| `PostToolUse` (`Edit\|Write`) | `format.sh` | Formats the touched file with lila's own configured tools (scalafmt, oxfmt/oxlint, stylelint); exit 2 with the remaining errors. | Formatting never reaches review. |
+| `PostToolUse` (`Edit\|Write`, async + `asyncRewake`) | `conformance-related-tests.sh` | When rules code, adapters or fixtures change, runs the fast conformance subset in the background and wakes Claude on failure. | Instant rules feedback. |
+| `Stop` | `stop-gate.sh` | Blocks the stop once (respecting `stop_hook_active`) if code changed since the last successful `/verify`, **or if code changed and no entry was appended to a `logs/` file this session**. The message: "run /verify and /log, or state why not". | No "done" without evidence and a log entry. |
+| `Notification` | `notify.sh` | Local desktop notification (Remote Control already pushes to your phone). | Questions reach you fast. |
 
 ---
 
 ## 7. Subagents (`.claude/agents/`)
 
-Model policy for a Max 5x plan: **Opus** for judgement (rules, review), **Sonnet** for bulk
-implementation, **Haiku** for scouting. Adjust after two weeks by looking at usage.
+**Every agent's prompt starts with the same four rules:**
+1. Reuse before build: check the ladder and ask the main session before writing custom code.
+2. If unsure or facing a major decision, **stop and return the question** to the main session with
+   options and a recommendation. Never guess.
+3. Verify your own work with real commands, and report what you could not verify.
+4. Read only the Lessons section and latest entries of the logs named for your area; draft your log
+   entry at the end.
 
-| Agent | Model | Tools | Preloaded skills | Role |
+Model policy (Max 5x): **Opus** for judgement, **Sonnet** for bulk implementation, **Haiku** for
+scouting.
+
+| Agent | Model | Tools | Reads logs | Role |
 |---|---|---|---|---|
-| `go-rules-expert` | opus | Read, Grep, Glob, Edit, Write, Bash | `go-rules`, `sgf` | Owns `docs/rules/` and `libs/conformance/fixtures/` (the only agent allowed to edit them — hook-enforced). Answers any question about ko/superko, seki, scoring (JP/CN), handicap placement, komi, dead-stone edge cases. Designs fixtures before implementation. `memory: project`. |
-| `lila-backend` | sonnet | all | `lila-backend`, `verify` | Implements Scala 3 / Play / Mongo / lila-ws changes following lila idioms. Writes the Scala-novice walkthrough for its changes. |
-| `lila-frontend` | sonnet | all | `lila-ui`, `verify` | TypeScript/snabbdom/SCSS in `lila/ui` and `libs/goground`; mobile-first; takes screenshots via Playwright MCP. |
-| `test-engineer` | sonnet | all | `verify`, `go-rules` | Turns acceptance criteria into failing tests first (munit + ScalaCheck, vitest, Playwright). Never edits fixtures. |
-| `reviewer` | opus | Read, Grep, Glob, Bash (read-only intent) | `verify` | Adversarial review of the branch diff against the issue, `docs/rules`, CLAUDE.md rules, security (auth/CSRF/rate limits), websocket hot-path performance, Mongo indexes, missing tests. Re-runs gates itself; outputs blocking vs optional findings. `memory: project` so it learns recurring mistakes. |
-| `katago-engineer` | sonnet | all | `katago-setup` | KataGo analysis-engine integration, worker protocol, OpenCL (your AMD GPU) and CPU configs, scoring-accuracy benchmark. |
-| `upstream-scout` | haiku | Read, Grep, Glob, Bash, WebFetch | — | Monthly: lists lichess-org/lila and lila-ws commits since the SHAs in `docs/UPSTREAM.md`, classifies them (security fix / bug fix in code we kept / irrelevant chess), drafts a porting issue. Read-only. |
+| `reuse-scout` | sonnet | Read, Grep, Glob, WebSearch, WebFetch, Bash (read-only) | the log of the area in question | For any capability: finds existing software (npm, Maven, GitHub, lila itself, OGS, KataGo ecosystem). Checks licence (AGPL-compatible?), maintenance, size, fit with lila, and handoff value to OGS. Writes `docs/build-vs-buy/<topic>.md` with a recommendation for you to approve. `memory: project`. |
+| `go-rules-expert` | opus | Read, Grep, Glob, Edit, Write, Bash | `rules-engine.md`, `scoring.md` | Owns `docs/rules/` and the fixtures (the only agent allowed to edit them); imports fixtures from existing test suites before writing new ones; answers ko/seki/scoring/handicap/komi questions; any rules *interpretation* goes to you. `memory: project`. |
+| `lila-backend` | sonnet | all | `backend.md`, `upstream-fork.md`, `clocks.md`, `ratings.md` (as relevant) | Scala 3 / Play / Mongo / lila-ws changes in lila idiom; adapts existing lila modules rather than writing new ones. |
+| `lila-frontend` | sonnet | all | `frontend.md`, `board-ui.md`, `lobby.md` | TypeScript/snabbdom/SCSS; wraps goban rather than reimplementing it; takes screenshots via Playwright MCP. |
+| `test-engineer` | sonnet | all | the unit's area log | Writes failing tests first from the acceptance criteria; reuses existing test suites and harnesses; never edits fixtures or weakens assertions. |
+| `reviewer` | opus | Read, Grep, Glob, Bash | the unit's area log + its own memory | Adversarial review: correctness vs rules spec and fixtures, tests, security, performance, schema, leftover chess, i18n, mobile. **Also checks:** reinvented wheels, undisclosed decisions (anything on the major-decision list made without your approval), an honest "needs your verification" list, and a log entry present. Re-runs gates itself. Output: blocking, then optional, then a plain-English summary. `memory: project`. |
+| `scoring-engineer` | sonnet | all | `scoring.md` | KataGo analysis engine, goban autoscore, goscorer, OpenCL/CPU configs, accuracy benchmark. |
+| `upstream-scout` | haiku | Read, Grep, Glob, Bash, WebFetch | `upstream-fork.md` | Monthly: new lila/lila-ws/strategygames/goban commits since pinned versions, classified (security / relevant fix / irrelevant); drafts porting units for your approval. |
 
-Built-in agents cover the rest: **Explore** for codebase searches, **Plan** for design passes.
+Built-in **Explore** and **Plan** agents cover searching and design passes.
 
-**Parallelism.** Cloud sessions are naturally isolated (one VM each). On your box, run parallel work
-with `claude --worktree <name>` so sessions never share a checkout. Implementer agents don't need
-`isolation: worktree` inside `/ship` because it runs them one after another. Agent teams are
-experimental and cost more tokens, so skip them for now and reconsider once Phase 3 is underway.
-
-Example — `.claude/agents/reviewer.md`:
-
-```markdown
----
-name: reviewer
-description: Adversarial pre-PR reviewer. Use before opening any PR and whenever asked to review a diff.
-tools: Read, Grep, Glob, Bash
-model: opus
-memory: project
-skills: [verify]
-color: red
----
-You review the current branch against origin/main for a product owner who cannot read Scala fluently.
-1. Read the linked issue/acceptance criteria and docs/STATUS.md.
-2. Run /verify yourself; never trust claims in the conversation.
-3. Check: correctness vs docs/rules and conformance fixtures; missing/weak tests; security
-   (authz, CSRF, rate limits, input validation); websocket/Mongo performance; migrations;
-   leftover chess assumptions; i18n; mobile layout for UI changes.
-4. Output: BLOCKING findings (with file:line and a concrete failure scenario), then OPTIONAL ones,
-   then a 5-line plain-English summary of what the change does.
-Record recurring mistake patterns in your memory directory.
-```
+**Parallelism:** cloud sessions are isolated VMs; locally use `claude --worktree <name>`. Agent teams
+(experimental, token-heavy) are skipped for now.
 
 ---
 
 ## 8. Skills (`.claude/skills/`)
 
+**Reuse first applies here too.** We use the built-in `/code-review`, `/security-review`, `/simplify`
+and `/fewer-permission-prompts` skills and the official `skill-creator` rather than writing our own
+equivalents. Custom skills exist only for LiGo-specific workflow and knowledge.
+
 ### 8.1 Workflow skills
 
-`/next`, `/ship`, `/status`, `/adr` and `/upstream-port` are user-only (`disable-model-invocation: true`),
-because they start work or change the plan. `/verify`, `/play-test`, `/explain` and `/katago-setup`
-can also be invoked by Claude and preloaded into agents.
+These are user-only (`disable-model-invocation: true`) because they start work or change the plan:
+`/next`, `/ship`, `/build-vs-buy`, `/status`, `/adr`, `/upstream-port`.
+
+These can also be invoked by Claude and preloaded into agents: `/verify`, `/ask`, `/log`,
+`/play-test`, `/explain`, `/katago-setup`.
 
 | Skill | What it does |
 |---|---|
-| `/next` | Reads `docs/STATUS.md`, `docs/PLAN.md` roadmap and open issues; proposes the next PR-sized task with acceptance criteria and a test plan; on your OK creates the GitHub issue. |
-| `/ship [issue]` | The main loop: branch → `test-engineer` writes failing tests → implementer agent → `/verify` → `reviewer` → fix blocking findings → `/play-test` if UI → open PR with the standard description template. Stops and asks only on genuine product decisions. |
-| `/verify` | Picks the gates for the changed paths (rules tests, sbt compile/test for touched modules, ui typecheck/lint/test, hook tests), runs them, writes `.claude/state/last-verify`, prints a pass/fail table with real output. |
-| `/play-test [scenario]` | Brings the stack up, runs a scripted Playwright game between two browser contexts (e.g. 9x9 Japanese byo-yomi, pass-pass, accept KataGo score), saves screenshots/video for the PR. |
-| `/explain [pr\|path]` | Explains a diff or module to a Scala newcomer: glossary, data flow, where to click to see it working. |
-| `/status` | Updates `docs/STATUS.md` (Now / Next / Blockers / Decisions) at the end of a session. |
-| `/adr "title"` | Writes a numbered Architecture Decision Record. |
-| `/upstream-port <sha>` | Ports one lila/lila-ws commit into the monorepo (`git format-patch` + `git am --directory=lila`), resolves conflicts, records it in `docs/UPSTREAM.md`. |
-| `/katago-setup [local\|cloud]` | Builds/configures KataGo: OpenCL + tuning on your AMD GPU locally, Eigen CPU build in the cloud; downloads the chosen network; runs the benchmark. |
+| `/next` | Reads STATUS, the roadmap, open issues and the relevant log Lessons, then **presents the next unit for approval**: goal, acceptance criteria, test plan, **reuse plan**, expected decisions, and which log it writes to. Uses AskUserQuestion; creates the issue only after you approve. |
+| `/ship [issue]` | The unit loop, with **hard checkpoints**. (1) Confirms the unit is approved. (2) Runs `/build-vs-buy` if any custom component is involved, and waits. (3) `test-engineer` writes failing tests. (4) The implementer agent builds. (5) `/verify`. (6) `reviewer`; blocking findings get fixed. (7) `/play-test` for UI units. (8) `/log`. (9) Opens a PR using the template. **At any point:** a major decision or uncertainty → `/ask` and pause the dependent work. |
+| `/build-vs-buy <capability>` | Runs `reuse-scout`, presents the options with a recommendation, records your choice as an ADR, and logs it. |
+| `/ask` | The standard way to stop and ask. Writes the question to `docs/STATUS.md` → "Waiting on owner" (with context, options and a recommendation), asks you via AskUserQuestion, sends a notification, and records your answer in the log and, if it's a major decision, an ADR. |
+| `/verify` | Runs the gates for the changed paths, writes `.claude/state/last-verify`, and prints a table with real output; never turns a failure into a pass. |
+| `/log [area]` | Appends a structured entry to the right `logs/<area>.md` (the path → area map is in `logs/README.md`); promotes durable lessons into that file's Lessons section; archives when the file gets too long (§9). |
+| `/play-test [scenario]` | A scripted two-browser Playwright game; saves screenshots/video to the PR. |
+| `/explain [pr\|path]` | Explains a diff or module to a Scala newcomer. |
+| `/status` | Updates STATUS (Now / Next / Blockers / Waiting on owner) at session end. |
+| `/adr "title"` | Writes a numbered ADR. |
+| `/upstream-port <sha>` | Ports an upstream commit (`git format-patch` + `git am --directory=…`) and logs it to `upstream-fork.md`. |
+| `/katago-setup [local\|cloud]` | KataGo OpenCL (AMD) or Eigen (CPU) setup, network download, benchmark. |
 
-### 8.2 Knowledge skills (Claude loads them when relevant; preloaded into agents)
+### 8.2 Knowledge skills (loaded when relevant; preloaded into agents)
 
 | Skill | Contents |
 |---|---|
-| `lila-backend` | Recipes: add a route + controller + view; add a Mongo collection with BSON handlers and indexes; add a module and wire its `Env`; add an i18n key; send a websocket message through lila-ws; where game/round/lobby/rating code lives. Grows as we learn. |
-| `lila-ui` | ui build commands; snabbdom component patterns; theming; adding a page bundle; how round/analyse talk to `goground`. |
-| `go-rules` | Summary of `docs/rules` (JP + CN), fixture JSON format, how to add a conformance case, the differential-testing harness vs KataGo. |
-| `sgf` | SGF FF[4] essentials, our import/export dialect, known quirks of OGS/KGS/Fox SGFs. |
+| `lila-backend` | Recipes for adapting lila: routes, Mongo collections + BSON, modules/`Env`, i18n keys, lila-ws messages; "look for an existing lila feature first". |
+| `lila-ui` | ui build, snabbdom patterns, theming, page bundles, the `libs/board` integration. |
+| `go-rules` | The approved rules spec summary, the fixture format, how to import cases from existing suites. |
+| `sgf` | SGF FF[4] essentials and quirks; "use goban-engine / @sabaki/sgf, don't write parsers". |
 
-Example — `.claude/skills/verify/SKILL.md` frontmatter:
+---
+
+## 9. Logging (`logs/`)
+
+**Goal:** a complete record of what happened, what worked and what didn't, split so that an agent
+working on one area reads only that area's history.
+
+### 9.1 Files
+
+| File | Covers | Main readers |
+|---|---|---|
+| `logs/README.md` | Index, entry template, **path → log map**, archiving rules | everyone (short) |
+| `logs/tooling.md` | Claude Code setup, hooks, skills, agents, dev environment, cloud/local environments, CI | all agents when changing tooling |
+| `logs/upstream-fork.md` | Forking lila/lila-ws, removing chess modules, upstream ports | `lila-backend`, `upstream-scout` |
+| `logs/rules-engine.md` | strategygames integration, goban-engine, conformance fixtures, differential tests, SGF | `go-rules-expert`, `test-engineer` |
+| `logs/board-ui.md` | The goban adapter, rendering, touch/confirm, themes, sounds | `lila-frontend` |
+| `logs/frontend.md` | Other UI work: round page, analysis board, profiles, PWA, accessibility | `lila-frontend` |
+| `logs/backend.md` | lila server modules, Mongo, lila-ws protocol (except the areas below) | `lila-backend` |
+| `logs/clocks.md` | Byo-yomi, Fischer, correspondence, lag compensation | `lila-backend`, `test-engineer` |
+| `logs/scoring.md` | Scoring phase, `services/scoring`, KataGo, autoscore accuracy | `scoring-engineer`, `go-rules-expert` |
+| `logs/ratings.md` | Glicko-2, rank curve, self-declared start, handicap maths | `lila-backend` |
+| `logs/lobby.md` | Lobby, pools, challenges, the player test | `lila-frontend`, `lila-backend` |
+| `logs/tsumego.md` | Puzzle sourcing, provenance, import scripts, trainer | relevant agents |
+| `logs/decisions.md` | A one-line chronological index of every question asked and answer given, linking to ADRs and entries | `/next`, `/status`, you |
+| `logs/general.md` | Cross-cutting items that fit nowhere else (kept small; recurring themes get their own file) | as needed |
+
+New areas get a new file (e.g. `bots.md`) when work starts on them, rather than piling into `general.md`.
+
+### 9.2 Structure of each file
 
 ```markdown
----
-name: verify
-description: Run the quality gates relevant to the current changes and record the result. Use before claiming work is done, before opening a PR, and when asked whether something works.
-allowed-tools: Bash(./dev/ligo *) Bash(git diff*) Bash(git status*)
----
-1. `git diff --name-only origin/main...` to list changed paths.
-2. Map paths → gates (table below) and run each via ./dev/ligo.
-3. Print a table: gate | command | PASS/FAIL | key output lines. Never summarise a failure as a pass.
-4. On all-pass, write the current HEAD sha + timestamp to .claude/state/last-verify.
+# Scoring log
+## Lessons (curated, ≤ 30 lines — read this first)
+- KataGo ownership needs both colours-to-move queries; single query mis-marks dame (2026-11-02, #41)
+- ...
+## Entries (newest first)
+### 2026-11-02 · #41 · Scoring worker: first KataGo round-trip
+- Did: …
+- Worked: …
+- Didn't work / dead ends: …
+- Lessons: … (promoted above if durable)
+- Decisions: asked owner about X → chose Y (ADR-0007)
+- Verified by Claude: … · Needs owner verification: …
+- Follow-ups: …
 ```
 
-Author skills with the `skill-creator` skill (available on claude.ai and as an official plugin) and
-test that each one triggers when it should (and doesn't when it shouldn't).
+### 9.3 Rules that stop logs flooding context
+
+- **Agents read the Lessons section plus the latest ~5 entries of only the logs mapped to their area.**
+  They never read whole logs or unrelated logs; the agent prompts and the `/log` skill enforce this.
+- **Lessons stays ≤ 30 lines.** `/log` curates it: it merges duplicates and drops lessons that have
+  been superseded.
+- **Archiving:** when a file passes ~400 lines, its oldest entries move to
+  `logs/archive/<area>-<year>-Q<n>.md`. Archives are searched with Grep only when needed.
+- **Every entry is written at the end of its unit** (`/ship` step 8), and a failure or dead end is
+  logged as carefully as a success. `stop-gate.sh` and the reviewer check that the entry exists;
+  `meta.yml` CI fails a PR that changes code without touching `logs/`.
+- **Entries are append-only.** Corrections are new entries; only the Lessons section is edited.
 
 ---
 
-## 9. MCP servers (`.mcp.json`, committed)
+## 10. MCP servers (`.mcp.json`, committed)
 
 | Server | Why | Config notes |
 |---|---|---|
-| **Playwright** (`@playwright/mcp`) | Claude drives the real app: plays moves, checks layout on phone viewports, takes screenshots for PRs. Core to the lobby/UI work. | stdio `npx @playwright/mcp@latest --headless --isolated`. In cloud sessions point it at the preinstalled Chromium (`/opt/pw-browsers`) — *(verify flag name during Phase 0)*. |
-| **MongoDB** (`mongodb-mcp-server`) | Inspect dev data: game documents, ratings, lobby seeks — without writing ad-hoc scripts. | stdio, **read-only** (`--readOnly`), connection string from env pointing at the local dev DB only. |
-| **context7** | Current docs for Play, Scala 3, Playwright, Vite/esbuild, snabbdom. | HTTP `https://mcp.context7.com/mcp`; add the host to the cloud environment allowlist. Optional. |
+| **Playwright** (`@playwright/mcp`) | Claude plays the real app, checks phone layouts, takes PR screenshots | stdio `npx @playwright/mcp@latest --headless --isolated`; point it at the preinstalled Chromium in cloud sessions *(verify flag)* |
+| **MongoDB** (`mongodb-mcp-server`) | Inspect dev data without ad-hoc scripts | stdio, **read-only**, local dev DB only |
+| **context7** | Current docs for Play, Scala 3, Playwright, snabbdom, goban | HTTP `https://mcp.context7.com/mcp`; add to the cloud allowlist; optional |
 
-Not needed: GitHub MCP (cloud sessions have GitHub built in; locally `gh` is simpler), Redis MCP
-(low value), Sentry (no production yet — add at public launch), Docker MCP (Bash suffices).
+Not needed: a GitHub MCP (built into cloud sessions; `gh` works locally), Redis, Sentry, Docker.
 
 ---
 
-## 10. Plugins (local machine only — cloud sessions don't load them)
+## 11. Plugins (local machine only — cloud sessions don't load them)
 
 | Plugin | Source | Why |
 |---|---|---|
-| `typescript-lsp` | `claude-plugins-official` | Type errors surface immediately after each TS edit; symbol navigation in `lila/ui`. Needs `npm i -g typescript-language-server typescript`. |
-| `ligo-metals` | our `tools/claude-plugins` marketplace | There is **no official Scala LSP plugin**, so we ship a 10-line one: `.lsp.json` running `metals` for `.scala`. Experimental: Metals indexing lila needs several GB RAM — enable only on the 32 GB box, disable if it slows things down. |
-| `frontend-design` | `claude-plugins-official` | Design-quality guidance for the lobby and board UI work — where LiGo has to beat OGS. |
-| `security-guidance` | `claude-plugins-official` | Warns about risky patterns as files are edited (auth, injection, secrets). |
-| `skill-creator` | `claude-plugins-official` | For authoring and testing our own skills during Phase 0. |
+| `typescript-lsp` | `claude-plugins-official` | Type errors after every TS edit; symbol navigation. Needs `npm i -g typescript-language-server typescript`. |
+| `frontend-design` | `claude-plugins-official` | Design guidance for the lobby and board UI. |
+| `security-guidance` | `claude-plugins-official` | Warns on risky patterns as files are edited. |
+| `skill-creator` | `claude-plugins-official` | Authoring and testing our skills in Phase 0 (reuse rather than hand-rolling skill QA). |
+| `ligo-metals` | our `tools/claude-plugins` | There's no official Scala LSP plugin, so this is a minimal `.lsp.json` pointing at Metals, the existing Scala language server. Experimental; enable only on the 32 GB box. |
 
-Enable in `.claude/settings.local.json` on your box:
+Enabled in `.claude/settings.local.json` on your box:
 
 ```json
-{
-  "enabledPlugins": {
+{ "enabledPlugins": {
     "typescript-lsp@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "security-guidance@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true,
-    "ligo-metals@ligo-local": false
-  }
-}
+    "ligo-metals@ligo-local": false } }
 ```
 
-Deliberately skipped: `code-review` / `pr-review-toolkit` / `feature-dev` (overlap with the built-in
-`/code-review` + `/security-review` skills and our own `reviewer` + `/ship`; one review path is easier
-to trust than three), `ralph-loop` (unattended loops conflict with the PR-gated workflow).
-
-Built-in skills we use as-is: `/code-review` (second opinion on big PRs), `/security-review`
-(anything touching auth, sessions, websockets), `/simplify`, `/fewer-permission-prompts`
-(run after the first two weeks to tune the allowlist).
+Deliberately skipped:
+- `code-review`, `pr-review-toolkit`, `feature-dev`: they overlap with the built-in `/code-review` and
+  `/security-review` plus our `reviewer`; one review path is easier to trust.
+- `ralph-loop`: unattended loops conflict with unit-by-unit approval.
 
 ---
 
-## 11. Environments
+## 12. Environments
 
-### 11.1 Cloud environment (claude.ai/code → environment "ligo")
+### 12.1 Cloud environment (claude.ai/code → "ligo")
 
-- **Network:** Trusted defaults (npm, Maven Central, Docker Hub, GitHub) **plus**:
-  `repo.scala-sbt.org`, `scala.jfrog.io`, `raw.githubusercontent.com` (lichess's `lila-maven`
-  artifacts — *verify the exact resolver hosts from lila's `build.sbt` in Phase 0*),
-  `github.com` release downloads (KataGo binaries), `media.katagotraining.org` (KataGo networks),
+- **Network:** the Trusted defaults, plus `repo.scala-sbt.org`, `scala.jfrog.io`, and
+  `raw.githubusercontent.com` (lichess's `lila-maven`; *verify resolver hosts from `build.sbt`*). Also
+  GitHub release downloads (KataGo), `media.katagotraining.org` (KataGo networks) and
   `mcp.context7.com`.
-- **Setup script** (versioned as `dev/cloud-setup.sh`, pasted into the environment; must exit 0 in
-  < 5 min; result is snapshotted and reused ~7 days):
-  install Node 24 and enable pnpm via corepack (lila pins Node ≥ 24 and pnpm 12); install coursier →
-  sbt 2.x + scalafmt; `docker pull mongo:7`; download a KataGo Eigen/AVX2 CPU binary + a small network
-  in the background; warm the coursier cache by resolving lila's and lila-ws's dependencies.
-- **Env vars:** `LIGO_KATAGO_BACKEND=cpu`, `LIGO_MONGO_CACHE_GB=0.5`. No secrets needed for the POC.
+- **Setup script** (versioned as `dev/cloud-setup.sh`; must exit 0 within 5 min; snapshotted for about
+  7 days):
+  - Node 24 + pnpm (corepack);
+  - coursier → sbt 2.x + scalafmt;
+  - `docker pull` of the lila-docker service images;
+  - a KataGo Eigen CPU binary + small network, downloaded in the background;
+  - a warm coursier cache.
+- **Env vars:** `LIGO_KATAGO_BACKEND=cpu`, `LIGO_MONGO_CACHE_GB=0.5`. No secrets.
 
-### 11.2 Your Linux box (32 GB, AMD CPU + GPU)
+### 12.2 Your Linux box (32 GB, AMD CPU + GPU)
 
-`dev/doctor.sh` verifies: JDK 21, coursier + sbt 2.x, Node 24 + pnpm 12, Docker, `scalafmt`,
-`typescript-language-server`, (optional) Metals, KataGo built with **OpenCL** (AMD) and tuned
-(`katago benchmark`), disk space. Run Remote Control in a persistent `tmux` session (or a systemd
-user unit) so you can pick up from your phone.
+`dev/doctor.sh` checks:
+- JDK 21, coursier + sbt 2.x, Node 24 + pnpm 12, Docker, scalafmt, typescript-language-server;
+- (optional) Metals;
+- KataGo with **OpenCL**, tuned via `katago benchmark`;
+- free disk space.
+
+Run Remote Control in `tmux` or as a systemd user unit.
 
 ---
 
-## 12. CI and repository settings (no Claude in CI, per your choice)
+## 13. CI and repository settings (no Claude in CI)
 
-GitHub Actions — all required on PRs to `main`:
+Start from **lila's existing GitHub workflows** and adapt them to the monorepo paths (reuse first).
+All of these are required on PRs to `main`:
 
 | Workflow | Runs |
 |---|---|
-| `rules.yml` | `scalago` tests + `goops` tests + **conformance parity** (both engines replay every fixture) + ScalaCheck/fast-check property tests |
-| `lila.yml` | sbt compile + tests for lila and lila-ws (coursier/sbt caches) |
-| `ui.yml` | pnpm install, typecheck, lint, unit tests, production build |
-| `e2e.yml` | `docker compose` stack + Playwright smoke game (on PRs labelled `ui`/`game` and nightly) |
-| `meta.yml` | hook bats tests, license/SPDX check (AGPL-compatible deps only), no secrets committed |
-| `nightly-differential.yml` | Random playouts: scalago vs KataGo's rules engine (GTP) on legality, captures and final score |
+| `rules.yml` | Server rules tests + goban-engine harness + **conformance parity** + property tests |
+| `lila.yml` | sbt compile + tests for lila and lila-ws |
+| `ui.yml` | pnpm install, typecheck, lint, unit tests, build |
+| `e2e.yml` | Stack + Playwright smoke game (PRs labelled `ui`/`game`, and nightly) |
+| `meta.yml` | Hook bats tests; licence check (AGPL-compatible deps only; `COPYING.md` updated when deps change); **log check** (code changes need a `logs/` change); PR template sections present |
+| `nightly-differential.yml` | Random playouts: server rules vs KataGo |
 
-Branch protection on `main`: PR required, all checks required, linear history, no force-push, no
-bypass. You're the only person with merge rights.
+**PR template** (`.github/pull_request_template.md`):
+- What & why (links the approved unit)
+- Plain-English walkthrough
+- Reuse: existing software used, and any custom code with the reason / memo link
+- Verified by Claude (commands + results)
+- **Needs your verification** (never empty without saying why)
+- Decisions made (with your approval) / decisions needed
+- Screenshots (UI)
+- Log entry link
+- Risks
+
+**Branch protection on `main`:** PR required, all checks required, linear history, no force-push,
+no bypass; only you merge.
 
 ---
 
-## 13. Phase 0 build order and acceptance
+## 14. Phase 0 build order and acceptance
 
-1. **Repo bootstrap** — `LICENSE` (AGPL-3.0), `COPYING.md` (third-party notices), `README`,
-   `.gitignore`, `docs/` skeleton (`STATUS.md`, `UPSTREAM.md`, `glossary.md`, ADR 0001 "Fork current
-   lila"), PR template, branch protection.
-2. **Import upstream snapshots** at pinned SHAs (recorded in `docs/UPSTREAM.md`); confirm the
-   *unmodified* lila builds and runs locally and in a cloud session (baseline).
-3. **`dev/` tooling** — `docker-compose.yml`, `dev/ligo`, `dev/doctor.sh`, `dev/cloud-setup.sh`.
-4. **Claude config** — CLAUDE.md files, rules, settings, hooks (+ bats tests), agents, skills, `.mcp.json`,
-   local marketplace + plugins.
-5. **Environments** — cloud environment created and cached; local box passes `dev/doctor.sh`;
-   KataGo OpenCL benchmark recorded.
-6. **CI** — workflows green on the baseline.
-7. **Dry run** — one real but tiny task end-to-end through `/next` → `/ship` → PR: rebrand the
-   site name/logo placeholder from lichess to LiGo in the unmodified fork.
+Each step is a unit you approve via `/next` once the skill exists. Until then, Claude presents each
+step to you for approval by hand.
 
-**Phase 0 is done when:** the dry-run PR has green CI, a `reviewer` report, a Playwright screenshot,
-a plain-English walkthrough, and you merged it having spent < 15 minutes; a fresh cloud session
-and a Remote Control session both start oriented (SessionStart output shows STATUS) and can run
-`/verify` successfully; every hook has a passing test showing it blocks what it should.
+1. **Repo bootstrap:**
+   - `LICENSE` (AGPL-3.0), `COPYING.md`, `README`, `.gitignore`;
+   - `docs/` skeleton (STATUS, UPSTREAM, glossary, ADR 0001 "Fork current lila", ADR 0002 "Reuse
+     first");
+   - **`logs/` skeleton** (README with the path → log map and entry template, one file per area);
+   - PR template, branch protection.
+2. **Import upstream snapshots** at pinned SHAs; confirm the *unmodified* lila builds and runs locally
+   and in a cloud session. Log to `upstream-fork.md`.
+3. **`dev/` tooling built on lila-docker:** the `ligo` wrapper, doctor, the cloud setup script. Log to
+   `tooling.md`.
+4. **Claude config:** CLAUDE.md files, rules, settings, hooks (+ bats tests), agents, skills (authored
+   with `skill-creator`), `.mcp.json`, local marketplace + plugins.
+5. **Environments:** the cloud environment is cached; your box passes `dev/doctor.sh`; the KataGo
+   OpenCL benchmark is recorded.
+6. **CI:** lila's workflows adapted, plus `meta.yml`, all green on the baseline.
+7. **Dry run:** a tiny real unit end-to-end (rebrand lichess → LiGo): `/next` approval → `/ship` →
+   PR → your merge.
+
+**Phase 0 is done when:**
+- The dry-run PR has green CI, a reviewer report, a screenshot, a walkthrough, an honest "needs your
+  verification" list, and a `logs/` entry, and you merged it in < 15 minutes of your time.
+- At least one `/ask` round-trip has been exercised: Claude paused, you answered from your phone, and
+  the answer landed in `logs/decisions.md`.
+- A dependency-manifest edit triggered your permission prompt.
+- A fresh cloud session and a Remote Control session both start oriented.
+- Every hook has a passing test showing it blocks what it should.
