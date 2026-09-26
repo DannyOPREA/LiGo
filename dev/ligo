@@ -35,6 +35,7 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
 
   up                  Start the stack (first run builds the UI and compiles; takes a while)
   down                Stop the stack (database data is kept)
+  db                  Start only Mongo and Redis (idempotent; the SessionStart hook runs it)
   status              Show what is running
   logs [lila|ws|db]   Follow logs
   compile [what]      Compile lila, ws, ui or all (default: all)
@@ -373,6 +374,7 @@ main() {
   case "$cmd" in
     up) if [[ "$MODE" == docker ]]; then docker_up; else native_up; fi ;;
     down) if [[ "$MODE" == docker ]]; then run dc --profile utils --profile mongo-express down; else native_down; fi ;;
+    db) if [[ "$MODE" == docker ]]; then docker_env; run dc up -d mongodb mongodb_secondary redis; else native_db_up; fi ;;
     status) cmd_status ;;
     logs) cmd_logs "$@" ;;
     compile) cmd_compile "$@" ;;

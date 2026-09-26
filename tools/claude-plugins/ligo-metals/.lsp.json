@@ -1,0 +1,6 @@
+{
+  "scala": {
+    "command": "metals",
+    "extensionToLanguage": { ".scala": "scala", ".sbt": "scala", ".sc": "scala" }
+  }
+}

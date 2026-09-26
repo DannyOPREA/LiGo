@@ -1,0 +1,7 @@
+{
+  "name": "ligo-metals",
+  "version": "0.1.0",
+  "description": "Scala language server (Metals) for lila and lila-ws: diagnostics after edits, go-to-definition, find references. Needs `metals` on PATH (cs install metals).",
+  "author": { "name": "LiGo" },
+  "license": "MIT"
+}

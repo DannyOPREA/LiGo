@@ -10,7 +10,8 @@
 #   2. sbt 2.x from the official GitHub tarball  -> ~/.local/bin/sbt
 #   3. ADR 0008 dependency sources: ~/.sbt/repositories, coursier mirror.properties and
 #      -Dsbt.override.build.repos=true in sbt's own conf/sbtopts (no repo file is touched)
-#   4. docker pull of the images `dev/ligo` uses in native mode (Mongo, Redis)
+#   4. docker pull of the images `dev/ligo` uses in native mode (Mongo, Redis); the apt packages
+#      bats and shellcheck, for the hook tests and /verify (best effort)
 #   5. If the repo is present and time allows: `dev/ligo deps` (warm caches, mirror cross-check,
 #      pnpm install with the ab-stub workaround). Best effort; `dev/ligo deps` can be rerun later.
 #
@@ -123,6 +124,15 @@ pull_images() {
   done
 }
 
+install_test_tools() {
+  if command -v bats >/dev/null && command -v shellcheck >/dev/null; then log "bats and shellcheck present"; return; fi
+  command -v apt-get >/dev/null || { log "no apt-get; skipping bats/shellcheck"; return; }
+  local sudo=""; [[ $(id -u) -ne 0 ]] && sudo="sudo -n"
+  log "installing bats and shellcheck"
+  { $sudo apt-get install -y -q bats shellcheck || { $sudo apt-get update -q && $sudo apt-get install -y -q bats shellcheck; }; } \
+    >/tmp/ligo-apt.log 2>&1 || log "WARN: could not install bats/shellcheck (see /tmp/ligo-apt.log)"
+}
+
 # ---------------------------------------------------------------------------------------------
 # 5. Repo-level dependencies, if the repo is here and there's time left
 find_repo() {
@@ -146,5 +156,6 @@ install_node
 install_sbt
 write_repo_config
 pull_images
+install_test_tools
 warm_repo
 log "done"

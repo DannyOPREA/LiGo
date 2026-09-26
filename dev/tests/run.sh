@@ -20,7 +20,7 @@ output_is() { [[ "$("${@:2}" 2>/dev/null)" == "$1" ]]; }  # output_is <expected>
 
 echo "dev/ tooling checks"
 
-scripts=("$ROOT/dev/ligo" "$ROOT/dev/doctor.sh" "$ROOT/dev/cloud-setup.sh" "$ROOT/dev/tests/run.sh")
+scripts=("$ROOT/dev/ligo" "$ROOT/dev/doctor.sh" "$ROOT/dev/cloud-setup.sh" "$ROOT/dev/mcp-playwright.sh" "$ROOT/dev/tests/run.sh")
 for s in "${scripts[@]}"; do check "bash -n ${s#"$ROOT"/}" bash -n "$s"; done
 if command -v shellcheck >/dev/null; then check "shellcheck" shellcheck "${scripts[@]}"
 else echo "  skip  shellcheck (not installed)"; fi
