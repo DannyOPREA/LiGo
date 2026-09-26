@@ -3,8 +3,8 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Now
-- **Phase 0 — Claude Code setup + baseline.** Unit 0.1 (repo bootstrap) is done on branch
-  `claude/zealous-hamilton-2mf80t`, waiting for the owner's review.
+- **Phase 0 — Claude Code setup + baseline.** Unit 0.1 (repo bootstrap) is done; PR open against `main`, waiting for
+  the owner's review.
 
 ## Next
 - Unit 0.2: import lila + lila-ws snapshots at pinned SHAs; confirm the unmodified lila builds and
@@ -12,8 +12,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Then 0.3 dev tooling · 0.4 Claude config · 0.5 environments · 0.6 CI · 0.7 dry run.
 
 ## Waiting on owner
-- Where to create `main`, and whether/how to protect it (the repo is private on a personal account;
-  GitHub branch protection for private repos needs a paid plan). See `logs/decisions.md`.
+- Owner actions in GitHub settings: (1) make the repo public, (2) set the default branch to `main`,
+  (3) protect `main` (require a PR, require status checks once CI exists, block force-pushes).
+- Review and merge the unit 0.1 PR.
 
 ## Blockers
 - None.

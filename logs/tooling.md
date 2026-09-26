@@ -14,9 +14,9 @@
 - Worked: everything above; the AGPL text matches lila's LICENSE byte for byte (sha256 0d96a4ff…abcb0).
 - Didn't work / dead ends: fetching the AGPL text from www.gnu.org was blocked by the cloud network policy, so we used lila's copy instead.
 - Lessons: see the Lessons section (network policy).
-- Decisions: owner approved the plan, defaults (ADRs 0003–0005) and MIT for own code (ADR 0006). Open: where to create `main` and whether to protect it (see decisions.md).
+- Decisions: owner approved the plan, defaults (ADRs 0003–0005) and MIT for own code (ADR 0006). `main` created at the approved-plan commit; repo to be made public for branch protection (see decisions.md).
 - Verified by Claude: files present; markdown links resolve (checked with a script); licence text is identical to lila's. Needs owner verification: that you're happy with the licence split wording in COPYING.md (a legal judgement, not something Claude can settle).
-- Follow-ups: branch protection once `main` exists; unit 0.2 (import upstream snapshots).
+- Follow-ups: owner makes the repo public, sets `main` as default and protects it (decided 2026-09-26: `main` created at d70e004); unit 0.2 (import upstream snapshots).
 
 ### 2026-09-25 · planning · Requirements interview and plan
 - Did: interviewed the owner over 8 rounds; researched lichess/lishogi/PlayStrategy/OGS/KataGo prior art and current Claude Code features; wrote docs/PLAN.md and docs/CLAUDE_SETUP.md; revised them for reuse-first, per-area logging, non-commercial intent and the working agreement.
