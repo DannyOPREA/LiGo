@@ -1,0 +1,24 @@
+---
+# LiGo addition (not from lila-docker): only the databases, for native mode (`dev/ligo` in cloud
+# sessions), where lila and lila-ws run directly on the host with sbt. Standalone Mongo, no replica
+# set, so lila's own defaults (mongodb://127.0.0.1:27017, redis://127.0.0.1) work unchanged.
+name: ligo-native
+
+services:
+  mongodb:
+    image: mongo:7.0.28-jammy
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:27017:27017
+    volumes:
+      - mongo-data:/data/db
+  redis:
+    image: redis:8.0.3-alpine3.21
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:6379:6379
+    profiles:
+      - redis  # skipped when a host redis-server already listens on 6379
+
+volumes:
+  mongo-data:

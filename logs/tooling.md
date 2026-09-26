@@ -12,9 +12,60 @@
 - The Google Central mirror is trustworthy only because we cross-check: all 918 mirror artifacts matched Maven Central's own SHA-1s. coursier alone checks same-origin checksums only (2026-09-26, unit 0.2).
 - sbt 2 runs as thin client + background server: after `compile` the server stays up holding ~9 GB. Stop it (`sbt shutdown` or kill) before `run`. Play dev `run` needs stdin kept open (`tail -f /dev/null | ./lila.sh run`) (2026-09-26, unit 0.2).
 - Workflow/subagent Bash calls reset cwd to the repo root: one verifier ran `git lfs install` there and planted hooks that would break every push (cleaned up). Future agent prompts must demand absolute paths / `git -C <scratch>` and forbid tools that install hooks or global state (2026-09-26, unit 0.2).
+- Starting `dockerd` from a script: detach it fully (`setsid nohup … </dev/null &`), or it holds the script's stdout open and the caller hangs after the script ends (2026-09-26, unit 0.3).
+- Containers in cloud sessions can't use the egress proxy (its certificate isn't trusted inside them), so anything that downloads inside a container (sbt, pnpm, apt) fails there. That's why `dev/ligo` uses native mode in the cloud (ADR 0010) (2026-09-26, unit 0.3).
+- `setsid` forks when the caller leads a process group, so `$!` is not the new session's pid. Have the child write `$$` to the pid file instead (2026-09-26, unit 0.3).
 - There's no official Scala LSP plugin; Metals needs a custom `.lsp.json` plugin (2026-09-25, planning).
 
 ## Entries (newest first)
+### 2026-09-26 · unit 0.3 · dev/ tooling: ligo, doctor, cloud setup, trimmed lila-docker
+- Did:
+  - `dev/lila-docker/`: trimmed copy of lichess-org/lila-docker @ cbba92c7 (compose, Dockerfiles,
+    configs), pointed at our lila/ and lila-ws/, lila-ws built from source, named Mongo volumes;
+    changes listed in its README. Plus `compose.native.yml` (Mongo + Redis only).
+  - `dev/ligo`: up/down/status/logs/compile/test/e2e/deps/verify-mirror/doctor, in docker mode
+    (default on your machine) or native mode (default in cloud sessions). ADR 0010 (proposed).
+  - `dev/cloud-setup.sh`: Node 24.20.0 (SHASUMS256 checked) + pnpm 12.3.4, sbt 2.0.9 (sha256
+    checked), ADR 0008's repositories/mirror files and resolver override, Mongo/Redis image pulls,
+    then `dev/ligo deps` if the repo is present and time allows.
+  - `dev/ligo deps` automates ADR 0008 steps 2–3: the Maven Central SHA-1 cross-check (remembered
+    in `.ligo/mirror-verified.txt`, rerun after every sbt command in the cloud) and the ab-stub
+    tarball install, with the lockfile restored even if interrupted.
+  - `dev/doctor.sh`, `dev/tests/run.sh` (16 fast checks incl. shellcheck), README "Run it",
+    COPYING (dev/lila-docker is AGPL-3.0), UPSTREAM, STATUS, CLAUDE_SETUP §12.1/§14.
+- Worked (all in a fresh cloud session, native mode):
+  - `dev/cloud-setup.sh`: 32 s from nothing (no repo step); 47 s rerun with a warm repo.
+  - `dev/ligo deps`: pnpm installs with the ab-stub workaround (sha512 matched the lockfile), sbt
+    update for lila and lila-ws through the mirror; cross-check 846/846 matched Maven Central.
+  - `dev/ligo up` cold: 5 min 13 s (UI build, both compiles, Mongo indexes); lila compile shows
+    the baseline's 17 `[warn]` lines. Warm restart: 52 s.
+  - `dev/ligo e2e`: home page 200 ("lichess.dev • Free Online Chess"), lobby websocket 101.
+    After `down` it fails as it should.
+  - `dev/ligo test ws`: 9 passed. `dev/ligo test ui`: 237 passed. `dev/tests/run.sh`: 16 passed.
+  - Docker mode, partly: both compose files validate; Mongo replica set (primary + secondary),
+    Redis, Caddy (serving lila-docker's 502 page) and the index scripts ran with the docker-mode
+    compose file.
+- Didn't work / dead ends:
+  - Docker mode's lila, lila-ws and ui containers can't be tested in the cloud: containers don't
+    trust the egress proxy's certificate (TLS failures), so sbt/pnpm/apt can't download there.
+    The owner's Linux-box run is docker mode's real test.
+  - First `dev/ligo down` left lila and lila-ws running: `setsid` had forked, so the recorded pid
+    was a zombie. Fixed (the child writes its own pid) and retested: nothing left after `down`.
+  - The first setup run hung after finishing, because the dockerd it started held stdout. Fixed.
+- Lessons: promoted (dockerd detach, containers vs proxy, setsid pid).
+- Decisions: owner's "Continue work on the project" taken as approval of unit 0.3. Trimmed copy
+  vs clone-on-demand for lila-docker: asked on a decision card, Claude built the recommended
+  option; ADR 0010 stays Proposed until the owner confirms. KataGo moved from the setup script to
+  unit 0.5 (its download hosts aren't allowed yet).
+- Verified by Claude: the above, with real output. Not verified: `dev/ligo test lila` (not
+  run; lila's test suite is long), docker mode end to end, the setup script from the
+  environment's own Setup script box.
+- Needs owner verification: on your Linux box, `dev/ligo doctor`, `dev/ligo up`, then
+  `dev/ligo e2e` and a look at http://localhost:8080; paste `dev/cloud-setup.sh` into the cloud
+  environment's Setup script.
+- Follow-ups: unit 0.4 adds a SessionStart hook running `dev/ligo deps`; unit 0.5 adds KataGo
+  and the environment's env vars; LiGo needs its own DB seed later (lila-db-seed is chess data).
+
 ### 2026-09-26 · unit 0.2 · Cloud build environment for lila
 - Did: installed sbt 2.0.9 (official tarball), Node 24.20.0 (nodejs.org, SHASUMS256 verified) + pnpm via corepack; configured `~/.sbt/repositories` (Google Central mirror + jitpack + lila-maven ×2 + central.sonatype.com snapshots + sbt plugin releases) and `~/.config/coursier/mirror.properties`; ran the ab-stub tarball workaround; ran the verification workflow.
 - Worked: everything built and ran (details in upstream-fork.md); mirror cross-check 918/918.

@@ -9,6 +9,7 @@ what we forked and every upstream change we port later. The `upstream-scout` age
 |---|---|---|---|---|
 | lila | https://github.com/lichess-org/lila | `b3f190be9d532d5f9cdf746938e9d480b1464e25` | 2026-09-25 | `lila/` (squashed snapshot) |
 | lila-ws | https://github.com/lichess-org/lila-ws | `24053fc0f0eb5e040233356dc62e13804c531bd6` | 2026-09-22 | `lila-ws/` (squashed snapshot) |
+| lila-docker | https://github.com/lichess-org/lila-docker | `cbba92c7f59bc7a95f4d1d8b177b0228349bc337` | 2026-09-26 | `dev/lila-docker/` (trimmed copy of a few files, ADR 0010) |
 
 Notes on the snapshots:
 - Imported with `git archive` of each pinned commit. In the import commit `adff5f9` the trees are
@@ -19,6 +20,8 @@ Notes on the snapshots:
   background galleries) in Git LFS. For those, the snapshot contains only the **94 pointer files**,
   not the objects (see ADR 0009). The other 10 lifat files are real content, including 4
   Unsplash-licensed montage images (COPYING §1.1).
+- **lila-docker** is not a full snapshot: only the files listed in `dev/lila-docker/README.md` were
+  copied, several of them trimmed. That README is its modification register.
 - **Non-free upstream assets** are kept temporarily and removed in the first Phase 3 unit
   (COPYING.md §1.1, ADR 0007).
 

@@ -1,0 +1,69 @@
+# From lichess-org/lila-docker @ cbba92c7, modified by LiGo: see dev/lila-docker/README.md.
+:80
+
+log
+
+handle_path /oops* {
+	root * /lila/public/oops
+	file_server
+}
+
+# for http://localhost:8080/oops/icons.html
+handle_path /images* {
+	root * /lila/public/images
+	file_server
+}
+
+# for http://localhost:8080/oops/flair.html
+handle_path /flair/list.txt {
+	root * /lila/public/flair/list.txt
+	file_server
+}
+
+handle_path /static* {
+	root * /static
+	file_server
+}
+
+handle_path /embed/* {
+	rewrite * /embed{uri}
+	reverse_proxy lila:9663 {
+		header_up Host {$LILA_DOMAIN}
+		header_up Origin {$LILA_URL}
+
+		header_down Cross-Origin-Embedder-Policy "credentialless"
+	}
+}
+
+@websockets {
+	header Connection *Upgrade*
+	header Upgrade websocket
+}
+
+reverse_proxy @websockets lila_ws:9664 {
+	header_up Origin {$LILA_URL}
+}
+
+reverse_proxy lila:9663 {
+	header_up Host {$LILA_DOMAIN}
+	header_up Origin {$LILA_URL}
+
+	# header_up X-Lichess-School true
+
+	# allow CORS for requests from web client on lichess.org/api
+	header_down Access-Control-Allow-Origin "*"
+
+	header_down Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+}
+
+handle_errors {
+	@502 expression {http.error.status_code} == 502
+
+	route @502 {
+		route {
+			root * /static/errors
+			rewrite * /502.html
+			file_server
+		}
+	}
+}

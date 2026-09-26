@@ -5,10 +5,12 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-26 | How should unit 0.3 reuse lila-docker: trimmed copy in the repo, or clone on demand? | _waiting on owner_ (Claude built the recommended trimmed copy) | ADR 0010 |
+| 2026-09-26 | Start unit 0.3 (dev tooling)? | "Continue work on the project" (owner), taken as approval of the next unit in the build order | logs/tooling.md |
 | 2026-09-26 | Approve unit 0.2 (import + baseline) and import style? | Approved; squashed snapshot | logs/upstream-fork.md |
 | 2026-09-26 | Owner's Linux-box baseline check: now or after unit 0.3? | After unit 0.3 | CLAUDE_SETUP §14 |
 | 2026-09-26 | Git LFS pointer files breaking clones | Remove the LFS lines from lila/.gitattributes | ADR 0009 |
-| 2026-09-26 | PR #2 merge method (merge vs squash): old branch commits carry LFS attributes | _waiting on owner_ | STATUS |
+| 2026-09-26 | PR #2 merge method (merge vs squash): old branch commits carry LFS attributes | Squash (owner) | STATUS |
 | 2026-09-26 | Non-free/NC upstream assets in the public repo, plus licence corrections (lila-ws AGPL-3.0 only, screenshots not MIT) | Document now; strip in the first Phase 3 unit; corrections applied | ADR 0007 |
 | 2026-09-26 | Cloud dependency sources (Google Central mirror, resolver override, ab-stub tarball) | Approved | ADR 0008 |
 | 2026-09-26 | PR #1 / repo settings | Merged; repo public; `main` default + protected (owner) | STATUS |

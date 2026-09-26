@@ -429,16 +429,19 @@ Deliberately skipped:
   `media.katagotraining.org` (KataGo networks), `mcp.context7.com`. Note: the session's GitHub
   proxy still refuses `codeload.github.com` tarballs for repos not attached to the session; see
   ADR 0008 for the ab-stub workaround.
-- **Setup script** (versioned as `dev/cloud-setup.sh`; must exit 0 within 5 min; snapshotted for about
-  7 days):
+- **Setup script** (versioned as `dev/cloud-setup.sh`, pasted into the environment's Setup script
+  box; must exit 0 within 5 min; snapshotted for about 7 days). Built in unit 0.3 (ADR 0010):
   - Node 24 + pnpm (corepack);
   - sbt 2.x from the official GitHub release tarball (coursier's launchers fail behind the proxy;
-    see logs/tooling.md) + scalafmt;
+    see logs/tooling.md);
   - ADR 0008's dependency sources: `~/.sbt/repositories` + coursier `mirror.properties` (Google
-    Central mirror), the origin SHA-1 cross-check, and the ab-stub tarball built from a git clone;
-  - `docker pull` of the lila-docker service images;
-  - a KataGo Eigen CPU binary + small network, downloaded in the background;
-  - a warm coursier cache.
+    Central mirror) and `-Dsbt.override.build.repos=true` in sbt's own `conf/sbtopts`;
+  - `docker pull` of the Mongo and Redis images native mode uses;
+  - if the repo is already cloned and time remains, `dev/ligo deps`: warm sbt caches, the origin
+    SHA-1 cross-check, and the frozen pnpm install with the ab-stub workaround. It's repo-level,
+    so it can be rerun in any session (unit 0.4's SessionStart hook will do that);
+  - moved to unit 0.5: a KataGo Eigen CPU binary + small network (their download hosts aren't
+    allowed yet); scalafmt runs through lila's sbt plugin, so no separate binary.
 - **Env vars:** `LIGO_KATAGO_BACKEND=cpu`, `LIGO_MONGO_CACHE_GB=0.5`. No secrets.
 
 ### 12.2 Your Linux box (32 GB, AMD CPU + GPU)

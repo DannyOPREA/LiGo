@@ -12,6 +12,20 @@ OGS developers.
 > **Status:** Phase 0 (project setup). The lichess code is imported (unmodified apart from one
 > git attribute) and builds and runs in a cloud session; no Go yet. See [`docs/STATUS.md`](docs/STATUS.md).
 
+## Run it
+
+Needs Docker and ~12 GB of free RAM. From the repo root:
+
+```bash
+dev/ligo doctor   # check this machine
+dev/ligo up       # start everything (the first run compiles for several minutes)
+dev/ligo e2e      # smoke-test the running site, then open http://localhost:8080
+dev/ligo down     # stop (the database is kept)
+```
+
+`dev/ligo help` lists every command. It's built on lichess's
+[lila-docker](https://github.com/lichess-org/lila-docker) ([ADR 0010](docs/decisions/0010-dev-tooling-on-lila-docker.md)).
+
 ## Documents
 
 - [`docs/PLAN.md`](docs/PLAN.md): requirements, architecture, roadmap, working agreement
