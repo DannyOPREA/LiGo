@@ -94,8 +94,15 @@ services:
     user: ${USER_ID:-}:${GROUP_ID:-}
     environment:
       - CI=1  # to disable pnpm install prompts (and make installs frozen)
+      # LiGo: lila/ isn't a git repo of its own here, but ui/build runs `git rev-parse HEAD`.
+      # Point git at the monorepo's .git (read-only) and trust it whatever its owner.
+      - GIT_DIR=/ligo.git
+      - GIT_CONFIG_COUNT=1
+      - GIT_CONFIG_KEY_0=safe.directory
+      - GIT_CONFIG_VALUE_0=*
     volumes:
       - ../../lila:/lila
+      - ../../.git:/ligo.git:ro
       - ./.pnpm-store:/.pnpm-store
     profiles:
       - utils

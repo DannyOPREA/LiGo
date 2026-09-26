@@ -28,6 +28,8 @@ Decision: [ADR 0010](../../docs/decisions/0010-dev-tooling-on-lila-docker.md).
   lichess's prebuilt `ghcr.io/lichess-org/lila-ws` image, because LiGo will change lila-ws.
 - Mongo keeps its data in named volumes (`mongo-data`, `mongo-secondary-data`), so `dev/ligo down`
   doesn't lose the database.
+- The `ui` service mounts the monorepo's `.git` read-only and points `GIT_DIR` at it: `ui/build`
+  runs `git rev-parse HEAD`, and `lila/` isn't a git repo of its own here.
 - `depends_on` added so lila and lila-ws start after Mongo and Redis.
 - No `profiles: base`: the core services always start. `ui` stays in the `utils` profile.
 - Dropped services LiGo doesn't use: the opening explorer, the one-container `mono` quick setup,
