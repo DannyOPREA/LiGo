@@ -1,0 +1,42 @@
+# OS / editors
+.DS_Store
+*.swp
+.idea/
+.vscode/
+*.iml
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+**/secrets/
+
+# Claude Code: per-machine settings and runtime state
+.claude/settings.local.json
+.claude/state/
+.claude/agent-memory-local/
+
+# Scala / sbt / Metals / Bloop
+target/
+project/target/
+project/project/
+.bsp/
+.metals/
+.bloop/
+metals.sbt
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+dist/
+coverage/
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+
+# KataGo binaries, networks and tuning output (downloaded, never committed)
+kata1-*.bin.gz
+**/katago/models/
+katago-tuning/
