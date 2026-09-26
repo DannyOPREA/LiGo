@@ -24,7 +24,7 @@
     configs), pointed at our lila/ and lila-ws/, lila-ws built from source, named Mongo volumes;
     changes listed in its README. Plus `compose.native.yml` (Mongo + Redis only).
   - `dev/ligo`: up/down/status/logs/compile/test/e2e/deps/verify-mirror/doctor, in docker mode
-    (default on your machine) or native mode (default in cloud sessions). ADR 0010 (proposed).
+    (default on your machine) or native mode (default in cloud sessions). ADR 0010.
   - `dev/cloud-setup.sh`: Node 24.20.0 (SHASUMS256 checked) + pnpm 12.3.4, sbt 2.0.9 (sha256
     checked), ADR 0008's repositories/mirror files and resolver override, Mongo/Redis image pulls,
     then `dev/ligo deps` if the repo is present and time allows.
@@ -54,8 +54,7 @@
   - The first setup run hung after finishing, because the dockerd it started held stdout. Fixed.
 - Lessons: promoted (dockerd detach, containers vs proxy, setsid pid).
 - Decisions: owner's "Continue work on the project" taken as approval of unit 0.3. Trimmed copy
-  vs clone-on-demand for lila-docker: asked on a decision card, Claude built the recommended
-  option; ADR 0010 stays Proposed until the owner confirms. KataGo moved from the setup script to
+  vs clone-on-demand for lila-docker: owner chose the trimmed copy (ADR 0010, Accepted). KataGo moved from the setup script to
   unit 0.5 (its download hosts aren't allowed yet).
 - Verified by Claude: the above, with real output. Not verified: `dev/ligo test lila` (not
   run; lila's test suite is long), docker mode end to end, the setup script from the

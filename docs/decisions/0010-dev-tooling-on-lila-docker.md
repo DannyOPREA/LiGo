@@ -1,7 +1,7 @@
 # 0010. Dev tooling on a trimmed copy of lila-docker, with a native mode for cloud sessions
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-09-26
-- Decided by: owner, on Claude's recommendation (pending: set to Accepted when the owner approves)
+- Decided by: owner, on Claude's recommendation
 
 ## Context
 PLAN §5 chose lichess's official dev environment, [lila-docker](https://github.com/lichess-org/lila-docker),

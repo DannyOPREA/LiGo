@@ -16,7 +16,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Then 0.5 environments (KataGo moves here) · 0.6 CI · 0.7 dry run.
 
 ## Waiting on owner
-- Review the unit 0.3 PR and ADR 0010 (trimmed copy of lila-docker vs cloning it on demand).
+- Review the unit 0.3 PR.
 - Run the baseline on your Linux box: `dev/ligo doctor`, `dev/ligo up`, `dev/ligo e2e`
   (steps in the PR).
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings).
