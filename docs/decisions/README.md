@@ -11,7 +11,10 @@ supersedes it and set the old one's status to `Superseded by NNNN` (the only edi
 | 0003 | [Situational superko in both rulesets](0003-superko-in-both-rulesets.md) | Accepted | 2026-09-26 |
 | 0004 | [OGS rank curve for kyu/dan display](0004-ogs-rank-curve.md) | Accepted | 2026-09-26 |
 | 0005 | [Initial lobby presets](0005-initial-lobby-presets.md) | Accepted | 2026-09-26 |
-| 0006 | [MIT for LiGo's own code](0006-mit-for-own-code.md) | Accepted | 2026-09-26 |
+| 0006 | [MIT for LiGo's own code](0006-mit-for-own-code.md) | Superseded by 0007 | 2026-09-26 |
+| 0007 | [Licensing corrections after the upstream import](0007-licensing-corrections-after-import.md) | Accepted | 2026-09-26 |
+| 0008 | [Dependency sources in cloud sessions](0008-cloud-dependency-sources.md) | Accepted | 2026-09-26 |
+| 0009 | [Remove upstream Git LFS attributes](0009-remove-lfs-attributes.md) | Accepted | 2026-09-26 |
 
 ## Template
 

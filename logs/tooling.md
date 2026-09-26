@@ -8,9 +8,21 @@
 - Cloud network policy also blocks jitpack.io, repo.scala-sbt.org, central.sonatype.com and codeload.github.com, all of which lila needs; they must be on the environment allowlist (2026-09-26, unit 0.2).
 - Maven Central throttles this environment (random HTTP 429). Use Google's Central mirror (maven-central.storage-download.googleapis.com) via coursier mirror.properties + ~/.sbt/repositories (2026-09-26, unit 0.2).
 - The native `cs` launcher ignores JAVA_TOOL_OPTIONS (PKIX failure behind the proxy); use the official sbt tarball from GitHub releases instead (2026-09-26, unit 0.2).
+- Even with `codeload.github.com` allowed, the session's GitHub proxy refuses tarballs of repos not attached to the session. Public repos can still be *git-cloned*. For `ab-stub`: clone, `git archive --format=tar.gz --prefix=ab-stub-<sha>/`, and the sha512 equals the lockfile integrity (ADR 0008) (2026-09-26, unit 0.2).
+- The Google Central mirror is trustworthy only because we cross-check: all 918 mirror artifacts matched Maven Central's own SHA-1s. coursier alone checks same-origin checksums only (2026-09-26, unit 0.2).
+- sbt 2 runs as thin client + background server: after `compile` the server stays up holding ~9 GB. Stop it (`sbt shutdown` or kill) before `run`. Play dev `run` needs stdin kept open (`tail -f /dev/null | ./lila.sh run`) (2026-09-26, unit 0.2).
+- Workflow/subagent Bash calls reset cwd to the repo root: one verifier ran `git lfs install` there and planted hooks that would break every push (cleaned up). Future agent prompts must demand absolute paths / `git -C <scratch>` and forbid tools that install hooks or global state (2026-09-26, unit 0.2).
 - There's no official Scala LSP plugin; Metals needs a custom `.lsp.json` plugin (2026-09-25, planning).
 
 ## Entries (newest first)
+### 2026-09-26 · unit 0.2 · Cloud build environment for lila
+- Did: installed sbt 2.0.9 (official tarball), Node 24.20.0 (nodejs.org, SHASUMS256 verified) + pnpm via corepack; configured `~/.sbt/repositories` (Google Central mirror + jitpack + lila-maven ×2 + central.sonatype.com snapshots + sbt plugin releases) and `~/.config/coursier/mirror.properties`; ran the ab-stub tarball workaround; ran the verification workflow.
+- Worked: everything built and ran (details in upstream-fork.md); mirror cross-check 918/918.
+- Didn't work / dead ends: coursier's native `cs` ignores the proxy truststore; its JVM launcher broke on skipped (429) jars; `pnpm store add` doesn't satisfy GitHub-hosted deps (they're keyed by URL, not integrity); a verifier agent's `git lfs install` in the real repo (cleaned up: 4 hooks, the `[lfs]` config section, `.git/lfs`).
+- Decisions: ADR 0008 (owner approved).
+- Verified by Claude: tool versions and checksums; the repo's `.git/hooks` and config restored and a push dry-run works. Needs owner verification: n/a.
+- Follow-ups: unit 0.3 turns all of this into `dev/cloud-setup.sh` + a SessionStart hook.
+
 
 ### 2026-09-26 · unit 0.1 · Repo bootstrap
 - Did: LICENSE (AGPL-3.0 text taken from lila's repo), LICENSE-MIT, COPYING.md (AGPL for lila-derived, MIT for our own code), README, .gitignore, docs skeleton (STATUS, UPSTREAM, glossary, ADRs 0001–0006, build-vs-buy/rules/research READMEs), logs/ skeleton with path → log map, PR template, PLAN/CLAUDE_SETUP status updates.

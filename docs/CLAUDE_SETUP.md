@@ -422,10 +422,13 @@ Deliberately skipped:
 
 ### 12.1 Cloud environment (claude.ai/code → "ligo")
 
-- **Network:** the Trusted defaults, plus `repo.scala-sbt.org`, `scala.jfrog.io`, and
-  `raw.githubusercontent.com` (lichess's `lila-maven`; *verify resolver hosts from `build.sbt`*). Also
-  GitHub release downloads (KataGo), `media.katagotraining.org` (KataGo networks) and
-  `mcp.context7.com`.
+- **Network:** the Trusted defaults, plus (as allowed by the owner in unit 0.2) `jitpack.io`,
+  `repo.scala-sbt.org`, `central.sonatype.com` and `codeload.github.com`; `raw.githubusercontent.com`
+  (lichess's `lila-maven`), `maven-central.storage-download.googleapis.com` (Google's Central mirror,
+  ADR 0008) and `nodejs.org` already work. Later: GitHub release downloads (KataGo),
+  `media.katagotraining.org` (KataGo networks), `mcp.context7.com`. Note: the session's GitHub
+  proxy still refuses `codeload.github.com` tarballs for repos not attached to the session; see
+  ADR 0008 for the ab-stub workaround.
 - **Setup script** (versioned as `dev/cloud-setup.sh`; must exit 0 within 5 min; snapshotted for about
   7 days):
   - Node 24 + pnpm (corepack);
@@ -488,10 +491,12 @@ step to you for approval by hand.
      first");
    - **`logs/` skeleton** (README with the path → log map and entry template, one file per area);
    - PR template, branch protection.
-2. **Import upstream snapshots** at pinned SHAs; confirm the *unmodified* lila builds and runs locally
-   and in a cloud session. Log to `upstream-fork.md`.
-3. **`dev/` tooling built on lila-docker:** the `ligo` wrapper, doctor, the cloud setup script. Log to
-   `tooling.md`.
+2. **Import upstream snapshots** at pinned SHAs; confirm the *unmodified* lila builds and runs in a
+   cloud session. Log to `upstream-fork.md`. (Done in unit 0.2. The owner's run on the Linux box
+   moved to the end of unit 0.3, so it exercises the real dev tooling.)
+3. **`dev/` tooling built on lila-docker:** the `ligo` wrapper, doctor, the cloud setup script
+   (codifying ADR 0008's cloud dependency sources). Log to `tooling.md`. Ends with the owner running
+   the baseline on the Linux box.
 4. **Claude config:** CLAUDE.md files, rules, settings, hooks (+ bats tests), agents, skills (authored
    with `skill-creator`), `.mcp.json`, local marketplace + plugins.
 5. **Environments:** the cloud environment is cached; your box passes `dev/doctor.sh`; the KataGo

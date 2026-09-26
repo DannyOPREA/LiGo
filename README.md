@@ -9,7 +9,8 @@ minimal, lichess-style interface. It is not a business and not a competitor to
 [OGS](https://online-go.com). If it works well, the code, designs and lessons may be offered to the
 OGS developers.
 
-> **Status:** Phase 0 (project setup). No playable server yet — see [`docs/STATUS.md`](docs/STATUS.md).
+> **Status:** Phase 0 (project setup). The unmodified lichess code is imported and builds and runs;
+> no Go yet. See [`docs/STATUS.md`](docs/STATUS.md).
 
 ## Documents
 

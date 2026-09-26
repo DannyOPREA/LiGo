@@ -5,8 +5,13 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
-| 2026-09-26 | Unit 0.2 import style | Squashed snapshot | logs/upstream-fork.md |
-| 2026-09-26 | Allow jitpack.io, repo.scala-sbt.org, central.sonatype.com, codeload.github.com in the cloud env? | _waiting on owner_ | STATUS |
+| 2026-09-26 | Approve unit 0.2 (import + baseline) and import style? | Approved; squashed snapshot | logs/upstream-fork.md |
+| 2026-09-26 | Owner's Linux-box baseline check: now or after unit 0.3? | After unit 0.3 | CLAUDE_SETUP §14 |
+| 2026-09-26 | Git LFS pointer files breaking clones | Remove the LFS lines from lila/.gitattributes | ADR 0009 |
+| 2026-09-26 | Non-free/NC upstream assets in the public repo | Document now; strip in the first Phase 3 unit | ADR 0007 |
+| 2026-09-26 | Cloud dependency sources (Google Central mirror, resolver override, ab-stub tarball) | Approved | ADR 0008 |
+| 2026-09-26 | PR #1 / repo settings | Merged; repo public; `main` default + protected (owner) | STATUS |
+| 2026-09-26 | Allow jitpack.io, repo.scala-sbt.org, central.sonatype.com, codeload.github.com in the cloud env? | Allowed (owner) | CLAUDE_SETUP §12.1 |
 | 2026-09-26 | Where to create `main`? | At the approved-plan commit (d70e004); unit 0.1 goes through a PR | this log |
 | 2026-09-26 | How to protect `main` on a private free account? | Make the repo public (owner does it), then enable branch protection | STATUS |
 | 2026-09-26 | Approve proposed defaults (superko, OGS rank curve, lobby presets)? | Approved | ADRs 0003–0005 |

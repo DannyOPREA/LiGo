@@ -3,28 +3,36 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Now
-- **Phase 0 — Claude Code setup + baseline.** Unit 0.1 (repo bootstrap) is done; PR open against `main`, waiting for
-  the owner's review.
-
-- Unit 0.2 (approved): lila + lila-ws imported at pinned SHAs (squashed). **Build blocked** by the
-  cloud network policy; see "Waiting on owner". Work is on branch `claude/unit-0.2-import-upstream`.
+- **Phase 0 — Claude Code setup + baseline.**
+  - Unit 0.1 (repo bootstrap): merged (PR #1).
+  - Unit 0.2 (import + baseline): done on branch `claude/unit-0.2-import-upstream`, PR open for
+    review. The unmodified lichess builds and runs in a cloud session (see
+    `logs/upstream-fork.md`).
 
 ## Next
-- Finish unit 0.2 once the hosts are allowed: pnpm install, UI build, sbt compile, run, screenshot.
-- Then 0.3 dev tooling · 0.4 Claude config · 0.5 environments · 0.6 CI · 0.7 dry run.
+- Unit 0.3 (needs your approval): `dev/` tooling on lila-docker, the `ligo` CLI, doctor, and the
+  cloud setup script codifying ADR 0008. It ends with you running the baseline on your Linux box.
+  Consider running unit 0.4 (CLAUDE.md files) first or alongside it: until it lands, Claude Code
+  auto-loads lichess's `lila/AGENTS.md`, which doesn't govern LiGo.
+- Then 0.4 Claude config · 0.5 environments · 0.6 CI · 0.7 dry run.
 
 ## Waiting on owner
-- Owner actions in GitHub settings: (1) make the repo public, (2) set the default branch to `main`,
-  (3) protect `main` (require a PR, require status checks once CI exists, block force-pushes).
-- Review and merge the unit 0.1 PR.
-- Add to the cloud environment's allowed domains: `jitpack.io`, `repo.scala-sbt.org`,
-  `central.sonatype.com`, `codeload.github.com` (all needed to build lila).
+- Review and merge the unit 0.2 PR.
+- GitHub: add "Require a pull request before merging" to the `main` ruleset (it currently blocks
+  only deletion and force-push). Status checks come after CI (unit 0.6).
+- Approve the next unit.
 
 ## Blockers
-- Unit 0.2 build: network allowlist (above).
+- None.
+
+## Known caveats
+- Until unit 0.4, `lila/AGENTS.md` (lichess's contributor guide) auto-loads for any Claude session
+  reading `lila/`. LiGo's rules win on any conflict: frozen lockfile, never `bin/deploy`, ask when
+  unsure.
+- Upstream non-free/NC assets remain in the tree until the first Phase 3 unit (COPYING.md §1.1).
 
 ## Phase progress
 | Phase | State |
 |---|---|
-| 0. Claude setup + baseline | in progress (0.1 done) |
+| 0. Claude setup + baseline | in progress (0.1 merged, 0.2 in review) |
 | 1–9 | not started |
