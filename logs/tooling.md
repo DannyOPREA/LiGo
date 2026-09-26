@@ -5,6 +5,9 @@
 - Cloud VM: 4 vCPU / 16 GB / 30 GB, Ubuntu 24.04, JDK 21, Node 20–22, Docker, Redis; no sbt, MongoDB or Node 24 (2026-09-25, planning).
 - `auto` permission mode can't be set from project settings, only from `~/.claude/settings.json` (2026-09-25, planning).
 - The cloud network policy blocks some hosts (e.g. www.gnu.org). Fetch licence texts etc. from GitHub (`raw.githubusercontent.com`) instead (2026-09-26, unit 0.1).
+- Cloud network policy also blocks jitpack.io, repo.scala-sbt.org, central.sonatype.com and codeload.github.com, all of which lila needs; they must be on the environment allowlist (2026-09-26, unit 0.2).
+- Maven Central throttles this environment (random HTTP 429). Use Google's Central mirror (maven-central.storage-download.googleapis.com) via coursier mirror.properties + ~/.sbt/repositories (2026-09-26, unit 0.2).
+- The native `cs` launcher ignores JAVA_TOOL_OPTIONS (PKIX failure behind the proxy); use the official sbt tarball from GitHub releases instead (2026-09-26, unit 0.2).
 - There's no official Scala LSP plugin; Metals needs a custom `.lsp.json` plugin (2026-09-25, planning).
 
 ## Entries (newest first)
