@@ -7,7 +7,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
   the owner's review.
 
 - Unit 0.2 (approved): lila + lila-ws imported at pinned SHAs (squashed). **Build blocked** by the
-  cloud network policy; see "Waiting on owner". Work is on local branch `unit/0.2-import-upstream`.
+  cloud network policy; see "Waiting on owner". Work is on branch `claude/unit-0.2-import-upstream`.
 
 ## Next
 - Finish unit 0.2 once the hosts are allowed: pnpm install, UI build, sbt compile, run, screenshot.
