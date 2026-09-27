@@ -92,14 +92,14 @@ def check_git(sub, args, cwd):
             dst = r.split(":", 1)[1] if ":" in r else r
             targets.append(dst.replace("refs/heads/", ""))
         if any(t in PROTECTED_BRANCHES or t == "HEAD" and branch in PROTECTED_BRANCHES for t in targets):
-            block("never push to main. Push your unit branch and open a PR; the owner merges.")
+            block("never push to main. Push your unit branch and open a PR; it lands by squash-merging the PR (ADR 0011).")
         if not targets and branch in PROTECTED_BRANCHES:
             block("you are on main; `git push` would push main. Create a unit branch first.")
         if "--delete" in flags or "-d" in flags or any(r.startswith(":") for r in refs[1:]):
             if any(t.lstrip(":") in PROTECTED_BRANCHES for t in refs[1:]):
                 block("never delete main.")
     elif sub == "merge" and branch in PROTECTED_BRANCHES:
-        block("never merge into main locally; the owner merges PRs on GitHub.")
+        block("never merge into main locally; PRs land by squash-merge on GitHub (ADR 0011).")
     elif branch in PROTECTED_BRANCHES and (
             (sub == "reset" and "--hard" in args) or sub in ("rebase", "filter-branch", "filter-repo")
             or (sub == "commit" and "--amend" in args)):
@@ -146,6 +146,42 @@ def check_mongo(command):
             block("dropping a Mongo database or collection is only allowed for ligo_test* databases.")
 
 
+GH_MERGE_VALUE_FLAGS = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "-A", "--author-email",
+                       "--match-head-commit"}
+GH_MERGE_SHORT = {"s": "--squash", "m": "--merge", "r": "--rebase", "d": "--delete-branch"}
+
+
+def gh_merge_flags(args):
+    """Flag names of `gh pr merge`, with `--flag=value` and bundled short flags (-sd) unpacked."""
+    flags, skip = set(), False
+    for a in args:
+        if skip:
+            skip = False
+            continue
+        if a.startswith("--"):
+            name = a.split("=", 1)[0]
+            flags.add(name)
+            skip = name in GH_MERGE_VALUE_FLAGS and "=" not in a
+        elif a.startswith("-") and len(a) > 1:
+            if a[:2] in GH_MERGE_VALUE_FLAGS:
+                flags.add(a[:2])
+                skip = len(a) == 2
+            else:
+                flags.update(GH_MERGE_SHORT.get(c, "-" + c) for c in a[1:])
+    return flags
+
+
+def check_gh_merge(args):
+    """Claude may squash-merge its own PR once the checks pass (ADR 0011); nothing looser."""
+    flags = gh_merge_flags(args)
+    if "--admin" in flags:
+        block("`gh pr merge --admin` bypasses branch protection; never use it.")
+    if "--auto" in flags:
+        block("`gh pr merge --auto` merges before Claude has checked the PR; merge by hand once the checks pass (ADR 0011).")
+    if flags & {"--merge", "--rebase"} or "--squash" not in flags:
+        block("PRs land by squash-merge only: `gh pr merge <n> --squash` (ADR 0011).")
+
+
 def check_words(words, cwd, command):
     name = os.path.basename(words[0])
     g = git_args(words)
@@ -153,7 +189,7 @@ def check_words(words, cwd, command):
         sub, args, gdir = g
         check_git(sub, args, os.path.join(cwd, gdir) if gdir else cwd)
     elif name == "gh" and words[1:3] == ["pr", "merge"]:
-        block("Claude never merges; the owner does.")
+        check_gh_merge(words[3:])
     elif name == "rm":
         check_rm(words[1:], cwd)
     elif name in ("sbt", "lila.sh", "sbtn") and os.environ.get("CLAUDE_CODE_REMOTE") == "true":
@@ -169,6 +205,10 @@ def check_words(words, cwd, command):
 
 def main():
     data = json.load(sys.stdin)
+    if (data.get("tool_name") or "").endswith("merge_pull_request"):
+        if (data.get("tool_input") or {}).get("merge_method") != "squash":
+            block("PRs land by squash-merge only: pass merge_method \"squash\" (ADR 0011).")
+        sys.exit(0)
     command = (data.get("tool_input") or {}).get("command") or ""
     cwd = data.get("cwd") or os.getcwd()
     check_mongo(strip_heredocs(command))

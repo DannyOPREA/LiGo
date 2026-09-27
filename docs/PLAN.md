@@ -72,7 +72,7 @@ These came out of the requirements interview. Changing any of them needs your ap
 | **Reuse first** | **Pre-built software over custom software, whenever possible**, for you and for every Claude agent | A build-vs-buy check with your approval before any component is built (§2.2); the `reuse-scout` agent; the reviewer flags any reinvented wheel |
 | **Logging** | Everything that happens is logged in markdown under `logs/`, **split by area** | One log file per workstream, each with a short curated "Lessons" section so agents read only what's relevant (`CLAUDE_SETUP.md` §9) |
 | **Working agreement** | Claude has wide latitude; you stay in the loop **unit by unit**; you're consulted on **all major decisions**; Claude **stops and asks when unsure**; autonomy never lowers review and testing rigour | Encoded in `CLAUDE.md`, the `/next` and `/ship` checkpoints, permission prompts for dependency changes, and the PR template (§7) |
-| Merging | Claude opens PRs; you merge | Branch protection, deny rules and hooks |
+| Merging | Claude opens PRs and squash-merges them once the checks pass, then tells you ([ADR 0011](decisions/0011-claude-merges-its-own-prs.md)) | Branch protection, a guard hook (squash only, never a push to `main`) |
 | Claude in CI | No | CI is plain GitHub Actions; reviews happen inside sessions |
 | Upstream | Hard fork + monthly cherry-pick review | `upstream-scout` agent + `/upstream-port` skill |
 
@@ -369,7 +369,7 @@ possible. What Claude can't verify goes to you, explicitly listed in the PR (§7
 | Server | Module tests; Mongo/Redis integration tests | CI required |
 | UI | Unit tests; board visual snapshots; Playwright two-player E2E on desktop and phone viewports | CI (E2E on labelled PRs + nightly) |
 | Review | `reviewer` subagent on every unit (including a reuse check and a log check); `/security-review` on auth, session and websocket changes; `/code-review` as a second opinion on large units | Blocking findings fixed before the PR opens |
-| Human check | The PR's "Needs your verification" list (UX feel, real-device touch, Go judgement calls, anything Claude couldn't run) plus a ≤ 5-minute test | You, before merging |
+| Human check | The PR's "Needs your verification" list (UX feel, real-device touch, Go judgement calls, anything Claude couldn't run) plus a ≤ 5-minute test | You, after Claude merges; a problem gets a fix or a revert PR (ADR 0011) |
 
 ---
 
@@ -392,7 +392,8 @@ runs the tools, fixes what it finds, and opens the PR — without asking permiss
    - decisions made or needed;
    - the log entry.
 
-   You merge or send it back.
+   Claude squash-merges it once the checks pass and tells you (ADR 0011). You can still ask for a
+   follow-up or a revert.
 
 **Major decisions: always consult you:**
 - Build-vs-buy choices; adding, removing or swapping any dependency.
@@ -427,7 +428,7 @@ it says so and hands that check to you.
   Control for full-stack work, cloud sessions for self-contained work).
 - **Between sessions:** answer Claude's questions when notified.
 - **Session B (~1–2 h):** review each PR's walkthrough, screenshots and "needs your verification"
-  list; run the 5-minute test; merge or comment.
+  list; run the 5-minute test; ask for follow-ups or reverts where needed.
 - **Monthly (~30 min):** the upstream-scout report, plus a skim of each log's Lessons section, then
   adjust the plan.
 

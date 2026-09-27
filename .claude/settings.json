@@ -12,6 +12,7 @@
       "Bash(git switch *)", "Bash(git checkout -b *)", "Bash(git add *)", "Bash(git commit *)",
       "Bash(git fetch *)", "Bash(git push -u origin claude/*)", "Bash(git push -u origin feat/*)",
       "Bash(gh pr create *)", "Bash(gh pr view *)", "Bash(gh issue *)",
+      "Bash(gh pr merge *)", "mcp__github__merge_pull_request",
       "mcp__playwright", "mcp__mongodb", "mcp__context7"
     ],
     "ask": [
@@ -25,8 +26,7 @@
     ],
     "deny": [
       "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push origin main*)",
-      "Bash(gh pr merge*)", "Bash(git reset --hard origin/main*)",
-      "mcp__github__merge_pull_request", "mcp__github__enable_pr_auto_merge",
+      "Bash(git reset --hard origin/main*)", "mcp__github__enable_pr_auto_merge",
       "Read(./.env)", "Read(./.env.*)", "Read(./**/secrets/**)"
     ]
   },
@@ -36,7 +36,7 @@
       { "matcher": "compact", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\" --after-compact", "timeout": 30 } ] }
     ],
     "PreToolUse": [
-      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.sh\"", "timeout": 10 } ] },
+      { "matcher": "Bash|mcp__github__merge_pull_request", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.sh\"", "timeout": 10 } ] },
       { "matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-paths.sh\"", "timeout": 10 } ] }
     ],
     "PostToolUse": [

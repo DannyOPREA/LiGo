@@ -24,6 +24,25 @@
 - A shell comment that starts with the word "shellcheck" is read as a shellcheck directive (2026-09-26, unit 0.4).
 
 ## Entries (newest first)
+### 2026-09-27 · working agreement · Claude merges its own PRs (ADR 0011)
+- Did: owner asked to let Claude merge without his approval. ADR 0011; CLAUDE.md, PLAN §1.1/§7,
+  CLAUDE_SETUP §1/§3/§5/§6/§13/§14 and /ship (new step 10) updated. settings.json: `gh pr merge`
+  and `mcp__github__merge_pull_request` moved from deny to allow; auto-merge stays denied.
+  guard-bash now lets a PR merge through only as a squash-merge (blocks `--admin`, `--auto`,
+  `--merge`, `--rebase`) and also guards the MCP merge tool (`merge_method` must be `squash`).
+- Worked: `bats .claude/hooks/tests`: 47 passed (2 new tests). The settings change reloaded live:
+  the MCP merge tool appeared in this session as soon as the deny rule was removed.
+- Didn't work / dead ends: the reviewer found the first guard compared whole words, so
+  `--admin=true`, `--auto=true`, `--merge=true` slipped through. Fixed: flags are now unpacked
+  as `gh` reads them (`--flag=value`, bundled `-sm`), with tests. It also found PLAN §6 still had
+  the owner checking "Needs your verification" before merging; now after the merge (owner
+  chose "after merge").
+- Lessons: none new.
+- Decisions: ADR 0011 (owner's request; the merge conditions are Claude's default, stated in the
+  PR). Branch protection on `main` must not require an approving review.
+- Needs owner verification: when adding "Require a pull request before merging" to the `main`
+  ruleset, leave "Required approvals" at 0.
+
 ### 2026-09-26 · unit 0.4 · Claude config: CLAUDE.md, rules, settings, hooks, agents, skills, MCP, plugins
 - Did:
   - `CLAUDE.md` (root, 60 lines, imports STATUS) plus `lila/`, `lila/ui/`, `lila-ws/` CLAUDE.md

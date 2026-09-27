@@ -17,6 +17,7 @@ edit allowed). While the PR that introduces an ADR is still open, its wording ma
 | 0008 | [Dependency sources in cloud sessions](0008-cloud-dependency-sources.md) | Accepted | 2026-09-26 |
 | 0009 | [Remove upstream Git LFS attributes](0009-remove-lfs-attributes.md) | Accepted | 2026-09-26 |
 | 0010 | [Dev tooling on a trimmed copy of lila-docker](0010-dev-tooling-on-lila-docker.md) | Accepted | 2026-09-26 |
+| 0011 | [Claude merges its own PRs](0011-claude-merges-its-own-prs.md) | Accepted | 2026-09-27 |
 
 ## Template
 
