@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-27 | Owner asked: change the working agreement so Claude can merge without his approval | Claude squash-merges its own PRs once /verify (and CI, when it exists) passes, the reviewer has no blocking finding, no review thread or owner question is open; then tells the owner (owner, default picked by Claude) | ADR 0011 |
 | 2026-09-26 | Start unit 0.4 (Claude config)? | "Continue." (owner), taken as approval of the next unit in the build order | logs/tooling.md |
 | 2026-09-26 | How should unit 0.3 reuse lila-docker: trimmed copy in the repo, or clone on demand? | Trimmed copy (owner) | ADR 0010 |
 | 2026-09-26 | Start unit 0.3 (dev tooling)? | "Continue work on the project" (owner), taken as approval of the next unit in the build order | logs/tooling.md |

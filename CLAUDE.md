@@ -16,7 +16,9 @@ ADRs: `docs/decisions/` · Upstream pins: `docs/UPSTREAM.md`
   doesn't depend on the answer.
 - Autonomy never lowers rigour: test and review everything you can; run /verify; paste real
   output; never say "should work". List what you could NOT verify under "Needs your verification".
-- Never push to main, force-push, or merge. The owner merges (squash and merge).
+- Never push to main or force-push. Claude squash-merges its own unit PR once /verify passes
+  (and CI, once it exists), the reviewer has no blocking findings, no review thread is open and no
+  question to the owner is pending on it; then it tells the owner (ADR 0011).
 
 ## Reuse before build
 Ladder: use as-is → configure → wrap → vendor minimally → port → custom (glue only).

@@ -27,4 +27,9 @@ the answer.
 8. **/log** the unit in its area log (and logs/decisions.md for every question asked).
 9. **Open the PR** with `.github/pull_request_template.md`: every section filled, a plain-English
    walkthrough for a Scala newcomer, and an honest "Needs your verification" list. Update
-   docs/STATUS.md (/status). Never merge: the owner does.
+   docs/STATUS.md (/status).
+10. **Merge (ADR 0011).** Squash-merge the PR yourself (`gh pr merge <n> --squash`, or the GitHub
+    MCP merge tool with `merge_method: "squash"`) once all of these hold: /verify passed on the
+    PR's head (and CI is green, once it exists), the reviewer has no open blocking finding, no
+    review thread is open, and no question to the owner is pending on the unit. Then tell the owner
+    it merged. If any of them fails, leave the PR open and say what it waits on.

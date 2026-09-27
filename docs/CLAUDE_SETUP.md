@@ -45,7 +45,8 @@
    approval.
 7. **Small context, loaded on demand.** The root `CLAUDE.md` stays under ~150 lines. Detail lives in
    nested `CLAUDE.md` files, path-scoped `.claude/rules/`, skills, and the Lessons sections of the logs.
-8. **You merge; Claude never does.** Branch protection, deny rules and a guard hook enforce this.
+8. **Claude merges its own PRs once the checks pass, and tells you** ([ADR 0011](decisions/0011-claude-merges-its-own-prs.md)).
+   Squash-merge only, never a push to `main` or a force push; a guard hook enforces both.
 
 ---
 
@@ -126,7 +127,8 @@ Plan: `docs/PLAN.md` · Setup: `docs/CLAUDE_SETUP.md` · Glossary: `docs/glossar
   work that doesn't depend on the answer.
 - Autonomy never lowers rigour: test and review everything you can; run /verify; paste real
   output; never say "should work". List what you could NOT verify under "Needs your verification".
-- Never push to main, force-push, or merge.
+- Never push to main or force-push. Claude squash-merges its own unit PR once the checks pass
+  (ADR 0011).
 
 ## Reuse before build
 Ladder: use as-is → configure → wrap → vendor minimally → port → custom (glue only).
@@ -206,7 +208,7 @@ Ratings: Glicko-2 shown as kyu/dan, one pool; rated auto-handicap. Fixtures + do
     ],
     "deny": [
       "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push origin main*)",
-      "Bash(gh pr merge*)", "Bash(git reset --hard origin/main*)",
+      "Bash(git reset --hard origin/main*)",
       "Read(./.env)", "Read(./.env.*)", "Read(./**/secrets/**)"
     ]
   },
@@ -228,7 +230,8 @@ Notes:
   from this draft: no `ask` on `git push *` (ask beats allow, so it would have prompted on every
   push to a unit branch; guard-bash blocks pushes to main and force pushes instead); `ask` added
   on `.claude/settings.json` and `.claude/hooks/**` so the guards can't be changed silently; the
-  GitHub MCP merge tools denied.
+  GitHub MCP auto-merge tool denied. Since ADR 0011, `gh pr merge` and the GitHub MCP merge tool are
+  allowed, and guard-bash lets them through only as a squash-merge (no `--admin`, no `--auto`).
 - `auto` mode can't be set from project settings. On your box put `"defaultMode": "auto"` in
   `~/.claude/settings.json` (or use `acceptEdits`).
 - JVM memory comes from lila's `.sbtopts`. The status line shows branch · phase · unit · last
@@ -244,7 +247,7 @@ Scripts live in `.claude/hooks/`, are idempotent and fast, and have bats tests r
 |---|---|---|---|
 | `SessionStart` (`startup\|resume`) | `session-start.sh` | Detects cloud vs local. Makes sure sbt/scalafmt and Node 24 exist. Starts Mongo + Redis (lila-docker-based, idempotent). Runs `pnpm install --frozen-lockfile` only if the lockfile changed. Prints: STATUS "Now/Next/Blockers", the current unit and its approval, **open questions awaiting you**, and the **names** of the log files relevant to the current unit (not their contents). | Every session starts ready and oriented, without flooding the context. |
 | `SessionStart` (`compact`) | `session-start.sh --after-compact` | Re-injects the unit's acceptance criteria, open questions and relevant log names. | Nothing is lost after compaction. |
-| `PreToolUse` (`Bash`) | `guard-bash.sh` | Blocks force pushes, any push or merge to `main`, destructive git on `main`, `rm -rf` outside the repo or scratch, dropping Mongo DBs other than `ligo_test*`, `sbt clean` in the cloud. | Hard guarantees. |
+| `PreToolUse` (`Bash`) | `guard-bash.sh` | Blocks force pushes, any push or local merge to `main`, a PR merge that isn't a plain squash-merge (ADR 0011), destructive git on `main`, `rm -rf` outside the repo or scratch, dropping Mongo DBs other than `ligo_test*`, `sbt clean` in the cloud. | Hard guarantees. |
 | `PreToolUse` (`Edit\|Write`) | `guard-paths.sh` | Reads `agent_type`. Only `go-rules-expert` may touch `libs/conformance/fixtures/**` and `docs/rules/**` (and still triggers your `ask` prompt). Accepted ADRs are immutable. Generated output is never hand-edited. **Log files are append-only below the Lessons section**, so past entries can't be rewritten. | Protects the spec and the history. |
 | `PostToolUse` (`Edit\|Write`) | `format.sh` | Formats the touched file with lila's own configured tools (scalafmt, oxfmt/oxlint, stylelint); exit 2 with the remaining errors. | Formatting never reaches review. |
 | `PostToolUse` (`Edit\|Write`, async + `asyncRewake`) | `conformance-related-tests.sh` | When rules code, adapters or fixtures change, runs the fast conformance subset in the background and wakes Claude on failure. | Instant rules feedback. |
@@ -487,7 +490,8 @@ All of these are required on PRs to `main`:
 - Risks
 
 **Branch protection on `main`:** PR required, all checks required, linear history, no force-push,
-no bypass; only you merge.
+no bypass. No required approving review: Claude merges its own PRs once the checks pass
+(ADR 0011), and GitHub doesn't let a PR's author approve it.
 
 ---
 
@@ -516,11 +520,12 @@ step to you for approval by hand.
    OpenCL benchmark is recorded.
 6. **CI:** lila's workflows adapted, plus `meta.yml`, all green on the baseline.
 7. **Dry run:** a tiny real unit end-to-end (rebrand lichess → LiGo): `/next` approval → `/ship` →
-   PR → your merge.
+   PR → Claude's squash-merge once the checks pass.
 
 **Phase 0 is done when:**
 - The dry-run PR has green CI, a reviewer report, a screenshot, a walkthrough, an honest "needs your
-  verification" list, and a `logs/` entry, and you merged it in < 15 minutes of your time.
+  verification" list, and a `logs/` entry, it merged once its checks passed, and your review of it
+  took < 15 minutes of your time.
 - At least one `/ask` round-trip has been exercised: Claude paused, you answered from your phone, and
   the answer landed in `logs/decisions.md`.
 - A dependency-manifest edit triggered your permission prompt.
