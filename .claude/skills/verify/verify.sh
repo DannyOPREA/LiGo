@@ -60,6 +60,11 @@ if has '^lila/(modules|app|conf|project|build\.sbt)'; then
   add "lila tests" "dev/ligo test lila"
 fi
 if has '^lila-ws/'; then add "lila-ws tests" "dev/ligo test ws"; fi
+if has '^libs/go-rules/|^libs/conformance/fixtures/|^dev/ligo$'; then
+  add "go-rules scalafmt" "cd libs/go-rules && sbt --server --batch scalafmtCheckAll"
+  add "go-rules tests + fixtures" "dev/ligo test rules"
+  add "strategygames jar pin" "libs/go-rules/check-pin.sh"
+fi
 if has '^libs/conformance/|^libs/go-rules/|^libs/board/' && [[ -x "$ROOT/libs/conformance/fast-check.sh" ]]; then
   add "conformance (fast)" "libs/conformance/fast-check.sh"
 fi

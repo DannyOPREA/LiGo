@@ -33,6 +33,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 1.6 (conformance fixtures): format, checker and 130 cases (strategygames, goban, KataGo,
     LiGo's own) in `libs/conformance/`. Draft PR until the rules spec (1.5, PR #13) is approved,
     because the fixtures encode its recommended choices.
+  - Unit 1.7 (server rules adapter): `libs/go-rules` over strategygames passes all 115 server
+    fixtures under both rulesets, with property and SGF tests, `dev/ligo test rules` and a `rules`
+    CI workflow. PR waits on the rules spec (1.5) and two questions in its thread.
   - Unit 1.5: rules spec drafted in docs/rules/spec.md; written against the recommended options of
     the open memos 1.2–1.4 (marked "Depends on memo"); 11 open points await your approval.
 
@@ -46,6 +49,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Waiting on owner
 - Approve the rules spec's 11 open points (docs/rules/spec.md §12; card in the unit 1.5 thread).
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
+- Unit 1.7: two cards in its thread (who tracks resuming after scoring; SGF read-back moved to
+  1.8). After it merges: add the `rules` job to the `main` ruleset's required checks.
 - Unit 1.6: approve the fixture writes (permission prompts) and, with the rules spec, the fixtures.
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).

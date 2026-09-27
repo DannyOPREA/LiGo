@@ -5,6 +5,8 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-27 | 1.7: who tracks resuming after the scoring phase and the limit on resuming: the rules adapter or lila? | Pending (card in the unit 1.7 thread); built on the recommendation, the adapter | logs/rules-engine.md |
+| 2026-09-27 | 1.7: move the SGF read-back half of the round trip to unit 1.8 (strategygames only writes SGF; no parser of our own)? | Pending (card in the unit 1.7 thread); built on the recommendation, split it | logs/rules-engine.md |
 | 2026-09-27 | 1.6: approve the 130 conformance fixtures (they encode the draft rules spec's recommended choices, PR #13) and their licensing (each imported file keeps its source's licence)? | Pending; asked in the unit 1.6 PR, which stays a draft until the spec is approved | logs/rules-engine.md |
 | 2026-09-27 | 1.5: approve the rules spec's 11 open points (docs/rules/spec.md §12) with the recommended choices? | Pending (card in the unit 1.5 thread) | PR #13 |
 | 2026-09-27 | 1.1: server-side Go rules + byo-yomi clock: strategygames as a dependency (unused games excluded) or vendor only its Go package and clock? | Dependency, unused games excluded (owner, on Claude's recommendation) | ADR 0012 |

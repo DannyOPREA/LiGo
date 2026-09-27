@@ -89,6 +89,7 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | Assets imported with lila (fonts, flags, piece sets, sounds, images) | `lila/public/` | various | Per `lila/COPYING.md` and COPYING §1.1 |
 | Rules test positions adapted from strategygames' and KataGo's tests | `libs/conformance/fixtures/strategygames.json`, `katago.json` | MIT | Notices in `libs/conformance/NOTICE.md` |
 | Rules test positions adapted from OGS goban's tests | `libs/conformance/fixtures/goban.json` | Apache-2.0 | `libs/conformance/LICENSE-Apache-2.0.txt`; goban ships no NOTICE file |
+| PlayStrategy strategygames `10.2.1-s3-ps14` (Go rules; a dependency, not copied), with its other games' engines excluded (ADR 0012) | `libs/go-rules/build.sbt` | MIT | Notice in `libs/go-rules/NOTICE.md`; jar SHA-256 pinned in `docs/UPSTREAM.md` |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they
