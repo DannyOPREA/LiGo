@@ -35,8 +35,8 @@
 - Didn't work / dead ends: the reviewer found the first guard compared whole words, so
   `--admin=true`, `--auto=true`, `--merge=true` slipped through. Fixed: flags are now unpacked
   as `gh` reads them (`--flag=value`, bundled `-sm`), with tests. It also found PLAN §6 still had
-  the owner checking "Needs your verification" before merging; now after the merge (Claude's
-  default, put to the owner).
+  the owner checking "Needs your verification" before merging; now after the merge (owner
+  chose "after merge").
 - Lessons: none new.
 - Decisions: ADR 0011 (owner's request; the merge conditions are Claude's default, stated in the
   PR). Branch protection on `main` must not require an approving review.
