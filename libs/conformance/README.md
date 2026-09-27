@@ -111,7 +111,8 @@ disagree, the `go-rules-expert` agent decides which one is wrong and asks the ow
 checks. Most rules no fixture covers belong to lila rather than to a rules engine: resigning,
 time-outs, forfeits and draws (R-END-2 to R-END-5), the scoring-phase flow of proposals,
 toggles, acceptance and its timeout (R-SP-2 to R-SP-5, R-SP-7), and komi defaults (R-KOMI-1,
-R-KOMI-4). Their tests come with the Phase 4 units that build them.
+R-KOMI-4). Their tests come with the Phase 4 units that build them. Still open for a later
+fixture change: R-KO-7 (dead marks create no situations), R-HCP-1, R-RES-1 and R-SCORE-J3.
 
 Expectations that only LiGo's server enforces (`phase`, `in-scoring`, `not-in-scoring`,
 `resume-limit`, `undo`) have no engine to check them against until unit 1.7's adapter exists.

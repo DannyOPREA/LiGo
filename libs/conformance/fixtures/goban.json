@@ -1,0 +1,769 @@
+{
+  "format": 1,
+  "idPrefix": "goban-",
+  "source": {
+    "name": "goban",
+    "url": "https://github.com/online-go/goban",
+    "commit": "e61c56e246726481ab39bdddbfc886a4df06b786",
+    "license": "Apache-2.0"
+  },
+  "cases": [
+    {
+      "id": "goban-basic-placement",
+      "title": "Seven ordinary moves on an empty 19x19 board put the stones where they were played, alternating colours",
+      "rules": ["R-MOVE-1", "R-MOVE-2"],
+      "from": "test/unit_tests/GoEngine.test.ts:227",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "moves": ["qd", "dc", "pq", "oc", "cp", "qo", "pe"],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...O..........O....",
+          "................X..",
+          "...............X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "................O..",
+          "..X................",
+          "...............X...",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 0,
+          "white": 0
+        },
+        "phase": "play"
+      },
+      "notes": "goban place(x, y) calls converted to SGF points (x = column, y = row from the top)."
+    },
+    {
+      "id": "goban-stone-on-stone",
+      "title": "White may not play on the point where Black has just played",
+      "rules": ["R-MOVE-3", "R-MOVE-8"],
+      "from": "test/unit_tests/GoEngine.test.ts:261",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["bb"],
+      "expect": {
+        "toMove": "white",
+        "illegal": [
+          {"move": "bb", "reason": "occupied"}
+        ],
+        "legal": ["cc"]
+      },
+      "notes": "The source uses a 3x3 board; occupancy does not depend on board size, so it is played on 9x9. The legal alternative cc is LiGo's addition."
+    },
+    {
+      "id": "goban-corner-capture",
+      "title": "Black captures a lone White stone in the corner; White may not play straight back into the corner (it would be suicide)",
+      "rules": ["R-MOVE-4", "R-MOVE-5", "R-KO-4"],
+      "from": "test/unit_tests/GoEngine.test.ts:271",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ab", "aa", "ba"],
+      "expect": {
+        "board": [
+          ".X.......",
+          "X........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": null,
+        "toMove": "white",
+        "illegal": [
+          {"move": "aa", "reason": "suicide"}
+        ]
+      },
+      "notes": "Source is a 2x2 board; the corner point aa has the same two neighbours on 9x9, so the capture is unchanged. On 2x2 the capturing stone ba has one liberty (a ko); on 9x9 it has two (ca, bb), so there is no ko point. The suicide check on aa is LiGo's addition (the source's 'removed_stones parameter' test at :383 plays the same three moves)."
+    },
+    {
+      "id": "goban-ko-no-immediate-retake",
+      "title": "Simple ko: after White captures one stone in a ko, Black may not retake at once",
+      "rules": ["R-KO-1", "R-KO-4", "R-MOVE-4", "R-MOVE-6"],
+      "from": "test/unit_tests/GoEngine.test.ts:284",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".XO......",
+          "X..O.....",
+          ".XO......",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["cb", "bb"],
+      "expect": {
+        "board": [
+          ".XO......",
+          "XO.O.....",
+          ".XO......",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 0,
+          "white": 1
+        },
+        "koPoint": "cb",
+        "toMove": "black",
+        "illegal": [
+          {"move": "cb", "reason": "superko"}
+        ],
+        "legal": ["gg"]
+      },
+      "notes": "Source is a 4x3 board (initial_state black baabbc, white cadbcc) embedded in the 9x9 top-left corner. Every chain in the ko keeps the same liberties (on 4x3 the far edges were column d and row c; on 9x9 only the outer stones bc, cc and db gain liberties, and none of them is in atari), so the ko is unchanged. The legal move elsewhere (gg) is LiGo's addition."
+    },
+    {
+      "id": "goban-superko-original-test-recreates-start",
+      "title": "In goban's own superko test position, White's recapture at B19 is illegal: after Black's opening pass it recreates the starting position with Black to move",
+      "rules": ["R-KO-1", "R-KO-2", "R-KO-6"],
+      "from": "test/unit_tests/GoEngine.test.ts:308",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "setup": {
+        "board": [
+          ".O.XO..............",
+          "OXXXO..............",
+          "O.XOO..............",
+          "XXXO...............",
+          "OOOO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "ca", "aa"],
+      "expect": {
+        "board": [
+          "X..XO..............",
+          "OXXXO..............",
+          "O.XOO..............",
+          "XXXO...............",
+          "OOOO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "captures": {
+          "black": 2,
+          "white": 0
+        },
+        "koPoint": null,
+        "toMove": "white",
+        "illegal": [
+          {"move": "ba", "reason": "superko"}
+        ],
+        "legal": ["pass"]
+      },
+      "knownGaps": {
+        "client": "goban-engine never compares with the starting position (spec §9); replayed on 8.3.226 it allows W ba. goban's own test at this line plays W ba as a legal move and only refuses the later W C19."
+      },
+      "notes": "goban's superko test (sending two, returning one) as written: B pass, W C19 (ca), B A19 (aa) captures two, W B19 (ba) captures one, B pass, W C19 refused. Under R-KO-2 the sequence stops earlier: W B19 recreates the starting situation (the setup, Black to move), which goban never checks and KataGo refuses. So this imports the position and the first three moves and expects W B19 to be illegal. The source's final refusal of W C19 is kept in goban-superko-across-a-pass and goban-superko-back-to-start (with an extra White stone at C19)."
+    },
+    {
+      "id": "goban-superko-across-a-pass",
+      "title": "A pass does not lift a superko ban: White may not recreate the position (with Black to move) that existed after White's opening pass",
+      "rules": ["R-KO-2", "R-KO-5"],
+      "from": "test/unit_tests/GoEngine.test.ts:308",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "setup": {
+        "board": [
+          ".OOXO..............",
+          "OXXXO..............",
+          "O.XOO..............",
+          "XXXO...............",
+          "OOOO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white"
+      },
+      "moves": ["pass", "aa", "ba", "pass"],
+      "expect": {
+        "board": [
+          ".O.XO..............",
+          "OXXXO..............",
+          "O.XOO..............",
+          "XXXO...............",
+          "OOOO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "illegal": [
+          {"move": "ca", "reason": "superko"}
+        ],
+        "legal": ["pass"]
+      },
+      "openPoints": [1],
+      "notes": "Spec §10 case: goban's superko position plus a White stone at C19 (ca), White to move. The only earlier situation W ca recreates is the one after White's first pass, so the case holds only if situations after a pass count (open point 1). goban 8.3.226 with ssk refuses it; strategygames as shipped allows it (it records no post-pass situations), which the unit 1.7 adapter must fix."
+    },
+    {
+      "id": "goban-superko-back-to-start",
+      "title": "White may not recreate the game's starting position (with Black to move) even though it was never produced by a move",
+      "rules": ["R-KO-1", "R-KO-2"],
+      "from": "test/unit_tests/GoEngine.test.ts:308",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "setup": {
+        "board": [
+          ".OOXO..............",
+          "OXXXO..............",
+          "O.XOO..............",
+          "XXXO...............",
+          "OOOO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["aa", "ba", "pass"],
+      "expect": {
+        "board": [
+          ".O.XO..............",
+          "OXXXO..............",
+          "O.XOO..............",
+          "XXXO...............",
+          "OOOO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "illegal": [
+          {"move": "ca", "reason": "superko"}
+        ],
+        "legal": ["pass"]
+      },
+      "knownGaps": {
+        "client": "goban-engine's superko search stops at move 1 and never compares with the starting position (spec §9); replayed on 8.3.226 it allows W ca."
+      },
+      "notes": "Spec §10 case: goban's superko position plus a White stone at C19 (ca), Black to move. W ca recreates the starting situation, which R-KO-2 includes in the history."
+    },
+    {
+      "id": "goban-suicide-corner",
+      "title": "Black may not play in a corner surrounded by two White stones (suicide)",
+      "rules": ["R-MOVE-5", "R-MOVE-8"],
+      "from": "test/unit_tests/GoEngine.test.ts:336",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".O.......",
+          "O........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "expect": {
+        "illegal": [
+          {"move": "aa", "reason": "suicide"}
+        ],
+        "toMove": "black"
+      },
+      "notes": "Source is a 2x2 board; the corner aa has the same two neighbours on 9x9 and the White stones still have liberties, so the move is still suicide. goban's companion test at :356 (Ing rules, suicide allowed) is not imported: suicide is out of scope (R-SCOPE-3)."
+    },
+    {
+      "id": "goban-handicap-4-placement",
+      "title": "A 4-stone handicap on 19x19 puts Black stones on the four corner star points and White moves first",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "test/unit_tests/GoEngine.test.ts:86",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 4,
+      "moves": [],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "openPoints": [2],
+      "notes": "goban's 'Japanese handicap' test creates a 4-stone game and only checks the score (357 points of Black territory implies four stones). Placement points from R-HCP-4. Under Chinese rules this depends on fixed placement (open point 2)."
+    },
+    {
+      "id": "goban-score-empty-board-japanese",
+      "title": "Both players pass on an empty board under Japanese rules: White wins by the komi",
+      "rules": ["R-END-1", "R-SCORE-J1", "R-SCORE-4", "R-RES-2"],
+      "from": "test/unit_tests/GoEngine.test.ts:38",
+      "appliesTo": ["server", "client", "scoring"],
+      "size": 19,
+      "ruleset": "japanese",
+      "komi": 6.5,
+      "moves": ["pass", "pass"],
+      "expect": {
+        "phase": "scoring",
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ]
+      },
+      "score": {
+        "dead": [],
+        "black": 0,
+        "white": 6.5,
+        "result": "W+6.5"
+      },
+      "notes": "goban's 'GobanEngine defaults' test (Japanese, komi 6.5, empty board). The two passes are LiGo's addition so the game reaches the scoring phase."
+    },
+    {
+      "id": "goban-score-handicap-4-japanese",
+      "title": "Japanese 4-stone handicap game passed out at once: Black owns the whole board as territory, White has only the 0.5 komi",
+      "rules": ["R-SCORE-J1", "R-SCORE-4", "R-KOMI-3", "R-HCP-5", "R-KOMI-2"],
+      "from": "test/unit_tests/GoEngine.test.ts:86",
+      "appliesTo": ["scoring"],
+      "size": 19,
+      "ruleset": "japanese",
+      "handicap": 4,
+      "komi": 0.5,
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": [],
+        "black": 357,
+        "white": 0.5,
+        "result": "B+356.5"
+      },
+      "notes": "Source expects Black territory 357, White komi 0.5, no handicap compensation under Japanese rules. White moves first (handicap), so the passes are White's then Black's."
+    },
+    {
+      "id": "goban-score-handicap-4-chinese",
+      "title": "Chinese 4-stone handicap game passed out at once: White gets 0.5 komi plus 4 points of handicap compensation",
+      "rules": ["R-SCORE-C1", "R-SCORE-4", "R-KOMI-3", "R-HCP-5", "R-KOMI-2"],
+      "from": "test/unit_tests/GoEngine.test.ts:104",
+      "appliesTo": ["scoring"],
+      "size": 19,
+      "ruleset": "chinese",
+      "handicap": 4,
+      "komi": 0.5,
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": [],
+        "black": 361,
+        "white": 4.5,
+        "result": "B+356.5"
+      },
+      "openPoints": [3],
+      "notes": "Adapted from goban's AGA handicap test, which expects AGA's N-1 = 3 points of compensation. LiGo's Chinese rules give N = 4 (R-KOMI-3, open point 3), as goban's own Chinese preset does. Black: 4 stones + 357 area."
+    },
+    {
+      "id": "goban-score-both-territory-japanese",
+      "title": "Japanese count: Black and White each wall off their side of the board; each side's empty points are its territory",
+      "rules": ["R-SCORE-2", "R-SCORE-J1", "R-SCORE-4"],
+      "from": "test/unit_tests/GoEngine.test.ts:121",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "japanese",
+      "komi": 6.5,
+      "setup": {
+        "board": [
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO...."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": [],
+        "black": 27,
+        "white": 42.5,
+        "result": "W+15.5"
+      },
+      "notes": "Source is a 4x4 board with a Black wall on column b and a White wall on column c. Scaled to 9x9 by putting the walls on columns d and e: Black territory is columns a-c (27), White's is f-i (36) plus komi 6.5."
+    },
+    {
+      "id": "goban-score-both-territory-chinese",
+      "title": "Chinese count: the same two walls; each side scores its stones plus its empty points",
+      "rules": ["R-SCORE-2", "R-SCORE-C1", "R-SCORE-4"],
+      "from": "test/unit_tests/GoEngine.test.ts:147",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "chinese",
+      "komi": 7.5,
+      "setup": {
+        "board": [
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO...."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": [],
+        "black": 36,
+        "white": 52.5,
+        "result": "W+16.5"
+      },
+      "notes": "Same adaptation as goban-score-both-territory-japanese: Black 9 stones + 27, White 9 stones + 36 + komi 7.5."
+    },
+    {
+      "id": "goban-score-removed-stones-chinese",
+      "title": "Chinese count with one dead stone inside each side's area: the dead stones' points count for the side that surrounds them",
+      "rules": ["R-SCORE-1", "R-SCORE-2", "R-SCORE-C1"],
+      "from": "test/unit_tests/GoEngine.test.ts:178",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "chinese",
+      "komi": 7.5,
+      "setup": {
+        "board": [
+          "O..XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO...X"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": ["aa", "ii"],
+        "black": 36,
+        "white": 52.5,
+        "result": "W+16.5"
+      },
+      "notes": "Source: the 4x4 two-wall board with a dead White stone in Black's corner (aa) and a dead Black stone in White's (dd), totals unchanged by them. Scaled like goban-score-both-territory-chinese; the dead Black stone sits at ii, White's far corner."
+    },
+    {
+      "id": "goban-score-removed-stones-japanese",
+      "title": "Japanese count with one dead stone inside each side's territory: each counts as a prisoner and its point as territory",
+      "rules": ["R-SCORE-1", "R-SCORE-2", "R-SCORE-J1"],
+      "from": "test/unit_tests/GoEngine.test.ts:178",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "japanese",
+      "komi": 6.5,
+      "setup": {
+        "board": [
+          "O..XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO....",
+          "...XO...X"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": ["aa", "ii"],
+        "black": 28,
+        "white": 43.5,
+        "result": "W+15.5"
+      },
+      "notes": "The source test is Chinese only; this is the same position counted under Japanese rules (LiGo's addition): Black 27 territory + 1 prisoner, White 36 + 1 + komi 6.5."
+    },
+    {
+      "id": "goban-score-seki-game-japanese",
+      "title": "A finished 19x19 game with seki, Japanese count: the points inside the seki count for nobody",
+      "rules": ["R-SCORE-1", "R-SCORE-J1", "R-SCORE-J2", "R-SCORE-3"],
+      "from": "test/autoscore_test_files/game_seki_64848549.json:1",
+      "appliesTo": ["scoring"],
+      "size": 19,
+      "ruleset": "japanese",
+      "komi": 6.5,
+      "setup": {
+        "board": [
+          ".X.OX..XOX.OOX.O.X.",
+          "XOOOX..XOXXXXXXOXXX",
+          "X.OXX..XOOOOOOOXXOO",
+          "OOOX...XO.....OOO..",
+          "XXXX...XOOOOOOO.OOO",
+          "OOOOX.X.XXOXXOXXXXX",
+          ".O.OX....X.X.XX.OOO",
+          "..OOX....X.XXOOOOX.",
+          "OOOXOX...XO.XO..OOO",
+          ".OOX.X...XO.XOXXO..",
+          ".OX.....XXOXXO..OXX",
+          "XOX.XXXXOO.OOXXXXX.",
+          "OXXXO..XO....OOO.XX",
+          "O..XOO.XOOOOO.O.OOO",
+          "OOOO.OXX.XXO.OOOOXX",
+          "XXXOOX.XXX.XXXXOX..",
+          ".X.XOXXX.XXO..XOXXX",
+          "XOXXO.XOOOOOOOXOX.O",
+          ".O.XO.XO.XXX.OXOXO."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": ["la", "ma", "rh", "ei", "al"],
+        "black": 40,
+        "white": 26.5,
+        "result": "B+13.5"
+      },
+      "notes": "OGS game 64848549 (Japanese) from goban's autoscore test files. Dead stones are the ones goban's autoscore removes on the file's stored KataGo ownership maps, which goban's own test accepts against the file's correct_ownership. The file has no prisoners from play or komi: captures during play are taken as 0 and komi is R-KOMI-1's 6.5. goscorer via goban-engine 8.3.226 computeScore: Black territory 37 + 3 prisoners, White territory 18 + 2 prisoners + 6.5."
+    },
+    {
+      "id": "goban-score-seki-game-chinese",
+      "title": "The same seki game, Chinese count: the seki groups' eyes count for their owner, the shared liberties for nobody",
+      "rules": ["R-SCORE-1", "R-SCORE-C1", "R-SCORE-C2", "R-SCORE-3"],
+      "from": "test/autoscore_test_files/game_seki_64848549.json:1",
+      "appliesTo": ["scoring"],
+      "size": 19,
+      "ruleset": "chinese",
+      "komi": 7.5,
+      "setup": {
+        "board": [
+          ".X.OX..XOX.OOX.O.X.",
+          "XOOOX..XOXXXXXXOXXX",
+          "X.OXX..XOOOOOOOXXOO",
+          "OOOX...XO.....OOO..",
+          "XXXX...XOOOOOOO.OOO",
+          "OOOOX.X.XXOXXOXXXXX",
+          ".O.OX....X.X.XX.OOO",
+          "..OOX....X.XXOOOOX.",
+          "OOOXOX...XO.XO..OOO",
+          ".OOX.X...XO.XOXXO..",
+          ".OX.....XXOXXO..OXX",
+          "XOX.XXXXOO.OOXXXXX.",
+          "OXXXO..XO....OOO.XX",
+          "O..XOO.XOOOOO.O.OOO",
+          "OOOO.OXX.XXO.OOOOXX",
+          "XXXOOX.XXX.XXXXOX..",
+          ".X.XOXXX.XXO..XOXXX",
+          "XOXXO.XOOOOOOOXOX.O",
+          ".O.XO.XO.XXX.OXOXO."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": ["la", "ma", "rh", "ei", "al"],
+        "black": 177,
+        "white": 157.5,
+        "result": "B+19.5"
+      },
+      "notes": "Same position and dead stones as goban-score-seki-game-japanese, counted by area with R-KOMI-1's 7.5. goscorer via goban-engine 8.3.226 computeScore: Black 128 stones + 49, White 125 stones + 25 + 7.5."
+    },
+    {
+      "id": "goban-score-9x9-game-japanese",
+      "title": "A finished 9x9 game with two dead White stones, Japanese count",
+      "rules": ["R-SCORE-1", "R-SCORE-J1", "R-SCORE-3"],
+      "from": "test/autoscore_test_files/game_34725406.json:1",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "japanese",
+      "komi": 6.5,
+      "setup": {
+        "board": [
+          "......OX.",
+          ".....OOXX",
+          "..O..OX.X",
+          ".....OXX.",
+          "OOOOOXOO.",
+          "OXXXOXXX.",
+          "X.XOOOX..",
+          ".X.XOOOX.",
+          "...XOXXX."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": ["ge", "he"],
+        "black": 19,
+        "white": 26.5,
+        "result": "W+7.5"
+      },
+      "notes": "OGS game 34725406 from goban's autoscore test files (no ruleset given there; counted here under both). Dead stones as removed by goban's autoscore, matching the file's correct_ownership. Captures during play taken as 0. goscorer via computeScore: Black 17 territory + 2 prisoners, White 20 + 6.5."
+    },
+    {
+      "id": "goban-score-9x9-game-chinese",
+      "title": "The same 9x9 game, Chinese count: the areas add up to all 81 points",
+      "rules": ["R-SCORE-1", "R-SCORE-C1", "R-SCORE-3"],
+      "from": "test/autoscore_test_files/game_34725406.json:1",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "chinese",
+      "komi": 7.5,
+      "setup": {
+        "board": [
+          "......OX.",
+          ".....OOXX",
+          "..O..OX.X",
+          ".....OXX.",
+          "OOOOOXOO.",
+          "OXXXOXXX.",
+          "X.XOOOX..",
+          ".X.XOOOX.",
+          "...XOXXX."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["pass", "pass"],
+      "score": {
+        "dead": ["ge", "he"],
+        "black": 41,
+        "white": 47.5,
+        "result": "W+6.5"
+      },
+      "notes": "Same position and dead stones as goban-score-9x9-game-japanese. computeScore: Black 24 stones + 17, White 20 stones + 20 + 7.5."
+    }
+  ]
+}

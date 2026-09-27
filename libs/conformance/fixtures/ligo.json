@@ -1,0 +1,957 @@
+{
+  "format": 1,
+  "idPrefix": "ligo-",
+  "source": {
+    "name": "LiGo",
+    "url": "https://github.com/DannyOPREA/LiGo",
+    "commit": "unit-1.6",
+    "license": "MIT"
+  },
+  "cases": [
+    {
+      "id": "ligo-undo-ko-capture-then-capture-again",
+      "title": "Black takes a ko, the capture is taken back, and Black may take the same ko again",
+      "rules": ["R-KO-8", "R-KO-1"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..XO.O...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ed", "undo"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..XO.O...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black",
+        "captures": {
+          "black": 0,
+          "white": 0
+        },
+        "koPoint": null,
+        "legal": ["ed"]
+      },
+      "notes": "Without R-KO-8 the undone situation (after Black's capture, White to move) would still be in the history and the capture would wrongly count as a repetition."
+    },
+    {
+      "id": "ligo-undo-then-replay-keeps-ko-rule",
+      "title": "After a ko capture is taken back and played again, White still may not retake at once",
+      "rules": ["R-KO-8", "R-KO-4"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..XO.O...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ed", "undo", "ed"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..X.XO...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": "dd",
+        "illegal": [
+          {"move": "dd", "reason": "superko"}
+        ]
+      },
+      "notes": "The takeback removes only the undone situation; the starting situation stays in the history, so the immediate retake is still refused."
+    },
+    {
+      "id": "ligo-undo-removes-only-the-undone-move",
+      "title": "Taking back White's move elsewhere does not lift the ko ban: White still may not retake the ko",
+      "rules": ["R-KO-8", "R-KO-1"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..XO.O...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ed", "hh", "undo"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..X.XO...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "illegal": [
+          {"move": "dd", "reason": "superko"}
+        ],
+        "legal": ["hh"]
+      },
+      "notes": "White plays elsewhere at hh (H2) and takes it back. The situation after hh leaves the history (so hh is legal again, R-KO-8) but the situation before Black's ko capture stays, so retaking the ko is still illegal."
+    },
+    {
+      "id": "ligo-ko-ban-survives-pass-pass-resume",
+      "title": "Black takes a ko, both players pass, play resumes: White still may not retake at once",
+      "rules": ["R-KO-5", "R-KO-2", "R-SP-6"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..XO.O...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ed", "pass", "pass", "resume"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "...XO....",
+          "..X.XO...",
+          "...XO....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "phase": "play",
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "illegal": [
+          {"move": "dd", "reason": "superko"}
+        ]
+      },
+      "openPoints": [6],
+      "notes": "White passed first and Black second, so White (the opponent of the second passer) moves after the resumption. The retake would recreate the starting situation (this board, Black to move), so it is illegal whatever open point 1 decides about post-pass situations; under simple ko the passes would have lifted the ban."
+    },
+    {
+      "id": "ligo-two-passes-start-scoring",
+      "title": "Two passes in a row end play and start the scoring phase",
+      "rules": ["R-END-1"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass"],
+      "expect": {
+        "phase": "scoring",
+        "legal": ["resume"]
+      }
+    },
+    {
+      "id": "ligo-resume-gives-move-to-opponent-of-second-passer",
+      "title": "After Black plays, White passes and Black passes, resuming play gives the move to White",
+      "rules": ["R-SP-6"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["ee", "pass", "pass", "resume"],
+      "expect": {
+        "phase": "play",
+        "toMove": "white",
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "illegal": [
+          {"move": "resume", "reason": "not-in-scoring"}
+        ]
+      },
+      "openPoints": [6],
+      "notes": "Black passed second, so White moves. Under open point 6's alternative, who moves would depend on who asked to resume."
+    },
+    {
+      "id": "ligo-resume-empty-board-black-to-move",
+      "title": "Both players pass at the start, play resumes, and Black (who passed first) moves again",
+      "rules": ["R-SP-6"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass", "resume"],
+      "expect": {
+        "phase": "play",
+        "toMove": "black",
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "legal": ["pass", "ee"]
+      },
+      "openPoints": [6]
+    },
+    {
+      "id": "ligo-one-pass-after-resume-is-still-play",
+      "title": "After play resumes, one pass does not end play again (the pass count restarted)",
+      "rules": ["R-SP-6", "R-END-1"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass", "resume", "pass"],
+      "expect": {
+        "phase": "play",
+        "toMove": "white",
+        "legal": ["pass", "ee"]
+      },
+      "openPoints": [6],
+      "notes": "strategygames counts this as the third pass in a row and would let the player to move submit dead stones; the adapter must restart the count at the resumption (spec §9)."
+    },
+    {
+      "id": "ligo-two-passes-after-resume-score-again-not-settle",
+      "title": "Pass, pass, resume, pass, pass: a new scoring phase starts and the game is not over",
+      "rules": ["R-SP-6", "R-END-1", "R-SP-9"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass", "resume", "pass", "pass"],
+      "expect": {
+        "phase": "scoring",
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "illegal": [
+          {"move": "resume", "reason": "resume-limit"}
+        ]
+      },
+      "openPoints": [6, 10],
+      "notes": "Four passes in total: strategygames' four-pass settlement (passesSettlingTheGame = 4, which ends the game with no dead stones) must never fire (spec §9). No stone was placed since the resumption, so a second resumption is refused (R-SP-9); the phase ends by acceptance or timeout."
+    },
+    {
+      "id": "ligo-resume-allowed-again-after-a-stone",
+      "title": "Pass, pass, resume, a stone, pass, pass: a stone was placed since the resumption, so play may resume again",
+      "rules": ["R-SP-9", "R-SP-6", "R-END-1"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass", "resume", "ee", "pass", "pass"],
+      "expect": {
+        "phase": "scoring",
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "legal": ["resume"]
+      },
+      "openPoints": [6, 10]
+    },
+    {
+      "id": "ligo-second-resume-after-a-stone",
+      "title": "The second resumption after a stone was placed gives the move to the opponent of the second passer",
+      "rules": ["R-SP-9", "R-SP-6"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass", "resume", "ee", "pass", "pass", "resume"],
+      "expect": {
+        "phase": "play",
+        "toMove": "white",
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "legal": ["pass", "ce"]
+      },
+      "openPoints": [6, 10],
+      "notes": "After the first resumption Black plays E5, White passes, Black passes: Black passed second, so White moves. Six passes so far in the game; none of strategygames' pass counting may end it."
+    },
+    {
+      "id": "ligo-resume-limit-applies-again",
+      "title": "After the second resumption, two passes with no stone in between: resuming a third time is refused",
+      "rules": ["R-SP-9", "R-END-1"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass", "resume", "ee", "pass", "pass", "resume", "pass", "pass"],
+      "expect": {
+        "phase": "scoring",
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "illegal": [
+          {"move": "resume", "reason": "resume-limit"}
+        ]
+      },
+      "openPoints": [6, 10]
+    },
+    {
+      "id": "ligo-stone-between-passes-resets-count",
+      "title": "Pass, stone, pass: the passes were not consecutive, so play goes on",
+      "rules": ["R-END-1"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "ee", "pass"],
+      "expect": {
+        "phase": "play",
+        "toMove": "white",
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....O....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "illegal": [
+          {"move": "resume", "reason": "not-in-scoring"}
+        ]
+      },
+      "notes": "Black passes, White plays E5, Black passes: White to move."
+    },
+    {
+      "id": "ligo-resume-during-play-refused",
+      "title": "Resuming is refused while the game is still in play",
+      "rules": ["R-SP-6"],
+      "from": "new",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["ee"],
+      "expect": {
+        "phase": "play",
+        "toMove": "white",
+        "illegal": [
+          {"move": "resume", "reason": "not-in-scoring"}
+        ]
+      }
+    },
+    {
+      "id": "ligo-long-ko-fight-never-ends-game",
+      "title": "A ko is taken and retaken 16 times with threats in between: the game goes on and the next capture is legal",
+      "rules": ["R-KO-6", "R-KO-1"],
+      "from": "new",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "setup": {
+        "board": [
+          "...................",
+          "...................",
+          "...XO..............",
+          "..XO.O.............",
+          "...XO..............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "black"
+      },
+      "moves": [
+        "ed", "cp", "co", "dd", "ck", "cl", "ed", "dp", "do", "dd", "dk", "dl", "ed", "ep", "eo",
+        "dd", "ek", "el", "ed", "fp", "fo", "dd", "fk", "fl", "ed", "gp", "go", "dd", "gk", "gl",
+        "ed", "hp", "ho", "dd", "hk", "hl", "ed", "ip", "io", "dd", "ik", "il", "ed", "jp", "jo",
+        "dd", "jk", "jl"
+      ],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...XO..............",
+          "..XO.O.............",
+          "...XO..............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..XXXXXXXX.........",
+          "..OOOOOOOO.........",
+          "...................",
+          "...................",
+          "..XXXXXXXX.........",
+          "..OOOOOOOO.........",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "phase": "play",
+        "toMove": "black",
+        "captures": {
+          "black": 8,
+          "white": 8
+        },
+        "koPoint": null,
+        "legal": ["ed"]
+      },
+      "notes": "PlayStrategy bug class 'early end on repetition': the same local ko shape comes back 16 times, but the whole board is new each time because of the threats and answers (White's threats on row 4, answered by Black on row 5; Black's threats on row 9, answered by White on row 8). No repetition draw, no 'no result', no end of game (R-KO-6)."
+    },
+    {
+      "id": "ligo-superko-more-than-30-moves-back",
+      "title": "Seven kos are taken in turn for 39 moves; White's next capture would recreate the position after move 2 (38 moves back), so it is illegal",
+      "rules": ["R-KO-2", "R-KO-1"],
+      "from": "new",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "setup": {
+        "board": [
+          "...................",
+          "..XO...XO...XO.....",
+          ".X.XO.X.XO.X.XO....",
+          "..XO...XO...XO.....",
+          "...................",
+          "..XO...XO...XO.....",
+          ".XO.O.XO.O.XO.O....",
+          "..XO...XO...XO.....",
+          "...................",
+          "..XO...............",
+          ".XO.O..............",
+          "..XO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "black"
+      },
+      "moves": [
+        "dg", "cc", "ig", "hc", "dc", "mc", "ic", "cc", "ng", "hc", "dc", "cg", "ic", "cc", "nc",
+        "hc", "dc", "hg", "ic", "cc", "dg", "hc", "dc", "mc", "ic", "cc", "dk", "hc", "dc", "cg",
+        "ic", "cc", "nc", "hc", "dc", "mg", "ic", "cc", "dg"
+      ],
+      "expect": {
+        "board": [
+          "...................",
+          "..XO...XO...XO.....",
+          ".XO.O.X.XO.X.XO....",
+          "..XO...XO...XO.....",
+          "...................",
+          "..XO...XO...XO.....",
+          ".X.XO.XO.O.XO.O....",
+          "..XO...XO...XO.....",
+          "...................",
+          "..XO...............",
+          ".X.XO..............",
+          "..XO...............",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 20,
+          "white": 19
+        },
+        "illegal": [
+          {"move": "ck", "reason": "superko"}
+        ],
+        "legal": ["hc"]
+      },
+      "knownGaps": {
+        "client": "goban-engine compares only the last 30 moves (MAX_SUPERKO_SEARCH, GobanEngine.ts:1367-1373); the repeated situation is 38 moves back (spec §9)."
+      },
+      "notes": "Seven independent kos (the first three held by Black, the other four by White). Every move is a ko capture; the move order was found by a search so that no situation repeats until the last capture, which would recreate the situation after move 2 (a stone placement, so open point 1 does not matter; not the starting situation, so goban's missing start check does not matter). Each player's ko captures are always legal as simple ko because the previous move was in another ko."
+    },
+    {
+      "id": "ligo-multi-stone-suicide-19x19",
+      "title": "Black may not fill the last liberty of a two-stone black chain when that captures nothing (three-stone suicide)",
+      "rules": ["R-MOVE-5"],
+      "from": "new",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "setup": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          ".........OOO.......",
+          "........OXX.O......",
+          ".........OOO.......",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "expect": {
+        "illegal": [
+          {"move": "lj", "reason": "suicide"}
+        ],
+        "legal": ["aa"]
+      },
+      "notes": "Black's K10-L10 chain has one liberty at M10 (lj); every surrounding White stone has other liberties."
+    },
+    {
+      "id": "ligo-capture-first-not-suicide-19x19",
+      "title": "Black plays on a point with no empty neighbour; it captures two White stones first, so it is legal",
+      "rules": ["R-MOVE-5", "R-MOVE-4"],
+      "from": "new",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "setup": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          ".........XXO.......",
+          "........XOO.O......",
+          ".........XXO.......",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["lj"],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          ".........XXO.......",
+          "........X..XO......",
+          ".........XXO.......",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "captures": {
+          "black": 2,
+          "white": 0
+        },
+        "koPoint": null,
+        "toMove": "white"
+      }
+    },
+    {
+      "id": "ligo-handicap-one-places-no-stone",
+      "title": "A 1-stone handicap places no stone: the board starts empty and Black moves first",
+      "rules": ["R-HCP-2", "R-MOVE-2"],
+      "from": "new",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 1,
+      "moves": ["pd"],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...............X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white"
+      },
+      "openPoints": [8],
+      "notes": "strategygames' default for 1 stone places a stone at D16 and gives White the move (spec §9); the adapter builds it as handicap 0. goban treats 1 as free placement, which here gives the same board."
+    },
+    {
+      "id": "ligo-jigo-integer-komi-chinese",
+      "title": "A Chinese game with komi 7 ends with equal totals: jigo (a draw)",
+      "rules": ["R-RES-3", "R-SCORE-C1"],
+      "from": "new",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "chinese",
+      "komi": 7,
+      "setup": {
+        "board": [
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "...XXO...",
+          "...XOO..."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "score": {
+        "dead": [],
+        "black": 44,
+        "white": 44,
+        "result": "0"
+      },
+      "notes": "Black's area 44 (10 stones + 34 points), White's 37 + 7 komi = 44."
+    },
+    {
+      "id": "ligo-jigo-integer-komi-japanese",
+      "title": "A Japanese game with komi 7 ends with equal totals: jigo (a draw)",
+      "rules": ["R-RES-3", "R-SCORE-J1"],
+      "from": "new",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "japanese",
+      "komi": 7,
+      "setup": {
+        "board": [
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "...XXO...",
+          "...XOO..."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "score": {
+        "dead": [],
+        "black": 34,
+        "white": 34,
+        "result": "0"
+      },
+      "notes": "Black 34 territory, White 27 territory + 7 komi = 34; no prisoners. Integer komi is a casual-game setting (R-KOMI-4)."
+    },
+    {
+      "id": "ligo-handicap-2-compensation-chinese",
+      "title": "A finished 9x9 two-stone handicap game under Chinese rules: White gets 2 points of compensation plus 0.5 komi and wins by 1.5",
+      "rules": ["R-KOMI-3", "R-SCORE-4", "R-HCP-3", "R-SCORE-C1", "R-KOMI-2"],
+      "from": "new",
+      "appliesTo": ["server", "scoring"],
+      "size": 9,
+      "ruleset": "chinese",
+      "handicap": 2,
+      "komi": 0.5,
+      "moves": [
+        "ha", "ga", "hb", "gb", "hc", "fc", "hd", "ec", "gd", "dc", "fd", "dd", "ed", "de", "ee",
+        "ce", "ef", "cf", "df", "ch", "dg", "ci", "dh", "pass", "di", "pass", "pass"
+      ],
+      "expect": {
+        "board": [
+          "......XO.",
+          "......XO.",
+          "...XXXXO.",
+          "...XOOOO.",
+          "..XXO....",
+          "..XOO....",
+          "..XO.....",
+          "..XO.....",
+          "..XO....."
+        ],
+        "phase": "scoring",
+        "captures": {
+          "black": 0,
+          "white": 0
+        }
+      },
+      "score": {
+        "dead": [],
+        "black": 41,
+        "white": 42.5,
+        "result": "W+1.5"
+      },
+      "openPoints": [3, 11],
+      "notes": "Black's area 41 (13 stones incl. the handicap stones G7 and C3, 28 points), White's area 40 + 0.5 komi + 2 compensation = 42.5. Without compensation Black would win by 0.5; with AGA's N-1 (open point 3's alternative) White 41.5, W+0.5. Komi 0.5 is R-KOMI-2's handicap komi (open point 11); the case takes it as an input."
+    },
+    {
+      "id": "ligo-handicap-2-compensation-japanese",
+      "title": "The same two-stone handicap game under Japanese rules: no compensation, Black wins by 0.5",
+      "rules": ["R-KOMI-3", "R-SCORE-4", "R-HCP-3", "R-SCORE-J1", "R-KOMI-2"],
+      "from": "new",
+      "appliesTo": ["server", "scoring"],
+      "size": 9,
+      "ruleset": "japanese",
+      "handicap": 2,
+      "komi": 0.5,
+      "moves": [
+        "ha", "ga", "hb", "gb", "hc", "fc", "hd", "ec", "gd", "dc", "fd", "dd", "ed", "de", "ee",
+        "ce", "ef", "cf", "df", "ch", "dg", "ci", "dh", "pass", "di", "pass", "pass"
+      ],
+      "expect": {
+        "board": [
+          "......XO.",
+          "......XO.",
+          "...XXXXO.",
+          "...XOOOO.",
+          "..XXO....",
+          "..XOO....",
+          "..XO.....",
+          "..XO.....",
+          "..XO....."
+        ],
+        "phase": "scoring",
+        "captures": {
+          "black": 0,
+          "white": 0
+        }
+      },
+      "score": {
+        "dead": [],
+        "black": 28,
+        "white": 27.5,
+        "result": "B+0.5"
+      },
+      "openPoints": [11],
+      "notes": "Black 28 territory, White 27 territory + 0.5 komi = 27.5; no prisoners. Compensation is Chinese only (R-KOMI-3). Komi 0.5 is R-KOMI-2's handicap komi (open point 11); the case takes it as an input."
+    },
+    {
+      "id": "ligo-handicap-one-no-compensation-chinese",
+      "title": "A 1-stone handicap game under Chinese rules gives White no compensation, only 0.5 komi",
+      "rules": ["R-KOMI-3", "R-HCP-2", "R-SCORE-4", "R-KOMI-2"],
+      "from": "new",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "chinese",
+      "handicap": 1,
+      "komi": 0.5,
+      "setup": {
+        "board": [
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "....XO...",
+          "...XXO...",
+          "...XOO..."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "score": {
+        "dead": [],
+        "black": 44,
+        "white": 37.5,
+        "result": "B+6.5"
+      },
+      "openPoints": [8, 11],
+      "notes": "goban-engine's Chinese preset adds `handicap` points for any handicap, so a scoring service that passed handicap 1 to computeScore would give White 38.5; the service must pass 0 (R-HCP-2: no stone, no compensation)."
+    },
+    {
+      "id": "ligo-bent-four-marked-dead-japanese",
+      "title": "Bent four in the corner, White's corner group marked dead: scored as marked",
+      "rules": ["R-SP-8", "R-SCORE-J1", "R-SCORE-1"],
+      "from": "new",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "japanese",
+      "komi": 6.5,
+      "setup": {
+        "board": [
+          ".XX.OX...",
+          ".OOOOX...",
+          "OOXXXX...",
+          "XXX......",
+          ".........",
+          "......XXX",
+          ".....XOOO",
+          ".....XO.O",
+          ".....XOO."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "score": {
+        "dead": ["ea", "eb", "db", "cb", "bb", "bc", "ac"],
+        "black": 62,
+        "white": 8.5,
+        "result": "B+53.5"
+      },
+      "openPoints": [7],
+      "notes": "White's corner group (seven stones) has the bent-four-in-the-corner shape: Black's two stones B9 and C9 (ba, ca) sit in a five-point eye space. Checked with a small local solver: White cannot make the group safe even moving first, and Black can capture it only by winning a ko that Black alone can start, so under J1989 it is dead as it stands. LiGo has no such ruling (R-SP-8): the players marked it dead, so it is scored dead. Black: 55 territory (the corner included) + 7 prisoners; White: 2 territory (the eyes of the lower-right group) + 6.5 komi."
+    },
+    {
+      "id": "ligo-bent-four-marked-alive-japanese",
+      "title": "The same bent four in the corner with White's group marked alive (Black's two stones inside dead): scored as marked",
+      "rules": ["R-SP-8", "R-SCORE-J1", "R-SCORE-1"],
+      "from": "new",
+      "appliesTo": ["scoring"],
+      "size": 9,
+      "ruleset": "japanese",
+      "komi": 6.5,
+      "setup": {
+        "board": [
+          ".XX.OX...",
+          ".OOOOX...",
+          "OOXXXX...",
+          "XXX......",
+          ".........",
+          "......XXX",
+          ".....XOOO",
+          ".....XO.O",
+          ".....XOO."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "score": {
+        "dead": ["ba", "ca"],
+        "black": 45,
+        "white": 15.5,
+        "result": "B+29.5"
+      },
+      "openPoints": [7],
+      "notes": "Same position as ligo-bent-four-marked-dead-japanese, but the players agreed that White's corner lives, so Black's two stones inside are dead. No automatic bent-four ruling may override the agreement (R-SP-8). White: 7 territory (5 in the corner, 2 in the lower right) + 2 prisoners + 6.5 komi; Black: 45 territory."
+    }
+  ]
+}

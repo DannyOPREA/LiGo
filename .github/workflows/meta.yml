@@ -39,6 +39,11 @@ jobs:
           done
       - name: Agent, skill and rule frontmatter
         run: python3 .claude/skills/verify/check_frontmatter.py
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: lila/.node-version
+      - name: Rules fixtures (libs/conformance)
+        run: libs/conformance/fast-check.sh
 
   repo-rules:
     runs-on: ubuntu-latest
