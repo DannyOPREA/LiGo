@@ -22,9 +22,9 @@ areas=(
   'ui|^(lila/|\.github/workflows/ui\.yml$|dev/ci/changed\.sh$)'
 )
 
-# Paths that never need a build: docs, logs, Claude config, repo meta files, dev tooling (which
-# meta.yml tests), CI workflows and top-level Markdown or licence files.
-no_build='^(docs/|logs/|\.claude/|\.github/|dev/|tools/claude-plugins/|[^/]+\.md$|LICENSE|\.gitignore$|\.mcp\.json$)'
+# Paths that never need a build: docs, logs, Claude config, repo meta files, dev tooling and the
+# rules fixtures (both of which meta.yml tests), CI workflows and top-level Markdown or licence files.
+no_build='^(docs/|logs/|\.claude/|\.github/|dev/|libs/conformance/|tools/claude-plugins/|[^/]+\.md$|LICENSE|\.gitignore$|\.mcp\.json$)'
 
 if [[ -z "$base" ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
   echo "no base commit; every area counts as changed" >&2

@@ -66,6 +66,8 @@ ci_commit newlib libs/go-rules/src/Rules.scala logs/rules-engine.md
 check "changed.sh: a file outside every area runs everything" output_is $'lila=true\nws=true\nui=true' in_ci_repo "$CHANGED" main
 ci_commit toolingonly dev/x.sh .claude/y.json logs/tooling.md
 check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false' in_ci_repo "$CHANGED" main
+ci_commit fixtures libs/conformance/fixtures/x.json logs/rules-engine.md
+check "changed.sh: rules fixtures need no build (meta checks them)" output_is $'lila=false\nws=false\nui=false' in_ci_repo "$CHANGED" main
 ci_commit dep lila/package.json logs/tooling.md
 check "changed.sh: lila/package.json triggers the ui build" output_is $'lila=false\nws=false\nui=true' in_ci_repo "$CHANGED" main
 check "manifest check: package.json without COPYING.md fails" fails in_ci_repo "$META" manifests main HEAD

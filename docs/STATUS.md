@@ -30,6 +30,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - **Phase 1 — build-vs-buy + rules integration** started 2026-09-27; units listed in docs/PLAN.md §5.
   - Unit 1.1: server-side Go rules and byo-yomi clock come from strategygames as a pinned dependency
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
+  - Unit 1.6 (conformance fixtures): format, checker and 130 cases (strategygames, goban, KataGo,
+    LiGo's own) in `libs/conformance/`. Draft PR until the rules spec (1.5, PR #13) is approved,
+    because the fixtures encode its recommended choices.
 
 ## Next
 - Phase 1 units 1.2–1.9 (docs/PLAN.md §5, "Phase 1 units"); next is 1.2, the client engine + board
@@ -40,6 +43,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Waiting on owner
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
+- Unit 1.6: approve the fixture writes (permission prompts) and, with the rules spec, the fixtures.
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).
 - Cloud network allowlist: add `media.katagotraining.org` (full-size KataGo networks) and
