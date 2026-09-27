@@ -85,10 +85,25 @@ final class Cms(env: Env) extends LilaController(env):
     negotiateCms(key): page =>
       views.site.page.withMenu(key.value, page)
 
+  // LiGo: the AGPL source page also works without a "source" CMS page in the database.
   def source = Open:
     pageHit
-    negotiateCms(CmsPageKey("source")): page =>
-      views.site.ui.source(page.title, views.cms.render(page), env.web.lilaVersion)
+    val key = CmsPageKey("source")
+    if HTTPRequest.acceptsMarkdown then
+      env.cms.api
+        .asMarkdown(key)
+        .map: text =>
+          Ok(text | views.site.ui.sourceDefaultMarkdown).withHeaders(asMarkdown)
+    else
+      env.cms
+        .render(key)
+        .flatMap: page =>
+          Ok.page:
+            views.site.ui.source(
+              page.fold(lila.core.i18n.I18nKey.site.sourceCode.txt())(_.title),
+              page.fold(views.site.ui.sourceDefault)(views.cms.render),
+              env.web.lilaVersion
+            )
 
   def variantHome = Open:
     negotiate(

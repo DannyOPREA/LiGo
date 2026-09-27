@@ -188,7 +188,8 @@ function relayForm() {
   showSource();
 }
 
-const githubRepoRoot = 'https://github.com/lichess-org/lila';
+// LiGo: keep in step with LigoBrand.scala (modules/web)
+const githubRepoRoot = 'https://github.com/DannyOPREA/LiGo';
 
 function setAssetInfo() {
   $('#asset-version-date').text(site.info.date);
@@ -198,7 +199,7 @@ function setAssetInfo() {
     .find('pre')
     .text(site.info.commit.slice(0, 7));
   $('#asset-version-upcoming')
-    .attr('href', githubRepoRoot + '/compare/' + site.info.commit + '...master')
+    .attr('href', githubRepoRoot + '/compare/' + site.info.commit + '...main')
     .attr('target', '_blank')
     .find('pre')
     .text('...');

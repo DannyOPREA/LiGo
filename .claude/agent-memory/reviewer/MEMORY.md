@@ -1,3 +1,4 @@
 - [Guard hook review patterns](guard-hook-review-patterns.md) — `--flag=value` bypasses, doc stragglers, stale origin/main
 - [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs
 - [Dev script review patterns](dev-script-review-patterns.md) — missing .ligo mkdir, hidden failures, unbounded curl, pending-decision merges
+- [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, duplicated brand constants, CMS markdown path

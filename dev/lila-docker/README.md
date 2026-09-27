@@ -15,7 +15,7 @@ Decision: [ADR 0010](../../docs/decisions/0010-dev-tooling-on-lila-docker.md).
 | `compose.yml` | `compose.yml` + `compose-lila-ws-build.yml` | See below |
 | `compose.native.yml` | (new) | Mongo + Redis only, for native mode in cloud sessions |
 | `docker/sbt.Dockerfile`, `docker/ui.Dockerfile` | same paths | none |
-| `conf/lila.conf` | same path | header; firebase `jsonPath` and `swiss.bbpairing` commented out (neither is set up) |
+| `conf/lila.conf` | same path | header; firebase `jsonPath` and `swiss.bbpairing` commented out (neither is set up); `net.site.name` override removed so `lila/conf/base.conf` sets the brand (unit 0.7) |
 | `conf/lila-ws.conf` | same path | none |
 | `conf/Caddyfile` | same path | header; removed the picfit (`/display`) and opening-explorer routes |
 | `scripts/replica-set.js` | same path | none |

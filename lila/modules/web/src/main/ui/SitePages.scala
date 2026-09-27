@@ -21,7 +21,7 @@ final class SitePages(helpers: Helpers):
     val external = frag(" ", iconTag(Icon.ExternalArrow))
     def activeCls(c: String) = cls := active.activeO(c)
     lila.ui.bits.pageMenuSubnav(
-      a(activeCls("about"), href := "/about")(trans.site.aboutX("lichess.org")),
+      a(activeCls("about"), href := "/about")(trans.site.aboutX(siteName)),
       a(activeCls("news"), href := routes.Feed.index(1))(trans.site.lichessUpdates()),
       a(activeCls("faq"), href := routes.Main.faq)(trans.faq.faqAbbreviation()),
       a(activeCls("contact"), href := routes.Main.contact)(trans.contact.contact()),
@@ -209,7 +209,18 @@ final class SitePages(helpers: Helpers):
           }
         )
 
-  private val repoRoot = "https://github.com/lichess-org/lila"
+  private val repoRoot = LigoBrand.repoUrl
+
+  def sourceDefaultMarkdown: String =
+    s"LiGo is free software, released under the GNU Affero General Public License v3. Its source code is at $repoRoot.\n"
+
+  def sourceDefault: Frag =
+    p(
+      "LiGo is free software, released under the GNU Affero General Public License v3. ",
+      "Its source code is at ",
+      a(href := repoRoot)(repoRoot),
+      "."
+    )
 
   def source(pageTitle: String, rendered: Frag, version: Option[WebConfig.LilaVersion])(using
       Context
@@ -237,7 +248,10 @@ final class SitePages(helpers: Helpers):
                     td(span(a(href := s"$repoRoot/commits/${v.commit}"):
                       pre(v.commit.take(7)))),
                     td(
-                      a(href := s"$repoRoot/compare/${v.commit}...master", title := "Upcoming changes")(
+                      a(
+                        href := s"$repoRoot/compare/${v.commit}...${LigoBrand.repoBranch}",
+                        title := "Upcoming changes"
+                      )(
                         pre("...")
                       )
                     )
