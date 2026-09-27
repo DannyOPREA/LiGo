@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-27 | 1.5: approve the rules spec's 11 open points (docs/rules/spec.md §12) with the recommended choices? | Pending (card in the unit 1.5 thread) | PR #13 |
 | 2026-09-27 | 1.1: server-side Go rules + byo-yomi clock: strategygames as a dependency (unused games excluded) or vendor only its Go package and clock? | Dependency, unused games excluded (owner, on Claude's recommendation) | ADR 0012 |
 | 2026-09-27 | Start Phase 1 (unit 1.1)? | Covered by the owner's "autonomously work towards the goal" message; Phase 1 broken into units 1.1–1.9 | PLAN §5 |
 | 2026-09-27 | 0.6: add an sbt plugin to scan Scala dependency licences in CI? | Defer (owner): Scala deps covered by the manifest → COPYING.md rule; revisit when Scala dependencies change | docs/CLAUDE_SETUP.md §13, PR #7 |
