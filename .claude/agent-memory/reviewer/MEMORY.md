@@ -2,3 +2,4 @@
 - [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs
 - [Dev script review patterns](dev-script-review-patterns.md) — missing .ligo mkdir, hidden failures, unbounded curl, pending-decision merges
 - [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, duplicated brand constants, CMS markdown path
+- [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM-header licences, full §3.1 row scope, spike-output cross-checks

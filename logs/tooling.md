@@ -25,6 +25,7 @@
 - KataGo's Linux binaries are AppImages and containers have no FUSE: unpack with `--appimage-extract` and run `AppRun` (`dev/katago.sh`) (2026-09-27, unit 0.5).
 - GitHub release downloads pass the cloud proxy, but GitHub's API and release pages don't for repos not attached to the session: probe asset URLs instead (2026-09-27, unit 0.5).
 - lila's pinned `@playwright/test` wants a newer Chromium than cloud containers ship: run it with a scratch config setting `launchOptions.executablePath: '/opt/pw-browsers/chromium'`. `bats`/`shellcheck` exist only once `dev/cloud-setup.sh` has run (2026-09-27, unit 0.7).
+- sbt 2 in the cloud: `~/.sbt/repositories` overrides build resolvers, so a project needing an extra repo passes `-Dsbt.repository.config=<copy with the repo added>`; and the thin client keeps a running server's JVM options, so `sbt shutdown` first (2026-09-27, 1.1).
 
 ## Entries (newest first)
 ### 2026-09-27 · unit 0.6 · CI: lila, ui and meta workflows
