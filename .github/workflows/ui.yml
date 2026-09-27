@@ -1,0 +1,84 @@
+# Frontend checks for lila/ui: lint, format, build, unit tests. Adapted from upstream's
+# lila/.github/workflows/assets.yml and lint.yml (same actions, pinned to the same commits) for
+# LiGo's monorepo paths, plus upstream's CodeQL scan of the JavaScript/TypeScript. Left out: the
+# optional private `ab` checkout, the asset artifact upload (LiGo doesn't deploy from CI) and
+# `workspace-check` (it runs an unpinned package via pnpx). Unit 0.6.
+name: ui
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  ui-paths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      ui: ${{ steps.changed.outputs.ui }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      # On a pull request the checkout is GitHub's merge commit, whose first parent is the base.
+      - id: changed
+        run: dev/ci/changed.sh "$BASE" >> "$GITHUB_OUTPUT"
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+
+  ui:
+    needs: ui-paths
+    if: needs.ui-paths.outputs.ui == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: lila
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: lila/package.json
+      - name: Setup node and restore pnpm cache
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: lila/.node-version
+          cache: pnpm
+          cache-dependency-path: lila/pnpm-lock.yaml
+      - name: Install pnpm dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Print tool versions
+        run: node -v && pnpm -v && cd ui/.build && pnpm tsc -v
+      - name: Lint
+        run: pnpm run lint
+      - name: Check format
+        run: pnpm run check-format
+      - name: Build
+        run: ./ui/build --no-install -p
+      - name: Tests
+        run: ./ui/test
+
+  codeql:
+    needs: ui-paths
+    if: needs.ui-paths.outputs.ui == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          languages: javascript
+      - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9

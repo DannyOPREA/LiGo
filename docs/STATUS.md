@@ -3,7 +3,7 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- None. 0.5 environments merged (PR #6); next is 0.6 CI. Logs: logs/tooling.md, logs/scoring.md.
+- None. 0.6 CI merged (PR #7); next is 0.7 dry run. Logs: logs/tooling.md.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -19,9 +19,13 @@ _Updated at the end of every session (`/status`). Newest information wins._
     and the SessionStart hook install the CPU build; `dev/ligo doctor` checks KataGo, OpenCL and
     the benchmark. Cloud sessions use KataGo's small test network until katagotraining.org is
     allowed. The OpenCL benchmark on your box is still to run (below).
+  - Unit 0.6 (CI): merged (PR #7). GitHub Actions runs `lila` (lila scalafmt + tests, lila-ws
+    tests + check), `ui` (lint, format, build, tests, CodeQL) and `meta` (hook bats tests, dev/ checks,
+    shellcheck, log check, COPYING.md-on-manifest-change, npm licences, PR template sections).
+    Jobs for untouched areas are skipped. rules/e2e/nightly workflows come with later units.
 
 ## Next
-- 0.6 CI (incl. the hook tests in `meta.yml`) · 0.7 dry run.
+- 0.7 dry run, then Phase 1 (docs/PLAN.md).
 
 ## Waiting on owner
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
@@ -34,7 +38,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
   thread so they get recorded (logs/scoring.md) and pinned.
 - GitHub: add "Require a pull request before merging" to the `main` ruleset (it currently blocks
   only deletion and force-push). Leave "Required approvals" at 0: Claude merges its own PRs
-  (ADR 0011) and GitHub doesn't let a PR's author approve it. Status checks come after CI (unit 0.6).
+  (ADR 0011) and GitHub doesn't let a PR's author approve it. In the same rule, tick "Require
+  status checks to pass" and add: `lila-paths`, `lila`, `lila-ws`, `ui-paths`, `ui`, `codeql`,
+  `tooling`, `repo-rules`, `js-licences` (a skipped job counts as passing).
 
 ## Blockers
 - None.
@@ -48,5 +54,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Phase progress
 | Phase | State |
 |---|---|
-| 0. Claude setup + baseline | in progress (0.1–0.5 merged) |
+| 0. Claude setup + baseline | in progress (0.1–0.6 merged) |
 | 1–9 | not started |

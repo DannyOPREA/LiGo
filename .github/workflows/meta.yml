@@ -1,0 +1,97 @@
+# LiGo's own repository rules (docs/CLAUDE_SETUP.md §13): the tooling self-tests (hook bats tests,
+# dev/ checks, shellcheck, JSON, agent/skill/rule frontmatter), the log check, the licence checks
+# and the PR template check. The checks themselves live in dev/ci/ so they run the same way
+# locally. Unit 0.6.
+name: meta
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  tooling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install bats and shellcheck
+        run: sudo apt-get update -q && sudo apt-get install -y -q bats shellcheck
+      - name: Hook tests (bats)
+        run: bats .claude/hooks/tests
+      - name: dev/ tooling checks
+        run: dev/tests/run.sh
+      - name: shellcheck
+        run: git ls-files -z '*.sh' 'dev/ligo' ':!lila' ':!lila-ws' | xargs -0 shellcheck -x -P SCRIPTDIR
+      - name: JSON files parse
+        run: |
+          git ls-files -z '*.json' ':!lila' ':!lila-ws' | while IFS= read -r -d '' f; do
+            python3 -m json.tool "$f" >/dev/null || { echo "bad JSON: $f"; exit 1; }
+          done
+      - name: Agent, skill and rule frontmatter
+        run: python3 .claude/skills/verify/check_frontmatter.py
+
+  repo-rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      ui: ${{ steps.changed.outputs.ui }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - id: changed
+        run: dev/ci/changed.sh "$BASE" >> "$GITHUB_OUTPUT"
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+      # The rest compare the PR with its base (GitHub's merge commit's first parent). Each runs even
+      # when an earlier one failed, so a PR sees every problem at once.
+      - name: Log check (code changes need a logs/ entry)
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        run: dev/ci/meta_checks.py logs HEAD^1 HEAD
+      - name: Dependency manifests changed → COPYING.md changed
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        run: dev/ci/meta_checks.py manifests HEAD^1 HEAD
+      - name: PR description has every template section
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+        run: dev/ci/meta_checks.py pr-body
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+
+  js-licences:
+    needs: repo-rules
+    # Runs even when a rule check failed: repo-rules sets its output before those checks.
+    if: ${{ !cancelled() && needs.repo-rules.outputs.ui == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: lila
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: lila/package.json
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: lila/.node-version
+          cache: pnpm
+          cache-dependency-path: lila/pnpm-lock.yaml
+      # Only package metadata is needed, so no install scripts run.
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      # All packages, dev ones included: lila bundles browser libraries (chessground, snabbdom...)
+      # from its devDependencies.
+      - name: npm dependencies are AGPL-compatible
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm licenses list --json | ../dev/ci/meta_checks.py js-licences
