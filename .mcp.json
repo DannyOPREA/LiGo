@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "bash",
+      "args": ["${CLAUDE_PROJECT_DIR:-.}/dev/mcp-playwright.sh"]
+    },
+    "mongodb": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mongodb-mcp-server@3.0.4", "--readOnly"],
+      "env": {
+        "MDB_MCP_CONNECTION_STRING": "mongodb://127.0.0.1:27017/lichess",
+        "MDB_MCP_TELEMETRY": "disabled"
+      }
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}

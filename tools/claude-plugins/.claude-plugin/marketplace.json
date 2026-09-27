@@ -1,0 +1,13 @@
+{
+  "name": "ligo-local",
+  "owner": { "name": "LiGo" },
+  "metadata": { "description": "LiGo's own local-only plugins (docs/CLAUDE_SETUP.md §11). Cloud sessions don't load plugins." },
+  "plugins": [
+    {
+      "name": "ligo-metals",
+      "source": "./ligo-metals",
+      "description": "Scala language server (Metals) for lila and lila-ws. Experimental; enable only on a machine with 32 GB of memory.",
+      "version": "0.1.0"
+    }
+  ]
+}

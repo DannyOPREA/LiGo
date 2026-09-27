@@ -202,7 +202,7 @@ Ratings: Glicko-2 shown as kyu/dan, one pool; rated auto-handicap. Fixtures + do
       "Bash(pnpm add *)", "Bash(pnpm remove *)", "Bash(npm install *)", "Bash(cs install *)",
       "Edit(./libs/conformance/fixtures/**)", "Edit(./docs/rules/**)",
       "Edit(./.github/workflows/**)", "Edit(./LICENSE*)", "Edit(./COPYING*)",
-      "Bash(git push *)", "Bash(docker system prune*)", "Bash(sbt clean*)"
+      "Bash(docker system prune*)", "Bash(sbt clean*)"
     ],
     "deny": [
       "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push origin main*)",
@@ -224,6 +224,11 @@ Notes:
   for those major decisions. Deny rules block in every mode.
 - Permission prefix rules aren't airtight; `guard-bash.sh` and `guard-paths.sh` (§6) are the real
   enforcement.
+- Built in unit 0.4; the committed `.claude/settings.json` is the source of truth. Differences
+  from this draft: no `ask` on `git push *` (ask beats allow, so it would have prompted on every
+  push to a unit branch; guard-bash blocks pushes to main and force pushes instead); `ask` added
+  on `.claude/settings.json` and `.claude/hooks/**` so the guards can't be changed silently; the
+  GitHub MCP merge tools denied.
 - `auto` mode can't be set from project settings. On your box put `"defaultMode": "auto"` in
   `~/.claude/settings.json` (or use `acceptEdits`).
 - JVM memory comes from lila's `.sbtopts`. The status line shows branch · phase · unit · last
@@ -504,7 +509,9 @@ step to you for approval by hand.
    (codifying ADR 0008's cloud dependency sources). Log to `tooling.md`. Ends with the owner running
    the baseline on the Linux box.
 4. **Claude config:** CLAUDE.md files, rules, settings, hooks (+ bats tests), agents, skills (authored
-   with `skill-creator`), `.mcp.json`, local marketplace + plugins.
+   with `skill-creator`), `.mcp.json`, local marketplace + plugins. (Built in unit 0.4; nested
+   CLAUDE.md files for `libs/`, `services/` and `tools/puzzles` come with the units that create
+   those folders. Choices made while building it: logs/tooling.md.)
 5. **Environments:** the cloud environment is cached; your box passes `dev/doctor.sh`; the KataGo
    OpenCL benchmark is recorded.
 6. **CI:** lila's workflows adapted, plus `meta.yml`, all green on the baseline.

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(./dev/ligo *)", "Bash(dev/ligo *)", "Bash(sbt *)", "Bash(pnpm run *)", "Bash(pnpm test*)",
+      "Bash(pnpm install --frozen-lockfile*)", "Bash(pnpm lint*)", "Bash(pnpm check-format*)",
+      "Bash(npx vitest *)", "Bash(npx playwright *)", "Bash(docker compose *)",
+      "Bash(scalafmt *)", "Bash(oxfmt *)", "Bash(oxlint *)", "Bash(stylelint *)",
+      "Bash(bats *)", "Bash(shellcheck *)", "Bash(dev/tests/run.sh*)",
+      "Bash(bash .claude/skills/verify/verify.sh*)",
+      "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
+      "Bash(git switch *)", "Bash(git checkout -b *)", "Bash(git add *)", "Bash(git commit *)",
+      "Bash(git fetch *)", "Bash(git push -u origin claude/*)", "Bash(git push -u origin feat/*)",
+      "Bash(gh pr create *)", "Bash(gh pr view *)", "Bash(gh issue *)",
+      "mcp__playwright", "mcp__mongodb", "mcp__context7"
+    ],
+    "ask": [
+      "Edit(./**/package.json)", "Edit(./**/build.sbt)", "Edit(./**/project/*.scala)", "Edit(./**/project/*.sbt)",
+      "Edit(./**/pnpm-workspace.yaml)", "Edit(./**/pnpm-lock.yaml)",
+      "Bash(pnpm add *)", "Bash(pnpm remove *)", "Bash(pnpm update*)", "Bash(npm install *)", "Bash(cs install *)",
+      "Edit(./libs/conformance/fixtures/**)", "Edit(./docs/rules/**)",
+      "Edit(./.github/workflows/**)", "Edit(./LICENSE*)", "Edit(./COPYING*)", "Edit(./**/COPYING.md)",
+      "Edit(./.claude/settings.json)", "Edit(./.claude/hooks/**)",
+      "Bash(docker system prune*)", "Bash(docker volume rm*)", "Bash(sbt clean*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push origin main*)",
+      "Bash(gh pr merge*)", "Bash(git reset --hard origin/main*)",
+      "mcp__github__merge_pull_request", "mcp__github__enable_pr_auto_merge",
+      "Read(./.env)", "Read(./.env.*)", "Read(./**/secrets/**)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      { "matcher": "startup|resume", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\"", "timeout": 30 } ] },
+      { "matcher": "compact", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\" --after-compact", "timeout": 30 } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.sh\"", "timeout": 10 } ] },
+      { "matcher": "Edit|Write|MultiEdit|NotebookEdit", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-paths.sh\"", "timeout": 10 } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write|MultiEdit", "hooks": [
+        { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/format.sh\"", "timeout": 60 },
+        { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/conformance-related-tests.sh\"", "timeout": 600, "async": true, "asyncRewake": true }
+      ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-gate.sh\"", "timeout": 30 } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/notify.sh\"", "timeout": 10 } ] }
+    ]
+  },
+  "statusLine": { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/statusline.sh\"" },
+  "extraKnownMarketplaces": {
+    "ligo-local": { "source": { "source": "directory", "path": "./tools/claude-plugins" } }
+  }
+}

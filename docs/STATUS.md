@@ -2,23 +2,28 @@
 
 _Updated at the end of every session (`/status`). Newest information wins._
 
+## Current unit
+- 0.4 Claude config (approved 2026-09-26; PR in review)
+- Acceptance: CLAUDE.md files, path rules, settings, hooks with passing tests, agents, skills,
+  .mcp.json, local plugin marketplace (docs/CLAUDE_SETUP.md §14 step 4)
+- Logs: logs/tooling.md
+
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
-  - Unit 0.1 (repo bootstrap): merged (PR #1).
-  - Unit 0.2 (import + baseline): merged (PR #2, squash).
-  - Unit 0.3 (dev tooling): PR open for review. `dev/ligo` runs the stack in one command:
-    docker mode on your machine (a trimmed copy of lila-docker, ADR 0010), native mode in cloud
-    sessions. `dev/cloud-setup.sh` codifies ADR 0008. The baseline runs on your Linux box in
-    docker mode (owner-verified 2026-09-26). See `logs/tooling.md`.
+  - Units 0.1–0.3 merged (PRs #1–#3, squash). `dev/ligo` runs the stack: docker mode on your
+    machine (ADR 0010), native mode in cloud sessions. Baseline verified on your Linux box.
+  - Unit 0.4 (Claude config): PR open for review. Root and nested CLAUDE.md files, 8 path rules,
+    `.claude/settings.json` (permissions + hooks), 8 hooks with 45 bats tests, 8 agents,
+    16 skills, `.mcp.json` (Playwright, read-only Mongo, context7), a local plugin marketplace
+    with a Metals LSP plugin. See `logs/tooling.md`.
 
 ## Next
-- Unit 0.4 Claude config: CLAUDE.md files (which also neutralise `lila/AGENTS.md`), rules,
-  settings, hooks (including a SessionStart hook that runs `dev/ligo deps`), agents, skills.
-- Then 0.5 environments (KataGo moves here) · 0.6 CI · 0.7 dry run.
+- 0.5 environments (KataGo moves here) · 0.6 CI (incl. the hook tests in `meta.yml`) · 0.7 dry run.
 
 ## Waiting on owner
-- Review the unit 0.3 PR.
-- Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings).
+- Review the unit 0.4 PR (it lists the choices the spec left open).
+- Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
+  also installs bats and shellcheck.
 - GitHub: add "Require a pull request before merging" to the `main` ruleset (it currently blocks
   only deletion and force-push). Status checks come after CI (unit 0.6).
 
@@ -26,14 +31,13 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - None.
 
 ## Known caveats
-- Until unit 0.4, `lila/AGENTS.md` (lichess's contributor guide) auto-loads for any Claude session
-  reading `lila/`. It says "trust these instructions" and suggests non-frozen `pnpm install`,
-  `sbt clean` and `bin/deploy`. LiGo's rules win on any conflict: frozen lockfile, never
-  `bin/deploy`, ask when unsure.
+- `lila/AGENTS.md` (lichess's contributor guide) stays in the tree. Claude Code no longer loads it
+  on its own now that CLAUDE.md files exist, and `lila/CLAUDE.md` says LiGo's rules win where it
+  disagrees; `guard-bash.sh` blocks non-frozen `pnpm install`, cloud `sbt clean` and `bin/deploy`.
 - Upstream non-free/NC assets remain in the tree until the first Phase 3 unit (COPYING.md §1.1).
 
 ## Phase progress
 | Phase | State |
 |---|---|
-| 0. Claude setup + baseline | in progress (0.1, 0.2 merged; 0.3 in review) |
+| 0. Claude setup + baseline | in progress (0.1–0.3 merged; 0.4 in review) |
 | 1–9 | not started |

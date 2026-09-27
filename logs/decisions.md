@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-26 | Start unit 0.4 (Claude config)? | "Continue." (owner), taken as approval of the next unit in the build order | logs/tooling.md |
 | 2026-09-26 | How should unit 0.3 reuse lila-docker: trimmed copy in the repo, or clone on demand? | Trimmed copy (owner) | ADR 0010 |
 | 2026-09-26 | Start unit 0.3 (dev tooling)? | "Continue work on the project" (owner), taken as approval of the next unit in the build order | logs/tooling.md |
 | 2026-09-26 | Approve unit 0.2 (import + baseline) and import style? | Approved; squashed snapshot | logs/upstream-fork.md |

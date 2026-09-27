@@ -44,3 +44,6 @@ katago-tuning/
 # dev/ligo runtime state (pids, logs, caches) and lila-docker's per-machine .env
 .ligo/
 dev/lila-docker/.env
+
+# Playwright MCP snapshots and screenshots
+.playwright-mcp/

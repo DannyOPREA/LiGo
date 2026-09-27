@@ -34,6 +34,8 @@ else
 fi
 command -v git >/dev/null && ok "git $(git --version | awk '{print $3}')" || bad "git not found"
 command -v curl >/dev/null && ok "curl" || bad "curl not found"
+command -v python3 >/dev/null && ok "python3 $(python3 -c 'import platform; print(platform.python_version())')" \
+  || bad "python3 not found (Claude Code's hooks in .claude/hooks need it)"
 
 mem_gb=$(awk '/MemTotal/ {printf "%d", $2 / 1024 / 1024}' /proc/meminfo 2>/dev/null || echo 0)
 if (( mem_gb >= 15 )); then ok "memory ${mem_gb} GB"
@@ -72,6 +74,8 @@ command -v scalafmt >/dev/null && ok "scalafmt $(scalafmt --version 2>/dev/null 
 command -v typescript-language-server >/dev/null && ok "typescript-language-server" \
   || meh "typescript-language-server not found (npm i -g typescript-language-server typescript)"
 command -v metals >/dev/null && ok "metals" || meh "metals not found (cs install metals)"
+command -v bats >/dev/null && ok "bats $(bats --version | awk '{print $2}')" || meh "bats not found (hook tests: dnf/apt install bats)"
+command -v shellcheck >/dev/null && ok "shellcheck" || meh "shellcheck not found (dnf/apt install ShellCheck/shellcheck)"
 
 echo "KataGo (needed from the scoring phase; benchmarked in unit 0.5)"
 if command -v katago >/dev/null; then

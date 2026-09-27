@@ -17,8 +17,62 @@
 - `setsid` forks when the caller leads a process group, so `$!` is not the new session's pid. Have the child write `$$` to the pid file instead (2026-09-26, unit 0.3).
 - Upstream lila tooling assumes `lila/` is its own git repo (e.g. `ui/build` runs `git rev-parse HEAD`). In containers, mount the monorepo's `.git` read-only and set `GIT_DIR` (2026-09-26, unit 0.3).
 - There's no official Scala LSP plugin; Metals needs a custom `.lsp.json` plugin (2026-09-25, planning).
+- Claude Code reloads `.claude/settings.json` while a session runs: hooks and deny rules apply as soon as the file is written, including to the session writing it (2026-09-26, unit 0.4).
+- Hook input has `agent_type` (and `agent_id`) only when a subagent makes the call; the main thread has none. Checked in the CLI's own schema (v2.1.283) (2026-09-26, unit 0.4).
+- Permission precedence is deny > ask > allow: an `ask` rule overrides a narrower `allow`, so `ask: git push *` would prompt on every unit-branch push (2026-09-26, unit 0.4).
+- Playwright MCP wants its own browser build; in cloud sessions point it at `/opt/pw-browsers/chromium` (`dev/mcp-playwright.sh`) (2026-09-26, unit 0.4).
+- A shell comment that starts with the word "shellcheck" is read as a shellcheck directive (2026-09-26, unit 0.4).
 
 ## Entries (newest first)
+### 2026-09-26 · unit 0.4 · Claude config: CLAUDE.md, rules, settings, hooks, agents, skills, MCP, plugins
+- Did:
+  - `CLAUDE.md` (root, 60 lines, imports STATUS) plus `lila/`, `lila/ui/`, `lila-ws/` CLAUDE.md
+    files. `lila/CLAUDE.md` says LiGo's rules win over `lila/AGENTS.md` (which Claude Code no
+    longer auto-loads once a CLAUDE.md exists).
+  - 8 path-scoped rules in `.claude/rules/` (scala, typescript, styles, tests, mongo, i18n,
+    security, dependencies).
+  - `.claude/settings.json`: permissions (allow / ask on dependency manifests, fixtures, rules
+    spec, CI, licences, the hooks themselves / deny force-push, merge, secrets), hooks, status
+    line, the `ligo-local` marketplace. `.claude/settings.local.json.example`.
+  - 8 hooks in `.claude/hooks/` (session-start, guard-bash, guard-paths, format,
+    conformance-related-tests, stop-gate, notify, statusline); the two guards' logic is Python in
+    `hooks/lib/`. 45 bats tests in `hooks/tests/`. guard-bash ignores here-document bodies (file contents, not commands); guard-paths protects log entries that are on main, so a unit can still fix its own new entry.
+  - 8 agents, 16 skills (6 user-only workflow skills, 6 shared, 4 knowledge). /verify has a real
+    gate runner, `.claude/skills/verify/verify.sh`, that picks gates from the changed paths.
+  - `.mcp.json`: Playwright (via `dev/mcp-playwright.sh`, pinned 0.0.82), MongoDB read-only
+    (pinned 3.0.4, telemetry off), context7 (HTTP).
+  - `tools/claude-plugins/`: local marketplace with `ligo-metals` (Metals `.lsp.json`).
+  - `dev/ligo db` (Mongo + Redis only; the SessionStart hook runs it); doctor checks python3,
+    bats, shellcheck; cloud-setup installs bats + shellcheck; STATUS gets a "Current unit" section.
+- Worked:
+  - `bats .claude/hooks/tests`: 45 passed. `/verify` (6 gates) passed; a deliberately broken JSON
+    file made it fail and record `fail`.
+  - Live in this session, once settings.json existed: guard-bash blocked `rm -rf` outside the repo,
+    guard-paths blocked a main-thread write to `docs/rules/`, and the deny rule removed the
+    GitHub MCP merge tools.
+  - SessionStart in the cloud: planned and ran `dev/ligo deps` then `dev/ligo db` in the
+    background; Mongo and Redis came up and lila's indexes were created.
+  - Playwright MCP navigated a page with the cloud Chromium; the Mongo MCP listed the 86 lila
+    collections and exposes no write tools with `--readOnly`.
+  - `claude plugin validate tools/claude-plugins` passed.
+- Didn't work / dead ends: Playwright MCP's default browser (`chrome`, then
+  `chrome-for-testing`) isn't installed in cloud sessions, hence the wrapper script.
+  The JSON Schema for settings.json couldn't be fetched here (schemastore), so settings were
+  checked by the live reload instead.
+- Lessons: promoted (settings reload, agent_type, permission precedence, Playwright browser,
+  shellcheck comments).
+- Decisions: "Continue." (owner) taken as approval of unit 0.4, the next unit in the build order.
+  Choices the spec left open are listed in the PR for the owner to confirm.
+- Verified by Claude: the above. Not verified: the Metals plugin (no Metals here), notify.sh on a
+  desktop, the Stop hook and status line as drawn by the Claude Code UI, and the new agents and
+  skills as invoked by a fresh session (they load at session start). The skills were written
+  following skill-creator's authoring guide but not run through its eval loop.
+- Needs owner verification: open a new Claude Code session on your box and check it starts
+  oriented (unit, questions, logs) and the status line shows; `/plugin` lists `ligo-local`.
+- Follow-ups: unit 0.6 runs the hook tests in `meta.yml`; nested CLAUDE.md files for `libs/`,
+  `services/scoring` and `tools/puzzles` come with their units; `libs/conformance/fast-check.sh`
+  comes with the first rules unit.
+
 ### 2026-09-26 · unit 0.3 · Owner's baseline run on the Linux box (docker mode)
 - Did: the owner ran `dev/ligo up` then `dev/ligo e2e` on his Fedora box, in docker mode, from a
   path containing a space (`~/VScode Projects/LiGo`).
