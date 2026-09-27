@@ -43,6 +43,13 @@ allowed() { hook guard-bash.sh "$(bash_input "$1")"; [ "$status" -eq 0 ] || { ec
   blocked "gh pr merge 5 --rebase"
   blocked "gh pr merge 5 --squash --admin"
   blocked "gh pr merge 5 --squash --auto"
+  blocked "gh pr merge 5 --squash --admin=true"
+  blocked "gh pr merge 5 --squash --auto=true"
+  blocked "gh pr merge 5 -s --merge=true"
+  blocked "gh pr merge 5 -s --rebase=1"
+  blocked "gh pr merge 5 -sm"
+  allowed "gh pr merge 5 -sd"
+  allowed "gh pr merge 5 --squash -t '--merge' --body=x"
 }
 
 @test "the GitHub MCP merge tool may only squash-merge (ADR 0011)" {

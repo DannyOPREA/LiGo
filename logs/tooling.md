@@ -32,7 +32,10 @@
   `--merge`, `--rebase`) and also guards the MCP merge tool (`merge_method` must be `squash`).
 - Worked: `bats .claude/hooks/tests`: 47 passed (2 new tests). The settings change reloaded live:
   the MCP merge tool appeared in this session as soon as the deny rule was removed.
-- Didn't work / dead ends: none.
+- Didn't work / dead ends: the reviewer found the first guard compared whole words, so
+  `--admin=true`, `--auto=true`, `--merge=true` slipped through. Fixed: flags are now unpacked
+  as `gh` reads them (`--flag=value`, bundled `-sm`), with tests. It also found PLAN §6 still had
+  the owner checking "Needs your verification" before merging; now after the merge (owner asked).
 - Lessons: none new.
 - Decisions: ADR 0011 (owner's request; the merge conditions are Claude's default, stated in the
   PR). Branch protection on `main` must not require an approving review.

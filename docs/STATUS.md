@@ -7,9 +7,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
-  - Units 0.1–0.3 merged (PRs #1–#3, squash). `dev/ligo` runs the stack: docker mode on your
+  - Units 0.1–0.3 merged (PRs #1–#3; #1 as a merge commit, #2–#3 squashed). `dev/ligo` runs the stack: docker mode on your
     machine (ADR 0010), native mode in cloud sessions. Baseline verified on your Linux box.
-  - Unit 0.4 (Claude config): merged (PR #4). Root and nested CLAUDE.md files, 8 path rules,
+  - Unit 0.4 (Claude config): merged (PR #4, merge commit). Root and nested CLAUDE.md files, 8 path rules,
     `.claude/settings.json` (permissions + hooks), 8 hooks with 45 bats tests, 8 agents,
     16 skills, `.mcp.json` (Playwright, read-only Mongo, context7), a local plugin marketplace
     with a Metals LSP plugin. See `logs/tooling.md`.

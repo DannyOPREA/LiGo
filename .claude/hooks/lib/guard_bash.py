@@ -146,13 +146,39 @@ def check_mongo(command):
             block("dropping a Mongo database or collection is only allowed for ligo_test* databases.")
 
 
+GH_MERGE_VALUE_FLAGS = {"-t", "--subject", "-b", "--body", "-F", "--body-file", "-A", "--author-email",
+                       "--match-head-commit"}
+GH_MERGE_SHORT = {"s": "--squash", "m": "--merge", "r": "--rebase", "d": "--delete-branch"}
+
+
+def gh_merge_flags(args):
+    """Flag names of `gh pr merge`, with `--flag=value` and bundled short flags (-sd) unpacked."""
+    flags, skip = set(), False
+    for a in args:
+        if skip:
+            skip = False
+            continue
+        if a.startswith("--"):
+            name = a.split("=", 1)[0]
+            flags.add(name)
+            skip = name in GH_MERGE_VALUE_FLAGS and "=" not in a
+        elif a.startswith("-") and len(a) > 1:
+            if a[:2] in GH_MERGE_VALUE_FLAGS:
+                flags.add(a[:2])
+                skip = len(a) == 2
+            else:
+                flags.update(GH_MERGE_SHORT.get(c, "-" + c) for c in a[1:])
+    return flags
+
+
 def check_gh_merge(args):
     """Claude may squash-merge its own PR once the checks pass (ADR 0011); nothing looser."""
-    if any(a == "--admin" for a in args):
+    flags = gh_merge_flags(args)
+    if "--admin" in flags:
         block("`gh pr merge --admin` bypasses branch protection; never use it.")
-    if any(a == "--auto" for a in args):
+    if "--auto" in flags:
         block("`gh pr merge --auto` merges before Claude has checked the PR; merge by hand once the checks pass (ADR 0011).")
-    if any(a in ("--merge", "-m", "--rebase", "-r") for a in args) or not any(a in ("--squash", "-s") for a in args):
+    if flags & {"--merge", "--rebase"} or "--squash" not in flags:
         block("PRs land by squash-merge only: `gh pr merge <n> --squash` (ADR 0011).")
 
 

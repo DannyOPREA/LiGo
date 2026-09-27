@@ -1,6 +1,6 @@
 ---
 name: ship
-description: Runs an approved LiGo unit end to end with hard checkpoints (build-vs-buy, failing tests, implementation, verify, review, play-test, log, PR). Use when the owner says to start or ship an approved unit.
+description: Runs an approved LiGo unit end to end with hard checkpoints (build-vs-buy, failing tests, implementation, verify, review, play-test, log, PR, squash-merge). Use when the owner says to start or ship an approved unit.
 disable-model-invocation: true
 argument-hint: "[issue or unit id]"
 ---

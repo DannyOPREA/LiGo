@@ -196,6 +196,7 @@ Ratings: Glicko-2 shown as kyu/dan, one pool; rated auto-handicap. Fixtures + do
       "Bash(git switch *)", "Bash(git checkout -b *)", "Bash(git add *)", "Bash(git commit *)",
       "Bash(git push -u origin claude/*)", "Bash(git push -u origin feat/*)",
       "Bash(gh pr create *)", "Bash(gh pr view *)", "Bash(gh issue *)",
+      "Bash(gh pr merge *)", "mcp__github__merge_pull_request",
       "mcp__playwright", "mcp__mongodb"
     ],
     "ask": [
@@ -247,7 +248,7 @@ Scripts live in `.claude/hooks/`, are idempotent and fast, and have bats tests r
 |---|---|---|---|
 | `SessionStart` (`startup\|resume`) | `session-start.sh` | Detects cloud vs local. Makes sure sbt/scalafmt and Node 24 exist. Starts Mongo + Redis (lila-docker-based, idempotent). Runs `pnpm install --frozen-lockfile` only if the lockfile changed. Prints: STATUS "Now/Next/Blockers", the current unit and its approval, **open questions awaiting you**, and the **names** of the log files relevant to the current unit (not their contents). | Every session starts ready and oriented, without flooding the context. |
 | `SessionStart` (`compact`) | `session-start.sh --after-compact` | Re-injects the unit's acceptance criteria, open questions and relevant log names. | Nothing is lost after compaction. |
-| `PreToolUse` (`Bash`) | `guard-bash.sh` | Blocks force pushes, any push or local merge to `main`, a PR merge that isn't a plain squash-merge (ADR 0011), destructive git on `main`, `rm -rf` outside the repo or scratch, dropping Mongo DBs other than `ligo_test*`, `sbt clean` in the cloud. | Hard guarantees. |
+| `PreToolUse` (`Bash`, GitHub MCP merge) | `guard-bash.sh` | Blocks force pushes, any push or local merge to `main`, a PR merge that isn't a plain squash-merge (ADR 0011), destructive git on `main`, `rm -rf` outside the repo or scratch, dropping Mongo DBs other than `ligo_test*`, `sbt clean` in the cloud. | Hard guarantees. |
 | `PreToolUse` (`Edit\|Write`) | `guard-paths.sh` | Reads `agent_type`. Only `go-rules-expert` may touch `libs/conformance/fixtures/**` and `docs/rules/**` (and still triggers your `ask` prompt). Accepted ADRs are immutable. Generated output is never hand-edited. **Log files are append-only below the Lessons section**, so past entries can't be rewritten. | Protects the spec and the history. |
 | `PostToolUse` (`Edit\|Write`) | `format.sh` | Formats the touched file with lila's own configured tools (scalafmt, oxfmt/oxlint, stylelint); exit 2 with the remaining errors. | Formatting never reaches review. |
 | `PostToolUse` (`Edit\|Write`, async + `asyncRewake`) | `conformance-related-tests.sh` | When rules code, adapters or fixtures change, runs the fast conformance subset in the background and wakes Claude on failure. | Instant rules feedback. |
@@ -304,7 +305,7 @@ These can also be invoked by Claude and preloaded into agents: `/verify`, `/ask`
 | Skill | What it does |
 |---|---|
 | `/next` | Reads STATUS, the roadmap, open issues and the relevant log Lessons, then **presents the next unit for approval**: goal, acceptance criteria, test plan, **reuse plan**, expected decisions, and which log it writes to. Uses AskUserQuestion; creates the issue only after you approve. |
-| `/ship [issue]` | The unit loop, with **hard checkpoints**. (1) Confirms the unit is approved. (2) Runs `/build-vs-buy` if any custom component is involved, and waits. (3) `test-engineer` writes failing tests. (4) The implementer agent builds. (5) `/verify`. (6) `reviewer`; blocking findings get fixed. (7) `/play-test` for UI units. (8) `/log`. (9) Opens a PR using the template. **At any point:** a major decision or uncertainty → `/ask` and pause the dependent work. |
+| `/ship [issue]` | The unit loop, with **hard checkpoints**. (1) Confirms the unit is approved. (2) Runs `/build-vs-buy` if any custom component is involved, and waits. (3) `test-engineer` writes failing tests. (4) The implementer agent builds. (5) `/verify`. (6) `reviewer`; blocking findings get fixed. (7) `/play-test` for UI units. (8) `/log`. (9) Opens a PR using the template. (10) Squash-merges it once the checks pass and tells you (ADR 0011). **At any point:** a major decision or uncertainty → `/ask` and pause the dependent work. |
 | `/build-vs-buy <capability>` | Runs `reuse-scout`, presents the options with a recommendation, records your choice as an ADR, and logs it. |
 | `/ask` | The standard way to stop and ask. Writes the question to `docs/STATUS.md` → "Waiting on owner" (with context, options and a recommendation), asks you via AskUserQuestion, sends a notification, and records your answer in the log and, if it's a major decision, an ADR. |
 | `/verify` | Runs the gates for the changed paths, writes `.claude/state/last-verify`, and prints a table with real output; never turns a failure into a pass. |

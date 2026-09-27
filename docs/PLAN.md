@@ -369,7 +369,7 @@ possible. What Claude can't verify goes to you, explicitly listed in the PR (§7
 | Server | Module tests; Mongo/Redis integration tests | CI required |
 | UI | Unit tests; board visual snapshots; Playwright two-player E2E on desktop and phone viewports | CI (E2E on labelled PRs + nightly) |
 | Review | `reviewer` subagent on every unit (including a reuse check and a log check); `/security-review` on auth, session and websocket changes; `/code-review` as a second opinion on large units | Blocking findings fixed before the PR opens |
-| Human check | The PR's "Needs your verification" list (UX feel, real-device touch, Go judgement calls, anything Claude couldn't run) plus a ≤ 5-minute test | You, before merging |
+| Human check | The PR's "Needs your verification" list (UX feel, real-device touch, Go judgement calls, anything Claude couldn't run) plus a ≤ 5-minute test | You, after Claude merges; a problem gets a fix or a revert PR (ADR 0011) |
 
 ---
 

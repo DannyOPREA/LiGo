@@ -1,7 +1,7 @@
 # 0011. Claude merges its own PRs
 - Status: Accepted
 - Date: 2026-09-27
-- Decided by: owner (own initiative)
+- Decided by: owner (own initiative); the merge conditions are Claude's recommendation
 
 ## Context
 The working agreement (PLAN §1.1 and §7, CLAUDE.md, CLAUDE_SETUP §1) said Claude opens PRs and the
@@ -24,10 +24,14 @@ Claude still never pushes to `main`, force-pushes or bypasses branch protection.
 Enforcement: `gh pr merge` and `mcp__github__merge_pull_request` move from `deny` to `allow` in
 `.claude/settings.json`. guard-bash lets a PR merge through only as a squash-merge, and blocks
 `--admin` (bypasses protection) and `--auto` (merges before Claude has checked the PR); the MCP
-merge tool must pass `merge_method: "squash"`. The MCP auto-merge tool stays denied.
+merge tool must pass `merge_method: "squash"`. The MCP auto-merge tool stays denied. The guard is
+best-effort: it reads flags as `gh` would (`--admin=true`, bundled `-sm`) but not commands hidden
+inside `bash -c` or `gh api`; those aren't allowed by settings, so they still prompt.
 
 ## Consequences
 - The owner reviews after the fact: a bad merge is undone with a revert PR, not a force push.
+  This includes each PR's "Needs your verification" list (PLAN §6 "Human check"): the owner works
+  through it after the merge, and Claude fixes or reverts what fails.
 - `main`'s branch protection must not require an approving review. GitHub doesn't let a PR's
   author approve their own PR, and Claude's PRs are opened under the owner's account, so a
   required approval would block every merge. "Require a pull request" and, after unit 0.6,
