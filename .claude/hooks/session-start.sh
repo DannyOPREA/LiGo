@@ -3,7 +3,8 @@
 #   startup|resume   records where this session started (for stop-gate.sh), prints the current
 #                    unit, what's waiting on the owner and which logs to read, checks tools, and
 #                    starts in the background whatever is missing: dev/cloud-setup.sh (cloud),
-#                    `dev/ligo deps` when the dependency manifests changed, and `dev/ligo db`.
+#                    `dev/ligo deps` when the dependency manifests changed, KataGo (cloud, when
+#                    ~/.local/bin/katago is missing) and `dev/ligo db`.
 #   --after-compact  re-prints only the unit, open questions and log names.
 # Stdout becomes context for Claude. Always exits 0: a broken hook must not block a session.
 # Env: LIGO_SESSION_START_BG=0 prints the background plan without running it (tests use this);
@@ -59,6 +60,9 @@ plan=()
 if is_cloud; then
   where=cloud
   if ((${#missing[@]})); then plan+=("dev/cloud-setup.sh"); fi
+  # Seconds to install, and its failure must not stop the rest of the chain.
+  [[ -x "${HOME:-/nonexistent}/.local/bin/katago" ]] \
+    || plan+=("{ dev/ligo katago install cpu || echo 'WARN: KataGo install failed'; }")
   if [[ "$(cat "$ROOT/.ligo/deps-stamp" 2>/dev/null)" != "$(deps_hash)" ]]; then
     plan+=("dev/ligo deps && deps_hash > .ligo/deps-stamp")
   fi

@@ -46,8 +46,8 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
 
 ## Commands
 `dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|all] | test [lila|ws|ui|all]`
-`dev/ligo e2e | deps | doctor | mode`. Docker mode on the owner's machine, native mode in cloud
-sessions (ADR 0010). Fresh cloud container: `dev/cloud-setup.sh` then `dev/ligo deps`.
+`dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench]`. Docker mode on the owner's
+machine, native mode in cloud sessions (ADR 0010). Fresh cloud container: `dev/cloud-setup.sh` then `dev/ligo deps`.
 Tooling self-tests: `dev/tests/run.sh`, `bats .claude/hooks/tests`.
 Never `sbt clean` in the cloud, never non-frozen `pnpm install`, never `lila/bin/deploy`.
 

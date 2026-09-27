@@ -12,10 +12,9 @@
 #      -Dsbt.override.build.repos=true in sbt's own conf/sbtopts (no repo file is touched)
 #   4. docker pull of the images `dev/ligo` uses in native mode (Mongo, Redis); the apt packages
 #      bats and shellcheck, for the hook tests and /verify (best effort)
-#   5. If the repo is present and time allows: `dev/ligo deps` (warm caches, mirror cross-check,
-#      pnpm install with the ab-stub workaround). Best effort; `dev/ligo deps` can be rerun later.
-#
-# Deliberately not here yet: KataGo (unit 0.5; its download hosts aren't on the allowlist).
+#   5. If the repo is present: KataGo's CPU build and small test network (`dev/ligo katago install
+#      cpu`, unit 0.5), then, if time allows, `dev/ligo deps` (warm caches, mirror cross-check,
+#      pnpm install with the ab-stub workaround). Best effort; both can be rerun in the session.
 #
 # Licence: MIT (LiGo's own code, ADR 0006).
 
@@ -146,6 +145,10 @@ warm_repo() {
   local repo; repo=$(find_repo || true)
   if [[ -z "$repo" ]]; then log "repo not found; run dev/ligo deps in the session"; return; fi
   local left=$((BUDGET - (SECONDS - START)))
+  log "installing KataGo (CPU build + test network)"
+  timeout "$(( left > 120 ? 120 : left ))" "$repo/dev/katago.sh" install cpu \
+    || log "WARN: KataGo install failed; rerun dev/ligo katago install"
+  left=$((BUDGET - (SECONDS - START)))
   if (( left < 60 )); then log "only ${left}s left; skipping dev/ligo deps"; return; fi
   log "running dev/ligo deps in $repo (budget ${left}s)"
   if PATH="$BIN_DIR:$PATH" timeout "$left" "$repo/dev/ligo" deps; then log "dev/ligo deps done"

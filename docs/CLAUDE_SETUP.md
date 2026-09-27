@@ -434,8 +434,9 @@ Deliberately skipped:
 - **Network:** the Trusted defaults, plus (as allowed by the owner in unit 0.2) `jitpack.io`,
   `repo.scala-sbt.org`, `central.sonatype.com` and `codeload.github.com`; `raw.githubusercontent.com`
   (lichess's `lila-maven`), `maven-central.storage-download.googleapis.com` (Google's Central mirror,
-  ADR 0008) and `nodejs.org` already work. Later: GitHub release downloads (KataGo),
-  `media.katagotraining.org` (KataGo networks), `mcp.context7.com`. Note: the session's GitHub
+  ADR 0008), `nodejs.org` and GitHub release downloads (KataGo's binaries; checked in unit 0.5)
+  already work. Still blocked, to add: `media.katagotraining.org` (full-size KataGo networks) and
+  `mcp.context7.com` (the context7 MCP server). Note: the session's GitHub
   proxy still refuses `codeload.github.com` tarballs for repos not attached to the session; see
   ADR 0008 for the ab-stub workaround.
 - **Setup script** (versioned as `dev/cloud-setup.sh`, pasted into the environment's Setup script
@@ -449,8 +450,10 @@ Deliberately skipped:
   - if the repo is already cloned and time remains, `dev/ligo deps`: warm sbt caches, the origin
     SHA-1 cross-check, and the frozen pnpm install with the ab-stub workaround. It's repo-level,
     so it can be rerun in any session (unit 0.4's SessionStart hook will do that);
-  - moved to unit 0.5: a KataGo Eigen CPU binary + small network (their download hosts aren't
-    allowed yet); scalafmt runs through lila's sbt plugin, so no separate binary.
+  - KataGo's Eigen CPU build and KataGo's small test network (`dev/ligo katago install cpu`, unit
+    0.5; before `dev/ligo deps`, since it takes seconds). The full-size network waits for
+    `media.katagotraining.org` on the allowlist. scalafmt runs through lila's sbt plugin, so no
+    separate binary.
 - **Env vars:** `LIGO_KATAGO_BACKEND=cpu`, `LIGO_MONGO_CACHE_GB=0.5`. No secrets.
 
 ### 12.2 Your Linux box (32 GB, AMD CPU + GPU)
@@ -458,7 +461,8 @@ Deliberately skipped:
 `dev/doctor.sh` checks:
 - JDK 21, coursier + sbt 2.x, Node 24 + pnpm 12, Docker, scalafmt, typescript-language-server;
 - (optional) Metals;
-- KataGo with **OpenCL**, tuned via `katago benchmark`;
+- KataGo with **OpenCL** (`dev/ligo katago install`), a network, `clinfo` seeing the GPU, and a
+  recorded benchmark (`dev/ligo katago bench`, which also tunes OpenCL on its first run);
 - free disk space.
 
 Run Remote Control in `tmux` or as a systemd user unit.
