@@ -31,7 +31,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 1.1: server-side Go rules and byo-yomi clock come from strategygames as a pinned dependency
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
   - Unit 1.4 (ratings memo): docs/build-vs-buy/ratings.md recommends lila's own Glicko-2 configured
-    like OGS plus ported goratings rank/handicap formulas; the spike matches OGS's numbers exactly.
+    with OGS's Glicko-2 settings plus ported goratings rank/handicap formulas; the spike reproduces
+    OGS's per-game update and handicap maths exactly (lila's floors and caps still differ).
     Waiting on your A / A2 answer.
 
 ## Next
