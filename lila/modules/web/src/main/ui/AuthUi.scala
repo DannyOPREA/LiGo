@@ -22,7 +22,7 @@ final class AuthUi(helpers: Helpers):
         span(cls := "auth__brand__name")(siteName)
       )
     case Some(c) =>
-      frag(customLogo(c), h2(cls := "oauth__connection__to-lichess")("Connect to lichess.org"))
+      frag(customLogo(c), h2(cls := "oauth__connection__to-lichess")(s"Connect to $siteName"))
 
   def customLogo(c: AuthCustomUi) =
     div(cls := "oauth__connection")(

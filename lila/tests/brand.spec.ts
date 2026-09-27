@@ -28,3 +28,9 @@ test('source page works without a CMS page and links to the LiGo repository', as
   );
   await expect(page.locator('#asset-version-upcoming')).toHaveAttribute('href', /\.\.\.main$/);
 });
+
+test('source page as markdown links to the LiGo repository', async ({ request }) => {
+  const response = await request.get('/source?output_format=md');
+  expect(response.status()).toBe(200);
+  expect(await response.text()).toContain(repo);
+});

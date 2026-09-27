@@ -211,6 +211,9 @@ final class SitePages(helpers: Helpers):
 
   private val repoRoot = LigoBrand.repoUrl
 
+  def sourceDefaultMarkdown: String =
+    s"LiGo is free software, released under the GNU Affero General Public License v3. Its source code is at $repoRoot.\n"
+
   def sourceDefault: Frag =
     p(
       "LiGo is free software, released under the GNU Affero General Public License v3. ",
@@ -245,7 +248,10 @@ final class SitePages(helpers: Helpers):
                     td(span(a(href := s"$repoRoot/commits/${v.commit}"):
                       pre(v.commit.take(7)))),
                     td(
-                      a(href := s"$repoRoot/compare/${v.commit}...${LigoBrand.repoBranch}", title := "Upcoming changes")(
+                      a(
+                        href := s"$repoRoot/compare/${v.commit}...${LigoBrand.repoBranch}",
+                        title := "Upcoming changes"
+                      )(
                         pre("...")
                       )
                     )

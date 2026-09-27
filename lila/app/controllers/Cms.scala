@@ -89,14 +89,21 @@ final class Cms(env: Env) extends LilaController(env):
   def source = Open:
     pageHit
     val key = CmsPageKey("source")
-    negotiateCmsOption(key).getOrElse:
-      env.cms.render(key).flatMap: page =>
-        Ok.page:
-          views.site.ui.source(
-            page.fold(lila.core.i18n.I18nKey.site.sourceCode.txt())(_.title),
-            page.fold(views.site.ui.sourceDefault)(views.cms.render),
-            env.web.lilaVersion
-          )
+    if HTTPRequest.acceptsMarkdown then
+      env.cms.api
+        .asMarkdown(key)
+        .map: text =>
+          Ok(text | views.site.ui.sourceDefaultMarkdown).withHeaders(asMarkdown)
+    else
+      env.cms
+        .render(key)
+        .flatMap: page =>
+          Ok.page:
+            views.site.ui.source(
+              page.fold(lila.core.i18n.I18nKey.site.sourceCode.txt())(_.title),
+              page.fold(views.site.ui.sourceDefault)(views.cms.render),
+              env.web.lilaVersion
+            )
 
   def variantHome = Open:
     negotiate(
