@@ -19,7 +19,7 @@ final class AuthUi(helpers: Helpers):
     case None =>
       div(cls := "auth__brand")(
         span(cls := "auth__brand__logo", aria.hidden := "true"),
-        span(cls := "auth__brand__name")("lichess.org")
+        span(cls := "auth__brand__name")(siteName)
       )
     case Some(c) =>
       frag(customLogo(c), h2(cls := "oauth__connection__to-lichess")("Connect to lichess.org"))

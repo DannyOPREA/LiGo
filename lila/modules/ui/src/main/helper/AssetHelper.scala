@@ -16,6 +16,7 @@ trait AssetHelper:
   def assetUrl(path: String): Url
   def safeJsonValue(jsValue: JsValue): SafeJsonStr
   def imageGetOrigin: ImageGetOrigin
+  def siteName: String // LiGo: the brand, from net.site.name
 
   given ImageGetOrigin = imageGetOrigin
 

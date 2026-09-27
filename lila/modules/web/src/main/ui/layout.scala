@@ -20,7 +20,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
 
   val doctype = raw("<!DOCTYPE html>")
   def htmlTag(using lang: Lang) = html(st.lang := lang.code, dir := isRTL(lang).option("rtl"))
-  val topComment = raw("""<!-- Lichess is open source! See https://lichess.org/source -->""")
+  val topComment = raw(s"""<!-- LiGo is open source! See ${LigoBrand.repoUrl} -->""")
   val charset = raw("""<meta charset="utf-8">""")
   val viewport = raw:
     """<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1,
@@ -293,10 +293,6 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           title := trans.team.teams.txt()
         )
 
-    private val siteNameFrag: Frag =
-      if siteName == "lichess.org" then frag("lichess", span(".org"))
-      else frag(siteName)
-
     def apply(
         zenable: Boolean,
         isAppealUser: Boolean,
@@ -312,7 +308,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
             if ctx.kid.yes then span(title := trans.site.kidMode.txt(), cls := "kiddo")(":)")
             else ctx.isBot.option(botImage),
             div(cls := "site-icon", dataIcon := Icon.Logo),
-            div(cls := "site-name")(siteNameFrag)
+            div(cls := "site-name")(siteName)
           ),
           (!isAppealUser).option(
             frag(
