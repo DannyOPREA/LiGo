@@ -27,7 +27,7 @@ MANIFEST = re.compile(
     r"^(lila/(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|bin/package\.json"
     r"|ui/[^/]+/package\.json|ui/@types/[^/]+/package\.json|build\.sbt|project/[^/]+)"
     r"|lila-ws/(build\.sbt|project/[^/]+)"
-    r"|(libs|services|tools)/.*/(package\.json|pnpm-lock\.yaml|build\.sbt|requirements[^/]*\.txt|pyproject\.toml))$"
+    r"|(libs|services|tools)/.*/(package\.json|pnpm-lock\.yaml|build\.sbt|project/[^/]+|requirements[^/]*\.txt|pyproject\.toml))$"
 )
 
 # SPDX ids LiGo accepts: the families COPYING.md §3 names (MIT, BSD, Apache-2.0, LGPL, GPL-3.0,

@@ -17,6 +17,7 @@ LD="$ROOT/dev/lila-docker"
 STATE="$ROOT/.ligo"
 LILA="$ROOT/lila"
 WS="$ROOT/lila-ws"
+RULES="$ROOT/libs/go-rules"
 
 is_cloud() { [[ "${CLAUDE_CODE_REMOTE:-}" == "true" ]]; }
 if [[ -n "${LIGO_MODE:-}" ]]; then MODE=$LIGO_MODE
@@ -38,8 +39,9 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   db                  Start only Mongo and Redis (idempotent; the SessionStart hook runs it)
   status              Show what is running
   logs [lila|ws|db]   Follow logs
-  compile [what]      Compile lila, ws, ui or all (default: all)
-  test [what]         Run the unit tests of lila, ws, ui or all (default: all)
+  compile [what]      Compile lila, ws, ui, rules or all (default: all)
+  test [what]         Run the unit tests of lila, ws, ui, rules or all (default: all);
+                      rules = libs/go-rules, replaying the libs/conformance fixtures
   e2e [-- args]       Smoke-test the running stack (home page + lobby websocket);
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
@@ -101,6 +103,10 @@ docker_sbt() {  # docker_sbt <service> <sbt args...>
   if [[ -n "$(dc ps -q "$svc" 2>/dev/null)" ]]; then run dc exec -T "$svc" sbt "$@"
   else run dc run --rm --no-deps --entrypoint sbt "$svc" "$@"; fi
 }
+
+# libs/go-rules is its own sbt build; in docker mode it runs in the lila container with libs/
+# mounted next to it, so its tests find ../conformance/fixtures.
+docker_rules_sbt() { run dc run --rm --no-deps -v "$ROOT/libs:/libs" -w /libs/go-rules --entrypoint sbt lila "$@"; }
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)
@@ -292,8 +298,10 @@ cmd_compile() {
     native:lila) lila_sbt compile; native_after_sbt ;;
     native:ws) sbt1 "$WS" compile; native_after_sbt ;;
     native:ui) native_ui ;;
-    *:all) cmd_compile ui; cmd_compile lila; cmd_compile ws ;;
-    *) die "compile what? lila, ws, ui or all" ;;
+    docker:rules) docker_rules_sbt Test/compile ;;
+    native:rules) sbt1 "$RULES" Test/compile; native_after_sbt ;;
+    *:all) cmd_compile ui; cmd_compile lila; cmd_compile ws; cmd_compile rules ;;
+    *) die "compile what? lila, ws, ui, rules or all" ;;
   esac
 }
 
@@ -306,8 +314,12 @@ cmd_test() {
     native:lila) lila_sbt test; native_after_sbt ;;
     native:ws) sbt1 "$WS" test; native_after_sbt ;;
     native:ui) need_node_modules; (cd "$LILA" && run pnpm test) ;;
-    *:all) cmd_test ui; cmd_test lila; cmd_test ws ;;
-    *) die "test what? lila, ws, ui or all" ;;
+    # testFull: sbt 2's plain `test` only reruns tests whose code changed, and a fixture change
+    # is not a code change.
+    docker:rules) docker_rules_sbt testFull ;;
+    native:rules) sbt1 "$RULES" testFull; native_after_sbt ;;
+    *:all) cmd_test ui; cmd_test lila; cmd_test ws; cmd_test rules ;;
+    *) die "test what? lila, ws, ui, rules or all" ;;
   esac
 }
 
@@ -340,6 +352,7 @@ cmd_deps() {
   pnpm_install_lila
   lila_sbt update
   sbt1 "$WS" update
+  sbt1 "$RULES" update
   native_after_sbt
 }
 

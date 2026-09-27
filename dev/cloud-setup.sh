@@ -85,7 +85,8 @@ install_sbt() {
 
 # ---------------------------------------------------------------------------------------------
 # 3. Dependency sources (ADR 0008). Lists every resolver lila and lila-ws declare, with Maven
-# Central replaced by Google's mirror and the dead oss.sonatype.org dropped.
+# Central replaced by Google's mirror and the dead oss.sonatype.org dropped, plus PlayStrategy's
+# repo for strategygames (libs/go-rules, ADR 0012).
 write_repo_config() {
   mkdir -p "$HOME/.sbt" "$HOME/.config/coursier"
   cat > "$HOME/.sbt/repositories" <<EOF
@@ -96,6 +97,7 @@ write_repo_config() {
   jitpack: https://jitpack.io
   lila-maven: https://raw.githubusercontent.com/lichess-org/lila-maven/master
   lila-maven-ornicar: https://raw.githubusercontent.com/ornicar/lila-maven/master
+  ps-lila-maven: https://raw.githubusercontent.com/Mind-Sports-Games/lila-maven/master
   sonatype-central-snapshots: https://central.sonatype.com/repository/maven-snapshots/
   sbt-plugin-releases: https://repo.scala-sbt.org/scalasbt/sbt-plugin-releases/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
 EOF
