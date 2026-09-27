@@ -77,13 +77,25 @@ command -v metals >/dev/null && ok "metals" || meh "metals not found (cs install
 command -v bats >/dev/null && ok "bats $(bats --version | awk '{print $2}')" || meh "bats not found (hook tests: dnf/apt install bats)"
 command -v shellcheck >/dev/null && ok "shellcheck" || meh "shellcheck not found (dnf/apt install ShellCheck/shellcheck)"
 
-echo "KataGo (needed from the scoring phase; benchmarked in unit 0.5)"
-if command -v katago >/dev/null; then
-  kv=$(katago version 2>/dev/null | head -3 | tr '\n' ' ')
+echo "KataGo (needed from the scoring phase; install with: dev/ligo katago install)"
+kbin=$(command -v katago || { [[ -x "$HOME/.local/bin/katago" ]] && echo "$HOME/.local/bin/katago"; } || true)
+if [[ -n "$kbin" ]]; then
+  kv=$("$kbin" version 2>/dev/null | grep -E '^KataGo|backend' | paste -sd ',' - | sed 's/,/, /')
   if grep -qi opencl <<<"$kv"; then ok "katago with OpenCL: $kv"
   elif is_cloud; then ok "katago: $kv"
-  else meh "katago found but not the OpenCL build: $kv"; fi
-else meh "katago not found"; fi
+  else meh "katago found but not the OpenCL build: $kv (dev/ligo katago install opencl)"; fi
+  if ls "$HOME/.local/share/ligo/katago/"*.bin.gz >/dev/null 2>&1; then
+    ok "katago networks: $(find "$HOME/.local/share/ligo/katago" -maxdepth 1 -name '*.bin.gz' -printf '%f ')"
+  else meh "no KataGo network (dev/ligo katago install)"; fi
+else meh "katago not found (dev/ligo katago install)"; fi
+if ! is_cloud; then
+  if command -v clinfo >/dev/null; then
+    gpus=$(clinfo -l 2>/dev/null | grep -ci device || true)
+    if (( gpus > 0 )); then ok "OpenCL sees $gpus device(s)"; else meh "clinfo sees no OpenCL device (Fedora AMD: dnf install ocl-icd mesa-libOpenCL and export RUSTICL_ENABLE=radeonsi, or ROCm rocm-opencl)"; fi
+  else meh "clinfo not found (dnf install clinfo), can't check OpenCL"; fi
+  if grep -qi 'using opencl' "$ROOT/.ligo/katago-benchmark.txt" 2>/dev/null; then ok "KataGo OpenCL benchmark recorded (.ligo/katago-benchmark.txt)"
+  else meh "no KataGo OpenCL benchmark yet (dev/ligo katago install opencl, then dev/ligo katago bench)"; fi
+fi
 
 if is_cloud; then
   echo "Cloud dependency sources (ADR 0008)"

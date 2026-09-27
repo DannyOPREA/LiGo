@@ -22,8 +22,44 @@
 - Permission precedence is deny > ask > allow: an `ask` rule overrides a narrower `allow`, so `ask: git push *` would prompt on every unit-branch push (2026-09-26, unit 0.4).
 - Playwright MCP wants its own browser build; in cloud sessions point it at `/opt/pw-browsers/chromium` (`dev/mcp-playwright.sh`) (2026-09-26, unit 0.4).
 - A shell comment that starts with the word "shellcheck" is read as a shellcheck directive (2026-09-26, unit 0.4).
+- KataGo's Linux binaries are AppImages and containers have no FUSE: unpack with `--appimage-extract` and run `AppRun` (`dev/katago.sh`) (2026-09-27, unit 0.5).
+- GitHub release downloads pass the cloud proxy, but GitHub's API and release pages don't for repos not attached to the session: probe asset URLs instead (2026-09-27, unit 0.5).
 
 ## Entries (newest first)
+### 2026-09-27 · unit 0.5 · Environments: KataGo in both environments, doctor, allowlist status
+- Did: `dev/katago.sh` (`dev/ligo katago install | smoke | bench | path`): KataGo v1.18.1 from its
+  GitHub release (both zips SHA-256-pinned), unpacked from its AppImage into `~/.local/opt`,
+  linked as `~/.local/bin/katago`; KataGo's own small test network (pinned by commit + SHA-256);
+  outside the cloud, the full-size b18 network. `dev/cloud-setup.sh` and the SessionStart hook
+  install the CPU build in the cloud; `dev/doctor.sh` checks the build, networks, `clinfo` and a
+  recorded benchmark. Docs: CLAUDE_SETUP §12, katago-setup skill, CLAUDE.md commands, STATUS.
+- Worked: GitHub release downloads now pass the cloud proxy (sbt already used them). Smoke query
+  answers in ~1.3 s with a 361-point ownership map. `dev/tests/run.sh` 21/21 (3 new checks);
+  session-start.bats has a new test for the KataGo plan.
+- Didn't work / dead ends: `media.katagotraining.org`, `katagotraining.org` and
+  `mcp.context7.com` still get 403 from the proxy. GitHub's releases API and expanded-assets page
+  answer 403 for repos not attached to the session, so asset names were found by probing URLs:
+  v1.18.2 is tagged but has no Linux zips; v1.18.1 is the newest with them. `katago analysis`
+  aborts if both logFile and logDir are set (the shipped config sets logDir).
+- Lessons: the OpenCL AppImage doesn't bundle libOpenCL.so.1 (needs the system's ocl-icd).
+  KataGo's Linux binaries are AppImages; containers lack FUSE, so unpack them once with
+  `--appimage-extract` and run `squashfs-root/AppRun`. KataGo's repo ships small test networks
+  under `cpp/tests/models/`, reachable via raw.githubusercontent.com.
+- Decisions: Claude's defaults, for the owner to confirm after merge (logs/decisions.md): KataGo
+  v1.18.1 (newest release with Linux zips); the g170 b6c96 test network in the cloud; the b18
+  network downloaded without a pinned checksum until the owner reports it; the cloud setup script
+  and SessionStart hook install the CPU build.
+- Review: the reviewer found smoke failing on a clone without `.ligo/` (KataGo makes logDir but
+  not its parents; stderr was hidden), an OpenCL build without libOpenCL.so.1 reported as
+  installed, no time limit on the setup step, KataGo chained before `dev/ligo db` in the hook,
+  and a half-finished install never repairing. All fixed; a broken build no longer replaces the
+  working `~/.local/bin/katago` link.
+- Verified by Claude: install, smoke, bench, doctor (cloud and non-cloud branches), cloud-setup
+  with budget 0, shellcheck, bats. · Needs owner verification: install/smoke/bench with OpenCL on
+  the AMD GPU; the b18 network download and its sha256; paste setup script; allowlist hosts.
+- Follow-ups: pin the b18 network's SHA-256 once reported; record the OpenCL benchmark in
+  logs/scoring.md.
+
 ### 2026-09-27 · working agreement · Claude merges its own PRs (ADR 0011)
 - Did: owner asked to let Claude merge without his approval. ADR 0011; CLAUDE.md, PLAN §1.1/§7,
   CLAUDE_SETUP §1/§3/§5/§6/§13/§14 and /ship (new step 10) updated. settings.json: `gh pr merge`

@@ -20,7 +20,7 @@ output_is() { [[ "$("${@:2}" 2>/dev/null)" == "$1" ]]; }  # output_is <expected>
 
 echo "dev/ tooling checks"
 
-scripts=("$ROOT/dev/ligo" "$ROOT/dev/doctor.sh" "$ROOT/dev/cloud-setup.sh" "$ROOT/dev/mcp-playwright.sh" "$ROOT/dev/tests/run.sh")
+scripts=("$ROOT/dev/ligo" "$ROOT/dev/doctor.sh" "$ROOT/dev/cloud-setup.sh" "$ROOT/dev/mcp-playwright.sh" "$ROOT/dev/katago.sh" "$ROOT/dev/tests/run.sh")
 for s in "${scripts[@]}"; do check "bash -n ${s#"$ROOT"/}" bash -n "$s"; done
 if command -v shellcheck >/dev/null; then check "shellcheck" shellcheck "${scripts[@]}"
 else echo "  skip  shellcheck (not installed)"; fi
@@ -33,6 +33,9 @@ check "mode defaults to docker elsewhere" output_is docker env -u LIGO_MODE -u C
 check "LIGO_MODE overrides the default" output_is docker env LIGO_MODE=docker CLAUDE_CODE_REMOTE=true "$LIGO" mode
 check "compile rejects an unknown target" fails "$LIGO" compile nonsense
 check "test rejects an unknown target" fails "$LIGO" test nonsense
+check "ligo katago help exits 0" "$LIGO" katago help
+check "ligo katago with an unknown command fails" fails "$LIGO" katago no-such-command
+check "katago install rejects an unknown backend" fails "$LIGO" katago install cuda
 
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
   check "compose.yml is valid" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.yml --profile utils --profile mongo-express config -q"

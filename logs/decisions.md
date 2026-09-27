@@ -5,6 +5,8 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-27 | 0.5: KataGo version, cloud network, b18 download, auto-install | Claude's defaults, owner to confirm after merge: pin v1.18.1 (newest with Linux zips); KataGo's g170 b6c96 test net in the cloud; b18 downloaded on the owner's box without a pinned checksum until he reports it; cloud setup + SessionStart install the CPU build | logs/tooling.md, PR #6 |
+| 2026-09-27 | Start unit 0.5 (environments)? | "Autonomously work towards the goal … without waiting for me to prompt you" (owner), taken as approval of each next unit in the build order | logs/tooling.md |
 | 2026-09-27 | Check a PR's "Needs your verification" list before or after Claude merges? | After merge (owner) | ADR 0011, PLAN §6 |
 | 2026-09-27 | Owner asked: change the working agreement so Claude can merge without his approval | Claude squash-merges its own PRs once /verify (and CI, when it exists) passes, the reviewer has no blocking finding, no review thread or owner question is open; then tells the owner (owner, default picked by Claude) | ADR 0011 |
 | 2026-09-26 | Start unit 0.4 (Claude config)? | "Continue." (owner), taken as approval of the next unit in the build order | logs/tooling.md |

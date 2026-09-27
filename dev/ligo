@@ -44,6 +44,7 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
   verify-mirror       Cross-check Google-mirror downloads against Maven Central (cloud, ADR 0008)
+  katago <cmd>        KataGo: install [cpu|opencl], smoke, bench, path (dev/katago.sh)
   doctor              Check this machine's tools (dev/doctor.sh)
   mode                Print the mode (docker or native)
 
@@ -382,6 +383,7 @@ main() {
     e2e) cmd_e2e "$@" ;;
     deps) cmd_deps ;;
     verify-mirror) verify_mirror ;;
+    katago) exec "$ROOT/dev/katago.sh" "$@" ;;
     doctor) exec "$ROOT/dev/doctor.sh" "$@" ;;
     mode) echo "$MODE" ;;
     help|-h|--help) usage ;;

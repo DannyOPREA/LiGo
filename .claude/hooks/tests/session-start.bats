@@ -35,6 +35,15 @@ start() { hook session-start.sh "$(json session_id s1 cwd "$REPO" source startup
   [[ "$output" == *"dev/ligo deps"* ]]
 }
 
+@test "in the cloud, plans the KataGo install only when katago is missing" {
+  export CLAUDE_CODE_REMOTE=true HOME="$BATS_TEST_TMPDIR/home"
+  start
+  [[ "$output" == *"dev/ligo katago install cpu"* ]]
+  mkdir -p "$HOME/.local/bin" && printf '#!/bin/sh\n' > "$HOME/.local/bin/katago" && chmod +x "$HOME/.local/bin/katago"
+  start
+  [[ "$output" != *"katago"* ]]
+}
+
 @test "survives a repo without STATUS.md" {
   rm docs/STATUS.md
   start
