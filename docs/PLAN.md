@@ -347,6 +347,25 @@ is the scarce resource.
 | **8. Tsumego** | Content sourcing (build-vs-buy + licence check, **you approve**), import pipeline, trainer, puzzle rating | ≥ 200 puzzles with recorded provenance, playable on a phone | 5–8 |
 | **9. PWA, polish & handoff** | Installable PWA, sounds, themes, accessibility basics, performance budget, credits page; a **handoff package** (write-up, demo video, lobby research, logs digest, how to run it) | A demo to a Go club and, if you choose, to the OGS developers | 4–6 |
 
+**Phase 1 units** (broken down 2026-09-27 when Phase 1 started; the order puts the decisions first so
+you can answer them while building continues):
+
+| Unit | What |
+|---|---|
+| 1.1 | Build-vs-buy memo for the server-side Go rules and byo-yomi clock, with a strategygames spike ([memo](build-vs-buy/server-go-rules.md)) |
+| 1.2 | Build-vs-buy memo for the client engine and board (OGS `goban` / `goban-engine`), with a spike |
+| 1.3 | Build-vs-buy memo for scoring (KataGo analysis engine + goban autoscore + goscorer), with a spike |
+| 1.4 | Build-vs-buy memo for ratings (scalachess Glicko-2 + the `goratings` formulas) |
+| 1.5 | The rules spec in `docs/rules/` (`go-rules-expert`), for your approval |
+| 1.6 | `libs/conformance`: fixture format and fixtures imported from existing suites |
+| 1.7 | `libs/go-rules` adapter over the chosen server engine, passing the fixtures and an SGF round-trip, with a `rules` CI job |
+| 1.8 | `goban-engine` test harness passing the same fixtures, SGF round-trip, parity CI |
+| 1.9 | Nightly differential test: 1,000 random games checked against KataGo |
+
+Other §3.1 rows: dev env (ADR 0010) and CI (unit 0.6) were settled in Phase 0; PWA and the tsumego
+trainer (both lila's own, used as-is) get their check when their phases start (9 and 8); tsumego
+content sourcing stays in Phase 8 and load testing in Phase 6+, as the table above says.
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.

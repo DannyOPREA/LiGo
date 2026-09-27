@@ -3,7 +3,9 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- 0.7 dry run: rebrand lichess to LiGo (PR #8). Logs: logs/backend.md.
+- 1.1 build-vs-buy for the server-side Go rules (started 2026-09-27, under the owner's standing
+  "work autonomously" approval). Acceptance: a memo in docs/build-vs-buy/ backed by a spike, the
+  owner's choice recorded as an ADR. Logs: logs/rules-engine.md.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -24,15 +26,19 @@ _Updated at the end of every session (`/status`). Newest information wins._
     shellcheck, log check, COPYING.md-on-manifest-change, npm licences, PR template sections).
     Jobs for untouched areas are skipped. rules/e2e/nightly workflows come with later units.
   - `main` ruleset (you, 2026-09-27): PR required (0 approvals), the 9 CI jobs required. Checked on PR #8.
-  - Unit 0.7 (dry run): rebrand lichess to LiGo: site name, page titles, AGPL source links, /source page (PR #8).
+  - Unit 0.7 (dry run): rebrand lichess to LiGo: site name, page titles, AGPL source links, /source page (PR #8, merged).
+- **Phase 1 — build-vs-buy + rules integration** started 2026-09-27; units listed in docs/PLAN.md §5.
 
 ## Next
-- Phase 1 (docs/PLAN.md) once PR #8 merges.
+- Phase 1 units 1.2–1.9 (docs/PLAN.md §5, "Phase 1 units"). 1.2 (client engine + board memo) does
+  not depend on the 1.1 answer.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
+- Unit 1.1: strategygames as a dependency (recommended) or vendor only its Go package? Memo:
+  docs/build-vs-buy/server-go-rules.md. The PR merges with the ADR once you answer.
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).
@@ -54,5 +60,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Phase progress
 | Phase | State |
 |---|---|
-| 0. Claude setup + baseline | units 0.1–0.7 built (0.7 in PR #8) |
-| 1–9 | not started |
+| 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
+| 1. Build-vs-buy + rules integration | 1.1 in progress (of 9 units) |
+| 2–9 | not started |
