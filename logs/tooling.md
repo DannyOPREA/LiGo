@@ -24,6 +24,7 @@
 - A shell comment that starts with the word "shellcheck" is read as a shellcheck directive (2026-09-26, unit 0.4).
 - KataGo's Linux binaries are AppImages and containers have no FUSE: unpack with `--appimage-extract` and run `AppRun` (`dev/katago.sh`) (2026-09-27, unit 0.5).
 - GitHub release downloads pass the cloud proxy, but GitHub's API and release pages don't for repos not attached to the session: probe asset URLs instead (2026-09-27, unit 0.5).
+- lila's pinned `@playwright/test` wants a newer Chromium than cloud containers ship: run it with a scratch config setting `launchOptions.executablePath: '/opt/pw-browsers/chromium'`. `bats`/`shellcheck` exist only once `dev/cloud-setup.sh` has run (2026-09-27, unit 0.7).
 
 ## Entries (newest first)
 ### 2026-09-27 · unit 0.6 · CI: lila, ui and meta workflows
