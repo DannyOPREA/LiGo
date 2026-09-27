@@ -1,8 +1,8 @@
 # Frontend checks for lila/ui: lint, format, build, unit tests. Adapted from upstream's
 # lila/.github/workflows/assets.yml and lint.yml (same actions, pinned to the same commits) for
-# LiGo's monorepo paths. Left out: the optional private `ab` checkout, the asset artifact upload
-# (LiGo doesn't deploy from CI), CodeQL, and `workspace-check` (it runs an unpinned package via
-# pnpx). Unit 0.6.
+# LiGo's monorepo paths, plus upstream's CodeQL scan of the JavaScript/TypeScript. Left out: the
+# optional private `ab` checkout, the asset artifact upload (LiGo doesn't deploy from CI) and
+# `workspace-check` (it runs an unpinned package via pnpx). Unit 0.6.
 name: ui
 
 on:
@@ -19,8 +19,9 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  changes:
+  ui-paths:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       ui: ${{ steps.changed.outputs.ui }}
     steps:
@@ -34,8 +35,8 @@ jobs:
           BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
 
   ui:
-    needs: changes
-    if: needs.changes.outputs.ui == 'true'
+    needs: ui-paths
+    if: needs.ui-paths.outputs.ui == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -65,3 +66,19 @@ jobs:
         run: ./ui/build --no-install -p
       - name: Tests
         run: ./ui/test
+
+  codeql:
+    needs: ui-paths
+    if: needs.ui-paths.outputs.ui == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        with:
+          languages: javascript
+      - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9

@@ -2,13 +2,14 @@
 """LiGo's repository-rule checks, run by .github/workflows/meta.yml (unit 0.6).
 
 Usage:
-  meta_checks.py logs <base> [head]       code changed -> a logs/ file changed too
+  meta_checks.py logs <base> [head]       code changed -> an area log (logs/<area>.md) changed too
   meta_checks.py manifests <base> [head]  a dependency manifest changed -> COPYING.md changed too
   meta_checks.py pr-body [template]       the PR description (env PR_BODY) has every template section,
                                           and "Needs your verification" isn't empty
-  meta_checks.py js-licences [json]       every production npm package of lila has an
-                                          AGPL-compatible licence (input: `pnpm licenses list
-                                          --prod --json`, from a file or stdin)
+  meta_checks.py js-licences [json]       every npm package of lila has an AGPL-compatible
+                                          licence (input: `pnpm licenses list --json`, from a
+                                          file or stdin). Dev dependencies count: lila bundles
+                                          browser libraries such as chessground from them.
 
 Each prints what it found and exits 1 on a violation. The rules come from docs/CLAUDE_SETUP.md
 §9.3 and §13. Licence: MIT (LiGo's own code, ADR 0006).
@@ -29,20 +30,21 @@ MANIFEST = re.compile(
     r"|(libs|services|tools)/.*/(package\.json|pnpm-lock\.yaml|build\.sbt|requirements[^/]*\.txt|pyproject\.toml))$"
 )
 
-# SPDX ids LiGo accepts in production dependencies: permissive licences and the GPL family that
-# AGPL-3.0 can combine with (GPL-3.0 via AGPL §13). "BSD" is how some old packages spell BSD-3.
+# SPDX ids LiGo accepts: the families COPYING.md §3 names (MIT, BSD, Apache-2.0, LGPL, GPL-3.0,
+# AGPL-3.0), their trivial variants (MIT-0, 0BSD, ISC), and the few others lila's tree already
+# uses (BlueOak-1.0.0, CC0-1.0, Python-2.0). Anything else needs the owner's approval first.
+# "BSD" is how some old packages spell BSD-3-Clause.
 ALLOWED = {
-    "0BSD", "Apache-2.0", "BlueOak-1.0.0", "BSD", "BSD-2-Clause", "BSD-3-Clause", "CC0-1.0",
-    "CC-BY-3.0", "CC-BY-4.0", "ISC", "MIT", "MIT-0", "MPL-2.0", "Python-2.0", "Unlicense",
-    "Zlib", "WTFPL", "LGPL-2.1-or-later", "LGPL-3.0", "LGPL-3.0-only", "LGPL-3.0-or-later",
-    "GPL-3.0", "GPL-3.0-only", "GPL-3.0-or-later", "GPL-2.0-or-later",
-    "AGPL-3.0", "AGPL-3.0-only", "AGPL-3.0-or-later",
+    "MIT", "MIT-0", "ISC", "0BSD", "BSD", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0",
+    "LGPL-2.1", "LGPL-2.1-only", "LGPL-2.1-or-later", "LGPL-3.0", "LGPL-3.0-only", "LGPL-3.0-or-later",
+    "GPL-3.0", "GPL-3.0-only", "GPL-3.0-or-later", "AGPL-3.0", "AGPL-3.0-only", "AGPL-3.0-or-later",
+    "BlueOak-1.0.0", "CC0-1.0", "Python-2.0",
 }
 
 
 def changed_files(base, head):
     out = subprocess.run(
-        ["git", "diff", "--name-only", base, head, "--"], check=True, capture_output=True, text=True
+        ["git", "diff", "--name-only", "--no-renames", base, head, "--"], check=True, capture_output=True, text=True
     ).stdout
     return [f for f in out.splitlines() if f]
 
@@ -50,14 +52,18 @@ def changed_files(base, head):
 def check_logs(base, head="HEAD"):
     files = changed_files(base, head)
     code = [f for f in files if not f.endswith(".md")]
-    logs = [f for f in files if f.startswith("logs/") and f.endswith(".md")]
+    # An area log (logs/README.md maps paths to them), not the decisions index or the archive.
+    logs = [
+        f for f in files
+        if re.fullmatch(r"logs/[^/]+\.md", f) and f not in ("logs/README.md", "logs/decisions.md")
+    ]
     if not code:
         print("only Markdown changed: no log entry needed")
         return 0
     if logs:
         print(f"code changed and so did {', '.join(logs)}")
         return 0
-    print("code changed but no logs/*.md file did. Append an entry with /log (logs/README.md):")
+    print("code changed but no area log (logs/<area>.md) did. Append an entry with /log (logs/README.md):")
     print("\n".join(f"  {f}" for f in code[:20]))
     return 1
 
@@ -154,13 +160,16 @@ def check_js_licences(path=None):
     data = json.load(open(path, encoding="utf-8") if path else sys.stdin)
     bad = {lic: pkgs for lic, pkgs in data.items() if not licence_ok(lic)}
     total = sum(len(p) for p in data.values())
+    if total == 0:
+        print("no packages in the input: did `pnpm licenses list` fail?")
+        return 1
     if bad:
-        print("npm production dependencies with licences not on LiGo's list (dev/ci/meta_checks.py):")
+        print("npm dependencies with licences not on LiGo's list (dev/ci/meta_checks.py):")
         for lic, pkgs in sorted(bad.items()):
             print(f"  {lic}: " + ", ".join(f"{p['name']}@{','.join(p.get('versions', []))}" for p in pkgs))
         print("Ask the owner before adding a dependency (CLAUDE.md); record approved ones in COPYING.md.")
         return 1
-    print(f"{total} npm production packages, {len(data)} licences, all AGPL-compatible")
+    print(f"{total} npm packages, {len(data)} licences, all AGPL-compatible")
     return 0
 
 

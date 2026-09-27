@@ -26,6 +26,42 @@
 - GitHub release downloads pass the cloud proxy, but GitHub's API and release pages don't for repos not attached to the session: probe asset URLs instead (2026-09-27, unit 0.5).
 
 ## Entries (newest first)
+### 2026-09-27 · unit 0.6 · CI: lila, ui and meta workflows
+- Did: `.github/workflows/lila.yml` (lila scalafmt + tests; lila-ws tests + `sbt check`),
+  `ui.yml` (lint, format, build, tests, CodeQL), `meta.yml` (hook bats tests, dev/ checks,
+  shellcheck, JSON, frontmatter; log check, manifest → COPYING.md check, PR template check; npm
+  licence check). All adapted from lila's and lila-ws's own workflows with the same pinned
+  actions. Checks live in `dev/ci/` (`changed.sh`, `meta_checks.py`), tested by
+  `dev/tests/run.sh` (42 checks). Docs: CLAUDE_SETUP §13, CLAUDE.md, STATUS.
+- Worked: the first real run on PR #7: lila compiled and tested in 4 m 44 s, lila-ws in 2 min,
+  the hook tests passed on the runner. The first run also caught two things: lila's oxfmt checks
+  Markdown, and LiGo's `lila/CLAUDE.md` and `lila/ui/CLAUDE.md` weren't formatted (fixed); and
+  the log check failed as designed until this entry existed.
+- Didn't work / dead ends: jobs gated by workflow-level `paths:` filters would leave required
+  checks pending forever, so each workflow has a small `*-paths` job and later jobs skip with
+  `if:` (GitHub counts a skipped job as passing).
+- Lessons: lila's `oxfmt --check` also covers Markdown and YAML under `lila/`, and verify.sh's
+  ui gate ignores `.md`, so edit lila/*.md with oxfmt in mind. On a pull_request run the checkout is
+  a merge commit: `HEAD^1` is the base, with `fetch-depth: 2`. `git diff --name-only` hides a
+  moved file's old path unless `--no-renames`. sbt 2's `test` is incremental (testQuick), with a
+  disk cache restored between runs.
+- Decisions: Scala licence scan deferred (owner, logs/decisions.md). Claude's defaults, for the
+  owner to confirm after merge: the licence allowlist (COPYING.md §3 families plus BlueOak-1.0.0,
+  CC0-1.0, Python-2.0, the ones lila's tree uses); dev dependencies are checked too; `rules.yml`,
+  `nightly-differential.yml` and `e2e.yml` deferred to the units that have rules code or a game;
+  `workspace-check` left out (runs an unpinned package via pnpx); files outside every known area
+  run every job.
+- Review: the reviewer found the log check satisfied by `logs/decisions.md` alone, renames
+  hiding a lila-ws change, `--prod` skipping the browser libraries lila bundles from
+  devDependencies, unknown paths (future `libs/`) skipping builds, an allowlist wider than
+  COPYING.md, CodeQL dropped, empty licence input passing, and a job name (`rules`) that would
+  clash with the planned `rules.yml`. All fixed, each with a test where it's testable.
+- Verified by Claude: dev/tests/run.sh 42/0, bats 48/0, actionlint, shellcheck, UI lint + format
+  + build + 237 unit tests locally, the npm licence check on all 315 packages, CI on PR #7. ·
+  Needs owner verification: add the required status checks to the main ruleset.
+- Follow-ups: extend `changed.sh` areas when `libs/`, `services/` or `tools/puzzles` arrive;
+  add rules/e2e/nightly workflows with their units.
+
 ### 2026-09-27 · unit 0.5 · Environments: KataGo in both environments, doctor, allowlist status
 - Did: `dev/katago.sh` (`dev/ligo katago install | smoke | bench | path`): KataGo v1.18.1 from its
   GitHub release (both zips SHA-256-pinned), unpacked from its AppImage into `~/.local/opt`,

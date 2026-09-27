@@ -52,11 +52,20 @@ ci_commit docs docs/x.md
 check "changed.sh: a docs-only change needs no build" output_is $'lila=false\nws=false\nui=false' in_ci_repo "$CHANGED" main
 check "log check: Markdown only passes" in_ci_repo "$META" logs main HEAD
 ci_commit scala lila/modules/a.scala
-check "changed.sh: lila/modules triggers the lila build only" output_is $'lila=true\nws=false\nui=false' in_ci_repo "$CHANGED" main
+check "changed.sh: lila/modules triggers the lila and ui builds" output_is $'lila=true\nws=false\nui=true' in_ci_repo "$CHANGED" main
 check "changed.sh: no base commit means build everything" output_is $'lila=true\nws=true\nui=true' in_ci_repo "$CHANGED" ""
 check "log check: code without a logs/ entry fails" fails in_ci_repo "$META" logs main HEAD
 ci_commit scala-logged lila/modules/a.scala logs/backend.md
 check "log check: code with a logs/ entry passes" in_ci_repo "$META" logs main HEAD
+ci_commit decisions-only lila/modules/a.scala logs/decisions.md
+check "log check: logs/decisions.md alone isn't a log entry" fails in_ci_repo "$META" logs main HEAD
+(cd "$ci_repo" && git checkout -q -B moved main && mkdir -p lila-ws/src && echo x > lila-ws/src/A.scala && git add -A && git commit -qm a \
+  && git mv lila-ws/src/A.scala docs/A.scala && git commit -qm mv) >/dev/null 2>&1
+check "changed.sh: moving a file out of lila-ws triggers the ws build" output_is $'lila=false\nws=true\nui=false' in_ci_repo "$CHANGED" HEAD~1
+ci_commit newlib libs/go-rules/src/Rules.scala logs/rules-engine.md
+check "changed.sh: a file outside every area runs everything" output_is $'lila=true\nws=true\nui=true' in_ci_repo "$CHANGED" main
+ci_commit toolingonly dev/x.sh .claude/y.json logs/tooling.md
+check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false' in_ci_repo "$CHANGED" main
 ci_commit dep lila/package.json logs/tooling.md
 check "changed.sh: lila/package.json triggers the ui build" output_is $'lila=false\nws=false\nui=true' in_ci_repo "$CHANGED" main
 check "manifest check: package.json without COPYING.md fails" fails in_ci_repo "$META" manifests main HEAD
@@ -66,8 +75,9 @@ check "PR body: the bare template fails (empty sections)" fails env PR_BODY="$(c
 filled=$(sed -E 's/^(## .*)$/\1\nn\/a/' "$ROOT/.github/pull_request_template.md")
 check "PR body: every section filled passes" env PR_BODY="$filled" "$META" pr-body "$ROOT/.github/pull_request_template.md"
 check "PR body: a missing section fails" fails env PR_BODY="$(grep -v '^## Risks' <<<"$filled")" "$META" pr-body "$ROOT/.github/pull_request_template.md"
-check "licences: MIT, (MIT OR CC0-1.0) and GPL-3.0 pass" bash -c "echo '{\"MIT\":[],\"(MIT OR CC0-1.0)\":[],\"GPL-3.0\":[]}' | '$META' js-licences"
+check "licences: MIT, (MPL-2.0 OR Apache-2.0) and GPL-3.0 pass" bash -c "echo '{\"MIT\":[{\"name\":\"a\"}],\"(MPL-2.0 OR Apache-2.0)\":[{\"name\":\"b\"}],\"GPL-3.0\":[{\"name\":\"c\"}]}' | '$META' js-licences"
 check "licences: GPL-2.0-only fails" fails bash -c "echo '{\"GPL-2.0-only\":[{\"name\":\"x\"}]}' | '$META' js-licences"
+check "licences: empty input fails" fails bash -c "echo '{}' | '$META' js-licences"
 check "licences: (MIT AND SSPL-1.0) fails" fails bash -c "echo '{\"(MIT AND SSPL-1.0)\":[{\"name\":\"x\"}]}' | '$META' js-licences"
 
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then

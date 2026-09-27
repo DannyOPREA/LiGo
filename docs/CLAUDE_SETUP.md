@@ -483,6 +483,26 @@ All of these are required on PRs to `main`:
 | `meta.yml` | Hook bats tests; licence check (AGPL-compatible deps only; `COPYING.md` updated when deps change); **log check** (code changes need a `logs/` change); PR template sections present |
 | `nightly-differential.yml` | Random playouts: server rules vs KataGo |
 
+Built in unit 0.6: `lila.yml`, `ui.yml` and `meta.yml`. The checks behind them live in `dev/ci/`
+(`changed.sh` decides which jobs a PR needs; `meta_checks.py` holds the log check, which wants an
+area log rather than `decisions.md`, and the manifest, PR template and npm licence checks) and are
+tested by `dev/tests/run.sh`. A PR that doesn't touch an area skips its jobs, and GitHub counts a
+skipped job as passing. Differences from the table:
+- `rules.yml` and `nightly-differential.yml` come with the Phase 1 units that create the rules
+  code; `e2e.yml` with the first unit that has a game to play.
+- `lila.yml` also runs lila's `scalafmtCheckAll` and lila-ws's `sbt check` (scalafmt + scalafix),
+  as upstream does; `ui.yml` runs lila's `lint` and `check-format` scripts and upstream's CodeQL
+  scan. Left out from upstream: the release artifacts, the optional private `ab` checkout and
+  `workspace-check` (it runs an unpinned package via `pnpx`).
+- A changed file outside every area and outside the no-build list in `changed.sh` (e.g. a new
+  `libs/` folder) makes every job run, until its unit adds it to an area.
+- Licence check: every npm package in lila's lockfile (dev ones too: lila bundles browser
+  libraries from them) is checked with pnpm's built-in `pnpm licenses` against the allowlist in
+  `meta_checks.py` (COPYING.md §3's licence families plus BlueOak-1.0.0, CC0-1.0, Python-2.0).
+  Scala dependencies are covered only by the rule that a dependency-manifest change must also
+  change `COPYING.md`; scanning them would need an sbt plugin,
+  which the owner chose to defer until Scala dependencies change (logs/decisions.md).
+
 **PR template** (`.github/pull_request_template.md`):
 - What & why (links the approved unit)
 - Plain-English walkthrough

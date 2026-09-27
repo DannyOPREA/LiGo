@@ -18,4 +18,5 @@ snabbdom, styled with SCSS, bundled by the custom esbuild-based `ui/.build/` (`u
   build-vs-buy memo (you will get a permission prompt).
 
 ## Logs to read
+
 `logs/frontend.md`, `logs/board-ui.md`, `logs/lobby.md` (as relevant; Lessons + latest entries).

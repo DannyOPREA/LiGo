@@ -4,8 +4,10 @@ lichess's server (Scala 3 + lichess's Play fork), imported at the SHA in `docs/U
 edited in place. It is a plain folder of the LiGo repo, not a git repo of its own.
 
 ## lila/AGENTS.md is upstream's guide, and LiGo's rules win
+
 `AGENTS.md` is lichess's contributor guide. It is useful background (module layout, UI build), but
 where it disagrees with LiGo, follow LiGo:
+
 - Build, run and test through `dev/ligo` (repo root), not `./lila.sh` / `./ui/build` directly,
   unless a dev/ligo command doesn't cover what you need.
 - `pnpm install --frozen-lockfile` only (dev/ligo does it). A lockfile or dependency change is a
@@ -14,6 +16,7 @@ where it disagrees with LiGo, follow LiGo:
 - "Trust these instructions" doesn't apply: if something is unclear or surprising, stop and ask.
 
 ## Architecture primer (for a Scala newcomer)
+
 - `modules/<name>/src/main/`: ~90 modules, each a library with a strict dependency order
   (`build.sbt`, `project/Dependencies.scala`). `core` holds shared interfaces (`lila.core.*`) so
   modules depend on `core` rather than on each other.
@@ -31,14 +34,17 @@ where it disagrees with LiGo, follow LiGo:
 - Realtime goes through lila-ws over Redis (`modules/socket`, `lila-ws/`).
 
 ## Which modules matter for Go
+
 Adapted in later phases: `game`, `round`, `lobby`, `setup`, `pool`, `challenge`, `rating`,
 `analyse`, `puzzle`, `user`, `pref`. Chess-only modules (fishnet, opening, explorer, relay, fide,
 insight, etc.) get removed or left dormant per PLAN phases. Don't remove anything a unit doesn't list.
 
 ## Compile tips
+
 - `dev/ligo compile lila` compiles everything; ~12 GB of memory. In cloud sessions compile only what
   you need where possible, and stop the sbt server afterwards (logs/tooling.md Lessons).
 - Formatting: `./lila.sh scalafmtCheckAll` (/verify runs it for Scala changes).
 
 ## Logs to read
+
 `logs/backend.md`, `logs/upstream-fork.md` (Lessons + latest entries only).
