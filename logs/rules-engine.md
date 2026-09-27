@@ -9,6 +9,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-27 · 1.1 · Owner chose strategygames as a dependency
+- Did: recorded the owner's answer (option A) as ADR 0012; marked the memo decided; updated STATUS and decisions.md.
+- Worked: the question went out as a decision card with work continuing, and was answered the same afternoon.
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Decisions: A, dependency with fairystockfish/aalina/joansala excluded (owner) → ADR 0012.
+- Verified by Claude: docs-only; /verify and CI on the PR. · Needs owner verification: none.
+- Follow-ups: unit 1.7 adds the dependency, the resolver (lila build, dev/cloud-setup.sh, CI), the SHA-256 in docs/UPSTREAM.md and the COPYING.md notice.
+
 ### 2026-09-27 · 1.1 · Build-vs-buy: server-side Go rules (strategygames spike)
 - Did: broke Phase 1 into units 1.1–1.9 (PLAN §5). Spiked strategygames `10.2.1-s3-ps14` (commit 7344183) in a throwaway sbt 2.0.9 / Scala 3.8.4 project with lila's scalalib and scalachess versions; ran its own Go tests; exercised its `ByoyomiClock`; wrote docs/build-vs-buy/server-go-rules.md; asked the owner A (dependency, exclusions) vs B (vendor Go package).
 - Worked: resolution from PlayStrategy's repo; Scala 3.7.4-built artifact consumed from 3.8.4; a 9×9 ko retake refused; `-verbose:class` showed only `strategygames`, `.go`, `.go.format`, `.go.variant` classes loaded; exclusions leave only strategygames, joda-time and scala-parser-combinators beyond scalachess's jars; 413/413 of its Go tests pass on its own build.

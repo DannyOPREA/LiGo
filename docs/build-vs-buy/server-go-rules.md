@@ -1,6 +1,6 @@
 # Build-vs-buy: server-side Go rules and byo-yomi clock
 
-- Unit: 1.1 (Phase 1). Status: **Proposed, waiting for the owner's choice.** The choice becomes an ADR.
+- Unit: 1.1 (Phase 1). Status: **Decided 2026-09-27: option A** (owner), recorded in [ADR 0012](../decisions/0012-strategygames-for-server-go-rules.md).
 - Date: 2026-09-27. Evidence gathered in a throwaway spike outside the repo (code and output below).
 
 ## Capability
