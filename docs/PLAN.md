@@ -355,7 +355,7 @@ you can answer them while building continues):
 | 1.1 | Build-vs-buy memo for the server-side Go rules and byo-yomi clock, with a strategygames spike ([memo](build-vs-buy/server-go-rules.md)) |
 | 1.2 | Build-vs-buy memo for the client engine and board (OGS `goban` / `goban-engine`), with a spike |
 | 1.3 | Build-vs-buy memo for scoring (KataGo analysis engine + goban autoscore + goscorer), with a spike |
-| 1.4 | Build-vs-buy memo for ratings (scalachess Glicko-2 + the `goratings` formulas) |
+| 1.4 | Build-vs-buy memo for ratings (scalachess Glicko-2 + the `goratings` formulas) ([memo](build-vs-buy/ratings.md)) |
 | 1.5 | The rules spec in `docs/rules/` (`go-rules-expert`), for your approval |
 | 1.6 | `libs/conformance`: fixture format and fixtures imported from existing suites |
 | 1.7 | `libs/go-rules` adapter over the chosen server engine, passing the fixtures and an SGF round-trip, with a `rules` CI job |
