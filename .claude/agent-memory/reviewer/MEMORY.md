@@ -4,3 +4,4 @@
 - [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, duplicated brand constants, CMS markdown path
 - [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM-header licences, full §3.1 row scope, spike-output cross-checks
 - [Conformance fixture review patterns](conformance-fixture-review-patterns.md) — CI wiring, checker argv bug, circular oracles, phase, licence
+- [Rules spec review patterns](rules-spec-review-patterns.md) — replay cited sequences, resume vs pass counter, false clock bounds

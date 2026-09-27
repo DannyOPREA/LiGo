@@ -3,9 +3,9 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- 1.1 build-vs-buy for the server-side Go rules (started 2026-09-27, under the owner's standing
-  "work autonomously" approval). Acceptance: a memo in docs/build-vs-buy/ backed by a spike, the
-  owner's choice recorded as an ADR. Done: ADR 0012 (PR #9). Logs: logs/rules-engine.md.
+- 1.5 the Go rules spec in docs/rules/ (started 2026-09-27, under the owner's standing "work
+  autonomously" approval). Acceptance: docs/rules/spec.md with testable rule IDs, reviewed, and the
+  owner's approval of its open points (spec §12). Logs: logs/rules-engine.md.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -33,6 +33,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 1.6 (conformance fixtures): format, checker and 130 cases (strategygames, goban, KataGo,
     LiGo's own) in `libs/conformance/`. Draft PR until the rules spec (1.5, PR #13) is approved,
     because the fixtures encode its recommended choices.
+  - Unit 1.5: rules spec drafted in docs/rules/spec.md; written against the recommended options of
+    the open memos 1.2–1.4 (marked "Depends on memo"); 11 open points await your approval.
 
 ## Next
 - Phase 1 units 1.2–1.9 (docs/PLAN.md §5, "Phase 1 units"); next is 1.2, the client engine + board
@@ -42,6 +44,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
+- Approve the rules spec's 11 open points (docs/rules/spec.md §12; card in the unit 1.5 thread).
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
 - Unit 1.6: approve the fixture writes (permission prompts) and, with the rules spec, the fixtures.
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
@@ -65,5 +68,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1 in progress (of 9 units) |
+| 1. Build-vs-buy + rules integration | 1.1 done; 1.2–1.4 memos await your pick; 1.5 spec awaits approval (of 9 units) |
 | 2–9 | not started |
