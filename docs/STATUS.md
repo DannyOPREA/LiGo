@@ -33,6 +33,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
+- Unit 1.2: OGS `goban` from npm, pinned, wrapped by `libs/board` (recommended), or vendor its source?
+  Memo: docs/build-vs-buy/client-board-and-rules.md. The PR merges with the ADR once you answer.
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).

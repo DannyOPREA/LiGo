@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-27 | 1.2: client-side rules, SGF and board: OGS `goban` from npm, pinned, wrapped by `libs/board`, or vendor its source into `libs/board`? | Pending (asked in the unit 1.2 thread; Claude recommends npm) | docs/build-vs-buy/client-board-and-rules.md |
 | 2026-09-27 | 0.6: add an sbt plugin to scan Scala dependency licences in CI? | Defer (owner): Scala deps covered by the manifest → COPYING.md rule; revisit when Scala dependencies change | docs/CLAUDE_SETUP.md §13, PR #7 |
 | 2026-09-27 | 0.5: KataGo version, cloud network, b18 download, auto-install | Claude's defaults, owner to confirm after merge: pin v1.18.1 (newest with Linux zips); KataGo's g170 b6c96 test net in the cloud; b18 downloaded on the owner's box without a pinned checksum until he reports it; cloud setup + SessionStart install the CPU build | logs/tooling.md, PR #6 |
 | 2026-09-27 | Start unit 0.5 (environments)? | "Autonomously work towards the goal … without waiting for me to prompt you" (owner), taken as approval of each next unit in the build order | logs/tooling.md |
