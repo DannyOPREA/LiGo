@@ -3,9 +3,10 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- 1.1 build-vs-buy for the server-side Go rules (started 2026-09-27, under the owner's standing
-  "work autonomously" approval). Acceptance: a memo in docs/build-vs-buy/ backed by a spike, the
-  owner's choice recorded as an ADR. Done: ADR 0012 (PR #9). Logs: logs/rules-engine.md.
+- 1.3 build-vs-buy for scoring (started 2026-09-27, under the owner's standing "work autonomously"
+  approval; run alongside 1.2, since neither memo needs the other's answer). Acceptance: a memo in
+  docs/build-vs-buy/ backed by a spike, the owner's choice recorded as an ADR. Memo:
+  docs/build-vs-buy/scoring.md. Logs: logs/scoring.md.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -30,6 +31,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - **Phase 1 — build-vs-buy + rules integration** started 2026-09-27; units listed in docs/PLAN.md §5.
   - Unit 1.1: server-side Go rules and byo-yomi clock come from strategygames as a pinned dependency
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
+  - Unit 1.3 (scoring memo): spike done; goban's autoscore reproduces OGS's 31 test games and gets
+    29/31 with the small cloud networks. Waiting on your choice (below).
 
 ## Next
 - Phase 1 units 1.2–1.9 (docs/PLAN.md §5, "Phase 1 units"); next is 1.2, the client engine + board
@@ -39,6 +42,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
+- Unit 1.3 (scoring memo, [docs/build-vs-buy/scoring.md](build-vs-buy/scoring.md)): build
+  `services/scoring` as a Node service around KataGo, goban's autoscore and goscorer (recommended),
+  or port autoscore and goscorer to Scala? The PR merges once you answer.
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).
@@ -61,5 +67,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1 in progress (of 9 units) |
+| 1. Build-vs-buy + rules integration | 1.1 done; 1.2 and 1.3 in progress (of 9 units) |
 | 2–9 | not started |
