@@ -1,0 +1,1 @@
+- [Rules writes via scratchpad](feedback_rules_writes_via_scratchpad.md) — owner away: draft docs/rules in scratchpad, main session applies one write per file
