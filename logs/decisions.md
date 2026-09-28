@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-28 | 3.2: drop the stored tournament/swiss/simul ids from games and chat, or keep them? | Keep them as neutral, unused fields (no data migration); remove every feature that reads or writes them (Claude, under the owner's 2026-09-28 delegation) | logs/upstream-fork.md |
 | 2026-09-28 | 3.1: which assets go, what replaces the logo, and which sound set becomes the default? | Deleted everything upstream marks non-free or NC, plus lichess-branded art, lichess's own flairs, lifat, ChessPursuit, governor and kosal; kept the AGPL board images (incl. horsey theme) and the Noto flair emoji; new two-stone LiGo logo drawn by LiGo (MIT); default sound set `sfx` (Claude, under the owner's 2026-09-28 delegation) | COPYING.md §1.1, logs/upstream-fork.md |
 | 2026-09-28 | 2.2: playground details the plan leaves open (13×13 handicap, wording, a link to the page, where the handicap table lives)? | 13×13 offered but even games only (R-HCP-4 has no 13×13 table, R-SCOPE-1); plain English text without i18n keys, as unit 0.7 did; no link in the site menu yet (`/playground` only); the spec's handicap and komi tables move from libs/board's tests into `src/rules.mjs` (Claude, under the owner's 2026-09-28 delegation) | logs/board-ui.md |
 | 2026-09-28 | Phase 3: may Claude bulk-delete files for units 3.1–3.7 (non-free assets, chess modules)? | Yes (owner, typed in the Phase 3 thread) | ADR 0018, logs/upstream-fork.md |

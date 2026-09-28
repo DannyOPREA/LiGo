@@ -2,7 +2,6 @@ package lila.activity
 
 import reactivemongo.api.bson.*
 
-import lila.core.simul.Simul
 import lila.db.AsyncCollFailingSilently
 import lila.db.dsl.{ *, given }
 
@@ -70,9 +69,6 @@ final class ActivityWriteApi(
   def practice(prog: lila.core.practice.OnComplete) = update(prog.userId): a =>
     bdoc(ActivityFields.practice -> { ~a.practice + prog.studyId })
 
-  def simul(simul: Simul): Funit =
-    (simul.hostId :: simul.playerIds).sequentiallyVoid(simulParticipant(simul, _))
-
   def corresMove(gameId: GameId, userId: UserId) = update(userId): a =>
     bdoc(ActivityFields.corres -> { (~a.corres).add(gameId, moved = true, ended = false) })
 
@@ -118,15 +114,6 @@ final class ActivityWriteApi(
   def streamStart(userId: UserId) =
     update(userId): _ =>
       bdoc(ActivityFields.stream -> true)
-
-  def swiss(id: SwissId, ranking: lila.core.swiss.Ranking) =
-    ranking.toList.sequentiallyVoid: (userId, rank) =>
-      update(userId): a =>
-        bdoc(ActivityFields.swisses -> { ~a.swisses + SwissRank(id, rank) })
-
-  private def simulParticipant(simul: Simul, userId: UserId) = update(userId) { a =>
-    bdoc(ActivityFields.simuls -> { ~a.simuls + simul.id })
-  }
 
   private def update(userId: UserId)(makeSetters: Activity => Bdoc): Funit =
     withColl: coll =>

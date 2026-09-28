@@ -4,7 +4,7 @@ import play.api.libs.json.*
 
 import lila.app.UiEnv.{ *, given }
 
-val ui = lila.tv.ui.TvUi(helpers)(views.game.ui, views.tournament.ui.tournamentLink(_))
+val ui = lila.tv.ui.TvUi(helpers)(views.game.ui)
 
 def index(
     channel: lila.tv.Tv.Channel,

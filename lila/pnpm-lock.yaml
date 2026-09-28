@@ -640,12 +640,6 @@ importers:
 
   ui/serviceWorker: {}
 
-  ui/simul:
-    dependencies:
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
   ui/site:
     dependencies:
       '@juggle/resize-observer':
@@ -676,35 +670,11 @@ importers:
         specifier: workspace:*
         version: link:../lib
 
-  ui/swiss:
-    dependencies:
-      flatpickr:
-        specifier: ^4.6.13
-        version: 4.6.13
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
   ui/team:
     dependencies:
       bits:
         specifier: workspace:*
         version: link:../bits
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
-  ui/tournament:
-    dependencies:
-      '@types/dragscroll':
-        specifier: 0.0.3
-        version: 0.0.3
-      date-fns:
-        specifier: 2.30.0
-        version: 2.30.0
-      dragscroll:
-        specifier: ^0.0.8
-        version: 0.0.8
       lib:
         specifier: workspace:*
         version: link:../lib
@@ -749,10 +719,6 @@ packages:
 
   '@babel/helper-validator-identifier@7.29.7':
     resolution: {integrity: sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==}
-    engines: {node: '>=6.9.0'}
-
-  '@babel/runtime@7.29.7':
-    resolution: {integrity: sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw==}
     engines: {node: '>=6.9.0'}
 
   '@badrap/result@0.3.1':
@@ -1243,9 +1209,6 @@ packages:
   '@types/debounce-promise@3.1.9':
     resolution: {integrity: sha512-awNxydYSU+E2vL7EiOAMtiSOfL5gUM5X4YSE2A92qpxDJQ/rXz6oMPYBFDcDywlUmvIDI6zsqgq17cGm5CITQw==}
 
-  '@types/dragscroll@0.0.3':
-    resolution: {integrity: sha512-Nti+uvpcVv2VAkqF1+XJivEdE1rxdvWmE4mtMydm9kYBaT0/QsvQSjzqA2G0SE62RoTjVmhC48ap8yfApl8YJw==}
-
   '@types/emscripten@1.41.5':
     resolution: {integrity: sha512-cMQm7pxu6BxtHyqJ7mQZ2kXWV5SLmugybFdHCBbJ5eHzOo6VhBckEgAT3//rP5FwPHNPeEiq4SmQ5ucBwsOo4Q==}
 
@@ -1577,10 +1540,6 @@ packages:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
 
-  date-fns@2.30.0:
-    resolution: {integrity: sha512-fnULvOpxnC5/Vg3NCiWelDsLiUc9bRwAPs/+LfTLNvetFCtCTN+yQz15C/fs4AwX1R9K5GLtLfn8QW+dWisaAw==}
-    engines: {node: '>=0.11'}
-
   dayjs@1.11.21:
     resolution: {integrity: sha512-98IT+HOahAisibz/yjKbzuOBwYcjJ7BCLPzARyHiyEBmRz4fatF+KPJszEHXsGYjUG234aH/cOjW1wwTbKUZlA==}
 
@@ -1628,9 +1587,6 @@ packages:
 
   domutils@3.2.2:
     resolution: {integrity: sha512-6kZKyUajlDuqlHKVX1w7gyslj9MPIXzIFiz/rGu35uC1wMi+kMhQwGhl4lt9unC9Vb9INnY9Z3/ZA3+FhASLaw==}
-
-  dragscroll@0.0.8:
-    resolution: {integrity: sha512-nMrx/KErHpEkiKZlrghcT/nLWCj8vEJgv6s6TF84gmgn6uROPx2wRvClkcnjSEyvppYY9okOI1DIv573Toql1w==}
 
   emoji-mart@5.6.0:
     resolution: {integrity: sha512-eJp3QRe79pjwa+duv+n7+5YsNhRcMl812EcFVwrnRvYKoNPoQb5qxU8DG6Bgwji0akHdp6D4Ln6tYLG58MFSow==}
@@ -2545,8 +2501,6 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.29.7': {}
 
-  '@babel/runtime@7.29.7': {}
-
   '@badrap/result@0.3.1': {}
 
   '@bramus/specificity@2.4.2':
@@ -2864,8 +2818,6 @@ snapshots:
 
   '@types/debounce-promise@3.1.9': {}
 
-  '@types/dragscroll@0.0.3': {}
-
   '@types/emscripten@1.41.5': {}
 
   '@types/fnando__sparkline@0.3.7': {}
@@ -3145,10 +3097,6 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
-  date-fns@2.30.0:
-    dependencies:
-      '@babel/runtime': 7.29.7
-
   dayjs@1.11.21: {}
 
   debounce-promise@3.1.2: {}
@@ -3188,8 +3136,6 @@ snapshots:
       dom-serializer: 2.0.0
       domelementtype: 2.3.0
       domhandler: 5.0.3
-
-  dragscroll@0.0.8: {}
 
   emoji-mart@5.6.0: {}
 

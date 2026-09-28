@@ -16,7 +16,6 @@ object replay:
       pov: Pov,
       initialFen: Option[chess.format.Fen.Full],
       pgn: PgnStr,
-      simul: Option[lila.simul.Simul],
       cross: Option[lila.game.Crosstable.WithMatchup]
   )(using Context) =
     replayUi.forCrawler(
@@ -24,7 +23,7 @@ object replay:
       pgn,
       views.round.ui.povOpenGraph(pov),
       chessground = views.round.ui.povChessground(pov),
-      gameSide = views.game.side(pov, initialFen, none, simul = simul, bookmarked = false),
+      gameSide = views.game.side(pov, initialFen, bookmarked = false),
       crosstable = cross.map: c =>
         views.game.ui.crosstable(pov.player.userId.fold(c)(c.fromPov), pov.gameId.some)
     )
@@ -36,7 +35,6 @@ object replay:
       pgn: PgnStr,
       analysis: Option[lila.analyse.Analysis],
       analysisStarted: Boolean,
-      simul: Option[lila.simul.Simul],
       cross: Option[lila.game.Crosstable.WithMatchup],
       userTv: Option[User],
       chatOption: Option[lila.chat.UserChat.Mine],
@@ -54,7 +52,7 @@ object replay:
         resource = lila.core.chat.PublicSource.Watcher(pov.gameId)
       ) -> views.chat.frag
 
-    val side = views.game.side(pov, initialFen, none, simul = simul, userTv = userTv, bookmarked = bookmarked)
+    val side = views.game.side(pov, initialFen, userTv = userTv, bookmarked = bookmarked)
 
     replayUi.forBrowser(
       pov,

@@ -4,7 +4,6 @@ import chess.ByColor
 import chess.format.Fen
 import chess.format.pgn.Pgn
 import chess.opening.Opening
-import play.api.i18n.Lang
 
 import lila.analyse.{ Analysis, Annotator }
 import lila.game.PgnDump.WithFlags
@@ -12,13 +11,8 @@ import lila.team.GameTeams
 
 final class PgnDump(
     val dumper: lila.game.PgnDump,
-    annotator: Annotator,
-    simulApi: lila.simul.SimulApi,
-    getTournamentName: lila.tournament.GetTourName,
-    getSwissName: lila.swiss.GetSwissName
+    annotator: Annotator
 )(using Executor):
-
-  private given Lang = lila.core.i18n.defaultLang
 
   def apply(
       game: Game,
@@ -28,15 +22,9 @@ final class PgnDump(
       flags: WithFlags,
       teams: Option[GameTeams] = None
   ): Fu[Pgn] =
+    // game.simulId/tournamentId/swissId are neutral fields kept in game storage (unit 3.2); no
+    // simul, tournament or swiss feature exists any more to name them for the PGN "Event" tag.
     dumper(game, initialFen, opening, flags, teams)
-      .flatMap: pgn =>
-        if flags.tags then
-          game.simulId
-            .so(simulApi.idToName)
-            .orElse(game.tournamentId.so(getTournamentName.async))
-            .orElse(game.swissId.so(getSwissName.async))
-            .map(_.fold(pgn)(pgn.withEvent))
-        else fuccess(pgn)
       .map: pgn =>
         val evaled = analysis.ifTrue(flags.evals).fold(pgn)(annotator.addEvals(pgn, _))
         if flags.literate then annotator(evaled, game, analysis, opening)

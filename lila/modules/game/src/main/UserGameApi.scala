@@ -1,6 +1,5 @@
 package lila.game
 
-import play.api.i18n.Lang
 import play.api.libs.json.*
 import scalalib.Json.given
 import scalalib.paginator.Paginator
@@ -11,20 +10,17 @@ import lila.game.JsonView.given
 import lila.ui.Context
 
 final class UserGameApi(
-    lightUser: lila.core.user.LightUserApi,
-    getTourName: => lila.core.tournament.GetTourName
+    lightUser: lila.core.user.LightUserApi
 )(using Executor):
 
   def jsPaginator(pag: Paginator[Game])(using ctx: Context): Fu[JsObject] =
-    for
-      _ <- lightUser.preloadMany(pag.currentPageResults.flatMap(_.userIds))
-      _ <- getTourName.preload(pag.currentPageResults.flatMap(_.tournamentId))(using ctx.lang)
+    for _ <- lightUser.preloadMany(pag.currentPageResults.flatMap(_.userIds))
     yield
       given Writes[Game] = Writes: g =>
-        write(g, ctx.me)(using ctx.lang)
+        write(g, ctx.me)
       Json.obj("paginator" -> pag)
 
-  private def write(g: Game, as: Option[User])(using Lang) =
+  private def write(g: Game, as: Option[User]) =
     Json
       .obj(
         "id" -> g.id,
@@ -56,7 +52,4 @@ final class UserGameApi(
       .add("clock" -> g.clock)
       .add("correspondence" -> g.daysPerTurn.map { d =>
         Json.obj("daysPerTurn" -> d)
-      })
-      .add("tournament" -> g.tournamentId.map { tid =>
-        Json.obj("id" -> tid, "name" -> getTourName.sync(tid))
       })

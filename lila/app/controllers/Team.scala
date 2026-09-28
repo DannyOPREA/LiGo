@@ -97,13 +97,6 @@ final class Team(env: Env) extends LilaController(env):
       (isGrantedOpt(_.ModerateForum) && asMod)
     }
 
-  def tournaments(teamId: TeamId) = Open:
-    WithEnabledTeamOrClas(teamId): team =>
-      CanSeeMembers(team):
-        env.teamInfo
-          .tournamentsOf(team, 30, 30)
-          .map(views.team.tournaments.page(team, _))
-
   private def renderEdit(team: TeamModel, form: Form[?])(using me: Me, ctx: Context) = for
     member <- env.team.memberRepo.get(team.id, me)
     _ <- env.msg.systemMsg.twoFactorReminder(me)
@@ -462,12 +455,9 @@ final class Team(env: Env) extends LilaController(env):
   }
 
   private def renderUpdateForm(team: TeamModel, form: Form[?])(using Context) = for
-    tours <- env.tournament.api.visibleByTeam(team.id, 0, 20).dmap(_.next)
-    swiss <- env.swiss.api.visibleByTeam(team.id, 0, 20).dmap(_.next)
     unsubs <- env.team.cached.unsubs.get(team.id)
     limiter <- env.team.update.limiter.status(team.id)
-    links = views.team.updateEventLinks(tours, swiss)
-    page <- renderPage(views.team.admin.updateForm(team, form, links, unsubs, limiter))
+    page <- renderPage(views.team.admin.updateForm(team, form, Nil, unsubs, limiter))
   yield Ok(page)
 
   def updateSend(id: TeamId) = AuthOrScopedBody(_.Team.Lead) { ctx ?=> me ?=>

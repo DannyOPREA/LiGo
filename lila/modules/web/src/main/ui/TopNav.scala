@@ -26,9 +26,6 @@ final class TopNav(helpers: Helpers):
           else a(href := "/?any#friend")(trans.site.challengeAFriend()),
           Option.when(ctx.noBot):
             frag(
-              a(href := langHref(routes.Tournament.home))(trans.arena.arenaTournaments()),
-              a(href := langHref(routes.Swiss.home))(trans.swiss.swissTournaments()),
-              a(href := langHref(routes.Simul.home))(trans.site.simultaneousExhibitions()),
               hasDgt.option(a(href := routes.DgtCtrl.index)(trans.dgt.dgtBoard())),
               (ctx.kid.no && !ctx.me.exists(_.isPatron)).option:
                 a(cls := "community-patron mobile-only", href := routes.Plan.index())(trans.patron.donate())

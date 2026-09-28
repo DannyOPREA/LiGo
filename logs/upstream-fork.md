@@ -12,6 +12,32 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 3.2 · Remove tournaments and events
+- Did: deleted lila modules `tournament`, `swiss`, `simul`, `gathering`, `event` and core
+  interfaces `lila.core.{tournament,swiss,simul}`; their controllers (incl. TournamentCrud,
+  UserTournament), views, routes, `ui/` packages (tournament, swiss, simul) and lila-ws actors
+  (Tour/Swiss/SimulClientActor, their Redis channels, IPC messages and Mongo lookups). Stripped the
+  hooks in ~95 kept files (activity, api, round, lobby, game, team, mod, user, views). 264 files
+  deleted, ~29k lines.
+- Worked: keeping the stored fields (game `tournamentId`/`swissId`/`simulId`, chat
+  `PublicSource.Tournament/Swiss/Simul`) avoided a schema change; nothing writes them now. Also
+  removed the orphaned `bits.tourForm`, `bits.teamBattleForm` and `bits.event` bundles and the
+  lobby's `tours` grid area.
+- Didn't work / dead ends: an incremental `dev/ligo compile lila` only re-prints warnings for files
+  it recompiles, so one run can hide unused-import warnings elsewhere.
+- Lessons: after a large deletion, audit warnings from a run that recompiles broadly (verify.sh's
+  log), not a single incremental compile. Removing workspace packages changes `pnpm-lock.yaml`,
+  and CI's meta check then wants COPYING.md changed too (verify.sh doesn't run the meta checks).
+- Decisions: keep the stored ids as unused fields rather than migrate data (a 3.2 call, not in
+  ADR 0019's key list); leave dormant round-page client code (tour standing, tour/swiss/simul
+  links) for 3.18 and dead socket plumbing (TourStanding, SimulMoveEvent, SendToFlag) for 3.13; leave i18n
+  keys and the tournament sounds for later clean-ups (logs/decisions.md).
+- Verified by Claude: verify.sh (lila compile, scalafmt, lila + lila-ws tests, ui lint/format/tests),
+  UI build, independent review. · Needs owner verification: none specific; the lobby no longer shows
+  tournaments or simuls.
+- Follow-ups: `public/sound/*/Tournament*` sounds, `.team-events` CSS, the `prizeTournamentMakers`
+  setting and tournament i18n keys go with 3.6 (team) or 3.8 (rebrand).
+
 ### 2026-09-28 · 3.1 · Strip non-free lichess assets
 - Did: deleted every asset upstream's `lila/COPYING.md` marks non-free or non-commercial (logo,
   favicons, 17 NC and 9 non-free piece sets plus 3D Staunton, the standard/instrument/other/robot/

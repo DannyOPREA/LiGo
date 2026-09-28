@@ -15,13 +15,11 @@ case class Activity(
     streak: Option[Streak] = None,
     learn: Option[Learn] = None,
     practice: Option[Practice] = None,
-    simuls: Option[Simuls] = None,
     corres: Option[Corres] = None,
     patron: Option[Patron] = None,
     follows: Option[Follows] = None,
     studies: Option[Studies] = None,
     teams: Option[Teams] = None,
-    swisses: Option[Swisses] = None,
     stream: Boolean = false
 ):
 
@@ -40,13 +38,11 @@ case class Activity(
       streak,
       learn,
       practice,
-      simuls,
       corres,
       patron,
       follows,
       studies,
-      teams,
-      swisses
+      teams
     )
       .forall(_.isEmpty)
 

@@ -19,12 +19,10 @@ case class UserInfo(
     nbs: UserInfo.NbGames,
     user: UserWithPerfs,
     trophies: lila.api.UserApi.TrophiesAndAwards,
-    hasSimul: Boolean,
     ratingChart: Option[SafeJsonStr],
     nbForumPosts: Int,
     ublog: Option[UblogPost.BlogPreview],
     nbStudies: Int,
-    nbSimuls: Int,
     nbRelays: Int,
     teamIds: List[lila.team.TeamId],
     isStreamer: Boolean,
@@ -106,7 +104,6 @@ object UserInfo:
       ublogApi: UblogApi,
       perfsRepo: lila.user.UserPerfsRepo,
       studyRepo: lila.study.StudyRepo,
-      simulApi: lila.simul.SimulApi,
       relayApi: lila.relay.RelayApi,
       ratingChartApi: lila.history.RatingChartApi,
       userApi: lila.api.UserApi,
@@ -125,7 +122,6 @@ object UserInfo:
       (
         perfsRepo.withPerfs(user),
         userApi.getTrophiesAndAwards(user).mon(lila.mon.user.segment("trophies")),
-        (nbs.playing > 0).so(simulApi.isSimulHost(user.id).mon(lila.mon.user.segment("simul"))),
         showRatings
           .so(ratingChartApi(user, computeIfNeeded = ctx.isAuth))
           .mon(lila.mon.user.segment("ratingChart")),
@@ -136,13 +132,12 @@ object UserInfo:
         full.so:
           studyRepo.countByOwner(user.id).recoverDefault.mon(lila.mon.user.segment("nbStudies"))
         ,
-        full.so(simulApi.countHostedByUser.get(user.id).mon(lila.mon.user.segment("nbSimuls"))),
         full.so(relayApi.countOwnedByUser.get(user.id).mon(lila.mon.user.segment("nbBroadcasts"))),
         full.so(ctx.useMe(teamApi.joinedTeamIdsOfUserAsSeenBy(user).mon(lila.mon.user.segment("teamIds")))),
         streamerApi.isActualStreamer(user).mon(lila.mon.user.segment("streamer")),
         coachApi.isListedCoach(user).mon(lila.mon.user.segment("coach")),
         fideIdOf(user.light),
         fuccess(Granter.opt(_.SeeInsight)) >>| (user.count.rated >= 50).so(insightShare.grant(user))
-      ).mapN(UserInfo(nbs, _, _, _, _, _, _, _, _, _, _, _, _, _, _))
+      ).mapN(UserInfo(nbs, _, _, _, _, _, _, _, _, _, _, _, _))
 
     def preloadTeams(info: UserInfo) = teamCache.lightCache.preloadMany(info.teamIds)

@@ -3,8 +3,7 @@ package http
 
 import play.api.mvc.*
 
-import lila.app.{ *, given }
-import lila.memo.CacheApi.*
+import lila.app.*
 import lila.mon.extensions.*
 
 final class KeyPages(val env: Env)(using Executor)
@@ -22,13 +21,6 @@ final class KeyPages(val env: Env)(using Executor)
   def homeHtml(using ctx: Context): Fu[lila.ui.RenderedPage] =
     env
       .preloader(
-        tours = ctx.userId
-          .so(env.team.cached.teamIdsList)
-          .flatMap(env.tournament.featuring.homepage.get)
-          .recoverDefault,
-        swiss = env.swiss.feature.onHomepage.getUnit.getIfPresent,
-        events = env.event.api.promoteTo(ctx.acceptLanguages).recoverDefault,
-        simuls = env.simul.allCreatedFeaturable.get {}.recoverDefault,
         streamerSpots = env.streamer.homepageMaxSetting.get()
       )
       .mon(lila.mon.lobby.segment("preloader.total"))

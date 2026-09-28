@@ -3,19 +3,15 @@ package views.mod
 import play.api.data.Form
 
 import lila.app.UiEnv.{ *, given }
-import lila.core.chess.Rank
 import lila.evaluation.PlayerAssessment
 import lila.game.GameExt.*
 import lila.mod.GameMod
 import lila.mod.ui.ModUserTableUi.sortNoneTh
-import lila.tournament.LeaderboardApi.TourEntry
 
 def games(
     user: User,
     filterForm: Form[GameMod.Filter],
-    games: Either[List[Pov], List[(Pov, Either[PlayerAssessment, PlayerAssessment.Basics])]],
-    arenas: Seq[TourEntry],
-    swisses: Seq[(lila.core.swiss.IdName, Rank)]
+    games: Either[List[Pov], List[(Pov, Either[PlayerAssessment, PlayerAssessment.Basics])]]
 )(using Context) =
   Page(s"${user.username} games")
     .css("mod.games")
@@ -32,25 +28,6 @@ def games(
                 lila.rating.PerfType.nonPuzzle.map: p =>
                   p.key -> p.trans,
                 "Variant".some
-              ),
-              form3.select(
-                filterForm("arena"),
-                arenas.map: t =>
-                  t.tour.id -> List(
-                    s"games ${t.entry.nbGames}",
-                    s"rank ${t.entry.rank}",
-                    s"top ${t.entry.rankRatio.percent}%",
-                    t.tour.name()
-                  ).mkString(" / "),
-                pluralize("arena", arenas.size).some,
-                disabled = arenas.isEmpty
-              ),
-              form3.select(
-                filterForm("swiss"),
-                swisses.map: (swiss, rank) =>
-                  swiss.id -> s"rank ${rank} / ${swiss.name}",
-                s"${swisses.size} swiss".some,
-                disabled = swisses.isEmpty
               )
             )
           )
@@ -111,20 +88,9 @@ def games(
                       iconTag(pov.game.perfType.icon)(cls := "text"),
                       shortClockName(pov.game)
                     ),
-                    td(dataSort := pov.game.tournamentId.so(_.value))(
-                      pov.game.tournamentId.map: tourId =>
-                        a(
-                          dataIcon := Icon.Trophy,
-                          href := routes.Tournament.show(tourId).url,
-                          title := views.tournament.ui.tournamentIdToName(tourId)
-                        ),
-                      pov.game.swissId.map: swissId =>
-                        a(
-                          dataIcon := Icon.Trophy,
-                          href := routes.Swiss.show(swissId).url,
-                          title := s"Swiss #${swissId}"
-                        )
-                    ),
+                    // tournamentId/swissId are neutral fields kept in game storage (unit 3.2); no
+                    // tournament or swiss feature exists to link to any more.
+                    td,
                     td(dataSort := pov.moves)(pov.moves),
                     td(dataSort := ~pov.player.ratingDiff)(
                       pov.win match

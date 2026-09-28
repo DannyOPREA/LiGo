@@ -3,7 +3,7 @@ package views.activity
 import lila.app.UiEnv.{ *, given }
 import lila.core.perf.UserWithPerfs
 
-private lazy val ui = lila.activity.ui.ActivityUi(helpers)(views.tournament.ui.tournamentIdToName)
+private lazy val ui = lila.activity.ui.ActivityUi(helpers)
 
 def apply(u: UserWithPerfs, as: Iterable[lila.activity.ActivityView])(using ctx: Context) =
   ui(u, as): activity =>

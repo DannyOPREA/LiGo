@@ -30,37 +30,19 @@ object Game:
 
   // must only contain invariant data (no status, turns, or termination)
   // because it's cached in Mongo.scala
-  case class Round(id: Game.Id, players: ByColor[Player], ext: Option[RoundExt]):
+  //
+  // tournament/swiss/simul round extensions (RoundExt) were removed with the tournament, swiss
+  // and simul modules (unit 3.2): a round is never part of one of those events any more, so there
+  // is nothing to route its chat or standing updates to.
+  case class Round(id: Game.Id, players: ByColor[Player]):
     def player(id: PlayerId, userId: Option[User.Id]): Option[RoundPlayer] =
       players.zipColor.collect:
-        case (c, p) if p.id == id && p.userId == userId => RoundPlayer(id, c, ext)
+        case (c, p) if p.id == id && p.userId == userId => RoundPlayer(id, c)
 
-  case class RoundPlayer(id: PlayerId, color: Color, ext: Option[RoundExt]):
-    def tourId = ext.collect { case RoundExt.InTour(id) => id }
-    def swissId = ext.collect { case RoundExt.InSwiss(id) => id }
-    def simulId = ext.collect { case RoundExt.InSimul(id) => id }
-    def extRoomId =
-      tourId.map(_.into(RoomId)).orElse(simulId.map(_.into(RoomId))).orElse(swissId.map(_.into(RoomId)))
-
-  enum RoundExt:
-    case InTour(id: Tour.Id) extends RoundExt
-    case InSwiss(id: Swiss.Id) extends RoundExt
-    case InSimul(id: Simul.Id) extends RoundExt
+  case class RoundPlayer(id: PlayerId, color: Color)
 end Game
 
-object Simul:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
-
-object Tour:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
-
 object Study:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
-
-object Swiss:
   opaque type Id = String
   object Id extends OpaqueString[Id]
 
@@ -100,7 +82,9 @@ opaque type Flag = String
 object Flag extends OpaqueString[Flag]:
   def make(value: String) =
     value match
-      case "simul" | "tournament" | "api" | "embed" => Some(Flag(value))
+      // "simul" and "tournament" flags (broadcast tags for those now-removed features,
+      // unit 3.2) are no longer recognized.
+      case "api" | "embed" => Some(Flag(value))
       case _ => None
   val api = Flag("api")
   val embed = Flag("embed")

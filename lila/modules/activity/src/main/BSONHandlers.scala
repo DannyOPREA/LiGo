@@ -5,7 +5,6 @@ import scala.util.Success
 import chess.IntRating
 
 import lila.common.LichessDay
-import lila.core.chess.Rank
 import lila.core.rating.{ RatingProg, Score }
 import lila.db.dsl.{ *, given }
 
@@ -92,10 +91,6 @@ private object BSONHandlers:
         "o" -> o.out
       )
 
-  given lila.db.BSON[SwissRank] with
-    def reads(r: lila.db.BSON.Reader) = SwissRank(SwissId(r.str("i")), Rank(r.intD("r")))
-    def writes(w: lila.db.BSON.Writer, s: SwissRank) = BSONDocument("i" -> s.id, "r" -> s.rank)
-
   object ActivityFields:
     val id = "_id"
     val games = "g"
@@ -107,13 +102,12 @@ private object BSONHandlers:
     val streak = "k"
     val learn = "l"
     val practice = "r"
-    val simuls = "s"
+    // "s" and "w" (simuls, swisses) are retired (unit 3.2): no longer written, still ignored on read.
     val corres = "o"
     val patron = "a"
     val follows = "f"
     val studies = "t"
     val teams = "e"
-    val swisses = "w"
     val stream = "st"
 
   given lila.db.BSON[Activity] with
@@ -131,13 +125,11 @@ private object BSONHandlers:
       streak = r.getO[Streak](streak),
       learn = r.getO[Learn](learn),
       practice = r.getO[Practice](practice),
-      simuls = r.getO[Simuls](simuls),
       corres = r.getO[Corres](corres),
       patron = r.getO[Patron](patron),
       follows = r.getO[Follows](follows).filterNot(_.isEmpty),
       studies = r.getO[Studies](studies),
       teams = r.getO[Teams](teams),
-      swisses = r.getO[Swisses](swisses),
       stream = r.getD[Boolean](stream)
     )
 
@@ -152,12 +144,10 @@ private object BSONHandlers:
       streak -> o.streak,
       learn -> o.learn,
       practice -> o.practice,
-      simuls -> o.simuls,
       corres -> o.corres,
       patron -> o.patron,
       follows -> o.follows,
       studies -> o.studies,
       teams -> o.teams,
-      swisses -> o.swisses,
       stream -> o.stream.option(true)
     )

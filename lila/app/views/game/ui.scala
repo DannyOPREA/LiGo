@@ -1,6 +1,6 @@
 package views.game
 
-import lila.app.UiEnv.{ *, given }
+import lila.app.UiEnv.*
 
 val ui = lila.game.ui.GameUi(helpers)
 export ui.mini
@@ -8,14 +8,12 @@ export ui.mini
 def sides(
     pov: Pov,
     initialFen: Option[chess.format.Fen.Full],
-    tour: Option[lila.tournament.TourAndTeamVs],
     cross: Option[lila.game.Crosstable.WithMatchup],
-    simul: Option[lila.simul.Simul],
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context) =
   div(
-    side.meta(pov, initialFen, tour, simul, userTv, bookmarked = bookmarked),
+    side.meta(pov, initialFen, userTv, bookmarked = bookmarked),
     cross.map: c =>
       div(cls := "crosstable")(ui.crosstable(ctx.userId.foldLeft(c)(_.fromPov(_)), pov.gameId.some))
   )
@@ -26,12 +24,4 @@ def widgets(
     ownerLink: Boolean = false
 )(using ctx: lila.ui.Context): Frag =
   games.map: g =>
-    ui.widgets(g, user = user, ownerLink = ownerLink):
-      g.tournamentId
-        .map: tourId =>
-          given Translate = ctx.translate
-          views.tournament.ui.tournamentLink(tourId)
-        .orElse(g.simulId.map: simulId =>
-          views.simul.ui.link(simulId))
-        .orElse(g.swissId.map: swissId =>
-          views.swiss.ui.link(swissId))
+    ui.widgets(g, user = user, ownerLink = ownerLink)(none)

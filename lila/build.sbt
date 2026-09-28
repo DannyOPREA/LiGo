@@ -78,20 +78,20 @@ lazy val modules = Seq(
   // level 4
   memo, rating,
   // level 5
-  game, gathering, study, user, puzzle, analyse,
+  game, study, user, puzzle, analyse,
   report, pref, chat, playban, lobby, mailer, oauth, search,
   // level 6
   insight, evaluation, storm,
   // level 7
   // everything else is free from deps; do the big ones first
-  relay, tutor, security, tournament, plan, round,
-  swiss, insight, fishnet, mod, challenge, web,
-  team, forum, streamer, simul, activity, msg, ublog,
+  relay, tutor, security, plan, round,
+  insight, fishnet, mod, challenge, web,
+  team, forum, streamer, activity, msg, ublog,
   notifyModule, clas, perfStat, opening, timeline,
   setup, video, fide, title, push,
   // and then the smaller ones
   pool, lobby, relation, tv, coordinate, feed, history, recap,
-  shutup, appeal, irc, explorer, learn, event, coach,
+  shutup, appeal, irc, explorer, learn, coach,
   practice, evalCache, irwin, bot, racer, cms, i18n, jsBot,
   socket, bookmark, studySearch, gameSearch, forumSearch, teamSearch, irc
 )
@@ -243,11 +243,6 @@ lazy val timeline = module("timeline",
   Seq()
 )
 
-lazy val event = module("event",
-  Seq(memo, ui),
-  Seq()
-)
-
 lazy val mod = module("mod",
   Seq(evaluation, report, chat, user),
   Seq()
@@ -322,26 +317,6 @@ lazy val tutor = module("tutor",
 lazy val opening = module("opening",
   Seq(memo, ui),
   tests.bundle
-)
-
-lazy val gathering = module("gathering",
-  Seq(rating),
-  tests.bundle
-)
-
-lazy val tournament = module("tournament",
-  Seq(gathering, room, memo),
-  Seq(lettuce) ++ tests.bundle
-).dependsOn(coreI18n % "test->test")
-
-lazy val swiss = module("swiss",
-  Seq(gathering, room, memo),
-  Seq(lettuce) ++ tests.bundle
-)
-
-lazy val simul = module("simul",
-  Seq(gathering, room, memo),
-  Seq(lettuce)
 )
 
 lazy val fishnet = module("fishnet",

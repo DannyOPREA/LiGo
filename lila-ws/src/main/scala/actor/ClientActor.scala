@@ -12,8 +12,7 @@ object ClientActor:
 
   case class State(
       watchedGames: SmallBoundedQueueSet[Game.Id] = SmallBoundedQueueSet.empty,
-      lastPing: Int = nowSeconds,
-      tourReminded: Boolean = false
+      lastPing: Int = nowSeconds
   )
 
   def onStart(deps: Deps, ctx: ActorContext[ClientMsg]): Unit =
@@ -131,11 +130,7 @@ object ClientActor:
 
   def clientInReceive(state: State, deps: Deps, msg: ClientIn): Option[State] = msg match
 
-    case msg: ClientIn.TourReminder =>
-      if state.tourReminded then None
-      else
-        deps.clientIn(msg)
-        Some(state.copy(tourReminded = true))
+    // TourReminder was removed with the tournament module (unit 3.2).
 
     case in: ClientIn =>
       deps.clientIn(in)

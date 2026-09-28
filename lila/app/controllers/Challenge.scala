@@ -104,7 +104,7 @@ final class Challenge(env: Env) extends LilaController(env):
               _.fold("The Challenge has already been accepted".raise): pov =>
                 negotiateApi(
                   html = Redirect(routes.Round.watcher(pov.gameId, color | Color.white)),
-                  api = _ => env.api.roundApi.player(pov, scalalib.data.Preload.none, none).map { Ok(_) }
+                  api = _ => env.api.roundApi.player(pov, scalalib.data.Preload.none).map { Ok(_) }
                 )
             .flatMap(withChallengeAnonCookie(ctx.isAnon, c, owner = false))
         .rescue: err =>

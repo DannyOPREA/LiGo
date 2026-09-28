@@ -6,7 +6,6 @@ import chess.format.Fen
 import chess.format.pgn.{ PgnStr, Tag }
 import chess.opening.Opening
 import play.api.libs.json.*
-import play.api.i18n.Lang
 import reactivemongo.pekkostream.cursorProducer
 
 import lila.analyse.{ AccuracyPercent, Analysis, JsonView as analysisJson }
@@ -19,7 +18,6 @@ import lila.game.PgnDump.{ WithFlags, applyDelay }
 import lila.game.{ Divider, Query }
 import lila.round.GameProxyRepo
 import lila.team.GameTeams
-import lila.tournament.Tournament
 import lila.gameSearch.GameSearchApi
 import smithy4s.time.Timestamp
 
@@ -28,10 +26,6 @@ final class GameApiV2(
     gameRepo: lila.game.GameRepo,
     gameCache: lila.game.Cached,
     gameJsonView: lila.game.JsonView,
-    pairingRepo: lila.tournament.PairingRepo,
-    playerRepo: lila.tournament.PlayerRepo,
-    tourName: lila.tournament.GetTourName,
-    swissApi: lila.swiss.SwissApi,
     analysisRepo: lila.analyse.AnalysisRepo,
     annotator: lila.analyse.Annotator,
     getLightUser: LightUser.Getter,
@@ -45,7 +39,7 @@ final class GameApiV2(
 
   import GameApiV2.*
 
-  def exportOne(game: Game, config: OneConfig)(using Lang): Fu[String] =
+  def exportOne(game: Game, config: OneConfig): Fu[String] =
     game.pgnImport.ifTrue(config.imported) match
       case Some(imported) => fuccess(imported.pgn.value)
       case None =>
@@ -82,35 +76,10 @@ final class GameApiV2(
         "_"
       )
 
-  def filename(tour: Tournament, format: Format): String =
-    filename(tour, format.toString.toLowerCase)
+  // filename(tour, ...) and filename(swiss, ...) were removed with the tournament and swiss
+  // modules (unit 3.2).
 
-  def filename(tour: Tournament, format: String): String =
-    fileR.replaceAllIn(
-      "lichess_tournament_%s_%s_%s.%s".format(
-        Tag.UTCDate.format.print(tour.startsAt),
-        tour.id,
-        scalalib.StringOps.slug(tour.name),
-        format
-      ),
-      "_"
-    )
-
-  def filename(swiss: lila.swiss.Swiss, format: Format): String =
-    filename(swiss, format.toString.toLowerCase)
-
-  def filename(swiss: lila.swiss.Swiss, format: String): String =
-    fileR.replaceAllIn(
-      "lichess_swiss_%s_%s_%s.%s".format(
-        Tag.UTCDate.format.print(swiss.startsAt),
-        swiss.id,
-        scalalib.StringOps.slug(swiss.name),
-        format
-      ),
-      "_"
-    )
-
-  def exportByUser(config: ByUserConfig)(using Lang): Source[String, ?] =
+  def exportByUser(config: ByUserConfig): Source[String, ?] =
     val playerSelect =
       if config.finished then config.vs.fold(Query.user(config.user.id)) { Query.opponents(config.user, _) }
       else
@@ -147,7 +116,7 @@ final class GameApiV2(
       .via(upgradeOngoingGame)
       .via(preparationFlow(config))
 
-  def mobileRecent(user: User)(using Option[Me], Lang): Fu[JsArray] = for
+  def mobileRecent(user: User)(using Option[Me]): Fu[JsArray] = for
     games <- gameRepo.recentFinishedGamesFromSecondary(user, Max(10))
     config = MobileRecentConfig(user)
     enriched <- games.sequentially(enrich(config.flags))
@@ -155,7 +124,7 @@ final class GameApiV2(
       toJson(game, fen, analysis, gameOpening.atPly(game, false), config)
   yield JsArray(jsons)
 
-  def mobileCurrent(user: User)(using Option[Me], Lang): Fu[Option[JsObject]] =
+  def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
     gameCache
       .lastPlayedPlayingId(user.id)
       .flatMapz(gameProxy.gameIfPresentOrFetch)
@@ -164,7 +133,7 @@ final class GameApiV2(
         enrich(config.flags)(game).flatMap: (game, fen, analysis) =>
           toJson(game, fen, analysis, none, config).dmap(some)
 
-  def exportByIds(config: ByIdsConfig)(using Lang): Source[String, ?] =
+  def exportByIds(config: ByIdsConfig): Source[String, ?] =
     gameRepo
       .sortedCursor(
         inIds(config.ids),
@@ -176,67 +145,10 @@ final class GameApiV2(
       .via(upgradeOngoingGame)
       .via(preparationFlow(config))
 
-  def exportByTournament(config: ByTournamentConfig, onlyUserId: Option[UserId])(using
-      Lang
-  ): Source[String, ?] =
-    pairingRepo
-      .sortedCursor(
-        tournamentId = config.tour.id,
-        userId = onlyUserId,
-        batchSize = config.perSecond.value
-      )
-      .documentSource()
-      .grouped(30)
-      .mapAsync(1): pairings =>
-        config.tour.isTeamBattle
-          .so:
-            playerRepo.teamsOfPlayers(config.tour.id, pairings.flatMap(_.users).distinct).dmap(_.toMap)
-          .flatMap: playerTeams =>
-            gameRepo
-              .gameOptionsFromSecondary(pairings.map(_.gameId))
-              .map:
-                _.zip(pairings).collect { case (Some(game), pairing) =>
-                  (
-                    game,
-                    pairing,
-                    ByColor(pairing.user1, pairing.user2).traverse(playerTeams.get)
-                  )
-                }
-      .mapConcat(identity)
-      .throttle(config.perSecond.value, 1.second)
-      .mapAsync(4): (game, pairing, teams) =>
-        enrich(config.flags)(game).dmap { (_, pairing, teams) }
-      .mapAsync(4) { case ((game, fen, analysis), pairing, teams) =>
-        val opening = config.flags.opening.isDefined.so(gameOpening.atPly(game, false))
-        config.format match
-          case Format.PGN => pgnDump.formatter(config.flags)(game, fen, analysis, opening, teams)
-          case Format.JSON =>
-            def addBerserk(color: Color)(json: JsObject) =
-              if pairing.berserkOf(color) then
-                json.deepMerge:
-                  Json.obj:
-                    "players" -> Json.obj(color.name -> Json.obj("berserk" -> true))
-              else json
-            toJson(game, fen, analysis, opening, config, teams)
-              .dmap(addBerserk(chess.White))
-              .dmap(addBerserk(chess.Black))
-              .dmap: json =>
-                s"${Json.stringify(json)}\n"
-      }
+  // exportByTournament and exportBySwiss were removed with the tournament and swiss modules
+  // (unit 3.2); they backed the now-deleted Api.tournamentGames/swissGames endpoints.
 
-  def exportBySwiss(config: BySwissConfig)(using Lang): Source[String, ?] =
-    swissApi
-      .gameIdSource(
-        swissId = config.swissId,
-        player = config.player,
-        batchSize = config.perSecond.value
-      )
-      .grouped(30)
-      .mapAsync(1)(gameRepo.gamesFromSecondary)
-      .mapConcat(identity)
-      .via(preparationFlow(config))
-
-  def exportUserImportedGames(config: ImportedConfig)(using Lang): Source[String, ?] =
+  def exportUserImportedGames(config: ImportedConfig): Source[String, ?] =
     val games = gameRepo
       .sortedCursor(Query.imported(config.user), Query.importedSort, batchSize = config.perSecond.value)
       .documentSource()
@@ -246,7 +158,7 @@ final class GameApiV2(
         .throttle(config.perSecond.value, 1.second)
         .mapConcat(_.pgnImport.map(_.pgn.value + "\n\n\n").toList)
 
-  def exportUserBookmarks(config: BookmarkConfig)(using Lang): Source[String, ?] =
+  def exportUserBookmarks(config: BookmarkConfig): Source[String, ?] =
     import lila.game.BSONHandlers.gameHandler
     bookmarkApi.coll
       .aggregateWith[Game](readPreference = ReadPref.sec): framework =>
@@ -268,7 +180,7 @@ final class GameApiV2(
   private val upgradeOngoingGame =
     Flow[Game].mapAsync(4)(gameProxy.upgradeIfPresent)
 
-  private def preparationFlow(config: Config)(using Lang) =
+  private def preparationFlow(config: Config) =
     Flow[Game]
       .throttle(config.perSecond.value, 1.second)
       .mapAsync(4)(enrich(config.flags))
@@ -285,12 +197,12 @@ final class GameApiV2(
           .dmap:
             (game, initialFen, _)
 
-  private def formatterFor(config: Config)(using Lang) =
+  private def formatterFor(config: Config) =
     config.format match
       case Format.PGN => pgnDump.formatter(config.flags)
       case Format.JSON => jsonFormatter(config)
 
-  private def jsonFormatter(config: Config)(using Lang) =
+  private def jsonFormatter(config: Config) =
     (
         game: Game,
         initialFen: Option[Fen.Full],
@@ -308,15 +220,14 @@ final class GameApiV2(
       opening: Option[Opening.AtPly],
       config: Config,
       teams: Option[GameTeams] = None
-  )(using Lang): Fu[JsObject] = for
+  ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
     flags = config.flags
     pgn <- config.flags.pgnInJson.optionFu:
       pgnDump(g, initialFen, analysisOption, opening, config.flags).map(annotator.toPgnString)
     bookmarked <- config.flags.bookmark.so(bookmarkApi.exists(g, config.by.map(_.userId)))
-    arena <- g.tournamentId.traverse: tournamentId =>
-      for name <- tourName.async(tournamentId)
-      yield Json.obj("id" -> tournamentId, "name" -> name)
+    // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
+    // exists any more to name it, so "arenaTour" is never populated for new games.
     division = flags.division.option(divider(g, initialFen))
     accuracy = analysisOption
       .ifTrue(flags.accuracy)
@@ -355,7 +266,7 @@ final class GameApiV2(
     .add("pgn" -> pgn)
     .add("daysPerTurn" -> g.daysPerTurn)
     .add("analysis" -> analysisOption.ifTrue(flags.evals).map(analysisJson.moves(_, withGlyph = false)))
-    .add("arenaTour" -> arena)
+    .add("arenaTour" -> g.tournamentId.map(id => Json.obj("id" -> id)))
     .add("swissTour" -> g.swissId.map(id => Json.obj("id" -> id)))
     .add("clock" -> g.clock.map: clock =>
       Json.obj(
@@ -454,22 +365,8 @@ object GameApiV2:
   )(using val by: Option[Me])
       extends Config
 
-  case class ByTournamentConfig(
-      tour: Tournament,
-      format: Format,
-      flags: WithFlags,
-      perSecond: MaxPerSecond
-  )(using val by: Option[Me])
-      extends Config
-
-  case class BySwissConfig(
-      swissId: SwissId,
-      format: Format,
-      flags: WithFlags,
-      perSecond: MaxPerSecond,
-      player: Option[UserId]
-  )(using val by: Option[Me])
-      extends Config
+  // ByTournamentConfig and BySwissConfig were removed with the tournament and swiss modules
+  // (unit 3.2).
 
   case class BookmarkConfig(
       user: UserId,

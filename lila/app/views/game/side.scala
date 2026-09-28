@@ -6,27 +6,22 @@ import lila.game.GameExt.perfType
 
 private val separator = " • "
 private val dataUserTv = attr("data-user-tv")
-private val dataTime = attr("data-time")
 
 def apply(
     pov: Pov,
     initialFen: Option[chess.format.Fen.Full],
-    tour: Option[lila.tournament.TourAndTeamVs],
-    simul: Option[lila.simul.Simul],
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =
   ctx.noBlind.option:
     frag(
-      meta(pov, initialFen, tour, simul, userTv, bookmarked),
+      meta(pov, initialFen, userTv, bookmarked),
       pov.game.userIds.filter(isStreaming).map(views.streamer.bits.contextual)
     )
 
 def meta(
     pov: Pov,
     initialFen: Option[chess.format.Fen.Full],
-    tour: Option[lila.tournament.TourAndTeamVs],
-    simul: Option[lila.simul.Simul],
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =
@@ -79,10 +74,7 @@ def meta(
                   withDiff = true,
                   withBerserk = true
                 )
-              ),
-              tour.flatMap(_.teamVs).map(_.teams(p.color)).map {
-                teamLink(_, withIcon = false)(cls := "team")
-              }
+              )
             )
         )
       ),
@@ -112,24 +104,4 @@ def meta(
       userTv.map: u =>
         st.section(cls := "game__tv"):
           h2(cls := "top user-tv text", dataUserTv := u.id, dataIcon := Icon.AnalogTv)(u.titleUsername)
-      ,
-      tour
-        .map: t =>
-          st.section(cls := "game__tournament")(
-            a(cls := "text", dataIcon := Icon.Trophy, href := routes.Tournament.show(t.tour.id)):
-              t.tour.name()
-            ,
-            div(cls := "clock", dataTime := t.tour.secondsToFinish)(t.tour.clockStatus)
-          )
-        .orElse:
-          game.tournamentId.map: tourId =>
-            st.section(cls := "game__tournament-link")(views.tournament.ui.tournamentLink(tourId))
-        .orElse:
-          game.swissId.map: swissId =>
-            st.section(cls := "game__tournament-link"):
-              views.swiss.ui.link(swissId)
-        .orElse:
-          simul.map: sim =>
-            st.section(cls := "game__simul-link"):
-              a(href := routes.Simul.show(sim.id))(sim.fullName)
     )

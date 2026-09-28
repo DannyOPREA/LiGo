@@ -12,7 +12,6 @@ object header:
 
   private val actionMenu = lila.user.ui.UserActionMenu(helpers)
 
-  private val dataToints = attr("data-toints")
   private val dataTab = attr("data-tab")
 
   private def possibleSeoBot(u: User) =
@@ -77,23 +76,6 @@ object header:
       ),
       div(cls := "user-show__social")(
         div(cls := "number-menu")(
-          u.noBot.option(
-            a(
-              href := routes.UserTournament.path(u.username, "recent"),
-              cls := "nm-item",
-              dataToints := u.toints
-            )(
-              splitNumber(trans.site.nbTournamentPoints.pluralSame(u.toints))
-            )
-          ),
-          (info.nbSimuls > 0).option(
-            a(
-              href := routes.Simul.byUser(u.username),
-              cls := "nm-item"
-            )(
-              splitNumber(trans.site.nbSimuls.pluralSame(info.nbSimuls))
-            )
-          ),
           (info.nbRelays > 0).option(
             a(
               href := routes.RelayTour.by(u.username),
