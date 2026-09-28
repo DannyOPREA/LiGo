@@ -18,9 +18,13 @@ fixtures in `libs/conformance/fixtures/`. Until docs/rules is filled in, these a
 - Handicap and komi: rated games get automatic handicap from the rank difference (PLAN §3.7).
 
 ## Fixture format (PLAN §3.3)
-JSON cases replayed by both engines (server strategygames adapter, client goban-engine):
-`size, rules, komi, setup, moves, expect{legal, board, captures, koPoint, deadStones → score}`.
-Each fixture records its source.
+JSON cases replayed by both engines (server strategygames adapter, client goban-engine) and the
+scoring service. The format is defined in `libs/conformance/README.md` and enforced by
+`libs/conformance/check.mjs` (run `libs/conformance/fast-check.sh`). In short: one file per source
+suite; each case has `id, title, rules (spec rule IDs), from, appliesTo, size, [ruleset, handicap,
+komi, setup], moves, expect{board, toMove, captures, koPoint, phase, legal, illegal}, [score]`,
+plus `openPoints` (spec §12) and `knownGaps` (client only). Points are SGF (`aa` top-left),
+boards are rows of `.XO`.
 
 ## Where cases come from (in this order)
 goban / goban-engine tests, strategygames tests, KataGo's rules tests, then new cases for

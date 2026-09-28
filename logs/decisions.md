@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-28 | 1.6: approve the 130 conformance fixtures (built on the rules spec's recommended choices) and their licensing (each imported file keeps its source's licence)? | Covered by the owner's 2026-09-28 "don't ask for my approval for anything" delegation and the spec's approval (PR #13); merged by Claude | logs/rules-engine.md, PR #14 |
 | 2026-09-28 | 1.2: client-side rules, SGF and board: OGS `goban` from npm, pinned, wrapped by `libs/board`, or vendor its source into `libs/board`? | npm, pinned (Claude, on its own recommendation, under the owner's 2026-09-28 "don't ask for my approval for anything" delegation; the owner can revisit it) | ADR 0014 |
 | 2026-09-28 | 1.3: scoring: `services/scoring` as a Node service (KataGo + goban autoscore + goscorer) or port autoscore and goscorer to Scala? | Node service (A): Claude's call under the owner's 2026-09-28 "Don't ask for my approval for anything"; owner may revisit | ADR 0016 |
 | 2026-09-27 | 1.5: approve the rules spec's 11 open points (docs/rules/spec.md §12) with the recommended choices? | Approved all as recommended (owner, 2026-09-28, decision card) | PR #13, docs/rules/spec.md §12 |
