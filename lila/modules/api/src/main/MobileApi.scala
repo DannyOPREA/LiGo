@@ -17,7 +17,6 @@ final class MobileApi(
     lightUserApi: lila.user.LightUserApi,
     gameProxy: lila.round.GameProxyRepo,
     unreadCount: lila.msg.MsgUnreadCount,
-    relayHome: lila.relay.RelayHomeApi,
     tv: lila.tv.Tv,
     liveStreamApi: lila.streamer.LiveApi,
     activityRead: lila.activity.ActivityReadApi,
@@ -63,14 +62,13 @@ final class MobileApi(
   // tournamentsOf/tournaments (the mobile app's featured-tournaments feed) were removed with the
   // tournament module (unit 3.2).
 
-  def watch(using Translate): Fu[JsObject] =
+  // "broadcast" (relay) field removed with the relay module (unit 3.3).
+  def watch: Fu[JsObject] =
     for
-      relay <- relayHome.getJson(1)(using lila.relay.RelayJsonView.Config(html = false))
       champs <- tv.getChampions
       tvChannels = champs.channels.mapKeys(_.key)
       streamers <- featuredStreamers
     yield Json.obj(
-      "broadcast" -> relay,
       "tv" -> Json.toJson(tvChannels),
       "streamers" -> streamers
     )
@@ -89,7 +87,7 @@ final class MobileApi(
       withPerfs <- userApi.withPerfs(user)
       prof <- userApi.mobile(withPerfs, Preload.none)
       activities <- activityRead.recentAndPreload(user)
-      activity <- activities.sequentially(activityJsonView(_, user))
+      activity <- activities.sequentially(activityJsonView(_))
       games <- gameApi.mobileRecent(user)
       status <- me.forall(_.isnt(user)).optionFu(userStatus(user))
       crosstable <- me.filter(_.isnt(user)).traverse(gameApi.crosstableWith(user))
@@ -98,7 +96,7 @@ final class MobileApi(
       .add("status", status)
       .add("crosstable", crosstable)
 
-  private def userStatus(user: User)(using Option[Me], Lang): Fu[JsObject] =
+  private def userStatus(user: User)(using Option[Me]): Fu[JsObject] =
     for playing <- gameApi.mobileCurrent(user)
     yield Json
       .obj()

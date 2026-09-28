@@ -28,13 +28,7 @@ export default function renderClocks(ctrl: AnalyseCtrl, path: TreePath): [VNode,
 
   if (!centis.some(notNull)) return undefined;
 
-  const study = ctrl.study;
-
-  const lastMoveAt = study
-    ? study.isClockTicking(path)
-      ? study.relay?.lastMoveAt(study.vm.chapterId)
-      : undefined
-    : ctrl.autoplay.lastMoveAt;
+  const lastMoveAt = ctrl.autoplay.lastMoveAt;
 
   if (lastMoveAt) {
     const spent = (Date.now() - lastMoveAt) / 10;
@@ -42,8 +36,8 @@ export default function renderClocks(ctrl: AnalyseCtrl, path: TreePath): [VNode,
     if (centis[i]) centis[i] = Math.max(0, centis[i] - spent);
   }
 
-  const showTenths = !study?.relay;
-  const pause = !!ctrl.study?.isRelayAwayFromLive();
+  const showTenths = true;
+  const pause = false;
 
   return [
     renderClock({

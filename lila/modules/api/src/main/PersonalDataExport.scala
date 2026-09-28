@@ -25,7 +25,6 @@ final class PersonalDataExport(
     shutupEnv: lila.shutup.Env,
     modLogApi: lila.mod.ModlogApi,
     reportEnv: lila.report.Env,
-    titleEnv: lila.title.Env,
     picfitUrl: lila.memo.PicfitUrl
 )(using Executor, Materializer):
 
@@ -228,27 +227,12 @@ final class PersonalDataExport(
                 val timeoutMsg = m.details.so(_.split(":").drop(1).mkString(":").trim())
                 s"${textDate(m.date)}\n${timeoutMsg}$bigSep"
 
-    val titleRequests = Source.futureSource:
-      titleEnv.api
-        .allOf(user)
-        .map: reqs =>
-          Source:
-            List(textTitle("Title request")) ++ reqs.map: req =>
-              import req.data.*
-              s"""Title: $title
-                 | Real name:  $realName
-                 | FIDE ID: ${fideId | "-"}
-                 | Federation URL: ${federationUrl | "-"}
-                 | Public: $public
-                 | Coach: ${req.data.coach}
-                 | Comment: ${comment | "-"}
-                 | $bigSep""".stripMargin
+    // title request export removed with the title module (unit 3.3).
 
     val outro = Source(List(textTitle("End of data export.")))
 
     List[Source[String, ?]](
       intro,
-      titleRequests,
       connections,
       followedUsers,
       streamer,

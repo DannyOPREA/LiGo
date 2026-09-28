@@ -1,20 +1,14 @@
 package lila.ws
 package ipc
 
-import com.github.blemale.scaffeine.AsyncLoadingCache
 import play.api.libs.json.*
 
-final class CrowdJson(inquirers: Inquirers, mongo: Mongo, lightUserApi: LightUserApi)(using
-    ec: Executor,
-    cacheApi: lila.ws.util.CacheApi
-):
+final class CrowdJson(inquirers: Inquirers, lightUserApi: LightUserApi)(using ec: Executor):
 
-  def room(crowd: RoomCrowd.Output): Future[ClientIn.Crowd] = {
-    if crowd.users.sizeIs > 20 then
-      keepOnlyStudyMembers(crowd).map: users =>
-        crowd.copy(users = users)
-    else Future.successful(crowd)
-  }.flatMap: withFewUsers =>
+  // Rooms with more than 20 users send only the count, not the names. Upstream kept the names of
+  // study members; studies were removed in unit 3.3, so no room keeps them now.
+  def room(crowd: RoomCrowd.Output): Future[ClientIn.Crowd] =
+    val withFewUsers = if crowd.users.sizeIs > 20 then crowd.copy(users = Nil) else crowd
     roomSpectatorsOf(withFewUsers, crowd.users).map: json =>
       ClientIn.Crowd.make(json, withFewUsers.members, withFewUsers.users)
 
@@ -54,13 +48,3 @@ final class CrowdJson(inquirers: Inquirers, mongo: Mongo, lightUserApi: LightUse
       }
 
   private def isBotName(name: User.TitleName) = name.value.startsWith("BOT ")
-
-  private val isStudyCache: AsyncLoadingCache[Study.Id, Boolean] = cacheApi(32, "crowdJson.isStudy"):
-    _.expireAfterWrite(20.minutes).buildAsyncFuture(mongo.studyExists)
-
-  private def keepOnlyStudyMembers(crowd: RoomCrowd.Output): Future[Iterable[User.Id]] =
-    isStudyCache
-      .get(crowd.roomId.into(Study.Id))
-      .flatMap:
-        case false => Future.successful(Nil)
-        case true => mongo.studyMembers(crowd.roomId.into(Study.Id)).map(crowd.users.toSet.intersect)

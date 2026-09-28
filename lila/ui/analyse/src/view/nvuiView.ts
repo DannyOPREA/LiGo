@@ -51,12 +51,8 @@ import { makeConfig as makeCgConfig } from '../ground';
 import type { AnalyseData } from '../interfaces';
 import { clickHook, currentLineIndex, renderCurrentNode } from '../nvuiUtil';
 import { renderRetro } from '../retrospect/nvuiRetroView';
-import { view as chapterEditFormView } from '../study/chapterEditForm';
-import { view as chapterNewFormView } from '../study/chapterNewForm';
-import { playersView } from '../study/relay/relayPlayers';
-import { showInfo as tourOverview } from '../study/relay/relayTourView';
 import renderClocks from '../view/clocks';
-import { renderResult, viewContext, type RelayViewContext } from '../view/components';
+import { renderResult } from '../view/components';
 
 const throttled = (sound: string) => throttle(100, () => site.sound.play(sound));
 const selectSound = throttled('select');
@@ -73,8 +69,7 @@ export function initNvui(ctx: AnalyseNvuiContext): void {
 }
 
 export function renderNvui(ctx: AnalyseNvuiContext): VNode {
-  const { ctrl, deps, notify, moveStyle, pieceStyle, prefixStyle, positionStyle, boardStyle, pageStyle } =
-    ctx;
+  const { ctrl, notify, moveStyle, pieceStyle, prefixStyle, positionStyle, boardStyle, pageStyle } = ctx;
   const d = ctrl.data,
     style = moveStyle.get(),
     clocks = renderClocks(ctrl, ctrl.path),
@@ -113,14 +108,13 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
     hl('div.nvui', [
       ...(boardFirst ? boardView : []),
       boardFirst && renderTouchDeviceCommands(ctx),
-      studyDetails(ctrl),
       hl('h2', i18n.nvui.gameInfo),
       ...COLORS.map(color => hl('p', [`${i18n.site[color]}: `, renderPlayer(ctrl, playerByColor(d, color))])),
       hl('p', `${i18n.site[d.game.rated ? 'rated' : 'casual']} ${d.game.perf || d.game.variant.name}`),
       d.clock ? hl('p', `Clock: ${d.clock.initial / 60} + ${d.clock.increment}`) : null,
       hl('h2', i18n.nvui.moveList),
       hl('p.moves', { attrs: { role: 'log', 'aria-live': 'off' } }, renderCurrentLine(ctx)),
-      !ctrl.study?.practice && [
+      [
         hl(
           'button',
           {
@@ -222,7 +216,6 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
       ),
       hl('h2', 'Chat'),
       ctrl.chatCtrl && renderChat(ctrl.chatCtrl),
-      deps && ctrl.study?.relay && tourDetails(ctx),
     ]),
   ]);
 }
@@ -546,14 +539,12 @@ const requestAnalysisBtn = ({ ctrl, notify, analysisInProgress }: AnalyseNvuiCon
 const renderPlayer = (ctrl: AnalyseCtrl, player: Player): LooseVNodes =>
   player.ai ? i18n.site.aiNameLevelAiLevel('Stockfish', player.ai) : userHtml(ctrl, player);
 
-function userHtml(ctrl: AnalyseCtrl, player: Player) {
-  const d = ctrl.data,
-    user = player.user,
-    perf = user ? user.perfs[d.game.perf] : null,
+function userHtml(_ctrl: AnalyseCtrl, player: Player) {
+  const user = player.user,
+    perf = user ? user.perfs[_ctrl.data.game.perf] : null,
     rating = player.rating ?? perf?.rating,
     rd = player.ratingDiff,
     ratingDiff = rd ? (rd > 0 ? '+' + rd : rd < 0 ? '−' + -rd : '') : '';
-  const studyPlayers = ctrl.study && renderStudyPlayer(ctrl, player.color);
   return user
     ? hl('span', [
         hl(
@@ -564,33 +555,7 @@ function userHtml(ctrl: AnalyseCtrl, player: Player) {
         rating ? ` ${rating}` : ``,
         ' ' + ratingDiff,
       ])
-    : studyPlayers || hl('span', i18n.site.anonymous);
-}
-
-function renderStudyPlayer({ study }: AnalyseCtrl, color: Color): VNode | undefined {
-  const player = study?.currentChapter().players?.[color];
-  const keys = [
-    ['name', i18n.site.name],
-    ['title', 'title'],
-    ['rating', i18n.site.rating],
-    ['fed', 'fed'],
-    ['team', 'team'],
-  ] as const;
-  return (
-    player &&
-    hl(
-      'span',
-      keys
-        .reduce<string[]>(
-          (strs, [key, i18n]) =>
-            player[key]
-              ? strs.concat(`${i18n}: ${key === 'fed' ? player[key].i18nName : player[key]}`)
-              : strs,
-          [],
-        )
-        .join(' '),
-    )
-  );
+    : hl('span', i18n.site.anonymous);
 }
 
 const playerByColor = (d: AnalyseData, color: Color): Player =>
@@ -607,141 +572,6 @@ function jumpLine(ctrl: AnalyseCtrl, delta: number) {
   const prevNode = ctrl.tree.nodeAtPath(prevPath);
   const newPath = prevPath + prevNode.children[newI].id;
   ctrl.userJumpIfCan(newPath);
-}
-
-const redirectToSelectedHook = bind('change', (e: InputEvent) => {
-  const target = e.target as HTMLSelectElement;
-  const selectedOption = target.options[target.selectedIndex];
-  const url = selectedOption.getAttribute('url');
-  if (url) window.location.href = url;
-});
-
-function tourDetails({ ctrl, deps }: AnalyseNvuiContext): VNode[] {
-  const ctx: RelayViewContext = { ...viewContext(ctrl, deps), allowVideo: false } as RelayViewContext;
-  const tour = ctx.relay.data.tour;
-  ctx.relay.redraw = ctrl.redraw;
-
-  return [
-    hl('h1', 'Tour details'),
-    hl('h2', 'Overview'),
-    hl('div', tourOverview(tour.info, tour.dates)),
-    hl('h2', 'Players'),
-    hl(
-      'button.tournament-players',
-      clickHook(() => ctx.relay.tab('players'), ctrl.redraw),
-      'Load player list',
-    ),
-    hl('div', ctx.relay.tab() === 'players' && playersView(ctx.relay.players)),
-  ];
-}
-
-function studyDetails({ study, redraw }: AnalyseCtrl) {
-  const relayGroups = study?.relay?.data.group;
-  const relayRounds = study?.relay?.data.rounds;
-  const tour = study?.relay?.data.tour;
-  const hash = window.location.hash;
-  return (
-    study &&
-    hl('div.study-details', [
-      hl('h2', 'Study details'),
-      hl('span', `Title: ${study.data.name}. By: ${study.data.ownerId}`),
-      hl('br'),
-      relayGroups &&
-        hl(
-          'div.relay-groups',
-          hl('label', [
-            'Current group:',
-            hl(
-              'select',
-              {
-                attrs: { autofocus: hash === '#group-select' },
-                hook: redirectToSelectedHook,
-              },
-              relayGroups.tours.map(t =>
-                hl(
-                  'option',
-                  { attrs: { selected: t.id === tour?.id, url: `/broadcast/-/${t.id}#group-select` } },
-                  t.name,
-                ),
-              ),
-            ),
-          ]),
-        ),
-      tour &&
-        relayRounds &&
-        hl(
-          'div.relay-rounds',
-          hl('label', [
-            'Current round:',
-            hl(
-              'select',
-              {
-                attrs: { autofocus: hash === '#round-select' },
-                hook: redirectToSelectedHook,
-              },
-              relayRounds.map(r =>
-                hl(
-                  'option',
-                  {
-                    attrs: {
-                      selected: r.id === study.data.id,
-                      url: `/broadcast/${tour.slug}/${r.slug}/${r.id}#round-select`,
-                    },
-                  },
-                  study.relay?.round.name,
-                ),
-              ),
-            ),
-          ]),
-        ),
-      hl('div.chapters', [
-        hl('label', [
-          'Current chapter:',
-          hl(
-            'select',
-            {
-              attrs: { id: 'chapter-select' },
-              hook: bind('change', (e: InputEvent) => {
-                const target = e.target as HTMLSelectElement;
-                const selectedOption = target.options[target.selectedIndex];
-                const chapterId = selectedOption.getAttribute('chapterId');
-                study.setChapter(chapterId!);
-              }),
-            },
-            study.chapters.list
-              .all()
-              .map((ch, i) =>
-                hl(
-                  'option',
-                  { attrs: { selected: ch.id === study.currentChapter().id, chapterId: ch.id } },
-                  `${i + 1}. ${ch.name}`,
-                ),
-              ),
-          ),
-        ]),
-        study.members.canContribute()
-          ? hl('div.buttons', [
-              hl(
-                'button.edit-chapter',
-                clickHook(() => study.chapters.editForm.toggle(study.currentChapter()), redraw),
-                [
-                  'Edit current chapter',
-                  study.chapters.editForm.current() && chapterEditFormView(study.chapters.editForm),
-                ],
-              ),
-              hl(
-                'button.create-chapter',
-                clickHook(() => study.chapters.newForm.toggle(), redraw),
-                [
-                  'Add new chapter',
-                  study.chapters.newForm.isOpen() ? chapterNewFormView(study.chapters.newForm) : undefined,
-                ],
-              ),
-            ])
-          : undefined,
-      ]),
-    ])
-  );
 }
 
 const doAndRedraw = (ctrl: AnalyseCtrl, fn: (ctrl: AnalyseCtrl) => void): void => {

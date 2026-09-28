@@ -17,11 +17,11 @@ lazy val editUi = lila.coach.ui.CoachEditUi(helpers, ui)
 
 def show(
     c: lila.coach.Coach.WithUser,
-    studies: Seq[lila.study.Study.WithChaptersAndLiked],
     posts: Seq[lila.ublog.UblogPost.PreviewPost]
 )(using ctx: Context) = ui.show(
   c,
-  studies = studies.map(s => st.article(cls := "study")(views.study.bits.widget(s, h3))),
+  // study removed in unit 3.3: coaches no longer feature studies on their profile.
+  studies = Nil,
   posts = posts.map(views.ublog.ui.card(_))
 )
 

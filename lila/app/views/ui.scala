@@ -53,10 +53,8 @@ object account:
   val twoFactor = lila.pref.ui.TwoFactorUi(helpers, ui)(netConfig.domain)
   val security = lila.security.ui.AccountSecurity(helpers)(ui.AccountPage)
 
-val practice = lila.practice.ui.PracticeUi(helpers)(
-  csp = analyse.ui.bits.cspExternalEngine,
-  views.analyse.ui.explorerAndCevalConfig
-)
+// practice, study, relay and fide (the study/broadcast/FIDE-player UI) were removed with the
+// study, relay, practice, studySearch, fide and title modules (unit 3.3).
 
 object forum:
   import lila.forum.ui.*

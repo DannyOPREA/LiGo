@@ -22,12 +22,9 @@ case class UserInfo(
     ratingChart: Option[SafeJsonStr],
     nbForumPosts: Int,
     ublog: Option[UblogPost.BlogPreview],
-    nbStudies: Int,
-    nbRelays: Int,
     teamIds: List[lila.team.TeamId],
     isStreamer: Boolean,
     isCoach: Boolean,
-    publicFideId: Option[chess.FideId],
     insightVisible: Boolean
 ):
   export trophies.ranks
@@ -103,15 +100,12 @@ object UserInfo:
       postApi: ForumPostApi,
       ublogApi: UblogApi,
       perfsRepo: lila.user.UserPerfsRepo,
-      studyRepo: lila.study.StudyRepo,
-      relayApi: lila.relay.RelayApi,
       ratingChartApi: lila.history.RatingChartApi,
       userApi: lila.api.UserApi,
       streamerApi: lila.streamer.StreamerApi,
       teamApi: lila.team.TeamApi,
       teamCache: lila.team.TeamCached,
       coachApi: lila.coach.CoachApi,
-      fideIdOf: lila.core.user.PublicFideIdOf,
       insightShare: lila.insight.Share
   )(using Executor):
     def fetch(user: User, nbs: NbGames, restricted: Boolean, withBlog: Boolean = true)(using
@@ -129,15 +123,10 @@ object UserInfo:
           postApi.nbByUser(user.id).mon(lila.mon.user.segment("nbForumPosts"))
         ,
         (withBlog && full).so(ublogApi.userBlogPreviewFor(user, 3)),
-        full.so:
-          studyRepo.countByOwner(user.id).recoverDefault.mon(lila.mon.user.segment("nbStudies"))
-        ,
-        full.so(relayApi.countOwnedByUser.get(user.id).mon(lila.mon.user.segment("nbBroadcasts"))),
         full.so(ctx.useMe(teamApi.joinedTeamIdsOfUserAsSeenBy(user).mon(lila.mon.user.segment("teamIds")))),
         streamerApi.isActualStreamer(user).mon(lila.mon.user.segment("streamer")),
         coachApi.isListedCoach(user).mon(lila.mon.user.segment("coach")),
-        fideIdOf(user.light),
         fuccess(Granter.opt(_.SeeInsight)) >>| (user.count.rated >= 50).so(insightShare.grant(user))
-      ).mapN(UserInfo(nbs, _, _, _, _, _, _, _, _, _, _, _, _))
+      ).mapN(UserInfo(nbs, _, _, _, _, _, _, _, _, _))
 
     def preloadTeams(info: UserInfo) = teamCache.lightCache.preloadMany(info.teamIds)

@@ -84,7 +84,6 @@ function whatNext(ctrl: LearnCtrl) {
             true,
           )
         : makeStage('/signup', 'beams-aura', i18n.learn.register, i18n.learn.getAFreeLichessAccount),
-      makeStage('/practice', 'robot-golem', i18n.learn.practice, i18n.learn.learnCommonChessPositions),
       makeStage('/training', 'bullseye', i18n.learn.puzzles, i18n.learn.exerciseYourTacticalSkills),
       makeStage(
         '/video?tags=beginner',

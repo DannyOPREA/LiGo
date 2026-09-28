@@ -9,12 +9,12 @@ sealed trait LilaOut
 sealed trait SiteOut extends LilaOut
 sealed trait LobbyOut extends LilaOut
 sealed trait RoomOut extends LilaOut
-sealed trait StudyOut extends RoomOut
 sealed trait RoundOut extends RoomOut
 sealed trait RacerOut extends RoomOut
 
-// SimulOut and TourOut were removed with the simul and tournament modules (unit 3.2).
-sealed trait AnyRoomOut extends RoundOut with StudyOut with RacerOut
+// SimulOut and TourOut were removed with the simul and tournament modules (unit 3.2); StudyOut
+// was removed with the study module (unit 3.3).
+sealed trait AnyRoomOut extends RoundOut with RacerOut
 
 object LilaOut:
 
@@ -25,7 +25,7 @@ object LilaOut:
   case class TellUsers(users: Iterable[User.Id], json: JsonString) extends SiteOut
   case class TellAll(json: JsonString) extends SiteOut
   case class DisconnectUser(user: User.Id) extends SiteOut
-  case class TellSri(sri: Sri, json: JsonString) extends SiteOut with LobbyOut with StudyOut
+  case class TellSri(sri: Sri, json: JsonString) extends SiteOut with LobbyOut
   case class SetTroll(user: User.Id, v: IsTroll) extends SiteOut
   case class Impersonate(mod: User.ModId, user: User.Id, v: Boolean) extends SiteOut
   case class Follow(left: User.Id, right: User.Id) extends SiteOut
@@ -66,12 +66,9 @@ object LilaOut:
 
   case class RoomStop(roomId: RoomId) extends AnyRoomOut
 
-  // study
-
-  case class RoomIsPresent(reqId: Int, roomId: RoomId, userId: User.Id) extends StudyOut
-
-  // RoomFilterPresent (simul) and GetWaitingUsers (tour) were removed with the simul and
-  // tournament modules (unit 3.2).
+  // RoomIsPresent (study) was removed with the study module (unit 3.3); RoomFilterPresent
+  // (simul) and GetWaitingUsers (tour) were removed with the simul and tournament modules
+  // (unit 3.2).
 
   // round
 
@@ -232,14 +229,8 @@ object LilaOut:
 
       case "room/stop" => Some(RoomStop(RoomId(args)))
 
-      case "room/present" =>
-        get(args, 3) { case Array(reqIdS, roomId, userId) =>
-          reqIdS.toIntOption.map { reqId =>
-            RoomIsPresent(reqId, RoomId(roomId), User.Id(userId))
-          }
-        }
-
-      // "room/filter-present" (simul) was removed with the simul module (unit 3.2).
+      // "room/present" (study) was removed with the study module (unit 3.3); "room/filter-present"
+      // (simul) was removed with the simul module (unit 3.2).
 
       case "tell/room/chat" =>
         get(args, 4) { case Array(roomId, version, troll, payload) =>

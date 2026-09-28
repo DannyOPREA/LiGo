@@ -6,9 +6,7 @@ import lila.db.AsyncCollFailingSilently
 import lila.db.dsl.{ *, given }
 
 final class ActivityWriteApi(
-    withColl: AsyncCollFailingSilently,
-    studyApi: lila.core.study.StudyApi,
-    userApi: lila.core.user.UserApi
+    withColl: AsyncCollFailingSilently
 )(using Executor):
 
   import Activity.*
@@ -66,9 +64,6 @@ final class ActivityWriteApi(
   def learn(userId: UserId, stage: String) = update(userId): a =>
     bdoc(ActivityFields.learn -> { ~a.learn + LearnStage(stage) })
 
-  def practice(prog: lila.core.practice.OnComplete) = update(prog.userId): a =>
-    bdoc(ActivityFields.practice -> { ~a.practice + prog.studyId })
-
   def corresMove(gameId: GameId, userId: UserId) = update(userId): a =>
     bdoc(ActivityFields.corres -> { (~a.corres).add(gameId, moved = true, ended = false) })
 
@@ -94,18 +89,6 @@ final class ActivityWriteApi(
                 regexId(userId) ++ bdoc("f.i.ids" -> from.id),
                 pull("f.i.ids" -> from.id)
               )
-
-  def study(id: StudyId) =
-    studyApi
-      .byId(id)
-      .flatMap:
-        _.filter(_.visibility == lila.core.study.Visibility.public).so: s =>
-          userApi
-            .isTroll(s.ownerId)
-            .not
-            .flatMapz:
-              update(s.ownerId): a =>
-                bdoc(ActivityFields.studies -> { ~a.studies + s.id })
 
   def team(id: TeamId, userId: UserId) =
     update(userId): a =>

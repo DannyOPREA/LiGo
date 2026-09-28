@@ -234,8 +234,7 @@ final class ModUi(helpers: Helpers):
     bits.pageMenuSubnav(
       Granter(_.SeeReport)
         .option(a(cls := itemCls(active, "report"), href := routes.Report.list)("Reports")),
-      Granter(_.PublicChatView)
-        .option(a(cls := itemCls(active, "public-chat"), href := routes.Mod.publicChat)("Public Chats")),
+      // "Public Chats" menu link removed with the relay module (unit 3.3).
       Granter(_.SeeReport).option:
         a(targetBlank, href := "https://monitor.lichess.ovh/d/ad7cldm/mod-queue-and-closed-report-charts"):
           "Queue charts"

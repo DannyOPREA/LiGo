@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-28 | 3.3: what replaces FIDE ids and the relay-only mod page once fide, title and relay go? | A stub `PublicFideIdOf` that returns none (game and api still ask); the Public chats mod page is removed; `lila.core.study` stays until its last users go (Claude, under the owner's 2026-09-28 delegation) | logs/upstream-fork.md |
 | 2026-09-28 | 3.2: drop the stored tournament/swiss/simul ids from games and chat, or keep them? | Keep them as neutral, unused fields (no data migration); remove every feature that reads or writes them (Claude, under the owner's 2026-09-28 delegation) | logs/upstream-fork.md |
 | 2026-09-28 | 4.3: how do the move cap and an impossible count read in the rules spec? | R-END-6: the 1,000-ply cap opens the scoring phase and resume is refused; R-SP-10: no proposal or recount within the grace period ends the game with no result (`Void`), not a draw (Claude, under the owner's 2026-09-28 delegation) | docs/rules/spec.md, logs/rules-engine.md |
 | 2026-09-28 | 4.2: which byo-yomi settings does the go-rules clock accept, and does it support an increment? | Any main time ≥ 0, periods ≥ 1, period ≥ 1 s; no increment; the values lila offers are unit 4.9's (Claude, under the owner's 2026-09-28 delegation) | logs/clocks.md |

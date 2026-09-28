@@ -431,24 +431,6 @@ importers:
         specifier: workspace:*
         version: link:../lib
 
-  ui/fide:
-    dependencies:
-      bits:
-        specifier: workspace:*
-        version: link:../bits
-      chart.js:
-        specifier: 4.5.1
-        version: 4.5.1
-      chartjs-adapter-dayjs-4:
-        specifier: ^1.0.4
-        version: 1.0.4(chart.js@4.5.1)(dayjs@1.11.21)
-      dayjs:
-        specifier: ^1.11.19
-        version: 1.11.21
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
   ui/insight:
     dependencies:
       chart:

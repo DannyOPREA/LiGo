@@ -78,22 +78,22 @@ lazy val modules = Seq(
   // level 4
   memo, rating,
   // level 5
-  game, study, user, puzzle, analyse,
+  game, user, puzzle, analyse,
   report, pref, chat, playban, lobby, mailer, oauth, search,
   // level 6
   insight, evaluation, storm,
   // level 7
   // everything else is free from deps; do the big ones first
-  relay, tutor, security, plan, round,
+  tutor, security, plan, round,
   insight, fishnet, mod, challenge, web,
   team, forum, streamer, activity, msg, ublog,
   notifyModule, clas, perfStat, opening, timeline,
-  setup, video, fide, title, push,
+  setup, video, push,
   // and then the smaller ones
   pool, lobby, relation, tv, coordinate, feed, history, recap,
   shutup, appeal, irc, explorer, learn, coach,
-  practice, evalCache, irwin, bot, racer, cms, i18n, jsBot,
-  socket, bookmark, studySearch, gameSearch, forumSearch, teamSearch, irc
+  evalCache, irwin, bot, racer, cms, i18n, jsBot,
+  socket, bookmark, gameSearch, forumSearch, teamSearch, irc
 )
 
 lazy val moduleRefs = modules map projectToRef
@@ -349,31 +349,6 @@ lazy val challenge = module("challenge",
   Seq(lettuce, catsMtl) ++ tests.bundle
 )
 
-lazy val fide = module("fide",
-  Seq(memo, ui),
-  tests.bundle
-)
-
-lazy val title = module("title",
-  Seq(memo, ui),
-  Seq()
-)
-
-lazy val study = module("study",
-  Seq(tree, memo, room, ui),
-  Seq(lettuce) ++ tests.bundle ++ Seq(scalacheck, munitCheck, chess.testKit)
-).dependsOn(common % "test->test")
-
-lazy val relay = module("relay",
-  Seq(study, game),
-  Seq(chess.tiebreak) ++ tests.bundle
-).dependsOn(coreI18n % "test->test")
-
-lazy val studySearch = module("studySearch",
-  Seq(study, search),
-  Seq()
-)
-
 lazy val learn = module("learn",
   Seq(db),
   Seq()
@@ -381,11 +356,6 @@ lazy val learn = module("learn",
 
 lazy val evalCache = module("evalCache",
   Seq(tree, memo),
-  Seq()
-)
-
-lazy val practice = module("practice",
-  Seq(study),
   Seq()
 )
 

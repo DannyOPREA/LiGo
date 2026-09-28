@@ -91,13 +91,13 @@ export class IdbTree {
     await Promise.all([
       (!what || what === 'ceval') && this.cevalDb().then(db => db.remove(this.cevalRange())),
       (!what || what === 'collapse') && this.collapseDb().then(db => db.remove(this.id)),
-      !this.ctrl.study && (!what || what === 'moves') && this.moveDb().then(db => db.remove(this.id)),
+      (!what || what === 'moves') && this.moveDb().then(db => db.remove(this.id)),
     ]);
     site.reload();
   };
 
   async saveMoves(force = false): Promise<IDBValidKey | undefined> {
-    if (this.noop || this.ctrl.study || !(this.cache.movesDirty || force)) return undefined;
+    if (this.noop || !(this.cache.movesDirty || force)) return undefined;
     const root = treeOps.structuredCloneLite(this.ctrl.tree.root);
     treeOps.updateAll(root, node => {
       delete node.ceval;
@@ -121,7 +121,7 @@ export class IdbTree {
       this.cacheMap.set(id, state);
       const [collapsedPaths, moves, cevals] = await Promise.all([
         this.collapseDb().then(db => db.getOpt(id)),
-        !this.ctrl.study ? this.moveDb().then(db => db.getOpt(id)) : undefined,
+        this.moveDb().then(db => db.getOpt(id)),
         this.cevalDb().then(db => db.getMany(this.cevalRange(id))),
       ]);
       if (id !== this.id) return;
@@ -157,7 +157,7 @@ export class IdbTree {
   }
 
   private get id(): string {
-    return this.ctrl.opts.study?.chapter.id ?? this.ctrl.data.game.id;
+    return this.ctrl.data.game.id;
   }
 
   private get noop(): boolean {

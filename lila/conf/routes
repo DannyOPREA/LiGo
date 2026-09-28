@@ -90,18 +90,6 @@ GET   /player/online                   controllers.User.online
 GET   /api/player/autocomplete         controllers.User.autocomplete
 GET   /api/player                      controllers.User.apiList
 
-# FIDE Player
-GET   /fide                            controllers.Fide.index(page: Int ?= 1, q: Option[String] ?= None)
-GET   /fide/federation                 controllers.Fide.federations(page: Int ?= 1)
-GET   /fide/federation/:name           controllers.Fide.federation(name, page: Int ?= 1)
-GET   /fide/:fideId/:name              controllers.Fide.show(fideId: chess.FideId, name, page: Int ?= 1)
-POST  /fide/:fideId/follow             controllers.Fide.follow(fideId: chess.FideId, follow: Boolean)
-GET   /api/fide/player/:id             controllers.Fide.apiShow(id: chess.FideId)
-GET   /api/fide/player/:id/ratings     controllers.Fide.apiRatings(id: chess.FideId)
-GET   /api/fide/player                 controllers.Fide.apiSearch(q: String)
-POST  /upload/image/fide/player/:id    controllers.Fide.playerPhoto(id: chess.FideId)
-POST  /fide/player/:id                 controllers.Fide.playerUpdate(id: chess.FideId)
-
 GET   /dasher                          controllers.Dasher.get
 
 # Blog/Ublog
@@ -221,101 +209,6 @@ GET   /analysis/*something             controllers.UserAnalysis.parseArg(somethi
 GET   /analysis                        controllers.UserAnalysis.index
 GET   /embed/analysis                  controllers.UserAnalysis.embed
 
-# Study
-GET   /study                           controllers.Study.allDefault(page: Int ?= 1)
-GET   /study/staff-picks               controllers.Study.staffPicks
-POST  /study/staff-picks               controllers.Study.staffPicksPost
-GET   /study/all/:order                controllers.Study.all(order: StudyOrder, page: Int ?= 1)
-GET   /study/mine/:order               controllers.Study.mine(order: StudyOrder, page: Int ?= 1)
-GET   /study/member/:order             controllers.Study.mineMember(order: StudyOrder, page: Int ?= 1)
-GET   /study/public/:order             controllers.Study.minePublic(order: StudyOrder, page: Int ?= 1)
-GET   /study/private/:order            controllers.Study.minePrivate(order: StudyOrder, page: Int ?= 1)
-GET   /study/likes/:order              controllers.Study.mineLikes(order: StudyOrder, page: Int ?= 1)
-GET   /study/by/:username              controllers.Study.byOwnerDefault(username: UserStr, page: Int ?= 1)
-GET   /study/by/:username/:order       controllers.Study.byOwner(username: UserStr, order: StudyOrder, page: Int ?= 1)
-GET   /study/search                    controllers.Study.search(q ?= "", page: Int ?= 1, order: Option[StudyOrder] ?= None)
-POST  /study/list-format               controllers.Study.listFormat
-GET   /study/$id<\w{8}>                controllers.Study.show(id: StudyId)
-POST  /study                           controllers.Study.create
-POST  /study/as                        controllers.Study.createAs
-GET   /study/$id<\w{8}>.pgn            controllers.Study.pgn(id: StudyId)
-GET   /study/$id<\w{8}>/$chapterId<\w{8}>.pgn controllers.Study.chapterPgn(id: StudyId, chapterId: StudyChapterId)
-GET   /study/$id<\w{8}>/$chapterId<\w{8}>.gif controllers.Study.chapterGif(id: StudyId, chapterId: StudyChapterId, theme: Option[String], piece: Option[String], showGlyphs: Boolean ?= false)
-POST  /study/$id<\w{8}>/delete         controllers.Study.delete(id: StudyId)
-GET   /study/$id<\w{8}>/clone          controllers.Study.cloneStudy(id: StudyId)
-POST  /study/$id<\w{8}>/cloneApply     controllers.Study.cloneApply(id: StudyId)
-GET   /study/$id<\w{8}>/$chapterId<\w{8}>        controllers.Study.chapter(id: StudyId, chapterId: StudyChapterId)
-GET   /study/$id<\w{8}>/$chapterId<\w{8}>/config controllers.Study.chapterConfig(id: StudyId, chapterId: StudyChapterId)
-GET   /study/embed/$id<\w{8}>/$chapterId<\w{8}>  controllers.Study.embed(id: StudyId, chapterId: StudyChapterId)
-POST  /study/$id<\w{8}>/clear-chat     controllers.Study.clearChat(id: StudyId)
-POST  /study/$id<\w{8}>/import-pgn     controllers.Study.importPgn(id: StudyId)
-POST  /study/$id<\w{8}>/admin          controllers.Study.admin(id: StudyId)
-GET   /study/topic                     controllers.Study.topics
-POST  /study/topic                     controllers.Study.setTopics
-GET   /study/topic/:topic/:order       controllers.Study.byTopic(topic, order: StudyOrder, page: Int ?= 1)
-GET   /study/topic/autocomplete        controllers.Study.topicAutocomplete
-GET   /study/glyphs/:lang.json         controllers.Study.glyphs(lang: String)
-GET   /$lang<\w\w\w?>/study            controllers.Study.homeLang(lang: Language)
-POST  /api/study                       controllers.Study.apiCreate
-GET   /api/study/$id<\w{8}>.pgn        controllers.Study.apiPgn(id: StudyId)
-GET   /api/study/$id<\w{8}>/$chapterId<\w{8}>.pgn controllers.Study.apiChapterPgn(id: StudyId, chapterId: StudyChapterId)
-DELETE /api/study/$id<\w{8}>/$chapterId<\w{8}>    controllers.Study.apiChapterDelete(id: StudyId, chapterId: StudyChapterId)
-GET   /api/study/by/:user              controllers.Study.apiListByOwner(user: UserStr)
-GET   /api/study/by/:username/export.pgn controllers.Study.apiExportPgn(username: UserStr)
-POST  /api/study/$id<\w{8}>/import-pgn controllers.Study.apiImportPgn(id: StudyId)
-POST  /api/study/$id<\w{8}>/$chapterId<\w{8}>/tags controllers.Study.apiChapterTagsUpdate(id: StudyId, chapterId: StudyChapterId)
-POST  /api/study/$id<\w{8}>/$chapterId<\w{8}>/moves controllers.Study.apiChapterPgnMovesUpdate(id: StudyId, chapterId: StudyChapterId)
-
-# Relay
-GET   /broadcast                              controllers.RelayTour.index(page: Int ?= 1, q ?= "")
-GET   /broadcast/new                          controllers.RelayTour.form
-POST  /broadcast/new                          controllers.RelayTour.create
-GET   /broadcast/calendar                     controllers.RelayTour.calendar
-GET   /broadcast/calendar/:year/:month        controllers.RelayTour.calendarMonth(year: Int, month: Int)
-GET   /broadcast/help                         controllers.RelayTour.help
-GET   /broadcast/app                          controllers.RelayTour.app
-GET   /broadcast/by/:user                     controllers.RelayTour.by(user: UserStr, page: Int ?= 1)
-GET   /api/broadcast/by/:user                 controllers.RelayTour.apiBy(user: UserStr, page: Int ?= 1)
-GET   /broadcast/:ts/$id<\w{8}>               controllers.RelayTour.show(ts, id: RelayTourId)
-GET   /embed/broadcast/:ts/$id<\w{8}>         controllers.RelayTour.embedShow(ts, id: RelayTourId)
-GET   /api/broadcast/$id<\w{8}>               controllers.RelayTour.apiShow(id: RelayTourId)
-GET   /api/broadcast/$tourId<\w{8}>.pgn       controllers.RelayTour.pgn(tourId: RelayTourId)
-GET   /broadcast/$tourId<\w{8}>/edit          controllers.RelayTour.edit(tourId: RelayTourId)
-POST  /broadcast/$tourId<\w{8}>/edit          controllers.RelayTour.update(tourId: RelayTourId)
-POST  /broadcast/$tourId<\w{8}>/delete        controllers.RelayTour.delete(tourId: RelayTourId)
-POST  /upload/image/broadcast/$id<\w{8}>      controllers.RelayTour.image(id: RelayTourId, tag: Option[String] ?= None)
-POST  /broadcast/$tourId<\w{8}>/clone         controllers.RelayTour.cloneTour(tourId: RelayTourId)
-POST  /broadcast/$tourId<\w{8}>/subscribe     controllers.RelayTour.subscribe(tourId: RelayTourId, set: Boolean)
-GET   /broadcast/$tourId<\w{8}>/new           controllers.RelayRound.form(tourId: RelayTourId)
-POST  /broadcast/$tourId<\w{8}>/new           controllers.RelayRound.create(tourId: RelayTourId)
-GET   /broadcast/$tourId<\w{8}>/players       controllers.RelayTour.playersView(tourId: RelayTourId)
-GET   /broadcast/$tourId<\w{8}>/players/:id   controllers.RelayTour.player(tourId: RelayTourId, id:  String)
-GET   /broadcast/$tourId<\w{8}>/teams/standings controllers.RelayTour.teamLeaderboard(tourId: RelayTourId)
-GET   /broadcast/:ts/:rs/$roundId<\w{8}>      controllers.RelayRound.show(ts, rs, roundId: RelayRoundId)
-GET   /api/broadcast/:ts/:rs/$roundId<\w{8}>  controllers.RelayRound.apiShow(ts, rs, roundId: RelayRoundId)
-GET   /embed/broadcast/:ts/:rs/$roundId<\w{8}> controllers.RelayRound.embedShow(ts, rs, roundId: RelayRoundId)
-GET   /embed/broadcast/:ts/:rs/$roundId<\w{8}>/$chapterId<\w{8}> controllers.RelayRound.embedChapter(ts, rs, roundId: RelayRoundId, chapterId: StudyChapterId)
-GET   /broadcast/:ts/:rs/$roundId<\w{8}>/$chapterId<\w{8}> controllers.RelayRound.chapter(ts, rs, roundId: RelayRoundId, chapterId: StudyChapterId)
-GET   /broadcast/round/$roundId<\w{8}>/edit   controllers.RelayRound.edit(roundId: RelayRoundId)
-POST  /broadcast/round/$roundId<\w{8}>/edit   controllers.RelayRound.update(roundId: RelayRoundId)
-POST  /broadcast/round/$roundId<\w{8}>/reset  controllers.RelayRound.reset(roundId: RelayRoundId)
-POST  /api/broadcast/round/$roundId<\w{8}>/reset  controllers.RelayRound.reset(roundId: RelayRoundId)
-GET   /broadcast/round/$roundId<\w{8}>/stats  controllers.RelayRound.stats(roundId: RelayRoundId)
-POST  /api/broadcast/round/$roundId<\w{8}>/push controllers.RelayRound.push(roundId: RelayRoundId)
-GET   /broadcast/:ts/:rs/$roundId<\w{8}>.pgn  controllers.RelayRound.pgn(ts, rs, roundId: RelayRoundId)
-GET   /broadcast/$roundId<\w{8}>/teams        controllers.RelayRound.teamsView(roundId: RelayRoundId)
-GET   /broadcast/:pager                       controllers.RelayTour.pager(pager: String, page: Int ?= 1)
-GET   /api/broadcast/round/$roundId<\w{8}>.pgn controllers.RelayRound.apiPgn(roundId: RelayRoundId)
-GET   /api/stream/broadcast/round/$roundId<\w{8}>.pgn controllers.RelayRound.streamRound(roundId: RelayRoundId)
-GET   /api/stream/broadcast/tour/$tourId<\w{8}>.pgn controllers.RelayRound.streamTour(tourId: RelayTourId)
-GET   /api/stream/broadcast/group/$groupId<\w{8}>.pgn controllers.RelayRound.streamGroup(groupId: RelayGroupId)
-GET   /api/broadcast                          controllers.RelayTour.apiIndex
-GET   /api/broadcast/top                      controllers.RelayTour.apiTop(page: Int ?= 1)
-GET   /api/broadcast/search                   controllers.RelayTour.apiSearch(page: Int ?= 1, q: String ?= "")
-GET   /api/broadcast/my-rounds                controllers.RelayRound.apiMyRounds
-GET   /api/broadcast/spotlight-rounds         controllers.RelayRound.apiSpotlightRounds
-GET   /$lang<\w\w\w?>/broadcast               controllers.RelayTour.indexLang(lang: Language)
-
 # Learn
 GET   /learn                           controllers.Learn.index
 POST  /learn/score                     controllers.Learn.score
@@ -339,16 +232,6 @@ POST  /patron/paypal/capture/:id       controllers.Plan.payPalCapture(id)
 POST  /api/patron/stripe/checkout      controllers.Plan.apiStripeCheckout
 GET   /api/patron/currencies           controllers.Plan.apiCurrencies
 GET   /features                        controllers.Plan.features
-
-# Practice
-GET   /practice                                   controllers.Practice.index
-GET   /practice/load/:studyId/:chapterId          controllers.Practice.chapter(studyId: StudyId, chapterId: StudyChapterId)
-POST  /practice/reset                             controllers.Practice.reset
-GET   /practice/:sectionId                        controllers.Practice.showSection(sectionId)
-GET   /practice/:sectionId/:studySlug             controllers.Practice.showStudySlug(sectionId, studySlug)
-GET   /practice/:sectionId/:studySlug/:studyId    controllers.Practice.show(sectionId, studySlug, studyId: StudyId)
-GET   /practice/:sectionId/:studySlug/:studyId/:chapterId controllers.Practice.showChapter(sectionId, studySlug, studyId: StudyId, chapterId: StudyChapterId)
-POST  /practice/complete/:chapterId/:moves        controllers.Practice.complete(chapterId: StudyChapterId, moves: Int)
 
 # Streamer
 GET   /streamer                        controllers.Streamer.index(page: Int ?= 1)
@@ -557,7 +440,6 @@ GET   /mod/chat-user/:username         controllers.Mod.chatUser(username: UserSt
 GET   /mod/:username/permissions       controllers.Mod.permissions(username: UserStr)
 POST  /mod/:username/permissions       controllers.Mod.savePermissions(username: UserStr)
 POST  /mod/:username/gdpr-erase        controllers.Mod.gdprErase(username: UserStr)
-GET   /mod/public-chat                 controllers.Mod.publicChat
 POST  /mod/public-chat/timeout         controllers.Mod.publicChatTimeout
 GET   /mod/email-confirm               controllers.Mod.emailConfirmGet
 POST  /mod/email-confirm               controllers.Mod.emailConfirmApi
@@ -814,17 +696,6 @@ POST  /upload/image/user/:realm        controllers.Main.uploadImage(realm: Markd
 POST  /markdown/preview/:realm         controllers.Main.markdownPreview(realm: MarkdownRealm)
 GET   /image-url/:realm/:id            controllers.Main.imageUrl(realm: MarkdownRealm, id: ImageId, width: Int)
 POST  /github/secret-scanning          controllers.Github.secretScanning
-
-GET   /verify-title                    controllers.TitleVerify.index
-GET   /verify-title/form               controllers.TitleVerify.form
-POST  /verify-title/form               controllers.TitleVerify.create
-GET   /verify-title/queue              controllers.TitleVerify.queue
-GET   /verify-title/:id                controllers.TitleVerify.show(id: TitleRequestId)
-POST  /verify-title/:id                controllers.TitleVerify.update(id: TitleRequestId)
-POST  /verify-title/:id/cancel         controllers.TitleVerify.cancel(id: TitleRequestId)
-POST  /verify-title/:id/process        controllers.TitleVerify.process(id: TitleRequestId)
-POST  /upload/image/verify-title/:id   controllers.TitleVerify.image(id: TitleRequestId, tag: String)
-
 # Technical
 GET   /run/captcha/$id<\w{8}>          controllers.Main.captchaCheck(id: GameId)
 GET   /run/temporarily-disabled        controllers.Main.temporarilyDisabled(path = "")

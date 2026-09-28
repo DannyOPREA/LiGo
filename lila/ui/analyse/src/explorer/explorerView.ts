@@ -117,10 +117,7 @@ function showGameTable(ctrl: AnalyseCtrl, fen: FEN, title: string, games: Openin
           const $tr = $(e.target as HTMLElement).parents('tr');
           if (!$tr.length) return;
           const id = $tr.data('id');
-          if (ctrl.study?.members.canContribute()) {
-            ctrl.explorer.gameMenu(id);
-            ctrl.redraw();
-          } else openGame(ctrl, id);
+          openGame(ctrl, id);
         },
       }),
       games.map(game =>
@@ -155,11 +152,6 @@ function openGame(ctrl: AnalyseCtrl, gameId: string) {
 }
 
 function gameActions(ctrl: AnalyseCtrl, game: OpeningGame): VNode {
-  const send = (insert: boolean) => {
-    ctrl.study!.explorerGame(game.id, insert);
-    ctrl.explorer.gameMenu(null);
-    ctrl.redraw();
-  };
   return hl('tr', { key: game.id + '-m' }, [
     hl('td.game_menu', { attrs: { colspan: ctrl.explorer.db() === 'masters' ? 4 : 5 } }, [
       hl(
@@ -172,18 +164,6 @@ function gameActions(ctrl: AnalyseCtrl, game: OpeningGame): VNode {
           { attrs: dataIcon(licon.Eye), hook: bind('click', () => openGame(ctrl, game.id)) },
           'View',
         ),
-        ctrl.study &&
-          hl(
-            'a.text',
-            { attrs: dataIcon(licon.BubbleSpeech), hook: bind('click', () => send(false), ctrl.redraw) },
-            'Cite',
-          ),
-        ctrl.study &&
-          hl(
-            'a.text',
-            { attrs: dataIcon(licon.PlusButton), hook: bind('click', () => send(true), ctrl.redraw) },
-            'Insert',
-          ),
         hl(
           'a.text',
           { attrs: dataIcon(licon.X), hook: bind('click', () => ctrl.explorer.gameMenu(null), ctrl.redraw) },

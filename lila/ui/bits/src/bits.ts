@@ -1,7 +1,6 @@
 import { spinnerHtml } from 'lib/view';
 import { text } from 'lib/xhr';
 
-import { wireCropDialog } from './crop';
 import flairPickerLoader from './flairPicker';
 
 // avoid node_modules and pay attention to imports here. we don't want to force people
@@ -27,16 +26,12 @@ export function initModule(args: { fn: string } & any): void {
       return importer();
     case 'pmAll':
       return pmAll();
-    case 'relayForm':
-      return relayForm();
     case 'setAssetInfo':
       return setAssetInfo();
     case 'streamerSubscribe':
       return streamerSubscribe();
     case 'thanksReport':
       return thanksReport();
-    case 'titleRequest':
-      return titleRequest();
     case 'validateEmail':
       return validateEmail();
     case 'emailErrorCheck':
@@ -170,24 +165,6 @@ function pmAll() {
   });
 }
 
-function relayForm() {
-  wireCropDialog({
-    aspectRatio: 2 / 1,
-    post: { url: $('.relay-image-edit').attr('data-post-url')!, field: 'image' },
-    selectClicks: $('.select-image, .drop-target'),
-    selectDrags: $('.drop-target'),
-  });
-
-  const $source = $('#form3-syncSource'),
-    showSource = () =>
-      $('.relay-form__sync').each(function (this: HTMLElement) {
-        this.classList.toggle('none', !this.classList.contains(`relay-form__sync-${$source.val()}`));
-      });
-
-  $source.on('change', showSource);
-  showSource();
-}
-
 // LiGo: keep in step with LigoBrand.scala (modules/web)
 const githubRepoRoot = 'https://github.com/DannyOPREA/LiGo';
 
@@ -216,16 +193,6 @@ function streamerSubscribe() {
       url.searchParams.set('set', String(!target.checked));
       target.dataset.action = url.pathname + url.search;
     }
-  });
-}
-
-function titleRequest() {
-  $('.title-image-edit').each(function (this: HTMLElement) {
-    wireCropDialog({
-      post: { url: $(this).attr('data-post-url')!, field: 'image' },
-      selectClicks: $(this).find('.drop-target'),
-      selectDrags: $(this).find('.drop-target'),
-    });
   });
 }
 

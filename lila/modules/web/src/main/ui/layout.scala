@@ -261,13 +261,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           dataCount := maxScore,
           dataIcon := Icon.Agent
         ).some
-      else if Granter.opt(_.PublicChatView) then
-        a(
-          cls := "link",
-          title := "Moderation",
-          href := routes.Mod.publicChat,
-          dataIcon := Icon.Agent
-        ).some
+      // PublicChatView fallback link removed with the relay module's "Public Chats" page (unit 3.3).
       else
         Granter
           .opt(_.Pages)
