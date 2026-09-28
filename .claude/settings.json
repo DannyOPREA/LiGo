@@ -15,15 +15,6 @@
       "Bash(gh pr merge *)", "mcp__github__merge_pull_request",
       "mcp__playwright", "mcp__mongodb", "mcp__context7"
     ],
-    "ask": [
-      "Edit(./**/package.json)", "Edit(./**/build.sbt)", "Edit(./**/project/*.scala)", "Edit(./**/project/*.sbt)",
-      "Edit(./**/pnpm-workspace.yaml)", "Edit(./**/pnpm-lock.yaml)",
-      "Bash(pnpm add *)", "Bash(pnpm remove *)", "Bash(pnpm update*)", "Bash(npm install *)", "Bash(cs install *)",
-      "Edit(./libs/conformance/fixtures/**)", "Edit(./docs/rules/**)",
-      "Edit(./.github/workflows/**)", "Edit(./LICENSE*)", "Edit(./COPYING*)", "Edit(./**/COPYING.md)",
-      "Edit(./.claude/settings.json)", "Edit(./.claude/hooks/**)",
-      "Bash(docker system prune*)", "Bash(docker volume rm*)", "Bash(sbt clean*)"
-    ],
     "deny": [
       "Bash(git push --force*)", "Bash(git push -f*)", "Bash(git push origin main*)",
       "Bash(git reset --hard origin/main*)", "mcp__github__enable_pr_auto_merge",
