@@ -12,8 +12,23 @@
 - goban's default theme (no `getSelectedThemes` callback) is Kaya/Slate/Shell and loads a board picture from OGS's CDN: LiGo overrides `getSelectedThemes` with the plain theme (2026-09-28, 2.1).
 - libs/board is in lila's pnpm workspace: run its scripts from `lila/` with `--filter @ligo/board`; `pnpm run` inside libs/board starts a lockfile of its own (2026-09-28, 2.1).
 - Don't list lila's lint tools again in libs/board: its oxlint resolved without lila's optional `oxlint-tsgolint` peer, a second lockfile entry that a full install never unpacks, so `pnpm licenses` read its licence as Unknown. The board uses lila's own oxfmt/oxlint; install with `--filter @ligo/board --filter lila` (2026-09-28, 2.1).
+- goban's `pass()` leaves stone placement on, and its `updateTitleAndStonePlacement` turns it off whenever a preview is shown: an adapter must keep "a move is waiting" state of its own (2026-09-28, 2.1 review).
 
 ## Entries (newest first)
+
+### 2026-09-28 · 2.1 review · Reviewer findings fixed
+- Reviewer (adversarial, Chromium probes): 2 blocking, 6 should-fix. Fixed: `dev/ligo deps` still
+  installed libs/board on its own (no lockfile there since ADR 0017: it failed, so cloud sessions
+  redid deps every start); after `pass()` the board still took clicks and reported a second move
+  for the other colour; `play` of a move goban can't place left the turn wrong; `set` during a
+  preview froze it; `pass` with a preview did nothing; the browser tests didn't fail on console
+  errors; the handicap test checked three rows only; stale `--filter` docs.
+- 4 new browser tests (17 now), every browser test fails on a page error, and a dev/ check that
+  `dev/ligo` never installs libs/board outside lila's workspace. Each fix was checked by undoing it
+  and watching a test fail. `dev/ligo test board`: 217/217.
+- Nits taken: `onMove` not called after `destroy`, replayed moves validated, `refusalOf` ignores
+  inherited ids, NOTICE names goban's second copyright holder. Left: `@playwright/test` stays
+  `^1.63.0` (the lockfile pins 1.63.0; a test tool, not shipped).
 
 ### 2026-09-28 · 2.1 · goban's board in libs/board (`mountBoard`)
 - Did: added npm `goban` 8.3.226 (same release as goban-engine) and wrapped its SVG board as `mountBoard(el, config)` in `libs/board/src/board.ts`: moves reported (`onMove`) and decided by the page (`play`/`cancel`), `movable` one colour/both/none, `confirm` (preview, then `confirm()`), pass, refusals with reasons, `state()`, sized from and following its box, destroy. Split the shared rule settings into `src/rules.mjs` (no goban import; typed by `rules.d.mts`). Moved libs/board into lila's pnpm workspace (ADR 0017): one lockfile, `--filter @ligo/board` installs and scripts, docker ui container mounts `libs/`, `rules` CI job installs from lila, lints, type-checks and runs the board in Chromium. 13 Playwright tests (desktop clicks, phone taps).

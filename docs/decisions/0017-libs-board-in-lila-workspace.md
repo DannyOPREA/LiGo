@@ -15,9 +15,9 @@ with lila's TypeScript settings.
 - `libs/board` becomes a member of lila's pnpm workspace (`'../libs/board'` in
   `lila/pnpm-workspace.yaml`; pnpm accepts a member outside the workspace folder). Its packages
   (goban and goban-engine `8.3.226`, pinned exactly, plus test and lint tools) are pinned in
-  `lila/pnpm-lock.yaml`; its own lockfile goes. Tooling and CI install it alone with
-  `pnpm install --frozen-lockfile --filter @ligo/board` and run its scripts from `lila/` with
-  `--filter`. Docker mode mounts `libs/` into the ui container at `/libs`.
+  `lila/pnpm-lock.yaml`; its own lockfile goes. Tooling and CI install it with lila's root
+  (whose oxfmt and oxlint it lints with) by `pnpm install --frozen-lockfile --filter @ligo/board
+  --filter lila`, and run its scripts from `lila/` with `--filter`. Docker mode mounts `libs/` into the ui container at `/libs`.
 - The board is `mountBoard(el, config)` in `libs/board/src/board.ts` (TypeScript, lila's style),
   a chessground-like API: the page mounts it, the board reports the player's move, and the page
   (or the server) decides with `play` or `cancel`. It subclasses goban's `SVGRenderer`, overriding

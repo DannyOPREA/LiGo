@@ -8,7 +8,7 @@
 
 import { SVGRenderer, type GobanConfig, type GobanSelectedThemes, type MoveCommand } from 'goban';
 
-import { gameConfig, refusalOf, stateOf, type BoardState, type Game } from './rules.mjs';
+import { gameConfig, refusalOf, stateOf, toXY, type BoardState, type Game } from './rules.mjs';
 
 export type { BoardState, Game };
 
@@ -28,14 +28,17 @@ export interface BoardConfig extends Game {
   coordinates?: boolean;
   /** The player picked a move the rules allow. Answer with `play(move)` or `cancel()`. */
   onMove?: (move: Move) => void;
-  /** goban refused the player's move before reporting it. */
+  /** goban refused the player's move before reporting it (a click on a stone is just ignored). */
   onRefused?: (reason: Refusal) => void;
   /** Something the page may show changed: the position, a preview waiting, whose turn it is. */
   onChange?: () => void;
 }
 
 export interface Board {
-  /** Plays a move on the board, the player's (after `onMove`) or the opponent's. */
+  /**
+   * Plays a move on the board, the player's (after `onMove`) or the opponent's. The caller is the
+   * referee: goban plays what it is given (a suicide too), and a move it can't place changes nothing.
+   */
   play(move: Move): void;
   /** Takes back the move the player picked, when it didn't count. */
   cancel(): void;
@@ -77,6 +80,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
   const squares = (config.coordinates ?? true) ? config.size + 2 : config.size;
   const squareSize = () => Math.max(8, Math.floor(el.clientWidth / squares));
   const socket = new StandInSocket();
+  let destroyed = false;
   const goban = new LigoGoban(
     {
       ...gameConfig(config),
@@ -85,7 +89,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       mode: 'play',
       game_id: GAME_ID,
       players: { black: { id: IDS.black, username: 'Black' }, white: { id: IDS.white, username: 'White' } },
-      moves: (config.moves ?? []).map(toPoint),
+      moves: (config.moves ?? []).map(move => toXY({ width: config.size, height: config.size }, move)),
       square_size: squareSize(),
       ...labels(config.coordinates ?? true),
       dont_show_messages: true,
@@ -94,7 +98,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       server_socket: socket as unknown as GobanConfig['server_socket'],
       onError: e => console.error(e),
     },
-    move => config.onMove?.(move),
+    move => destroyed || config.onMove?.(move),
     reason => config.onRefused?.(reason),
   );
   goban.setMovable(config.movable ?? 'none');
@@ -109,19 +113,24 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
 
   return {
     play: move => {
+      toXY(goban.engine, move); // throws on a malformed or off-board move, before anything changes
       goban.dropPreview();
+      const before = goban.engine.last_official_move;
       goban.handTurnOver();
       socket.receive(`game/${GAME_ID}/move`, {
         game_id: GAME_ID,
         move_number: goban.engine.getMoveNumber() + 1,
         move: toGoban(move),
       });
+      // goban logs a move it can't place (an occupied point) and carries on: the turn stays.
+      if (goban.engine.last_official_move === before) goban.dropPreview();
     },
     cancel: () => goban.dropPreview(),
     pass: () => {
+      if (goban.pending()) goban.dropPreview();
       if (goban.mayMove()) goban.pass();
     },
-    pending: () => !!goban.submit_move,
+    pending: () => goban.pending(),
     confirm: () => goban.submit_move?.(),
     set: options => {
       if (options.confirm !== undefined) {
@@ -132,6 +141,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
     },
     state: () => goban.officialState(),
     destroy: () => {
+      destroyed = true;
       resize.disconnect();
       goban.destroy();
       boardDiv.remove();
@@ -142,6 +152,8 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
 /** goban's SVG board, with its moves going to LiGo instead of OGS's server. */
 class LigoGoban extends SVGRenderer {
   private movable: Color | 'both' | 'none' = 'none';
+  /** A move was reported and neither `play` nor `cancel` has answered it yet. */
+  private awaiting = false;
 
   constructor(
     config: GobanConfig,
@@ -166,6 +178,9 @@ class LigoGoban extends SVGRenderer {
    */
   protected override sendMove(mv: MoveCommand): boolean {
     const move = fromGoban(mv.move);
+    // goban turns placement off after a stone but not after a pass: no second move while this one waits.
+    this.awaiting = true;
+    this.disableStonePlacement();
     queueMicrotask(() => this.report(move));
     return true;
   }
@@ -176,9 +191,19 @@ class LigoGoban extends SVGRenderer {
 
   setMovable(movable: Color | 'both' | 'none'): void {
     this.movable = movable;
-    this.player_id = this.idFor(this.engine.colorToMove());
+    if (this.awaiting) return; // placement stays off until the reported move is answered
+    // The turn is the last played move's, not a previewed stone's.
+    this.player_id = this.idFor(this.officialState().toMove);
+    // goban turns placement off while a preview is shown (it isn't the last move played): keep the
+    // preview if the player may still move, else take it back.
+    if (this.pending() && this.player_id !== 0) return;
+    if (this.pending()) this.dropPreview();
     this.updateTitleAndStonePlacement();
     this.redraw();
+  }
+
+  pending(): boolean {
+    return !!this.submit_move;
   }
 
   /**
@@ -190,7 +215,7 @@ class LigoGoban extends SVGRenderer {
   }
 
   mayMove(): boolean {
-    return this.player_id !== 0 && this.engine.cur_move === this.engine.last_official_move;
+    return !this.awaiting && this.player_id !== 0 && this.engine.cur_move === this.engine.last_official_move;
   }
 
   /** Removes a previewed or reported move that wasn't played, back to the last move played. */
@@ -198,6 +223,7 @@ class LigoGoban extends SVGRenderer {
     const tentative = this.engine.cur_move;
     delete this.move_selected;
     this.submit_move = undefined;
+    this.awaiting = false;
     this.engine.jumpToLastOfficialMove();
     if (tentative !== this.engine.cur_move) tentative.removeIfNoChildren();
     this.player_id = this.idFor(this.engine.colorToMove());
@@ -252,10 +278,6 @@ class StandInSocket {
 /** SGF points and goban's move encoding are the same letters; a pass is `..` to goban. */
 function toGoban(move: Move): string {
   return move === 'pass' ? '..' : move;
-}
-
-function toPoint(move: Move): { x: number; y: number } {
-  return move === 'pass' ? { x: -1, y: -1 } : { x: move.charCodeAt(0) - 97, y: move.charCodeAt(1) - 97 };
 }
 
 function fromGoban(move: string): Move {

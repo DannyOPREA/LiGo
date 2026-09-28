@@ -18,7 +18,9 @@ Copyright (C) Online-Go.com, licensed under the Apache License, Version 2.0: the
 OGS's Go board (https://github.com/online-go/goban): the SVG renderer LiGo's board wraps
 (`src/board.ts`), with its own copy of the same engine. Copyright (C) Online-Go.com, licensed under
 the Apache License, Version 2.0 (same text, [`LICENSE-Apache-2.0.txt`](LICENSE-Apache-2.0.txt)).
-The package ships the licence header (`build/goban.min.js.LICENSE.txt`) and no NOTICE file. LiGo
+The package ships the licence header (`build/goban.min.js.LICENSE.txt`) and no NOTICE file. Its
+bundle also carries goban's test board module, "Copyright (C) Benjamin P. Jones", under the same
+Apache-2.0 licence. LiGo
 uses its plain board and stones only; its image themes, whose pictures come from OGS's CDN, are not
 used (unit 2.1).
 

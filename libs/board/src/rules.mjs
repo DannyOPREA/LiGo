@@ -86,7 +86,7 @@ export function gameConfig({ size, ruleset, komi, handicap = 0, stones, toMove =
  */
 export function refusalOf(error) {
   const id = /** @type {{message_id?: string} | null} */ (error)?.message_id;
-  return id === undefined ? undefined : REASONS[id];
+  return id !== undefined && Object.hasOwn(REASONS, id) ? REASONS[id] : undefined;
 }
 
 /**

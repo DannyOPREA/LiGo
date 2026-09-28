@@ -18,7 +18,6 @@ STATE="$ROOT/.ligo"
 LILA="$ROOT/lila"
 WS="$ROOT/lila-ws"
 RULES="$ROOT/libs/go-rules"
-BOARD="$ROOT/libs/board"
 
 is_cloud() { [[ "${CLAUDE_CODE_REMOTE:-}" == "true" ]]; }
 if [[ -n "${LIGO_MODE:-}" ]]; then MODE=$LIGO_MODE
@@ -384,7 +383,6 @@ cmd_deps() {
   sbt1 "$WS" update
   sbt1 "$RULES" update
   native_after_sbt
-  (cd "$BOARD" && run pnpm install --frozen-lockfile)
 }
 
 cmd_status() {

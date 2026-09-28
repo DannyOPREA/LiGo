@@ -36,6 +36,8 @@ check "test rejects an unknown target" fails "$LIGO" test nonsense
 check "ligo katago help exits 0" "$LIGO" katago help
 check "ligo katago with an unknown command fails" fails "$LIGO" katago no-such-command
 check "katago install rejects an unknown backend" fails "$LIGO" katago install cuda
+# libs/board has no lockfile of its own (ADR 0017): pnpm must install it from lila/, in lila's workspace.
+check "ligo installs libs/board only through lila's workspace" fails grep -nE 'libs/board.*pnpm install|BOARD.*pnpm install' "$LIGO"
 
 # CI helpers (dev/ci/, used by .github/workflows/): run against a throwaway repo.
 ci_repo=$(mktemp -d)

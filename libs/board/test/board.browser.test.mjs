@@ -7,7 +7,7 @@
 
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { after, before, beforeEach, describe, test } from "node:test";
+import { after, afterEach, before, beforeEach, describe, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { chromium, devices } from "@playwright/test";
@@ -69,6 +69,8 @@ describe("board in Chromium", () => {
     await t?.close();
     t = await open();
   });
+  // goban reports a lost sync (and reloads the page) or a move it couldn't place on the console only.
+  afterEach(() => assert.deepEqual(t.problems.errors, [], "no errors on the page"));
   after(() => t?.close());
 
   test("a local game: each click is reported, played back, and the turn passes", async () => {
@@ -79,7 +81,7 @@ describe("board in Chromium", () => {
     const s = await state(t.page);
     assert.equal(s.board[4], "...OX....");
     assert.equal(s.toMove, "black");
-    assert.deepEqual(t.problems.errors, []);
+    assert.ok((await t.page.evaluate(() => window.harness.changes)) >= 2, "onChange fired");
   });
 
   test("captures come off the board and are counted", async () => {
@@ -155,6 +157,60 @@ describe("board in Chromium", () => {
     assert.deepEqual(await events(t.page), ["move ee", "move dd"]);
   });
 
+  test("after a pass is reported the board takes nothing else until it is answered", async () => {
+    await mount(t.page, { ...game9, movable: "black" });
+    await call(t.page, "pass");
+    await click(t.page, "ee");
+    await call(t.page, "pass");
+    assert.deepEqual(await events(t.page), ["move pass"]);
+    await call(t.page, "cancel");
+    await click(t.page, "ee");
+    assert.deepEqual(await events(t.page), ["move pass", "move ee"]);
+    await call(t.page, "play", "ee");
+    await call(t.page, "play", "pass"); // White passes
+    await call(t.page, "pass");
+    assert.deepEqual(await events(t.page), ["move pass", "move ee", "move pass"]);
+  });
+
+  test("white only: clicks count on White's turn, after Black's move comes by play", async () => {
+    await mount(t.page, { ...game9, movable: "white", autoPlay: true });
+    await click(t.page, "ee");
+    assert.deepEqual(await events(t.page), []);
+    await call(t.page, "play", "ee");
+    await click(t.page, "dd");
+    assert.deepEqual(await events(t.page), ["move dd"]);
+    assert.equal((await state(t.page)).board[3], "...O.....");
+  });
+
+  test("a move play can't place changes nothing, and the turn stays", async () => {
+    await mount(t.page, { ...game9, movable: "white", moves: ["ee"] });
+    await call(t.page, "play", "ee"); // occupied: goban logs it
+    t.problems.errors.length = 0;
+    await assert.rejects(call(t.page, "play", "zz"), /bad move zz/);
+    assert.equal((await state(t.page)).toMove, "white");
+    await click(t.page, "cc"); // still White's turn on this board
+    assert.deepEqual(await events(t.page), ["move cc"]);
+  });
+
+  test("with a preview waiting, set keeps the turn and pass replaces the preview", async () => {
+    await t.page.clock.install();
+    await mount(t.page, { ...game9, movable: "both", autoPlay: true, confirm: true });
+    await click(t.page, "ee");
+    await call(t.page, "set", { movable: "both" }); // a page's redraw
+    assert.equal(await call(t.page, "pending"), true, "the preview stays");
+    await t.page.clock.runFor(100);
+    await click(t.page, "dd");
+    await t.page.clock.runFor(100);
+    await call(t.page, "confirm");
+    assert.deepEqual(await events(t.page), ["move dd"]);
+    assert.equal((await state(t.page)).board[3], "...X.....");
+    await click(t.page, "ee");
+    assert.equal(await call(t.page, "pending"), true);
+    await call(t.page, "pass");
+    assert.deepEqual(await events(t.page), ["move dd", "move pass"]);
+    assert.equal((await state(t.page)).board[4], ".........");
+  });
+
   test("pass is reported like a move and hands the turn over", async () => {
     await mount(t.page, { ...game9, movable: "both", autoPlay: true });
     await call(t.page, "pass");
@@ -166,8 +222,8 @@ describe("board in Chromium", () => {
     const stones = { black: ["gc", "cg"], white: [] };
     await mount(t.page, { ...game9, komi: 0.5, handicap: 2, stones, toMove: "white", movable: "both", autoPlay: true, moves: ["ee"] });
     let s = await state(t.page);
-    assert.equal(s.board[2], "......X..");
-    assert.equal(s.board[4], "....O....");
+    const empty = ".........";
+    assert.deepEqual(s.board, [empty, empty, "......X..", empty, "....O....", empty, "..X......", empty, empty]);
     assert.equal(s.toMove, "black");
     await click(t.page, "dd");
     s = await state(t.page);

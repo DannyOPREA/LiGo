@@ -31,8 +31,13 @@ board.destroy();
 ```
 
 - **The page decides which moves count.** A click is only reported (`onMove`); the stone stays a
-  preview until `play` (or goes with `cancel`). A local page plays it back at once; a game page
-  waits for the server. Moves from the other side also come in by `play`.
+  preview until `play` (or goes with `cancel`), and the board takes no other move (stone or pass)
+  until then. A local page plays it back at once; a game page waits for the server. Moves from the
+  other side also come in by `play`.
+- **`play` trusts its caller**, which is the referee: goban plays what it is given, a suicide too
+  (a malformed move throws; one on an occupied point changes nothing). Clicks on a stone are
+  ignored, so `onRefused` reports suicide and superko. Two passes don't end play here: the
+  scoring phase comes with the game page (Phase 4).
 - **Sized by its box.** The board is as wide as `el` (the page's CSS sets that) and follows it
   when it changes size. goban draws in a child of `el`, inside a shadow root.
 - **Plain board and stones.** goban's default look loads a wood picture from OGS's CDN, and its
@@ -93,11 +98,13 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
   table against R-HCP-4.
 
 `dev/ligo test board` runs the engine, fixture and browser tests without the server; docker mode
-skips the browser tests (the ui container has no Chromium). `pnpm run lint` and
-`pnpm run typecheck` check `src/board.ts` with lila's oxfmt, oxlint and TypeScript settings.
+skips the browser tests (the ui container has no Chromium). The `lint` and `typecheck` scripts
+check `src/board.ts` with lila's oxfmt, oxlint and TypeScript settings.
 
 ## Packages
 
 libs/board is a member of lila's pnpm workspace (`lila/pnpm-workspace.yaml`, unit 2.1, ADR 0017): its
-packages are pinned in `lila/pnpm-lock.yaml`, and `pnpm install --frozen-lockfile --filter
-@ligo/board`, run in `lila/`, installs them alone (what `dev/ligo` and CI do).
+packages are pinned in `lila/pnpm-lock.yaml`. `pnpm install --frozen-lockfile --filter @ligo/board
+--filter lila`, run in `lila/`, installs them with lila's own oxfmt and oxlint, which the board is
+linted with (what `dev/ligo` and CI do). Run its scripts from `lila/` too, as
+`pnpm --filter @ligo/board run <script>`.
