@@ -168,7 +168,7 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
               frag(
                 radios(form("behavior.confirmMoves"), confirmMovesChoices),
                 div(cls := "help text shy", dataIcon := Icon.InfoCircle)(
-                  "A tap previews the stone and the Confirm move button plays it; tap the stone again to take it back."
+                  "Go: a click or tap previews the stone and the Confirm move button plays it; click or tap it again to take it back."
                 )
               ),
               "confirmMoves"

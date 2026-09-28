@@ -3,7 +3,7 @@ import { describe, test } from 'node:test';
 
 import { isTouchDevice } from 'lib/device';
 
-import PlaygroundCtrl from '../src/ctrl';
+import PlaygroundCtrl, { resolveConfirm } from '../src/ctrl';
 
 const noop = () => {};
 
@@ -125,6 +125,19 @@ describe('PlaygroundCtrl', () => {
 
     test('on touch screens (1) follows the device (lib/device.isTouchDevice)', () => {
       assert.equal(new PlaygroundCtrl({ confirmMoves: 1 }, noop).confirm, isTouchDevice());
+    });
+
+    test('each setting on a touch screen and on a desktop', () => {
+      const cases: [number, boolean, boolean][] = [
+        [0, true, false],
+        [0, false, false],
+        [1, true, true],
+        [1, false, false],
+        [2, true, true],
+        [2, false, true],
+      ];
+      for (const [pref, touch, confirm] of cases)
+        assert.equal(resolveConfirm(pref, touch), confirm, `pref ${pref}, touch ${touch}`);
     });
 
     test('an anonymous visitor (no confirmMoves passed) gets the pref default: on touch screens', () => {

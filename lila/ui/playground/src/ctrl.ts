@@ -13,6 +13,10 @@ import type { GameSettings, PlaygroundConfig, Redraw, Ruleset, Size } from './in
 /** `Pref.ConfirmMoves` (lila/modules/pref): kept in step by hand, it's a small fixed set. */
 const ConfirmMoves = { NEVER: 0, TOUCH: 1, ALWAYS: 2 } as const;
 
+/** Whether taps only preview, for a `Pref.ConfirmMoves` value on this kind of device. */
+export const resolveConfirm = (confirmMoves: number, touch: boolean): boolean =>
+  confirmMoves === ConfirmMoves.ALWAYS || (confirmMoves === ConfirmMoves.TOUCH && touch);
+
 const defaultSettings = (): GameSettings => ({
   size: 9,
   ruleset: 'japanese',
@@ -43,8 +47,7 @@ export default class PlaygroundCtrl {
   ) {
     this.moves = [...(config.moves ?? [])];
     const confirmMoves = config.confirmMoves ?? ConfirmMoves.TOUCH;
-    this.confirm =
-      confirmMoves === ConfirmMoves.ALWAYS || (confirmMoves === ConfirmMoves.TOUCH && isTouchDevice());
+    this.confirm = resolveConfirm(confirmMoves, isTouchDevice());
   }
 
   /** Handicap stones for `settings`, as the board's `stones` (R-HCP-3/4; none below 2 stones). */
