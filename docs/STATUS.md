@@ -12,6 +12,11 @@ _Updated at the end of every session (`/status`). Newest information wins._
   3.2 (tournaments, events) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   wait for Phase 2 units 2.1, 2.3 and 2.4.
 
+- Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
+  docs/PLAN.md §5. 4.1–4.6 (design ADR, byo-yomi clock and scoring phase in `libs/go-rules`,
+  `services/scoring`, the autoscore benchmark) need nothing from Phases 2–3 and run now; 4.7–4.12
+  wait for Phase 3 units 3.12–3.20. Logs: logs/scoring.md, logs/clocks.md.
+
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
   - Units 0.1–0.3 merged (PRs #1–#3; #1 as a merge commit, #2–#3 squashed). `dev/ligo` runs the stack: docker mode on your
@@ -108,4 +113,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | 2.1–2.2 done; 2.3 in review (of 4 units) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1 and 3.9 merged; 3.2 in review (you approved the deletions for 3.1–3.7) |
-| 4–9 | not started |
+| 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
+| 5–9 | not started |
