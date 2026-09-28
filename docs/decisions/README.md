@@ -24,6 +24,7 @@ edit allowed). While the PR that introduces an ADR is still open, its wording ma
 | 0015 | [No approval prompts in the repo's Claude settings](0015-no-approval-prompts.md) | Accepted | 2026-09-28 |
 | 0016 | [Scoring as a Node service: KataGo + goban autoscore + goscorer](0016-scoring-service-node-autoscore-goscorer.md) | Accepted | 2026-09-28 |
 | 0018 | [Phase 3 module map: what lila keeps, keeps dormant and removes](0018-phase-3-module-map.md) | Accepted | 2026-09-28 |
+| 0019 | [Go core types, game storage and round protocol; scalachess stays as a library](0019-go-core-types-schema-protocol.md) | Accepted | 2026-09-28 |
 
 ## Template
 

@@ -239,7 +239,8 @@ way to catch them disagreeing:
   3. Add the `go-rules` adapter alongside scalachess.
   4. Migrate the core types: Game, Board, Move, Variant → (BoardSize, Ruleset), PerfType → a single
      `go` perf, Clock.
-  5. Drop scalachess, keeping its Glicko-2 module.
+  5. Stop using scalachess's chess rules and formats; it stays as a library for its game-neutral
+     types (colours, clocks, time units) and Glicko-2 ([ADR 0019](decisions/0019-go-core-types-schema-protocol.md)).
   6. Swap the chess board for `libs/board`.
 
 ### 3.5 `lila-ws` fork

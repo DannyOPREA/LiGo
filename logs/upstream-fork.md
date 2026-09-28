@@ -12,6 +12,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 3.9 · Design: Go core types, game storage, round protocol, scalachess
+- Did: ADR 0019. A read-only survey of the kept modules and `lila/app` counted scalachess use (about 245 files touch game-neutral types, about 200 chess rules/formats), read lila's game BSON, the round move flow and lila-ws's `Fens`/`ClientOut`, then decided: scalachess stays for neutral types and Glicko-2 only (a CI check in 3.17 bans chess rules/formats); a Go game sits beside the chess one until 3.17; `game5` keeps neutral keys plus `sz`/`ru`/`km`/`hc`/`ip`/`ac`; moves are an SGF point or `pass`; Fischer stays on `chess.Clock`, byo-yomi comes via go-rules in Phase 4. PLAN §3.4 step 5 reworded.
+- Worked: lila already derives turn from ply parity with `startedAtPly`, so Go's "Black first, or White first with handicap 2–9" fits without a new turn field.
+- Didn't work / dead ends: the strategygames jar isn't in this container's coursier cache, so its clock class names come from the unit 1.1 memo, not the jar; 3.10 confirms them and whether strategygames pulls in scalachess (`dependencyTree`).
+- Lessons: `scalachess-rating` needs `ByColor`, `Color`, `Outcome` and `IntRating` from scalachess core, nothing chess-specific; `Lilaism` exports `chess.Color`, so never wildcard-import `ligo.gorules.*` in lila.
+- Decisions: ADR 0019, Claude's call under the owner's 2026-09-28 delegation (logs/decisions.md). Fallback: vendor the neutral types if Phase 4's "scored" status or byo-yomi can't live outside scalachess.
+- Verified by Claude: the survey's key facts spot-checked (`Lilaism.scala` export, `GoGame.replay` private, `RoundSocket` `r/move` parsing, lila-ws `RoundMove`); `bash .claude/skills/verify/verify.sh` (see PR). · Needs owner verification: none.
+- Follow-ups: 3.10 wires go-rules in; 3.12 adds public `GoGame.replay` to go-rules.
+
 ### 2026-09-28 · Phase 3 breakdown · Split fork & de-chess into units
 - Did: split PLAN §5's Phase 3 row into units 3.1–3.20 (asset strip; six removal units; rebrand leftovers; a design ADR for Go core types, the game schema and the round protocol; go-rules wiring; core, game, round, lila-ws, game creation and remaining-module migrations; dropping scalachess; round and lobby UI; the demo) and classified every lila module and `ui/` package in ADR 0018. Refreshed docs/STATUS.md.
 - Worked: lila's `build.sbt` module graph gives a clean removal order (gathering only feeds tournaments; study feeds relay, practice and studySearch). The reviewer's scripted checks found every module in exactly one bucket and no removal unit deleting something a later one needs.
