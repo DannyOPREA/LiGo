@@ -63,11 +63,70 @@ export interface Deps {
   katago: KataGoClient | null;
 }
 
+const VALID_TYPES = new Set(['propose', 'count']);
+const VALID_SIZES = new Set([9, 13, 19]);
+const VALID_RULESETS = new Set(['j', 'c']);
+
+function isNonNegativeInt(v: unknown): v is number {
+  return typeof v === 'number' && Number.isFinite(v) && Number.isInteger(v) && v >= 0;
+}
+
+/** A request's `ref`, read defensively: `req` comes from outside (lila, eventually over Redis,
+ * unit 4.5), so it may not even be an object. Used both before and after full validation, so an
+ * error reply always carries the caller's ref when there is one to carry. */
+function safeRef(req: unknown): string | undefined {
+  if (typeof req !== 'object' || req === null) return undefined;
+  const ref = (req as { ref?: unknown }).ref;
+  return typeof ref === 'string' ? ref : undefined;
+}
+
+/** Checks the shape and range of an incoming request before anything else touches it (B4, review
+ * finding for unit 4.4: `handle` must never throw on bad input, whatever shape it's given).
+ * Returns an error message, or null when the request is well-formed enough to go on to
+ * `parseBoard`/`parsePoints` (which still do their own, more specific checks). */
+function validateRequest(req: unknown): string | null {
+  if (typeof req !== 'object' || req === null) return 'request must be an object';
+  const r = req as Record<string, unknown>;
+  if (!VALID_TYPES.has(r.t as string)) return `t must be 'propose' or 'count', got ${JSON.stringify(r.t)}`;
+  if (typeof r.ref !== 'string') return `ref must be a string, got ${JSON.stringify(r.ref)}`;
+  if (!VALID_SIZES.has(r.size as number)) return `size must be 9, 13 or 19, got ${JSON.stringify(r.size)}`;
+  if (!VALID_RULESETS.has(r.rules as string)) {
+    return `rules must be 'j' or 'c', got ${JSON.stringify(r.rules)}`;
+  }
+  // A multiple of 0.5 is exact in floating point (the denominator is a power of two), so no
+  // epsilon is needed here.
+  if (typeof r.komi !== 'number' || !Number.isFinite(r.komi) || (r.komi * 2) % 1 !== 0) {
+    return `komi must be a finite multiple of 0.5, got ${JSON.stringify(r.komi)}`;
+  }
+  if (!isNonNegativeInt(r.handicap) || r.handicap > 9) {
+    return `handicap must be an integer from 0 to 9, got ${JSON.stringify(r.handicap)}`;
+  }
+  const prisoners = r.prisoners as Record<string, unknown> | null | undefined;
+  if (
+    typeof prisoners !== 'object' ||
+    prisoners === null ||
+    !isNonNegativeInt(prisoners.b) ||
+    !isNonNegativeInt(prisoners.w)
+  ) {
+    return `prisoners.b and prisoners.w must be non-negative integers, got ${JSON.stringify(r.prisoners)}`;
+  }
+  if (typeof r.board !== 'string') return `board must be a string, got ${JSON.stringify(r.board)}`;
+  if (r.t === 'count') {
+    if (!Array.isArray(r.dead) || !r.dead.every(p => typeof p === 'string')) {
+      return `dead must be an array of strings, got ${JSON.stringify(r.dead)}`;
+    }
+  }
+  return null;
+}
+
 /** Turns one lila → service message into one service → lila reply (ADR 0020 §1). Never throws:
  * every failure this function can attribute to the request becomes an `error` reply; anything
  * else propagates, since it means the service itself is broken. */
 export async function handle(req: Request, deps: Deps): Promise<Reply> {
-  const ref = (req as { ref?: string }).ref;
+  const validationError = validateRequest(req);
+  if (validationError) return { t: 'error', ref: safeRef(req), message: validationError };
+
+  const ref = req.ref;
   let board;
   try {
     board = parseBoard(req.board, req.size);

@@ -36,6 +36,21 @@ test('parseBoard: rejects an unknown character', () => {
   assert.throws(() => parseBoard(['b6xw', ...Array(8).fill('9')].join('/'), 9), /invalid character/);
 });
 
+// B4 (logs/scoring.md "4.4 review fixes"): the protocol is lowercase only (ADR 0019 §6).
+test('parseBoard: rejects uppercase B/W', () => {
+  assert.throws(() => parseBoard(['B8', ...Array(8).fill('9')].join('/'), 9), /invalid character/);
+  assert.throws(() => parseBoard(['W8', ...Array(8).fill('9')].join('/'), 9), /invalid character/);
+});
+
+test('parseBoard: rejects a run with a leading zero', () => {
+  assert.throws(() => parseBoard(['b07', ...Array(8).fill('9')].join('/'), 9), /leading zero/);
+  assert.throws(() => parseBoard(['b0', ...Array(8).fill('9')].join('/'), 9), /leading zero/);
+});
+
+test('parseBoard: rejects a run longer than the board, before expanding it', () => {
+  assert.throws(() => parseBoard(['99', ...Array(8).fill('9')].join('/'), 9), /longer than the board/);
+});
+
 test("formatBoard is parseBoard's inverse", () => {
   const compact = ['b7w', '2bw5', ...Array(7).fill('9')].join('/');
   const board = parseBoard(compact, 9);

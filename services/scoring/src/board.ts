@@ -26,16 +26,29 @@ function parseRow(row: string, size: number, y: number): number[] {
   let i = 0;
   while (i < row.length) {
     const ch = row[i];
-    if (ch === 'b' || ch === 'B') {
+    // Lowercase only (ADR 0019 §6, R-BOARD-4): the protocol is `[a-s]{2}` points and lowercase
+    // 'b'/'w' stones; an uppercase 'B'/'W' is rejected rather than accepted leniently.
+    if (ch === 'b') {
       cells.push(BLACK);
       i += 1;
-    } else if (ch === 'w' || ch === 'W') {
+    } else if (ch === 'w') {
       cells.push(WHITE);
       i += 1;
     } else if (ch >= '0' && ch <= '9') {
       let j = i;
       while (j < row.length && row[j] >= '0' && row[j] <= '9') j += 1;
-      const n = Number(row.slice(i, j));
+      const digits = row.slice(i, j);
+      // A run's digits are never "0" (an empty run means nothing) and never lead with a '0'
+      // (canonical form has none), and a run longer than the board itself is rejected before it
+      // is ever expanded into cells (this also guards against a huge run inflating a small `size`
+      // into a huge allocation).
+      if (digits[0] === '0') {
+        throw new Error(`board row ${y} has a run '${digits}' with a leading zero`);
+      }
+      const n = Number(digits);
+      if (n > size) {
+        throw new Error(`board row ${y} has a run of ${n} empty points, longer than the board (${size})`);
+      }
       for (let k = 0; k < n; k += 1) cells.push(EMPTY);
       i = j;
     } else {

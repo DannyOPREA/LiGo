@@ -153,6 +153,14 @@ docker_scoring() {
   say "scoring service tests skipped in docker mode (no KataGo in the ui container yet; unit 4.5 wires up supervision); native mode and CI run them"
 }
 native_scoring() {
+  # When KataGo is installed, load KATAGO_BIN/KATAGO_TEST_NET/KATAGO_GTP_CONFIG (dev/katago.sh
+  # env, same as cmd_differential below) so test/integration.test.ts's real-KataGo test runs
+  # instead of skipping; when it isn't installed, leave them unset and that one test skips itself.
+  local katago_env
+  if katago_env=$("$ROOT/dev/katago.sh" env 2>/dev/null); then
+    eval "$katago_env"
+    export KATAGO_BIN KATAGO_TEST_NET KATAGO_GTP_CONFIG
+  fi
   (cd "$LILA" && run sh -c "$(scoring_pnpm typecheck) && pnpm --filter @ligo/scoring run lint && pnpm --filter @ligo/scoring run test")
 }
 

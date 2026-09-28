@@ -45,6 +45,10 @@ jobs:
       # needs no accuracy, only that a real analysis-engine process answers (dev/katago.sh).
       LIGO_KATAGO_TEST_NET_ONLY: '1'
       LIGO_KATAGO_BACKEND: cpu
+      # CI always installs KataGo below, so a missing KATAGO_BIN/KATAGO_TEST_NET here is a real
+      # setup bug, not the normal "no KataGo on this machine" case: fail test/integration.test.ts
+      # instead of letting it silently skip (review finding, logs/scoring.md "4.4 review fixes").
+      LIGO_REQUIRE_KATAGO: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install KataGo (CPU)

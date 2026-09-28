@@ -114,3 +114,76 @@ test('handle count: the owner string is one character per point, b/w/., row by r
   assert.equal(reply.owner[0], 'b'); // aa: a black stone, counted under Chinese rules
   assert.equal(new Set(reply.owner).size <= 3, true); // only 'b', 'w', '.' ever appear
 });
+
+// B4 (logs/scoring.md "4.4 review fixes"): request validation, one rule per test. Each bad
+// request comes back as an `error` reply, never a throw.
+const validPropose: ProposeRequest = {
+  t: 'propose',
+  ref: 'g:1:1',
+  size: 9,
+  rules: 'c',
+  komi: 7.5,
+  handicap: 0,
+  board: board9,
+  prisoners: { b: 0, w: 0 },
+};
+
+async function expectValidationError(req: unknown): Promise<void> {
+  const reply = await handle(req as ProposeRequest, { katago: null });
+  assert.equal(reply.t, 'error', `expected an error reply for ${JSON.stringify(req)}`);
+}
+
+test('handle: rejects a request that is not even an object, without throwing', async () => {
+  await expectValidationError(null);
+  await expectValidationError('propose');
+  await expectValidationError([1, 2, 3]);
+});
+
+test("handle: rejects a t other than 'propose'/'count'", async () => {
+  await expectValidationError({ ...validPropose, t: 'score' });
+});
+
+test('handle: rejects a size other than 9/13/19', async () => {
+  await expectValidationError({ ...validPropose, size: 21 });
+});
+
+test("handle: rejects rules other than 'j'/'c'", async () => {
+  await expectValidationError({ ...validPropose, rules: 'k' });
+});
+
+test('handle: rejects a komi that is not a finite multiple of 0.5', async () => {
+  await expectValidationError({ ...validPropose, komi: 7.3 });
+  await expectValidationError({ ...validPropose, komi: Number.POSITIVE_INFINITY });
+  await expectValidationError({ ...validPropose, komi: Number.NaN });
+  await expectValidationError({ ...validPropose, komi: '7.5' });
+});
+
+test('handle: accepts a negative komi (a multiple of 0.5 all the same)', async () => {
+  const reply = await handle({ ...validPropose, komi: -7.5 }, { katago: null });
+  assert.equal(reply.t, 'proposal');
+});
+
+test('handle: rejects a handicap outside 0..9, or a non-integer one', async () => {
+  await expectValidationError({ ...validPropose, handicap: -1 });
+  await expectValidationError({ ...validPropose, handicap: 10 });
+  await expectValidationError({ ...validPropose, handicap: 2.5 });
+});
+
+test('handle: rejects negative or non-integer prisoners', async () => {
+  await expectValidationError({ ...validPropose, prisoners: { b: -1, w: 0 } });
+  await expectValidationError({ ...validPropose, prisoners: { b: 0, w: 1.5 } });
+  await expectValidationError({ ...validPropose, prisoners: { b: 0 } });
+});
+
+test('handle count: rejects a dead that is not an array of strings', async () => {
+  const countReq = { ...validPropose, t: 'count', dead: [] };
+  await expectValidationError({ ...countReq, dead: 'aa' });
+  await expectValidationError({ ...countReq, dead: [1, 2] });
+});
+
+test('handle: rejects a missing or non-string ref', async () => {
+  const { ref, ...withoutRef } = validPropose;
+  void ref;
+  await expectValidationError(withoutRef);
+  await expectValidationError({ ...validPropose, ref: 42 });
+});

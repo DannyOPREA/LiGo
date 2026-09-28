@@ -86,20 +86,26 @@ export function countGiven(
   });
   const cs: Score = engine.computeScore();
   const owner = ownerString(size, cs.black.scoring_positions, cs.white.scoring_positions);
+  // R-SCORE-C1: Chinese scoring is stones + area; play prisoners never count (goscorer already
+  // gives 0 for cs.*.prisoners under Chinese rules, so only add lila's play-time prisoners under
+  // Japanese rules, R-SCORE-J1).
+  const addPlayPrisoners = rules === 'j';
+  const bPlayPrisoners = addPlayPrisoners ? playPrisoners.b : 0;
+  const wPlayPrisoners = addPlayPrisoners ? playPrisoners.w : 0;
   const score = {
     b: {
       territory: cs.black.territory,
       stones: cs.black.stones,
-      prisoners: cs.black.prisoners + playPrisoners.b,
-      total: cs.black.total + playPrisoners.b,
+      prisoners: cs.black.prisoners + bPlayPrisoners,
+      total: cs.black.total + bPlayPrisoners,
     },
     w: {
       territory: cs.white.territory,
       stones: cs.white.stones,
-      prisoners: cs.white.prisoners + playPrisoners.w,
+      prisoners: cs.white.prisoners + wPlayPrisoners,
       komi: cs.white.komi,
       compensation: cs.white.handicap,
-      total: cs.white.total + playPrisoners.w,
+      total: cs.white.total + wPlayPrisoners,
     },
   };
   return { owner, score };
@@ -116,7 +122,16 @@ export function proposeFromOwnership(
   handicap: number,
   playPrisoners: Prisoners,
 ): ScoreReply {
-  const [res] = autoscore(board, fullRules(rules), ownership.blackToMove, ownership.whiteToMove);
+  // goban-engine's `autoscore` mutates the board it's given (it blanks the dead stones it finds
+  // in place), so a caller that then widens or counts against the same array sees an already-
+  // blanked board and finds nothing dead. Give it a copy; `board` itself, and the real board this
+  // function counts with below, are never touched (test/score.test.ts pins this).
+  const [res] = autoscore(
+    board.map(row => row.slice()),
+    fullRules(rules),
+    ownership.blackToMove,
+    ownership.whiteToMove,
+  );
   const dead = widenToChains(board, res.removed);
   const deadKeys = new Set(dead.map(p => `${p.x},${p.y}`));
   const seal = res.needs_sealing.filter(p => !deadKeys.has(`${p.x},${p.y}`));

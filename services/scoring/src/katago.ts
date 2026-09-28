@@ -11,6 +11,7 @@
 //
 // Licence: MIT (LiGo's own code, ADR 0006).
 import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
+import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline';
@@ -62,9 +63,12 @@ export class KataGoClient {
     const args = ['analysis', '-config', this.opts.configPath, '-model', this.opts.modelPath];
     // The example config's logDir is relative to the current directory (analysis_logs/), which
     // would litter wherever this process happens to run from; keep KataGo's own logs out of the
-    // repo by default. A caller's overrideConfig, if given, is appended after and so wins on any
-    // key it repeats (KataGo takes the last value of a repeated override key).
-    const defaultOverride = `logDir=${join(tmpdir(), 'ligo-katago-logs')}`;
+    // repo by default. A fixed shared directory would let two KataGo processes (this client after
+    // a restart, or two clients in the same run, e.g. tests) collide on the same log files, so
+    // each spawn gets its own fresh directory under the OS temp dir instead. A caller's
+    // overrideConfig, if given, is appended after and so wins on any key it repeats (KataGo takes
+    // the last value of a repeated override key).
+    const defaultOverride = `logDir=${mkdtempSync(join(tmpdir(), 'ligo-katago-logs-'))}`;
     const override = this.opts.overrideConfig
       ? `${defaultOverride},${this.opts.overrideConfig}`
       : defaultOverride;
@@ -83,6 +87,12 @@ export class KataGoClient {
     proc.stderr.on('data', () => {
       /* KataGo logs progress to stderr; nothing we act on here. */
     });
+    // A KataGo that exits immediately (a bad binary, a config error) closes its stdin from the
+    // other end; writing to it after that raises an uncaught EPIPE that would otherwise kill this
+    // whole process. `proc.on('exit', ...)` above already calls `die`, but Node can emit stdin's
+    // own 'error' first (or `write`'s callback can be called with none, since EPIPE is also
+    // surfaced as an event on the stream) — handle both so every path ends in `die`, never a throw.
+    proc.stdin.on('error', e => this.die(`katago stdin error: ${(e as Error).message}`));
   }
 
   private die(reason: string): void {
@@ -106,7 +116,7 @@ export class KataGoClient {
   }
 
   private onLine(line: string): void {
-    let msg: { id?: string; error?: string; warning?: string };
+    let msg: { id?: string; error?: string; warning?: string; ownership?: number[] };
     try {
       msg = JSON.parse(line);
     } catch {
@@ -115,6 +125,11 @@ export class KataGoClient {
     if (!msg.id) return;
     const p = this.pending.get(msg.id);
     if (!p) return;
+    // KataGo can emit a `warning` line carrying the same id as the query it warns about, before
+    // its real answer (e.g. "warning: consider increasing numSearchThreads"); it has no
+    // `ownership` and isn't the reply this request is waiting for, so it's ignored and the
+    // request stays pending for the line that does carry one (or the error/timeout that follows).
+    if (msg.warning !== undefined && msg.ownership === undefined) return;
     this.pending.delete(msg.id);
     clearTimeout(p.timer);
     if (msg.error) p.reject(new KataGoUnavailable(`katago error: ${msg.error}`));
@@ -129,8 +144,10 @@ export class KataGoClient {
     const line = JSON.stringify({ ...payload, id }) + '\n';
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new KataGoUnavailable(`katago request timed out after ${this.opts.timeoutMs}ms`));
+        // A KataGo that never answers is hung, not merely slow on this one request: leaving it
+        // running would mean every later request times out too. `die` kills the process and
+        // rejects any other pending requests with it; `start()` spawns a fresh one next time.
+        this.die(`katago request timed out after ${this.opts.timeoutMs}ms`);
       }, this.opts.timeoutMs);
       this.pending.set(id, { resolve: resolve as (v: unknown) => void, reject, timer });
       proc.stdin.write(line, err => {

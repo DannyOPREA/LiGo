@@ -11,8 +11,84 @@
 - goban-engine 8.3.226's Chinese `getHandicapPointAdjustmentForWhite` returns the raw handicap count with no AGA "-1" step, so `handicap: 1` gives White 1 point of compensation R-HCP-2 forbids; a service (or anything else calling `computeScore`) must clamp handicap below 2 to 0 itself, never trust the field as given (2026-09-28, unit 4.4).
 - `autoscore`'s "needs sealing" list only exists because of KataGo's ownership-uncertainty threshold; a `count` recount (goscorer only, no KataGo) has no way to compute it, so its `seal` is always empty — the ADR 0020 example's "same fields without src" is imprecise on this point (2026-09-28, unit 4.4).
 - `api.github.com`, `github.com` and `codeload.github.com` are blocked in this cloud session's proxy allowlist, but `raw.githubusercontent.com` and a plain `git clone https://github.com/...` both work; vendoring files from a public GitHub repo goes through `git clone`, not the GitHub API (2026-09-28, unit 4.4).
+- goban-engine's `autoscore` mutates the board it's given (it blanks the dead stones it finds in place); always pass a copy, never the board a later widen/count step still needs (2026-09-28, unit 4.4 review fixes).
 
 ## Entries (newest first)
+### 2026-09-28 · unit 4.4 review fixes · 4.4 review fixes
+- Did: fixed four blocking review findings on unit 4.4 (32402dd) and several non-blocking ones, on
+  top of the unit rather than amending it. B1: `proposeFromOwnership` (`src/score.ts`) now calls
+  `autoscore` on a copy of the board (`board.map(row => row.slice())`), since goban-engine's
+  `autoscore` mutates the board it's given (blanks the dead stones it finds in place) — the
+  original code passed it the same array `widenToChains` and `countGiven` then read, so every
+  proposal came back `dead: []`. B2: `countGiven` only adds lila's play-time prisoners under
+  Japanese rules now (R-SCORE-J1); Chinese rules never did (R-SCORE-C1), but the original code
+  added them regardless. B3: `KataGoClient.start()` now listens for `proc.stdin`'s own `'error'`
+  event (`die(...)`), since a KataGo that exits immediately (e.g. a bad binary) closes its stdin
+  and an unhandled EPIPE on that stream crashes the whole Node process even though the write
+  callback already rejects the one pending request. B4: `src/handle.ts` gained
+  `validateRequest`, checked before `parseBoard`, covering `t`, `size`, `rules`, `komi`,
+  `handicap`, `prisoners.{b,w}`, `dead` (for `count`) and `ref`; `src/board.ts`'s `parseRow` now
+  rejects uppercase `B`/`W` (ADR 0019 §6 is lowercase only), a run with a leading zero, and a run
+  longer than the board (checked before it's expanded into cells, so a malformed run can't inflate
+  a small `size` into a huge allocation). Non-blocking: `KataGoClient.onLine` ignores a `warning`
+  line that carries no `ownership` instead of treating it as the reply; a request that times out
+  now kills the process (`die`) instead of leaving a hung KataGo running for the next request;
+  `dev/ligo`'s `native_scoring` loads `dev/katago.sh env` when KataGo is installed, so
+  `test/integration.test.ts`'s real-KataGo test runs instead of skipping; `scoring.yml` sets
+  `LIGO_REQUIRE_KATAGO=1`, which makes that test's module throw (failing the whole run) instead of
+  skip when KataGo isn't there; KataGo's `logDir` override is now a fresh `mkdtemp` directory per
+  spawn instead of one fixed shared path. Every fix has a test that fails on 32402dd and passes
+  after (`test/score.test.ts` is new; the rest are additions to the existing suites).
+- Worked: reproducing each bug for real before writing the fix (a small standalone script for the
+  EPIPE crash, since it raced timing inside `node --test`; running `autoscore` directly against a
+  vendored OGS game and diffing the board before/after for B1) made the fix and the test obvious,
+  and confirmed the review's descriptions were accurate.
+- Didn't work / dead ends: the EPIPE crash (B3) didn't reproduce reliably inside `node --test`
+  itself (timing-dependent: `proc.on('exit', ...)` sometimes rejected the pending request before
+  the stray stdin `'error'` event fired) — confirmed instead with a standalone script run outside
+  the test runner, which crashed the whole Node process every time without the fix and never with
+  it; the katago.test.ts case for it is kept as a regression test even though it doesn't reliably
+  fail pre-fix in-process.
+- Lessons: see the Lessons section (goban-engine autoscore/copy).
+- Decisions: none needed asking the owner; all four blocking findings and the non-blocking ones
+  were mechanical fixes within the unit's existing design (ADR 0020 §1, ADR 0019 §6). Checked
+  whether a Chinese scoring fixture with nonzero captures exists in `libs/conformance/fixtures/`
+  for B2 (only go-rules-expert may add one): none of the "scoring" fixtures give nonzero
+  `expect.captures` under Chinese rules, so `test/score.test.ts` covers B2 directly against a
+  vendored game instead; flagging this so go-rules-expert can add one if the owner wants fixture
+  coverage of it too.
+- Why the 82 tests missed these: B1 (autoscore mutating its input) had no test that checked the
+  board was unchanged after a call, or that a `dead` proposal was actually non-empty on a game
+  known to have dead stones — `test/autoscore.test.ts` calls `autoscore` directly on data loaded
+  fresh from each file, so it never noticed the mutation, and no test then chained `autoscore`'s
+  output back through `widenToChains`/`countGiven` the way `proposeFromOwnership` does. B2 had no
+  Chinese-rules test with nonzero play prisoners (`test/handicap.test.ts`'s Chinese cases all use
+  `{b:0,w:0}`). B3 had no test that started a process built to die immediately and then wrote to
+  its stdin — the existing `EXIT_AFTER: '0'` case exits the fake *script* before the client even
+  spawns a real child in some code paths, and the real crash needs a big-enough write plus the
+  process already gone, which `/bin/true` on a 19x19 board reproduces but the smaller cases didn't.
+  B4: `handle` had no test at all with a malformed request shape (wrong types, out-of-range
+  numbers, a missing field) — every existing test used a well-formed `ProposeRequest`/
+  `CountRequest`. Separately, the earlier "`dev/ligo test scoring` (82/82, including the real
+  KataGo test network via `dev/ligo katago install cpu`)" line in the entry below was wrong:
+  `dev/ligo`'s `native_scoring` never exported `KATAGO_BIN`/`KATAGO_TEST_NET`
+  (`dev/katago.sh env`), so `test/integration.test.ts` was always skipped, not passing, in that
+  run and in CI (`scoring.yml` did export them, so CI's own run of that test was genuine — but the
+  log entry's claim was about `dev/ligo test scoring`, which didn't). Also: ADR 0020 §4's
+  goban-pure-JS-estimator fallback (for when KataGo itself is unavailable) was never tried in unit
+  4.4 — the fallback actually shipped is `noneDead` (nothing marked dead), not that estimator.
+- Verified by Claude: `dev/ligo test scoring` 102/102, 0 skipped (KataGo env loaded via
+  `dev/ligo katago env`, including the real-KataGo integration test and its new dead-stone
+  assertion); every new/changed test confirmed to fail on 32402dd and pass after (real command
+  output, not narrated); `bash dev/tests/run.sh` 50/50; `bats .claude/hooks/tests` 48/48;
+  `.claude/skills/verify/verify.sh` all gates pass, including its `scoring` gate running the real
+  KataGo test (0 skipped, checked in its log); `shellcheck dev/ligo` clean;
+  `pnpm --filter @ligo/scoring run typecheck`/`lint` clean. · Needs owner verification: none beyond
+  the standing item below.
+- Follow-ups: ask go-rules-expert (with the owner's approval) whether to add a Chinese scoring
+  fixture with nonzero play captures to `libs/conformance/fixtures/`, since none exists today
+  (B2's decision above).
+
 ### 2026-09-28 · unit 4.4 · services/scoring core: KataGo client, autoscore, goscorer
 - Did: `services/scoring`, a member of lila's pnpm workspace (ADR 0017's reasoning, applied here:
   one lockfile, `goban-engine` pinned to the same 8.3.226 as `libs/board`). `src/goban.ts` wraps
