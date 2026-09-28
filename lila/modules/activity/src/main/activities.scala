@@ -3,7 +3,6 @@ package lila.activity
 import alleycats.Zero
 
 import lila.activity.Score.plus
-import lila.core.chess.Rank
 import lila.core.rating.Score
 
 object activities:
@@ -64,11 +63,6 @@ object activities:
         a.value + (studyId -> a.value.get(studyId).fold(1)(1 +))
     given Zero[Practice] = Zero(Map.empty)
 
-  opaque type Simuls = List[SimulId]
-  object Simuls extends TotalWrapper[Simuls, List[SimulId]]:
-    extension (a: Simuls) def +(s: SimulId): Simuls = s :: a.value
-    given Zero[Simuls] = Zero(Nil)
-
   case class Corres(moves: Int, movesIn: List[GameId], end: List[GameId]):
     def add(gameId: GameId, moved: Boolean, ended: Boolean) =
       Corres(
@@ -109,10 +103,3 @@ object activities:
   object Teams extends TotalWrapper[Teams, List[TeamId]]:
     extension (a: Teams) def +(s: TeamId): Teams = (s :: a.value).distinct.take(maxSubEntries)
     given Zero[Teams] = Zero(Nil)
-
-  case class SwissRank(id: SwissId, rank: Rank)
-
-  opaque type Swisses = List[SwissRank]
-  object Swisses extends TotalWrapper[Swisses, List[SwissRank]]:
-    extension (a: Swisses) def +(s: SwissRank): Swisses = (s :: a.value).take(maxSubEntries)
-    given Zero[Swisses] = Zero(Nil)

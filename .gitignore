@@ -41,6 +41,7 @@ blob-report/
 kata1-*.bin.gz
 **/katago/models/
 katago-tuning/
+services/scoring/analysis_logs/
 
 # dev/ligo runtime state (pids, logs, caches) and lila-docker's per-machine .env
 .ligo/

@@ -63,6 +63,12 @@ copies.
 (`lila/public/logo/ligo*.svg`, `ligo*.png`, `public/favicon.ico`, `public/apple-touch-icon.png`),
 the small UI images in `lila/public/images/ligo/`, and their generator `lila/bin/gen/ligo-logo.mjs`.
 
+### 1.2 npm packages removed with Phase 3 features
+
+Unit 3.2 removed the `ui/tournament`, `ui/swiss` and `ui/simul` workspace packages and the npm
+packages only they used: `date-fns` 2.30.0 (MIT), its dependency `@babel/runtime` 7.29.7 (MIT),
+`dragscroll` 0.0.8 (MIT) and `@types/dragscroll` 0.0.3 (MIT). No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file
@@ -102,6 +108,9 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | goscorer (lightvector), bundled inside goban-engine and goban | `libs/board` (inside goban-engine and goban) | MIT | goban's build drops its notice, so `libs/board/NOTICE.md` carries it |
 | eventemitter3 `5.0.4`, goban-engine's and goban's only dependency | `libs/board` (transitive) | MIT | Notice in `libs/board/NOTICE.md` |
 | No third-party code: the playground page (unit 2.2) depends only on workspace packages, `@ligo/board` (above) and lila's own `lib` | `lila/ui/playground/package.json`, `lila/pnpm-lock.yaml` | — | LiGo's own page inside `lila/`, so AGPL-3.0-or-later like other changes there (§1) |
+| OGS goban-engine `8.3.226` again, this time as the scoring service's own dependency (ADR 0016, unit 4.4): its `autoscore` and `GobanEngine.computeScore()` (goscorer) | `services/scoring/package.json` | Apache-2.0 | Copyright Online-Go.com; notices in `services/scoring/NOTICE.md`; ships no NOTICE file |
+| goscorer and eventemitter3, bundled inside that second copy of goban-engine | `services/scoring` (inside goban-engine) | MIT | Notices in `services/scoring/NOTICE.md` |
+| OGS's own autoscore test games (31 finished games with KataGo's stored analysis), vendored unchanged as `services/scoring`'s regression set (unit 4.4) | `services/scoring/test/autoscore_test_files/` | Apache-2.0 | `services/scoring/LICENSE-Apache-2.0.txt`; notice in `services/scoring/test/autoscore_test_files/NOTICE.md`; goban ships no NOTICE file |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they

@@ -15,8 +15,7 @@ final class UserList(helpers: Helpers, bits: UserBits):
   def page(
       online: List[UserWithPerfs],
       leaderboards: lila.rating.UserPerfs.Leaderboards,
-      nbAllTime: List[LightCount],
-      tournamentWinners: Frag
+      nbAllTime: List[LightCount]
   )(using ctx: Context) =
     Page(trans.site.players.txt())
       .css("user.list")
@@ -48,12 +47,6 @@ final class UserList(helpers: Helpers, bits: UserBits):
                 userTopPerf(leaderboards.classical, PerfKey.classical),
                 userTopPerf(leaderboards.ultraBullet, PerfKey.ultraBullet),
                 userTopActive(nbAllTime, trans.site.activePlayers(), icon = Icon.Swords.some),
-                st.section(cls := "user-top")(
-                  h2(cls := "text", dataIcon := Icon.Trophy)(
-                    a(href := routes.Tournament.leaderboard)(trans.site.tournament())
-                  ),
-                  tournamentWinners
-                ),
                 userTopPerf(leaderboards.crazyhouse, PerfKey.crazyhouse),
                 userTopPerf(leaderboards.chess960, PerfKey.chess960),
                 userTopPerf(leaderboards.antichess, PerfKey.antichess),

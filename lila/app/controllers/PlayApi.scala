@@ -3,7 +3,7 @@ package controllers
 import play.api.i18n.Lang
 import play.api.mvc.*
 
-import lila.app.{ *, given }
+import lila.app.*
 import lila.core.id.GameAnyId
 
 // both bot & board APIs
@@ -28,9 +28,6 @@ final class PlayApi(env: Env) extends LilaController(env):
           else
             {
               for
-                _ <- env.tournament.api.withdrawAll(me, forceDelete = true)
-                teamIds <- env.team.cached.teamIdsList(me)
-                _ <- env.swiss.api.withdrawAll(me, teamIds)
                 _ <- env.user.api.setBot(me)
                 _ <- env.pref.api.setBot(me)
                 _ <- env.streamer.repo.delete(me)
@@ -141,7 +138,9 @@ final class PlayApi(env: Env) extends LilaController(env):
   private def isReallyBotCompatible(game: lila.core.game.Game): Fu[Boolean] =
     lila.game.Game.isBotCompatible(game) match
       case Some(known) => fuccess(known)
-      case None => game.tournamentId.so(env.tournament.api.isForBots)
+      // game.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament
+      // feature exists any more, so it is never set and this always falls through.
+      case None => fuFalse
 
   private def WithPovAsBoard(id: GameId)(f: Pov => Fu[Result])(using ctx: Context)(using Me) =
     WithPov(id): pov =>

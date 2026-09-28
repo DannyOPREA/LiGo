@@ -60,21 +60,14 @@ final class TimelineUi(helpers: Helpers):
               st.title := title
             )(shorten(title, 40))
           )
-        case TourJoin(userId, tourId, tourName) =>
-          trans.site.xCompetesInY(
-            userLink(userId),
-            a(href := addQueryParam(routes.Tournament.show(tourId).url, "player", userId.value))(tourName)
-          )
-        case SimulCreate(userId, simulId, simulName) =>
-          trans.site.xHostsY(
-            userLink(userId),
-            a(href := routes.Simul.show(simulId))(simulName)
-          )
-        case SimulJoin(userId, simulId, simulName) =>
-          trans.site.xJoinsY(
-            userLink(userId),
-            a(href := routes.Simul.show(simulId))(simulName)
-          )
+        // TourJoin/SimulCreate/SimulJoin are never published any more (unit 3.2 removed the
+        // tournament and simul modules); old stored timeline entries render as plain text.
+        case TourJoin(userId, _, tourName) =>
+          trans.site.xCompetesInY(userLink(userId), tourName)
+        case SimulCreate(userId, _, simulName) =>
+          trans.site.xHostsY(userLink(userId), simulName)
+        case SimulJoin(userId, _, simulName) =>
+          trans.site.xJoinsY(userLink(userId), simulName)
         case GameEnd(playerId, opponent, win, perfKey) =>
           (win match
             case Some(true) => trans.site.victoryVsYInZ

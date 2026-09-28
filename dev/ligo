@@ -40,13 +40,16 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   status              Show what is running
   logs [lila|ws|db]   Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
-  test [what]         Run the unit tests of lila, ws, ui, pages, rules, board or all (default: all);
-                      pages = the playground's screenshots and scripted game in Chromium, from
-                      the built ui (compile ui first; docker mode skips them);
+  test [what]         Run the unit tests of lila, ws, ui, pages, rules, board, scoring or all
+                      (default: all); pages = the playground's screenshots and scripted game in
+                      Chromium, from the built ui (compile ui first; docker mode skips them);
                       rules = both Go rules engines: libs/go-rules (server) and libs/board
                       (goban-engine) replaying the libs/conformance fixtures, then the parity
                       check between them, plus the board in Chromium; board = the libs/board
-                      tests alone, without parity (docker mode skips the Chromium ones)
+                      tests alone, without parity (docker mode skips the Chromium ones); scoring =
+                      services/scoring's own tests (OGS's 31 autoscore games, the libs/conformance
+                      scoring fixtures, KataGo client, no build step), plus a real-KataGo test when
+                      KataGo is installed (docker mode: not yet, unit 4.5)
   e2e [-- args]       Smoke-test the running stack (home page + lobby websocket);
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
@@ -139,6 +142,29 @@ docker_board() {
   say "board browser tests skipped in docker mode (no Chromium in the ui container); CI runs them"
 }
 native_board() { (cd "$LILA" && run sh -c "$(board_pnpm typecheck) && pnpm --filter @ligo/board run $1"); }
+
+# services/scoring is also a member of lila's pnpm workspace (unit 4.4, same reasoning as
+# libs/board, ADR 0017): one lockfile, goban-engine pinned to the same 8.3.226 both packages use.
+# No build step (Node 24 runs its .ts directly): "test" typechecks nothing itself, so this runs
+# typecheck, lint and the tests together. Its tests need KataGo installed to run the real-KataGo
+# integration test, and are skipped otherwise (test/integration.test.ts); everything else runs
+# with no KataGo at all. Docker mode has no KataGo in its containers yet (that plumbing is unit
+# 4.5's, alongside the Redis worker), so it says so rather than pretending to test it.
+scoring_pnpm() { echo "pnpm install --frozen-lockfile --filter @ligo/scoring --filter lila && pnpm --filter @ligo/scoring run $1"; }
+docker_scoring() {
+  say "scoring service tests skipped in docker mode (no KataGo in the ui container yet; unit 4.5 wires up supervision); native mode and CI run them"
+}
+native_scoring() {
+  # When KataGo is installed, load KATAGO_BIN/KATAGO_TEST_NET/KATAGO_GTP_CONFIG (dev/katago.sh
+  # env, same as cmd_differential below) so test/integration.test.ts's real-KataGo test runs
+  # instead of skipping; when it isn't installed, leave them unset and that one test skips itself.
+  local katago_env
+  if katago_env=$("$ROOT/dev/katago.sh" env 2>/dev/null); then
+    eval "$katago_env"
+    export KATAGO_BIN KATAGO_TEST_NET KATAGO_GTP_CONFIG
+  fi
+  (cd "$LILA" && run sh -c "$(scoring_pnpm typecheck) && pnpm --filter @ligo/scoring run lint && pnpm --filter @ligo/scoring run test")
+}
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)
@@ -359,8 +385,10 @@ cmd_test() {
       need_node_modules
       if ui_built; then (cd "$LILA" && run pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts)
       else say "page browser tests skipped: build the ui first (dev/ligo compile ui)"; fi ;;
-    *:all) cmd_test ui; cmd_test pages; cmd_test lila; cmd_test ws; cmd_test rules ;;
-    *) die "test what? lila, ws, ui, pages, rules, board or all" ;;
+    docker:scoring) docker_scoring ;;
+    native:scoring) native_scoring ;;
+    *:all) cmd_test ui; cmd_test pages; cmd_test lila; cmd_test ws; cmd_test rules; cmd_test scoring ;;
+    *) die "test what? lila, ws, ui, pages, rules, board, scoring or all" ;;
   esac
 }
 

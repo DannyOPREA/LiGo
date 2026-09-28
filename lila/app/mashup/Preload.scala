@@ -5,13 +5,9 @@ import play.api.libs.json.*
 
 import lila.core.game.Game
 import lila.core.perf.UserWithPerfs
-import lila.event.Event
 import lila.playban.TempBan
-import lila.simul.{ Simul, SimulIsFeaturable }
 import lila.streamer.LiveStreams
-import lila.swiss.Swiss
 import lila.timeline.Entry
-import lila.tournament.Tournament
 import lila.ublog.UblogPost
 import lila.user.{ LightUserApi, Me, User }
 import lila.mon.extensions.*
@@ -28,7 +24,6 @@ final class Preload(
     playbanApi: lila.playban.PlaybanApi,
     lightUserApi: LightUserApi,
     roundProxy: lila.round.GameProxyRepo,
-    simulIsFeaturable: SimulIsFeaturable,
     getLastUpdates: lila.feed.Feed.GetLastUpdates,
     ublogApi: lila.ublog.UblogApi,
     unreadCount: lila.msg.MsgUnreadCount,
@@ -40,51 +35,36 @@ final class Preload(
   import Preload.*
 
   def apply(
-      tours: Fu[List[Tournament]],
-      swiss: Option[Swiss],
-      events: Fu[List[Event]],
-      simuls: Fu[List[Simul]],
       streamerSpots: Int
   )(using ctx: Context): Fu[Homepage] = for
     nbNotifications <- ctx.me.so(notifyApi.unreadCount(_))
     withPerfs <- ctx.user.traverse(perfsRepo.withPerfs)
     given Option[UserWithPerfs] = withPerfs
     (
-      (
-        (
-          (
-            (
-              (((((((data, povs), tours), events), simuls), feat), entries), puzzle),
-              streams
-            ),
-            playban
-          ),
-          blindGames
-        ),
-        ublogPosts
-      ),
+      ((((((((data, povs), feat), entries), puzzle), streams), playban), blindGames), ublogPosts),
       lichessMsg
-    ) <- lobbyApi.get
-      .mon(lila.mon.lobby.segment("lobbyApi"))
-      .zip(tours.mon(lila.mon.lobby.segment("tours")))
-      .zip(events.mon(lila.mon.lobby.segment("events")))
-      .zip(simuls.mon(lila.mon.lobby.segment("simuls")))
-      .zip(tv.getBestGame.mon(lila.mon.lobby.segment("tvBestGame")))
-      .zip((ctx.userId.so(timelineApi.userEntries)).mon(lila.mon.lobby.segment("timeline")))
-      .zip((ctx.noBot.so(dailyPuzzle())).mon(lila.mon.lobby.segment("puzzle")))
-      .zip:
-        ctx.kid.no.so:
-          liveStreamApi.all
-            .dmap(_.homepage(streamerSpots, ctx.acceptLanguages).withTitles(lightUserApi))
-            .mon(lila.mon.lobby.segment("streams"))
-      .zip((ctx.userId.so(playbanApi.currentBan)).mon(lila.mon.lobby.segment("playban")))
-      .zip(ctx.blind.so(ctx.me).so(roundProxy.urgentGames))
-      .zip(ublogApi.myCarousel)
-      .zip:
-        ctx.userId
-          .ifTrue(nbNotifications > 0)
-          .filterNot(liveStreamApi.isStreaming)
-          .so(unreadCount.hasMustReadLichessMsg)
+    ) <-
+      lobbyApi.get
+        .mon(lila.mon.lobby.segment("lobbyApi"))
+        .zip(tv.getBestGame.mon(lila.mon.lobby.segment("tvBestGame")))
+        .zip((ctx.userId.so(timelineApi.userEntries)).mon(lila.mon.lobby.segment("timeline")))
+        .zip((ctx.noBot.so(dailyPuzzle())).mon(lila.mon.lobby.segment("puzzle")))
+        .zip(
+          ctx.kid.no.so(
+            liveStreamApi.all
+              .dmap(_.homepage(streamerSpots, ctx.acceptLanguages).withTitles(lightUserApi))
+              .mon(lila.mon.lobby.segment("streams"))
+          )
+        )
+        .zip((ctx.userId.so(playbanApi.currentBan)).mon(lila.mon.lobby.segment("playban")))
+        .zip(ctx.blind.so(ctx.me).so(roundProxy.urgentGames))
+        .zip(ublogApi.myCarousel)
+        .zip(
+          ctx.userId
+            .ifTrue(nbNotifications > 0)
+            .filterNot(liveStreamApi.isStreaming)
+            .so(unreadCount.hasMustReadLichessMsg)
+        )
     (currentGame, _) <- ctx.me
       .soUse(currentGameMyTurn(povs, lightUserApi.sync))
       .mon(lila.mon.lobby.segment("currentGame"))
@@ -96,17 +76,12 @@ final class Preload(
   yield Homepage(
     data,
     entries,
-    tours,
-    swiss,
-    events,
     relayHome.spotlight.get,
-    simuls,
     feat,
     puzzle,
-    streams.excludeUsers(events.flatMap(_.hostedBy)),
+    streams,
     playban,
     currentGame,
-    simulIsFeaturable,
     blindGames,
     getLastUpdates(),
     ublogPosts,
@@ -138,17 +113,12 @@ object Preload:
   case class Homepage(
       data: JsObject,
       userTimeline: Vector[Entry],
-      tours: List[Tournament],
-      swiss: Option[Swiss],
-      events: List[Event],
       relays: List[lila.relay.RelayCard],
-      simuls: List[Simul],
       featured: Option[Game],
       puzzle: Option[lila.puzzle.DailyPuzzle.WithHtml],
       streams: LiveStreams.WithTitles,
       playban: Option[TempBan],
       currentGame: Option[Preload.CurrentGame],
-      isFeaturable: Simul => Boolean,
       blindGames: UrgentGames,
       lastUpdates: List[lila.feed.Feed.Update],
       ublogPosts: List[UblogPost.PreviewPost],

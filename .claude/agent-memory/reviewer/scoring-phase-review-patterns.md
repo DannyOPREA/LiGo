@@ -11,3 +11,13 @@ metadata:
 - `closePlay` state (`closed`) is not an Action, so replay drops it; lila (4.8) must re-close. Check the wiring unit for it.
 
 **Why:** found reviewing unit 4.3 (2026-09-28). **How to apply:** in 4.8 (lila scoring wiring) and 4.11 (SGF export) reviews.
+
+Unit 4.4 (services/scoring, 2026-09-28) defects none of its 82 tests caught:
+- goban-engine `autoscore(board, ...)` MUTATES `board` (dead stones set to 0). Anything reading the
+  board afterwards (chain widening, computeScore) sees them gone: every proposal said "nothing dead".
+  Probe any third-party call for input mutation; the OGS 31-game test only checked autoscore itself.
+- Play prisoners were added to the total under Chinese (area) rules too. Probe count with prisoners≠0 per ruleset.
+- Child-process clients: no `proc.stdin.on('error')` → EPIPE when the child dies at start is an
+  uncaughtException that kills the service. Probe with `bin: '/bin/true'` and a 19x19 payload.
+  Also a hung child is never restarted (timeout only rejects).
+- `dev/ligo test X` gates may skip the "real" integration test (env vars not exported) while the log claims it ran.

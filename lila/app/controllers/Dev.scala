@@ -131,7 +131,6 @@ final class Dev(env: Env) extends LilaController(env):
       env.web.lichobileAnnounceApi.lichobileUpgrade
     ),
     "Config" -> List(
-      env.plan.donationGoalSetting,
-      env.tournament.reloadEndpointSetting
+      env.plan.donationGoalSetting
     )
   )

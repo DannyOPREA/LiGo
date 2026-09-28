@@ -19,12 +19,6 @@ final class UserBits(helpers: Helpers):
       )(
         trans.site.ratingStats()
       ),
-      a(cls := active.active("tournament"), href := routes.Tournament.leaderboard)(
-        trans.arena.tournamentWinners()
-      ),
-      a(cls := active.active("shield"), href := routes.Tournament.shields)(
-        trans.arena.tournamentShields()
-      ),
       div(cls := "sep"),
       a(cls := active.active("bots"), href := routes.PlayApi.botOnline)(
         trans.site.onlineBots()

@@ -45,9 +45,7 @@ def show(
   val modLog = log.map: e =>
     li(userIdLink(e.mod.userId.some), " ", e.showAction, ": ", Modlog.explain(e))
 
-  val toursFrag = info.tours.nonEmpty.option:
-    tournaments.renderList:
-      info.tours.next ::: info.tours.past.take(5 - info.tours.next.size)
+  val toursFrag: Option[Frag] = None
 
   val forumFrag = info.forum.map:
     _.map: post =>
@@ -64,52 +62,3 @@ def show(
       )
 
   showUi(info.show, members, chat, toursFrag, forumFrag, asMod, modLog)
-
-def updateEventLinks(
-    tours: List[lila.tournament.Tournament],
-    swiss: List[lila.swiss.Swiss]
-)(using Context): List[(Tag, Instant, Call)] =
-  tours.map(t => (views.tournament.ui.tournamentLink(t), t.startsAt, routes.Tournament.show(t.id)))
-    ++ swiss.map(s => (views.swiss.ui.link(s), s.startsAt, routes.Swiss.show(s.id)))
-
-// both arena and swiss
-object tournaments:
-
-  def page(t: lila.team.Team, tours: TeamInfo.PastAndNext)(using Context) =
-    Page(s"${t.name} • ${trans.site.tournaments.txt()}")
-      .graph(
-        title = s"${t.name} team tournaments",
-        url = routeUrl(routes.Team.tournaments(t.id)),
-        description = shorten(t.description.unlink, 152)
-      )
-      .css("team")
-      .flag(_.fullScreen):
-        main(
-          div(cls := "box")(
-            boxTop:
-              h1(teamLink(t, true), " • ", trans.site.tournaments())
-            ,
-            div(cls := "team-events team-tournaments team-tournaments--both")(
-              div(cls := "team-tournaments__next")(
-                h2(trans.team.upcomingTournaments()),
-                table(cls := "slist slist-pad slist-invert")(
-                  renderList(tours.next)
-                )
-              ),
-              div(cls := "team-tournaments__past")(
-                h2(trans.team.completedTourns()),
-                table(cls := "slist slist-pad")(
-                  renderList(tours.past)
-                )
-              )
-            )
-          )
-        )
-
-  def renderList(tours: List[TeamInfo.AnyTour])(using Context) =
-    tbody:
-      tours.map:
-        _.fold(
-          views.tournament.ui.teamTournamentRow,
-          views.swiss.ui.teamSwissRow
-        )

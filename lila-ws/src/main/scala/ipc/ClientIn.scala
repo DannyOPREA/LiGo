@@ -110,14 +110,7 @@ object ClientIn:
   def onlyFor(select: OnlyFor.Endpoint.type => OnlyFor.Endpoint, payload: Payload) =
     OnlyFor(select(OnlyFor.Endpoint), payload)
 
-  case class TourReminder(tourId: Tour.Id, tourName: String) extends ClientIn:
-    lazy val write = cliMsg(
-      "tournamentReminder",
-      Json.obj(
-        "id" -> tourId,
-        "name" -> tourName
-      )
-    )
+  // TourReminder was removed with the tournament module (unit 3.2).
 
   def tvSelect(data: JsonString) = payload("tvSelect", data)
 
@@ -141,7 +134,6 @@ object ClientIn:
     lazy val noDests = Payload(JsonString(destsRemover.replaceAllIn(full.write, "")))
   case object RoundPingFrameNoFlush extends ClientIn:
     val write = "" // not actually sent
-  def roundTourStanding(data: JsonString) = payload("tourStanding", data)
 
   def roundFull(data: JsonString) = payload("full", data)
 

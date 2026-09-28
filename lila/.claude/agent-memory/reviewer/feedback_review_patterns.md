@@ -19,5 +19,15 @@ Patterns seen in LiGo unit reviews; check these every time.
 - lila baseline is 17 `[warn]` lines (logs/upstream-fork.md Lessons); count `[warn]` in
   `.claude/state/verify/lila_compile.log` and flag new ones (Scala `-Wunused:all` catches leftover
   `given` imports after deleting attribute code).
+- verify.sh doesn't run `dev/ci/meta_checks.py` (logs, manifests). Removal units that delete
+  `ui/*/package.json` or touch `lila/pnpm-lock.yaml`/`build.sbt` fail CI `meta` unless COPYING.md
+  changes too, even for pure removals. **Why:** unit 3.2 (2026-09-28) logged "lockfile removals
+  aren't a dependency change" and left COPYING.md untouched. Check the MANIFEST regex every time.
+- sbt 2 remote cache: `.claude/state/verify/lila_tests.log` can show "Passed: Total 0" for every
+  module and 0 compile `[warn]` (cache hits replay nothing), so it isn't evidence tests ran or that
+  warnings are gone. Ask for a non-cached run or say it's unverified.
+- Removal units leave orphans outside the deleted package: `ui/bits/src/bits.<feature>*.ts` and
+  `ui/bits/css/build/bits.<feature>.scss` entries whose only `Esm(...)`/`.css(...)` caller was
+  deleted. Grep deleted Scala (`git show HEAD:<file>`) for Esm/css names and check each still has a caller.
 - Licensing text: check claims like "all X are Noto/free" against generator inputs
   (e.g. `lila/bin/flair/custom.txt` lists non-Noto flairs).

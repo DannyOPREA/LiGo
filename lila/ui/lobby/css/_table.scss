@@ -84,16 +84,4 @@
       }
     }
   }
-
-  .lobby__tournaments-simuls {
-    .lobby__box__top {
-      border-bottom: $border;
-    }
-
-    .timeago {
-      @media (max-width: at-most($x-small)) {
-        display: none;
-      }
-    }
-  }
 }

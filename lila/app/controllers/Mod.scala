@@ -60,8 +60,8 @@ final class Mod(
 
   def publicChat = Secure(_.PublicChatView) { ctx ?=> _ ?=>
     for
-      (t, s, r) <- env.mod.publicChat.all
-      page <- Ok.page(views.mod.publicChat(t, s, r))
+      r <- env.mod.publicChat.all
+      page <- Ok.page(views.mod.publicChat(r))
     yield page
   }
 

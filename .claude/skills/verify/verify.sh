@@ -67,6 +67,9 @@ fi
 if has '^libs/conformance/|^libs/go-rules/|^libs/board/' && [[ -x "$ROOT/libs/conformance/fast-check.sh" ]]; then
   add "conformance (fast)" "libs/conformance/fast-check.sh"
 fi
+if has '^services/scoring/|^libs/conformance/fixtures/|^dev/katago\.sh$|^dev/ligo$'; then
+  add "scoring: typecheck, lint, tests" "dev/ligo test scoring"
+fi
 
 if ((LIST)); then
   if ((${#gates[@]})); then printf '%s\n' "${gates[@]%%|*}"; else echo "(no gates for these changes)"; fi

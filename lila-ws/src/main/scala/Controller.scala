@@ -51,40 +51,8 @@ final class Controller(
         )
       )
 
-  def simul(id: Simul.Id, header: RequestHeader) =
-    WebSocket(header): req =>
-      (mongo.simulExists(id), mongo.troll.is(req.user)).mapN:
-        case (true, isTroll) =>
-          endpoint(
-            name = "simul",
-            behavior = emit =>
-              SimulClientActor.start(RoomActor.State(id.into(RoomId), isTroll), fromVersion(header)):
-                Deps(emit, req, services)
-            ,
-            req,
-            credits = 30,
-            interval = 20.seconds
-          )
-        case _ => notFound
-
-  def tournament(id: Tour.Id, header: RequestHeader) =
-    WebSocket(header): req =>
-      mongo
-        .tourExists(id)
-        .zip(mongo.troll.is(req.user))
-        .map:
-          case (true, isTroll) =>
-            endpoint(
-              name = "tour",
-              behavior = emit =>
-                TourClientActor.start(RoomActor.State(id.into(RoomId), isTroll), fromVersion(header)):
-                  Deps(emit, req, services)
-              ,
-              req,
-              credits = 30,
-              interval = 20.seconds
-            )
-          case _ => notFound
+  // simul and tournament room endpoints were removed with the simul and tournament modules
+  // (unit 3.2).
 
   def study(id: Study.Id, header: RequestHeader) =
     WebSocket(header): req =>
@@ -207,24 +175,7 @@ final class Controller(
             )
           else siteEndpoint(req)
 
-  def swiss(id: Swiss.Id, header: RequestHeader) =
-    WebSocket(header): req =>
-      mongo
-        .swissExists(id)
-        .zip(mongo.troll.is(req.user))
-        .map:
-          case (true, isTroll) =>
-            endpoint(
-              name = "swiss",
-              behavior = emit =>
-                SwissClientActor.start(RoomActor.State(id.into(RoomId), isTroll), fromVersion(header)):
-                  Deps(emit, req, services)
-              ,
-              req,
-              credits = 30,
-              interval = 20.seconds
-            )
-          case _ => notFound
+  // swiss room endpoint was removed with the swiss module (unit 3.2).
 
   def racer(id: Racer.Id, header: RequestHeader) =
     WebSocket(header): req =>

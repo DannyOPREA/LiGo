@@ -27,8 +27,6 @@ final class UserApi(
     liveStreamApi: lila.streamer.LiveApi,
     gameProxyRepo: lila.round.GameProxyRepo,
     trophyApi: lila.user.TrophyApi,
-    shieldApi: lila.tournament.TournamentShieldApi,
-    revolutionApi: lila.tournament.RevolutionApi,
     challengeGranter: lila.challenge.ChallengeGranter,
     playbanApi: lila.playban.PlaybanApi,
     rankingsOf: UserId => lila.core.rating.UserRankMap,
@@ -154,10 +152,11 @@ final class UserApi(
   )
 
   def getTrophiesAndAwards(u: User) =
-    (trophyApi.findByUser(u), shieldApi.active(u), revolutionApi.active(u)).mapN:
-      (trophies, shields, revols) =>
+    trophyApi
+      .findByUser(u)
+      .map: trophies =>
         val roleTrophies = trophyApi.roleBasedTrophies(u)
-        UserApi.TrophiesAndAwards(userCache.rankingsOf(u.id), trophies ::: roleTrophies, shields, revols)
+        UserApi.TrophiesAndAwards(userCache.rankingsOf(u.id), trophies ::: roleTrophies)
 
   private def trophiesJson(all: UserApi.TrophiesAndAwards)(using Lang): JsArray =
     JsArray:
@@ -201,9 +200,7 @@ final class UserApi(
 object UserApi:
   case class TrophiesAndAwards(
       ranks: lila.core.rating.UserRankMap,
-      trophies: List[Trophy],
-      shields: List[lila.tournament.TournamentShield.Award],
-      revolutions: List[lila.tournament.Revolution.Award]
+      trophies: List[Trophy]
   ):
     def countTrophiesAndPerfCups = trophies.size + ranks.count(_._2 <= 100)
 

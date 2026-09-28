@@ -3,7 +3,6 @@ package lila.ws
 import cats.data.NonEmptyList
 import com.typesafe.scalalogging.Logger
 import org.apache.pekko.actor.typed.{ ActorRef, Scheduler }
-import scalalib.ThreadLocalRandom
 
 import lila.ws.util.Batcher
 
@@ -85,36 +84,11 @@ final class LilaHandler(
     case site: SiteOut => siteHandler(site)
     case msg => logger.warn(s"Unhandled lobby: $msg")
 
-  private val simulHandler: Emit[LilaOut] =
-    case LilaOut.RoomFilterPresent(reqId, roomId, userIds) =>
-      lila.emit.simul(LilaIn.ReqResponse(reqId, roomCrowd.filterPresent(roomId, userIds).mkString(",")))
-    case LilaBoot => roomBoot(_.idFilter.simul, lila.emit.simul)
-    case msg => roomHandler(msg)
+  // simulHandler, swissHandler and tourHandler were removed with the simul, swiss and tournament
+  // modules (unit 3.2).
 
   private val teamHandler: Emit[LilaOut] =
     case LilaBoot => roomBoot(_.idFilter.team, lila.emit.team)
-    case msg => roomHandler(msg)
-
-  private val swissHandler: Emit[LilaOut] =
-    case LilaBoot => roomBoot(_.idFilter.swiss, lila.emit.swiss)
-    case msg => roomHandler(msg)
-
-  private val tourHandler: Emit[LilaOut] =
-    case GetWaitingUsers(roomId, name) =>
-      mongo
-        .tournamentActiveUsers(roomId.into(Tour.Id))
-        .zip(mongo.tournamentPlayingUsers(roomId.into(Tour.Id)))
-        .foreach: (active, playing) =>
-          val present = roomCrowd.getUsers(roomId)
-          val standby = active.diff(playing)
-          val allAbsent = standby.diff(present)
-          lila.emit.tour(LilaIn.WaitingUsers(roomId, present.intersect(standby)))
-          val absent =
-            if allAbsent.sizeIs > 100
-            then ThreadLocalRandom.shuffle(allAbsent).take(80)
-            else allAbsent
-          if absent.nonEmpty then users.tellMany(absent, ClientIn.TourReminder(roomId.into(Tour.Id), name))
-    case LilaBoot => roomBoot(_.idFilter.tour, lila.emit.tour)
     case msg => roomHandler(msg)
 
   private val studyHandler: Emit[LilaOut] =
@@ -153,8 +127,6 @@ final class LilaHandler(
       publish(_.room(fullId.gameId), ClientIn.RoundGone(fullId.playerId, gone))
     case RoundGoneIn(fullId, seconds) =>
       publish(_.room(fullId.gameId), ClientIn.RoundGoneIn(fullId.playerId, seconds))
-    case RoundTourStanding(tourId, data) =>
-      publish(_.tourStanding(tourId), ClientIn.roundTourStanding(data))
     case o: TvSelect => services.tv.select(o)
     case o @ RoomStop(roomId) =>
       History.round.stop(Game.Id(roomId.value))
@@ -209,7 +181,6 @@ final class LilaHandler(
     case TellRoomVersion(roomId, version, troll, payload) => tellRoomVersion(roomId, version, troll, payload)
     case TellRoomChat(roomId, version, troll, payload) =>
       tellRoomVersion(roomId, version, troll, payload)
-      publish(_.externalChat(roomId), ClientIn.Payload(payload))
     case TellRoom(roomId, payload) => publish(_.room(roomId), ClientIn.Payload(payload))
     case RoomStop(roomId) => History.room.stop(roomId)
 
@@ -228,9 +199,6 @@ final class LilaHandler(
     case Lila.chans.round.out => roundHandler
     case Lila.chans.site.out => siteHandler
     case Lila.chans.lobby.out => lobbyHandler
-    case Lila.chans.tour.out => tourHandler
-    case Lila.chans.swiss.out => swissHandler
-    case Lila.chans.simul.out => simulHandler
     case Lila.chans.study.out => studyHandler
     case Lila.chans.team.out => teamHandler
     case Lila.chans.challenge.out => roomHandler

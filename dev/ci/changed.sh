@@ -23,6 +23,7 @@ areas=(
   'ws|^(lila-ws/|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ui|^(lila/|libs/board/|\.github/workflows/ui\.yml$|dev/ci/changed\.sh$)'
   'rules|^(libs/go-rules/|libs/board/|libs/conformance/fixtures/|lila/pnpm-(lock|workspace)\.yaml$|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
+  'scoring|^(services/scoring/|libs/conformance/fixtures/|lila/pnpm-(lock|workspace)\.yaml$|dev/katago\.sh$|\.github/workflows/scoring\.yml$|dev/ci/changed\.sh$)'
 )
 
 # Paths that never need a build: docs, logs, Claude config, repo meta files, dev tooling and the

@@ -250,10 +250,6 @@ final class ModUi(helpers: Helpers):
       Granter(_.SetEmail)
         .option(a(cls := itemCls(active, "email"), href := routes.Mod.emailConfirmGet)("Email confirm")),
       Granter(_.Pages).option(a(cls := itemCls(active, "cms"), href := routes.Cms.index)("Pages")),
-      Granter(_.ManageTournament)
-        .option(a(cls := itemCls(active, "tour"), href := routes.TournamentCrud.index(1))("Tournaments")),
-      Granter(_.ManageEvent)
-        .option(a(cls := itemCls(active, "event"), href := routes.Event.manager())("Events")),
       Granter(_.ModerateBlog)
         .option(a(cls := itemCls(active, "carousel"), href := routes.Ublog.modShowCarousel)("Blog carousel")),
       Granter(_.MarkEngine)

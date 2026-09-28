@@ -4,7 +4,6 @@ import play.api.libs.json.Json
 
 import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.Preload.Homepage
-import lila.core.perf.UserWithPerfs
 
 object home:
 
@@ -52,7 +51,6 @@ object home:
         )
       )
       .hrefLangs(lila.ui.LangPath("/")):
-        given Option[UserWithPerfs] = homepage.me
         main(
           cls := List(
             "lobby" -> true,
@@ -63,25 +61,7 @@ object home:
             ctx.blind.option(h2(trans.nvui.featuredEvents())),
             ctx.kid.no.option(views.streamer.bits.liveStreams(streams)),
             div(cls := "lobby__spotlights"):
-              val eventTags = events.map(bits.spotlight)
-              val relayTags = views.relay.ui.spotlight(relays)
-              frag(
-                eventTags,
-                relayTags,
-                ctx.noBot.option {
-                  val nbManual = eventTags.size + relayTags.size
-                  val simulBBB = simuls.find(isFeaturable(_) && nbManual < 4)
-                  val nbForced = nbManual + simulBBB.size.toInt
-                  val tourBBBs = if nbForced > 3 then 0 else if nbForced == 3 then 1 else 3 - nbForced
-                  frag(
-                    lila.tournament.Spotlight.select(tours, tourBBBs).map {
-                      views.tournament.list.homepageSpotlight(_)
-                    },
-                    swiss.ifTrue(nbForced < 3).map(views.swiss.ui.homepageSpotlight),
-                    simulBBB.map(views.simul.ui.homepageSpotlight)
-                  )
-                }
-              )
+              views.relay.ui.spotlight(relays)
             ,
             classes.nonEmpty.option:
               div(cls := "lobby__classes"):
@@ -139,7 +119,6 @@ object home:
           div(cls := "lobby__feed"):
             views.feed.lobbyUpdates(lastUpdates)
           ,
-          ctx.noBot.option(bits.underboards(tours, simuls)),
           div(cls := "lobby__about")(
             ctx.blind.option(h2(trans.site.about())),
             a(href := "/about")(trans.site.aboutX("Lichess")),

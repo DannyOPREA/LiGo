@@ -130,10 +130,6 @@ final class User(
                     filters = lila.app.mashup.GameFilterMenu(u, nbs, filter, ctx.isAuth)
                     pag <- env.gamePaginator(user = u, nbs = nbs.some, filter = filters.current, page = page)
                     _ <- lightUserApi.preloadMany(pag.currentPageResults.flatMap(_.userIds))
-                    _ <- env.tournament.cached.nameCache.preloadMany:
-                      pag.currentPageResults.flatMap(_.tournamentId).map(tid => tid -> ctx.lang)
-                    _ <- env.swiss.cache.name.preloadMany:
-                      pag.currentPageResults.flatMap(_.swissId)
                     res <-
                       if HTTPRequest.isSynchronousHttp(ctx.req) then
                         for
@@ -243,8 +239,6 @@ final class User(
       for
         pagFromDb <- env.gamePaginator(user = u, nbs = none, filter = GameFilter(filterName), page = page)
         pag <- pagFromDb.mapFutureResults(env.round.proxyRepo.upgradeIfPresent)
-        _ <- env.tournament.cached.nameCache.preloadMany:
-          pag.currentPageResults.flatMap(_.tournamentId).map(_ -> ctx.lang)
         _ <- lightUserApi.preloadMany(pag.currentPageResults.flatMap(_.userIds))
       yield pag
 
@@ -253,11 +247,9 @@ final class User(
       negotiate(
         html = for
           nbAllTime <- env.user.cached.top10NbGame.get {}
-          tourneyWinners <- env.tournament.winners.all.map(_.top)
           topOnline <- env.user.cached.getTop50Online
-          _ <- lightUserApi.preloadMany(tourneyWinners.map(_.userId))
           page <- renderPage:
-            views.user.list(tourneyWinners, topOnline, leaderboards, nbAllTime)
+            views.user.list(topOnline, leaderboards, nbAllTime)
         yield Ok(page),
         json =
           given OWrites[LightPerf] = OWrites(env.user.jsonView.lightPerfIsOnline)
@@ -568,12 +560,8 @@ final class User(
           .flatMap(UserSearch.read)
           .fold(BadRequest("No search term provided").toFuccess): term =>
             for
-              userIds <- (get("tour"), get("swiss"), get("team")) match
-                case (Some(tourId), _, _) =>
-                  env.tournament.playerRepo.searchPlayers(TourId(tourId), term, 10)
-                case (_, Some(swissId), _) =>
-                  env.swiss.api.searchPlayers(SwissId(swissId), term, 10)
-                case (_, _, Some(teamId)) =>
+              userIds <- get("team") match
+                case Some(teamId) =>
                   val showHidden = ctx.fullAuthOrScope(_.Team.Read)
                   env.team.api.searchMembersAs(TeamId(teamId), term, 10, showHidden)
                 case _ =>

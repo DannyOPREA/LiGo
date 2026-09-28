@@ -35,15 +35,6 @@ final class PlanPages(helpers: Helpers)(fishnetPerDay: Int):
                 strong(trans.features.zeroAdsAndNoTracking())
               ),
               tr(unlimited)(
-                a(href := routes.Tournament.home)(trans.arena.arenaTournaments())
-              ),
-              tr(unlimited)(
-                a(href := routes.Swiss.home)(trans.swiss.swissTournaments())
-              ),
-              tr(unlimited)(
-                a(href := routes.Simul.home)(trans.site.simultaneousExhibitions())
-              ),
-              tr(unlimited)(
                 trans.features.correspondenceWithConditionalPremoves()
               ),
               tr(check)(
@@ -129,9 +120,6 @@ final class PlanPages(helpers: Helpers)(fishnetPerDay: Int):
               ),
               tr(unlimited)(
                 trans.features.ultraBulletBulletBlitzRapidClassicalAndCorrespondenceChess()
-              ),
-              tr(unlimited)(
-                a(href := routes.Tournament.home)(trans.arena.arenaTournaments())
               ),
               tr(check)(
                 trans.features.boardEditorAndAnalysisBoardWithEngine("Stockfish 14+")

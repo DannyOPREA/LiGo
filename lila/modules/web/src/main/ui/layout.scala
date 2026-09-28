@@ -269,14 +269,16 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           dataIcon := Icon.Agent
         ).some
       else
-        (Granter.opt(_.Pages) || Granter.opt(_.ManageEvent)).option(
-          a(
-            cls := "link",
-            title := "Content",
-            href := Granter.opt(_.Pages).option(routes.Cms.index).orElse(routes.Event.manager().some),
-            dataIcon := Icon.InkQuill
+        Granter
+          .opt(_.Pages)
+          .option(
+            a(
+              cls := "link",
+              title := "Content",
+              href := routes.Cms.index,
+              dataIcon := Icon.InkQuill
+            )
           )
-        )
 
     private def teamRequests(nb: Int)(using Translate) =
       Option.when(nb > 0):

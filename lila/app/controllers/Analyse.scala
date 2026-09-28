@@ -50,7 +50,6 @@ final class Analyse(
           (
             env.analyse.analyser.get(pov.game),
             (!pov.game.metadata.analysed).so(env.fishnet.api.userAnalysisExists(pov.gameId)),
-            pov.game.simulId.so(env.simul.repo.find),
             roundC.getWatcherChat(pov.game),
             ctx.noBlind.so(env.game.crosstableApi.withMatchup(pov.game)),
             env.bookmark.api.exists(pov.game, ctx.me),
@@ -61,7 +60,7 @@ final class Analyse(
               opening = opening,
               pgnFlags
             )
-          ).flatMapN: (analysis, analysisInProgress, simul, chat, crosstable, bookmarked, pgn) =>
+          ).flatMapN: (analysis, analysisInProgress, chat, crosstable, bookmarked, pgn) =>
             env.api.roundApi
               .review(
                 pov,
@@ -89,7 +88,6 @@ final class Analyse(
                     env.analyse.annotator(pgn, pov.game, analysis, opening).render,
                     analysis,
                     analysisInProgress,
-                    simul,
                     crosstable,
                     userTv,
                     chat,
@@ -138,7 +136,6 @@ final class Analyse(
   private def replayForCrawler(pov: Pov)(using Context) = for
     initialFen <- env.game.gameRepo.initialFen(pov.game)
     analysis <- env.analyse.analyser.get(pov.game)
-    simul <- pov.game.simulId.so(env.simul.repo.find)
     crosstable <- env.game.crosstableApi.withMatchup(pov.game)
     pgn <- env.api.pgnDump(pov.game, initialFen, analysis, none, PgnDump.WithFlags(clocks = false))
     page <- renderPage:
@@ -146,7 +143,6 @@ final class Analyse(
         pov,
         initialFen,
         env.analyse.annotator(pgn, pov.game, analysis, none).render,
-        simul,
         crosstable
       )
   yield Ok(page)

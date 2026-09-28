@@ -9,7 +9,6 @@ import lila.common.Json.given
 import lila.core.i18n.Translate
 import lila.core.user.KidMode
 import lila.oauth.TokenScopes
-import lila.core.perf.UserWithPerfs
 
 final class MobileApi(
     userApi: UserApi,
@@ -18,9 +17,6 @@ final class MobileApi(
     lightUserApi: lila.user.LightUserApi,
     gameProxy: lila.round.GameProxyRepo,
     unreadCount: lila.msg.MsgUnreadCount,
-    teamCached: lila.team.TeamCached,
-    tourFeaturing: lila.tournament.TournamentFeaturing,
-    tourApiJson: lila.tournament.ApiJsonView,
     relayHome: lila.relay.RelayHomeApi,
     tv: lila.tv.Tv,
     liveStreamApi: lila.streamer.LiveApi,
@@ -45,7 +41,6 @@ final class MobileApi(
       withPerfs <- myUser.traverse(userApi.withPerfs)
       urgentGames <- myUser.traverse(gameProxy.urgentGames)
       ongoingGames = urgentGames.map(_.value.take(20).map(lobbyApi.nowPlaying))
-      tours <- takex3.not.option(tournamentsOf(withPerfs)).sequence
       account <- withPerfs.traverse(userApi.mobile(_, Preload(urgentGames)))
       recentGames <- myUser.traverse(gameApi.mobileRecent)
       inbox <- me.ifFalse(takex3).traverse(unreadCount.mobile)
@@ -58,7 +53,6 @@ final class MobileApi(
           relationStream.recentlySeenList(10, lightUserApi.projection, playing.apply)
     yield Json
       .obj()
-      .add("tournaments", tours)
       .add("account", account)
       .add("recentGames", recentGames)
       .add("ongoingGames", ongoingGames)
@@ -66,19 +60,8 @@ final class MobileApi(
       .add("challenges", challenges.map(challengeJson.all))
       .add("friends", friends)
 
-  def tournamentsOf(me: Option[UserWithPerfs])(using Translate): Fu[JsObject] =
-    for
-      teamIds <- me.so(teamCached.teamIdsList)
-      tours <- tourFeaturing.homepage.get(teamIds)
-      spotlight = lila.tournament.Spotlight.select(tours, 4)(using me)
-      json <- spotlight.sequentially(tourApiJson.fullJson)
-    yield Json.obj("featured" -> json)
-
-  def tournaments(using me: Option[Me])(using Translate): Fu[JsObject] =
-    for
-      withPerfs <- me.so(userApi.withPerfs)
-      tours <- tournamentsOf(withPerfs)
-    yield tours
+  // tournamentsOf/tournaments (the mobile app's featured-tournaments feed) were removed with the
+  // tournament module (unit 3.2).
 
   def watch(using Translate): Fu[JsObject] =
     for

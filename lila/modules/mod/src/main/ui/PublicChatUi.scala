@@ -10,8 +10,6 @@ final class PublicChatUi(helpers: Helpers)(modMenu: Context ?=> Frag, highlightB
   import helpers.{ *, given }
 
   def apply(
-      tourChats: PublicChats[lila.core.tournament.Tournament],
-      swissChats: PublicChats[lila.core.swiss.IdName],
       relayChats: PublicChats[lila.core.relay.RoundIdName]
   )(using Context) =
     Page("Public Chats")
@@ -22,25 +20,11 @@ final class PublicChatUi(helpers: Helpers)(modMenu: Context ?=> Frag, highlightB
           div(id := "comm-wrap")(
             div(id := "communication", cls := "page-menu__content public-chat box box-pad")(
               div(
-                h2("Tournament Chats"),
-                div(cls := "player_chats"):
-                  tourChats.map: (tournament, chat) =>
-                    div(cls := "game", dataChan := "tournament", dataRoom := tournament.id):
-                      chatOf(tournamentTitle(tournament), chat)
-              ),
-              div(
                 h2("Broadcast Chats"),
                 div(cls := "player_chats"):
                   relayChats.map: (relay, chat) =>
                     div(cls := "game", dataChan := "study", dataRoom := relay.id):
                       chatOf(relayTitle(relay), chat)
-              ),
-              div(
-                h2("Swiss Chats"),
-                div(cls := "player_chats"):
-                  swissChats.map: (swiss, chat) =>
-                    div(cls := "game", dataChan := "swiss", dataRoom := swiss.id):
-                      chatOf(swissTitle(swiss), chat)
               ),
               div(cls := "timeout-modal none")(
                 h2(cls := "username")("username"),
@@ -75,14 +59,5 @@ final class PublicChatUi(helpers: Helpers)(modMenu: Context ?=> Frag, highlightB
             )
     )
 
-  private def swissTitle(swiss: lila.core.swiss.IdName) =
-    a(cls := "title", href := routes.Swiss.show(swiss.id))(swiss.name)
-
   private def relayTitle(relay: lila.core.relay.RoundIdName) =
     a(cls := "title", href := routes.RelayRound.show("-", "-", relay.id))(relay.name)
-
-  private def tournamentTitle(tournament: lila.core.tournament.Tournament) =
-    div(cls := "title-time")(
-      a(cls := "title", href := routes.Tournament.show(tournament.id))(tournament.name),
-      span(cls := s"tournament-status ${tournament.status.name}")(tournament.status.name)
-    )

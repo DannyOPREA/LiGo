@@ -7,8 +7,6 @@ final class AnySearch(
     relayEnv: lila.relay.Env,
     studyEnv: lila.study.Env,
     puzzleEnv: lila.puzzle.Env,
-    tourEnv: lila.tournament.Env,
-    swissEnv: lila.swiss.Env,
     ublogApi: lila.ublog.UblogApi,
     teamEnv: lila.team.Env,
     fideEnv: lila.fide.Env
@@ -32,9 +30,7 @@ final class AnySearch(
 
         def puzzle = puzzleEnv.api.puzzle.find(PuzzleId(id)).map2(_ => routes.Puzzle.show(id).url)
 
-        def tour = tourEnv.api.get(TourId(id)).map2(_ => routes.Tournament.show(TourId(id)).url)
-
-        def swiss = swissEnv.api.fetchByIdNoCache(SwissId(id)).map2(_ => routes.Swiss.show(SwissId(id)).url)
+        // tournament/swiss lookup was removed with the tournament and swiss modules (unit 3.2)
 
         def ublog = ublogApi.getPost(UblogPostId(id)).map2(_ => routes.Ublog.redirect(UblogPostId(id)).url)
 
@@ -51,8 +47,6 @@ final class AnySearch(
           .orElse(study)
           .orElse(chapter)
           .orElse(puzzle)
-          .orElse(tour)
-          .orElse(swiss)
           .orElse(ublog)
           .orElse(team)
           .orElse(fideplayer)

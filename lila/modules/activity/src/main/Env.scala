@@ -17,12 +17,8 @@ final class Env(
     gameRepo: lila.core.game.GameRepo,
     forumPostApi: lila.core.forum.ForumPostApi,
     ublogApi: lila.core.ublog.UblogApi,
-    simulApi: lila.core.simul.SimulApi,
     studyApi: lila.core.study.StudyApi,
-    tourLeaderApi: lila.core.tournament.leaderboard.Api,
-    getTourName: lila.core.tournament.GetTourName,
     teamApi: lila.core.team.TeamApi,
-    swissApi: lila.core.swiss.SwissApi,
     getLightTeam: lila.core.team.LightTeam.GetterSync,
     lightUserApi: lila.core.user.LightUserApi,
     userApi: lila.core.user.UserApi,
@@ -54,8 +50,6 @@ final class Env(
   Bus.sub[lila.core.ublog.UblogPost.Create]: create =>
     write.ublogPost(create.post)
   Bus.sub[lila.core.practice.OnComplete](write.practice(_))
-  Bus.sub[lila.core.simul.OnStart]: start =>
-    write.simul(start.simul)
   Bus.sub[CorresMoveEvent]:
     case CorresMoveEvent(move, Some(userId), _, _, _) => write.corresMove(move.gameId, userId)
   Bus.sub[lila.core.plan.MonthInc]:
@@ -69,8 +63,6 @@ final class Env(
     case lila.core.team.TeamCreate(t) => write.team(t.id, t.userId)
   Bus.sub[lila.core.team.JoinTeam]:
     case lila.core.team.JoinTeam(id, userId) => write.team(id, userId)
-  Bus.sub[lila.core.swiss.SwissFinish]:
-    case lila.core.swiss.SwissFinish(swissId, ranking) => write.swiss(swissId, ranking)
 
   Bus.sub[StreamStart]:
     case StreamStart(userId, _) => write.streamStart(userId)
