@@ -3,10 +3,9 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- 1.3 build-vs-buy for scoring (started 2026-09-27, under the owner's standing "work autonomously"
-  approval; run alongside 1.2, since neither memo needs the other's answer). Acceptance: a memo in
-  docs/build-vs-buy/ backed by a spike, the owner's choice recorded as an ADR. Memo:
-  docs/build-vs-buy/scoring.md. Done: ADR 0015 (PR #11). Logs: logs/scoring.md.
+- 1.5 the Go rules spec in docs/rules/ (started 2026-09-27, under the owner's standing "work
+  autonomously" approval). Done: spec approved by the owner 2026-09-28 (all 11 choices as
+  recommended), PR #13. Logs: logs/rules-engine.md.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -39,9 +38,12 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 1.2: the client-side rules, SGF reading and the board come from OGS `goban` on npm, pinned,
     wrapped by `libs/board` (ADR 0014, PR #10). Claude chose it under your 2026-09-28 delegation;
     revisit any time. The dependency lands with Phase 2's `libs/board` unit (and 1.8's harness).
+  - Unit 1.5: the rules spec (docs/rules/spec.md) is approved, all 11 choices as recommended
+    (PR #13). It follows the recommended options of memos 1.2–1.4
+    ("Depends on memo" notes; 1.2, 1.3 and 1.4 all went as recommended).
 
 ## Next
-- Phase 1 units 1.3–1.9 (docs/PLAN.md §5, "Phase 1 units").
+- Phase 1 units 1.6–1.9 (docs/PLAN.md §5, "Phase 1 units").
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
@@ -69,5 +71,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1–1.4 done (of 9 units) |
+| 1. Build-vs-buy + rules integration | 1.1–1.5 done (of 9 units) |
 | 2–9 | not started |
