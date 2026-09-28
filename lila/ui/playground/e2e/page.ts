@@ -1,8 +1,10 @@
-import { expect, type Page } from '@playwright/test';
 // Serves the built playground page to Playwright without a lila server (unit 2.4). The page is a
 // trimmed copy of what lila's `views.playground.home` renders: the same CSS and module, the same
-// `#playground` element and init data, in lila's default (dark) theme, without the site header. Assets come from lila/public as lila serves them at /assets/;
-// any other request fails the test, so the page can't quietly depend on the network.
+// `#playground` element and init data, in lila's default (dark) theme, without the site header.
+// Assets come from lila/public as lila serves them at /assets/; any other request fails the test, so
+// the page can't quietly depend on the network.
+
+import { expect, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';

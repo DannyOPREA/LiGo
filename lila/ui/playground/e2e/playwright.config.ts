@@ -1,10 +1,11 @@
-import { defineConfig } from '@playwright/test';
 // The playground's browser tests (unit 2.4): screenshots against committed baselines, and a scripted
 // game played through the page. They load the built page from lila/public (run `ui/build` first)
 // through Playwright's request routing, so no lila server, Mongo or Redis is needed; that keeps
 // them runnable in CI and in cloud sessions, where the full site can't start.
 // Chromium: $LIGO_CHROMIUM, else the cloud sessions' /opt/pw-browsers/chromium, else Playwright's own.
 // Licence: AGPL-3.0-or-later, like the rest of lila.
+
+import { defineConfig } from '@playwright/test';
 import { existsSync } from 'node:fs';
 
 const cloudChromium = '/opt/pw-browsers/chromium';
@@ -15,7 +16,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // A retry would hide a flaky screenshot; a failure here is looked at, not re-rolled.
   retries: 0,
-  reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
+  // Next to this file, not next to package.json (Playwright's default); CI uploads both on failure.
+  outputDir: 'test-results',
+  reporter: process.env.CI
+    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    : 'list',
   // One baseline for every machine: no browser or platform in the file name, so CI and a
   // contributor compare against the same picture (the tolerance below absorbs anti-aliasing).
   snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',

@@ -32,8 +32,9 @@ prisoner counts, "Black to play.", Pass and Undo buttons, and a New game form.
 
 ## 3. Preferences: "Confirm moves"
 
-- [ ] Sign in (or create a local account), open Preferences, then Game behaviour. Set
-      "Confirm moves" to **Always**.
+- [ ] Sign in, open Preferences, then Game behaviour. (A new local account needs its email
+      confirmed: the site sends no mail, so find the confirmation link with `dev/ligo logs lila`.)
+      Set "Confirm moves" to **Always**.
 - [ ] Back on /playground, a click now shows a preview stone with a "+" and a Confirm move button
       becomes active. Confirm move plays the stone. Clicking the preview again takes it back.
 - [ ] Set it back to **On touch screens**. On the desktop, clicks play at once again.
