@@ -66,6 +66,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
+- Phase 3 deletions: Claude's safety check needs your own typed OK before it bulk-deletes files
+  (unit 3.1's non-free assets, units 3.2–3.7's chess modules). Reply "go ahead with the Phase 3
+  deletions" in the Phase 3 thread.
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
 - Add the `rules` job to the `main` ruleset's required checks.
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
@@ -91,5 +94,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | 1.1–1.7 done; 1.8 in review; 1.9 in progress (of 9 units) |
 | 2. Board integration | split into units 2.1–2.4; not started |
-| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1 next |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 next, 3.1–3.7 wait for your OK to delete files |
 | 4–9 | not started |

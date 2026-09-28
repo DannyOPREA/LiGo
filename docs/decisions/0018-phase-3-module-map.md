@@ -11,8 +11,8 @@ and 35 `ui/` packages, and about 30 of them are not named there (e.g. `activity`
 `evaluation`, `fide`). Phase 3 removes chess, so every module must land in one bucket before the
 removal units start, and removing anything beyond §3.4's list is a decision (PLAN §7).
 
-"Keep dormant" can't mean "untouched": once scalachess goes (unit 3.17), every module that stays
-must compile against Go types. So each dormant module is a module we pay to migrate, and the map
+"Keep dormant" can't mean "untouched": once lila's game types become Go types (units 3.11–3.17), every
+module that stays must compile against them. So each dormant module is a module we pay to migrate, and the map
 keeps only what the POC or a possible public demo (§8) needs.
 
 ## Decision
@@ -28,18 +28,23 @@ Server modules (`lila/modules/`):
 | Remove (not named in §3.4) | gathering (only tournaments use it), event, fide, title, coordinate, jsBot, irwin, evaluation (chess engine assessment), studySearch, forumSearch, teamSearch, search, gameSearch (Elasticsearch isn't needed, §3.2), feed, plan (Patron), recap, clas, tv |
 
 `ui/` packages: keep `@types`, analyse (minus its study, practice, explorer and eval parts), bits,
-build, challenge, chart, dasher, lib, lobby, mod, notify, puzzle (minus storm/streak), round,
-serviceWorker, site, test, user. Remove botDev, botPlay, coordinateTrainer, dgt, editor, fide,
+challenge, chart, dasher, lib (minus its chess engine code, `ceval` and `bot`), lobby, mod, notify,
+puzzle (minus storm/streak), round, serviceWorker, site, user. Remove botDev, botPlay, coordinateTrainer, dgt, editor, fide,
 insight, keyboardMove, learn, msg, opening, racer, recap, simul, storm, swiss, team, tournament,
-tutor, voice. `editor` (the chess position editor) returns, if wanted, as a Go editor in Phase 7.
+tutor, voice. `voice`, `keyboardMove` and `dgt` are imported by `ui/round` and `ui/puzzle`, so they
+go when the round UI is rewritten (unit 3.18) rather than in a removal unit. `editor` (the chess position editor) returns, if wanted, as a Go editor in Phase 7.
 
-lila-ws loses the handlers of removed features (study, relay crowd, tournaments, simuls, storm,
-eval cache, TV) in the same unit as the lila module they serve.
+lila-ws loses the handlers and actors of removed features (study, relay crowd, tournaments, swiss,
+simuls, teams, storm, racer, streamers, eval cache, TV) in the same unit as the lila module they serve.
+Its live mini-board updates (`Fens.scala`) are kept and move to Go in unit 3.14.
 
 ## Consequences
 - Phase 3's removal units (3.2–3.7) follow this table, in dependency order, each compiling.
 - Moderation stays dormant without engine assessment (`evaluation`, `irwin` go), which is
-  chess-only anyway; `mod` loses those hooks.
+  chess-only anyway. `mod` loses `AssessApi` and needs direct build dependencies on `game` and
+  `analyse`, which it only reached through `evaluation` (unit 3.5).
+- PLAN §3.4's `importer` now lives in `game` (`Importer.scala`); its PGN import goes in unit 3.17 and
+  SGF import arrives with the analysis board in Phase 7.
 - Without `tv`, the home page has no featured game and there is no "current games" page until the
   lobby (Phase 6) or a later unit brings one back.
 - Without `search`/`gameSearch`, a user's game list is the only way to find past games in the POC.
