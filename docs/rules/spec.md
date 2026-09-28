@@ -158,6 +158,11 @@ Komi is added to White's score. All values are multiples of 0.5.
   scoring-phase timeout (R-SP-7) keeps running and may end the game first. A game aborted before it
   really started (lila's abort) has no result (`Void`).
 - **R-END-5** There are no draw offers; the only draw is jigo (R-RES-3) (open point 9).
+- **R-END-6** Move cap: a game that reaches lila's cap of 1,000 plies (stone placements and passes;
+  ADR 0019 §7) ends play and opens the scoring phase at once, without two passes. Resuming is then
+  refused, also when the ply reaching the cap is itself the second pass, since no further move is
+  allowed (go-rules refusal `play-closed`). The phase ends as R-SP-9 says, or by R-SP-10. This goes
+  beyond R-SP-6 and R-SP-9. Decided by Claude under the owner's 2026-09-28 delegation (ADR 0020 §3).
 
 The scoring phase (PLAN §3.8):
 
@@ -193,6 +198,12 @@ The scoring phase (PLAN §3.8):
   (R-SP-4) or timeout (R-SP-7), or by resignation or forfeit (open point 10). Clocks alone do not
   bound resume → pass → pass cycles: a pass costs nothing in byo-yomi, Fischer adds time on every
   move, and a correspondence clock resets.
+- **R-SP-10** No count possible: if the scoring service never produces a proposal within a grace
+  period (10 minutes live, 1 day correspondence) after the phase opens, or never produces a pending
+  recount within the same grace period after the timeout fires, the game ends with **no result** (`Void`,
+  R-RES-2): no winner, and not a draw (R-END-5). This extends R-SP-7's "never without a result" for
+  the case where no count can be made; repetition still never voids a game (R-KO-6). Decided by
+  Claude under the owner's 2026-09-28 delegation (ADR 0020 §4).
 
 ## 8. Scoring and results
 
@@ -319,6 +330,10 @@ test line numbers are from its GitHub `main` (`e61c56e`); the npm package ships 
    unchanged).
 8. **Limit on resuming** (R-SP-9): neither text needs one, because neither has an online
    scoring phase.
+9. **Move cap** (R-END-6): a server limit with no counterpart in either text; at 1,000 plies play
+   ends without two passes and cannot resume.
+10. **No result when no count can be made** (R-SP-10): caused by a failure of the scoring
+    service, not by the position; J1989's "no result" for cycles still does not exist (item 1).
 
 ## 12. Choices approved by the owner
 
