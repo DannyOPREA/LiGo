@@ -7,4 +7,5 @@
 - [Conformance fixture review patterns](conformance-fixture-review-patterns.md) — CI wiring, checker argv bug, circular oracles, phase, licence
 - [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, silent SGF parse, RU override, vacuous handicap test, truncated notice
 - [General review patterns](review-patterns-general.md) — transitive-dep licences, pipefail+find, docker caches, harness vacuity, pin-check order
+- [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, interim phases, old reader crashes, maxPlies draw
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column

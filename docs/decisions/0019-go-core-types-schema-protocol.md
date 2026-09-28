@@ -27,7 +27,10 @@ fixes the shape of that change before any code moves. A read-only survey of the 
 - A move arrives from lila-ws as `r/move <fullId> <uci> …`, is parsed with `Uci`, validated by
   `chess.Game.moveWithCompensated` (which also steps the clock with lag compensation), and goes back
   to clients as versioned `move` events carrying `uci`, `san`, `fen`, `dests`, `clock` and chess flags.
-  lila-ws parses `Uci`/`Fen` itself only to relay moves and feed live mini boards (`Fens.scala`).
+  lila-ws parses `Uci`/`Fen` to relay moves and feed live mini boards (`Fens.scala`), and in its eval
+  cache (`evalCache/`, removed by ADR 0018). It also depends on `scalachess-play-json`.
+- strategygames (10.2.1-s3-ps14) does not depend on scalachess (its POM), and ships
+  `strategygames.ByoyomiClock` (its jar).
 - `libs/go-rules` has its own `Color`, `Position` and `Action` (`model.scala`), so a wildcard import
   of `ligo.gorules.*` in lila would shadow lila's global `Color`.
 
@@ -49,7 +52,9 @@ threshold in Phase 5.
 ### 2. Two colour types, one bridge
 lila keeps `chess.Color` everywhere (Go's Black is `chess.Black`, White is `chess.White`). lila code
 never wildcard-imports `ligo.gorules.*`; it converts between the two `Color`s, and between lila's
-and go-rules' other types, in one place (`lila.game.GoBridge`).
+and go-rules' other types, in one place: a bridge object in `core` (`lila.core.game.GoBridge`),
+since `core`'s `Game` holds the Go game and every module can reach it. The 3.17 CI check also bans
+`strategygames.` imports anywhere outside `libs/go-rules`.
 
 ### 3. The game model: a Go game beside the chess one, then instead of it
 - Unit 3.11 moves `clock`, `ply` and `startedAtPly` off `chess.Game` onto lila's `Game` (keeping the
@@ -58,12 +63,20 @@ and go-rules' other types, in one place (`lila.game.GoBridge`).
 - Unit 3.12 adds `go: Option[GoGame]` beside `chess`. A Go game carries an unused standard-start
   chess game, so chess readers keep compiling. Unit 3.17 removes `chess` and makes `go` required.
 - `GoGame` (go-rules) is the authority on the position, turn, captures, ko point and phase. go-rules
-  gains a public `GoGame.replay(setup, actions)` (its private one exists) for loading.
+  gains a public `GoGame.replay(setup, actions): Either[...]` for loading (its private one calls
+  `sys.error`, which must not crash a round actor on a corrupt document). Unit 3.12 measures a
+  300-move 19×19 replay, since game lists load many games, and cross-checks the replayed ply count
+  against the stored `t` (`ac` also holds resumes, so its length is not the ply count).
 - **Ply** counts placements and passes. Resuming play from the scoring phase is not a ply. lila
   derives the player to move from ply parity (even is White), so `startedAtPly` is 1 when Black
   moves first (even games, handicap 1) and 0 when White does (handicap 2–9), the trick lila already
-  uses for positions with Black to move. A test per handicap case checks lila's turn equals
-  `GoGame.toMove`.
+  uses for positions with Black to move. A custom starting position (`ip`) takes it from the
+  position's player to move. That parity rule only holds when a game is loaded: at runtime lila's
+  `turnColor` is today `chess.Game.player`, so unit 3.11 redefines `turnColor` on lila's `Game`
+  (from `GoGame.toMove` for Go games). Tests per handicap case (0, 1, 2+) and for a custom position
+  check lila's turn equals `GoGame.toMove`. Upstream spots that assume White moved first
+  (`GameUi.scala` "didn't move" message, `RoundUi.scala` move count) are fixed as their units reach
+  them.
 
 ### 4. Storage: same collection, neutral keys kept, a small Go block
 Go games stay in `game5` and keep every game-neutral key (ids, players, status, ply, `st`, clock,
@@ -80,14 +93,26 @@ keys (`hp`, `pg`, `ps`, `ph`, `cl`, `ur`, `cc`, `chd`, `if`, `v`, `pgni`, `do`).
 | `ac` | the actions, 2 bytes each, big-endian: a point is `row × size + col`, pass is `0xFFFF`, resume is `0xFFFE` |
 
 A 300-move game's actions take 600 bytes. Captures, phase and ko point are derived by replaying
-`ac`; lists that need prisoner counts without a replay may add a denormalised field later. Chess
-games in a developer's database are not migrated: LiGo has no production data, and a dev database
-is reset (`dev/ligo db`) after unit 3.17.
+`ac`; lists that need prisoner counts without a replay may add a denormalised field later. `ip`
+holds the stones as two SGF point lists (`AB`/`AW` style) and the player to move; its exact BSON
+shape is 3.12's.
+
+From 3.12 to 3.17 the reader, the writer and `GameDiff` branch on the Go block: a Go document has no
+`hp`/`ps`/`cl`, which the chess reader requires today, and `GameDiff` writes `ac` instead of the chess
+keys. A BSON round-trip test covers Go games.
+
+Chess games already in a developer's database are not migrated (LiGo has no production data).
+From 3.17 game queries only match documents with `sz`, so old chess documents are ignored rather
+than read. Claude never drops or wipes a database: resetting the owner's local data is the owner's
+call, and the 3.17 PR gives the command for it.
 
 ### 5. Clocks
 Fischer games keep scalachess's `chess.Clock` unchanged (limit, increment, berserk, moretime, lag
-compensation, the `c`/`cw`/`cb` storage). A Go move steps the clock itself (`clock.step`), since
-`chess.Game.moveWithCompensated` no longer does it. Byo-yomi arrives in Phase 4 behind a small
+compensation, the `c`/`cw`/`cb` storage). A Go move steps the clock itself, since
+`chess.Game.moveWithCompensated` no longer does it, repeating scalachess's `Game.applyClock`
+recipe: apply the frame lag (`withFrameLag`), `step(metrics, gameActive)`, and `start` the clock
+after the first ply. `Clock(config)` starts with White's side, so a Black-first game switches it
+to Black at creation; a test checks the right side's clock runs in a Black-first game. Byo-yomi arrives in Phase 4 behind a small
 lila-side clock interface with two implementations: Fischer (`chess.Clock`) and byo-yomi
 (strategygames' byo-yomi clock, wrapped by `libs/go-rules` per ADR 0012), stored under its own key
 rather than inside `c`. Correspondence keeps lila's days-per-move clock.
@@ -101,7 +126,7 @@ rather than inside `c`. Correspondence keeps lila's days-per-move clock.
   with the fixture reason (`occupied`, `suicide`, `superko`, …) as its text.
 - lila → clients, a versioned `move` event:
   `{"p":"pd"}` or `{"pass":true}`, plus `"ply"`, `"cap"` (points captured by this move),
-  `"prisoners":{"b":n,"w":n}`, `"ko"` (optional), `"phase"`, `"clock"` (optional), and `"status"`
+  `"prisoners":{"b":n,"w":n}` (`b` is the White stones Black has taken, as go-rules' `Captures`), `"ko"` (optional), `"phase"`, `"clock"` (optional), and `"status"`
   / `"winner"` when the game ends. No `dests`: the browser's goban engine knows the legal points and
   the server re-checks.
 - The move bus event becomes `(gameId, board, move)` instead of FEN and UCI.
@@ -112,17 +137,26 @@ rather than inside `c`. Correspondence keeps lila's days-per-move clock.
   Draw offers are removed; Go games end by resignation, timeout or abort in Phase 3 (and by
   scoring in Phase 4).
 
-### 7. Game status
-Phase 3 needs only statuses lila already has (started, resign, out of time, aborted, no start).
-The Go-specific end, "scored" (both players accepted a count), is decided in Phase 4 with the
-scoring phase. If it can't be expressed with scalachess's fixed `Status` values, that is the
-trigger in decision 1 to vendor the neutral types.
+### 7. Game status and how Phase 3 games end
+Phase 3 needs only statuses lila already has (started, resign, out of time, aborted, no start,
+unknown finish).
+- **Two passes in Phase 3.** The scoring phase and resuming play arrive in Phase 4, so in Phase 3
+  the second consecutive pass ends the game with status "unknown finish" and no winner, stopping the
+  clock. Nobody loses on time for having passed, and no game hangs. Phase 3 games are casual only
+  (ratings come in Phase 5), so no rating is affected. Phase 4 replaces this with the scoring phase.
+- **Move cap.** lila's chess cap (`Game.maxPlies = 600`) forces a draw, which Go doesn't have
+  (R-END-5). Go games get their own cap of 1,000 plies (well beyond any real 19×19 game; superko
+  already prevents endless repetition), ending the same way as two passes: "unknown finish", no
+  winner. Phase 4 revisits it (reaching the cap could open the scoring phase instead).
+- **"Scored"** (both players accepted a count) is decided in Phase 4. scalachess's `Status` has
+  `VariantEnd` and `UnknownFinish`, which may be enough; if not, that is the trigger in decision 1
+  to vendor the neutral types.
 
 ### 8. Order of work
 As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
-3.17 chess rules and formats removed, CI check added.
+3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
 
 ## Consequences
 - No new code to own for colours, clocks, time units or Glicko-2; lila-ws keeps its types.
