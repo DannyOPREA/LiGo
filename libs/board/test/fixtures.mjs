@@ -6,6 +6,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { createEngine, play } from "../src/engine.mjs";
+import { handicapStones, standardKomi } from "../src/rules.mjs";
+
+export { handicapStones, standardKomi };
 
 export const dir = fileURLToPath(new URL("../../conformance/fixtures/", import.meta.url));
 
@@ -21,23 +24,9 @@ export const forClient = () => all().filter((c) => c.appliesTo.includes("client"
 /** The rulesets a case runs under: its own, or both when it names none. */
 export const rulesetsOf = (c) => (c.ruleset ? [c.ruleset] : ["japanese", "chinese"]);
 
-// R-HCP-4's fixed placements. In a game the server sends its stones (strategygames places them);
-// here they stand in for the server. goban's own table is checked against this one in engine.test.mjs.
-const HANDICAP = {
-  9: ["gc", "cg", "gg", "cc", "ee", "ce", "ge", "ec", "eg"],
-  19: ["pd", "dp", "pp", "dd", "jj", "dj", "pj", "jd", "jp"],
-};
-
-/** The handicap stones for N stones (R-HCP-4). */
-export function handicapStones(size, n) {
-  if (n < 2) return []; // R-HCP-2: one stone of handicap is no stone, Black moves first
-  const t = HANDICAP[size];
-  if (!t) throw new Error(`no handicap table for ${size}x${size}`);
-  const [corners, centre, sides] = [t.slice(0, 4), t[4], t.slice(5)];
-  if (n <= 4) return corners.slice(0, n);
-  if (n % 2 === 1) return [...handicapStones(size, n - 1), centre];
-  return [...corners, ...sides.slice(0, n - 4)];
-}
+// R-HCP-4's fixed placements and R-KOMI's default komi live in src/rules.mjs (unit 2.2, so the
+// playground can use the same table); re-exported above. In a game the server sends its stones
+// (strategygames places them); here they stand in for the server.
 
 /** Rows of `.XO` as SGF points per colour. */
 export function stonesOf(rows) {
@@ -51,9 +40,6 @@ export function stonesOf(rows) {
   );
   return stones;
 }
-
-/** R-KOMI: 6.5 Japanese, 7.5 Chinese in even games, 0.5 with any handicap (the server's Komi.standard). */
-export const standardKomi = (ruleset, handicap) => (handicap > 0 ? 0.5 : ruleset === "chinese" ? 7.5 : 6.5);
 
 /** The engine for a case at its start, set up as a game would be. */
 export function engineFor(c, ruleset) {

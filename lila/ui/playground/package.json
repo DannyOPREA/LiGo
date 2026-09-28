@@ -1,0 +1,14 @@
+{
+  "name": "playground",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LiGo local Go playground: play both colours on one board, nothing stored",
+  "type": "module",
+  "dependencies": {
+    "@ligo/board": "workspace:*",
+    "lib": "workspace:*"
+  },
+  "build": {
+    "bundle": "src/playground.ts"
+  }
+}

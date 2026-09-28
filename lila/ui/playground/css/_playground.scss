@@ -1,0 +1,103 @@
+.playground {
+  padding: $block-gap;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  &__intro {
+    color: $c-font-dim;
+    margin-bottom: $block-gap;
+  }
+
+  &__layout {
+    display: flex;
+    flex-direction: column;
+    gap: $block-gap;
+
+    @include mq-at-least-col2 {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+  }
+
+  &__board-wrap {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    // Full width, not shrink-to-fit: the board takes its size from this box, and `margin: auto`
+    // would otherwise shrink it to the loading text's width on phones.
+    width: 100%;
+
+    // As wide as the screen allows, but never so wide the side panel is pushed off on a tall
+    // desktop window: the board sizes itself from this container (libs/board README).
+    max-width: 70vh;
+    margin: 0 auto;
+
+    @include mq-at-least-col2 {
+      margin: 0;
+    }
+  }
+
+  &__loading {
+    text-align: center;
+    color: $c-font-dim;
+  }
+
+  &__side {
+    flex: 0 0 auto;
+    width: 100%;
+
+    @include mq-at-least-col2 {
+      width: 280px;
+    }
+  }
+
+  &__captures,
+  &__status {
+    padding: 0.5em 0;
+  }
+
+  &__capture {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__controls {
+    display: flex;
+    gap: 0.5em;
+    margin: $block-gap 0;
+
+    .button {
+      flex: 1 1 auto;
+      min-height: 44px;
+
+      &[disabled] {
+        opacity: 0.5;
+        cursor: default;
+        pointer-events: none;
+      }
+    }
+  }
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3em;
+    margin-bottom: 0.8em;
+
+    label {
+      color: $c-font-dim;
+      font-size: 0.9em;
+    }
+
+    select,
+    input {
+      font-size: 1rem;
+      min-height: 44px;
+      padding: 0.4em 0.6em;
+      background: $c-bg-zebra;
+      color: $c-font;
+      border: $border;
+      border-radius: $box-radius-size;
+    }
+  }
+}

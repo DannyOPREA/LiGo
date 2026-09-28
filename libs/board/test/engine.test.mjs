@@ -7,7 +7,8 @@ import { test } from "node:test";
 import gobanEngine from "goban-engine";
 
 import { createEngine, play, readSgf, stateOf, tryMove } from "../src/engine.mjs";
-import { handicapStones, stonesOf } from "./fixtures.mjs";
+import { handicapStones, standardKomi } from "../src/rules.mjs";
+import { stonesOf } from "./fixtures.mjs";
 
 const { GobanEngine } = gobanEngine;
 
@@ -47,6 +48,17 @@ test("goban's own fixed handicap placement agrees with R-HCP-4", () => {
       const placed = stonesOf(stateOf(e).board).black.sort();
       assert.deepEqual(placed, [...handicapStones(size, n)].sort(), `${size}x${size}, ${n} stones`);
     }
+});
+
+test("has no handicap table for 13x13 (R-SCOPE-1: no fixed placements yet)", () => {
+  assert.throws(() => handicapStones(13, 2), /no handicap table for 13x13/);
+});
+
+test("standardKomi follows R-KOMI-1/2 (even games; 0.5 with any handicap, both rulesets)", () => {
+  assert.equal(standardKomi("japanese", 0), 6.5);
+  assert.equal(standardKomi("chinese", 0), 7.5);
+  assert.equal(standardKomi("japanese", 2), 0.5);
+  assert.equal(standardKomi("chinese", 9), 0.5);
 });
 
 test("names the reason a move is refused and leaves the position as it was", () => {

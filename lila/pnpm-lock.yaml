@@ -581,6 +581,15 @@ importers:
         specifier: workspace:*
         version: link:../lib
 
+  ui/playground:
+    dependencies:
+      '@ligo/board':
+        specifier: workspace:*
+        version: link:../../../libs/board
+      lib:
+        specifier: workspace:*
+        version: link:../lib
+
   ui/puzzle:
     dependencies:
       '@badrap/result':
