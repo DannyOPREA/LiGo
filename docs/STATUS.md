@@ -30,10 +30,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - **Phase 1 — build-vs-buy + rules integration** started 2026-09-27; units listed in docs/PLAN.md §5.
   - Unit 1.1: server-side Go rules and byo-yomi clock come from strategygames as a pinned dependency
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
-  - Unit 1.4 (ratings memo): docs/build-vs-buy/ratings.md recommends lila's own Glicko-2 configured
-    with OGS's Glicko-2 settings plus ported goratings rank/handicap formulas; the spike reproduces
-    OGS's per-game update and handicap maths exactly (lila's floors and caps still differ).
-    Waiting on your A / A2 answer.
+  - Unit 1.4: ratings use lila's own Glicko-2 with OGS's Glicko-2 settings plus goratings' rank
+    curve and handicap maths (9×9 stone = 6 ranks) (ADR 0013, PR #12). The glue lands in Phase 5.
 
 ## Next
 - Phase 1 units 1.2–1.9 (docs/PLAN.md §5, "Phase 1 units"); next is 1.2, the client engine + board
@@ -43,7 +41,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
-- Unit 1.4: ratings A (OGS's Glicko-2 settings, recommended) or A2 (lila's settings)? See the unit thread.
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).

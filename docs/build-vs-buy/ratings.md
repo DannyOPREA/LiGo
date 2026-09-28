@@ -1,6 +1,6 @@
 # Build-vs-buy: ratings, kyu/dan ranks and handicap
 
-- Unit: 1.4 (Phase 1). Status: **Open: waiting for the owner's choice.**
+- Unit: 1.4 (Phase 1). Status: **Decided 2026-09-28: option A** (owner), recorded in [ADR 0013](../decisions/0013-lila-glicko2-with-ogs-settings.md).
 - Date: 2026-09-27. Evidence gathered in a throwaway spike outside the repo (code and output below).
 
 ## Capability

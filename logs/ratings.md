@@ -10,6 +10,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 1.4 · Owner chose lila's Glicko-2 with OGS's settings
+- Did: recorded the owner's answer (option A) as ADR 0013; marked the memo decided; updated STATUS and decisions.md.
+- Worked: the decision card was answered without follow-up questions.
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Decisions: A (owner) → ADR 0013; settles PLAN §10's 9×9 stone value (6 ranks).
+- Verified by Claude: docs-only; /verify and CI on the PR. · Needs owner verification: none.
+- Follow-ups: Phase 5 writes the glue (GoRank/handicap object, two calls per game in PerfsUpdater, four constants, one overall Go perf) with goratings' MIT notice in COPYING.md.
+
 ### 2026-09-27 · 1.4 · Build-vs-buy: ratings (scalachess Glicko-2 + goratings formulas)
 - Did: read lila's rating module and PerfsUpdater, scalachess-rating 17.17.1, goratings @ 6cab309 and OGS's rank_utils.ts @ d94be54, PlayStrategy's lila rating module. Spiked scalachess-rating in a throwaway sbt 2.0.9 / Scala 3.8.4 project with a Scala port of goratings' rank curve and handicap maths, and ran the same cases through goratings' own Python. Wrote docs/build-vs-buy/ratings.md; asked the owner A (OGS settings) vs A2 (lila settings).
 - Worked: 5/5 Glicko-2 per-game updates identical to 6 decimals (lila's floors/caps/start values still differ; listed in the memo) with tau 0.5 and step 6; 90/90 handicap grid rows identical; a 4-stone game identical to goratings' one-game-at-a-time pattern. ADR 0004's curve constants (525, 23.15) confirmed in goratings and OGS's frontend.
