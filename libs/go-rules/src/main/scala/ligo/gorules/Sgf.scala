@@ -12,7 +12,7 @@ package ligo.gorules
   */
 object Sgf:
 
-  def write(game: GoGame): String =
+  def write(game: GoGame, info: SgfInfo = SgfInfo()): String =
     val setup = game.setup
     val (start, firstToMove) = startOf(game)
     val header = List(
@@ -23,6 +23,7 @@ object Sgf:
       s"RU[${setup.ruleset}]",
       s"KM[${komi(setup.komi)}]"
     ) ++ Option.when(setup.handicap >= 2)(s"HA[${setup.handicap}]") ++
+      infoProperties(info) ++
       stonesOf(start, Color.Black).map(ps => s"AB$ps") ++
       stonesOf(start, Color.White).map(ps => s"AW$ps") ++
       Option.when(start.nonEmpty || firstToMove == Color.White)(s"PL[${letter(firstToMove)}]")
@@ -33,6 +34,28 @@ object Sgf:
         case ((color, nodes), Action.Resume) => (color, nodes)
       ._2
     s"(;${header.mkString}\n${moves.mkString("\n")})"
+
+  // Game information (FF[4] "game-info" properties), in the order players read them.
+  private def infoProperties(info: SgfInfo): List[String] =
+    List(
+      info.black.map(n => s"PB[${text(n)}]"),
+      info.blackRank.map(r => s"BR[${text(r)}]"),
+      info.white.map(n => s"PW[${text(n)}]"),
+      info.whiteRank.map(r => s"WR[${text(r)}]"),
+      info.date.map(d => s"DT[$d]"),
+      info.place.map(p => s"PC[${text(p)}]")
+    ).flatten ++ timeProperties(info.time) ++ info.result.map(r => s"RE[${r.sgf}]")
+
+  private def timeProperties(time: Option[SgfTime]): List[String] = time match
+    case Some(SgfTime.Byoyomi(c)) =>
+      List(s"TM[${c.mainSeconds}]", s"OT[${c.periods}x${c.periodSeconds} byo-yomi]")
+    case Some(SgfTime.Fischer(limit, increment)) => List(s"TM[$limit]", s"OT[$increment fischer]")
+    case Some(SgfTime.Correspondence(days)) => List(s"OT[$days days per move]")
+    case None => Nil
+
+  // SimpleText: `]` and `\` are escaped with a backslash; line breaks become spaces.
+  private def text(s: String): String =
+    s.replace("\\", "\\\\").replace("]", "\\]").replaceAll("[\r\n]+", " ")
 
   private def startOf(game: GoGame): (Map[Point, Color], Color) =
     GoGame.start(game.setup) match
@@ -47,3 +70,23 @@ object Sgf:
 
   // 6.5, 7, -3.5, 0.5
   private def komi(k: Double): String = BigDecimal(k).bigDecimal.stripTrailingZeros.toPlainString
+
+/** How a game was timed, for SGF's `TM` (main time in seconds) and `OT` (overtime, free text). */
+enum SgfTime:
+  case Byoyomi(config: ByoyomiConfig)
+  case Fischer(limitSeconds: Int, incrementSeconds: Int)
+  case Correspondence(daysPerMove: Int)
+
+/** Game information lila adds to an SGF record (unit 4.3, written by 4.11's export). Every field is optional;
+  * the default writes a bare record, as before.
+  */
+final case class SgfInfo(
+    black: Option[String] = None,
+    white: Option[String] = None,
+    blackRank: Option[String] = None,
+    whiteRank: Option[String] = None,
+    date: Option[java.time.LocalDate] = None,
+    place: Option[String] = None,
+    time: Option[SgfTime] = None,
+    result: Option[GameResult] = None
+)

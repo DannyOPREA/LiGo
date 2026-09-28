@@ -12,6 +12,34 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · unit 4.3 · Scoring phase, results and SGF game info in libs/go-rules
+- Did: `Scoring` (open on the service's proposal, whole-chain toggles, acceptances, count versions
+  and pending recounts, ADR 0020 §3), `GameResult` (totals to `B+3.5` / jigo `0`, and `R`/`T`/`F`/
+  `Void`), `GoGame.chainAt` (strategygames' `Chain.at`), `GoGame.closePlay` for the 1,000-ply cap
+  (new refusal `play-closed`), `SgfInfo`/`SgfTime` for `PB`/`PW`/`BR`/`WR`/`DT`/`PC`/`TM`/`OT`/`RE`.
+  The spec gains R-END-6 (move cap) and R-SP-10 (no count possible → `Void`) and §11 items 9–10
+  (go-rules-expert).
+- Worked: toggles and accepts naming the count version make "accept a count you haven't seen"
+  impossible in the model itself, not only in lila.
+- Didn't work / dead ends: `closePlay` first refused a game already in the scoring phase, so a cap
+  reached by the second pass would still allow resume (go-rules-expert spotted it); it now always
+  closes.
+- Lessons: an enum method can't share a name with its cases' fields in Scala 3 (`winner` →
+  `winningColor`).
+- Decisions: R-END-6 and R-SP-10 wording, Claude under the owner's 2026-09-28 delegation
+  (ADR 0020, logs/decisions.md).
+- Review (reviewer agent): nothing blocking. Fixed its findings: count versions now carry the
+  phase number (request numbers restart per phase, so an accept from an earlier phase could have
+  landed on a new count; ADR 0020 §3/§6 amended to `v: "n:cv"`); `GameResult.Scored` keeps the
+  two totals so no impossible result can be built; `counted` checks the count's dead stones match
+  the marks; more tests (other dead chains stay dead, off-board toggle, play/undo on a closed
+  game, line breaks in SGF names); R-SP-10's wording.
+- Verified by Claude: `dev/ligo test rules`, verify.sh. · Needs owner verification: none for the
+  library; whether OGS and Sabaki read `OT[10 fischer]` and `OT[3 days per move]` is checked in
+  unit 4.11.
+- Follow-ups: lila wiring in unit 4.8, which must close play again after replaying a capped game
+  (closing isn't a stored action); SGF export in 4.11.
+
 ### 2026-09-28 · 1.9 · Nightly differential test against KataGo
 - Did: added the differential test in libs/go-rules' test scope (`differential/`): seeded random games (random size, ruleset, handicap 2–9 in a fifth of games; random stones that don't fill the mover's own one-point eye; mid-game passes, takebacks and resumptions) played by the adapter while KataGo v1.18.1 follows over GTP; after every action it compares the legal points, stones, player to move and captures, and at the end the area score (strategygames' own count vs KataGo's `final_score`). `DifferentialTest` checks the plumbing without KataGo (real `showboard` output, an adapter-backed oracle, two planted-bug oracles). `dev/ligo differential` (native mode), `dev/katago.sh env` and `LIGO_KATAGO_TEST_NET_ONLY`, and `.github/workflows/nightly-differential.yml` (1,000 games nightly with new seeds, 60 on PRs touching libs/go-rules; report in the job summary, SGFs of disagreeing games as an artifact; not a required check).
 - Worked: 1,000 games (seeds 20260928–20261927, 522 9×9, 260 13×13, 218 19×19, 219 with handicap) all agree: 228,125 actions (216,121 stones, 9,658 passes, 2,346 takebacks, 311 resumptions), 79,703 stones captured, 1,367,774 suicide / 10,379 simple-ko / 1,271 longer-superko refusals seen by both, 1,000 final scores; 29 min on 4 cores. Mutation: KataGo switched to simple ko made 23 of 60 games disagree (legal points) — the test bites.

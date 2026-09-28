@@ -126,14 +126,14 @@ waiting, timing and storage in lila (unit 4.8):
    4.3), since today only two passes open it.
 2. **Proposal.** When the reply arrives, `d` = `pd` = its dead stones, `cv` = its request number,
    acceptances are cleared, and `ex` moves to the timeout.
-3. **Toggle.** `{"p":"pd","v":cv}`: either player taps a stone; its whole chain flips (R-SP-3).
-   lila refuses a toggle whose `v` is not the current `cv`, or that arrives while a recount is
+3. **Toggle.** `{"p":"pd","v":"n:cv"}`: either player taps a stone; its whole chain flips (R-SP-3).
+   lila refuses a toggle whose `v` is not the current phase and `cv`, or that arrives while a recount is
    pending, so two players tapping the same chain at once can't silently cancel each other: the
    second tap is refused and the player sees the new marks. Both acceptances reset, `pn` is set
    and lila sends `count`. Toggles go through lila's existing per-socket rate limit, and only one
    recount is ever outstanding per game.
-4. **Accept.** `{"v":cv}` sets the player's bit. lila refuses it while a recount is pending or if
-   `v` is not the current `cv`, so a player can only accept the count they are looking at
+4. **Accept.** `{"v":"n:cv"}` sets the player's bit. lila refuses it while a recount is pending or if
+   `v` is not the current phase and `cv`, so a player can only accept the count they are looking at
    (R-SP-4). When both bits are set, the game ends (§5).
 5. **Resume.** Either player, any time, within R-SP-9's limit (go-rules refuses otherwise). The
    dead marks go, `sc` is removed, play continues with the opponent of the second passer. After
@@ -188,12 +188,12 @@ periods. Nobody can lose on time while agreeing on dead stones; the phase's time
 - `sc` holds the count, komi and compensation; SGF export (unit 4.11) writes `RE` from them.
 
 ### 6. Round messages (lila ⇄ lila-ws ⇄ browser)
-- Browser → lila-ws: `{"t":"score-toggle","d":{"p":"pd","v":3}}`, `{"t":"score-accept","d":{"v":3}}`,
+- Browser → lila-ws: `{"t":"score-toggle","d":{"p":"pd","v":"2:3"}}`, `{"t":"score-accept","d":{"v":"2:3"}}`,
   `{"t":"score-resume"}`. lila-ws adds these three names to the commands it forwards as
   `r/do <fullId> <json>` (as `resign` is today); it needs no Go knowledge. lila's `RoundSocket`
   gets the three matching cases.
-- lila → clients: a versioned `scoring` event with the phase number, `v` (the count version
-  `cv`), `src`, `dead`, `seal`, `owner`, the count, `accepted: {"b":bool,"w":bool}`, `pending` (a
+- lila → clients: a versioned `scoring` event with the phase number, `v` (the count version:
+  `<phase number>:<cv>`, since request numbers start again in each phase; amended in unit 4.3), `src`, `dead`, `seal`, `owner`, the count, `accepted: {"b":bool,"w":bool}`, `pending` (a
   recount is under way) and the time left; `{"t":"scoring","d":{"counting":true}}` while waiting
   for the proposal. A resume is the versioned `resume` event with the player to move and the
   clock. The game's end is lila's usual `endData` event, with the result string added.

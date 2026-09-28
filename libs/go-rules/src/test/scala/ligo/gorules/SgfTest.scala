@@ -68,3 +68,40 @@ class SgfTest extends munit.FunSuite:
       assertEquals(replayed.stones, g.stones, f.id)
       assertEquals(replayed.toMove, g.toMove, f.id)
       assertEquals(replayed.captures, g.captures, f.id)
+
+class SgfInfoTest extends munit.FunSuite:
+
+  private val game = GoGame
+    .start(Setup(BoardSize.Nineteen, Ruleset.Japanese, 6.5))
+    .flatMap(_.play(Point.fromSgf("pd").get))
+    .fold(e => fail(e.toString), identity)
+
+  test("writes players, ranks, date, place, byo-yomi and the result after the settings"):
+    val info = SgfInfo(
+      black = Some("alice"),
+      white = Some("bob"),
+      blackRank = Some("5k"),
+      whiteRank = Some("1d"),
+      date = Some(java.time.LocalDate.of(2026, 9, 28)),
+      place = Some("LiGo"),
+      time = Some(SgfTime.Byoyomi(ByoyomiConfig(600, 5, 30))),
+      result = Some(GameResult.fromTotals(BigDecimal(40), BigDecimal("43.5")))
+    )
+    assertEquals(
+      Sgf.write(game, info),
+      "(;GM[1]FF[4]CA[UTF-8]SZ[19]RU[Japanese]KM[6.5]PB[alice]BR[5k]PW[bob]WR[1d]DT[2026-09-28]PC[LiGo]" +
+        "TM[600]OT[5x30 byo-yomi]RE[W+3.5]\n;B[pd])"
+    )
+
+  test("writes Fischer and correspondence time, and escapes ] and backslash in names"):
+    val fischer = SgfInfo(black = Some("a]b\\c"), time = Some(SgfTime.Fischer(300, 10)))
+    assert(Sgf.write(game, fischer).contains("PB[a\\]b\\\\c]TM[300]OT[10 fischer]"), Sgf.write(game, fischer))
+    val corr =
+      SgfInfo(time = Some(SgfTime.Correspondence(3)), result = Some(GameResult.Resigned(Color.Black)))
+    assert(Sgf.write(game, corr).contains("KM[6.5]OT[3 days per move]RE[B+R]"), Sgf.write(game, corr))
+
+  test("line breaks in names become spaces"):
+    assert(Sgf.write(game, SgfInfo(white = Some("a\r\nb\nc"))).contains("PW[a b c]"))
+
+  test("without info the record is unchanged"):
+    assertEquals(Sgf.write(game), Sgf.write(game, SgfInfo()))
