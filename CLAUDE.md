@@ -39,9 +39,11 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
 - `lila-ws/` websocket server (Scala, Netty), talks to lila via Redis. See lila-ws/CLAUDE.md.
 - `dev/` the only way to build, run and test (`dev/ligo`), plus `doctor.sh` and `cloud-setup.sh`.
 - `.claude/` agents, skills, hooks, rules. `docs/`, `logs/` as above.
+- `libs/conformance/` the Go rules test cases (JSON) BOTH engines and the scoring service replay.
+  See libs/conformance/CLAUDE.md.
 - Planned, not created yet (each gets its own CLAUDE.md when its unit starts): `libs/go-rules`
-  (server rules adapter), `libs/board` (goban adapter), `libs/conformance` (fixtures for BOTH
-  engines), `services/scoring` (KataGo + goban autoscore + goscorer), `tools/puzzles`.
+  (server rules adapter), `libs/board` (goban adapter), `services/scoring` (KataGo + goban
+  autoscore + goscorer), `tools/puzzles`.
 - `lila/` and `lila-ws/` are plain folders of this repo, not git repos of their own.
 
 ## Commands

@@ -1,0 +1,1094 @@
+{
+  "format": 1,
+  "idPrefix": "katago-",
+  "source": {
+    "name": "KataGo",
+    "url": "https://github.com/lightvector/KataGo",
+    "commit": "92ee95c0a4b25fec214da00951ab69e97e207729",
+    "license": "MIT"
+  },
+  "cases": [
+    {
+      "id": "katago-ko-retake-banned",
+      "title": "Black takes a ko; White may not take back at once",
+      "rules": ["R-KO-1", "R-KO-4", "R-MOVE-4"],
+      "from": "cpp/tests/testrules.cpp:473",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".O.XXOX..",
+          "OXXXO.O..",
+          "O.X.OOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["fb"],
+      "expect": {
+        "board": [
+          ".O.XX.X..",
+          "OXXXOXO..",
+          "O.X.OOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": "fa",
+        "phase": "play",
+        "illegal": [
+          {"move": "fa", "reason": "superko"}
+        ]
+      },
+      "notes": "First step of KataGo's 'Situational ko rules' test. KataGo's 6x5 board is in the 9x9 top-left corner. Its old right and bottom edges are walled with one stone per point (column g, row 6), each the opposite colour of every stone that ever stands next to it, and each with an empty point behind it so it can never be captured. Checked with a reference model: at every step the stones inside the 6x5 area have exactly the liberties they have on KataGo's board, and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-sending-two-returning-one-return-legal",
+      "title": "Sending two, returning one: White may return one stone (legal under situational superko, illegal under positional)",
+      "rules": ["R-KO-1", "R-MOVE-4"],
+      "from": "cpp/tests/testrules.cpp:473",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".O.XXOX..",
+          "OXXXO.O..",
+          "O.X.OOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["fb", "pass", "dc", "ca", "aa"],
+      "expect": {
+        "board": [
+          "X..XX.X..",
+          "OXXXOXO..",
+          "O.XXOOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 0
+        },
+        "phase": "play",
+        "legal": ["ba"]
+      },
+      "notes": "KataGo's 'Situational ko rules' test prints no ban for White here ('Can white recapture?'), while its 'Positional ko rules' test (testrules.cpp:389) bans (1,0) = ba: the board would repeat with the other player to move. LiGo compares situations (ADR 0003), so it is legal. KataGo's 6x5 board is in the 9x9 top-left corner. Its old right and bottom edges are walled with one stone per point (column g, row 6), each the opposite colour of every stone that ever stands next to it, and each with an empty point behind it so it can never be captured. Checked with a reference model: at every step the stones inside the 6x5 area have exactly the liberties they have on KataGo's board, and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-sending-two-returning-one-ko-recapture",
+      "title": "Sending two, returning one: after White retakes the other ko, Black may not retake it at once",
+      "rules": ["R-KO-1", "R-KO-4"],
+      "from": "cpp/tests/testrules.cpp:473",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".O.XXOX..",
+          "OXXXO.O..",
+          "O.X.OOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["fb", "pass", "dc", "ca", "aa", "fa"],
+      "expect": {
+        "board": [
+          "X..XXOX..",
+          "OXXXO.O..",
+          "O.XXOOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 1
+        },
+        "koPoint": "fb",
+        "illegal": [
+          {"move": "fb", "reason": "superko"}
+        ]
+      },
+      "notes": "KataGo's 6x5 board is in the 9x9 top-left corner. Its old right and bottom edges are walled with one stone per point (column g, row 6), each the opposite colour of every stone that ever stands next to it, and each with an empty point behind it so it can never be captured. Checked with a reference model: at every step the stones inside the 6x5 area have exactly the liberties they have on KataGo's board, and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-sending-two-returning-one-long-ban",
+      "title": "Sending two, returning one: a retake that is not a simple ko is still banned because it repeats an earlier position",
+      "rules": ["R-KO-1", "R-KO-2"],
+      "from": "cpp/tests/testrules.cpp:473",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".O.XXOX..",
+          "OXXXO.O..",
+          "O.X.OOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["fb", "pass", "dc", "ca", "aa", "fa", "pass", "ba"],
+      "expect": {
+        "board": [
+          ".O.XXOX..",
+          "OXXXO.O..",
+          "O.XXOOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 2
+        },
+        "koPoint": null,
+        "phase": "play",
+        "illegal": [
+          {"move": "fb", "reason": "superko"}
+        ]
+      },
+      "notes": "KataGo prints 'Illegal: (5,1) X' after 'white now returns 1'. The repeated situation is the one after Black's 3rd move (dc), not the one just before: a simple-ko check alone would allow it. KataGo's 6x5 board is in the 9x9 top-left corner. Its old right and bottom edges are walled with one stone per point (column g, row 6), each the opposite colour of every stone that ever stands next to it, and each with an empty point behind it so it can never be captured. Checked with a reference model: at every step the stones inside the 6x5 area have exactly the liberties they have on KataGo's board, and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-sending-two-returning-one-cycle-blocked",
+      "title": "Sending two, returning one: when White sends two again, Black may not capture them (the cycle would repeat); the game goes on",
+      "rules": ["R-KO-1", "R-KO-2", "R-KO-6"],
+      "from": "cpp/tests/testrules.cpp:473",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".O.XXOX..",
+          "OXXXO.O..",
+          "O.X.OOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["fb", "pass", "dc", "ca", "aa", "fa", "pass", "ba", "pass", "ca"],
+      "expect": {
+        "board": [
+          ".OOXXOX..",
+          "OXXXO.O..",
+          "O.XXOOX..",
+          "XX.OO.O..",
+          "OOOO.OX..",
+          "XXXXOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 2
+        },
+        "koPoint": null,
+        "phase": "play",
+        "legal": ["fb", "pass"],
+        "illegal": [
+          {"move": "aa", "reason": "superko"}
+        ]
+      },
+      "openPoints": [1],
+      "notes": "KataGo's last check ('After white sends 2 again'): situational superko bans only (0,0) = aa; positional superko (its test at :389) also bans (5,1) = fb, which LiGo allows. The situation Black's aa would repeat is the one after White's pass (move 7), so this depends on open point 1. KataGo's 6x5 board is in the 9x9 top-left corner. Its old right and bottom edges are walled with one stone per point (column g, row 6), each the opposite colour of every stone that ever stands next to it, and each with an empty point behind it so it can never be captured. Checked with a reference model: at every step the stones inside the 6x5 area have exactly the liberties they have on KataGo's board, and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-eternal-life-cycle-blocked",
+      "title": "Eternal life: the 4-move cycle cannot be completed; White's move that would recreate the start is illegal and the game goes on",
+      "rules": ["R-KO-1", "R-KO-2", "R-KO-6"],
+      "from": "cpp/tests/testrules.cpp:765",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          "OOOOOO...",
+          "XXXXXO...",
+          "XOOOXXOOX",
+          ".O.X.OX.O",
+          "XXOOXXOO.",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ce", "ee", "de"],
+      "expect": {
+        "board": [
+          ".........",
+          "OOOOOO...",
+          "XXXXXO...",
+          "XOOOXXOOX",
+          ".O.X..X.O",
+          "XXOOXXOO.",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 2,
+          "white": 2
+        },
+        "phase": "play",
+        "legal": ["pass"],
+        "illegal": [
+          {"move": "fe", "reason": "superko"}
+        ]
+      },
+      "knownGaps": {
+        "client": "goban-engine never compares against the starting position (spec §9: its superko loop stops at move 1), so it allows this move."
+      },
+      "notes": "KataGo's test uses simple ko and expects the game to end with no result after two cycles; LiGo has no 'no result' (R-KO-6, spec §11.1): the cycle's 4th move repeats the starting situation and is illegal. KataGo's 8x5 board is in the 9x9 top-left corner; its old right and bottom edges are walled (column i, row 6) as in the other embedded cases. Checked with a reference model: at every step all stones inside the 8x5 area keep exactly their liberties on KataGo's board and every move there has the same legality, except one move neither played nor tested (Black at ae after move 2 is suicide on KataGo's board but connects to the wall stone at af here)."
+    },
+    {
+      "id": "katago-eternal-life-cycle-blocked-after-other-moves",
+      "title": "Eternal life, after two moves elsewhere: White's move that would complete the cycle is illegal",
+      "rules": ["R-KO-1", "R-KO-6"],
+      "from": "cpp/tests/testrules.cpp:765",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          "OOOOOO...",
+          "XXXXXO...",
+          "XOOOXXOOX",
+          ".O.X.OX.O",
+          "XXOOXXOO.",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["bh", "fh", "ce", "ee", "de"],
+      "expect": {
+        "board": [
+          ".........",
+          "OOOOOO...",
+          "XXXXXO...",
+          "XOOOXXOOX",
+          ".O.X..X.O",
+          "XXOOXXOO.",
+          ".........",
+          ".X...O...",
+          "........."
+        ],
+        "captures": {
+          "black": 2,
+          "white": 2
+        },
+        "phase": "play",
+        "illegal": [
+          {"move": "fe", "reason": "superko"}
+        ]
+      },
+      "notes": "Same as katago-eternal-life-cycle-blocked with one move each far away first (bh, fh), so the repeated situation is the one after White's fh rather than the starting position. KataGo's 8x5 board is in the 9x9 top-left corner; its old right and bottom edges are walled (column i, row 6) as in the other embedded cases. Checked with a reference model: at every step all stones inside the 8x5 area keep exactly their liberties on KataGo's board and every move there has the same legality, except one move neither played nor tested (Black at ae after move 2 is suicide on KataGo's board but connects to the wall stone at af here)."
+    },
+    {
+      "id": "katago-triple-ko-retake-banned",
+      "title": "Triple ko: after five ko captures, White may not retake the ko Black just took",
+      "rules": ["R-KO-1", "R-KO-4", "R-KO-6"],
+      "from": "cpp/tests/testrules.cpp:846",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          "OOOOOOOX.",
+          "OXO.O.OX.",
+          "X.XOXOXO.",
+          "XXXXXXXO.",
+          "OOOOOOOX.",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["db", "bc", "fb", "dc", "bb"],
+      "expect": {
+        "board": [
+          "OOOOOOOX.",
+          "OXO.OXOX.",
+          "X.XOX.XO.",
+          "XXXXXXXO.",
+          "OOOOOOOX.",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 2
+        },
+        "koPoint": "bc",
+        "phase": "play",
+        "illegal": [
+          {"move": "bc", "reason": "superko"}
+        ]
+      },
+      "notes": "KataGo 'Triple ko superko' expects White illegal at (1,2) = bc and (5,2) = fc (positional superko; situational gives the same). This case checks bc; katago-triple-ko-back-to-start checks fc. Under simple ko (KataGo's 'Triple ko simple', :803) the cycle goes on and ends the game with no result; LiGo has none (R-KO-6). KataGo's 7x6 board is in the 9x9 top-left corner; its bottom row is empty and never played, and its old right edge is walled (column h). Checked with a reference model: at every step all stones in the 7x6 area keep exactly their liberties and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-triple-ko-back-to-start",
+      "title": "Triple ko: White may not take a ko if that recreates the starting position",
+      "rules": ["R-KO-1", "R-KO-2", "R-KO-6"],
+      "from": "cpp/tests/testrules.cpp:846",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          "OOOOOOOX.",
+          "OXO.O.OX.",
+          "X.XOXOXO.",
+          "XXXXXXXO.",
+          "OOOOOOOX.",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["db", "bc", "fb", "dc", "bb"],
+      "expect": {
+        "phase": "play",
+        "legal": ["pass"],
+        "illegal": [
+          {"move": "fc", "reason": "superko"}
+        ]
+      },
+      "knownGaps": {
+        "client": "goban-engine never compares against the starting position (spec §9: its superko loop stops at move 1), so it allows this move."
+      },
+      "notes": "KataGo 'Triple ko superko' expects (5,2) = fc illegal for White: it recreates the starting situation. KataGo's 7x6 board is in the 9x9 top-left corner; its bottom row is empty and never played, and its old right edge is walled (column h). Checked with a reference model: at every step all stones in the 7x6 area keep exactly their liberties and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-triple-ko-cycle-blocked-after-other-moves",
+      "title": "Triple ko, after two moves elsewhere: White may not take the ko that would complete the cycle",
+      "rules": ["R-KO-1", "R-KO-6"],
+      "from": "cpp/tests/testrules.cpp:846",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          "OOOOOOOX.",
+          "OXO.O.OX.",
+          "X.XOXOXO.",
+          "XXXXXXXO.",
+          "OOOOOOOX.",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["bh", "fh", "db", "bc", "fb", "dc", "bb"],
+      "expect": {
+        "board": [
+          "OOOOOOOX.",
+          "OXO.OXOX.",
+          "X.XOX.XO.",
+          "XXXXXXXO.",
+          "OOOOOOOX.",
+          ".........",
+          ".........",
+          ".X...O...",
+          "........."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 2
+        },
+        "koPoint": "bc",
+        "phase": "play",
+        "illegal": [
+          {"move": "fc", "reason": "superko"},
+          {"move": "bc", "reason": "superko"}
+        ]
+      },
+      "notes": "Same as katago-triple-ko-back-to-start with one move each far away first (bh, fh), so the repeated situation is the one after White's fh, not the starting position. KataGo's 7x6 board is in the 9x9 top-left corner; its bottom row is empty and never played, and its old right edge is walled (column h). Checked with a reference model: at every step all stones in the 7x6 area keep exactly their liberties and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-sending-two-returning-one-after-pass",
+      "title": "Sending two, returning one: after White passes, Black may not throw in again (the cycle would repeat)",
+      "rules": ["R-KO-1", "R-KO-2", "R-KO-6"],
+      "from": "cpp/tests/testrules.cpp:3718",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          "..XXXO...",
+          "XXXOOX...",
+          "XOOO.O...",
+          "XO.OXO...",
+          "XOXX.X...",
+          "OXOOX....",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ed", "ef", "ee", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          "..XXXO...",
+          "XXXOOX...",
+          "XOOO.O...",
+          "XO.OXO...",
+          "XOXX.X...",
+          "OXOOX....",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 1,
+          "white": 2
+        },
+        "phase": "play",
+        "illegal": [
+          {"move": "ed", "reason": "superko"}
+        ]
+      },
+      "notes": "KataGo 'Sending two returning one NO initial pass WITHOUT button, SSK' expects Black illegal at (4,3) = ed. The repeated situation is the one after Black's first ed (a stone placement), so this does not depend on open point 1. KataGo's 5x6 board is in the 9x9 top-left corner with its old right and bottom edges walled (column f, row 7); checked with a reference model: all stones in the 5x6 area keep exactly their liberties at every step and every move there, by either colour, has the same legality."
+    },
+    {
+      "id": "katago-capture-two-stones",
+      "title": "Black captures two White stones",
+      "rules": ["R-MOVE-4"],
+      "from": "cpp/tests/testboardbasic.cpp:908",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["fb"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.OX..X",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "captures": {
+          "black": 2,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeCapture' marks (5,1) = fb for Black."
+    },
+    {
+      "id": "katago-capture-three-stones-corner",
+      "title": "Black captures three White stones in the corner",
+      "rules": ["R-MOVE-4"],
+      "from": "cpp/tests/testboardbasic.cpp:908",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["gi"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OX.X",
+          ".XO..XX.."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeCapture' marks (6,8) = gi for Black."
+    },
+    {
+      "id": "katago-capture-two-stones-edge",
+      "title": "White captures two Black stones on the top edge",
+      "rules": ["R-MOVE-4"],
+      "from": "cpp/tests/testboardbasic.cpp:908",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "white"
+      },
+      "moves": ["ia"],
+      "expect": {
+        "board": [
+          ".....O..O",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "captures": {
+          "black": 0,
+          "white": 2
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeCapture' marks (8,0) = ia for White."
+    },
+    {
+      "id": "katago-capture-three-stones-edge",
+      "title": "White captures three Black stones on the right edge",
+      "rules": ["R-MOVE-4"],
+      "from": "cpp/tests/testboardbasic.cpp:908",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "white"
+      },
+      "moves": ["if"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXOO",
+          "....O.O..",
+          "XO...OXO.",
+          ".XO..X.OO"
+        ],
+        "captures": {
+          "black": 0,
+          "white": 3
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeCapture' marks (8,5) = if for White."
+    },
+    {
+      "id": "katago-capture-same-point-either-colour",
+      "title": "The same empty point captures for whichever player plays it (here Black)",
+      "rules": ["R-MOVE-4"],
+      "from": "cpp/tests/testboardbasic.cpp:908",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["cd"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".OXO..X..",
+          ".X.X.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeCapture' marks (2,3) = cd for both colours; katago-capture-same-point-white is White's side."
+    },
+    {
+      "id": "katago-capture-same-point-white",
+      "title": "The same empty point captures for whichever player plays it (here White)",
+      "rules": ["R-MOVE-4"],
+      "from": "cpp/tests/testboardbasic.cpp:908",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "white"
+      },
+      "moves": ["cd"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".O.O.OXX.",
+          ".OOO..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "captures": {
+          "black": 0,
+          "white": 1
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeCapture' marks (2,3) = cd for White too."
+    },
+    {
+      "id": "katago-ko-capture-centre",
+      "title": "Black takes a ko in the middle of the board; White may not retake at once",
+      "rules": ["R-KO-1", "R-KO-4", "R-MOVE-5"],
+      "from": "cpp/tests/testboardbasic.cpp:969",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["fg"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....OX.XX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": "gg",
+        "illegal": [
+          {"move": "gg", "reason": "superko"}
+        ]
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeKoCapture' marks (5,6) = fg for Black. Black's stone is surrounded but captures, so it is not suicide."
+    },
+    {
+      "id": "katago-ko-capture-side",
+      "title": "White takes a ko; Black may not retake at once",
+      "rules": ["R-KO-1", "R-KO-4"],
+      "from": "cpp/tests/testboardbasic.cpp:969",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "white"
+      },
+      "moves": ["ge"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.XOXO",
+          "..X..O.O.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "captures": {
+          "black": 0,
+          "white": 1
+        },
+        "koPoint": "gf",
+        "illegal": [
+          {"move": "gf", "reason": "superko"}
+        ]
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeKoCapture' marks (6,4) = ge for White."
+    },
+    {
+      "id": "katago-ko-capture-corner",
+      "title": "White takes a ko in the corner; Black may not retake at once",
+      "rules": ["R-KO-1", "R-KO-4"],
+      "from": "cpp/tests/testboardbasic.cpp:969",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          ".XO..X.OO"
+        ],
+        "toMove": "white"
+      },
+      "moves": ["ai"],
+      "expect": {
+        "board": [
+          ".....OXX.",
+          "..O.O.OOX",
+          ".OXO.OXX.",
+          ".O.O..X..",
+          ".XOX.X.XO",
+          "..X..OXO.",
+          "....O.OXX",
+          "XO...OXOX",
+          "O.O..X.OO"
+        ],
+        "captures": {
+          "black": 0,
+          "white": 1
+        },
+        "koPoint": "bi",
+        "illegal": [
+          {"move": "bi", "reason": "superko"}
+        ]
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'wouldBeKoCapture' marks (0,8) = ai for White."
+    },
+    {
+      "id": "katago-suicide-single-stone",
+      "title": "Black may not play a stone with no liberties that captures nothing",
+      "rules": ["R-MOVE-5", "R-MOVE-8"],
+      "from": "cpp/tests/testboardbasic.cpp:395",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".....X...",
+          "..OO..X..",
+          "..X......",
+          "......XX.",
+          "..X..OX..",
+          ".OXOO.OXX",
+          "XXOO.O.OX",
+          ".X.....OO"
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "expect": {
+        "legal": ["pass"],
+        "illegal": [
+          {"move": "fg", "reason": "suicide"}
+        ]
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'Liberties after move' gives Black 0 liberties at (5,6) = fg."
+    },
+    {
+      "id": "katago-suicide-single-stone-corner",
+      "title": "White may not play a suicide stone in the corner",
+      "rules": ["R-MOVE-5"],
+      "from": "cpp/tests/testboardbasic.cpp:395",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".....X...",
+          "..OO..X..",
+          "..X......",
+          "......XX.",
+          "..X..OX..",
+          ".OXOO.OXX",
+          "XXOO.O.OX",
+          ".X.....OO"
+        ],
+        "toMove": "white"
+      },
+      "moves": [],
+      "expect": {
+        "illegal": [
+          {"move": "ai", "reason": "suicide"}
+        ]
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'Liberties after move' gives White 0 liberties at (0,8) = ai."
+    },
+    {
+      "id": "katago-suicide-two-stones",
+      "title": "White may not fill the last liberty of its own two-stone group (multi-stone suicide)",
+      "rules": ["R-MOVE-5"],
+      "from": "cpp/tests/testboardbasic.cpp:596",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          "X.XX...XX",
+          "OOOXO.OXO",
+          "XXXXO.OX.",
+          "OOOOO..OX",
+          "..XXX..O.",
+          "........O",
+          "X......XO",
+          "OX....XOX",
+          ".OX...XO."
+        ],
+        "toMove": "white"
+      },
+      "moves": [],
+      "expect": {
+        "illegal": [
+          {"move": "ic", "reason": "suicide"}
+        ]
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'Liberties after move 2' gives White 0 liberties at (8,2) = ic, which would join the White stone at ib."
+    },
+    {
+      "id": "katago-suicide-three-stones-corner",
+      "title": "White may not fill the last liberty of its own stones in the corner (three-stone suicide)",
+      "rules": ["R-MOVE-5"],
+      "from": "cpp/tests/testboardbasic.cpp:596",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          "X.XX...XX",
+          "OOOXO.OXO",
+          "XXXXO.OX.",
+          "OOOOO..OX",
+          "..XXX..O.",
+          "........O",
+          "X......XO",
+          "OX....XOX",
+          ".OX...XO."
+        ],
+        "toMove": "white"
+      },
+      "moves": [],
+      "expect": {
+        "illegal": [
+          {"move": "ai", "reason": "suicide"}
+        ]
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'Liberties after move 2' gives White 0 liberties at (0,8) = ai, which would join the White stones at ah and bi."
+    },
+    {
+      "id": "katago-capture-not-suicide-corner",
+      "title": "Black plays into the same corner point: surrounded, but it captures two stones, so it is legal",
+      "rules": ["R-MOVE-4", "R-MOVE-5"],
+      "from": "cpp/tests/testboardbasic.cpp:596",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          "X.XX...XX",
+          "OOOXO.OXO",
+          "XXXXO.OX.",
+          "OOOOO..OX",
+          "..XXX..O.",
+          "........O",
+          "X......XO",
+          "OX....XOX",
+          ".OX...XO."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ai"],
+      "expect": {
+        "board": [
+          "X.XX...XX",
+          "OOOXO.OXO",
+          "XXXXO.OX.",
+          "OOOOO..OX",
+          "..XXX..O.",
+          "........O",
+          "X......XO",
+          ".X....XOX",
+          "X.X...XO."
+        ],
+        "captures": {
+          "black": 2,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'Liberties after move 2' gives Black 2 liberties at (0,8) = ai after its captures."
+    },
+    {
+      "id": "katago-capture-three-stones-top",
+      "title": "Black captures three White stones along the top",
+      "rules": ["R-MOVE-4"],
+      "from": "cpp/tests/testboardbasic.cpp:596",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          "X.XX...XX",
+          "OOOXO.OXO",
+          "XXXXO.OX.",
+          "OOOOO..OX",
+          "..XXX..O.",
+          "........O",
+          "X......XO",
+          "OX....XOX",
+          ".OX...XO."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ba"],
+      "expect": {
+        "board": [
+          "XXXX...XX",
+          "...XO.OXO",
+          "XXXXO.OX.",
+          "OOOOO..OX",
+          "..XXX..O.",
+          "........O",
+          "X......XO",
+          "OX....XOX",
+          ".OX...XO."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "KataGo's 9x9 board, used as is. KataGo 'Liberties after move 2' gives Black 4 liberties at (1,0) = ba after capturing ab, bb, cb."
+    }
+  ]
+}

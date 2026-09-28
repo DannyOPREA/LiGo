@@ -38,6 +38,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 1.5: the rules spec (docs/rules/spec.md) is approved, all 11 choices as recommended
     (PR #13). It follows the recommended options of memos 1.2–1.4
     ("Depends on memo" notes; 1.2 and 1.4 went as recommended, 1.3 is still open).
+  - Unit 1.6 (conformance fixtures): format, checker and 130 cases (strategygames, goban, KataGo,
+    LiGo's own) in `libs/conformance/`, checked against the approved spec (PR #14).
 
 ## Next
 - Phase 1 units 1.3 and 1.6–1.9 (docs/PLAN.md §5, "Phase 1 units").

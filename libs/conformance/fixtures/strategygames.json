@@ -1,0 +1,1782 @@
+{
+  "format": 1,
+  "idPrefix": "sg-",
+  "source": {
+    "name": "strategygames",
+    "url": "https://github.com/Mind-Sports-Games/strategygames",
+    "commit": "7344183d94893a80b099a66fca7b305e0ea18056",
+    "license": "MIT"
+  },
+  "cases": [
+    {
+      "id": "sg-corner-capture-9x9",
+      "title": "On 9x9, Black takes a White stone in the corner by filling its last liberty.",
+      "rules": ["R-MOVE-4", "R-BOARD-4"],
+      "from": "src/test/scala/go/GoCaptureTest.scala:17",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ah", "ai", "bi"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "X........",
+          ".X......."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "The source runs the same shape on 13x13 too; left out because LiGo launches with 9x9 and 19x19 only (R-SCOPE-1)."
+    },
+    {
+      "id": "sg-corner-capture-19x19",
+      "title": "On 19x19, Black takes a White stone in the corner by filling its last liberty.",
+      "rules": ["R-MOVE-4", "R-BOARD-4"],
+      "from": "src/test/scala/go/GoCaptureTest.scala:19",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "moves": ["ra", "sa", "sb"],
+      "expect": {
+        "board": [
+          ".................X.",
+          "..................X",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "The source runs the same shape on 13x13 too; left out because LiGo launches with 9x9 and 19x19 only (R-SCOPE-1)."
+    },
+    {
+      "id": "sg-capture-two-chains-at-once",
+      "title": "Black's corner stone has no empty neighbour of its own but takes two separate White stones at once, so it is legal.",
+      "rules": ["R-MOVE-4", "R-MOVE-5", "R-KO-4"],
+      "from": "src/test/scala/go/GoCaptureTest.scala:31",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ag", "ah", "bh", "bi", "ci", "ee", "ai"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....O....",
+          ".........",
+          "X........",
+          ".X.......",
+          "X.X......"
+        ],
+        "captures": {
+          "black": 2,
+          "white": 0
+        },
+        "koPoint": null
+      },
+      "notes": "Also covers GoLegalityTest.scala:126 (the same placement, asked as a legality question). No ko point: two stones came off."
+    },
+    {
+      "id": "sg-prisoners-kept-into-scoring",
+      "title": "Each side captures one stone in a ko; both prisoner counts are still there after the two passes that start scoring.",
+      "rules": ["R-MOVE-4", "R-END-1"],
+      "from": "src/test/scala/go/GoCaptureTest.scala:46",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ge", "fe", "ff", "ef", "fd", "de", "he", "ed", "ee", "ai", "ca", "fe", "pass", "pass"],
+      "expect": {
+        "board": [
+          "..X......",
+          ".........",
+          ".........",
+          "....OX...",
+          "...O.OXX.",
+          "....OX...",
+          ".........",
+          ".........",
+          "O........"
+        ],
+        "captures": {
+          "black": 1,
+          "white": 1
+        },
+        "phase": "scoring"
+      },
+      "notes": "Combines the source's 'accumulate' (:48) and 'survive the passes' (:51) checks. Its settlement and score checks (:54, :58) are not imported: strategygames' settlement and area score are not used by LiGo (R-SCORE-3)."
+    },
+    {
+      "id": "sg-capture-two-stone-chain",
+      "title": "White surrounds a two-stone Black chain and removes it; the two emptied points can be played again.",
+      "rules": ["R-MOVE-4", "R-BOARD-2"],
+      "from": "src/test/scala/go/GoCaptureTest.scala:67",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ee", "de", "ed", "fe", "aa", "ef", "df", "dd", "ff", "fd", "ab", "ec"],
+      "expect": {
+        "board": [
+          "X........",
+          "X........",
+          "....O....",
+          "...O.O...",
+          "...O.O...",
+          "...XOX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black",
+        "captures": {
+          "black": 0,
+          "white": 2
+        },
+        "legal": ["ee", "ed"]
+      },
+      "notes": "The source also counts 71 legal placements; the format has no count field, so the two freed points are checked instead."
+    },
+    {
+      "id": "sg-occupied-point",
+      "title": "Neither player may place a stone on a point that already holds one, whoever's stone it is.",
+      "rules": ["R-MOVE-3", "R-MOVE-8"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:15",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ee", "de"],
+      "expect": {
+        "toMove": "black",
+        "illegal": [
+          {"move": "ee", "reason": "occupied"},
+          {"move": "de", "reason": "occupied"}
+        ]
+      }
+    },
+    {
+      "id": "sg-suicide-single-stone",
+      "title": "White may not play into the corner point that Black's two stones surround, because it would capture nothing and have no liberty.",
+      "rules": ["R-MOVE-5", "R-MOVE-8"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:25",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ah", "ee", "bi"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....O....",
+          ".........",
+          ".........",
+          "X........",
+          ".X......."
+        ],
+        "toMove": "white",
+        "illegal": [
+          {"move": "ai", "reason": "suicide"}
+        ]
+      }
+    },
+    {
+      "id": "sg-suicide-multi-stone",
+      "title": "Black may not fill the last liberty of its own two-stone chain, even though the new stone touches a friendly stone.",
+      "rules": ["R-MOVE-5", "R-MOVE-8"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:35",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ah", "ag", "ia", "bh", "ib", "bi"],
+      "expect": {
+        "board": [
+          "........X",
+          "........X",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "O........",
+          "XO.......",
+          ".O......."
+        ],
+        "toMove": "black",
+        "illegal": [
+          {"move": "ai", "reason": "suicide"}
+        ]
+      }
+    },
+    {
+      "id": "sg-simple-ko-9x9",
+      "title": "On 9x9, Black takes one stone in a ko; White may not take back at once.",
+      "rules": ["R-KO-4", "R-KO-1", "R-MOVE-6"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:52",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ge", "fe", "ff", "ef", "fd", "de", "he", "ed", "ee"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          "....OX...",
+          "...OX.XX.",
+          "....OX...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": "fe",
+        "illegal": [
+          {"move": "fe", "reason": "superko"}
+        ]
+      },
+      "notes": "Also covers GoLegalityTest.scala:61-73 (same position on 9x9)."
+    },
+    {
+      "id": "sg-simple-ko-19x19",
+      "title": "On 19x19, Black takes one stone in a ko; White may not take back at once.",
+      "rules": ["R-KO-4", "R-KO-1", "R-MOVE-6"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:57",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "moves": ["go", "fo", "fp", "ep", "fn", "do", "ho", "en", "eo"],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "....OX.............",
+          "...OX.XX...........",
+          "....OX.............",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": "fo",
+        "illegal": [
+          {"move": "fo", "reason": "superko"}
+        ]
+      },
+      "notes": "The source runs the shape on 13x13 too; left out (R-SCOPE-1)."
+    },
+    {
+      "id": "sg-ko-released-after-exchange",
+      "title": "After one move each elsewhere, White may take the ko back.",
+      "rules": ["R-KO-4", "R-KO-1"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:76",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ge", "fe", "ff", "ef", "fd", "de", "he", "ed", "ee", "ai", "ca"],
+      "expect": {
+        "board": [
+          "..X......",
+          ".........",
+          ".........",
+          "....OX...",
+          "...OX.XX.",
+          "....OX...",
+          ".........",
+          ".........",
+          "O........"
+        ],
+        "toMove": "white",
+        "koPoint": null,
+        "legal": ["fe"]
+      }
+    },
+    {
+      "id": "sg-ko-recapture-moves-ko-point",
+      "title": "White takes the ko back; now the ko point is where Black's stone was, and Black may not take back at once.",
+      "rules": ["R-KO-4", "R-KO-1", "R-MOVE-4"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:84",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ge", "fe", "ff", "ef", "fd", "de", "he", "ed", "ee", "ai", "ca", "fe"],
+      "expect": {
+        "board": [
+          "..X......",
+          ".........",
+          ".........",
+          "....OX...",
+          "...O.OXX.",
+          "....OX...",
+          ".........",
+          ".........",
+          "O........"
+        ],
+        "toMove": "black",
+        "captures": {
+          "black": 1,
+          "white": 1
+        },
+        "koPoint": "ee",
+        "illegal": [
+          {"move": "ee", "reason": "superko"}
+        ]
+      }
+    },
+    {
+      "id": "sg-ko-point-19x19-edge",
+      "title": "On 19x19 near the bottom edge, White takes a ko; Black may not take back at once.",
+      "rules": ["R-KO-4", "R-KO-1", "R-BOARD-4"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:92",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "moves": ["cs", "cp", "br", "bq", "dr", "dq", "cq", "cr"],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..O................",
+          ".O.O...............",
+          ".XOX...............",
+          "..X................"
+        ],
+        "toMove": "black",
+        "captures": {
+          "black": 0,
+          "white": 1
+        },
+        "koPoint": "cq",
+        "illegal": [
+          {"move": "cq", "reason": "superko"}
+        ]
+      }
+    },
+    {
+      "id": "sg-pass-clears-ko-point",
+      "title": "Black passes instead; the ko point is cleared and White may fill the ko.",
+      "rules": ["R-KO-4", "R-MOVE-7"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:98",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "moves": ["cs", "cp", "br", "bq", "dr", "dq", "cq", "cr", "pass"],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "..O................",
+          ".O.O...............",
+          ".XOX...............",
+          "..X................"
+        ],
+        "toMove": "white",
+        "koPoint": null,
+        "phase": "play",
+        "legal": ["cq"]
+      },
+      "notes": "The source also counts 353 and 354 legal placements; the format has no count field."
+    },
+    {
+      "id": "sg-issue489-surrounded-point-suicide-for-white",
+      "title": "Black captures a lone White stone; White may not play back into the hole, because that is suicide (not ko).",
+      "rules": ["R-MOVE-5", "R-MOVE-4", "R-KO-4"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:107",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ee", "ef", "df", "pass", "eg", "pass", "ff"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          "...X.X...",
+          "....X....",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": null,
+        "illegal": [
+          {"move": "ef", "reason": "suicide"}
+        ]
+      },
+      "notes": "PlayStrategy issue #489 regression. Same sequence as GoSituationTest.scala:313. The source's 76 placements are 77 empty points minus this suicide point."
+    },
+    {
+      "id": "sg-issue489-black-may-fill-after-pass",
+      "title": "After White passes, Black may fill the point its capture emptied.",
+      "rules": ["R-MOVE-7", "R-KO-4"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:113",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ee", "ef", "df", "pass", "eg", "pass", "ff", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          "...X.X...",
+          "....X....",
+          ".........",
+          "........."
+        ],
+        "toMove": "black",
+        "koPoint": null,
+        "phase": "play",
+        "legal": ["ef"]
+      },
+      "notes": "PlayStrategy issue #489 regression (GoSituationTest.scala:340 too)."
+    },
+    {
+      "id": "sg-snapback-capture-is-not-ko",
+      "title": "White captures one stone but its capturing stone joins a larger chain, so there is no ko and Black may capture back at once (snapback).",
+      "rules": ["R-KO-4", "R-MOVE-4"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:119",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ag", "ah", "bg", "bh", "ch", "ci", "bi", "ai"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "XX.......",
+          "OOX......",
+          "O.O......"
+        ],
+        "toMove": "black",
+        "captures": {
+          "black": 0,
+          "white": 1
+        },
+        "koPoint": null,
+        "legal": ["bi"]
+      }
+    },
+    {
+      "id": "sg-snapback-takes-three",
+      "title": "Black's snapback removes White's whole three-stone chain.",
+      "rules": ["R-MOVE-4", "R-MOVE-5"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:130",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ag", "ah", "bg", "bh", "ch", "ci", "bi", "ai", "bi"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "XX.......",
+          "..X......",
+          ".XO......"
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 3,
+          "white": 1
+        },
+        "koPoint": null
+      }
+    },
+    {
+      "id": "sg-issue490-two-stone-recapture-after-ko",
+      "title": "Right after White takes one stone, Black takes two stones back on the same point; this is not a ko recapture and is legal.",
+      "rules": ["R-KO-4", "R-KO-1", "R-MOVE-4"],
+      "from": "src/test/scala/go/GoLegalityTest.scala:154",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": [
+        "ee", "ed", "dd", "ec", "dc", "ea", "eb", "fb", "fc", "db", "fd", "hi", "eb", "ed", "gi",
+        "ec", "eb"
+      ],
+      "expect": {
+        "board": [
+          "....O....",
+          "...OXO...",
+          "...X.X...",
+          "...X.X...",
+          "....X....",
+          ".........",
+          ".........",
+          ".........",
+          "......XO."
+        ],
+        "toMove": "white",
+        "captures": {
+          "black": 4,
+          "white": 2
+        },
+        "koPoint": null
+      },
+      "notes": "PlayStrategy issue #490 regression. Same sequence as GoSituationTest.scala:348."
+    },
+    {
+      "id": "sg-send-two-return-one",
+      "title": "Sending two, returning one: Black gives up two stones and would retake one, but that would repeat an earlier position, so it is refused and play goes on.",
+      "rules": ["R-KO-1", "R-KO-6", "R-MOVE-6"],
+      "from": "src/test/scala/go/GoSuperkoTest.scala:20",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["di", "ah", "ch", "bh", "ai", "pass", "bi", "ci", "ai", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "OOX......",
+          "X.OX....."
+        ],
+        "toMove": "black",
+        "captures": {
+          "black": 0,
+          "white": 2
+        },
+        "phase": "play",
+        "illegal": [
+          {"move": "bi", "reason": "superko"}
+        ]
+      }
+    },
+    {
+      "id": "sg-repeat-without-capture",
+      "title": "A move that captures nothing but would recreate the position of six moves earlier, same player to move, is refused.",
+      "rules": ["R-KO-1", "R-MOVE-6"],
+      "from": "src/test/scala/go/GoSuperkoTest.scala:33",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ch", "cf", "bi", "ci", "dh", "dg", "ag", "ah", "bg", "df", "ai", "bh", "bi", "ai", "bi"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "..OO.....",
+          "XX.O.....",
+          "..XX.....",
+          ".XO......"
+        ],
+        "toMove": "white",
+        "illegal": [
+          {"move": "ah", "reason": "superko"}
+        ]
+      }
+    },
+    {
+      "id": "sg-ko-ban-survives-two-passes",
+      "title": "White takes a ko, both players pass, Black resumes play: the immediate retake is still refused, because passing does not lift a superko ban.",
+      "rules": ["R-KO-5", "R-KO-2", "R-SP-6", "R-KO-4"],
+      "from": "src/test/scala/go/GoSuperkoTest.scala:56",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["bh", "ch", "ag", "dg", "bf", "cf", "cg", "bg", "pass", "pass", "resume"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".XO......",
+          "XO.O.....",
+          ".XO......",
+          "........."
+        ],
+        "toMove": "black",
+        "koPoint": null,
+        "phase": "play",
+        "illegal": [
+          {"move": "cg", "reason": "superko"}
+        ]
+      },
+      "openPoints": [6],
+      "notes": "In strategygames two passes do not stop play, so its test retakes straight after them; LiGo has a scoring phase in between, so a resume was added (R-SP-6). The refused retake repeats a situation after a stone placement, so it does not depend on open point 1."
+    },
+    {
+      "id": "sg-returning-capture-other-player-legal",
+      "title": "A capture that brings back an earlier board but with the other player to move is allowed (situational, not positional, superko).",
+      "rules": ["R-KO-1", "R-BOARD-3", "R-KO-6"],
+      "from": "src/test/scala/go/GoSituationalSuperkoTest.scala:27",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["eg", "gg", "fh", "hh", "ff", "hf", "gh", "ig", "gf", "fg", "hg"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".....XXO.",
+          "....X..XO",
+          ".....XXO.",
+          "........."
+        ],
+        "toMove": "white",
+        "koPoint": null,
+        "legal": ["gg"]
+      }
+    },
+    {
+      "id": "sg-returning-capture-recreates-board",
+      "title": "After that capture the board is exactly as three moves earlier, the game goes on, and it is Black's turn.",
+      "rules": ["R-KO-1", "R-KO-6"],
+      "from": "src/test/scala/go/GoSituationalSuperkoTest.scala:56",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["eg", "gg", "fh", "hh", "ff", "hf", "gh", "ig", "gf", "fg", "hg", "gg"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".....XXO.",
+          "....X.O.O",
+          ".....XXO.",
+          "........."
+        ],
+        "toMove": "black",
+        "phase": "play"
+      }
+    },
+    {
+      "id": "sg-triple-ko-cycle-refused",
+      "title": "In a triple ko, the move that would bring back the same position with the same player to move is refused; the game is not ended or voided.",
+      "rules": ["R-KO-1", "R-KO-6", "R-MOVE-6"],
+      "from": "src/test/scala/go/GoSituationalSuperkoTest.scala:70",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": [
+        "bb", "bc", "ca", "cd", "db", "dc", "fb", "fc", "ga", "gd", "hb", "hc", "bh", "bg", "ci",
+        "cf", "dh", "dg", "fh", "fg", "gi", "gf", "hh", "hg", "cc", "ch", "gg", "gb", "gc", "cb",
+        "cg", "gh", "cc", "ch"
+      ],
+      "expect": {
+        "board": [
+          "..X...X..",
+          ".X.X.X.X.",
+          ".OXO.OXO.",
+          "..O...O..",
+          ".........",
+          "..O...O..",
+          ".O.O.O.O.",
+          ".XOX.XOX.",
+          "..X...X.."
+        ],
+        "toMove": "black",
+        "phase": "play",
+        "illegal": [
+          {"move": "gg", "reason": "superko"}
+        ]
+      }
+    },
+    {
+      "id": "sg-returning-capture-corner-legal",
+      "title": "In the corner, a capture that brings back an earlier board with the other player to move is allowed.",
+      "rules": ["R-KO-1", "R-BOARD-3"],
+      "from": "src/test/scala/go/GoSituationTest.scala:439",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["ia", "ib", "ha", "hb", "gb", "ic", "fa", "ga", "ha", "id", "ia", "ga"],
+      "expect": {
+        "board": [
+          ".....XO..",
+          "......XOO",
+          "........O",
+          "........O",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black",
+        "phase": "play",
+        "legal": ["ha", "pass"]
+      }
+    },
+    {
+      "id": "sg-repetition-after-pass-refused",
+      "title": "A ko retake that would repeat an earlier position is refused, also when a pass was played earlier in the fight.",
+      "rules": ["R-KO-1", "R-MOVE-6"],
+      "from": "src/test/scala/go/GoSituationTest.scala:474",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["cd", "ce", "cc", "dd", "ed", "ee", "ec", "df", "db", "ef", "pass", "dc", "de"],
+      "expect": {
+        "board": [
+          ".........",
+          "...X.....",
+          "..X.X....",
+          "..X.X....",
+          "..OXO....",
+          "...OO....",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "illegal": [
+          {"move": "dd", "reason": "superko"}
+        ]
+      }
+    },
+    {
+      "id": "sg-two-passes-from-start-scoring",
+      "title": "Two passes at the very start end play and start the scoring phase.",
+      "rules": ["R-END-1", "R-MOVE-7", "R-KO-3"],
+      "from": "src/test/scala/go/GoEndingTest.scala:41",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["pass", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "phase": "scoring"
+      },
+      "notes": "strategygames keeps offering placements after two passes (source :46); in LiGo a placement needs a resume first (R-SP-1, R-SP-6), see sg-resume-then-stone-back-to-play."
+    },
+    {
+      "id": "sg-one-pass-keeps-play",
+      "title": "A single pass does not end play; it is simply the other player's turn.",
+      "rules": ["R-END-1", "R-MOVE-1", "R-MOVE-7"],
+      "from": "src/test/scala/go/GoEndingTest.scala:59",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["gg", "cc", "fh", "ee", "ei", "df", "hf", "ii", "ie", "ce", "de", "dd", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..O......",
+          "...O.....",
+          "..O.O...X",
+          "...O...X.",
+          "......X..",
+          ".....X...",
+          "....X...O"
+        ],
+        "toMove": "white",
+        "phase": "play"
+      }
+    },
+    {
+      "id": "sg-two-passes-after-play-scoring",
+      "title": "After some play, a pass by each player ends play and starts the scoring phase.",
+      "rules": ["R-END-1"],
+      "from": "src/test/scala/go/GoEndingTest.scala:71",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "moves": ["gg", "cc", "fh", "ee", "ei", "df", "hf", "ii", "ie", "ce", "de", "dd", "pass", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..O......",
+          "...O.....",
+          "..O.O...X",
+          "...O...X.",
+          "......X..",
+          ".....X...",
+          "....X...O"
+        ],
+        "phase": "scoring"
+      },
+      "notes": "The source's settlement checks (:73-:95) are not imported: dead stones are agreed in lila's scoring phase, not by strategygames' settlement (spec §9)."
+    },
+    {
+      "id": "sg-resume-then-stone-back-to-play",
+      "title": "Both pass, play is resumed, and Black (whose turn it naturally is) places a stone: the game is back in play.",
+      "rules": ["R-SP-6", "R-END-1"],
+      "from": "src/test/scala/go/GoEndingTest.scala:52",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["pass", "pass", "resume", "ee"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "openPoints": [6],
+      "notes": "In strategygames a placement after two passes simply closes dead-stone selection; LiGo needs an explicit resume (R-SP-6), which was added."
+    },
+    {
+      "id": "sg-passes-split-by-stone-scoring-again",
+      "title": "Pass, pass, resume, White plays a stone, pass, pass: the scoring phase starts again (the passes before the stone do not count twice).",
+      "rules": ["R-END-1", "R-SP-6", "R-SP-9", "R-SP-1"],
+      "from": "src/test/scala/go/GoEndingTest.scala:102",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["ee", "pass", "pass", "resume", "de", "pass", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "...OX....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "phase": "scoring",
+        "legal": ["resume"],
+        "illegal": [
+          {"move": "aa", "reason": "in-scoring"},
+          {"move": "pass", "reason": "in-scoring"}
+        ]
+      },
+      "openPoints": [6, 10],
+      "notes": "Also GoSituationTest.scala:417. The source plays the stone straight after two passes; LiGo needs a resume first, added here. Resuming again is allowed because a stone was placed since the previous resumption (R-SP-9). During the scoring phase neither a stone nor a pass may be played (R-SP-1): strategygames would accept both (a placement just closes dead-stone selection, GoEndingTest.scala:52; a third pass is allowed, :62), so the adapter must refuse them."
+    },
+    {
+      "id": "sg-four-passes-never-settle",
+      "title": "Four passes around a resume do not end the game with no dead stones: a new scoring phase starts, and a second resume with no stone played since the first is refused.",
+      "rules": ["R-END-1", "R-SP-6", "R-SP-9"],
+      "from": "src/test/scala/go/GoEndingTest.scala:98",
+      "appliesTo": ["server"],
+      "size": 9,
+      "moves": ["ee", "pass", "pass", "resume", "pass", "pass"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "....X....",
+          ".........",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "phase": "scoring",
+        "illegal": [
+          {"move": "resume", "reason": "resume-limit"}
+        ]
+      },
+      "openPoints": [6, 10],
+      "notes": "Inverts the source on purpose: strategygames settles the game with no dead stones on the fourth pass (passesSettlingTheGame = 4); the spec says that must never happen (§9, §10 'infinite games'). The adapter owns this (unit 1.7). Also GoSituationTest.scala:394."
+    },
+    {
+      "id": "sg-handicap-2-9x9",
+      "title": "A 2-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go9x9.scala:29",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 2,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "......X..",
+          ".........",
+          ".........",
+          ".........",
+          "..X......",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-3-9x9",
+      "title": "A 3-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go9x9.scala:30",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 3,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "......X..",
+          ".........",
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-4-9x9",
+      "title": "A 4-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/test/scala/go/GoHandicapTest.scala:31",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 4,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "The source test checks the 4-stone setup FEN and White to move (:31-:39); the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-5-9x9",
+      "title": "A 5-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go9x9.scala:32",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 5,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          "....X....",
+          ".........",
+          "..X...X..",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-6-9x9",
+      "title": "A 6-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go9x9.scala:33",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 6,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          "..X...X..",
+          ".........",
+          "..X...X..",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-7-9x9",
+      "title": "A 7-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go9x9.scala:34",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 7,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          "..X.X.X..",
+          ".........",
+          "..X...X..",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-8-9x9",
+      "title": "A 8-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go9x9.scala:35",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 8,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X.X.X..",
+          ".........",
+          "..X...X..",
+          ".........",
+          "..X.X.X..",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-9-9x9",
+      "title": "A 9-stone handicap on 9x9 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go9x9.scala:36",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 9,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X.X.X..",
+          ".........",
+          "..X.X.X..",
+          ".........",
+          "..X.X.X..",
+          ".........",
+          "........."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-2-19x19",
+      "title": "A 2-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:31",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 2,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...............X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...............",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-3-19x19",
+      "title": "A 3-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:32",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 3,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...............X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-4-19x19",
+      "title": "A 4-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:33",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 4,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-5-19x19",
+      "title": "A 5-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:34",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 5,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          ".........X.........",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-6-19x19",
+      "title": "A 6-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:35",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 6,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-7-19x19",
+      "title": "A 7-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:36",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 7,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X.....X.....X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-8-19x19",
+      "title": "A 8-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:37",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 8,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...X.....X.....X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X...........X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X.....X.....X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-9-19x19",
+      "title": "A 9-stone handicap on 19x19 puts Black's stones on the fixed star points and gives White the first move.",
+      "rules": ["R-HCP-3", "R-HCP-4", "R-MOVE-2"],
+      "from": "src/main/scala/go/variant/Go19x19.scala:38",
+      "appliesTo": ["server", "client"],
+      "size": 19,
+      "handicap": 9,
+      "moves": [],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          "...................",
+          "...................",
+          "...................",
+          "...X.....X.....X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X.....X.....X...",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...................",
+          "...X.....X.....X...",
+          "...................",
+          "...................",
+          "..................."
+        ],
+        "toMove": "white",
+        "phase": "play"
+      },
+      "notes": "strategygames' only handicap test covers 4 stones on 9x9 (GoHandicapTest.scala:31), so this case takes its board from strategygames' handicap table; the table row equals spec R-HCP-4. The 1-stone row is deliberately not imported: the spec overrides it (R-HCP-2)."
+    },
+    {
+      "id": "sg-handicap-stones-stay-after-white-answers",
+      "title": "In a 4-stone game White answers in the corner; the handicap stones stay and it is Black's turn.",
+      "rules": ["R-HCP-3", "R-HCP-5", "R-MOVE-1"],
+      "from": "src/test/scala/go/GoHandicapTest.scala:54",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 4,
+      "moves": ["ai"],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          "O........"
+        ],
+        "toMove": "black",
+        "phase": "play"
+      }
+    },
+    {
+      "id": "sg-handicap-2-game-to-scoring",
+      "title": "A 2-stone game on 9x9: White starts, the players alternate, and two passes start the scoring phase with the board unchanged.",
+      "rules": ["R-HCP-3", "R-MOVE-2", "R-END-1"],
+      "from": "src/test/scala/go/GoEndingTest.scala:182",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "handicap": 2,
+      "moves": ["gg", "cc", "fh", "ee", "ei", "df", "hf", "ii", "ie", "pass", "pass"],
+      "openPoints": [2],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "..X...X..",
+          ".........",
+          "....X...O",
+          "...X...O.",
+          "..X...O..",
+          ".....O...",
+          "....O...X"
+        ],
+        "captures": {
+          "black": 0,
+          "white": 0
+        },
+        "phase": "scoring"
+      },
+      "notes": "The source walks the recorded FENs of this game from a 2-stone start; the expected board is its FEN after the second pass (:197)."
+    },
+    {
+      "id": "sg-chain-capture-cornered-stone",
+      "title": "Black fills the last liberty of a White stone in the corner and takes it.",
+      "rules": ["R-MOVE-4"],
+      "from": "src/test/scala/go/GoChainTest.scala:171",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "X........",
+          "O........"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["bi"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "X........",
+          ".X......."
+        ],
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": null
+      }
+    },
+    {
+      "id": "sg-chain-capture-two-chains-one-point",
+      "title": "One Black stone fills the shared last liberty of two separate White stones and takes both.",
+      "rules": ["R-MOVE-4"],
+      "from": "src/test/scala/go/GoChainTest.scala:183",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          "...X.X...",
+          "..XO.OX..",
+          "...X.X...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ee"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          "...X.X...",
+          "..X.X.X..",
+          "...X.X...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 2,
+          "white": 0
+        },
+        "koPoint": null
+      }
+    },
+    {
+      "id": "sg-chain-own-stones-not-captured",
+      "title": "Same position with White to move: White may play the shared point, which captures nothing.",
+      "rules": ["R-MOVE-4", "R-MOVE-5"],
+      "from": "src/test/scala/go/GoChainTest.scala:190",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          "...X.X...",
+          "..XO.OX..",
+          "...X.X...",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "white"
+      },
+      "moves": [],
+      "expect": {
+        "legal": ["ee"]
+      },
+      "notes": "The source asks whether White's placement would capture its own stones (it must not); a legality check is the closest thing the format can state."
+    },
+    {
+      "id": "sg-chain-capture-bent-chain-once",
+      "title": "Black's stone touches one White chain on two sides and removes all three of its stones (counted once).",
+      "rules": ["R-MOVE-4", "R-BOARD-2"],
+      "from": "src/test/scala/go/GoChainTest.scala:195",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          "...XX....",
+          "..XOOX...",
+          "..XO.....",
+          "...X.....",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ee"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          "...XX....",
+          "..X..X...",
+          "..X.X....",
+          "...X.....",
+          ".........",
+          ".........",
+          "........."
+        ],
+        "captures": {
+          "black": 3,
+          "white": 0
+        },
+        "koPoint": null
+      }
+    },
+    {
+      "id": "sg-chain-suicide-between-two-stones",
+      "title": "Black may not play into a corner point enclosed by two separate White stones.",
+      "rules": ["R-MOVE-5"],
+      "from": "src/test/scala/go/GoChainTest.scala:219",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "O........",
+          ".O......."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "expect": {
+        "illegal": [
+          {"move": "ai", "reason": "suicide"}
+        ]
+      }
+    },
+    {
+      "id": "sg-chain-suicide-joining-friendly-stone",
+      "title": "Black may not join its stone in the corner if that takes the whole chain's last liberty.",
+      "rules": ["R-MOVE-5"],
+      "from": "src/test/scala/go/GoChainTest.scala:231",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "O........",
+          "XO.......",
+          ".O......."
+        ],
+        "toMove": "black"
+      },
+      "moves": [],
+      "expect": {
+        "illegal": [
+          {"move": "ai", "reason": "suicide"}
+        ]
+      }
+    },
+    {
+      "id": "sg-chain-capture-frees-would-be-suicide",
+      "title": "A Black corner stone with no liberty of its own is legal because it captures the White stone next to it; that makes a ko, so White may not take back at once.",
+      "rules": ["R-MOVE-5", "R-MOVE-4", "R-KO-4", "R-KO-2"],
+      "from": "src/test/scala/go/GoChainTest.scala:243",
+      "appliesTo": ["server", "client"],
+      "size": 9,
+      "setup": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "OX.......",
+          ".OX......"
+        ],
+        "toMove": "black"
+      },
+      "moves": ["ai"],
+      "expect": {
+        "board": [
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          ".........",
+          "OX.......",
+          "X.X......"
+        ],
+        "captures": {
+          "black": 1,
+          "white": 0
+        },
+        "koPoint": "bi",
+        "illegal": [
+          {"move": "bi", "reason": "superko"}
+        ]
+      },
+      "notes": "The source checks the capture only. The ko point and the refused retake are added from R-KO-4 and R-KO-2: the retake would recreate the starting situation, which counts for superko."
+    }
+  ]
+}
