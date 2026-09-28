@@ -9,6 +9,20 @@
 - KataGo's multi-threaded search is not deterministic: store the proposal shown to players, recount only with goscorer (2026-09-27, unit 1.3).
 
 ## Entries (newest first)
+### 2026-09-28 · Phase 4 breakdown · Go-native game split into units 4.1–4.12
+- Did: split Phase 4 into 12 units (docs/PLAN.md §5, "Phase 4 units"): a design ADR (4.1), then the
+  go-rules byo-yomi clock (4.2) and scoring phase (4.3), `services/scoring` core (4.4) and on Redis
+  (4.5), the autoscore benchmark and full-size network (4.6), and the lila halves (4.7–4.11) and the
+  demo (4.12), which need Phase 3's round, game creation and round UI.
+- Worked: ADRs 0016 and 0019 already fix most of the shape; their open points (message format,
+  prisoners, fallback, network licence, "scored" status, byo-yomi storage) all land in 4.1 or 4.6.
+- Didn't work / dead ends: none.
+- Lessons: splitting each feature into a library half (go-rules, the Node service) and a lila half
+  lets a phase start while the lila fork is still being de-chessed.
+- Decisions: the split itself, Claude's call under the owner's 2026-09-28 delegation
+  (logs/decisions.md).
+- Verified by Claude: verify.sh. · Needs owner verification: whether the split reads right.
+- Follow-ups: 4.1 next.
 ### 2026-09-28 · unit 1.3 / PR #11 · Scoring decision recorded
 - Did: adopted option A (Node `services/scoring` with KataGo + goban-engine autoscore + goscorer)
   as ADR 0016, after the owner delegated every decision on 2026-09-28 ("Don't ask for my approval

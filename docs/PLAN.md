@@ -414,6 +414,32 @@ What stays out of Phase 3: byo-yomi, komi choices beyond the spec's defaults, th
 SGF export (Phase 4), ratings and ranks (Phase 5), the lobby redesign (Phase 6), the analysis board
 and SGF import (Phase 7), tsumego (Phase 8).
 
+**Phase 4 units** (broken down 2026-09-28 while Phases 2 and 3 were being built; the scoring
+service is [ADR 0016](decisions/0016-scoring-service-node-autoscore-goscorer.md), the game model and
+clocks follow [ADR 0019](decisions/0019-go-core-types-schema-protocol.md), and the rules are spec §7–8.
+Units 4.1–4.6 need nothing from Phases 2 and 3, so they run now; 4.7–4.12 wait for the Phase 3 round,
+game creation and round UI. Twelve units, above the table's 6–10, because the scoring service and
+the go-rules halves are split from their lila halves so they can be built early):
+
+| Unit | What | Needs |
+|---|---|---|
+| 4.1 | Design ADR for Phase 4: the lila ⇄ `services/scoring` messages over Redis (what lila sends: size, ruleset, komi, handicap, final board and the prisoners from go-rules, per ADR 0016's open point; what comes back: dead stones, points that need sealing, territory, score; recounts after a toggle), where the proposal and each recount are stored on the game, the server's scoring-phase state machine (toggles, acceptances, resume and its R-SP-9 limit, timeout values live and correspondence, whether game clocks run during it), the "scored" status and result encoding (ADR 0019 §7), the 1,000-ply cap, the no-KataGo fallback, the lila-ws scoring messages (PLAN §3.5), and the byo-yomi clock's shape in lila (ADR 0019 §5: its interface, storage key and clock payload) | — |
+| 4.2 | Byo-yomi clock in `libs/go-rules`: strategygames' byo-yomi clock (ADR 0012) wrapped behind go-rules' own clock type (main time, periods × period time; a move inside a period keeps it, a period that runs out is used up, the last one running out loses on time), with lag compensation as lila needs it and tests for every period transition | 4.1 |
+| 4.3 | Scoring phase in `libs/go-rules`: dead marks on the position after the two passes, toggling a whole chain, any change resetting both acceptances, accept, timeout accepting the current proposal, resume dropping the marks (resume and its limit already exist); the result from the service's count (R-SCORE-4, R-RES-1–3, jigo, `B+3.5`); the SGF writer gains `RE`, players, date, rules and time settings; conformance fixtures for toggles and results (`go-rules-expert`) | 4.1 |
+| 4.4 | `services/scoring` core: a Node/TypeScript package with `goban-engine` pinned to `libs/board`'s version, a client for one long-running KataGo analysis engine (two ownership queries per position), autoscore and `computeScore`, the no-KataGo fallback, OGS's 31 autoscore games as a regression test, `dev/ligo test scoring`, a `scoring` CI job on KataGo's test network, COPYING.md notices (goban-engine, goscorer, eventemitter3) | 4.1 |
+| 4.5 | `services/scoring` on Redis: the worker speaking 4.1's protocol, recounts, KataGo crashes and restarts (a game never stays without a proposal), `dev/ligo up/down/status/logs` starting and supervising it in native and docker modes, a Redis round-trip test | 4.4 |
+| 4.6 | Autoscore benchmark and the full-size network: a set of finished games with agreed results and a checked licence, `dev/ligo scoring bench`, the licence check of katagotraining.org's networks, a pinned b18 network for your box (the cloud keeps the test network); the ≥ 97% gate is measured on your GPU | 4.4 |
+| 4.7 | Clocks in lila: the clock interface with Fischer (`chess.Clock`) and byo-yomi (4.2) behind it, byo-yomi storage, the round stepping it with lag compensation, lila-ws clock payloads, out of time in overtime | 3.13, 3.14, 4.2 |
+| 4.8 | Scoring phase in lila: two passes open it and ask the service, the proposal and recounts stored, toggles, accept, resume, timeout, results and the "scored" status written, lila-ws scoring messages; replaces ADR 0019's "two passes end the game with no winner" | 3.13, 3.14, 4.3, 4.5 |
+| 4.9 | Game creation: byo-yomi time controls, ruleset and komi choice, handicap for casual games in the setup and challenge forms (what 3.15 and 3.19 don't already offer) | 3.15, 3.19, 4.7 |
+| 4.10 | Round UI: the byo-yomi clock with its periods, the scoring-phase board on `libs/board` (dead marks, territory, live score, tap a chain to toggle, Accept and Resume buttons, the timeout countdown), the result line | 3.18, 4.7, 4.8 |
+| 4.11 | SGF export: download from the game page and the API, with result, players and time settings from 4.3's writer | 3.12, 4.3, 4.8 |
+| 4.12 | Phase 4 demo: a Playwright test where two browsers play a 19×19 Japanese byo-yomi game that ends with an accepted proposal, and a disputed game that resumes and then ends; the exported SGF read back by goban-engine; the demo checklist for you (opening the SGF in Sabaki, the benchmark on your GPU) | 3.20, 4.6, 4.9, 4.10, 4.11 |
+
+What stays out of Phase 4: rating changes and auto-handicap (Phases 5 and 6), correspondence
+notifications and SGF import (Phase 7), a remote GPU scoring worker (after the POC; the Redis
+boundary keeps it possible).
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.
