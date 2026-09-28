@@ -1,7 +1,9 @@
 /* circular loader */
-$len1: 33.96;
-$len2: 42.6;
-$len3: 104.31;
+
+/* path lengths of LiGo's logo: the ring (2π·15), then each half of the stone (π·17) */
+$len1: 94.25;
+$len2: 53.41;
+$len3: 53.41;
 $total_len: $len1 + $len2 + $len3;
 
 @keyframes mask1 {
@@ -80,25 +82,20 @@ $total_len: $len1 + $len2 + $len3;
   }
 }
 
-/* small horizontal loader */
+/* small horizontal loader: three pulsing dots (LiGo; lichess's sprite was non-free) */
 @keyframes ddloader {
   0% {
-    background-position: left;
+    opacity: 0.3;
   }
 
   100% {
-    background-position: right;
+    opacity: 1;
   }
 }
 
 .ddloader {
-  background: url('../images/loader/whitex1.png') no-repeat;
-
-  @include if-light {
-    background: url('../images/loader/blackx1.png') no-repeat;
-  }
-
-  animation: ddloader 0.5s steps(15) infinite !important;
+  background: radial-gradient(circle, currentcolor 2.5px, transparent 3px) 0 50% / 11px 8px repeat-x;
+  animation: ddloader 0.5s ease-in-out infinite alternate !important;
   vertical-align: middle;
   display: inline-block;
   width: 32px;

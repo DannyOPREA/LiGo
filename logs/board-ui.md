@@ -19,6 +19,17 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 2.3 review · Reviewer findings fixed
+- No blocking findings; the reviewer agreed with keeping goban's second-tap behaviour. Fixed: the
+  ctrl tests couldn't fail if desktops were wrongly asked to confirm (the ui test stub makes
+  `isTouchDevice()` always true); the choice is now a pure `resolveConfirm(pref, touch)` tested in
+  all six cases. `BoardConfig.confirm`'s comment no longer promises double taps; the help text says
+  click or tap; PLAN's 2.3 row notes the change; merged main (unit 3.1 landed).
+- Left, disclosed: no Scala tests for the pref module (it has none; adding munit is a build.sbt
+  change); `confirmMoves` can't be set through the single-pref API and now shows in
+  `/api/account/preferences`; "Confirm moves" sits next to chess's "Move confirmation" until Phase 3
+  removes the chess settings.
+
 ### 2026-09-28 · 2.3 · Touch-confirm setting ("Confirm moves")
 - Done: `Pref.confirmMoves` in lila's pref module (never / on touch screens / always, default on
   touch screens; BSON default so old documents read fine), a "Confirm moves" setting on the

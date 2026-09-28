@@ -177,8 +177,8 @@ export default class PuzzleCtrl implements CevalHandler {
     return () => site.sound.play(name, volume);
   };
   sound = {
-    good: this.loadSound('lisp/PuzzleStormGood', 0.7),
-    end: this.loadSound('lisp/PuzzleStormEnd', 1),
+    good: this.loadSound('sfx/Confirmation', 0.7),
+    end: this.loadSound('sfx/Victory', 1),
   };
 
   setPath = (path: TreePath): void => {

@@ -8,7 +8,9 @@ final class SoundSet private (val key: String, val name: String):
 
 object SoundSet:
 
-  val default = new SoundSet("standard", "Standard")
+  // lichess's own sound sets (standard, lisp, woodland, robot, the "music" instruments) were not free
+  // software and were removed in unit 3.1; the default is Enigmahack's SFX set (AGPL-3.0+).
+  val default = new SoundSet("sfx", "SFX")
   val silent = new SoundSet("silent", "Silent")
   val speech = new SoundSet("speech", "Speech")
 
@@ -17,12 +19,7 @@ object SoundSet:
     default,
     new SoundSet("piano", "Piano"),
     new SoundSet("nes", "NES"),
-    new SoundSet("sfx", "SFX"),
     new SoundSet("futuristic", "Futuristic"),
-    new SoundSet("lisp", "Lisp"),
-    new SoundSet("woodland", "WoodLand"),
-    new SoundSet("robot", "Robot"),
-    new SoundSet("music", "Pentatonic"),
     speech
   )
 

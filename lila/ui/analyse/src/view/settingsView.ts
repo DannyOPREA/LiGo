@@ -267,8 +267,9 @@ function videoHtml(path: string) {
     <br>`;
 }
 
-function imageHtml(path: string) {
-  return `<img src="${site.asset.url('images/help/' + path + '.webp')}" alt=""><br>`;
+// lichess's help images were non-free and are gone (unit 3.1); analysis help returns in Phase 7.
+function imageHtml(_path: string) {
+  return '';
 }
 
 async function preload(html: string): Promise<Node[]> {

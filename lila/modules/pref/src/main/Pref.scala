@@ -147,7 +147,8 @@ case class Pref(
 
 object Pref:
 
-  val defaultBgImgUrl = "//lichess1.org/assets/images/background/landscape.jpg"
+  // LiGo (unit 3.1): lichess's landscape.jpg was non-free; use the AGPL wood board image instead
+  val defaultBgImgUrl = "/assets/images/board/wood4.jpg"
   val defaultBgOpacity = 50
 
   case class BoardPref(

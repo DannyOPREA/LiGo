@@ -67,7 +67,7 @@ final class UserActionMenu(helpers: Helpers):
             .filter(_.is(u))
             .ifTrue(Granter.opt(_.LichessTeam))
             .map: me =>
-              MenuItem("My permissions", Icon.Logo, routes.Mod.permissions(me.username).url),
+              MenuItem("My permissions", Icon.Shield, routes.Mod.permissions(me.username).url),
           canImpersonate.option(
             MenuItem(
               "Impersonate",
