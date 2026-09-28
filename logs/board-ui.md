@@ -21,6 +21,14 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 2.4 CI (2) · Board and page pictures
+- Didn't work: with the text hidden, 5 of 8 pictures still failed on CI by 110–120 pixels, all at
+  button edges (Pass/Undo, New game): lila's buttons are as wide as their text, and the two Chromium
+  builds measure text slightly differently.
+- Done: each state now takes two pictures. The board alone is held to 100 pixels (the painted-out
+  stone fails it, 1,487), and the whole page is allowed 600 for layout (a lost button or a moved
+  panel is thousands). 16 baselines.
+
 ### 2026-09-28 · 2.4 CI · Screenshots on CI's Chromium
 - Didn't work: all 8 pictures recorded with the cloud's Chromium 141 differed on CI's Chromium 153
   by 2,200–2,400 pixels. CI's artifacts can't be downloaded from a cloud session (the proxy refuses
