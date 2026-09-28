@@ -102,6 +102,8 @@ services:
       - GIT_CONFIG_VALUE_0=*
     volumes:
       - ../../lila:/lila
+      # LiGo: libs/board is in lila's pnpm workspace as ../libs/board (unit 2.1).
+      - ../../libs:/libs
       - ../../.git:/ligo.git:ro
       - ./.pnpm-store:/.pnpm-store
     profiles:

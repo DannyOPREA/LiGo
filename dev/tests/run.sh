@@ -36,6 +36,8 @@ check "test rejects an unknown target" fails "$LIGO" test nonsense
 check "ligo katago help exits 0" "$LIGO" katago help
 check "ligo katago with an unknown command fails" fails "$LIGO" katago no-such-command
 check "katago install rejects an unknown backend" fails "$LIGO" katago install cuda
+# libs/board has no lockfile of its own (ADR 0017): pnpm must install it from lila/, in lila's workspace.
+check "ligo installs libs/board only through lila's workspace" fails grep -nE 'libs/board.*pnpm install|BOARD.*pnpm install' "$LIGO"
 
 # CI helpers (dev/ci/, used by .github/workflows/): run against a throwaway repo.
 ci_repo=$(mktemp -d)
@@ -75,6 +77,8 @@ check "changed.sh: rules fixtures trigger only the rules build" output_is $'lila
 ci_commit dep lila/package.json logs/tooling.md
 check "changed.sh: lila/package.json triggers the ui build" output_is $'lila=false\nws=false\nui=true\nrules=false' in_ci_repo "$CHANGED" main
 check "manifest check: package.json without COPYING.md fails" fails in_ci_repo "$META" manifests main HEAD
+ci_commit lockfile lila/pnpm-lock.yaml logs/tooling.md
+check "changed.sh: lila's pnpm lockfile triggers the ui and rules builds (libs/board's packages)" output_is $'lila=false\nws=false\nui=true\nrules=true' in_ci_repo "$CHANGED" main
 ci_commit dep-copying lila-ws/build.sbt COPYING.md
 check "manifest check: build.sbt with COPYING.md passes" in_ci_repo "$META" manifests main HEAD
 ci_commit lib-plugins libs/go-rules/project/plugins.sbt logs/rules-engine.md
