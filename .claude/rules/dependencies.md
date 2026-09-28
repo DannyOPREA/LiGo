@@ -12,5 +12,5 @@ Adding, removing, upgrading or swapping a dependency is a major decision. Before
 1. An approved build-vs-buy memo (`docs/build-vs-buy/`) or ADR covering it (/build-vs-buy).
 2. A licence check: AGPL-3.0-compatible only.
 3. A `COPYING.md` update in the same PR.
-You'll get a permission prompt for these files anyway; that prompt is the owner's approval
-moment, so explain the change first. Never run a non-frozen `pnpm install`.
+There is no permission prompt for these files any more (ADR 0015), so explain the change in the
+PR. Never run a non-frozen `pnpm install`.
