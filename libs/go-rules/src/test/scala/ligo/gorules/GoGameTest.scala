@@ -91,3 +91,10 @@ class GoGameTest extends munit.FunSuite:
 
   test("no legal points during the scoring phase"):
     assertEquals(start(setup()).pass.ok.pass.ok.legalPoints, Nil)
+
+  test("13x13: corners map to SGF points and 4 handicap stones go on the 4-4 points"):
+    val g = start(setup(size = BoardSize.Thirteen, handicap = 4, komi = 0.5))
+    assertEquals(g.stones.keySet.map(_.sgf), Set("dd", "jd", "dj", "jj"))
+    val corners = start(setup(size = BoardSize.Thirteen)).play(p("aa")).ok.play(p("mm")).ok
+    assertEquals(corners.stones, Map(p("aa") -> Color.Black, p("mm") -> Color.White))
+    assertEquals(corners.play(Point(13, 0)), Left(Refusal.OffBoard))

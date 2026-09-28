@@ -17,8 +17,10 @@ game0.flatMap(_.play(Point.fromSgf("pd").get)) // Either[Refusal, GoGame]
 
 - `GoGame.start(setup)`: board size, ruleset, komi, handicap (0–9) or a custom position.
 - `play(point)`, `pass`, `resume`, `undo`: each returns the next game or why it was refused
-  (`Refusal`: occupied, suicide, superko, in-scoring, not-in-scoring, resume-limit, ...). Games are
-  immutable values: nothing changes on a refusal.
+  (`Refusal`: the fixture reasons occupied, suicide, superko, in-scoring, not-in-scoring and
+  resume-limit, plus the adapter's own off-board and nothing-to-undo). The fixtures' `game-over`
+  reason is lila's to give: the end of the game (acceptance, timeout, resignation) is decided there.
+  Games are immutable values: nothing changes on a refusal.
 - Read: `stones`, `toMove`, `captures`, `koPoint`, `phase` (play or scoring), `legalPoints`,
   `actions`.
 - `Sgf.write(game)`: the game as an SGF record.

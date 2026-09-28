@@ -105,8 +105,16 @@ docker_sbt() {  # docker_sbt <service> <sbt args...>
 }
 
 # libs/go-rules is its own sbt build; in docker mode it runs in the lila container with libs/
-# mounted next to it, so its tests find ../conformance/fixtures.
-docker_rules_sbt() { run dc run --rm --no-deps -v "$ROOT/libs:/libs" -w /libs/go-rules --entrypoint sbt lila "$@"; }
+# mounted next to it, so its tests find ../conformance/fixtures. Its downloads (sbt, Scala,
+# strategygames) go to .ligo/rules-cache, so they survive the throwaway container and
+# libs/go-rules/check-pin.sh can check the jar from the host.
+docker_rules_sbt() {
+  mkdir -p "$STATE/rules-cache"
+  run dc run --rm --no-deps -v "$ROOT/libs:/libs" -v "$STATE/rules-cache:/rules-cache" \
+    -e COURSIER_CACHE=/rules-cache/coursier \
+    -e SBT_OPTS="-Dsbt.boot.directory=/rules-cache/sbt/boot -Dsbt.global.base=/rules-cache/sbt/global -Dsbt.ivy.home=/rules-cache/ivy2" \
+    -w /libs/go-rules --entrypoint sbt lila "$@"
+}
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)
@@ -316,8 +324,9 @@ cmd_test() {
     native:ui) need_node_modules; (cd "$LILA" && run pnpm test) ;;
     # testFull: sbt 2's plain `test` only reruns tests whose code changed, and a fixture change
     # is not a code change.
-    docker:rules) docker_rules_sbt testFull ;;
-    native:rules) sbt1 "$RULES" testFull; native_after_sbt ;;
+    # The strategygames jar's SHA-256 is checked after it is downloaded and before tests run it.
+    docker:rules) docker_rules_sbt update; run "$RULES/check-pin.sh"; docker_rules_sbt testFull ;;
+    native:rules) sbt1 "$RULES" update; run "$RULES/check-pin.sh"; sbt1 "$RULES" testFull; native_after_sbt ;;
     *:all) cmd_test ui; cmd_test lila; cmd_test ws; cmd_test rules ;;
     *) die "test what? lila, ws, ui, rules or all" ;;
   esac

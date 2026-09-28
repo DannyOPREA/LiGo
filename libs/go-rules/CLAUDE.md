@@ -16,8 +16,9 @@ what it adds: [README.md](README.md). The rules it implements: `docs/rules/spec.
 - Own sbt build (sbt 2, Scala and scalalib as lila). Phase 3 wires it into lila's build.
 
 ## Test
-`dev/ligo test rules` (sbt `testFull`: plain `test` in sbt 2 skips tests whose code didn't change,
-and a fixture change is not a code change), then `libs/go-rules/check-pin.sh`. Format:
+`dev/ligo test rules`: resolves, checks the strategygames jar's SHA-256 (`check-pin.sh`), then
+runs sbt `testFull` (plain `test` in sbt 2 skips tests whose code didn't change, and a fixture
+change is not a code change). Format:
 `cd libs/go-rules && sbt scalafmtAll`. CI: `.github/workflows/rules.yml`.
 
 ## Logs to read

@@ -8,10 +8,17 @@ set -euo pipefail
 
 jar=strategygames_3-10.2.1-s3-ps14.jar
 want=682916195761758d8a4849abdf60deb121d10b0f412c5ea43986fe4ae3de261f
-cache=${COURSIER_CACHE:-$HOME/.cache/coursier/v1}
+here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+# The host's coursier cache (native mode, CI), or the one dev/ligo's docker mode keeps in .ligo/.
+caches=("${COURSIER_CACHE:-$HOME/.cache/coursier/v1}" "$here/../../.ligo/rules-cache/coursier")
 
-found=$(find "$cache" -name "$jar" -path '*Mind-Sports-Games*' 2>/dev/null | head -1)
-[[ -n "$found" ]] || { echo "check-pin: $jar not in $cache; run sbt update in libs/go-rules first" >&2; exit 1; }
+found=""
+for cache in "${caches[@]}"; do
+  [[ -d "$cache" ]] || continue
+  found=$(find "$cache" -name "$jar" -path '*Mind-Sports-Games*' 2>/dev/null | head -1 || true)
+  [[ -n "$found" ]] && break
+done
+[[ -n "$found" ]] || { echo "check-pin: $jar not found in ${caches[*]}; run sbt update in libs/go-rules first" >&2; exit 1; }
 got=$(sha256sum "$found" | cut -d' ' -f1)
 if [[ "$got" != "$want" ]]; then
   echo "check-pin: $jar has SHA-256 $got, pinned $want (docs/UPSTREAM.md). Do not use it; ask the owner." >&2

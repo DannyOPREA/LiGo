@@ -27,8 +27,12 @@ class ConformanceTest extends munit.FunSuite:
           .fold(r => fail(s"move ${move._2 + 1} (${move._1}) refused: ${r.key}"), identity)
       check(f, game)
 
+  private val expectFields = Set("board", "toMove", "captures", "koPoint", "phase", "legal", "illegal")
+
   private def check(f: FixtureCase, game: GoGame): Unit =
     val e = f.expect
+    // A field this harness doesn't know would otherwise pass unchecked.
+    assertEquals(e.keys.toSet -- expectFields, Set.empty[String], "unknown expect fields")
     (e \ "board")
       .asOpt[List[String]]
       .foreach: rows =>

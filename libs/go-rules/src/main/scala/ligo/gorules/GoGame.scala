@@ -25,8 +25,6 @@ final class GoGame private (
     val phase: Phase,
     // R-SP-9: true until the first resumption, then true again once a stone is placed.
     private val mayResume: Boolean,
-    // The game before the last move, for takebacks (None: nothing to take back).
-    private val beforeLastMove: Option[GoGame],
     val actions: Vector[Action]
 ):
   def size: BoardSize = setup.size
@@ -80,15 +78,19 @@ final class GoGame private (
     else if !mayResume then Left(Refusal.ResumeLimit)
     else
       val restarted = game.copy(situation = situation.copy(board = board.copy(consecutivePasses = 0)))
-      // A takeback never reaches back past a resumption: that would reopen the scoring phase.
-      Right(GoGame(setup, restarted, Phase.Play, mayResume = false, None, actions :+ Action.Resume))
+      Right(GoGame(setup, restarted, Phase.Play, mayResume = false, actions :+ Action.Resume))
 
   /** An accepted takeback of the last move (R-KO-8): the game as it was before it, so the situations it
-    * created leave the superko history. Not during the scoring phase.
+    * created leave the superko history. Not during the scoring phase, and never back past a resumption (that
+    * would reopen the scoring phase).
+    *
+    * The earlier game is rebuilt by replaying the setup and the other actions, rather than kept, so a game
+    * value holds no chain of earlier games; takebacks are rare, and a replay is milliseconds.
     */
   def undo: Either[Refusal, GoGame] =
     if phase == Phase.Scoring then Left(Refusal.InScoring)
-    else beforeLastMove.toRight(Refusal.NothingToUndo)
+    else if actions.lastOption.forall(_ == Action.Resume) then Left(Refusal.NothingToUndo)
+    else Right(GoGame.replay(setup, actions.init))
 
   def apply(action: Action): Either[Refusal, GoGame] = action match
     case Action.Place(at) => play(at)
@@ -107,7 +109,7 @@ final class GoGame private (
     else Refusal.Superko
 
   private def next(after: Game, phase: Phase, mayResume: Boolean, action: Action): GoGame =
-    GoGame(setup, after, phase, mayResume, Some(this), actions :+ action)
+    GoGame(setup, after, phase, mayResume, actions :+ action)
 
   override def toString = s"GoGame(${setup.size}, ${actions.size} actions, $phase, $toMove to move)"
 
@@ -127,7 +129,13 @@ object GoGame:
       pieces = start.stones.map((p, c) => posOf(p, setup.size).get -> Piece(playerOf(c), Role.defaultRole))
       board = Board(pieces, variant).copy(komi = setup.komi).withHistoryStartingHere(playerOf(start.toMove))
       _ <- noChainWithoutLiberties(board, setup.size)
-    yield GoGame(setup, Game(Situation(board, playerOf(start.toMove))), Phase.Play, true, None, Vector.empty)
+    yield GoGame(setup, Game(Situation(board, playerOf(start.toMove))), Phase.Play, true, Vector.empty)
+
+  // Actions this setup already accepted once; replaying them cannot be refused.
+  private def replay(setup: Setup, actions: Vector[Action]): GoGame =
+    val start = GoGame.start(setup).fold(e => sys.error(s"replaying a started game: ${e.message}"), identity)
+    actions.foldLeft(start): (game, action) =>
+      game(action).fold(r => sys.error(s"replaying an accepted action $action: ${r.key}"), identity)
 
   // R-HCP-2..4. Handicap stones come from strategygames' own tables; 1 stone places none.
   private def startingPosition(setup: Setup, variant: Variant): Either[SetupError, Position] =

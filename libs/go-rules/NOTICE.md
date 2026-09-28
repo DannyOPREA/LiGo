@@ -30,3 +30,14 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
+
+## Libraries strategygames brings in
+
+Also downloaded at build time, not copied: **joda-time** `2.10.10` (Apache-2.0) and
+**scala-parser-combinators** `2.4.0` (Apache-2.0, no NOTICE file). joda-time's NOTICE file
+(`META-INF/NOTICE.txt` in its jar) reads:
+
+```text
+This product includes software developed by
+Joda.org (https://www.joda.org/).
+```

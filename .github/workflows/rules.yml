@@ -52,9 +52,13 @@ jobs:
             libs/go-rules/project/**
       - name: Setup sbt
         uses: sbt/setup-sbt@c7d2d6258b4bd0d3ec5129e6b3453199d3c79729 # v1.5.8
-      # testFull, not test: sbt 2's test skips tests whose code didn't change, and a fixture change
-      # is not a code change.
-      - name: Check formatting, compile and replay the fixtures
-        run: sbt scalafmtCheckAll testFull
+      # The jar is checked after it is downloaded and before any test runs it.
+      - name: Resolve dependencies
+        run: sbt update
       - name: strategygames jar matches the pinned SHA-256
         run: ./check-pin.sh
+      # testFull, not test: sbt 2's test skips tests whose code didn't change, and a fixture change
+      # is not a code change. sbt 2's thin client takes one command line, so the two commands go in
+      # one quoted argument separated by ';'.
+      - name: Check formatting, compile and replay the fixtures
+        run: sbt "scalafmtCheckAll; testFull"

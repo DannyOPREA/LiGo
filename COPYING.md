@@ -90,7 +90,15 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | Rules test positions adapted from strategygames' and KataGo's tests | `libs/conformance/fixtures/strategygames.json`, `katago.json` | MIT | Notices in `libs/conformance/NOTICE.md` |
 | Rules test positions adapted from OGS goban's tests | `libs/conformance/fixtures/goban.json` | Apache-2.0 | `libs/conformance/LICENSE-Apache-2.0.txt`; goban ships no NOTICE file |
 | PlayStrategy strategygames `10.2.1-s3-ps14` (Go rules; a dependency, not copied), with its other games' engines excluded (ADR 0012) | `libs/go-rules/build.sbt` | MIT | Notice in `libs/go-rules/NOTICE.md`; jar SHA-256 pinned in `docs/UPSTREAM.md` |
+| joda-time `2.10.10` and scala-parser-combinators `2.4.0`, brought in by strategygames (dependencies, not copied) | `libs/go-rules/build.sbt` (transitive) | Apache-2.0 | joda-time's NOTICE is below and in `libs/go-rules/NOTICE.md`; scala-parser-combinators ships none |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they
 ship one.
+
+joda-time (`META-INF/NOTICE.txt` in `joda-time-2.10.10.jar`):
+
+```text
+This product includes software developed by
+Joda.org (https://www.joda.org/).
+```
