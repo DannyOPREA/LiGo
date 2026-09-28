@@ -38,6 +38,7 @@ AGPL §5(a) modification notices. Every change to a file under `lila/` or `lila-
 | Library | Repo | Version | Used in |
 |---|---|---|---|
 | strategygames (PlayStrategy) | https://github.com/Mind-Sports-Games/strategygames | `10.2.1-s3-ps14` (source commit `7344183`), from `https://raw.githubusercontent.com/Mind-Sports-Games/lila-maven/master`; jar SHA-256 `682916195761758d8a4849abdf60deb121d10b0f412c5ea43986fe4ae3de261f`, checked by `libs/go-rules/check-pin.sh` | `libs/go-rules` (ADR 0012) |
+| goban-engine (OGS) | https://github.com/online-go/goban | `8.3.226` from npm (its protocol types match goban commit `6276a50`), exact version in `libs/board/package.json`, integrity `sha512-KINA9jC5/0wsTvk6EDnvHjWi15zANCzJHzygGUEuN+am4j9+r/ZNku8U7ge/rzGEmIOlH+5/BkGt6mZQuDSmrg==` in `libs/board/pnpm-lock.yaml` | `libs/board` (ADR 0014) |
 
 ## Ported upstream commits
 

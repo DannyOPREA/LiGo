@@ -46,3 +46,14 @@ through the usual manifest permission prompt.
 ## Alternatives considered
 Vendor goban's source (B, runner-up), goban pinned to a git commit, Sabaki's go-board + sgf +
 Shudan (C), building our own (D). See the memo.
+
+## Amendment (2026-09-28, unit 1.8)
+Two details of the decision above changed when the dependency landed; both are Claude's calls under
+the owner's 2026-09-28 delegation (logs/decisions.md):
+- `libs/board` is, for now, its own small pnpm package (`libs/board/package.json`, pinned
+  `goban-engine@8.3.226`), not part of lila's pnpm workspace. It holds only the engine settings and
+  their tests; the Phase 2 board unit decides how it joins lila's workspace and adds `goban`.
+- Games pass `handicap: N` (not `handicap: 0`) together with the server's stones as
+  `initial_state`, White to move and `free_handicap_placement: false`. goban places no stones of
+  its own when `initial_state` is given, and its score count reads `handicap` for the Chinese
+  compensation (docs/rules/spec.md §9, which the owner approved, supersedes the memo here).

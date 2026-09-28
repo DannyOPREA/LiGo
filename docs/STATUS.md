@@ -47,6 +47,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
     fixtures under both rulesets, with property and SGF tests, `dev/ligo test rules` and a `rules`
     CI workflow (PR #15). Its two questions (adapter owns resume and its limit; SGF read-back in
     1.8) were decided by Claude under your 2026-09-28 delegation. Merged.
+  - Unit 1.8 (client rules harness): `libs/board` sets up goban-engine 8.3.226 with LiGo's rules;
+    it passes all 95 client fixtures (5 known gaps), reads back all 227 server SGF games, and agrees
+    with the server on 80 seeded random games (16,100 actions). `dev/ligo test rules` and the `rules`
+    CI job run both engines and the parity check (PR #17).
   - Your PR #16 (no more approval prompts, ADR 0015) merged.
 - **Phase 2 — board integration** split into four units on 2026-09-28 (docs/PLAN.md §5, "Phase 2
   units"): 2.1 the goban board in `libs/board`, 2.2 a playground page, 2.3 the touch-confirm

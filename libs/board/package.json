@@ -1,0 +1,19 @@
+{
+  "name": "@ligo/board",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LiGo's client-side Go board and rules: a wrapper around OGS goban-engine (memo 1.2). Unit 1.8 adds the engine settings and its conformance harness.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "test": "node --test test/engine.test.mjs test/conformance.test.mjs",
+    "test:all": "node --test test/engine.test.mjs test/conformance.test.mjs test/parity.test.mjs"
+  },
+  "dependencies": {
+    "goban-engine": "8.3.226"
+  }
+}

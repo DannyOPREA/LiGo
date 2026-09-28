@@ -68,6 +68,8 @@ ci_commit rules libs/go-rules/src/Rules.scala logs/rules-engine.md
 check "changed.sh: libs/go-rules triggers only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true' in_ci_repo "$CHANGED" main
 ci_commit toolingonly dev/x.sh .claude/y.json logs/tooling.md
 check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false\nrules=false' in_ci_repo "$CHANGED" main
+ci_commit board libs/board/src/engine.mjs logs/rules-engine.md
+check "changed.sh: libs/board triggers only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true' in_ci_repo "$CHANGED" main
 ci_commit fixtures libs/conformance/fixtures/x.json logs/rules-engine.md
 check "changed.sh: rules fixtures trigger only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true' in_ci_repo "$CHANGED" main
 ci_commit dep lila/package.json logs/tooling.md
