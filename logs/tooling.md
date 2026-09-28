@@ -1,6 +1,7 @@
 # Tooling log
 
 ## Lessons (curated, ≤ 30 lines — read this first)
+- The cloud auto-mode safety check blocks Claude from loosening its own permission config (`.claude/settings.json` ask/allow lists), even with the owner's go-ahead in the thread; the owner has to make that edit himself (2026-09-28, ADR 0015).
 - Claude Code cloud sessions do not install plugins or start LSP servers, ignore `~/.claude/`, and keep no auto-memory across machines: everything that matters must be committed (2026-09-25, planning).
 - Cloud VM: 4 vCPU / 16 GB / 30 GB, Ubuntu 24.04, JDK 21, Node 20–22, Docker, Redis; no sbt, MongoDB or Node 24 (2026-09-25, planning).
 - `auto` permission mode can't be set from project settings, only from `~/.claude/settings.json` (2026-09-25, planning).
@@ -28,6 +29,21 @@
 - sbt 2 in the cloud: `~/.sbt/repositories` overrides build resolvers, so a project needing an extra repo passes `-Dsbt.repository.config=<copy with the repo added>`; and the thin client keeps a running server's JVM options, so `sbt shutdown` first (2026-09-27, 1.1).
 
 ## Entries (newest first)
+### 2026-09-28 · working agreement · No approval prompts (ADR 0015)
+- Did: owner asked Claude not to ask for approval for anything. The owner removed the `ask` list
+  from `.claude/settings.json` himself (PR #16); Claude added ADR 0015, the decisions.md line, and
+  updated CLAUDE_SETUP §5 and `.claude/rules/dependencies.md`. Deny rules, guard hooks, stop gate
+  and CI are unchanged.
+- Worked: fixing PR #16's `repo-rules` check (missing log entry, empty PR description) from the
+  thread.
+- Didn't work / dead ends: Claude's own edit of settings.json was refused twice by the cloud
+  session's auto-mode safety check (reason: self-modification), the second time after the owner
+  said "Remove them anyway."
+- Lessons: see the new Lessons line on self-modification.
+- Decisions: ADR 0015 (owner's own initiative).
+- Needs owner verification: in the next session, editing a package.json or docs/rules/ no longer
+  prompts.
+
 ### 2026-09-27 · unit 0.6 · CI: lila, ui and meta workflows
 - Did: `.github/workflows/lila.yml` (lila scalafmt + tests; lila-ws tests + `sbt check`),
   `ui.yml` (lint, format, build, tests, CodeQL), `meta.yml` (hook bats tests, dev/ checks,
