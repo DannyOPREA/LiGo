@@ -5,7 +5,10 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+<<<<<<< HEAD
 | 2026-09-28 | 3.9: how do lila's chess types, game storage and round messages become Go, and what happens to scalachess? | scalachess stays only for neutral types and Glicko-2; Go game beside the chess one then instead; `game5` keeps neutral keys plus `sz`/`ru`/`km`/`hc`/`ac` (2-byte actions); SGF-point-or-pass moves; Fischer on lila's clock, byo-yomi via go-rules in Phase 4 (Claude, under the owner's 2026-09-28 delegation) | ADR 0019, logs/upstream-fork.md |
+=======
+>>>>>>> origin/claude/phase-3-units-ri4x1l
 | 2026-09-28 | Phase 3: how is it split, and which lila modules not named in PLAN §3.4 stay or go? | Units 3.1–3.20 (PLAN §5); ~30 unnamed modules classified, 18 more removed (e.g. `tv`, `search`, `evaluation`, `fide`), `activity`/`perfStat`/`bookmark`/`relation`/`timeline` kept (Claude, under the owner's 2026-09-28 delegation) | ADR 0018, logs/upstream-fork.md |
 | 2026-09-28 | 1.8: where does the goban-engine harness live, and which `handicap` value do games pass? | `libs/board` as its own pnpm package until Phase 2 joins it to lila's workspace; `handicap: N` with the server's stones, per spec §9 (Claude, under the owner's 2026-09-28 delegation) | ADR 0014 amendment, logs/rules-engine.md |
 | 2026-09-28 | Phase 2 breakdown: how to split board integration, and should touch-confirm reuse lila's "submit move" preference? | Four units (2.1 board, 2.2 playground, 2.3 touch-confirm, 2.4 snapshots + demo); touch-confirm is its own board preference in lila's `pref` module, because lila's "submit move" confirms after a move is made, not before (Claude, under the owner's 2026-09-28 delegation) | docs/PLAN.md §5, logs/board-ui.md |

@@ -94,5 +94,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | 1.1–1.7 done; 1.8 in review; 1.9 in progress (of 9 units) |
 | 2. Board integration | split into units 2.1–2.4; not started |
+<<<<<<< HEAD
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 design in review (ADR 0019), 3.10 next; 3.1–3.7 wait for your OK to delete files |
+=======
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 next, 3.1–3.7 wait for your OK to delete files |
+>>>>>>> origin/claude/phase-3-units-ri4x1l
 | 4–9 | not started |
