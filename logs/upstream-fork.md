@@ -27,7 +27,8 @@
   it recompiles, so one run can hide unused-import warnings elsewhere.
 - Lessons: after a large deletion, audit warnings from a run that recompiles broadly (verify.sh's
   log), not a single incremental compile. Removing workspace packages changes `pnpm-lock.yaml`,
-  and CI's meta check then wants COPYING.md changed too (verify.sh doesn't run the meta checks).
+  and CI's meta check then wants COPYING.md changed too. verify.sh runs neither the meta checks nor
+  lila-ws's `sbt check` (scalafix + scalafmt): run `cd lila-ws && sbt check` after lila-ws edits.
 - Decisions: keep the stored ids as unused fields rather than migrate data (a 3.2 call, not in
   ADR 0019's key list); leave dormant round-page client code (tour standing, tour/swiss/simul
   links) for 3.18 and dead socket plumbing (TourStanding, SimulMoveEvent, SendToFlag) for 3.13; leave i18n

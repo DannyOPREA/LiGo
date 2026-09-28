@@ -25,12 +25,7 @@ object LilaIn:
 
   // Simul, Swiss and Tour room traits were removed with the simul, swiss and tournament modules
   // (unit 3.2).
-  sealed trait AnyRoom
-      extends Team
-      with Study
-      with Round
-      with Challenge
-      with Racer
+  sealed trait AnyRoom extends Team with Study with Round with Challenge with Racer
 
   case class TellSri(sri: Sri, user: Option[User.Id], payload: JsValue) extends Site with Lobby:
     def write = s"tell/sri $sri ${optional(user.map(_.value))} ${Json.stringify(payload)}"
