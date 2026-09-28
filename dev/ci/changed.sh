@@ -20,10 +20,11 @@ areas=(
   'lila|^(lila/(app|conf|modules|project|translation)/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ws|^(lila-ws/|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ui|^(lila/|\.github/workflows/ui\.yml$|dev/ci/changed\.sh$)'
+  'rules|^(libs/go-rules/|libs/conformance/fixtures/|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
 )
 
 # Paths that never need a build: docs, logs, Claude config, repo meta files, dev tooling and the
-# rules fixtures (both of which meta.yml tests), CI workflows and top-level Markdown or licence files.
+# rules fixtures (both of which meta.yml tests; fixtures also count for the rules area), CI workflows and top-level Markdown or licence files.
 no_build='^(docs/|logs/|\.claude/|\.github/|dev/|libs/conformance/|tools/claude-plugins/|[^/]+\.md$|LICENSE|\.gitignore$|\.mcp\.json$)'
 
 if [[ -z "$base" ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then

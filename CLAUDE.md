@@ -41,17 +41,18 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
 - `.claude/` agents, skills, hooks, rules. `docs/`, `logs/` as above.
 - `libs/conformance/` the Go rules test cases (JSON) BOTH engines and the scoring service replay.
   See libs/conformance/CLAUDE.md.
-- Planned, not created yet (each gets its own CLAUDE.md when its unit starts): `libs/go-rules`
-  (server rules adapter), `libs/board` (goban adapter), `services/scoring` (KataGo + goban
+- `libs/go-rules/` the server's Go rules: adapter over strategygames (ADR 0012), replays the
+  fixtures. See libs/go-rules/CLAUDE.md.
+- Planned, not created yet (each gets its own CLAUDE.md when its unit starts): `libs/board` (goban adapter), `services/scoring` (KataGo + goban
   autoscore + goscorer), `tools/puzzles`.
 - `lila/` and `lila-ws/` are plain folders of this repo, not git repos of their own.
 
 ## Commands
-`dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|all] | test [lila|ws|ui|all]`
+`dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|rules|all] | test [lila|ws|ui|rules|all]`
 `dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench]`. Docker mode on the owner's
 machine, native mode in cloud sessions (ADR 0010). Fresh cloud container: `dev/cloud-setup.sh` then `dev/ligo deps`.
 Tooling self-tests: `dev/tests/run.sh`, `bats .claude/hooks/tests`. CI: `.github/workflows/` (lila, ui,
-meta); its checks live in `dev/ci/`.
+meta, rules); its checks live in `dev/ci/`.
 Never `sbt clean` in the cloud, never non-frozen `pnpm install`, never `lila/bin/deploy`.
 
 ## Environment gotchas

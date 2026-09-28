@@ -49,11 +49,11 @@ in_ci_repo() { (cd "$ci_repo" && "$@"); }
 META="$ROOT/dev/ci/meta_checks.py"
 CHANGED="$ROOT/dev/ci/changed.sh"
 ci_commit docs docs/x.md
-check "changed.sh: a docs-only change needs no build" output_is $'lila=false\nws=false\nui=false' in_ci_repo "$CHANGED" main
+check "changed.sh: a docs-only change needs no build" output_is $'lila=false\nws=false\nui=false\nrules=false' in_ci_repo "$CHANGED" main
 check "log check: Markdown only passes" in_ci_repo "$META" logs main HEAD
 ci_commit scala lila/modules/a.scala
-check "changed.sh: lila/modules triggers the lila and ui builds" output_is $'lila=true\nws=false\nui=true' in_ci_repo "$CHANGED" main
-check "changed.sh: no base commit means build everything" output_is $'lila=true\nws=true\nui=true' in_ci_repo "$CHANGED" ""
+check "changed.sh: lila/modules triggers the lila and ui builds" output_is $'lila=true\nws=false\nui=true\nrules=false' in_ci_repo "$CHANGED" main
+check "changed.sh: no base commit means build everything" output_is $'lila=true\nws=true\nui=true\nrules=true' in_ci_repo "$CHANGED" ""
 check "log check: code without a logs/ entry fails" fails in_ci_repo "$META" logs main HEAD
 ci_commit scala-logged lila/modules/a.scala logs/backend.md
 check "log check: code with a logs/ entry passes" in_ci_repo "$META" logs main HEAD
@@ -61,18 +61,22 @@ ci_commit decisions-only lila/modules/a.scala logs/decisions.md
 check "log check: logs/decisions.md alone isn't a log entry" fails in_ci_repo "$META" logs main HEAD
 (cd "$ci_repo" && git checkout -q -B moved main && mkdir -p lila-ws/src && echo x > lila-ws/src/A.scala && git add -A && git commit -qm a \
   && git mv lila-ws/src/A.scala docs/A.scala && git commit -qm mv) >/dev/null 2>&1
-check "changed.sh: moving a file out of lila-ws triggers the ws build" output_is $'lila=false\nws=true\nui=false' in_ci_repo "$CHANGED" HEAD~1
-ci_commit newlib libs/go-rules/src/Rules.scala logs/rules-engine.md
-check "changed.sh: a file outside every area runs everything" output_is $'lila=true\nws=true\nui=true' in_ci_repo "$CHANGED" main
+check "changed.sh: moving a file out of lila-ws triggers the ws build" output_is $'lila=false\nws=true\nui=false\nrules=false' in_ci_repo "$CHANGED" HEAD~1
+ci_commit newlib services/scoring/index.ts logs/scoring.md
+check "changed.sh: a file outside every area runs everything" output_is $'lila=true\nws=true\nui=true\nrules=true' in_ci_repo "$CHANGED" main
+ci_commit rules libs/go-rules/src/Rules.scala logs/rules-engine.md
+check "changed.sh: libs/go-rules triggers only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true' in_ci_repo "$CHANGED" main
 ci_commit toolingonly dev/x.sh .claude/y.json logs/tooling.md
-check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false' in_ci_repo "$CHANGED" main
+check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false\nrules=false' in_ci_repo "$CHANGED" main
 ci_commit fixtures libs/conformance/fixtures/x.json logs/rules-engine.md
-check "changed.sh: rules fixtures need no build (meta checks them)" output_is $'lila=false\nws=false\nui=false' in_ci_repo "$CHANGED" main
+check "changed.sh: rules fixtures trigger only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true' in_ci_repo "$CHANGED" main
 ci_commit dep lila/package.json logs/tooling.md
-check "changed.sh: lila/package.json triggers the ui build" output_is $'lila=false\nws=false\nui=true' in_ci_repo "$CHANGED" main
+check "changed.sh: lila/package.json triggers the ui build" output_is $'lila=false\nws=false\nui=true\nrules=false' in_ci_repo "$CHANGED" main
 check "manifest check: package.json without COPYING.md fails" fails in_ci_repo "$META" manifests main HEAD
 ci_commit dep-copying lila-ws/build.sbt COPYING.md
 check "manifest check: build.sbt with COPYING.md passes" in_ci_repo "$META" manifests main HEAD
+ci_commit lib-plugins libs/go-rules/project/plugins.sbt logs/rules-engine.md
+check "manifest check: a libs/ sbt plugin file without COPYING.md fails" fails in_ci_repo "$META" manifests main HEAD
 check "PR body: the bare template fails (empty sections)" fails env PR_BODY="$(cat "$ROOT/.github/pull_request_template.md")" "$META" pr-body "$ROOT/.github/pull_request_template.md"
 filled=$(sed -E 's/^(## .*)$/\1\nn\/a/' "$ROOT/.github/pull_request_template.md")
 check "PR body: every section filled passes" env PR_BODY="$filled" "$META" pr-body "$ROOT/.github/pull_request_template.md"

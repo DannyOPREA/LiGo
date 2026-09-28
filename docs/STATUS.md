@@ -43,6 +43,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
     ("Depends on memo" notes; 1.2, 1.3 and 1.4 all went as recommended).
   - Unit 1.6 (conformance fixtures): format, checker and 130 cases (strategygames, goban, KataGo,
     LiGo's own) in `libs/conformance/`, checked against the approved spec (PR #14).
+  - Unit 1.7 (server rules adapter): `libs/go-rules` over strategygames passes all 115 server
+    fixtures under both rulesets, with property and SGF tests, `dev/ligo test rules` and a `rules`
+    CI workflow (PR #15). Its two questions (adapter owns resume and its limit; SGF read-back in
+    1.8) were decided by Claude under your 2026-09-28 delegation.
 
 ## Next
 - Phase 1 units 1.7–1.9 (docs/PLAN.md §5, "Phase 1 units").
@@ -51,7 +55,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
+- Approve the rules spec's 11 open points (docs/rules/spec.md §12; card in the unit 1.5 thread).
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
+- After unit 1.7 merges: add the `rules` job to the `main` ruleset's required checks.
+- Unit 1.6: approve the fixture writes (permission prompts) and, with the rules spec, the fixtures.
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).
 - Cloud network allowlist: add `media.katagotraining.org` (full-size KataGo networks) and

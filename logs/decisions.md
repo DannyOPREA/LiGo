@@ -5,6 +5,9 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-28 | Owner: "Don't ask for my approval for anything, just work until I tell you to stop." | Claude takes its own recommendation on pending questions and records each as its call under this delegation | this log |
+| 2026-09-27 | 1.7: who tracks resuming after the scoring phase and the limit on resuming: the rules adapter or lila? | The adapter (Claude, under the owner's 2026-09-28 delegation: "Don't ask for my approval for anything") | logs/rules-engine.md |
+| 2026-09-27 | 1.7: move the SGF read-back half of the round trip to unit 1.8 (strategygames only writes SGF; no parser of our own)? | Split: 1.7 writes SGF, 1.8 reads it back in goban-engine (Claude, under the owner's 2026-09-28 delegation) | logs/rules-engine.md |
 | 2026-09-28 | 1.6: approve the 130 conformance fixtures (built on the rules spec's recommended choices) and their licensing (each imported file keeps its source's licence)? | Covered by the owner's 2026-09-28 "don't ask for my approval for anything" delegation and the spec's approval (PR #13); merged by Claude | logs/rules-engine.md, PR #14 |
 | 2026-09-28 | 1.2: client-side rules, SGF and board: OGS `goban` from npm, pinned, wrapped by `libs/board`, or vendor its source into `libs/board`? | npm, pinned (Claude, on its own recommendation, under the owner's 2026-09-28 "don't ask for my approval for anything" delegation; the owner can revisit it) | ADR 0014 |
 | 2026-09-28 | 1.3: scoring: `services/scoring` as a Node service (KataGo + goban autoscore + goscorer) or port autoscore and goscorer to Scala? | Node service (A): Claude's call under the owner's 2026-09-28 "Don't ask for my approval for anything"; owner may revisit | ADR 0016 |
