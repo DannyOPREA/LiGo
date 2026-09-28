@@ -2,7 +2,9 @@
 
 libs/board's own code is MIT (ADR 0006, [`LICENSE-MIT`](../../LICENSE-MIT)). It depends on, but
 does not copy, the npm packages below, which pnpm downloads at install time (pinned in
-`pnpm-lock.yaml`).
+lila's `lila/pnpm-lock.yaml`: libs/board is in lila's pnpm workspace since unit 2.1). Its
+development tools (Playwright, esbuild, TypeScript, oxfmt, oxlint) run tests and checks only and
+are not part of what the browser gets.
 
 ## goban-engine 8.3.226 (Apache-2.0)
 
@@ -11,9 +13,18 @@ Copyright (C) Online-Go.com, licensed under the Apache License, Version 2.0: the
 [`LICENSE-Apache-2.0.txt`](LICENSE-Apache-2.0.txt). The package ships only the licence header
 (`build/goban-engine.js.LICENSE.txt`) and no NOTICE file.
 
-## goscorer (MIT), bundled inside goban-engine
+## goban 8.3.226 (Apache-2.0)
 
-goban-engine's scoring code includes lightvector's goscorer
+OGS's Go board (https://github.com/online-go/goban): the SVG renderer LiGo's board wraps
+(`src/board.ts`), with its own copy of the same engine. Copyright (C) Online-Go.com, licensed under
+the Apache License, Version 2.0 (same text, [`LICENSE-Apache-2.0.txt`](LICENSE-Apache-2.0.txt)).
+The package ships the licence header (`build/goban.min.js.LICENSE.txt`) and no NOTICE file. LiGo
+uses its plain board and stones only; its image themes, whose pictures come from OGS's CDN, are not
+used (unit 2.1).
+
+## goscorer (MIT), bundled inside goban-engine and goban
+
+goban-engine's and goban's scoring code includes lightvector's goscorer
 (`src/third_party/goscorer/goscorer.mjs` in goban). The minified build drops its notice, so it is
 reproduced here from https://github.com/lightvector/goscorer/blob/main/LICENSE.txt (memo 1.2,
 ADR 0014):
@@ -37,7 +48,7 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ```
 
-## eventemitter3 5.0.4 (MIT), goban-engine's only dependency
+## eventemitter3 5.0.4 (MIT), goban-engine's and goban's only dependency
 
 ```text
 The MIT License (MIT)

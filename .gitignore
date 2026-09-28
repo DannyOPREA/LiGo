@@ -28,6 +28,7 @@ metals.sbt
 # Node / pnpm
 node_modules/
 .pnpm-store/
+*.tsbuildinfo
 dist/
 coverage/
 

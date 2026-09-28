@@ -4,6 +4,8 @@ packages:
   - 'bin'
   - 'ui/*'
   - 'ui/@types/*'
+  # LiGo: the Go board and its rules (goban), built into lila's pages (unit 2.1)
+  - '../libs/board'
 ignoredOptionalDependencies:
   - '@ox*/*-arm-*'
   - '@ox*/*-ia32-*'

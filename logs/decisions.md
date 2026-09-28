@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-28 | 2.1: how libs/board joins lila's pnpm workspace, and how the board is exposed to lila's pages? | As a workspace member (`../libs/board`), one lockfile, filtered installs; goban's board behind `mountBoard`, plain theme, tested in Chromium in the rules job (Claude, under the owner's 2026-09-28 delegation) | ADR 0017, logs/board-ui.md |
 | 2026-09-28 | 1.8: where does the goban-engine harness live, and which `handicap` value do games pass? | `libs/board` as its own pnpm package until Phase 2 joins it to lila's workspace; `handicap: N` with the server's stones, per spec §9 (Claude, under the owner's 2026-09-28 delegation) | ADR 0014 amendment, logs/rules-engine.md |
 | 2026-09-28 | Phase 2 breakdown: how to split board integration, and should touch-confirm reuse lila's "submit move" preference? | Four units (2.1 board, 2.2 playground, 2.3 touch-confirm, 2.4 snapshots + demo); touch-confirm is its own board preference in lila's `pref` module, because lila's "submit move" confirms after a move is made, not before (Claude, under the owner's 2026-09-28 delegation) | docs/PLAN.md §5, logs/board-ui.md |
 | 2026-09-28 | Owner: "Don't ask for my approval for anything, just work until I tell you to stop." | Claude takes its own recommendation on pending questions and records each as its call under this delegation | this log |

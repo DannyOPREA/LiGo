@@ -2,8 +2,9 @@
 # strategygames, ADR 0012) replaying every libs/conformance fixture, its property tests and SGF
 # tests, formatting, and the strategygames jar pin (unit 1.7). The client's: goban-engine with
 # LiGo's settings (libs/board, ADR 0014) replaying the same fixtures, reading back the server's SGF,
-# and replaying the server's seeded random games move by move (unit 1.8). Runs when libs/go-rules,
-# libs/board or the fixtures change.
+# and replaying the server's seeded random games move by move (unit 1.8); and the board itself,
+# goban's SVG board driven in Chromium (unit 2.1). Runs when libs/go-rules, libs/board or the
+# fixtures change.
 name: rules
 
 on:
@@ -67,25 +68,35 @@ jobs:
         run: sbt "scalafmtCheckAll; testFull"
       # The client's engine (goban-engine, libs/board, unit 1.8): the same fixtures, then the parity
       # check against what the server just wrote to target/parity/server.json (ParityExportTest).
+      # libs/board is in lila's pnpm workspace (unit 2.1): its packages come from lila's lockfile,
+      # installed for it alone, and its scripts run from lila/ (pnpm run inside libs/board wouldn't
+      # find the workspace).
       - name: Install pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
-          package_json_file: libs/board/package.json
+          package_json_file: lila/package.json
       - name: Setup node and restore pnpm cache
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: libs/board/.node-version
           cache: pnpm
-          cache-dependency-path: libs/board/pnpm-lock.yaml
-      - name: Install goban-engine
-        working-directory: libs/board
-        run: pnpm install --frozen-lockfile
-      - name: goban-engine's npm dependencies are AGPL-compatible
-        working-directory: libs/board
+          cache-dependency-path: lila/pnpm-lock.yaml
+      - name: Install libs/board's packages
+        working-directory: lila
+        run: pnpm install --frozen-lockfile --filter @ligo/board
+      - name: libs/board's npm dependencies are AGPL-compatible
+        working-directory: lila
         shell: bash
         run: |
           set -o pipefail
-          pnpm licenses list --json | ../../dev/ci/meta_checks.py js-licences
-      - name: Client fixtures, SGF read-back and parity with the server
-        working-directory: libs/board
-        run: pnpm run test:all
+          pnpm licenses list --json --filter @ligo/board | ../dev/ci/meta_checks.py js-licences
+      - name: Format, lint and type-check the board
+        working-directory: lila
+        run: pnpm --filter @ligo/board run lint && pnpm --filter @ligo/board run typecheck
+      # The board's tests drive goban's board in Chromium (unit 2.1).
+      - name: Install Chromium for Playwright
+        working-directory: lila
+        run: pnpm --filter @ligo/board exec playwright install --with-deps chromium
+      - name: Client fixtures, SGF read-back, parity with the server, and the board in Chromium
+        working-directory: lila
+        run: pnpm --filter @ligo/board run test:all

@@ -44,7 +44,8 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   test [what]         Run the unit tests of lila, ws, ui, rules, board or all (default: all);
                       rules = both Go rules engines: libs/go-rules (server) and libs/board
                       (goban-engine) replaying the libs/conformance fixtures, then the parity
-                      check between them; board = the libs/board tests alone, without parity
+                      check between them, plus the board in Chromium; board = the libs/board
+                      tests alone, without parity (docker mode skips the Chromium ones)
   e2e [-- args]       Smoke-test the running stack (home page + lobby websocket);
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
@@ -119,10 +120,20 @@ docker_rules_sbt() {
     -w /libs/go-rules --entrypoint sbt lila "$@"
 }
 
-# libs/board is its own small pnpm package (goban-engine, unit 1.8); in docker mode it runs in the
-# ui container with libs/ mounted, like docker_rules_sbt.
-docker_board() { docker_env; run dc run --rm --no-deps -v "$ROOT/libs:/libs" -w /libs/board ui sh -c "pnpm install --frozen-lockfile && pnpm run $1"; }
-native_board() { (cd "$BOARD" && run pnpm install --frozen-lockfile && run pnpm run "$1"); }
+# libs/board is a member of lila's pnpm workspace (unit 2.1): its packages come from lila's lockfile,
+# installed for it alone with --filter, and its scripts run from lila/ with --filter too (pnpm run
+# inside libs/board wouldn't find the workspace). In docker mode the ui container sees it at
+# /libs/board (compose.yml mounts libs/). Its browser tests need Chromium, which the ui container
+# doesn't have: docker mode runs the Node tests and says so; native mode and CI run them all.
+board_pnpm() { echo "pnpm install --frozen-lockfile --filter @ligo/board && pnpm --filter @ligo/board run $1"; }
+docker_board() {
+  docker_env
+  local script=test:node
+  [[ "$1" == test:all ]] && script=test:node-all
+  run dc run --rm --no-deps -w /lila ui sh -c "$(board_pnpm "$script")"
+  say "board browser tests skipped in docker mode (no Chromium in the ui container); CI runs them"
+}
+native_board() { (cd "$LILA" && run sh -c "$(board_pnpm typecheck) && pnpm --filter @ligo/board run $1"); }
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)

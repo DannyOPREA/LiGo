@@ -18,6 +18,7 @@ lila/ui/CLAUDE.md has the overview; the path rules cover style.
 - **Shared code:** `ui/lib/src` (xhr, i18n via `i18n.site.*`, storage, pubsub, socket, `view/dialog`). Reuse it.
 - **Themes and CSS:** SCSS in each package's `css/`, shared abstract variables and mixins in
   `ui/lib/css/abstract/`; colours come from theme CSS variables.
-- **Board (planned):** chess uses chessground; LiGo will use OGS goban via `libs/board`, a thin
-  adapter exposing what round/analyse need. Never reimplement goban behaviour in lila.
+- **Board:** chess uses chessground; LiGo uses OGS goban via `libs/board`'s `mountBoard`
+  (`@ligo/board/board`, in lila's pnpm workspace; API in libs/board/README.md), mounted in a
+  snabbdom `insert` hook and loaded with `import()`. Never reimplement goban behaviour in lila.
 - **Tests:** vitest (`dev/ligo test ui`); lint/format with `pnpm lint`, `pnpm check-format`.

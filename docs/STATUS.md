@@ -3,9 +3,10 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- Phase 2 breakdown (started 2026-09-28, under the owner's "work until I tell you to stop"
-  delegation): Phase 2 split into units 2.1–2.4 in docs/PLAN.md §5. Logs: logs/board-ui.md.
-  Unit 1.8 (client rules harness, PR #17) and 1.9 (nightly KataGo check) run in their own threads.
+- 2.1 goban's board in `libs/board` (started 2026-09-28, under the owner's "work until I tell you to
+  stop" delegation). Acceptance: `mountBoard` wraps goban's SVG board for lila's pages, tested in
+  Chromium on desktop and phone sizes; libs/board joins lila's pnpm workspace (ADR 0017).
+  Logs: logs/board-ui.md.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -55,10 +56,14 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - **Phase 2 — board integration** split into four units on 2026-09-28 (docs/PLAN.md §5, "Phase 2
   units"): 2.1 the goban board in `libs/board`, 2.2 a playground page, 2.3 the touch-confirm
   setting, 2.4 visual snapshots and the demo. All build on unit 1.8's `libs/board`.
+  - Unit 2.1 (the board): `mountBoard` in `libs/board` wraps goban's SVG board (goban 8.3.226,
+    plain theme); libs/board is now in lila's pnpm workspace (ADR 0017); 13 browser tests in the
+    `rules` CI job.
 
 ## Next
-- Phase 1 units 1.8 (PR #17) and 1.9, the nightly KataGo differential test.
-- Phase 2 unit 2.1 once 1.8 merges, then 2.2–2.4 (docs/PLAN.md §5, "Phase 2 units").
+- Phase 1 unit 1.9, the nightly KataGo differential test (its own thread).
+- Phase 2 units 2.2 (playground page), 2.3 (touch-confirm setting), 2.4 (snapshots + demo)
+  (docs/PLAN.md §5, "Phase 2 units").
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
@@ -87,6 +92,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1–1.7 done; 1.8 in review; 1.9 in progress (of 9 units) |
-| 2. Board integration | split into units 2.1–2.4; not started |
+| 1. Build-vs-buy + rules integration | 1.1–1.8 done; 1.9 in progress (of 9 units) |
+| 2. Board integration | 2.1 in review (of 4 units) |
 | 3–9 | not started |
