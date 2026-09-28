@@ -92,8 +92,9 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | PlayStrategy strategygames `10.2.1-s3-ps14` (Go rules; a dependency, not copied), with its other games' engines excluded (ADR 0012) | `libs/go-rules/build.sbt` | MIT | Notice in `libs/go-rules/NOTICE.md`; jar SHA-256 pinned in `docs/UPSTREAM.md` |
 | joda-time `2.10.10` and scala-parser-combinators `2.4.0`, brought in by strategygames (dependencies, not copied) | `libs/go-rules/build.sbt` (transitive) | Apache-2.0 | joda-time's NOTICE is below and in `libs/go-rules/NOTICE.md`; scala-parser-combinators ships none |
 | OGS goban-engine `8.3.226` (the client's Go rules; a dependency, not copied, ADR 0014) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
-| goscorer (lightvector), bundled inside goban-engine | `libs/board` (inside goban-engine) | MIT | goban's build drops its notice, so `libs/board/NOTICE.md` carries it |
-| eventemitter3 `5.0.4`, goban-engine's only dependency | `libs/board` (transitive) | MIT | Notice in `libs/board/NOTICE.md` |
+| OGS goban `8.3.226` (the board: its SVG renderer and its own copy of the engine; a dependency, not copied, ADR 0014, unit 2.1). Only its plain board and stones are used; its image themes are not (their pictures are unchecked) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
+| goscorer (lightvector), bundled inside goban-engine and goban | `libs/board` (inside goban-engine and goban) | MIT | goban's build drops its notice, so `libs/board/NOTICE.md` carries it |
+| eventemitter3 `5.0.4`, goban-engine's and goban's only dependency | `libs/board` (transitive) | MIT | Notice in `libs/board/NOTICE.md` |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they
