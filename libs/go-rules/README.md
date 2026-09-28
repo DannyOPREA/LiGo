@@ -52,3 +52,23 @@ score is counted by goscorer in `services/scoring` (R-SCORE-3), not here.
   `libs/board/test/parity.test.mjs`): every server fixture's game as SGF with its end position, and
   80 seeded random games on 9×9, 13×13 and 19×19 with the position after every action and the
   reason for every refused point at probed plies.
+- `DifferentialTest`: the differential test's own plumbing (below), without KataGo.
+
+## The differential test against KataGo (unit 1.9)
+
+`dev/ligo differential` (native mode) and the `nightly-differential` workflow (every night, and on pull
+requests that touch this folder) play random games with this adapter while KataGo follows the same
+game over GTP, and compare after every action: the legal points (KataGo's strict legality, read from
+the NAN mask of `kata-raw-nn`'s policy, because its `play` accepts ko retakes and suicide), the
+stones, the player to move and the captures; and at the end the area score (strategygames' count vs
+KataGo's `final_score`). The games are seeded: random size, ruleset and handicap, random stones that
+don't fill a player's own one-point eye, the odd mid-game pass, takeback and resumption. Code:
+`src/test/scala/ligo/gorules/differential/` (test scope: none of it ships).
+
+- KataGo runs with situational superko, suicide illegal and plain area scoring (`KataGo.rules`); only
+  its small test network is used, since its judgement plays no part.
+- Scores are compared only on settled boards (both final passes forced: every empty point is a
+  one-colour eye). KataGo counts stones inside the opponent's pass-alive area as dead, so an
+  unsettled board would differ by design.
+- A disagreement fails the run and writes `<seed>.txt` and `<seed>.sgf`; `--seed <seed> --games 1`
+  replays that game. The final score LiGo shows comes from goscorer (Phase 4), not this count.

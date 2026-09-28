@@ -18,8 +18,10 @@ what it adds: [README.md](README.md). The rules it implements: `docs/rules/spec.
 ## Test
 `dev/ligo test rules`: resolves, checks the strategygames jar's SHA-256 (`check-pin.sh`), then
 runs sbt `testFull` (plain `test` in sbt 2 skips tests whose code didn't change, and a fixture
-change is not a code change). Format:
-`cd libs/go-rules && sbt scalafmtAll`. CI: `.github/workflows/rules.yml`.
+change is not a code change). `dev/ligo differential [--games N --seed S]`: random games against
+KataGo (README, unit 1.9; nightly in CI). Format:
+`cd libs/go-rules && sbt scalafmtAll`. CI: `.github/workflows/rules.yml` and
+`nightly-differential.yml`.
 
 ## Logs to read
 `logs/rules-engine.md` (Lessons + latest entries).

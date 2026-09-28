@@ -10,6 +10,11 @@
 #   bench                 `katago benchmark` (on OpenCL the first run also tunes the GPU); saves the
 #                         report to .ligo/katago-benchmark.txt for the log.
 #   path                  Print where the binary and networks live.
+#   env                   Print KATAGO_BIN, KATAGO_TEST_NET and KATAGO_GTP_CONFIG as shell assignments
+#                         (the differential test's KataGo: `dev/ligo differential`).
+#
+# LIGO_KATAGO_TEST_NET_ONLY=1 makes install skip the full-size network (CI, which needs only the
+# test network).
 #
 # Backend: argument, else $LIGO_KATAGO_BACKEND, else cpu in cloud sessions and opencl elsewhere.
 # Nothing here is committed: binaries and networks live under ~/.local (never in the repo).
@@ -113,6 +118,8 @@ cmd_install() {
 
   if is_cloud; then
     say "cloud session: using the test network only (katagotraining.org isn't on the allowlist)"
+  elif [[ "${LIGO_KATAGO_TEST_NET_ONLY:-}" == 1 ]]; then
+    say "LIGO_KATAGO_TEST_NET_ONLY=1: skipping the full-size network"
   elif [[ -s "$NET_DIR/$NET_NAME" ]]; then
     say "network $NET_NAME present"
   else
@@ -181,11 +188,21 @@ cmd_path() {
   find "$NET_DIR" -maxdepth 1 -name '*.bin.gz' -printf '  %f\n' 2>/dev/null
 }
 
+# The differential test reads only KataGo's legality mask, board and count, never its judgement, so it
+# always uses the small, fast test network.
+cmd_env() {
+  local k; k=$(katago_bin); [[ -n "$k" ]] || die "katago not installed: run dev/ligo katago install"
+  [[ -s "$NET_DIR/$TEST_NET" ]] || die "test network missing: run dev/ligo katago install"
+  printf 'KATAGO_BIN=%q\nKATAGO_TEST_NET=%q\nKATAGO_GTP_CONFIG=%q\n' \
+    "$k" "$NET_DIR/$TEST_NET" "$(installed_dir)/default_gtp.cfg"
+}
+
 case "${1:-help}" in
   install) shift; cmd_install "$@" ;;
   smoke) cmd_smoke ;;
   bench) cmd_bench ;;
   path) cmd_path ;;
-  help|-h|--help) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//' ;;
-  *) sed -n '2,15p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2 ;;
+  env) cmd_env ;;
+  help|-h|--help) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2 ;;
 esac
