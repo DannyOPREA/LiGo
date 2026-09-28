@@ -10,6 +10,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · Phase 2 breakdown · Split board integration into units
+- Did: split PLAN §5's Phase 2 row into units 2.1–2.4 (board in `libs/board`, playground page, touch-confirm setting, visual snapshots + demo), each with what it needs; refreshed docs/STATUS.md.
+- Worked: the 1.2 memo, ADR 0014 (and its unit 1.8 amendment) and this log's Lessons already answer the build-vs-buy questions, so no new memo is needed for Phase 2.
+- Didn't work / dead ends: none. Every Phase 2 unit sits on unit 1.8's `libs/board`, so none can start before PR #17 merges (only 2.3's server-side preference could).
+- Lessons: lila's "submit move" preference confirms after the move (a confirm bar), not the tap-to-preview Go players expect; touch-confirm gets its own preference.
+- Decisions: the split and the touch-confirm preference, Claude's calls under the owner's 2026-09-28 delegation (logs/decisions.md).
+- Verified by Claude: `bash .claude/skills/verify/verify.sh` (see PR). · Needs owner verification: none; skim the four units if you like.
+- Follow-ups: 2.1 decides how `libs/board` joins lila's pnpm workspace; goban's image themes need a licence check before any ships.
+
 ### 2026-09-27 · 1.2 · Build-vs-buy: client-side rules, SGF and board (OGS goban spike)
 - Did: spiked npm `goban`/`goban-engine` 8.3.226 (release commit 6276a50) and goban `main` (e61c56e) in a scratch folder: the engine in Node (ko, suicide, captures, superko settings, SGF in/out), goban's own engine tests, and the SVG board inside a snabbdom view bundled with lila's esbuild, played by Playwright on desktop and phone viewports; measured bundle sizes; looked at the Sabaki fallbacks. Wrote docs/build-vs-buy/client-board-and-rules.md; asked the owner A (npm, pinned) vs B (vendor source).
 - Worked: 203/203 of goban's engine tests; ADR 0003's situational superko via per-game config under both rulesets; tap-to-preview + confirm through goban's own `submit_move`; captures and prisoner counts; no page errors on either viewport.

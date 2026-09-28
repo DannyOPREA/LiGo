@@ -366,6 +366,20 @@ Other §3.1 rows: dev env (ADR 0010) and CI (unit 0.6) were settled in Phase 0; 
 trainer (both lila's own, used as-is) get their check when their phases start (9 and 8); tsumego
 content sourcing stays in Phase 8 and load testing in Phase 6+, as the table above says.
 
+**Phase 2 units** (broken down 2026-09-28 when Phase 1's decisions were done; every unit builds on
+`libs/board` from unit 1.8, and the board follows ADR 0014 and its unit 1.8 amendment):
+
+| Unit | What | Needs |
+|---|---|---|
+| 2.1 | `libs/board` joins lila's pnpm workspace and gains the board: goban's SVG renderer (npm `goban`, pinned to the same version as `goban-engine`), wrapped for snabbdom behind a small chessground-like API (mount with size, komi, handicap stones and moves; set position; move and pass events; destroy). Board sized from its container, lazy-loaded, plain-colour stones and board only (goban's image themes wait for a licence check), adapter tests, COPYING/NOTICE kept in step | 1.8 |
+| 2.2 | Playground page in lila (a new route and a small `ui/` page bundle): a local game where you play both colours on 9×9, 13×13 or 19×19, with komi, ruleset and handicap choices, pass, undo, new game and prisoner counts; legality from `libs/board`'s engine settings; desktop and phone layouts. No server game, no clock, nothing stored | 2.1 |
+| 2.3 | Touch-confirm setting: tap shows a preview stone and a second tap (or a confirm button) plays it, using goban's own preview-and-submit. One board preference on lila's existing preferences page and `pref` module ("Confirm moves: never / on touch screens / always", default on touch screens), passed to the board by the adapter; the playground honours it | 2.1 (server half can start earlier) |
+| 2.4 | Visual snapshots and the Phase 2 demo: Playwright screenshot tests of the playground (desktop 1280×800 and phone 390×844; empty 9×9 and 19×19, a capture, a preview stone) with committed baselines, run in CI; a scripted two-colour game through the playground; the demo checklist for you | 2.2, 2.3 |
+
+What stays out of Phase 2: server games and lila-ws messages (Phase 3), clocks and the scoring phase
+(Phase 4), board themes beyond the plain one and sounds (Phase 9), SGF import into the playground
+(Phase 7's analysis board).
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.
