@@ -1,8 +1,8 @@
 # services/scoring/ in LiGo
 
-The scoring service's core: KataGo's analysis engine, OGS **goban-engine**'s `autoscore` and
-`GobanEngine.computeScore()` (goscorer), no Redis yet (ADR 0016, ADR 0020 §1, unit 4.4). How it
-works: [README.md](README.md).
+The scoring service: KataGo's analysis engine, OGS **goban-engine**'s `autoscore` and
+`GobanEngine.computeScore()` (goscorer), on a Redis worker (ADR 0016, ADR 0020 §1, units 4.4-4.5).
+How it works: [README.md](README.md).
 
 - **We call goban-engine, we don't rewrite it.** Every board comes from `src/board.ts`'s
   `parseBoard`/`initialState`, never a hand-built `GobanEngine` config; `src/goban.ts` is the only
@@ -30,8 +30,36 @@ works: [README.md](README.md).
 - In lila's pnpm workspace (ADR 0017's reasoning, applied here too: one lockfile, `goban-engine`
   pinned to the exact version `libs/board` uses, so both sides of the wire share one copy of it).
   Add or bump packages from `lila/` with `pnpm --filter @ligo/scoring add --save-exact <pkg>@<version>`;
-  the lockfile is `lila/pnpm-lock.yaml`. No third-party dependency beyond `goban-engine` and
-  `typescript`/`@types/node` (dev only) — no Redis client until unit 4.5.
+  the lockfile is `lila/pnpm-lock.yaml`. Third-party runtime dependencies: `goban-engine` and
+  `ioredis` (unit 4.5, logs/decisions.md: node-redis's own alternative was passed over for
+  ioredis's automatic resubscribe of `scoring-in` after a reconnect); `typescript`/`@types/node`
+  are dev-only.
+- **The Redis worker** (`src/worker.ts`, unit 4.5, ADR 0020 §1): the two channels (`scoring-in`
+  lila → service, `scoring-out` service → lila), each message one JSON object, `{"t":"start"}`
+  announced once on boot so lila re-sends whatever it was waiting on. It never has its own
+  opinions about scoring — it only routes `handle()`'s replies onto Redis — but three things live
+  here rather than in `handle()` (logs/decisions.md has the reasoning):
+  - **Concurrency**: `count` never asks KataGo (`handle()`'s own rule), so it runs as soon as it
+    arrives, however many are in flight; `propose` queries the one KataGo process this service
+    runs, so a second `propose` queues behind the first (FIFO) rather than racing it for the same
+    CPU/GPU.
+  - **Dedup of re-sent requests** (lila resends the latest unanswered request of a game on
+    `start`, when its round loads, and every 30s while one is outstanding, ADR 0020 §1): a bounded
+    LRU-ish cache of `ref` → reply. A re-sent `ref` gets the cached reply republished, not
+    recomputed (safe even for `propose`, since it's the same board either way); a `ref` still
+    in-flight is dropped, since the request already running will answer it.
+  - **A game never stays without a proposal**: `handle()` itself never throws for a
+    request-shaped failure, and `KataGoClient` falls back to `src:"none"` on its own crash or
+    timeout and respawns lazily on the next query (`src/katago.ts`); the one thing `worker.ts`
+    guards is a `handle()` bug (a real throw) — caught, logged, turned into an `error` reply, so a
+    single bad request never leaves a game silent or takes the process down.
+  `src/main.ts` is the actual entry point (env vars, the two ioredis connections, signal
+  handling); `worker.ts` itself knows nothing about ioredis specifically (`Publisher`/`Subscriber`
+  are the narrow slice of its interface it needs), so `test/worker.test.ts` drives it with an
+  in-process fake pub/sub. Supervision: `dev/ligo up`/`down`/`status`/`logs scoring` in native
+  mode (`dev/ligo`'s `native_scoring_worker_up`/`_down`, alongside lila/lila-ws); docker mode does
+  not start it (no KataGo in any container yet — no OpenCL passthrough to the owner's GPU, no
+  binary staged into an image), an honest skip like `docker_scoring` already makes for tests.
 - Bumping `goban-engine`: change the exact version in `package.json` (from `lila/`, as above),
   keeping step with `libs/board`'s version (both packages must pin the same one), check its engine
   changes (upstream-scout), keep `NOTICE.md`/`test/autoscore_test_files/NOTICE.md` and COPYING.md
@@ -42,10 +70,15 @@ works: [README.md](README.md).
 Runs OGS's 31 autoscore regression games (`test/autoscore.test.ts`, must be 31/31), the
 libs/conformance scoring fixtures (`test/conformance.test.ts`), board/chain/handicap unit tests,
 the KataGo client against a fake `katago` process (`test/katago.test.ts`: fallback, timeout,
-crash-and-restart), and, only when `KATAGO_BIN`/`KATAGO_TEST_NET` are set (as `dev/ligo katago env`
-prints them), one real-KataGo test (`test/integration.test.ts`; otherwise skipped, not failed).
-Docker mode: not yet (no KataGo in the ui container; unit 4.5 wires up supervision there). CI: the
-`scoring` job in `.github/workflows/scoring.yml`.
+crash-and-restart), the Redis worker against an in-process fake pub/sub
+(`test/worker.test.ts`: dedup, propose/count concurrency, a `handle()` bug becoming an `error`
+reply), a real Redis round trip (`test/worker-redis.test.ts`: starts its own `redis-server` on a
+free port, skipped — not failed — when `redis-server` isn't on PATH), and, only when
+`KATAGO_BIN`/`KATAGO_TEST_NET` are set (as `dev/ligo katago env` prints them), one real-KataGo test
+(`test/integration.test.ts`; otherwise skipped, not failed). Docker mode: test suite skipped (no
+KataGo in the ui container yet); `dev/ligo up`/`down` don't start a worker there either (unit 4.5,
+see the "Redis worker" note above). CI: the `scoring` job in `.github/workflows/scoring.yml`
+installs `redis-server` so the round trip runs there too.
 
 ## Logs to read
 `logs/scoring.md` (Lessons + latest entries).

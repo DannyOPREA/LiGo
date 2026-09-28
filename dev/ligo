@@ -34,11 +34,13 @@ usage() {
   cat <<EOF
 Usage: dev/ligo <command> [args]        (mode: $MODE)
 
-  up                  Start the stack (first run builds the UI and compiles; takes a while)
+  up                  Start the stack (first run builds the UI and compiles; takes a while).
+                      Native mode also starts the scoring Redis worker (unit 4.5); docker mode
+                      doesn't yet (no KataGo in any container)
   down                Stop the stack (database data is kept)
   db                  Start only Mongo and Redis (idempotent; the SessionStart hook runs it)
   status              Show what is running
-  logs [lila|ws|db]   Follow logs
+  logs [lila|ws|db|scoring]  Follow logs (scoring: native mode only, unit 4.5)
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
   test [what]         Run the unit tests of lila, ws, ui, rules, board, scoring or all (default:
                       all); rules = both Go rules engines: libs/go-rules (server) and libs/board
@@ -163,6 +165,37 @@ native_scoring() {
   fi
   (cd "$LILA" && run sh -c "$(scoring_pnpm typecheck) && pnpm --filter @ligo/scoring run lint && pnpm --filter @ligo/scoring run test")
 }
+
+# services/scoring's Redis worker (unit 4.5, ADR 0020 §1: `scoring-in`/`scoring-out`, `start` on
+# boot). Native mode: supervised exactly like lila/lila-ws (start_bg/stop_bg, its own pid and log
+# under .ligo/). KataGo is best-effort: if `dev/ligo katago install` has already run, the worker
+# gets KATAGO_BIN/KATAGO_MODEL/KATAGO_CONFIG (the test network `katago env` also gives CI and the
+# differential test — weak, but real KataGo plumbing rather than a full-size net a dev box may not
+# have); otherwise the worker starts anyway with none of them set, and every `propose` answers
+# `src:"none"` (ADR 0020 §4's own fallback), same as a KataGo that crashed. Docker mode has no
+# KataGo in any container yet (no OpenCL passthrough to the owner's GPU, no binary staged into an
+# image build) — `dev/ligo up`/`down` in docker mode do not start or stop a scoring worker, an
+# honest skip (docker_scoring already says the same for tests); a later unit adds a `scoring`
+# compose service once KataGo has a docker story.
+scoring_katago_env() {
+  local envout
+  if ! envout=$("$ROOT/dev/katago.sh" env 2>/dev/null); then
+    say "scoring worker: KataGo not installed (dev/ligo katago install); every propose will answer src:\"none\""
+    return
+  fi
+  eval "$envout"
+  export KATAGO_BIN
+  export KATAGO_MODEL="$KATAGO_TEST_NET"
+  local cfg
+  cfg="$(dirname "$(readlink -f "$KATAGO_BIN")")/analysis_example.cfg"
+  export KATAGO_CONFIG="$cfg"
+}
+native_scoring_worker_up() {
+  need_node_modules
+  scoring_katago_env
+  start_bg scoring-worker "$LILA" pnpm --filter @ligo/scoring run start
+}
+native_scoring_worker_down() { stop_bg scoring-worker; }
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)
@@ -330,6 +363,7 @@ native_up() {
   ui_built || native_ui
   start_bg lila-ws "$WS" sbt --server run
   start_bg lila "$LILA" ./lila.sh --server run
+  native_scoring_worker_up
   say "waiting for lila on :9663 (compiles first; can take 5+ minutes)"
   if wait_http http://localhost:9663/ 900; then say "up: $(site_url)"
   else die "lila did not answer within 15 minutes; see .ligo/logs/lila.log"; fi
@@ -339,6 +373,7 @@ native_up() {
 native_down() {
   stop_bg lila
   stop_bg lila-ws
+  native_scoring_worker_down
   (cd "$LD" && run docker compose -f compose.native.yml --profile redis down)
 }
 
@@ -439,7 +474,7 @@ cmd_status() {
     dc ps
   else
     local n
-    for n in lila lila-ws; do
+    for n in lila lila-ws scoring-worker; do
       if [[ -f "$STATE/$n.pid" ]] && kill -0 "$(cat "$STATE/$n.pid")" 2>/dev/null; then say "$n: running"; else say "$n: stopped"; fi
     done
     (cd "$LD" && docker compose -f compose.native.yml --profile redis ps)
@@ -449,13 +484,20 @@ cmd_status() {
 cmd_logs() {
   local what=${1:-lila}
   if [[ "$MODE" == docker ]]; then
-    case "$what" in lila) dc logs -f lila ;; ws) dc logs -f lila_ws ;; db) dc logs -f mongodb ;; *) dc logs -f "$what" ;; esac
+    case "$what" in
+      lila) dc logs -f lila ;;
+      ws) dc logs -f lila_ws ;;
+      db) dc logs -f mongodb ;;
+      scoring) die "scoring isn't part of docker mode yet (no KataGo in any container); use native mode" ;;
+      *) dc logs -f "$what" ;;
+    esac
   else
     case "$what" in
       lila) tail -F "$STATE/logs/lila.log" ;;
       ws) tail -F "$STATE/logs/lila-ws.log" ;;
       db) (cd "$LD" && docker compose -f compose.native.yml logs -f mongodb) ;;
-      *) die "logs lila, ws or db" ;;
+      scoring) tail -F "$STATE/logs/scoring-worker.log" ;;
+      *) die "logs lila, ws, db or scoring" ;;
     esac
   fi
 }
