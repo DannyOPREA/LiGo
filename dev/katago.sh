@@ -4,7 +4,10 @@
 #
 #   install [cpu|opencl]  Download the pinned KataGo release for this backend (checksum-checked),
 #                         unpack it and link it as ~/.local/bin/katago; fetch the small test network.
-#                         Elsewhere it also fetches a full-size network (b18, ~100 MB).
+#                         Elsewhere it also fetches a full-size network (b18, ~100 MB); it stays
+#                         UNVERIFIED (net_path refuses to use it) until NET_SHA256 below is pinned
+#                         by the owner (unit 4.6: its licence needs reading on his box too, since
+#                         katagotraining.org is unreachable from this cloud session).
 #   smoke                 One analysis query on an empty-ish 19x19 board; checks KataGo answers with
 #                         an ownership map (what the scoring phase will use).
 #   bench                 `katago benchmark` (on OpenCL the first run also tunes the GPU); saves the
@@ -39,9 +42,15 @@ KATAGO_COMMIT=92ee95c0a4b25fec214da00951ab69e97e207729
 TEST_NET=g170-b6c96-s175395328-d26788732.bin.gz
 TEST_NET_SHA256=f5d32604e3675c480c7c8f6aa579a1ea857135628a0afccc8fa56330fbacd38d
 # Full-size network for the owner's box: the b18 network KataGo's README recommends. Its host
-# (media.katagotraining.org) is not on the cloud allowlist, so cloud sessions skip it. No
-# checksum is pinned yet: the first download prints one to record (unit 0.5 follow-up); once
-# NET_SHA256 is set, downloads are checked against it.
+# (media.katagotraining.org) is not on the cloud allowlist, so cloud sessions skip it, and
+# katagotraining.org/web.archive.org are also unreachable from this cloud session, so its
+# licence could not be read here (unit 4.6: pending the owner pasting it, logs/scoring.md).
+# TODO(owner, unit 4.6): after `dev/ligo katago install` downloads this network on your box, it
+# prints its sha256 — paste that value in below and re-run install once to have it verified. Until
+# NET_SHA256 is set, `net_path` (used by smoke/bench/env, so also by `dev/ligo scoring bench`)
+# refuses to use this network and falls back to the test network, so an unverified download is
+# never silently used for anything that matters (LIGO_KATAGO_ALLOW_UNVERIFIED=1 overrides this,
+# for trying it before the checksum is pinned).
 NET_NAME=${LIGO_KATAGO_NET:-kata1-b18c384nbt-s9996604416-d4316597426.bin.gz}
 NET_SHA256=
 NET_URL=https://media.katagotraining.org/uploaded/networks/models/kata1/$NET_NAME
@@ -67,11 +76,34 @@ sha_ok() { echo "$2  $1" | sha256sum -c --quiet - >/dev/null 2>&1; }  # sha_ok <
 # Ours first: smoke and bench read the example configs next to the binary we installed.
 katago_bin() { if [[ -x "$BIN_DIR/katago" ]]; then echo "$BIN_DIR/katago"; else command -v katago 2>/dev/null || true; fi; }
 
-# The network to use: the full-size one if present, else the test network.
+# True only when the full-size network is on disk AND checked against a pinned sha256 (unit 4.6:
+# an unpinned NET_SHA256, or a mismatch, must never look the same as a verified network).
+net_full_verified() {
+  [[ -s "$NET_DIR/$NET_NAME" && -n "$NET_SHA256" ]] && sha_ok "$NET_DIR/$NET_NAME" "$NET_SHA256"
+}
+
+# The network to use: the full-size one if present and verified, else the test network — never an
+# unverified full-size network, unless the owner opts in with LIGO_KATAGO_ALLOW_UNVERIFIED=1 (unit
+# 4.6 decision: refuse by default rather than merely warn, since this choice feeds straight into
+# the ≥ 97% accuracy gate). Warnings go to stderr so `net=$(net_path)` still captures only the path.
 net_path() {
-  if [[ -s "$NET_DIR/$NET_NAME" ]]; then echo "$NET_DIR/$NET_NAME"
-  elif [[ -s "$NET_DIR/$TEST_NET" ]]; then echo "$NET_DIR/$TEST_NET"
-  else die "no network found in $NET_DIR: run dev/ligo katago install"; fi
+  if net_full_verified; then
+    echo "$NET_DIR/$NET_NAME"
+  elif [[ -s "$NET_DIR/$NET_NAME" ]]; then
+    if [[ "${LIGO_KATAGO_ALLOW_UNVERIFIED:-}" == 1 ]]; then
+      echo "[katago] WARNING: using UNVERIFIED network $NET_NAME (no sha256 pinned in dev/katago.sh yet, or it doesn't match); LIGO_KATAGO_ALLOW_UNVERIFIED=1 overrides the refusal" >&2
+      echo "$NET_DIR/$NET_NAME"
+    elif [[ -s "$NET_DIR/$TEST_NET" ]]; then
+      echo "[katago] WARNING: $NET_NAME is on disk but UNVERIFIED (no pinned sha256, or a mismatch); refusing to use it, falling back to the test network. Paste its sha256 into dev/katago.sh's NET_SHA256 to pin it, or set LIGO_KATAGO_ALLOW_UNVERIFIED=1 to use it anyway." >&2
+      echo "$NET_DIR/$TEST_NET"
+    else
+      die "$NET_NAME is on disk but UNVERIFIED (no pinned sha256) and no test network is available either: run dev/ligo katago install"
+    fi
+  elif [[ -s "$NET_DIR/$TEST_NET" ]]; then
+    echo "$NET_DIR/$TEST_NET"
+  else
+    die "no network found in $NET_DIR: run dev/ligo katago install"
+  fi
 }
 
 cmd_install() {
@@ -121,7 +153,16 @@ cmd_install() {
   elif [[ "${LIGO_KATAGO_TEST_NET_ONLY:-}" == 1 ]]; then
     say "LIGO_KATAGO_TEST_NET_ONLY=1: skipping the full-size network"
   elif [[ -s "$NET_DIR/$NET_NAME" ]]; then
-    say "network $NET_NAME present"
+    # Re-checked every run, not just on first download: NET_SHA256 may have been filled in since
+    # (unit 4.6) after an earlier UNVERIFIED download, and a file that predates the pin, or was
+    # changed on disk, must not silently pass as verified from here on.
+    if [[ -n "$NET_SHA256" ]]; then
+      sha_ok "$NET_DIR/$NET_NAME" "$NET_SHA256" \
+        && say "network $NET_NAME present and verified against the pinned sha256" \
+        || die "network $NET_NAME on disk does not match the sha256 pinned in dev/katago.sh; delete $NET_DIR/$NET_NAME and run install again"
+    else
+      say "network $NET_NAME present but UNVERIFIED (no sha256 pinned yet in dev/katago.sh; smoke/bench/scoring bench fall back to the test network until it is, or set LIGO_KATAGO_ALLOW_UNVERIFIED=1)"
+    fi
   else
     say "downloading network $NET_NAME (~100 MB)"
     if curl -fSL --progress-bar -o "$NET_DIR/$NET_NAME.part" "$NET_URL"; then
@@ -129,7 +170,7 @@ cmd_install() {
         sha_ok "$NET_DIR/$NET_NAME.part" "$NET_SHA256" || { rm -f "$NET_DIR/$NET_NAME.part"; die "checksum mismatch for $NET_NAME"; }
       fi
       mv "$NET_DIR/$NET_NAME.part" "$NET_DIR/$NET_NAME"
-      [[ -n "$NET_SHA256" ]] || say "UNVERIFIED (no pinned checksum yet): sha256 $(sha256sum "$NET_DIR/$NET_NAME" | cut -d' ' -f1); paste it into the unit 0.5 thread so it gets pinned"
+      [[ -n "$NET_SHA256" ]] || say "UNVERIFIED (no pinned checksum yet): sha256 $(sha256sum "$NET_DIR/$NET_NAME" | cut -d' ' -f1); paste it (and the network's licence, from katagotraining.org, unreachable from this cloud session) into the unit 4.6 thread so it gets pinned. Until then smoke/bench/scoring bench use the test network instead (LIGO_KATAGO_ALLOW_UNVERIFIED=1 overrides this)."
     else
       rm -f "$NET_DIR/$NET_NAME.part"
       say "WARN: could not download $NET_URL; smoke and bench will use the test network"
@@ -188,13 +229,16 @@ cmd_path() {
   find "$NET_DIR" -maxdepth 1 -name '*.bin.gz' -printf '  %f\n' 2>/dev/null
 }
 
-# The differential test reads only KataGo's legality mask, board and count, never its judgement, so it
-# always uses the small, fast test network.
+# KATAGO_TEST_NET is always the small test network (the differential test reads only KataGo's
+# legality mask, board and count, never its judgement, so it always uses that one). KATAGO_NET is
+# `net_path`'s choice (unit 4.6): the full-size network if installed and verified, else the test
+# network too — what `dev/ligo scoring bench` uses by default.
 cmd_env() {
   local k; k=$(katago_bin); [[ -n "$k" ]] || die "katago not installed: run dev/ligo katago install"
   [[ -s "$NET_DIR/$TEST_NET" ]] || die "test network missing: run dev/ligo katago install"
-  printf 'KATAGO_BIN=%q\nKATAGO_TEST_NET=%q\nKATAGO_GTP_CONFIG=%q\n' \
-    "$k" "$NET_DIR/$TEST_NET" "$(installed_dir)/default_gtp.cfg"
+  local net; net=$(net_path)
+  printf 'KATAGO_BIN=%q\nKATAGO_TEST_NET=%q\nKATAGO_NET=%q\nKATAGO_GTP_CONFIG=%q\n' \
+    "$k" "$NET_DIR/$TEST_NET" "$net" "$(installed_dir)/default_gtp.cfg"
 }
 
 case "${1:-help}" in
