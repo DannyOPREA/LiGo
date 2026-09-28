@@ -20,6 +20,19 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 2.4 review · Reviewer findings fixed
+- Blocking, fixed: Playwright writes `test-results/` and its html report next to the nearest
+  package.json (`ui/playground/`), not next to the config, so CI's failure upload would have been
+  empty; the config now sets `outputDir` and the report's `outputFolder`. A PR changing only
+  libs/board skipped the `ui` job and so the screenshots; `dev/ci/changed.sh` now counts libs/board
+  for ui too (its dev/tests check updated).
+- Also fixed: `dev/ligo test all` skips the page tests instead of stopping when the ui isn't built;
+  the demo says a new local account's confirmation link is in `dev/ligo logs lila`; oxfmt had moved
+  an import above two files' header comments (a blank line after the header keeps it there).
+- Left, disclosed: /verify has no gate for the page tests; `ui_built` doesn't notice a stale build;
+  the refused-move check can't catch a move that lands late (a later Undo would on desktop).
+- Merged main (1.9 and the Phase 4 breakdown landed): STATUS and decisions conflicts, both kept.
+
 ### 2026-09-28 · 2.4 · Visual snapshots and the Phase 2 demo
 - Done: Playwright tests in `lila/ui/playground/e2e/`: 8 screenshots (desktop 1280×800 and phone
   390×844; empty 9×9 and 19×19, a capture, a preview stone) against committed baselines, and a

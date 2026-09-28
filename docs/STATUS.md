@@ -12,6 +12,11 @@ _Updated at the end of every session (`/status`). Newest information wins._
   next 3.2. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   wait for Phase 2 units 2.1, 2.3 and 2.4.
 
+- Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
+  docs/PLAN.md §5. 4.1–4.6 (design ADR, byo-yomi clock and scoring phase in `libs/go-rules`,
+  `services/scoring`, the autoscore benchmark) need nothing from Phases 2–3 and run now; 4.7–4.12
+  wait for Phase 3 units 3.12–3.20. Logs: logs/scoring.md, logs/clocks.md.
+
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
   - Units 0.1–0.3 merged (PRs #1–#3; #1 as a merge commit, #2–#3 squashed). `dev/ligo` runs the stack: docker mode on your
@@ -56,6 +61,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
     it passes all 95 client fixtures (5 known gaps), reads back all 227 server SGF games, and agrees
     with the server on 80 seeded random games (16,100 actions). `dev/ligo test rules` and the `rules`
     CI job run both engines and the parity check (PR #17).
+  - Unit 1.9 (nightly differential test): random games played by `libs/go-rules` and followed by
+    KataGo, compared on legal points, captures and area score. 1,000 games all agree; the
+    `nightly-differential` workflow plays 1,000 new ones every night (`dev/ligo differential` runs
+    it in a cloud session). This closes Phase 1.
   - Your PR #16 (no more approval prompts, ADR 0015) merged.
 - **Phase 2 — board integration** split into four units on 2026-09-28 (docs/PLAN.md §5, "Phase 2
   units"): 2.1 the goban board in `libs/board`, 2.2 a playground page, 2.3 the touch-confirm
@@ -71,7 +80,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
     `dev/ligo test pages`, and your demo checklist docs/demos/phase-2.md; in review.
 
 ## Next
-- Phase 1 unit 1.9, the nightly KataGo differential test (its own thread).
 - Your Phase 2 demo: docs/demos/phase-2.md, once unit 2.4 merges.
 - Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
@@ -103,7 +111,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1–1.8 done; 1.9 in progress (of 9 units) |
+| 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | 2.1–2.3 done; 2.4 in review (of 4 units) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 design merged (ADR 0019); 3.1 in review (you approved the deletions for 3.1–3.7) |
-| 4–9 | not started |
+| 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
+| 5–9 | not started |

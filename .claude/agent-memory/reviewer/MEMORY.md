@@ -7,6 +7,7 @@
 - [Conformance fixture review patterns](conformance-fixture-review-patterns.md) — CI wiring, checker argv bug, circular oracles, phase, licence
 - [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, SGF parse, pass-window clicks, play() trust, stale deps line
 - [General review patterns](review-patterns-general.md) — transitive-dep licences, pipefail+find, docker caches, harness vacuity, pin-check order
+- [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
 - [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, interim phases, old reader crashes, maxPlies draw
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
 - [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, browser mismatch, verify gate
