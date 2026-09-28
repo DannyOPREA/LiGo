@@ -705,6 +705,9 @@ GET   /editor.json                     controllers.Editor.data
 GET   /editor/*urlFen                  controllers.Editor.load(urlFen)
 GET   /editor                          controllers.Editor.index
 
+# Playground (LiGo, unit 2.2)
+GET   /playground                      controllers.Playground.home
+
 # Lichess Mobile
 GET   /api/mobile/home                 controllers.Api.mobileHome
 GET   /api/mobile/watch                controllers.Api.mobileWatch

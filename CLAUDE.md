@@ -43,8 +43,9 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
   See libs/conformance/CLAUDE.md.
 - `libs/go-rules/` the server's Go rules: adapter over strategygames (ADR 0012), replays the
   fixtures. See libs/go-rules/CLAUDE.md.
-- `libs/board/` the client's Go rules: OGS goban-engine with LiGo's settings (ADR 0014), replays the
-  fixtures and checks parity with the server; Phase 2 adds the board. See libs/board/CLAUDE.md.
+- `libs/board/` the browser's Go board and rules: OGS goban's board (`mountBoard`) and goban-engine
+  with LiGo's settings (ADR 0014), in lila's pnpm workspace; replays the fixtures, checks parity
+  with the server, tests the board in Chromium. See libs/board/CLAUDE.md.
 - Planned, not created yet (each gets its own CLAUDE.md when its unit starts): `services/scoring`
   (KataGo + goban autoscore + goscorer), `tools/puzzles`.
 - `lila/` and `lila-ws/` are plain folders of this repo, not git repos of their own.

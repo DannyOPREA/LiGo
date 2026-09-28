@@ -6,14 +6,12 @@ const initialTitle = document.title;
 
 let curFaviconIdx = 0;
 
-const F = ['/assets/logo/lichess-favicon.svg', '/assets/logo/lichess-favicon-invert.svg'].map(
-  (path, i) => () => {
-    if (curFaviconIdx !== i) {
-      (document.getElementById('favicon') as HTMLAnchorElement).href = path;
-      curFaviconIdx = i;
-    }
-  },
-);
+const F = ['/assets/logo/ligo-favicon.svg', '/assets/logo/ligo-favicon-invert.svg'].map((path, i) => () => {
+  if (curFaviconIdx !== i) {
+    (document.getElementById('favicon') as HTMLAnchorElement).href = path;
+    curFaviconIdx = i;
+  }
+});
 
 let tickerTimer: Timeout | undefined;
 function resetTicker() {

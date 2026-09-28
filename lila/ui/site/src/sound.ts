@@ -67,7 +67,7 @@ export default new (class implements SoundI {
     let dir = this.theme;
     if (this.theme === 'music' || this.speech()) {
       if (['move', 'capture', 'check', 'checkmate'].includes(name)) return undefined;
-      dir = 'standard';
+      dir = 'sfx';
     }
     return this.url(`${dir}/${name[0].toUpperCase() + name.slice(1)}.mp3`);
   }
@@ -104,7 +104,7 @@ export default new (class implements SoundI {
   }
 
   async playAndDelayMateResultIfNecessary(name: Name): Promise<void> {
-    if (this.theme === 'standard') this.play(name);
+    if (this.theme === 'sfx') this.play(name);
     else setTimeout(() => this.play(name), 600);
   }
 

@@ -33,6 +33,7 @@ case class Pref(
     studyInvite: Int,
     submitMove: Int,
     confirmResign: Int,
+    confirmMoves: Int,
     insightShare: Int,
     keyboardMove: Int,
     voice: Option[Int],
@@ -146,7 +147,8 @@ case class Pref(
 
 object Pref:
 
-  val defaultBgImgUrl = "//lichess1.org/assets/images/background/landscape.jpg"
+  // LiGo (unit 3.1): lichess's landscape.jpg was non-free; use the AGPL wood board image instead
+  val defaultBgImgUrl = "/assets/images/board/wood4.jpg"
   val defaultBgOpacity = 50
 
   case class BoardPref(
@@ -251,6 +253,21 @@ object Pref:
         else NEVER
 
   object ConfirmResign extends BooleanPref
+
+  /** Go board touch-confirm (unit 2.3): a tap previews the stone, and a confirm button plays it (goban's
+    * preview-and-submit). Its own pref, not `submitMove`/`confirmResign` (chess prefs that confirm after a
+    * move is made, not before; Phase 2 breakdown decision, logs/decisions.md).
+    */
+  object ConfirmMoves:
+    val NEVER = 0
+    val TOUCH = 1
+    val ALWAYS = 2
+
+    val choices = Seq(
+      NEVER -> "Never",
+      TOUCH -> "On touch screens",
+      ALWAYS -> "Always"
+    )
 
   object InsightShare:
     import lila.core.pref.InsightShare.*
@@ -500,6 +517,7 @@ object Pref:
     studyInvite = lila.core.pref.StudyInvite.ALWAYS,
     submitMove = SubmitMove.CORRESPONDENCE,
     confirmResign = ConfirmResign.YES,
+    confirmMoves = ConfirmMoves.TOUCH,
     insightShare = lila.core.pref.InsightShare.FRIENDS,
     keyboardMove = KeyboardMove.NO,
     voice = None,

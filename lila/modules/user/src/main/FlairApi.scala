@@ -22,7 +22,7 @@ object FlairApi:
   def formPair(asMod: Boolean) =
     "flair" -> formField(anyFlair = false, asMod = asMod)
 
-  val adminFlairs: Set[Flair] = Set(Flair("activity.lichess"))
+  val adminFlairs: Set[Flair] = Set.empty // lichess-branded flairs removed in unit 3.1
 
   private[user] object badFlairs:
     private type Pair = (UserId, Flair)

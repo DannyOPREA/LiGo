@@ -145,6 +145,7 @@ final class LilaComponents(
   lazy val oAuth: OAuth = wire[OAuth]
   lazy val oAuthToken: OAuthToken = wire[OAuthToken]
   lazy val plan: Plan = wire[Plan]
+  lazy val playground: Playground = wire[Playground]
   lazy val practice: Practice = wire[Practice]
   lazy val pref: Pref = wire[Pref]
   lazy val push: Push = wire[Push]

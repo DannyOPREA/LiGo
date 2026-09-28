@@ -3,9 +3,14 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- Phase 2 breakdown (started 2026-09-28, under the owner's "work until I tell you to stop"
-  delegation): Phase 2 split into units 2.1–2.4 in docs/PLAN.md §5. Logs: logs/board-ui.md.
-  Unit 1.9 (nightly KataGo differential test) is finishing in its own thread; it closes Phase 1.
+- 2.3 the touch-confirm setting (started 2026-09-28, under the owner's "work until I tell you to
+  stop" delegation). Acceptance: "Confirm moves" (never / on touch screens / always) on the
+  preferences page; with it on, a tap previews and a button plays; the playground honours it.
+  Logs: logs/board-ui.md.
+- Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
+  docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (asset strip) in review;
+  next 3.2. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  wait for Phase 2 units 2.1, 2.3 and 2.4.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -59,9 +64,18 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - **Phase 2 — board integration** split into four units on 2026-09-28 (docs/PLAN.md §5, "Phase 2
   units"): 2.1 the goban board in `libs/board`, 2.2 a playground page, 2.3 the touch-confirm
   setting, 2.4 visual snapshots and the demo. All build on unit 1.8's `libs/board`.
+  - Unit 2.1 (the board): `mountBoard` in `libs/board` wraps goban's SVG board (goban 8.3.226,
+    plain theme); libs/board is now in lila's pnpm workspace (ADR 0017); 17 browser tests in the
+    `rules` CI job (PR #19, merged).
+  - Unit 2.2 (playground): `/playground`, a local game for both colours on lila's page, board
+    loaded lazily (PR #23, merged).
+  - Unit 2.3 (touch-confirm): a "Confirm moves" preference; the playground shows a Confirm move
+    button when it applies; in review.
 
 ## Next
-- Phase 2 unit 2.1 (1.8 has merged), then 2.2–2.4 (docs/PLAN.md §5, "Phase 2 units").
+- Phase 2 unit 2.4 (snapshots + demo)
+  (docs/PLAN.md §5, "Phase 2 units").
+- Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
@@ -84,12 +98,14 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - `lila/AGENTS.md` (lichess's contributor guide) stays in the tree. Claude Code no longer loads it
   on its own now that CLAUDE.md files exist, and `lila/CLAUDE.md` says LiGo's rules win where it
   disagrees; `guard-bash.sh` blocks non-frozen `pnpm install`, cloud `sbt clean` and `bin/deploy`.
-- Upstream non-free/NC assets remain in the tree until the first Phase 3 unit (COPYING.md §1.1).
+- Upstream non-free/NC assets were removed in unit 3.1 (COPYING.md §1.1). The manifest text and the
+  default background image URL still say lichess until unit 3.8.
 
 ## Phase progress
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
-| 2. Board integration | split into units 2.1–2.4; not started |
-| 3–9 | not started |
+| 2. Board integration | 2.1–2.2 done; 2.3 in review (of 4 units) |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 design merged (ADR 0019); 3.1 in review (you approved the deletions for 3.1–3.7) |
+| 4–9 | not started |

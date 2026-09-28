@@ -43,11 +43,12 @@
   right: 0;
   width: 20px;
   height: 25px;
-  background: url('../images/icons/multiple-select.png') left top no-repeat;
+  background: url('../images/ligo/select-arrow.svg') center no-repeat;
 }
 
 .ms-choice > div.open {
-  background: url('../images/icons/multiple-select.png') right top no-repeat;
+  background: url('../images/ligo/select-arrow.svg') center no-repeat;
+  transform: rotate(180deg);
 }
 
 .ms-drop {
@@ -95,7 +96,6 @@
   border: $border;
   border-radius: 0;
   box-shadow: none;
-  background: url('../images/icons/multiple-select.png') no-repeat 100% -22px;
 }
 
 .ms-drop ul {

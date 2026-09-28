@@ -140,7 +140,6 @@ object Icon:
   val Mute: Icon = "" // e077
   val Reload: Icon = "" // e078
   val AccountCircle: Icon = "" // e079
-  val Logo: Icon = "" // e07a
   val Switch: Icon = "" // e07b
   val Cpu: Icon = "" // e07e
   val Prune: Icon = "" // e07f
