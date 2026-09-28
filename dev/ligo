@@ -121,7 +121,7 @@ docker_rules_sbt() {
 
 # libs/board is its own small pnpm package (goban-engine, unit 1.8); in docker mode it runs in the
 # ui container with libs/ mounted, like docker_rules_sbt.
-docker_board() { run dc run --rm --no-deps -v "$ROOT/libs:/libs" -w /libs/board ui sh -c "pnpm install --frozen-lockfile && pnpm run $1"; }
+docker_board() { docker_env; run dc run --rm --no-deps -v "$ROOT/libs:/libs" -w /libs/board ui sh -c "pnpm install --frozen-lockfile && pnpm run $1"; }
 native_board() { (cd "$BOARD" && run pnpm install --frozen-lockfile && run pnpm run "$1"); }
 
 # --------------------------------------------------------------------------------------------

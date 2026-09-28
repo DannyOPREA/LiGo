@@ -3,6 +3,8 @@ package ligo.gorules
 import play.api.libs.json.*
 
 import java.nio.file.{ Files, Path, Paths }
+import java.security.MessageDigest
+import scala.jdk.CollectionConverters.*
 import scala.util.Random
 
 // Writes what the server's engine does, for the client's engine (goban-engine, libs/board, unit 1.8)
@@ -111,6 +113,19 @@ class ParityExportTest extends munit.FunSuite:
         randomGame(s, BoardSize.Nineteen, if s % 3 == 0 then (s % 8 + 2).toInt else 0, 400, 20)
       )
 
+  /** SHA-256 of the fixture files, in file-name order, so the client can tell stale data from fresh. */
+  private def fixturesHash: String =
+    val sha = MessageDigest.getInstance("SHA-256")
+    Files
+      .list(Fixtures.dir)
+      .iterator
+      .asScala
+      .filter(_.toString.endsWith(".json"))
+      .toList
+      .sortBy(_.getFileName.toString)
+      .foreach(p => sha.update(Files.readAllBytes(p)))
+    sha.digest.map("%02x".format(_)).mkString
+
   test("writes the server's positions for the client's parity check"):
     val sgf = sgfCases
     val gs = games
@@ -118,4 +133,7 @@ class ParityExportTest extends munit.FunSuite:
     val actions = gs.map(g => (g \ "steps").as[JsArray].value.size).sum
     assert(actions > 12000, s"only $actions random actions")
     Files.createDirectories(out.getParent)
-    Files.writeString(out, Json.stringify(Json.obj("format" -> 1, "sgf" -> sgf, "games" -> gs)))
+    Files.writeString(
+      out,
+      Json.stringify(Json.obj("format" -> 1, "fixtures" -> fixturesHash, "sgf" -> sgf, "games" -> gs))
+    )

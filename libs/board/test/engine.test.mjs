@@ -27,10 +27,11 @@ test("keeps the komi it is given, even where goban's preset would change it", ()
 });
 
 test("a handicap game starts with exactly the server's stones and White to move", () => {
-  // goban's Chinese preset would switch to free placement (Black places the stones as moves).
+  // Points off goban's own table, so its fixed placement (or its Chinese preset's free placement)
+  // would show up as extra stones or a Black move.
   for (const ruleset of ["japanese", "chinese"]) {
-    const e = createEngine({ size: 9, ruleset, komi: 0.5, handicap: 3, stones: { black: ["gc", "cg", "gg"], white: [] }, toMove: "white" });
-    assert.deepEqual(stonesOf(stateOf(e).board), { black: ["gc", "cg", "gg"], white: [] }, ruleset);
+    const e = createEngine({ size: 9, ruleset, komi: 0.5, handicap: 2, stones: { black: ["aa", "bb"], white: [] }, toMove: "white" });
+    assert.deepEqual(stonesOf(stateOf(e).board), { black: ["aa", "bb"], white: [] }, ruleset);
     assert.equal(e.colorToMove(), "white");
     assert.equal(play(e, "ee"), null);
     assert.equal(e.colorToMove(), "black");
@@ -92,8 +93,25 @@ test("reads an SGF record's size, komi, ruleset, handicap and player to move", (
   assert.equal(play(played, "jj"), null);
 });
 
-test("refuses an SGF record with a move out of turn or a size LiGo doesn't play", () => {
+test("refuses an SGF record with a move out of turn or a size or ruleset LiGo doesn't play", () => {
   assert.throws(() => readSgf("(;GM[1]FF[4]SZ[9]KM[6.5];B[ee];B[cc])"), /not a move by the player to move/);
   assert.throws(() => readSgf("(;GM[1]FF[4]SZ[7]KM[6.5])"), /board size 7/);
+  assert.throws(() => readSgf("(;GM[1]FF[4]SZ[19]KM[7.5]RU[AGA];B[dd])"), /ruleset AGA/);
   assert.throws(() => readSgf("no record"), /not an SGF record/);
+});
+
+test("refuses a broken SGF record instead of keeping what goban could read", () => {
+  // goban's reader only logs these and returns a partial game.
+  assert.throws(() => readSgf("(;SZ[9]KM[6.5];B[ee];W[cc];B["), /not a readable SGF record/);
+  assert.throws(() => readSgf("(;SZ[9]KM[6.5]C[a]b];B[ee])"), /not a readable SGF record/);
+  assert.equal(console.log.name, "log", "console.log is restored");
+});
+
+test("trying moves leaves no trace in the game record", () => {
+  const e = nine();
+  assert.equal(play(e, "ee"), null);
+  for (const m of ["aa", "bb", "ee"]) tryMove(e, m);
+  assert.equal(play(e, "cc"), null);
+  assert.equal(tryMove(e, "dd"), null);
+  assert.equal(e.move_tree.toSGF().replace(/\s/g, ""), ";B[ee];W[cc]");
 });

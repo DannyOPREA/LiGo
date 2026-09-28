@@ -11,12 +11,13 @@
 // Licence: MIT (LiGo's own code, ADR 0006).
 
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
 import { createEngine, play, readSgf, stateOf, tryMove } from "../src/engine.mjs";
-import { all, engineFor, playMoves, stonesOf } from "./fixtures.mjs";
+import { all, dir, engineFor, playMoves, stonesOf } from "./fixtures.mjs";
 
 const file =
   process.env.LIGO_PARITY_FILE ?? fileURLToPath(new URL("../../go-rules/target/parity/server.json", import.meta.url));
@@ -29,6 +30,10 @@ if (!existsSync(file)) {
 
   test("the server wrote the data this check expects", () => {
     assert.equal(server.format, 1);
+    // Data written before a fixture change would compare against old cases: rerun the server side.
+    const sha = createHash("sha256");
+    for (const f of readdirSync(dir).filter((f) => f.endsWith(".json")).sort()) sha.update(readFileSync(dir + f));
+    assert.equal(server.fixtures, sha.digest("hex"), `${file} is stale: run \`dev/ligo test rules\``);
     assert.ok(server.sgf.length >= 227, `only ${server.sgf.length} SGF cases`);
     assert.ok(server.games.length >= 80, `only ${server.games.length} random games`);
   });

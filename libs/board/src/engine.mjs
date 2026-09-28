@@ -80,11 +80,20 @@ export function play(engine, move) {
   }
 }
 
-/** Whether a move would be accepted, and if not why, without changing the position. */
+/**
+ * Whether a move would be accepted, and if not why, without changing the position. An accepted
+ * probe is taken back and its node removed from goban's move tree, so the game record only holds
+ * moves really played.
+ */
 export function tryMove(engine, move) {
   const here = engine.cur_move;
+  const children = new Set([here.trunk_next, ...here.branches].filter(Boolean));
   const refused = play(engine, move);
-  if (!refused) engine.jumpTo(here);
+  if (!refused) {
+    const probe = engine.cur_move;
+    engine.jumpTo(here);
+    if (!children.has(probe)) probe.remove();
+  }
   return refused;
 }
 
@@ -130,25 +139,30 @@ function neighbours(engine, x, y) {
 /**
  * Reads an SGF record's main line into an engine with LiGo's settings. goban's SGF reader ignores
  * the board size, komi and player to move (memo 1.2, point 7), so they are read here and handed to
- * it. Every move must be a real move by the colour to move: goban would otherwise turn it into an
- * edit, silently.
+ * it. goban never throws on a broken record (it logs and keeps what it read) and turns a move out
+ * of turn into an edit, silently; both are refused here.
  */
 export function readSgf(sgf) {
   const root = rootProperties(sgf);
   const size = Number(root.SZ ?? 19);
   if (!SIZES.includes(size)) throw new Error(`board size ${size}: LiGo plays 9, 13 or 19`);
-  const ruleset = /^(chinese|cn|zh)$/i.test(root.RU ?? "") ? "chinese" : "japanese";
-  const engine = new GobanEngine({
-    width: size,
-    height: size,
-    rules: ruleset,
-    komi: Number(root.KM ?? 0),
-    ...LIGO_RULES,
-    handicap: Number(root.HA ?? 0),
-    ...(root.PL ? { initial_player: root.PL === "W" ? "white" : "black" } : {}),
-    original_sgf: sgf,
-  });
-  // goban leaves an SGF game at the root with the phase "finished"; go to the end of the main line.
+  const ruleset = RULESETS[(root.RU ?? "japanese").toLowerCase()];
+  if (!ruleset) throw new Error(`ruleset ${root.RU}: LiGo plays Japanese or Chinese rules`);
+  const engine = withoutGobanLogs(
+    () =>
+      new GobanEngine({
+        width: size,
+        height: size,
+        rules: ruleset,
+        komi: Number(root.KM ?? 0),
+        ...LIGO_RULES,
+        handicap: Number(root.HA ?? 0),
+        ...(root.PL ? { initial_player: root.PL === "W" ? "white" : "black" } : {}),
+        original_sgf: sgf,
+      }),
+  );
+  // goban leaves an SGF game at the end of its main line (the first variation at each branch);
+  // make sure of it, and go back from "finished" (goban's phase for records) to play.
   let last = engine.move_tree;
   while (last.trunk_next ?? last.branches?.[0]) last = last.trunk_next ?? last.branches[0];
   engine.jumpTo(last);
@@ -156,6 +170,24 @@ export function readSgf(sgf) {
   for (let n = last; n.parent; n = n.parent)
     if (n.edited) throw new Error(`SGF move ${n.move_number} is not a move by the player to move`);
   return engine;
+}
+
+const RULESETS = { japanese: "japanese", jp: "japanese", chinese: "chinese", cn: "chinese", zh: "chinese" };
+
+/** Runs `f`, turning the errors goban's SGF reader only logs ("Failed to parse SGF ...") into a throw. */
+function withoutGobanLogs(f) {
+  const { log, error } = console;
+  const logged = [];
+  console.log = console.error = (...args) => logged.push(args.map(String).join(" "));
+  try {
+    const result = f();
+    const failure = logged.find((l) => /Failed to parse SGF|Error loading SGF/.test(l));
+    if (failure) throw new Error(`not a readable SGF record: ${failure}`);
+    return result;
+  } finally {
+    console.log = log;
+    console.error = error;
+  }
 }
 
 /** The root node's properties (first value of each), e.g. { SZ: "9", KM: "6.5", PL: "W" }. */

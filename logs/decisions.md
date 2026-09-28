@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-28 | 1.8: where does the goban-engine harness live, and which `handicap` value do games pass? | `libs/board` as its own pnpm package until Phase 2 joins it to lila's workspace; `handicap: N` with the server's stones, per spec §9 (Claude, under the owner's 2026-09-28 delegation) | ADR 0014 amendment, logs/rules-engine.md |
 | 2026-09-28 | Owner: "Don't ask for my approval for anything, just work until I tell you to stop." | Claude takes its own recommendation on pending questions and records each as its call under this delegation | this log |
 | 2026-09-27 | 1.7: who tracks resuming after the scoring phase and the limit on resuming: the rules adapter or lila? | The adapter (Claude, under the owner's 2026-09-28 delegation: "Don't ask for my approval for anything") | logs/rules-engine.md |
 | 2026-09-27 | 1.7: move the SGF read-back half of the round trip to unit 1.8 (strategygames only writes SGF; no parser of our own)? | Split: 1.7 writes SGF, 1.8 reads it back in goban-engine (Claude, under the owner's 2026-09-28 delegation) | logs/rules-engine.md |
