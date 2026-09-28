@@ -22,6 +22,7 @@
   &__board-wrap {
     flex: 1 1 auto;
     min-width: 0;
+
     // Full width, not shrink-to-fit: the board takes its size from this box, and `margin: auto`
     // would otherwise shrink it to the loading text's width on phones.
     width: 100%;
@@ -90,6 +91,7 @@
 
     select,
     input {
+      font-size: 1rem;
       min-height: 44px;
       padding: 0.4em 0.6em;
       background: $c-bg-zebra;

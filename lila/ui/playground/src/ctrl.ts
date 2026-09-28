@@ -22,6 +22,8 @@ export default class PlaygroundCtrl {
   pending: GameSettings = { ...this.settings };
   moves: Move[] = [];
   board?: Board;
+  /** goban's chunk couldn't be loaded (offline, a deploy in between). */
+  loadFailed = false;
   /** Bumped on every remount so the view gives the board container a fresh key (destroy + insert). */
   generation = 0;
 
@@ -29,7 +31,7 @@ export default class PlaygroundCtrl {
     readonly config: PlaygroundConfig,
     readonly redraw: Redraw,
   ) {
-    this.moves = config.moves ?? [];
+    this.moves = [...(config.moves ?? [])];
   }
 
   /** Handicap stones for `settings`, as the board's `stones` (R-HCP-3/4; none below 2 stones). */
@@ -60,12 +62,19 @@ export default class PlaygroundCtrl {
   /** Mounted by the view's `insert` hook; loads goban's board lazily (see `loadMountBoard`). */
   mount = (el: HTMLElement): void => {
     const generation = this.generation;
-    loadMountBoard().then(mountBoard => {
-      // the container was already replaced (a remount, or the page moved on) before this arrived
-      if (generation !== this.generation) return;
-      this.board = mountBoard(el, this.boardConfig());
-      this.redraw();
-    });
+    loadMountBoard().then(
+      mountBoard => {
+        // the container was already replaced (a remount, or the page moved on) before this arrived
+        if (generation !== this.generation) return;
+        this.board = mountBoard(el, this.boardConfig());
+        this.redraw();
+      },
+      (e: unknown) => {
+        console.error(e);
+        this.loadFailed = true;
+        this.redraw();
+      },
+    );
   };
 
   private readonly onMove = (move: Move): void => {
@@ -104,7 +113,12 @@ export default class PlaygroundCtrl {
     this.pending = { ...this.pending, handicap, komi: standardKomi(this.pending.ruleset, handicap) };
   };
 
+  /** R-KOMI-4: a multiple of 0.5, at most the board's number of points either way. */
+  komiLimit = (): number => this.pending.size * this.pending.size;
+
+  /** Ignores what isn't a komi (a blank or half-typed field) rather than reading it as 0. */
   setPendingKomi = (komi: number): void => {
+    if (!Number.isFinite(komi) || Math.abs(komi) > this.komiLimit() || (komi * 2) % 1 !== 0) return;
     this.pending = { ...this.pending, komi };
   };
 

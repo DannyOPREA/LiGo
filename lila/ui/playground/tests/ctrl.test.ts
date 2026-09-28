@@ -82,4 +82,32 @@ describe('PlaygroundCtrl', () => {
     ctrl.moves.push('dd');
     assert.equal(ctrl.bothPassed, false);
   });
+  test('one stone of handicap places no stone: Black first, komi 0.5 (R-HCP-2)', () => {
+    const ctrl = new PlaygroundCtrl({}, noop);
+    ctrl.setPendingHandicap(1);
+    ctrl.newGame();
+    const config = ctrl.boardConfig();
+    assert.deepEqual(config.stones, { black: [], white: [] });
+    assert.equal(config.toMove, 'black');
+    assert.equal(config.komi, 0.5);
+  });
+
+  test('a komi that is blank, not a half point or beyond the board (R-KOMI-4) is ignored', () => {
+    const ctrl = new PlaygroundCtrl({}, noop);
+    ctrl.setPendingKomi(Number(''.trim() || NaN));
+    ctrl.setPendingKomi(6.3);
+    ctrl.setPendingKomi(-82); // 9x9 has 81 points
+    assert.equal(ctrl.pending.komi, 6.5);
+    ctrl.setPendingKomi(-81);
+    assert.equal(ctrl.pending.komi, -81);
+    ctrl.setPendingKomi(0);
+    assert.equal(ctrl.pending.komi, 0);
+  });
+
+  test('the moves passed in are copied, not played into', () => {
+    const moves = ['ee'];
+    const ctrl = new PlaygroundCtrl({ moves }, noop);
+    assert.notEqual(ctrl.moves, moves);
+    assert.deepEqual(ctrl.moves, ['ee']);
+  });
 });
