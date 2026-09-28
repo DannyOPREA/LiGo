@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-28 | 4.2: which byo-yomi settings does the go-rules clock accept, and does it support an increment? | Any main time ≥ 0, periods ≥ 1, period ≥ 1 s; no increment; the values lila offers are unit 4.9's (Claude, under the owner's 2026-09-28 delegation) | logs/clocks.md |
 | 2026-09-28 | 4.1: how do lila and the scoring service talk, how does the scoring phase run, and how does byo-yomi fit lila's clock? | Redis pub/sub `scoring-in`/`scoring-out` with JSON, the final board plus go-rules' prisoners, replies matched by `ref`; `sc` block on the game; clocks stop during the phase; timeout 3 min live / 1 day correspondence from the proposal; KataGo fallback "nothing dead"; scored games get `VariantEnd`; byo-yomi stored in `cy` (Claude, under the owner's 2026-09-28 delegation) | ADR 0020, logs/scoring.md |
 | 2026-09-28 | Phase 4 breakdown: how to split the Go-native game? | Units 4.1–4.12: a design ADR, library halves (go-rules clock and scoring phase, `services/scoring`, benchmark) built now, lila halves and the demo after Phase 3 (Claude, under the owner's 2026-09-28 delegation) | docs/PLAN.md §5, logs/scoring.md |
 | 2026-09-28 | 1.9: differential test design: which server-side score, when to compare it, which KataGo network, required check or not? | strategygames' own area count (goscorer joins in Phase 4), on settled boards only; KataGo's test network; nightly workflow not required (Claude, under the owner's 2026-09-28 delegation) | logs/rules-engine.md |

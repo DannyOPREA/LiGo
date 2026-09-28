@@ -24,6 +24,11 @@ game0.flatMap(_.play(Point.fromSgf("pd").get)) // Either[Refusal, GoGame]
 - Read: `stones`, `toMove`, `captures`, `koPoint`, `phase` (play or scoring), `legalPoints`,
   `actions`.
 - `Sgf.write(game)`: the game as an SGF record.
+- `ByoyomiClock(ByoyomiConfig(mainSeconds, periods, periodSeconds), firstToMove)`: the byo-yomi
+  clock (unit 4.2, ADR 0020 §7), strategygames' clock behind go-rules' types. `start`, `stop` (the
+  scoring phase), `move(clientLag…)` after a stone or a pass, `outOfTime(color)`,
+  `reading(color)` (time left in main time or the current period, periods left counting the one in
+  progress), `giveTime`, and `state` / `ByoyomiClock.restore` for storage.
 
 ## What the adapter adds to strategygames
 
@@ -48,6 +53,8 @@ score is counted by goscorer in `services/scoring` (R-SCORE-3), not here.
   liberty, stones are conserved and no stone placement repeats a situation (checked on real boards,
   not strategygames' hashes).
 - `GoGameTest`: setup checks, komi, takeback limits. `SgfTest`: SGF output.
+- `ByoyomiClockTest`: main time, keeping and using up periods, out of time, stopping for the
+  scoring phase, lag compensation, handicap games (White's clock first) and storage.
 - `ParityExportTest`: writes `target/parity/server.json` for the client's parity check (unit 1.8,
   `libs/board/test/parity.test.mjs`): every server fixture's game as SGF with its end position, and
   80 seeded random games on 9×9, 13×13 and 19×19 with the position after every action and the
