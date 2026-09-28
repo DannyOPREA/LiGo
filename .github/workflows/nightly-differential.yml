@@ -1,0 +1,82 @@
+# The nightly differential test (unit 1.9, PLAN §3.3): random games played by the server's Go
+# rules (libs/go-rules) and followed by KataGo, compared after every move on the legal points,
+# stones, captures and player to move, and at the end on the area score. 1,000 games a night, new
+# seeds each night; a pull request that changes the rules code or this test plays 60.
+# A red run uploads the report and each disagreeing game as SGF (the run's "differential" artifact).
+# Not a required check: it guards main over time rather than gating a PR.
+name: nightly-differential
+
+on:
+  schedule:
+    - cron: '17 3 * * *' # 03:17 UTC
+  workflow_dispatch:
+    inputs:
+      games:
+        description: Number of random games
+        default: '1000'
+      seed:
+        description: First seed (empty = the run number, so each run plays new games)
+        default: ''
+  pull_request:
+    paths:
+      - 'libs/go-rules/**'
+      - 'dev/katago.sh'
+      - '.github/workflows/nightly-differential.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  differential:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    defaults:
+      run:
+        working-directory: libs/go-rules
+    env:
+      GAMES: ${{ github.event_name == 'pull_request' && '60' || inputs.games || '1000' }}
+      # Seeds are 64-bit; run_number * 100000 keeps nightly runs' 1,000-game ranges apart.
+      SEED: ${{ inputs.seed || format('{0}00000', github.run_number) }}
+      DIFFERENTIAL_OUT: ${{ github.workspace }}/differential-out
+      # The test reads only KataGo's legality mask, board and count, so its small test network
+      # (from KataGo's own repo, checksum-pinned) is enough; skip the 100 MB network.
+      LIGO_KATAGO_TEST_NET_ONLY: '1'
+      LIGO_KATAGO_BACKEND: cpu
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+          cache-dependency-path: |
+            libs/go-rules/build.sbt
+            libs/go-rules/project/**
+      - name: Setup sbt
+        uses: sbt/setup-sbt@c7d2d6258b4bd0d3ec5129e6b3453199d3c79729 # v1.5.8
+      # The pinned KataGo release and test network, each checked against its SHA-256 (unit 0.5).
+      - name: Install KataGo (CPU)
+        run: ../../dev/katago.sh install cpu
+      - name: Resolve dependencies
+        run: sbt update
+      - name: strategygames jar matches the pinned SHA-256
+        run: ./check-pin.sh
+      - name: Play the games
+        run: |
+          eval "$(../../dev/katago.sh env)"
+          export KATAGO_BIN KATAGO_TEST_NET KATAGO_GTP_CONFIG
+          sbt "Test/runMain ligo.gorules.differential.Differential --games $GAMES --seed $SEED --workers $(nproc)"
+      - name: Report
+        if: always()
+        run: cat "$DIFFERENTIAL_OUT/summary.md" >> "$GITHUB_STEP_SUMMARY" || echo "no report was written" >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep the report and disagreeing games
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (same pin as lila/.github/workflows/server.yml)
+        with:
+          name: differential
+          path: differential-out/
+          retention-days: 30

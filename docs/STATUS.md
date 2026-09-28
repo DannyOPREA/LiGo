@@ -5,7 +5,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Current unit
 - Phase 2 breakdown (started 2026-09-28, under the owner's "work until I tell you to stop"
   delegation): Phase 2 split into units 2.1–2.4 in docs/PLAN.md §5. Logs: logs/board-ui.md.
-  Unit 1.8 (client rules harness, PR #17) and 1.9 (nightly KataGo check) run in their own threads.
+  Unit 1.9 (nightly KataGo differential test) is finishing in its own thread; it closes Phase 1.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -51,14 +51,17 @@ _Updated at the end of every session (`/status`). Newest information wins._
     it passes all 95 client fixtures (5 known gaps), reads back all 227 server SGF games, and agrees
     with the server on 80 seeded random games (16,100 actions). `dev/ligo test rules` and the `rules`
     CI job run both engines and the parity check (PR #17).
+  - Unit 1.9 (nightly differential test): random games played by `libs/go-rules` and followed by
+    KataGo, compared on legal points, captures and area score. 1,000 games all agree; the
+    `nightly-differential` workflow plays 1,000 new ones every night (`dev/ligo differential` runs
+    it in a cloud session). This closes Phase 1.
   - Your PR #16 (no more approval prompts, ADR 0015) merged.
 - **Phase 2 — board integration** split into four units on 2026-09-28 (docs/PLAN.md §5, "Phase 2
   units"): 2.1 the goban board in `libs/board`, 2.2 a playground page, 2.3 the touch-confirm
   setting, 2.4 visual snapshots and the demo. All build on unit 1.8's `libs/board`.
 
 ## Next
-- Phase 1 units 1.8 (PR #17) and 1.9, the nightly KataGo differential test.
-- Phase 2 unit 2.1 once 1.8 merges, then 2.2–2.4 (docs/PLAN.md §5, "Phase 2 units").
+- Phase 2 unit 2.1 (1.8 has merged), then 2.2–2.4 (docs/PLAN.md §5, "Phase 2 units").
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
@@ -87,6 +90,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1–1.7 done; 1.8 in review; 1.9 in progress (of 9 units) |
+| 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | split into units 2.1–2.4; not started |
 | 3–9 | not started |
