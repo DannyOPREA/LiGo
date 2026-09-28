@@ -9,6 +9,28 @@
 - KataGo's multi-threaded search is not deterministic: store the proposal shown to players, recount only with goscorer (2026-09-27, unit 1.3).
 
 ## Entries (newest first)
+### 2026-09-28 · unit 4.1 · ADR 0020: scoring phase, service protocol, byo-yomi in lila
+- Did: wrote ADR 0020: Redis pub/sub messages between lila and `services/scoring` (final board +
+  go-rules' prisoners, replies matched by `ref`), the `sc` block on `game5`, the scoring-phase state
+  machine with versioned toggles and accepts, timeouts (3 min live, 1 day correspondence), clocks
+  stopped during the phase, the no-KataGo and no-service fallbacks, `VariantEnd` for scored games,
+  and byo-yomi's `cy` key and clock payload.
+- Worked: fishnet's Redis pattern (two channels, re-send on `start`) fits; lila-ws forwards the new
+  commands with no Go knowledge (`r/do`).
+- Didn't work / dead ends: the first draft missed five things the reviewer found: lila's
+  `outoftime` counts a stopped clock as flagged, re-send on `start` only reaches loaded rounds and
+  deadlines didn't survive a lila restart, accept could land on an unseen count, widening dead
+  stones in lila made the stored count stale, and goban-engine gives 1 point of compensation for
+  handicap 1. All fixed in the ADR (outoftime off while `sc` exists, `ck`/`ex` + Titivate, count
+  version `v`, the service returns whole chains, handicap 0 for `hc` < 2).
+- Lessons: a pause in lila's round needs checking against every out-of-time path (client flag,
+  Titivate), and any deadline must live in Mongo (`ck`), not only in the round actor.
+- Decisions: all of ADR 0020, Claude's call under the owner's 2026-09-28 delegation
+  (logs/decisions.md).
+- Verified by Claude: verify.sh; reviewer agent (5 blocking findings, fixed); KataGo accepts komi
+  from -400 to 400 in half points (reviewer's run). · Needs owner verification: none beyond reading
+  the ADR if curious.
+- Follow-ups: 4.3 records the two spec additions; 4.4 adds a 1-stone-handicap scoring fixture.
 ### 2026-09-28 · Phase 4 breakdown · Go-native game split into units 4.1–4.12
 - Did: split Phase 4 into 12 units (docs/PLAN.md §5, "Phase 4 units"): a design ADR (4.1), then the
   go-rules byo-yomi clock (4.2) and scoring phase (4.3), `services/scoring` core (4.4) and on Redis

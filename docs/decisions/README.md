@@ -26,6 +26,7 @@ edit allowed). While the PR that introduces an ADR is still open, its wording ma
 | 0017 | [libs/board in lila's pnpm workspace; goban's board behind `mountBoard`](0017-libs-board-in-lila-workspace.md) | Accepted | 2026-09-28 |
 | 0018 | [Phase 3 module map: what lila keeps, keeps dormant and removes](0018-phase-3-module-map.md) | Accepted | 2026-09-28 |
 | 0019 | [Go core types, game storage and round protocol; scalachess stays as a library](0019-go-core-types-schema-protocol.md) | Accepted | 2026-09-28 |
+| 0020 | [Scoring phase, the lila ⇄ scoring-service protocol, and byo-yomi in lila](0020-scoring-phase-protocol-and-byoyomi-shape.md) | Accepted | 2026-09-28 |
 
 ## Template
 
