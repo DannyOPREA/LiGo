@@ -348,12 +348,6 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
             "browser-notifications",
             trf.enableDisableNotificationPopUps.txt(),
             p(
-              img(
-                src := assetUrl("images/connection-info.png"),
-                alt := trf.viewSiteInformationPopUp.txt()
-              )
-            ),
-            p(
               trf.lichessCanOptionnalySendPopUps()
             )
           ),

@@ -56,7 +56,7 @@ export const init = (user: LightUser): VNode =>
   slideTag('init')([
     confettiCanvas(),
     hi(user),
-    img(site.asset.url('logo/lichess-white.svg'), 'Lichess logo')('.recap__logo'),
+    img(site.asset.url('logo/ligo-white.svg'), 'LiGo logo')('.recap__logo'),
     h2(i18n.recap.initTitle),
   ]);
 
@@ -273,7 +273,7 @@ export const lichessGames = ({ games, year }: Recap): VNode => {
 export const thanks = ({ year }: Recap): VNode =>
   slideTag('thanks')([
     div('.recap--massive', i18n.recap.thanksTitle),
-    img(site.asset.url('logo/lichess-white.svg'), 'Lichess logo')('.recap__logo'),
+    img(site.asset.url('logo/ligo-white.svg'), 'LiGo logo')('.recap__logo'),
     div(i18n.recap.thanksHaveAGreat.asArray(year + 1)),
   ]);
 

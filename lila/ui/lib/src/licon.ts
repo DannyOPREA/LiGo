@@ -132,7 +132,6 @@ export const licon = {
   Mute: '' as const, // e077
   Reload: '' as const, // e078
   AccountCircle: '' as const, // e079
-  Logo: '' as const, // e07a
   Switch: '' as const, // e07b
   Cpu: '' as const, // e07e
   Prune: '' as const, // e07f

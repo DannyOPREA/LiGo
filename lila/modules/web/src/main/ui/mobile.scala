@@ -6,7 +6,7 @@ import play.api.mvc.RequestHeader
 import lila.core.i18n.{ I18nKey as trans, Translate }
 import lila.ui.*
 
-import ScalatagsTemplate.{ *, given }
+import ScalatagsTemplate.*
 
 def mobileRedirect(using req: RequestHeader)(using Translate) =
   val callbackUrl = "org.lichess.mobile://login-callback" + req.rawQueryString.nonEmptyOption.so("?" + _)
@@ -26,10 +26,7 @@ def mobile(helpers: Helpers)(renderedCmsPage: Frag)(using Translate) =
     s"""
   <a class="store"
     href="${StaticContent.mobileIosUrl}">
-    <img alt="${trans.app.downloadOnAppleAppStore.txt()}"
-    width="172"
-    height="50"
-    src="${assetUrl("images/mobile/apple-store.svg")}" />
+    ${trans.app.downloadOnAppleAppStore.txt()}
   </a>
   """
 
@@ -37,10 +34,7 @@ def mobile(helpers: Helpers)(renderedCmsPage: Frag)(using Translate) =
     s"""
   <a class="store"
     href="${StaticContent.mobileAndroidUrl}">
-    <img alt="${trans.app.downloadOnGooglePlay.txt()}"
-    width="172"
-    height="50"
-    src="${assetUrl("images/mobile/google-play.webp")}" />
+    ${trans.app.downloadOnGooglePlay.txt()}
   </a>
   """
 
@@ -48,10 +42,7 @@ def mobile(helpers: Helpers)(renderedCmsPage: Frag)(using Translate) =
     s"""
   <a class="store"
     href="${StaticContent.mobileFdroidUrl}">
-    <img alt="${trans.app.downloadOnFdroid.txt()}"
-    width="172"
-    height="50"
-    src="${assetUrl("images/mobile/fdroid.svg")}" />
+    ${trans.app.downloadOnFdroid.txt()}
   </a>
   """
 
@@ -78,16 +69,8 @@ def mobile(helpers: Helpers)(renderedCmsPage: Frag)(using Translate) =
                 )
               )
             ),
-            div(cls := "right-side")(
-              a(href := routes.Main.redirectToAppStore):
-                img(
-                  widthA := "358",
-                  heightA := "766",
-                  cls := "mobile-playing",
-                  src := assetUrl("images/mobile/lichess-mobile-screen.webp"),
-                  alt := trans.app.lichessMobileScreen.txt()
-                )
-            )
+            // unit 3.1: lichess's app screenshot and store badges were removed (non-free images)
+            div(cls := "right-side")
           )
         )
       )

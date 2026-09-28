@@ -18,12 +18,11 @@ Notes on the snapshots:
 - The lila-ws date is 2026-09-23 in UTC.
 - **Git LFS:** upstream keeps ~777 MiB of `lila/public/lifat/` assets (nnue, maia, vosk, bots,
   background galleries) in Git LFS. For those, the snapshot contains only the **94 pointer files**,
-  not the objects (see ADR 0009). The other 10 lifat files are real content, including 4
-  Unsplash-licensed montage images (COPYING §1.1).
+  not the objects (see ADR 0009). The other 10 lifat files were real content, including 4
+  Unsplash-licensed montage images. Unit 3.1 deleted all of `public/lifat/` (COPYING §1.1).
 - **lila-docker** is not a full snapshot: only the files listed in `dev/lila-docker/README.md` were
   copied, several of them trimmed. That README is its modification register.
-- **Non-free upstream assets** are kept temporarily and removed in the first Phase 3 unit
-  (COPYING.md §1.1, ADR 0007).
+- **Non-free upstream assets** were removed in unit 3.1 (COPYING.md §1.1, ADR 0007).
 
 ## LiGo modifications to upstream files
 
@@ -32,6 +31,10 @@ AGPL §5(a) modification notices. Every change to a file under `lila/` or `lila-
 | Date | File(s) | Change | Why | Commit / PR |
 |---|---|---|---|---|
 | 2026-09-26 | `lila/.gitattributes` | Removed upstream's 8 `filter=lfs` rules under `public/lifat/`; added an explanatory comment | The snapshot has pointer files only; checkouts failed wherever git-lfs is installed | commit 6479d55 (unit 0.2 PR), ADR 0009 |
+| 2026-09-28 | `lila/public/` (logo, favicon.ico, apple-touch-icon.png, 28 piece sets and 3D Staunton, 6 sound sets and the Silence files, lifat, images except board/learn/pieces/practice/puzzle-themes/staunton/trophy, 77 flairs, flair/list.txt, vendor/ChessPursuit; the logo glyph in font/lichess.{sfd,ttf,woff2}), `lila/bin/gen/favicons` | Deleted | Non-free, non-commercial or lichess-branded (COPYING §1.1) | unit 3.1 PR |
+| 2026-09-28 | `lila/public/logo/ligo*`, `favicon.ico`, `apple-touch-icon.png`, `public/images/ligo/`, `bin/gen/ligo-logo.mjs` | Added LiGo's own logo, icons and UI images (MIT) with their generator | Replace the deleted lichess artwork | unit 3.1 PR |
+| 2026-09-28 | `modules/ui` `Icon.scala`, `helper/HtmlHelper.scala` (spinner) + `modules/web` `ui/bits.scala`, `layout.scala`, `StaticContent.scala`, `FaqUi.scala`, `mobile.scala`; `modules/oauth` `AuthorizeUi.scala`, `OAuthSignedClient.scala`; `modules/user` `UserActionMenu.scala`, `FlairApi.scala`; `modules/mod` `GamifyUi.scala`; `modules/pref` `SoundSet.scala`, `PieceSet.scala`; `modules/pref` `Pref.scala` (default background); `modules/feed` `FeedUi.scala` (default flair); `app/controllers/Dasher.scala` (no gallery); `app/views/base/page.scala`, `base/notFound.scala`, `user/show/page.scala`, `lobby/home.scala`; `lila/.gitattributes` comment | Logo, favicons and manifest icons point at LiGo's files; removed references to deleted images; default sound set `sfx`; deleted piece sets dropped from the choices | Keep the server working after the deletions | unit 3.1 PR |
+| 2026-09-28 | `ui/` `lib/src/view/controls.ts` (spinner), `lib/src/licon.ts`, `analyse/src/explorer/explorerView.ts`, `puzzle/src/ctrl.ts`, `round/src/title.ts`, `round/src/plugins/round.yeet.ts`, `serviceWorker/src/serviceWorker.ts`, `lib/src/notification.ts`, `recap/src/slides.ts`, `notify/src/renderers.ts`, `analyse/src/view/settingsView.ts`, `bits/src/bits.devMode.ts`, `site/src/sound.ts`; SCSS in `lib/css` (licon, header title, tree, colorChoice, loader, zen-toggle, multiple-select, board-3d), `bits/css` (auth, not-found, oauth, oauth-connection, markdown-textarea), `lobby/css/app/_app.scss`, `dasher/css/_piece.scss`, `mod/css` (report, user, inquiry), `puzzle/css/_side.scss`; `public/oops/*.html` | Same: LiGo logo, CSS-only loader, LiGo UI images, `sfx` as the fallback sound set, deleted images no longer referenced | Keep the client working after the deletions | unit 3.1 PR |
 
 ## Reused libraries (tracked for fixes)
 

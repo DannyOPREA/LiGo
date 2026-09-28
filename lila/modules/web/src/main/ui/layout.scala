@@ -83,19 +83,18 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
       a(dataIcon := Icon.Mute, targetBlank, href := s"${routes.Main.faq}#autoplay")
     )
 
-  def botImage = img(
-    src := staticAssetUrl("images/icons/bot.webp"),
-    title := "Robot chess",
-    style := "display:inline;width:34px;height:34px;vertical-align:top;margin-right:5px;vertical-align:text-top"
-  )
+  def botImage = span(
+    title := "Bot account",
+    style := "display:inline;font-size:0.6em;margin-right:5px;vertical-align:text-top"
+  )("BOT")
 
   val manifests = raw("""<link rel="manifest" href="/manifest.json">""")
   val noRobots = raw("""<meta content="noindex,nofollow" name="robots">""")
 
   val favicons = raw:
     val path = s"$assetBaseUrl/assets/logo"
-    s"""<link rel="alternate icon" type="image/png" href="$path/lichess-favicon-64.png">""" +
-      s"""<link id="favicon" rel="icon" type="image/svg+xml" href="$path/lichess-favicon.svg">"""
+    s"""<link rel="alternate icon" type="image/png" href="$path/ligo-favicon-64.png">""" +
+      s"""<link id="favicon" rel="icon" type="image/svg+xml" href="$path/ligo-favicon.svg">"""
 
   def blindModeForm(using ctx: Context) = raw:
     val btnText =
@@ -208,9 +207,6 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
   val dataAssetUrl = attr("data-asset-url") := netConfig.assetBaseUrl.value
   val dataAssetVersion = attr("data-asset-version")
 
-  val spinnerMask = raw:
-    """<svg width="0" height="0"><mask id="spinner-mask"><path fill="#fff" stroke="#fff" stroke-linejoin="round" d="M38.956.5c-3.53.418-6.452.902-9.286 2.984C5.534 1.786-.692 18.533.68 29.364 3.493 50.214 31.918 55.785 41.329 41.7c-7.444 7.696-19.276 8.752-28.323 3.084C3.959 39.116-.506 27.392 4.683 17.567 9.873 7.742 18.996 4.535 29.03 6.405c2.43-1.418 5.225-3.22 7.655-3.187l-1.694 4.86 12.752 21.37c-.439 5.654-5.459 6.112-5.459 6.112-.574-1.47-1.634-2.942-4.842-6.036-3.207-3.094-17.465-10.177-15.788-16.207-2.001 6.967 10.311 14.152 14.04 17.663 3.73 3.51 5.426 6.04 5.795 6.756 0 0 9.392-2.504 7.838-8.927L37.4 7.171z"/></mask></svg>"""
-
   val networkAlert = a(id := "network-status", cls := "link text", dataIcon := Icon.ChasingArrows)
 
   private val spaceRegex = """\s{2,}+""".r
@@ -239,8 +235,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           )
         )
       ),
-    Option.when(netConfig.socketDomains.nonEmpty)(networkAlert),
-    spinnerMask
+    Option.when(netConfig.socketDomains.nonEmpty)(networkAlert)
   )
 
   object siteHeader:
@@ -307,7 +302,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           a(cls := "site-title", href := langHref("/"), testId("site-title"))(
             if ctx.kid.yes then span(title := trans.site.kidMode.txt(), cls := "kiddo")(":)")
             else ctx.isBot.option(botImage),
-            div(cls := "site-icon", dataIcon := Icon.Logo),
+            div(cls := "site-icon")(lila.web.ui.bits.logo),
             div(cls := "site-name")(siteName)
           ),
           (!isAppealUser).option(
