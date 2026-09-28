@@ -10,3 +10,4 @@
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
 - [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, maxPlies draw, stopped-clock outoftime, fishnet re-send, handicap-1
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
+- [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods

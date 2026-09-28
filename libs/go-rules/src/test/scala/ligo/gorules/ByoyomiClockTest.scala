@@ -30,6 +30,9 @@ class ByoyomiClockTest extends munit.FunSuite:
     assert(ByoyomiClock(ByoyomiConfig(60, 0, 30), Color.Black).isLeft)
     assert(ByoyomiClock(ByoyomiConfig(60, 3, 0), Color.Black).isLeft)
     assert(ByoyomiClock(ByoyomiConfig(-1, 3, 30), Color.Black).isLeft)
+    assert(ByoyomiClock(ByoyomiConfig(0, 3, 4), Color.Black).isLeft, "periods under 5 s without main time")
+    assert(ByoyomiClock(ByoyomiConfig(0, 3, 5), Color.Black).isRight)
+    assert(ByoyomiClock(ByoyomiConfig(60, 3, 1), Color.Black).isRight)
 
   test("a new clock is stopped, Black's side current, with full main time and every period"):
     given Wall = Wall()
@@ -142,12 +145,60 @@ class ByoyomiClockTest extends munit.FunSuite:
     val c2 = clock().start
     w.seconds(10)
     val huge = c2.move(clientLagCentis = Some(10_000)) // far above the quota: only the quota is granted
-    assert(huge.reading(Color.Black).centis < 5000 + 1000, huge.reading(Color.Black).toString)
+    val granted = huge.reading(Color.Black).centis - 5000
+    assert(granted > 0 && granted < 1000, s"granted $granted cs of 10,000 reported")
 
-  test("give more time adds to main time"):
+  test("give more time adds to main time, and is refused for nothing or less"):
     given w: Wall = Wall()
-    val c = clock().giveTime(Color.White, 1500)
+    val c = clock().giveTime(Color.White, 1500).fold(fail(_), identity)
     assertEquals(c.reading(Color.White).centis, 7500)
+    assert(clock().giveTime(Color.White, 0).isLeft)
+    assert(clock().giveTime(Color.White, -100).isLeft)
+
+  test("time given in byo-yomi is kept across moves until used"):
+    given w: Wall = Wall()
+    val inByo = blackThinks(clock().start, 70)
+    val topped = inByo.giveTime(Color.Black, 6000).fold(fail(_), identity)
+    assertEquals(topped.reading(Color.Black), ByoyomiReading(9000, 3, inByoyomi = true))
+    val after = blackThinks(topped, 1)
+    assertEquals(after.reading(Color.Black), ByoyomiReading(8900, 3, inByoyomi = true))
+
+  test("main time running out exactly on a move goes into byo-yomi with every period"):
+    given w: Wall = Wall()
+    val c = blackThinks(clock().start, 60)
+    assertEquals(c.reading(Color.Black), ByoyomiReading(3000, 3, inByoyomi = true))
+
+  test("a move on a stopped clock charges nothing"):
+    given w: Wall = Wall()
+    val c = clock()
+    w.seconds(30)
+    assertEquals(c.move().reading(Color.Black).centis, 6000)
+
+  test("a game-ending move stops the clock and still switches the side"):
+    given w: Wall = Wall()
+    val c = clock().start.after(0).after(10) // Black to move
+    val ended = c.move(gameActive = false)
+    assert(!ended.isRunning)
+    assertEquals(ended.toMove, Color.White)
+
+  test("out of time with grace allows for the player's lag"):
+    given w: Wall = Wall()
+    val c = clock().start
+    w.seconds(150.5)
+    assert(c.outOfTime(Color.Black))
+    assert(!c.outOfTime(Color.Black, withGrace = true))
+    w.seconds(5)
+    assert(c.outOfTime(Color.Black, withGrace = true))
+
+  test("clocks without main time and White-first clocks restore to the same readings"):
+    given w: Wall = Wall()
+    val noMain = blackThinks(clock(ByoyomiConfig(0, 3, 10)).start, 12)
+    val back = ByoyomiClock.restore(noMain.state, w.now).fold(fail(_), identity)
+    for color <- Color.values do assertEquals(back.reading(color), noMain.reading(color))
+    val whiteFirst = clock(first = Color.White).start.after(5)
+    val back2 = ByoyomiClock.restore(whiteFirst.state, w.now).fold(fail(_), identity)
+    assertEquals(back2.toMove, Color.Black)
+    for color <- Color.values do assertEquals(back2.reading(color), whiteFirst.reading(color))
 
   test("a stored clock rebuilds to the same readings, running or stopped"):
     given w: Wall = Wall()

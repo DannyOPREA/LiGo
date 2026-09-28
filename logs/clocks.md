@@ -20,5 +20,12 @@
 - Lessons: see Lessons (spentPeriods; `???` methods).
 - Decisions: settings are only checked structurally (main ≥ 0, periods ≥ 1, period ≥ 1 s); which
   values lila offers is unit 4.9's (Claude, under the owner's 2026-09-28 delegation).
-- Verified by Claude: `dev/ligo test rules`, verify.sh. · Needs owner verification: none.
+- Review (reviewer agent): nothing blocking; fixed its non-blocking findings: periods under 5 s
+  refused without main time (strategygames makes the first one 5 s), give-time refused for 0 or
+  less and its banking in byo-yomi documented and tested, a move on a stopped clock charging
+  nothing documented, a stronger lag test, and tests for main time running out on a move, a
+  game-ending move, grace, and restoring main-time-0 and White-first clocks (21 tests).
+- Verified by Claude: `dev/ligo test rules`, verify.sh. · Needs owner verification: none for the
+  library; the lila side (`cy` storage, clock JSON, lag stats and last-move time dropped on restore)
+  is only exercised in unit 4.7.
 - Follow-ups: lila's clock interface and `cy` storage in unit 4.7.

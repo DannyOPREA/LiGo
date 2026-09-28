@@ -8,7 +8,10 @@ import strategygames.{ ByoyomiClock as SgClock, Centis, MoveMetrics, Player, Tim
   * may be 0 (straight into byo-yomi). Which values lila offers is game creation's business (unit 4.9).
   */
 final case class ByoyomiConfig(mainSeconds: Int, periods: Int, periodSeconds: Int):
-  def isValid: Boolean = mainSeconds >= 0 && periods >= 1 && periodSeconds >= 1
+  // strategygames makes the first period at least 5 s when there is no main time, so shorter periods would
+  // differ between the first and the rest.
+  def isValid: Boolean =
+    mainSeconds >= 0 && periods >= 1 && periodSeconds >= (if mainSeconds == 0 then 5 else 1)
   override def toString = s"$mainSeconds s + $periods × $periodSeconds s"
 
 /** One player's clock as it reads now.
@@ -65,7 +68,9 @@ final class ByoyomiClock private (private val sg: SgClock):
   def stop: ByoyomiClock = wrap(sg.stop())
 
   /** The player to move has moved (a stone or a pass): charges the time taken, less the lag compensation
-    * strategygames grants (lila's recipe), and switches to the opponent.
+    * strategygames grants (lila's recipe), and switches to the opponent. On a stopped clock nothing is
+    * charged: lila must `start` the clock after the first move and on resuming from the scoring phase. With
+    * `gameActive = false` the clock stops but still switches, so the stored side to move is the opponent's.
     *
     * @param clientLagCentis
     *   the network lag the player's browser reported, if any
@@ -95,9 +100,16 @@ final class ByoyomiClock private (private val sg: SgClock):
     if left <= 0 || sg.outOfTime(player, withGrace = false) then ByoyomiReading(0, 0, inByoyomi = true)
     else ByoyomiReading(info.time.centis, left, inByoyomi)
 
-  /** Adds main time (or time to the current period) for `color`: lila's "give more time" button. */
-  def giveTime(color: Color, centis: Int): ByoyomiClock =
-    wrap(sg.giveTime(ByoyomiClock.playerOf(color), Centis(centis)))
+  /** Adds `centis` (> 0) to `color`'s main time, or to the current period once in byo-yomi: lila's "give more
+    * time" button. Time given in byo-yomi is kept across moves until used (strategygames resets a period to
+    * at least its full length, never below what is left). Refused for 0 or less.
+    */
+  def giveTime(color: Color, centis: Int): Either[String, ByoyomiClock] =
+    Either.cond(
+      centis > 0,
+      wrap(sg.giveTime(ByoyomiClock.playerOf(color), Centis(centis))),
+      s"cannot give $centis cs"
+    )
 
   def state: ByoyomiState =
     val b = sg.players(Player.P1)
