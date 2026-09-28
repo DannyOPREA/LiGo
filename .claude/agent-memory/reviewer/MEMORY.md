@@ -3,3 +3,4 @@
 - [Dev script review patterns](dev-script-review-patterns.md) — missing .ligo mkdir, hidden failures, unbounded curl, pending-decision merges
 - [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, duplicated brand constants, CMS markdown path
 - [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM licences, §3.1 row scope, spike cross-checks, unlisted params, §10 deferrals
+- [Rules spec review patterns](rules-spec-review-patterns.md) — replay cited sequences, resume vs pass counter, false clock bounds
