@@ -30,6 +30,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - **Phase 1 — build-vs-buy + rules integration** started 2026-09-27; units listed in docs/PLAN.md §5.
   - Unit 1.1: server-side Go rules and byo-yomi clock come from strategygames as a pinned dependency
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
+  - Unit 1.3: scoring is a Node service (`services/scoring`, Phase 4) around KataGo, goban's
+    autoscore and goscorer (ADR 0016, PR #11). Claude's call under your 2026-09-28 delegation;
+    autoscore got 29/31 of OGS's test games with the cloud's networks.
   - Unit 1.4: ratings use lila's own Glicko-2 with OGS's Glicko-2 settings plus goratings' rank
     curve and handicap maths (9×9 stone = 6 ranks) (ADR 0013, PR #12). The glue lands in Phase 5.
   - Unit 1.2: the client-side rules, SGF reading and the board come from OGS `goban` on npm, pinned,
@@ -37,12 +40,12 @@ _Updated at the end of every session (`/status`). Newest information wins._
     revisit any time. The dependency lands with Phase 2's `libs/board` unit (and 1.8's harness).
   - Unit 1.5: the rules spec (docs/rules/spec.md) is approved, all 11 choices as recommended
     (PR #13). It follows the recommended options of memos 1.2–1.4
-    ("Depends on memo" notes; 1.2 and 1.4 went as recommended, 1.3 is still open).
+    ("Depends on memo" notes; 1.2, 1.3 and 1.4 all went as recommended).
   - Unit 1.6 (conformance fixtures): format, checker and 130 cases (strategygames, goban, KataGo,
     LiGo's own) in `libs/conformance/`, checked against the approved spec (PR #14).
 
 ## Next
-- Phase 1 units 1.3 and 1.6–1.9 (docs/PLAN.md §5, "Phase 1 units").
+- Phase 1 units 1.7–1.9 (docs/PLAN.md §5, "Phase 1 units").
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
@@ -70,5 +73,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1, 1.2, 1.4, 1.5 done; 1.3 memo open (of 9 units) |
+| 1. Build-vs-buy + rules integration | 1.1–1.6 done (of 9 units) |
 | 2–9 | not started |

@@ -5,8 +5,41 @@
 - goscorer (MIT, lightvector) does territory/area counting with seki detection once dead stones are marked, and is bundled in goban (2026-09-25, planning research).
 - KataGo on CPU (Eigen) manages ~10–20 playouts/s with small nets: fine for scoring tests, not for review. The AMD GPU uses the OpenCL backend (2026-09-25, planning research).
 - Measured: KataGo v1.18.1 Eigen with the b6 test net does ~140 visits/s on the 4 cloud vCPUs (4 threads); the planning estimate above was for full-size nets (2026-09-27, unit 0.5).
+- goban's `test/autoscore_test_files/` (31 OGS games with ownership maps and expected results) is a ready-made regression set for autoscore; its expected results were drafted from the same maps, so it is not an accuracy benchmark (2026-09-27, unit 1.3).
+- KataGo's multi-threaded search is not deterministic: store the proposal shown to players, recount only with goscorer (2026-09-27, unit 1.3).
 
 ## Entries (newest first)
+### 2026-09-28 · unit 1.3 / PR #11 · Scoring decision recorded
+- Did: adopted option A (Node `services/scoring` with KataGo + goban-engine autoscore + goscorer)
+  as ADR 0016, after the owner delegated every decision on 2026-09-28 ("Don't ask for my approval
+  for anything, just work until I tell you to stop"); merged main first.
+- Worked: CI green on the memo PR before the decision (9/9 checks).
+- Didn't work / dead ends: none.
+- Lessons: ADR numbers race between parallel units (1.4 took 0013, 1.2 merged 0014 and another
+  change took 0015 while this PR was open, so this ADR became 0016); re-check the number right
+  before merging.
+- Decisions: 1.3 → A, Claude's call under the delegation (logs/decisions.md, ADR 0016).
+- Verified by Claude: verify.sh, CI. · Needs owner verification: whether he agrees with A (revisit
+  by a superseding ADR); the katagotraining.org network licence before Phase 4 pins one.
+- Follow-ups: Phase 4 builds the service and decides its message format and fallback.
+### 2026-09-27 · unit 1.3 · Build-vs-buy memo for scoring
+- Did: spike of the plan's pipeline (KataGo analysis engine → goban-engine 8.3.226 `autoscore` →
+  goscorer via `computeScore`) in plain Node over goban's 31 autoscore test games; compared KataGo's
+  GTP `final_status_list dead`; wrote docs/build-vs-buy/scoring.md (options A–F).
+- Worked: OGS's stored maps 31/31; our KataGo 29/31 with b6, b10 and a full-size g170e b20 net
+  (misses shrink with net size); goscorer counts Japanese and Chinese, seki eyes excluded under
+  Japanese rules. A b20 net from KataGo's v1.4.5 GitHub release downloads in the cloud, unlike
+  katagotraining.org.
+- Didn't work / dead ends: GTP's dead list 21–22/31. The seki game misses even with Chinese rules.
+  No full-size b18 run (host blocked). The goban-engine WASM estimator needs a browser.
+- Lessons: see Lessons (regression set, non-determinism).
+- Decisions: asked the owner A (Node service, recommended) or C (port to Scala); pending.
+- Verified by Claude: the spike outputs quoted in the memo; reviewer agent re-ran the stored modes
+  and cross-checked the numbers (4 blocking findings fixed: strategygames option, circular 31/31,
+  three facts, this entry). · Needs owner verification: licence of katagotraining.org networks;
+  accuracy with the b18 net on the GPU (Phase 4 benchmark).
+- Follow-ups: ADR once the owner answers; Phase 4 decides the lila ⇄ service message (prisoners,
+  komi) and the no-KataGo fallback in Node.
 ### 2026-09-27 · unit 0.5 · KataGo installed and benchmarked in the cloud (CPU)
 - Did: `dev/ligo katago install cpu`, `smoke`, `bench` in a cloud session: KataGo v1.18.1 Eigen
   (not the AVX2 build), g170 b6c96 test network, 4 vCPU Intel Xeon @ 2.80 GHz.

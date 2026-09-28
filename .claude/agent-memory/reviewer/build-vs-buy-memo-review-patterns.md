@@ -25,6 +25,16 @@ Checks that found real problems in the unit 1.1 memo (server-side Go rules, 2026
 - Local `main` ref can be stale; diff against `origin/main` after `git fetch` (see
   [[guard-hook-review-patterns]]).
 
+Unit 1.3 (scoring memo, 2026-09-27) found more of the same kind:
+- **Check how the upstream fixture was generated** (goban `scripts/fetch_game_for_autoscore_testing.ts`):
+  correct answers seeded from the same stored maps make "N/N on stored data" circular, and the
+  fixture's query settings (rules "chinese") may differ from the spike's (japanese) -> not like-for-like.
+- **Timestamp overlap**: `stat` run files + klogs names to spot concurrent runs (inflated timings)
+  and claims with no saved artifact (a "28/31 earlier run").
+- **Deferred items from the previous memo** (1.1 handed strategygames' area scoring to 1.3) must
+  appear as candidates.
+- Check the runtime version claimed (`which -a node`; spike ran on 24 while memo said 22).
+
 **How to apply:** for every future memo (1.2 goban, 1.3 scoring, 1.4 batch) run these checks.
 
 Added after the unit 1.4 ratings memo review (2026-09-27):
