@@ -105,6 +105,15 @@ trait PrefHelper:
       (Pref.ConfirmResign.YES, trans.site.yes.txt())
     )
 
+  // Go board touch-confirm (unit 2.3): "On touch screens" is plain English, not a new i18n key,
+  // as LiGo's new text has been since unit 0.7; "Never" and "Always" reuse lichess's own keys.
+  def confirmMovesChoices(using Translate) =
+    List(
+      (Pref.ConfirmMoves.NEVER, trans.site.never.txt()),
+      (Pref.ConfirmMoves.TOUCH, "On touch screens"),
+      (Pref.ConfirmMoves.ALWAYS, trans.site.always.txt())
+    )
+
   def translatedRookCastleChoices(using Translate) =
     List(
       (Pref.RookCastle.NO, trans.preferences.castleByMovingTwoSquares.txt()),

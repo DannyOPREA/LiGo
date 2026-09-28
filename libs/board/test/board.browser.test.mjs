@@ -280,3 +280,24 @@ test("phone: taps play stones on a board as wide as the screen", async () => {
     await t.close();
   }
 });
+
+test("phone, confirm on: a second tap on the preview takes it back (goban's way); confirm() plays", async () => {
+  const t = await open({ width: 390, context: devices["iPhone 13"] });
+  try {
+    await t.page.clock.install();
+    await t.page.evaluate(() => harness.mount({ size: 9, ruleset: "japanese", komi: 6.5, movable: "both", autoPlay: true, confirm: true }));
+    const p = await pointOf(t.page, "ee", 9);
+    await t.page.touchscreen.tap(p.x, p.y);
+    assert.equal(await call(t.page, "pending"), true);
+    await t.page.clock.runFor(300);
+    await t.page.touchscreen.tap(p.x, p.y);
+    assert.equal(await call(t.page, "pending"), false, "the second tap removed the preview");
+    assert.deepEqual(await events(t.page), []);
+    await t.page.touchscreen.tap(p.x, p.y);
+    await t.page.clock.runFor(300);
+    await call(t.page, "confirm");
+    assert.deepEqual(await events(t.page), ["move ee"]);
+  } finally {
+    await t.close();
+  }
+});

@@ -80,6 +80,16 @@ function gameSummary(s: GameSettings): string {
 
 function controls(ctrl: PlaygroundCtrl): VNode {
   return div('.playground__controls', [
+    ctrl.confirm
+      ? button(
+          '.button.playground__confirm',
+          {
+            attrs: { disabled: !ctrl.movePending() },
+            hook: bind('click', () => ctrl.confirmMove(), ctrl.redraw),
+          },
+          'Confirm move',
+        )
+      : null,
     button('.button', { hook: bind('click', () => ctrl.pass(), ctrl.redraw) }, 'Pass'),
     button(
       '.button',

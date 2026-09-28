@@ -3,10 +3,19 @@
 import type { Board, BoardConfig, Move } from '@ligo/board/board';
 import { handicapStones, standardKomi } from '@ligo/board/rules';
 
+import { isTouchDevice } from 'lib/device';
+
 /** goban's engine is ~100 KB gzipped (libs/board/README.md): load it only once the page needs it. */
 const loadMountBoard = () => import('@ligo/board/board').then(m => m.mountBoard);
 
 import type { GameSettings, PlaygroundConfig, Redraw, Ruleset, Size } from './interfaces';
+
+/** `Pref.ConfirmMoves` (lila/modules/pref): kept in step by hand, it's a small fixed set. */
+const ConfirmMoves = { NEVER: 0, TOUCH: 1, ALWAYS: 2 } as const;
+
+/** Whether taps only preview, for a `Pref.ConfirmMoves` value on this kind of device. */
+export const resolveConfirm = (confirmMoves: number, touch: boolean): boolean =>
+  confirmMoves === ConfirmMoves.ALWAYS || (confirmMoves === ConfirmMoves.TOUCH && touch);
 
 const defaultSettings = (): GameSettings => ({
   size: 9,
@@ -26,12 +35,19 @@ export default class PlaygroundCtrl {
   loadFailed = false;
   /** Bumped on every remount so the view gives the board container a fresh key (destroy + insert). */
   generation = 0;
+  /**
+   * `Pref.ConfirmMoves` (unit 2.3), resolved once against this browser: a tap previews the stone
+   * and `confirmMove` plays it (a mouse double click too; goban ignores double taps on touch).
+   */
+  readonly confirm: boolean;
 
   constructor(
     readonly config: PlaygroundConfig,
     readonly redraw: Redraw,
   ) {
     this.moves = [...(config.moves ?? [])];
+    const confirmMoves = config.confirmMoves ?? ConfirmMoves.TOUCH;
+    this.confirm = resolveConfirm(confirmMoves, isTouchDevice());
   }
 
   /** Handicap stones for `settings`, as the board's `stones` (R-HCP-3/4; none below 2 stones). */
@@ -54,6 +70,7 @@ export default class PlaygroundCtrl {
       toMove: stones.black.length ? 'white' : 'black',
       moves: this.moves,
       movable: 'both',
+      confirm: this.confirm,
       onMove: this.onMove,
       onChange: this.redraw,
     };
@@ -84,6 +101,12 @@ export default class PlaygroundCtrl {
   };
 
   pass = (): void => this.board?.pass();
+
+  /** Whether a previewed stone is waiting for `confirmMove` (confirm mode only). */
+  movePending = (): boolean => this.board?.pending() ?? false;
+
+  /** Plays the previewed stone (the "Confirm move" button). */
+  confirmMove = (): void => this.board?.confirm();
 
   /** The game just ended in two consecutive passes; scoring is Phase 4, so play may go on. */
   get bothPassed(): boolean {

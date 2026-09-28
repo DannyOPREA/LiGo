@@ -1,5 +1,7 @@
 package views
 
+import play.api.libs.json.Json
+
 import lila.app.UiEnv.*
 
 // LiGo's local Go playground (unit 2.2, docs/PLAN.md Phase 2): a self-contained page, no lila
@@ -7,10 +9,10 @@ import lila.app.UiEnv.*
 // built entirely in ui/playground; this just gives it a page to load into.
 object playground:
 
-  def home =
+  def home(using ctx: Context) =
     Page("Playground")
       .css("playground")
-      .js(esmInit("playground")):
+      .js(esmInitObj("playground", Json.obj("confirmMoves" -> ctx.pref.confirmMoves))):
         main(id := "playground")(
           p("Loading the Go playground…")
         )
