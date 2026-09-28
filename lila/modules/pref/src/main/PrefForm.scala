@@ -46,6 +46,7 @@ object PrefForm:
     val autoThreefold = "autoThreefold" -> checkedNumber(Pref.AutoThreefold.choices)
     val submitMove = "submitMove" -> bitCheckedNumber(Pref.SubmitMove.choices)
     val confirmResign = "confirmResign" -> checkedNumber(Pref.ConfirmResign.choices)
+    val confirmMoves = "confirmMoves" -> checkedNumber(Pref.ConfirmMoves.choices)
     val moretime = "moretime" -> checkedNumber(Pref.Moretime.choices)
     val clockSound = "clockSound" -> booleanNumber
     val clockTenths = "clockTenths" -> checkedNumber(Pref.ClockTenths.choices)
@@ -89,6 +90,7 @@ object PrefForm:
             optional(numberIn(compat.choices).transform(compat.appToServer, compat.serverToApp))
           else optional(mapping),
         fields.confirmResign,
+        fields.confirmMoves.map2(optional),
         fields.keyboardMove.map2(optional),
         fields.voice.map2(optional),
         "rookCastle" -> optional(booleanNumber),
@@ -130,6 +132,7 @@ object PrefForm:
       autoThreefold: Int,
       submitMove: Option[Int],
       confirmResign: Int,
+      confirmMoves: Option[Int],
       keyboardMove: Option[Int],
       voice: Option[Int],
       rookCastle: Option[Int],
@@ -178,6 +181,7 @@ object PrefForm:
         submitMove = behavior.submitMove.getOrElse(0),
         insightShare = insightShare,
         confirmResign = behavior.confirmResign,
+        confirmMoves = behavior.confirmMoves | pref.confirmMoves,
         captured = display.captured == 1,
         keyboardMove = behavior.keyboardMove | pref.keyboardMove,
         voice = if pref.voice.isEmpty && !behavior.voice.contains(1) then None else behavior.voice,
@@ -213,6 +217,7 @@ object PrefForm:
           autoThreefold = pref.autoThreefold,
           submitMove = pref.submitMove.some,
           confirmResign = pref.confirmResign,
+          confirmMoves = pref.confirmMoves.some,
           keyboardMove = pref.keyboardMove.some,
           voice = pref.voice.getOrElse(0).some,
           rookCastle = pref.rookCastle.some,

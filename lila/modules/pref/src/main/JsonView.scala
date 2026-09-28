@@ -33,6 +33,7 @@ def toJson(p: Pref, lichobileCompat: Boolean) = Json.obj(
     else p.submitMove
   },
   "confirmResign" -> p.confirmResign,
+  "confirmMoves" -> p.confirmMoves,
   "insightShare" -> p.insightShare,
   "keyboardMove" -> p.keyboardMove,
   "voiceMove" -> p.hasVoice,

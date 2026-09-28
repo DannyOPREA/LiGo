@@ -15,8 +15,28 @@
 - goban's `pass()` leaves stone placement on, and its `updateTitleAndStonePlacement` turns it off whenever a preview is shown: an adapter must keep "a move is waiting" state of its own (2026-09-28, 2.1 review).
 - A board box that goban measures needs an explicit width: `margin: 0 auto` on a flex item shrinks it to its content (the loading text), and goban then draws a tiny board (2026-09-28, 2.2).
 - snabbdom: bind an input's shown value with `props: { value }`, not `attrs`; `attrs.value` is only the default and stops showing once the user has typed (2026-09-28, 2.2 review).
+- goban's confirm mode: a second tap on the preview removes it, and double taps on touch screens are ignored; phones need a confirm button calling `board.confirm()` (2026-09-28, 2.3).
 
 ## Entries (newest first)
+
+### 2026-09-28 · 2.3 · Touch-confirm setting ("Confirm moves")
+- Done: `Pref.confirmMoves` in lila's pref module (never / on touch screens / always, default on
+  touch screens; BSON default so old documents read fine), a "Confirm moves" setting on the
+  preferences page next to "Confirm resignation", passed to `/playground`, whose page resolves
+  "on touch screens" with lila's `isTouchDevice()` and shows a "Confirm move" button while a preview
+  waits. No libs/board change: `confirm`, `pending()` and `confirm()` came with 2.1.
+- Didn't work as planned: the plan said a second tap on the preview plays it. In goban a second tap
+  on the preview takes it back (its `same_stone_clicked`), a tap elsewhere moves it, and goban
+  ignores double taps on touch screens (only a mouse double click plays). Kept goban's behaviour,
+  with a browser test pinning it and the README saying phones need the page's button.
+- Also: ui's test setup attached its `matchMedia` stub to `window` (lib/device calls
+  `window.matchMedia`, which jsdom lacks).
+- Verified: lila compiles, scalafmt clean, `dev/ligo test ui` 252/252 (4 new), board browser tests
+  18/18, lint and format clean; a scratch Chromium check of the compiled page with each setting on
+  desktop and an iPhone 13 layout (17 checks). The builder agent reported lila compiling when it
+  didn't (`esmInitObj` with an Int needs `Json.obj`): re-run a helper's gates yourself.
+- Lesson: goban drops a confirm within 50 ms of the tap (its "bad click" guard) without a word;
+  a script that confirms at once fails now and then, a person never.
 
 ### 2026-09-28 · 2.2 review · Reviewer findings fixed
 - Reviewer (Chromium probes on the compiled bundle): 3 blocking, 4 should-fix. Fixed: a stylelint

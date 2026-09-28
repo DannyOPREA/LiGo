@@ -16,4 +16,10 @@ export type Redraw = () => void;
 export interface PlaygroundConfig {
   /** Nothing is passed from the server: the page starts with LiGo's own default settings. */
   moves?: Move[];
+  /**
+   * `Pref.ConfirmMoves` (unit 2.3): 0 never, 1 on touch screens, 2 always. Anonymous visitors get
+   * the pref's default (`Pref.default.confirmMoves`, currently "on touch screens"). Resolved to a
+   * plain boolean by `PlaygroundCtrl.confirm` once the browser is known.
+   */
+  confirmMoves?: number;
 }

@@ -16,7 +16,7 @@ define('localStorage', window.localStorage);
 define('sessionStorage', window.sessionStorage);
 define('requestAnimationFrame', (cb: any) => setTimeout(() => cb(Date.now()), 0));
 define('cancelAnimationFrame', (id: any) => clearTimeout(id));
-define('matchMedia', (q: any) => ({
+const matchMediaStub = (q: any) => ({
   matches: false,
   media: q,
   addEventListener() {},
@@ -25,7 +25,11 @@ define('matchMedia', (q: any) => ({
   removeListener() {},
   onchange: null,
   dispatchEvent: () => false,
-}));
+});
+define('matchMedia', matchMediaStub);
+// jsdom doesn't implement matchMedia on its `window` (only the bare global above): lib/device.ts
+// (isTouchDevice, prefersLightThemeQuery) calls `window.matchMedia` directly.
+window.matchMedia = matchMediaStub;
 define(
   'i18n',
   new Proxy(Object.create(null), {

@@ -105,6 +105,16 @@ trait PrefHelper:
       (Pref.ConfirmResign.YES, trans.site.yes.txt())
     )
 
+  // Go board touch-confirm (unit 2.3), not a lichess i18n key: "On touch screens" has no
+  // chess-neutral equivalent, so it stays plain English rather than adding a new key
+  // (docs/PLAN.md Phase 2 units; the other two values reuse lichess's existing generic keys).
+  def confirmMovesChoices(using Translate) =
+    List(
+      (Pref.ConfirmMoves.NEVER, trans.site.never.txt()),
+      (Pref.ConfirmMoves.TOUCH, "On touch screens"),
+      (Pref.ConfirmMoves.ALWAYS, trans.site.always.txt())
+    )
+
   def translatedRookCastleChoices(using Translate) =
     List(
       (Pref.RookCastle.NO, trans.preferences.castleByMovingTwoSquares.txt()),

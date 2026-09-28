@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
+import { isTouchDevice } from 'lib/device';
+
 import PlaygroundCtrl from '../src/ctrl';
 
 const noop = () => {};
@@ -109,5 +111,24 @@ describe('PlaygroundCtrl', () => {
     const ctrl = new PlaygroundCtrl({ moves }, noop);
     assert.notEqual(ctrl.moves, moves);
     assert.deepEqual(ctrl.moves, ['ee']);
+  });
+
+  // Pref.ConfirmMoves (unit 2.3): 0 never, 1 on touch screens (the pref's default), 2 always.
+  describe('confirm (Pref.ConfirmMoves)', () => {
+    test('never (0) is never confirm, whatever the device', () => {
+      assert.equal(new PlaygroundCtrl({ confirmMoves: 0 }, noop).confirm, false);
+    });
+
+    test('always (2) is always confirm, whatever the device', () => {
+      assert.equal(new PlaygroundCtrl({ confirmMoves: 2 }, noop).confirm, true);
+    });
+
+    test('on touch screens (1) follows the device (lib/device.isTouchDevice)', () => {
+      assert.equal(new PlaygroundCtrl({ confirmMoves: 1 }, noop).confirm, isTouchDevice());
+    });
+
+    test('an anonymous visitor (no confirmMoves passed) gets the pref default: on touch screens', () => {
+      assert.equal(new PlaygroundCtrl({}, noop).confirm, isTouchDevice());
+    });
   });
 });
