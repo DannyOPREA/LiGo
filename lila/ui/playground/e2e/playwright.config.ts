@@ -7,6 +7,7 @@
 
 import { defineConfig } from '@playwright/test';
 import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const cloudChromium = '/opt/pw-browsers/chromium';
 const executablePath = process.env.LIGO_CHROMIUM || (existsSync(cloudChromium) ? cloudChromium : undefined);
@@ -32,6 +33,7 @@ export default defineConfig({
       // smallest thing that matters, a stone on a phone's 19×19 board, is ~200 pixels.
       maxDiffPixels: 100,
       threshold: 0.2,
+      stylePath: fileURLToPath(new URL('./screenshot.css', import.meta.url)),
     },
   },
   use: {

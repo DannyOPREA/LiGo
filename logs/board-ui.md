@@ -17,8 +17,23 @@
 - snabbdom: bind an input's shown value with `props: { value }`, not `attrs`; `attrs.value` is only the default and stops showing once the user has typed (2026-09-28, 2.2 review).
 - goban's confirm mode: a second tap on the preview removes it, and double taps on touch screens are ignored; phones need a confirm button calling `board.confirm()` (2026-09-28, 2.3).
 - Screenshot tolerance as a pixel count, not a share of the page: a whole stone is ~0.15% of a 1280×800 page. Serve a page's CSS as lila does (`lib.theme.all` + `site` + the page's own), or it renders unstyled (2026-09-28, 2.4).
+- Chromium builds rasterise web-font text differently (~2,300 px per page between 141 and 153); board SVG matched. Hide page text in screenshots (`stylePath`) and check it with locators (2026-09-28, 2.4 CI).
 
 ## Entries (newest first)
+
+### 2026-09-28 · 2.4 CI · Screenshots on CI's Chromium
+- Didn't work: all 8 pictures recorded with the cloud's Chromium 141 differed on CI's Chromium 153
+  by 2,200–2,400 pixels. CI's artifacts can't be downloaded from a cloud session (the proxy refuses
+  Azure blob storage), so CI now prints a grid of where a diff picture's red pixels are
+  (`e2e/diffmap.mjs`). Every differing cell was page text (title, intro, side panel, form); the
+  board, its coordinates and the stones matched.
+- Done: while a screenshot is taken, `e2e/screenshot.css` makes the page's text transparent
+  (Playwright's `stylePath`), so the pictures compare layout, boxes, buttons and the board; the text
+  is checked by locators. A painted-out stone still fails (1,487 pixels).
+- Found a real bug through it: with Confirm move on, the three buttons overflowed the 280px desktop
+  panel; `.playground__controls` now wraps.
+- Rebuilt the ui after merging main before re-recording: baselines must come from the branch's own
+  build, not an older `public/`.
 
 ### 2026-09-28 · 2.4 review · Reviewer findings fixed
 - Blocking, fixed: Playwright writes `test-results/` and its html report next to the nearest

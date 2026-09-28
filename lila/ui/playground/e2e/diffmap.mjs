@@ -1,5 +1,9 @@
+// Where a Playwright diff picture's red (changed) pixels are, as counts per 40-pixel cell (unit 2.4).
+// CI prints this when a screenshot fails: cloud sessions can't download CI's artifacts, but they can
+// read its log, and the grid shows whether the board, the page text or the layout moved.
+// Usage (from lila/): node ui/playground/e2e/diffmap.mjs <diff.png>...
+
 import { chromium } from '@playwright/test';
-// TEMPORARY (unit 2.4): where a Playwright diff picture's red (changed) pixels are, as a coarse grid.
 import { readFileSync } from 'node:fs';
 const browser = await chromium.launch({ executablePath: process.env.LIGO_CHROMIUM || undefined });
 const page = await browser.newPage();
