@@ -64,6 +64,12 @@ stateOf(e);         // { board: [".X.."...], toMove, captures: { black, white },
 readSgf(sgfText);   // an engine at the end of an SGF record's main line
 ```
 
+`src/rules.mjs` (shared by the board and the engine, no goban import) also exports the two things a
+page needs to start a game without a server: `handicapStones(size, n)` (R-HCP-4's fixed placements;
+throws for 13×13, which has no table yet, R-SCOPE-1) and `standardKomi(ruleset, handicap)` (R-KOMI-1/2,
+before any Chinese compensation, which `gameConfig` applies from `handicap`). Unit 2.2's playground
+is the first caller.
+
 ## What LiGo sets that goban's presets would get wrong
 
 | Spec rule | goban-engine's own preset | `src/engine.mjs` |

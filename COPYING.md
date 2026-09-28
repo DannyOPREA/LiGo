@@ -101,6 +101,7 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | OGS goban `8.3.226` (the board: its SVG renderer and its own copy of the engine; a dependency, not copied, ADR 0014, unit 2.1). Only its plain board and stones are used; its image themes are not (their pictures are unchecked) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
 | goscorer (lightvector), bundled inside goban-engine and goban | `libs/board` (inside goban-engine and goban) | MIT | goban's build drops its notice, so `libs/board/NOTICE.md` carries it |
 | eventemitter3 `5.0.4`, goban-engine's and goban's only dependency | `libs/board` (transitive) | MIT | Notice in `libs/board/NOTICE.md` |
+| No third-party code: the playground page (unit 2.2) depends only on workspace packages, `@ligo/board` (above) and lila's own `lib` | `lila/ui/playground/package.json`, `lila/pnpm-lock.yaml` | — | LiGo's own page inside `lila/`, so AGPL-3.0-or-later like other changes there (§1) |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they

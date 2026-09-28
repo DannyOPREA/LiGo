@@ -13,5 +13,15 @@ Checks that paid off reviewing lila/ edits (first seen unit 0.7 rebrand, 2026-09
 - Cms controller has a separate markdown-negotiation path (negotiateCmsOption) that bypasses HTML fallbacks.
 - `git diff origin/main...HEAD` can be inflated when origin/main is stale: `git fetch` first, or diff the commit.
 
+Added from unit 2.2 (playground ui page, 2026-09-28):
+- snabbdom `attrs: { value }` on an `<input>` only sets the default: once the user has typed, a
+  programmatic reset (e.g. komi recomputed on ruleset change) never shows. Needs `props: { value }`.
+  Probe in Chromium: type, change the driver, compare `inputValue()` with `getAttribute('value')`.
+- `Number(input.value)` turns an empty/invalid number field into 0 silently; check spec bounds (min/max).
+- A new `ui/<page>/package.json` (even workspace-only deps) trips meta's COPYING.md-on-manifest
+  check: run `dev/ci/meta_checks.py manifests <merge-base> HEAD`.
+- Late CSS edits after the "lint clean" claim: re-run stylelint (verify gate), don't trust the log.
+- Parallel threads move origin/main: `git merge-tree --write-tree HEAD origin/main` for STATUS/decisions conflicts.
+
 **Why:** these slip past compile and Playwright checks.
 **How to apply:** any unit touching lila/ Scala views/controllers.

@@ -27,6 +27,12 @@ export interface BoardState {
 
 export declare const SIZES: number[];
 
+/** R-HCP-4's fixed placements for N stones on a size the spec defines them on (9, 19; throws for 13). */
+export declare function handicapStones(size: 9 | 13 | 19, n: number): string[];
+
+/** R-KOMI-1/2: the default komi for a ruleset and handicap (before any Chinese compensation). */
+export declare function standardKomi(ruleset: 'japanese' | 'chinese', handicap: number): number;
+
 export declare const LIGO_RULES: {
   readonly allow_ko: false;
   readonly allow_superko: false;

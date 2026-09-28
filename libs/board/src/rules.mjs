@@ -30,6 +30,42 @@ export const SIZES = [9, 13, 19];
 const BLACK = 1;
 const WHITE = 2;
 
+// R-HCP-4's fixed placements, for the two sizes the spec defines them on (9×9 and 19×19; 13×13
+// has none yet, R-SCOPE-1). goban's own table is checked against this one in engine.test.mjs.
+const HANDICAP = {
+  9: ["gc", "cg", "gg", "cc", "ee", "ce", "ge", "ec", "eg"],
+  19: ["pd", "dp", "pp", "dd", "jj", "dj", "pj", "jd", "jp"],
+};
+
+/**
+ * The handicap stones for N stones on a board size R-HCP-4 defines them on (9×9, 19×19). Throws
+ * for a size with no table (13×13).
+ *
+ * @param {9 | 13 | 19} size
+ * @param {number} n
+ * @returns {string[]}
+ */
+export function handicapStones(size, n) {
+  if (n < 2) return []; // R-HCP-2: one stone of handicap is no stone, Black moves first
+  const t = HANDICAP[size];
+  if (!t) throw new Error(`no handicap table for ${size}x${size}`);
+  const [corners, centre, sides] = [t.slice(0, 4), t[4], t.slice(5)];
+  if (n <= 4) return corners.slice(0, n);
+  if (n % 2 === 1) return [...handicapStones(size, n - 1), centre];
+  return [...corners, ...sides.slice(0, n - 4)];
+}
+
+/**
+ * R-KOMI: 6.5 Japanese, 7.5 Chinese in even games, 0.5 with any handicap (R-KOMI-1, R-KOMI-2).
+ * Chinese handicap compensation (R-KOMI-3) is separate (goban reads it from `handicap`, see
+ * `gameConfig` below); this is the komi value itself.
+ *
+ * @param {"japanese" | "chinese"} ruleset
+ * @param {number} handicap
+ * @returns {number}
+ */
+export const standardKomi = (ruleset, handicap) => (handicap > 0 ? 0.5 : ruleset === "chinese" ? 7.5 : 6.5);
+
 /** goban's move errors, as the conformance fixtures' refusal reasons (libs/conformance/README.md). */
 const REASONS = {
   stone_already_placed_here: "occupied",
