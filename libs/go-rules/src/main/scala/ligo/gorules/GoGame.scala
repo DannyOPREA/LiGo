@@ -25,7 +25,9 @@ final class GoGame private (
     val phase: Phase,
     // R-SP-9: true until the first resumption, then true again once a stone is placed.
     private val mayResume: Boolean,
-    val actions: Vector[Action]
+    val actions: Vector[Action],
+    // ADR 0020 §3: play was closed at lila's move cap; no resume.
+    private val closed: Boolean = false
 ):
   def size: BoardSize = setup.size
 
@@ -43,6 +45,15 @@ final class GoGame private (
 
   /** The ko point as R-KO-4 defines it, for display. Legality never depends on it: superko decides. */
   def koPoint: Option[Point] = board.ko.map(pointOf)
+
+  /** Every stone of the chain the stone at `p` belongs to (R-SP-3 toggles whole chains); empty when `p` is
+    * empty or off the board.
+    */
+  def chainAt(p: Point): Set[Point] =
+    posOf(p).fold(Set.empty[Point])(pos => Chain.at(board, pos).map(pointOf))
+
+  /** True once play was closed at the move cap ([[closePlay]]): the scoring phase can then only end. */
+  def playClosed: Boolean = closed
 
   /** Points where the player to move may place a stone now. */
   def legalPoints: List[Point] =
@@ -75,10 +86,19 @@ final class GoGame private (
     */
   def resume: Either[Refusal, GoGame] =
     if phase == Phase.Play then Left(Refusal.NotInScoring)
+    else if closed then Left(Refusal.PlayClosed)
     else if !mayResume then Left(Refusal.ResumeLimit)
     else
       val restarted = game.copy(situation = situation.copy(board = board.copy(consecutivePasses = 0)))
       Right(GoGame(setup, restarted, Phase.Play, mayResume = false, actions :+ Action.Resume))
+
+  /** Ends play without two passes and opens the scoring phase for good: lila calls it when a game reaches its
+    * move cap (ADR 0019 §7, ADR 0020 §3). Resuming is then refused (`play-closed`), since no further move is
+    * allowed; this holds too when the ply reaching the cap was itself the second pass (R-END-6). Not an
+    * action: lila closes play again after replaying a capped game.
+    */
+  def closePlay: GoGame =
+    GoGame(setup, game, Phase.Scoring, mayResume = false, actions, closed = true)
 
   /** An accepted takeback of the last move (R-KO-8): the game as it was before it, so the situations it
     * created leave the superko history. Not during the scoring phase, and never back past a resumption (that

@@ -23,7 +23,23 @@ game0.flatMap(_.play(Point.fromSgf("pd").get)) // Either[Refusal, GoGame]
   Games are immutable values: nothing changes on a refusal.
 - Read: `stones`, `toMove`, `captures`, `koPoint`, `phase` (play or scoring), `legalPoints`,
   `actions`.
-- `Sgf.write(game)`: the game as an SGF record.
+- `Sgf.write(game, info)`: the game as an SGF record; `SgfInfo` optionally adds players, ranks,
+  date, place, time settings (`TM`/`OT`) and the result (`RE`).
+- `chainAt(point)`: the whole chain a stone belongs to. `closePlay`: ends play at lila's move cap
+  and opens the scoring phase for good (resume is then refused as `play-closed`, ADR 0020 §3).
+- `Scoring.open(game, phase, deadStones, request)`, then `toggle(point, seen)`, `counted(request, dead)`,
+  `accept(color, seen)`, `agreed`, `canFinish`: the scoring phase's marks and acceptances (unit
+  4.3, ADR 0020 §3). Toggles flip whole chains and clear both acceptances; toggles and accepts name
+  the count the player saw (`CountVersion`: phase and request number), and are refused while a
+  recount is pending; a count made for other marks is refused.
+- `GameResult.fromTotals(black, white)`: the result from the scoring service's totals (it keeps the
+  totals, so winner and margin always follow from them), with its
+  SGF form (`B+3.5`, `0` for jigo, `W+R`, `B+T`, `W+F`, `Void`).
+- `ByoyomiClock(ByoyomiConfig(mainSeconds, periods, periodSeconds), firstToMove)`: the byo-yomi
+  clock (unit 4.2, ADR 0020 §7), strategygames' clock behind go-rules' types. `start`, `stop` (the
+  scoring phase), `move(clientLag…)` after a stone or a pass, `outOfTime(color)`,
+  `reading(color)` (time left in main time or the current period, periods left counting the one in
+  progress), `giveTime`, and `state` / `ByoyomiClock.restore` for storage.
 
 ## What the adapter adds to strategygames
 
@@ -36,8 +52,9 @@ game0.flatMap(_.play(Point.fromSgf("pd").get)) // Either[Refusal, GoGame]
 | R-KO-8 takeback removes situations | No takeback | `undo` returns the previous game value |
 | R-HCP-2 1-stone handicap places no stone | Places one | Starts like an even game |
 
-The dead-stone marking, acceptance and timeout of the scoring phase are lila's (Phase 4); the final
-score is counted by goscorer in `services/scoring` (R-SCORE-3), not here.
+The rules of the scoring phase's marks and acceptances are here (`Scoring`); waiting for the
+scoring service, the timeout and storage are lila's (unit 4.8); the score itself is counted by
+goscorer in `services/scoring` (R-SCORE-3), never here.
 
 ## Tests
 
@@ -47,7 +64,11 @@ score is counted by goscorer in `services/scoring` (R-SCORE-3), not here.
 - `PropertyTest`: seeded random games on 9×9 and 19×19 checking that no chain is left without a
   liberty, stones are conserved and no stone placement repeats a situation (checked on real boards,
   not strategygames' hashes).
-- `GoGameTest`: setup checks, komi, takeback limits. `SgfTest`: SGF output.
+- `GoGameTest`: setup checks, komi, takeback limits. `SgfTest`, `SgfInfoTest`: SGF output.
+- `ScoringTest`: chains, proposals, toggles, stale and pending counts, acceptance, closing play at
+  the cap, results.
+- `ByoyomiClockTest`: main time, keeping and using up periods, out of time, stopping for the
+  scoring phase, lag compensation, handicap games (White's clock first) and storage.
 - `ParityExportTest`: writes `target/parity/server.json` for the client's parity check (unit 1.8,
   `libs/board/test/parity.test.mjs`): every server fixture's game as SGF with its end position, and
   80 seeded random games on 9×9, 13×13 and 19×19 with the position after every action and the

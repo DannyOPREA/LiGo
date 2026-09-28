@@ -63,6 +63,7 @@ enum Refusal(val key: String):
   case NotInScoring extends Refusal("not-in-scoring")
   case ResumeLimit extends Refusal("resume-limit")
   case NothingToUndo extends Refusal("nothing-to-undo")
+  case PlayClosed extends Refusal("play-closed")
 
 /** Stones each player has captured during play: `black` counts the White stones Black took. */
 final case class Captures(black: Int, white: Int)
