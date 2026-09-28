@@ -381,7 +381,7 @@ What stays out of Phase 2: server games and lila-ws messages (Phase 3), clocks a
 (Phase 7's analysis board).
 
 **Phase 3 units** (broken down 2026-09-28 while Phase 2 was being built; which lila modules and `ui/`
-packages stay, stay dormant or go is [ADR 0017](decisions/0017-phase-3-module-map.md). Every unit
+packages stay, stay dormant or go is [ADR 0018](decisions/0018-phase-3-module-map.md). Every unit
 leaves lila and lila-ws compiling with their tests passing, and the kept pages serving without new
 5xx errors. From 3.13 until 3.18 the server plays Go but the browser still has the chess round UI,
 so games can't be played in a browser in between):

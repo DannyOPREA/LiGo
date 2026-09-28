@@ -4,7 +4,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
 - Phase 3 breakdown (started 2026-09-28, under the owner's "work until I tell you to stop"
-  delegation): Phase 3 split into units 3.1–3.20 in docs/PLAN.md §5; module map in ADR 0017.
+  delegation): Phase 3 split into units 3.1–3.20 in docs/PLAN.md §5; module map in ADR 0018.
   Logs: logs/upstream-fork.md. Units 3.1–3.17 don't need Phase 2 and are built next in order;
   3.18–3.20 wait for Phase 2 units 2.1, 2.3 and 2.4. Phase 2 and unit 1.9 run in their own threads.
 
@@ -91,5 +91,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | 1.1–1.7 done; 1.8 in review; 1.9 in progress (of 9 units) |
 | 2. Board integration | split into units 2.1–2.4; not started |
-| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0017); 3.1 next |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1 next |
 | 4–9 | not started |

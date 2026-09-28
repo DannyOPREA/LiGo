@@ -1,4 +1,4 @@
-# 0017. Phase 3 module map: what lila keeps, keeps dormant and removes
+# 0018. Phase 3 module map: what lila keeps, keeps dormant and removes
 - Status: Accepted
 - Date: 2026-09-28
 - Decided by: Claude, under the owner's 2026-09-28 delegation ("Don't ask for my approval for
