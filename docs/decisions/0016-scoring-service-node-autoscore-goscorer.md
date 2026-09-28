@@ -1,4 +1,4 @@
-# 0015. Scoring as a Node service: KataGo + goban autoscore + goscorer
+# 0016. Scoring as a Node service: KataGo + goban autoscore + goscorer
 - Status: Accepted
 - Date: 2026-09-28
 - Decided by: Claude, under the owner's 2026-09-28 delegation ("Don't ask for my approval for

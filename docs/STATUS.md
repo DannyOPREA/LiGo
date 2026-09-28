@@ -31,7 +31,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 1.1: server-side Go rules and byo-yomi clock come from strategygames as a pinned dependency
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
   - Unit 1.3: scoring is a Node service (`services/scoring`, Phase 4) around KataGo, goban's
-    autoscore and goscorer (ADR 0015, PR #11). Claude's call under your 2026-09-28 delegation;
+    autoscore and goscorer (ADR 0016, PR #11). Claude's call under your 2026-09-28 delegation;
     autoscore got 29/31 of OGS's test games with the cloud's networks.
   - Unit 1.4: ratings use lila's own Glicko-2 with OGS's Glicko-2 settings plus goratings' rank
     curve and handicap maths (9×9 stone = 6 ranks) (ADR 0013, PR #12). The glue lands in Phase 5.
