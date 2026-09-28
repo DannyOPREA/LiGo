@@ -32,10 +32,12 @@ _Updated at the end of every session (`/status`). Newest information wins._
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
   - Unit 1.4: ratings use lila's own Glicko-2 with OGS's Glicko-2 settings plus goratings' rank
     curve and handicap maths (9×9 stone = 6 ranks) (ADR 0013, PR #12). The glue lands in Phase 5.
+  - Unit 1.2: the client-side rules, SGF reading and the board come from OGS `goban` on npm, pinned,
+    wrapped by `libs/board` (ADR 0014, PR #10). Claude chose it under your 2026-09-28 delegation;
+    revisit any time. The dependency lands with Phase 2's `libs/board` unit (and 1.8's harness).
 
 ## Next
-- Phase 1 units 1.2–1.9 (docs/PLAN.md §5, "Phase 1 units"); next is 1.2, the client engine + board
-  memo (OGS goban / goban-engine).
+- Phase 1 units 1.3–1.9 (docs/PLAN.md §5, "Phase 1 units").
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
