@@ -11,6 +11,15 @@
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-28 · Phase 3 breakdown · Split fork & de-chess into units
+- Did: split PLAN §5's Phase 3 row into units 3.1–3.20 (asset strip; six removal units; rebrand leftovers; a design ADR for Go core types, the game schema and the round protocol; go-rules wiring; core, game, round, lila-ws, game creation and remaining-module migrations; dropping scalachess; round and lobby UI; the demo) and classified every lila module and `ui/` package in ADR 0017. Refreshed docs/STATUS.md.
+- Worked: lila's `build.sbt` module graph gives a clean removal order (gathering only feeds tournaments; study feeds relay, practice and studySearch). `scalachess-rating` is a separate artifact, so Glicko-2 can stay when scalachess goes.
+- Didn't work / dead ends: none.
+- Lessons: "keep dormant" still costs a migration once scalachess goes, so the map keeps dormant only what a public demo would need (report, mod, appeal, shutup).
+- Decisions: the split and the module map, Claude's calls under the owner's 2026-09-28 delegation (ADR 0017, logs/decisions.md).
+- Verified by Claude: every module in `lila/modules` appears in exactly one bucket of ADR 0017 and every `lila/ui` package is listed (scripted check); `bash .claude/skills/verify/verify.sh` (see PR). · Needs owner verification: none; skim the units and ADR 0017's remove list if you like.
+- Follow-ups: 3.1 starts next. Only 3.18–3.20 need Phase 2 (2.1, 2.3, 2.4).
 ### 2026-09-26 · unit 0.2 · Import upstream snapshots + baseline build — DONE (supersedes the "IN PROGRESS" entry below)
 - Did:
   - Owner allowed the four blocked hosts. Built and ran the unmodified lila + lila-ws in a cloud

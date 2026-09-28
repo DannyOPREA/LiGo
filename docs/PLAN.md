@@ -380,6 +380,39 @@ What stays out of Phase 2: server games and lila-ws messages (Phase 3), clocks a
 (Phase 4), board themes beyond the plain one and sounds (Phase 9), SGF import into the playground
 (Phase 7's analysis board).
 
+**Phase 3 units** (broken down 2026-09-28 while Phase 2 was being built; which lila modules and `ui/`
+packages stay, stay dormant or go is [ADR 0017](decisions/0017-phase-3-module-map.md). Every unit
+leaves lila and lila-ws compiling with their tests passing, and the kept pages serving without new
+5xx errors. From 3.13 until 3.18 the server plays Go but the browser still has the chess round UI,
+so games can't be played in a browser in between):
+
+| Unit | What | Needs |
+|---|---|---|
+| 3.1 | Strip upstream non-free/NC assets, auditing by directory (COPYING.md §1.1, ADR 0007): non-free and NC piece sets, sounds, the lichess logo and favicons (including the inline copies), lichess-branded art, the Unsplash montages, and the lifat LFS pointer files of chess-only assets. Free replacements where something still needs one: a LiGo logo and favicons, a default sound set of our own, a check that the default piece set is free while chess pages remain. COPYING.md and UPSTREAM.md updated | — |
+| 3.2 | Remove tournaments and events: `tournament`, `swiss`, `simul`, `gathering`, `event`, their routes, controllers, views, `ui/` packages and lila-ws handlers | — |
+| 3.3 | Remove studies and broadcasts: `study`, `relay`, `practice`, `studySearch`, `fide`, `title`, and the study parts of `ui/analyse` | 3.2 |
+| 3.4 | Remove chess training and openings: `storm`, `racer`, `coordinate`, `learn`, `opening`, `explorer`, `evalCache`, puzzle streak | 3.3 |
+| 3.5 | Remove engines and bots: `fishnet`, `irwin`, `evaluation`, `insight`, `tutor`, `jsBot`, `bot`, and the `botDev`, `botPlay`, `dgt`, `voice`, `keyboardMove` UI packages | 3.4 |
+| 3.6 | Remove community features: `forum`, `forumSearch`, `ublog`, `team`, `teamSearch`, `msg`, `clas` | 3.5 |
+| 3.7 | Remove the extras and search: `streamer`, `coach`, `video`, `feed`, `plan`, `recap`, `tv`, `search`, `gameSearch`, and `ui/editor` | 3.6 |
+| 3.8 | Rebrand leftovers from unit 0.7: "Lichess" in English strings, the lobby's lichess texts, footer and social links, the FAQ, email footers | 3.7 |
+| 3.9 | Design ADR: Go core types, Mongo game schema and the round protocol. How lila's Game, Board, Move, Variant, PerfType and Clock map onto `libs/go-rules` (board size + ruleset instead of variant, one `go` perf, point-or-pass moves and how they're stored in BSON, Fischer on lila's clock now, byo-yomi in Phase 4), the lila-ws round messages, and how scalachess is replaced step by step | — |
+| 3.10 | Wire `libs/go-rules` into lila's sbt build (strategygames stays pinned and checksum-checked), with a smoke test from lila | 3.9 |
+| 3.11 | Core types: `lila.core`'s game and color types and `rating`'s perf types move to Go (board size, ruleset, one `go` perf) | 3.10 |
+| 3.12 | `game` module: the Game model, BSON with Go moves, game lists and exports that don't need SGF (SGF export is Phase 4) | 3.11 |
+| 3.13 | `round` module: moves and passes validated by `libs/go-rules`, captures, resign, abort, undo requests (casual), Fischer clock, no draw offers | 3.12 |
+| 3.14 | lila-ws: Go round payloads (point or pass, clock), lobby payloads without chess variants, its own scalachess use removed | 3.13 |
+| 3.15 | Game creation: `setup`, `lobby`, `pool`, `challenge` with board size, ruleset, komi and casual/rated fields (casual only until Phase 5) | 3.12 |
+| 3.16 | The remaining kept modules compile on Go types: `analyse`, `tree`, `puzzle`, `activity`, `perfStat`, `history`, `mod`, `user`, `api`, `web`; the analysis and puzzle pages show a placeholder until Phases 7 and 8 | 3.13, 3.15 |
+| 3.17 | Drop scalachess from lila (keeping `scalachess-rating` for Glicko-2, ADR 0013), with chess-only code (FEN, PGN, openings) gone and COPYING.md updated | 3.14, 3.16 |
+| 3.18 | Round UI: `ui/round` shows `libs/board` instead of chessground, sends points and passes, shows prisoners and the Fischer clock, honours touch-confirm | 2.1, 2.3, 3.14 |
+| 3.19 | Lobby, setup and game-list UI: Go options (size, ruleset, komi) in the create-game and challenge forms, Go mini boards, chessground and the chess UI packages removed | 2.1, 3.15, 3.17 |
+| 3.20 | Phase 3 demo: a Playwright test where two browsers play a casual 9×9 Fischer game to resignation (desktop and phone viewports, E2E on labelled PRs and nightly), plus the demo checklist for you | 2.4, 3.18, 3.19 |
+
+What stays out of Phase 3: byo-yomi, komi choices beyond the spec's defaults, the scoring phase and
+SGF export (Phase 4), ratings and ranks (Phase 5), the lobby redesign (Phase 6), the analysis board
+and SGF import (Phase 7), tsumego (Phase 8).
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.

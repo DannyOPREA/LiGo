@@ -3,9 +3,10 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- Phase 2 breakdown (started 2026-09-28, under the owner's "work until I tell you to stop"
-  delegation): Phase 2 split into units 2.1–2.4 in docs/PLAN.md §5. Logs: logs/board-ui.md.
-  Unit 1.8 (client rules harness, PR #17) and 1.9 (nightly KataGo check) run in their own threads.
+- Phase 3 breakdown (started 2026-09-28, under the owner's "work until I tell you to stop"
+  delegation): Phase 3 split into units 3.1–3.20 in docs/PLAN.md §5; module map in ADR 0017.
+  Logs: logs/upstream-fork.md. Units 3.1–3.17 don't need Phase 2 and are built next in order;
+  3.18–3.20 wait for Phase 2 units 2.1, 2.3 and 2.4. Phase 2 and unit 1.9 run in their own threads.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -59,6 +60,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Next
 - Phase 1 units 1.8 (PR #17) and 1.9, the nightly KataGo differential test.
 - Phase 2 unit 2.1 once 1.8 merges, then 2.2–2.4 (docs/PLAN.md §5, "Phase 2 units").
+- Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
@@ -89,4 +91,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | 1.1–1.7 done; 1.8 in review; 1.9 in progress (of 9 units) |
 | 2. Board integration | split into units 2.1–2.4; not started |
-| 3–9 | not started |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0017); 3.1 next |
+| 4–9 | not started |
