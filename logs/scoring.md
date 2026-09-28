@@ -11,13 +11,13 @@
 ## Entries (newest first)
 ### 2026-09-28 · unit 1.3 / PR #11 · Scoring decision recorded
 - Did: adopted option A (Node `services/scoring` with KataGo + goban-engine autoscore + goscorer)
-  as ADR 0014, after the owner delegated every decision on 2026-09-28 ("Don't ask for my approval
+  as ADR 0015, after the owner delegated every decision on 2026-09-28 ("Don't ask for my approval
   for anything, just work until I tell you to stop"); merged main first.
 - Worked: CI green on the memo PR before the decision (9/9 checks).
 - Didn't work / dead ends: none.
-- Lessons: ADR numbers race between parallel units (1.4 holds 0013 on its branch); check open
-  branches before picking a number.
-- Decisions: 1.3 → A, Claude's call under the delegation (logs/decisions.md, ADR 0014).
+- Lessons: ADR numbers race between parallel units (1.4 took 0013, then 1.2 merged 0014 while
+  this PR was open, so this ADR became 0015); re-check the number right before merging.
+- Decisions: 1.3 → A, Claude's call under the delegation (logs/decisions.md, ADR 0015).
 - Verified by Claude: verify.sh, CI. · Needs owner verification: whether he agrees with A (revisit
   by a superseding ADR); the katagotraining.org network licence before Phase 4 pins one.
 - Follow-ups: Phase 4 builds the service and decides its message format and fallback.

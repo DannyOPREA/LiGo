@@ -1,6 +1,6 @@
 # Build-vs-buy: scoring (dead-stone proposal and score counting)
 
-- Unit: 1.3 (Phase 1). Status: **Decided 2026-09-28: option A** (Claude, under the owner's delegation of all decisions), recorded in [ADR 0014](../decisions/0014-scoring-service-node-autoscore-goscorer.md).
+- Unit: 1.3 (Phase 1). Status: **Decided 2026-09-28: option A** (Claude, under the owner's delegation of all decisions), recorded in [ADR 0015](../decisions/0015-scoring-service-node-autoscore-goscorer.md).
 - Date: 2026-09-27. Evidence gathered in a throwaway spike outside the repo (code and output below).
 
 ## Capability
