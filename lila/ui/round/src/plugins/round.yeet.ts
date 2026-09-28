@@ -2,10 +2,8 @@
  * https://gist.github.com/thomas-daniels/4a53ba9e08864e65b2e501c4a8c2ec7e
  * The following code does not follow our quality standards and is very poorly typed.
  * It's just a joke after all. */
-export async function initModule(): Promise<void> {
+export function initModule(): void {
   window.scrollTo(0, 0);
-  await site.sound.load('yeet', site.asset.url('sound/other/yeet.mp3'));
-  site.sound.play('yeet');
   setTimeout(yeet, 150);
 }
 

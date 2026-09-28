@@ -265,7 +265,7 @@ $disclosure-btn-size: calc(15px + var(---button-size-pointer-adjust, 0px));
   align-self: center;
   width: $disclosure-btn-size;
   height: $disclosure-btn-size;
-  mask: url('/assets/images/buttons/plus-button-mask.webp') 0 0 / contain no-repeat;
+  mask: url('/assets/images/ligo/plus.svg') 0 0 / contain no-repeat;
 
   + san::before,
   + index::before {
@@ -275,7 +275,7 @@ $disclosure-btn-size: calc(15px + var(---button-size-pointer-adjust, 0px));
 }
 
 .tview2 .disclosure.expanded {
-  mask: url('/assets/images/buttons/minus-button-mask.webp') 0 0 / contain no-repeat;
+  mask: url('/assets/images/ligo/minus.svg') 0 0 / contain no-repeat;
 
   + san::before,
   + index::before {

@@ -26,9 +26,9 @@ final class GamifyUi(helpers: Helpers)(modMenu: Context ?=> Frag):
         div(id := "mod-gamify", cls := "page-menu__content index box")(
           h1(cls := "box__top")(title),
           div(cls := "champs")(
-            champion(leaderboards.daily.headOption, "reward1", Period.Day),
-            champion(leaderboards.weekly.headOption, "reward2", Period.Week),
-            champion(leaderboards.monthly.headOption, "reward3", Period.Month)
+            champion(leaderboards.daily.headOption, Period.Day),
+            champion(leaderboards.weekly.headOption, Period.Week),
+            champion(leaderboards.monthly.headOption, Period.Month)
           ),
           table(cls := "slist slist-pad history")(
             tbody(
@@ -89,9 +89,8 @@ final class GamifyUi(helpers: Helpers)(modMenu: Context ?=> Frag):
         )
       )
 
-  private def champion(champ: Option[Gamify.ModMixed], img: String, period: Gamify.Period)(using Translate) =
+  private def champion(champ: Option[Gamify.ModMixed], period: Gamify.Period)(using Translate) =
     div(cls := "champ")(
-      st.img(src := assetUrl(s"images/mod/$img.webp")),
       h2("Mod of the ", period.name),
       champ
         .map { m =>

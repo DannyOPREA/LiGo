@@ -11,6 +11,10 @@ import lila.ui.ScalatagsTemplate.{ *, given }
 
 object bits:
 
+  // LiGo's logo (public/logo/ligo.svg), drawn in the current text colour.
+  val logo = raw:
+    """<svg class="ligo-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" aria-hidden="true"><circle cx="31" cy="19" r="15" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="19" cy="31" r="17" fill="currentColor"/></svg>"""
+
   val engineFullName = "Stockfish 19"
 
   def subnav(mods: Modifier*) = st.aside(cls := "subnav"):

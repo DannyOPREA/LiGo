@@ -51,13 +51,8 @@ final class OAuthSignedClients(appConfig: Configuration, baseUrl: BaseUrl)(using
     OAuthScope.Web.Takex3,
     signersOf("takex3"),
     displayName = "Take Take Take",
-    design = Some:
-      AuthCustomUi(
-        name = "Take Take Take",
-        imagePath = "images/t3-logo.svg",
-        cssClass = "takex3",
-        lang = lila.core.i18n.enUsLang
-      )
+    // Its logo was lichess artwork (removed in unit 3.1), so the client gets the default design.
+    design = None
   )
 
   def monitor(client: Option[OAuthSignedClient], prompt: Prompt, action: Action)(using ctx: Context) =

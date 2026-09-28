@@ -10,25 +10,11 @@ def notFound(msg: Option[String]) =
         div(
           strong("Page not found!"),
           msg.map(em(_)),
+          // LiGo (unit 3.1): the ChessPursuit mini-game (no licence stated) was removed
           p(
             "Return to ",
-            a(href := routes.Lobby.home)("the homepage"),
-            span(cls := "or-play")(", or play this mini-game")
+            a(href := routes.Lobby.home)("the homepage")
           )
-        )
-      ),
-      div(cls := "game")(
-        iframe(
-          src := staticAssetUrl(s"vendor/ChessPursuit/bin-release/index.html"),
-          st.frameborder := 0,
-          widthA := 400,
-          heightA := 500,
-          frame.credentialless
-        ),
-        p(cls := "credits")(
-          a(href := "https://github.com/Saturnyn/ChessPursuit")("ChessPursuit"),
-          " courtesy of ",
-          a(href := "https://github.com/Saturnyn")("Saturnyn")
         )
       )
     )
