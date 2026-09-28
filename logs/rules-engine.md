@@ -10,6 +10,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 1.7 · CI fix and review findings
+- Did: fixed the red `rules` job (sbt 2's thin client read `sbt scalafmtCheckAll testFull` as one command; now `sbt "scalafmtCheckAll; testFull"`, reproduced locally before and after). Independent review: added COPYING/NOTICE rows for joda-time and scala-parser-combinators (Apache-2.0, pulled in by strategygames; joda-time's NOTICE reproduced), jar pin checked after `sbt update` and before tests (CI, `dev/ligo test rules`), check-pin explains a missing cache, docker mode keeps sbt/coursier downloads in `.ligo/rules-cache`, takebacks rebuild by replay instead of keeping every earlier game (~0.9 MB per 300-move 19x19 game), harness fails on unknown `expect` fields, a 13x13 test. Owner delegated all decisions (2026-09-28): both 1.7 questions settled on the recommendation.
+- Worked: 251/251 tests; the reviewer's mutations (post-pass superko, pass reset, resume limit, suicide vs superko, undo history) were all caught.
+- Didn't work / dead ends: a `sed … && grep` chain silently skipped this entry when scalafmt had reflowed the target line; check each step's output.
+- Lessons: list new transitive jars in COPYING, not just the direct dependency; `unzip -l` them for NOTICE files. Run an integrity check before the tests execute the artifact. sbt 2 CLI: pass several commands as one quoted `"a; b"`.
+- Decisions: under the owner's delegation, the adapter owns resume and its limit; SGF read-back in 1.8.
+- Verified by Claude: dev/ligo test rules (251), /verify, check-pin with a bogus cache. · Needs owner verification: docker-mode `dev/ligo test rules` on the Fedora box.
+- Follow-ups: Phase 3: lila should not call `legalPoints` on every move (~3 ms on a full 19x19 board).
+
 ### 2026-09-27 · 1.7 · libs/go-rules adapter over strategygames
 - Did: added libs/go-rules, its own sbt 2 build (Scala 3.8.4 and scalalib 11.10.12 as lila) depending on strategygames 10.2.1-s3-ps14 with fairystockfish/aalina/joansala excluded (ADR 0012). `GoGame` wraps strategygames' `Game` and adds post-pass superko situations (open point 1), the scoring phase (R-SP-1), resume with pass-count reset (R-SP-6) and the resume limit (R-SP-9), takebacks (R-KO-8), 1-stone handicap as no stone (R-HCP-2), setup checks and `Komi.standard`. `Sgf.write` exports FF[4] with AB/AW/PL/HA/KM/RU. Tests: the fixture harness (115 server cases, 228 runs over both rulesets), seeded random-game property tests on 9x9/19x19, unit tests, SGF tests. `dev/ligo compile|test rules`, a `rules` CI workflow and area in changed.sh, verify gates, `check-pin.sh` for the jar's SHA-256; PlayStrategy's repo added to dev/cloud-setup.sh.
 - Worked: every server fixture passed first time; mutation checks showed the harness bites (dropping post-pass situations fails 4 runs, dropping the pass reset 8, dropping the resume limit 6). Resolving with the exclusions pulls only strategygames, joda-time, scala-parser-combinators, cats and pprint on top of scalalib.
