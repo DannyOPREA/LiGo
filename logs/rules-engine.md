@@ -10,6 +10,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 1.5 · Owner approved the rules spec
+- Did: recorded the owner's approval of all 11 open points (as recommended) in docs/rules (status lines), logs/decisions.md and STATUS.
+- Worked: one approval card for all 11 points, answered the next morning.
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Decisions: spec §12, all as recommended (owner) → docs/rules/spec.md is the rules truth.
+- Verified by Claude: docs-only; /verify and CI on PR #13. · Needs owner verification: J1989/C2017 article numbers (from memory).
+- Follow-ups: 1.6 fixtures cite the rule IDs.
+
 ### 2026-09-27 · 1.5 · Rules spec drafted for owner approval
 - Did: go-rules-expert wrote docs/rules/spec.md (rule IDs for moves, situational superko and its history, handicap tables, komi, end of play, scoring phase, Japanese/Chinese scoring, results; an engine-mapping table; a fixture checklist; intentional departures from J1989/C2017; 11 open points) and a README index. Engine facts checked in strategygames 7344183, goban-engine 8.3.226 (npm source map), KataGo v1.18.1 boardhistory.cpp and goscorer 0ac5f59; goban-engine run for handicap tables, compensation and two superko probes. The reviewer re-ran the tables and the probes before the draft went into the repo.
 - Worked: both engines place 2–9 handicap stones on identical points on 9×9 and 19×19 (checked mechanically, GTP and SGF). goban's own "superko" test position (plus White C19) gives two ready-made fixtures that separate the engines.
