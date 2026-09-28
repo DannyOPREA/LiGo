@@ -34,6 +34,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 1.3: scoring is a Node service (`services/scoring`, Phase 4) around KataGo, goban's
     autoscore and goscorer (ADR 0014, PR #11). Claude's call under your 2026-09-28 delegation;
     autoscore got 29/31 of OGS's test games with the cloud's networks.
+  - Unit 1.4: ratings use lila's own Glicko-2 with OGS's Glicko-2 settings plus goratings' rank
+    curve and handicap maths (9×9 stone = 6 ranks) (ADR 0013, PR #12). The glue lands in Phase 5.
 
 ## Next
 - Phase 1 units 1.2–1.9 (docs/PLAN.md §5, "Phase 1 units"); next is 1.2, the client engine + board
@@ -65,5 +67,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1 and 1.3 done; 1.2 in progress (of 9 units) |
+| 1. Build-vs-buy + rules integration | 1.1, 1.3 and 1.4 done; 1.2 in progress (of 9 units) |
 | 2–9 | not started |
