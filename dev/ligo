@@ -49,7 +49,11 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
   verify-mirror       Cross-check Google-mirror downloads against Maven Central (cloud, ADR 0008)
-  katago <cmd>        KataGo: install [cpu|opencl], smoke, bench, path (dev/katago.sh)
+  katago <cmd>        KataGo: install [cpu|opencl], smoke, bench, path, env (dev/katago.sh)
+  differential [args] Random games checked against KataGo (unit 1.9): libs/go-rules vs KataGo on
+                      legality, captures and area score; args: --games N (1000) --seed S
+                      --workers W; report in .ligo/differential/. Native mode only; CI runs it
+                      nightly (.github/workflows/nightly-differential.yml)
   doctor              Check this machine's tools (dev/doctor.sh)
   mode                Print the mode (docker or native)
 
@@ -385,6 +389,22 @@ cmd_deps() {
   native_after_sbt
 }
 
+# The differential test (unit 1.9). Docker mode would need KataGo inside the lila container (and the
+# OpenCL build there), so it runs natively; the nightly workflow runs it for everyone.
+cmd_differential() {
+  [[ "$MODE" == native ]] || die "differential runs in native mode; otherwise use the nightly-differential workflow's 'Run workflow' button on GitHub (Actions tab)"
+  local a
+  for a in "$@"; do [[ "$a" =~ ^[-A-Za-z0-9]+$ ]] || die "differential takes --games N --seed S --workers W (got '$a')"; done
+  local env; env=$("$ROOT/dev/katago.sh" env) || die "KataGo is not installed: run dev/ligo katago install"
+  eval "$env"
+  export KATAGO_BIN KATAGO_TEST_NET KATAGO_GTP_CONFIG
+  export DIFFERENTIAL_OUT="$STATE/differential"
+  rm -rf "$DIFFERENTIAL_OUT"
+  sbt1 "$RULES" update
+  run "$RULES/check-pin.sh"
+  sbt1 "$RULES" "Test/runMain ligo.gorules.differential.Differential $*"
+}
+
 cmd_status() {
   say "mode: $MODE"
   if [[ "$MODE" == docker ]]; then
@@ -426,6 +446,7 @@ main() {
     deps) cmd_deps ;;
     verify-mirror) verify_mirror ;;
     katago) exec "$ROOT/dev/katago.sh" "$@" ;;
+    differential) cmd_differential "$@" ;;
     doctor) exec "$ROOT/dev/doctor.sh" "$@" ;;
     mode) echo "$MODE" ;;
     help|-h|--help) usage ;;

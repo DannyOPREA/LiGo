@@ -18,7 +18,7 @@ const board = mountBoard(el, {
   size: 19, ruleset: 'japanese', komi: 6.5, // handicap games also pass `handicap` and `stones`
   moves: ['pd', 'dp'],       // already played
   movable: 'black',          // 'white' | 'both' (a local game) | 'none'
-  confirm: false,            // true: a tap previews, board.confirm() (or a double tap) plays
+  confirm: false,            // true: a tap previews, board.confirm() (or a mouse double click) plays
   onMove: move => send(move),            // the player picked a legal move: 'dd' or 'pass'
   onRefused: reason => {},               // 'occupied' | 'suicide' | 'superko'
   onChange: () => redraw(),
@@ -38,6 +38,10 @@ board.destroy();
   (a malformed move throws; one on an occupied point changes nothing). Clicks on a stone are
   ignored, so `onRefused` reports suicide and superko. Two passes don't end play here: the
   scoring phase comes with the game page (Phase 4).
+- **Confirm mode is goban's.** A tap shows a preview stone; the page's confirm button
+  (`board.confirm()`) plays it. A second tap on the preview takes it back, and a tap elsewhere
+  moves it; a mouse double click plays at once. goban ignores double taps on touch screens, so
+  phones need the page's button.
 - **Sized by its box.** The board is as wide as `el` (the page's CSS sets that) and follows it
   when it changes size. goban draws in a child of `el`, inside a shadow root.
 - **Plain board and stones.** goban's default look loads a wood picture from OGS's CDN, and its

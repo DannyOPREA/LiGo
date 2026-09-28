@@ -374,7 +374,7 @@ content sourcing stays in Phase 8 and load testing in Phase 6+, as the table abo
 |---|---|---|
 | 2.1 | `libs/board` joins lila's pnpm workspace and gains the board: goban's SVG renderer (npm `goban`, pinned to the same version as `goban-engine`), wrapped for snabbdom behind a small chessground-like API (mount with size, komi, handicap stones and moves; set position; move and pass events; destroy). Board sized from its container, lazy-loaded, plain-colour stones and board only (goban's image themes wait for a licence check), adapter tests, COPYING/NOTICE kept in step | 1.8 |
 | 2.2 | Playground page in lila (a new route and a small `ui/` page bundle): a local game where you play both colours on 9×9, 13×13 or 19×19, with komi, ruleset and handicap choices, pass, undo, new game and prisoner counts; legality from `libs/board`'s engine settings; desktop and phone layouts. No server game, no clock, nothing stored | 2.1 |
-| 2.3 | Touch-confirm setting: tap shows a preview stone and a second tap (or a confirm button) plays it, using goban's own preview-and-submit. One board preference on lila's existing preferences page and `pref` module ("Confirm moves: never / on touch screens / always", default on touch screens), passed to the board by the adapter; the playground honours it | 2.1 (server half can start earlier) |
+| 2.3 | Touch-confirm setting: tap shows a preview stone and a second tap (or a confirm button) plays it (as built: goban's second tap takes the preview back, so a confirm button plays it; logs/decisions.md), using goban's own preview-and-submit. One board preference on lila's existing preferences page and `pref` module ("Confirm moves: never / on touch screens / always", default on touch screens), passed to the board by the adapter; the playground honours it | 2.1 (server half can start earlier) |
 | 2.4 | Visual snapshots and the Phase 2 demo: Playwright screenshot tests of the playground (desktop 1280×800 and phone 390×844; empty 9×9 and 19×19, a capture, a preview stone) with committed baselines, run in CI; a scripted two-colour game through the playground; the demo checklist for you | 2.2, 2.3 |
 
 What stays out of Phase 2: server games and lila-ws messages (Phase 3), clocks and the scoring phase
@@ -430,7 +430,7 @@ possible. What Claude can't verify goes to you, explicitly listed in the PR (§7
 
 | Layer | What | Gate |
 |---|---|---|
-| Rules | Conformance fixtures, property tests (stones conserved, no zero-liberty groups after legal moves, superko invariants, SGF round-trip), nightly KataGo differential test | CI required; only `go-rules-expert` may edit fixtures (hook-enforced) |
+| Rules | Conformance fixtures, property tests (stones conserved, no zero-liberty groups after legal moves, superko invariants, SGF round-trip), nightly KataGo differential test | CI required (the nightly differential runs on a schedule and on rules PRs, not as a required PR check: unit 1.9); only `go-rules-expert` may edit fixtures (hook-enforced) |
 | Scoring | Benchmark of finished positions with agreed results | ≥ 97% agreement before Phase 4 closes |
 | Clocks | Deterministic-time tests (byo-yomi periods, resets, lag compensation, timeouts inside byo-yomi) | CI required |
 | Server | Module tests; Mongo/Redis integration tests | CI required |

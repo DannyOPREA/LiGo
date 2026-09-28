@@ -22,7 +22,10 @@ export interface BoardConfig extends Game {
   moves?: Move[];
   /** Who may place stones here: one colour, both (a local game), or nobody. Default nobody. */
   movable?: Color | 'both' | 'none';
-  /** A tap only previews the stone; `confirm()` (or a double tap) plays it. Default off. */
+  /**
+   * A tap only previews the stone; `confirm()` (or a mouse double click) plays it, and a second
+   * tap on the preview takes it back. goban ignores double taps on touch screens. Default off.
+   */
   confirm?: boolean;
   /** Letters and numbers round the board. Default on. */
   coordinates?: boolean;

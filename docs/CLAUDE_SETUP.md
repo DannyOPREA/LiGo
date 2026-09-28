@@ -487,8 +487,9 @@ Built in unit 0.6: `lila.yml`, `ui.yml` and `meta.yml`. The checks behind them l
 area log rather than `decisions.md`, and the manifest, PR template and npm licence checks) and are
 tested by `dev/tests/run.sh`. A PR that doesn't touch an area skips its jobs, and GitHub counts a
 skipped job as passing. Differences from the table:
-- `rules.yml` and `nightly-differential.yml` come with the Phase 1 units that create the rules
-  code; `e2e.yml` with the first unit that has a game to play.
+- `rules.yml` came with unit 1.7 and `nightly-differential.yml` with unit 1.9; `e2e.yml` comes
+  with the first unit that has a game to play. `nightly-differential.yml` is not a required check:
+  it runs nightly (1,000 games) and on pull requests that touch `libs/go-rules` (60 games).
 - `lila.yml` also runs lila's `scalafmtCheckAll` and lila-ws's `sbt check` (scalafmt + scalafix),
   as upstream does; `ui.yml` runs lila's `lint` and `check-format` scripts and upstream's CodeQL
   scan. Left out from upstream: the release artifacts, the optional private `ab` checkout and

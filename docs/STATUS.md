@@ -3,9 +3,9 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- 2.2 the playground page (started 2026-09-28, under the owner's "work until I tell you to stop"
-  delegation). Acceptance: `/playground` lets you play both colours on 9×9, 13×13 or 19×19 with
-  ruleset, handicap, komi, pass, undo, new game and prisoner counts, on desktop and phone.
+- 2.3 the touch-confirm setting (started 2026-09-28, under the owner's "work until I tell you to
+  stop" delegation). Acceptance: "Confirm moves" (never / on touch screens / always) on the
+  preferences page; with it on, a tap previews and a button plays; the playground honours it.
   Logs: logs/board-ui.md.
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
   docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (asset strip) merged (PR #24);
@@ -56,6 +56,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
     it passes all 95 client fixtures (5 known gaps), reads back all 227 server SGF games, and agrees
     with the server on 80 seeded random games (16,100 actions). `dev/ligo test rules` and the `rules`
     CI job run both engines and the parity check (PR #17).
+  - Unit 1.9 (nightly differential test): random games played by `libs/go-rules` and followed by
+    KataGo, compared on legal points, captures and area score. 1,000 games all agree; the
+    `nightly-differential` workflow plays 1,000 new ones every night (`dev/ligo differential` runs
+    it in a cloud session). This closes Phase 1.
   - Your PR #16 (no more approval prompts, ADR 0015) merged.
 - **Phase 2 — board integration** split into four units on 2026-09-28 (docs/PLAN.md §5, "Phase 2
   units"): 2.1 the goban board in `libs/board`, 2.2 a playground page, 2.3 the touch-confirm
@@ -64,11 +68,12 @@ _Updated at the end of every session (`/status`). Newest information wins._
     plain theme); libs/board is now in lila's pnpm workspace (ADR 0017); 17 browser tests in the
     `rules` CI job (PR #19, merged).
   - Unit 2.2 (playground): `/playground`, a local game for both colours on lila's page, board
-    loaded lazily; in review.
+    loaded lazily (PR #23, merged).
+  - Unit 2.3 (touch-confirm): a "Confirm moves" preference; the playground shows a Confirm move
+    button when it applies; in review.
 
 ## Next
-- Phase 1 unit 1.9, the nightly KataGo differential test (its own thread).
-- Phase 2 units 2.3 (touch-confirm setting), 2.4 (snapshots + demo)
+- Phase 2 unit 2.4 (snapshots + demo)
   (docs/PLAN.md §5, "Phase 2 units").
 - Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
@@ -100,7 +105,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | Phase | State |
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
-| 1. Build-vs-buy + rules integration | 1.1–1.8 done; 1.9 in progress (of 9 units) |
-| 2. Board integration | 2.1 done; 2.2 in review (of 4 units) |
+| 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
+| 2. Board integration | 2.1–2.2 done; 2.3 in review (of 4 units) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1 and 3.9 merged; 3.2 in review (you approved the deletions for 3.1–3.7) |
 | 4–9 | not started |

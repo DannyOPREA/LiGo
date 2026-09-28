@@ -162,6 +162,17 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
               radios(form("behavior.confirmResign"), confirmResignChoices),
               "confirmResignationAndDrawOffers"
             ),
+            // Go board touch-confirm (unit 2.3): plain English, no new i18n key (see PrefHelper).
+            setting(
+              "Confirm moves",
+              frag(
+                radios(form("behavior.confirmMoves"), confirmMovesChoices),
+                div(cls := "help text shy", dataIcon := Icon.InfoCircle)(
+                  "Go: a click or tap previews the stone and the Confirm move button plays it; click or tap it again to take it back."
+                )
+              ),
+              "confirmMoves"
+            ),
             setting(
               trp.castleByMovingTheKingTwoSquaresOrOntoTheRook(),
               radios(form("behavior.rookCastle"), translatedRookCastleChoices),
