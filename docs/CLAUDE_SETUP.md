@@ -222,9 +222,8 @@ Ratings: Glicko-2 shown as kyu/dan, one pool; rated auto-handicap. Fixtures + do
 ```
 
 Notes:
-- **The `ask` rules are how the working agreement is enforced.** Dependency manifests, fixtures, the
-  rules spec, CI and licence files always prompt you, even in `auto` mode. That puts you in the loop
-  for those major decisions. Deny rules block in every mode.
+- **The `ask` list was removed on 2026-09-28 (ADR 0015)** at the owner's request; the block above
+  shows the original unit 0.4 config. Deny rules block in every mode.
 - Permission prefix rules aren't airtight; `guard-bash.sh` and `guard-paths.sh` (§6) are the real
   enforcement.
 - Built in unit 0.4; the committed `.claude/settings.json` is the source of truth. Differences
