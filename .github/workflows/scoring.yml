@@ -1,0 +1,86 @@
+# services/scoring (ADR 0016, ADR 0020, unit 4.4): KataGo's analysis engine, goban-engine's
+# autoscore and goscorer, no build step (Node 24 runs its .ts directly). Typechecks, lints,
+# replays OGS's 31 autoscore regression games and the libs/conformance scoring fixtures, and runs
+# one real-KataGo test on the CPU test network (dev/katago.sh, as nightly-differential.yml
+# installs it). Runs when services/scoring, the rules fixtures (the service replays them too,
+# libs/conformance/README.md) or dev/katago.sh change.
+name: scoring
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  scoring-paths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      scoring: ${{ steps.changed.outputs.scoring }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      # On a pull request the checkout is GitHub's merge commit, whose first parent is the base.
+      - id: changed
+        run: dev/ci/changed.sh "$BASE" >> "$GITHUB_OUTPUT"
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+
+  scoring:
+    needs: scoring-paths
+    if: needs.scoring-paths.outputs.scoring == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # The test network only (checksum-pinned, from KataGo's own repo): the real-KataGo test
+      # needs no accuracy, only that a real analysis-engine process answers (dev/katago.sh).
+      LIGO_KATAGO_TEST_NET_ONLY: '1'
+      LIGO_KATAGO_BACKEND: cpu
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install KataGo (CPU)
+        run: dev/katago.sh install cpu
+      # services/scoring is in lila's pnpm workspace (ADR 0017's reasoning: one lockfile,
+      # goban-engine pinned to the same 8.3.226 as libs/board), so its packages come from lila's
+      # lockfile, installed for it alone.
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: lila/package.json
+      - name: Setup node and restore pnpm cache
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: services/scoring/.node-version
+          cache: pnpm
+          cache-dependency-path: lila/pnpm-lock.yaml
+      - name: Install services/scoring's packages
+        working-directory: lila
+        run: pnpm install --frozen-lockfile --filter @ligo/scoring --filter lila
+      - name: services/scoring's npm dependencies are AGPL-compatible
+        working-directory: lila
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm licenses list --json --filter @ligo/scoring | ../dev/ci/meta_checks.py js-licences
+      - name: Format, lint and type-check
+        working-directory: lila
+        run: pnpm --filter @ligo/scoring run typecheck && pnpm --filter @ligo/scoring run lint
+      # OGS's 31 autoscore games, the libs/conformance scoring fixtures, the KataGo client (a fake
+      # process; ADR 0020 §4's fallback and timeout), and one real-KataGo analysis (KATAGO_BIN and
+      # KATAGO_TEST_NET, as dev/ligo katago env prints them; test/integration.test.ts finds the
+      # analysis config next to the binary itself, since it isn't one of those variables).
+      - name: Test
+        working-directory: lila
+        run: |
+          eval "$(../dev/katago.sh env)"
+          export KATAGO_BIN KATAGO_TEST_NET
+          pnpm --filter @ligo/scoring run test

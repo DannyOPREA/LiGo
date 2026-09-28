@@ -7,8 +7,57 @@
 - Measured: KataGo v1.18.1 Eigen with the b6 test net does ~140 visits/s on the 4 cloud vCPUs (4 threads); the planning estimate above was for full-size nets (2026-09-27, unit 0.5).
 - goban's `test/autoscore_test_files/` (31 OGS games with ownership maps and expected results) is a ready-made regression set for autoscore; its expected results were drafted from the same maps, so it is not an accuracy benchmark (2026-09-27, unit 1.3).
 - KataGo's multi-threaded search is not deterministic: store the proposal shown to players, recount only with goscorer (2026-09-27, unit 1.3).
+- KataGo's analysis engine accepts a location as `"(x,y)"` with explicit integer coordinates (its docs plus `cpp/game/board.cpp`'s `Location::getLoc`/`getX`/`getY`): y increases top-to-bottom, the same row-major order as its `ownership` reply and as our own board matrix, so no coordinate flip is needed when building `initialStones` (2026-09-28, unit 4.4).
+- goban-engine 8.3.226's Chinese `getHandicapPointAdjustmentForWhite` returns the raw handicap count with no AGA "-1" step, so `handicap: 1` gives White 1 point of compensation R-HCP-2 forbids; a service (or anything else calling `computeScore`) must clamp handicap below 2 to 0 itself, never trust the field as given (2026-09-28, unit 4.4).
+- `autoscore`'s "needs sealing" list only exists because of KataGo's ownership-uncertainty threshold; a `count` recount (goscorer only, no KataGo) has no way to compute it, so its `seal` is always empty — the ADR 0020 example's "same fields without src" is imprecise on this point (2026-09-28, unit 4.4).
+- `api.github.com`, `github.com` and `codeload.github.com` are blocked in this cloud session's proxy allowlist, but `raw.githubusercontent.com` and a plain `git clone https://github.com/...` both work; vendoring files from a public GitHub repo goes through `git clone`, not the GitHub API (2026-09-28, unit 4.4).
 
 ## Entries (newest first)
+### 2026-09-28 · unit 4.4 · services/scoring core: KataGo client, autoscore, goscorer
+- Did: `services/scoring`, a member of lila's pnpm workspace (ADR 0017's reasoning, applied here:
+  one lockfile, `goban-engine` pinned to the same 8.3.226 as `libs/board`). `src/goban.ts` wraps
+  the CJS default export; `src/board.ts` parses/formats the compact board string (ADR 0019 §6) and
+  SGF points; `src/chains.ts` widens dead points to whole chains and checks a given set already is
+  one; `src/katago.ts` is a `KataGoClient` for one long-running `katago analysis` process
+  (JSON-lines, a 30s per-request timeout, restart after a crash); `src/score.ts` runs `autoscore`
+  and `GobanEngine.computeScore()` and builds the ADR 0020 `score`/`owner` reply, clamping handicap
+  below 2 to 0; `src/handle.ts` is `handle(message) -> reply` (`propose` falling back to
+  `src:"none"`, `count` rejecting non-whole-chain dead stones as an `error`); `src/cli.ts` reads one
+  JSON request on stdin. No Redis (unit 4.5). Vendored OGS's 31 autoscore test games
+  (`test/autoscore_test_files/`, goban commit e61c56e2) with their Apache-2.0 notice. Added
+  `dev/ligo test scoring` (native; docker: "not yet", no KataGo in its containers until unit 4.5),
+  a `scoring` area in `dev/ci/changed.sh` (also covers `libs/conformance/fixtures/`, the lockfile,
+  and `dev/katago.sh`, updating `dev/tests/run.sh`'s exact-output checks to match) and a `scoring`
+  CI job (`.github/workflows/scoring.yml`, KataGo CPU test network only). COPYING.md, NOTICE.md,
+  CLAUDE.md and README.md for the new package; root CLAUDE.md's repo map moved it out of "planned".
+- Worked: `autoscore` and `GobanEngine.computeScore()` needed nothing beyond a board matrix, two
+  ownership maps and a dead-stone list — no wrapper logic around goscorer itself, exactly what the
+  build-vs-buy memo found; `computeScore().{black,white}.scoring_positions` already gives the owner
+  string's points (encoded the same way as `dead`/`seal`), so no second call to goscorer's
+  territory/area functions was needed for that.
+- Didn't work / dead ends: `github.com`/`api.github.com`/`codeload.github.com` are blocked in this
+  cloud session, so the GitHub API couldn't list `goban`'s test directory; a plain `git clone`
+  worked instead (see Lessons). A fake KataGo process exiting right after writing its last response
+  raced the parent's pipe read in one test until the fake script waited briefly before exiting.
+- Decisions (Claude, under the owner's 2026-09-28 delegation):
+  - A `count` reply's `seal` is always empty (see Lessons); `sc.sl` (unit 4.8) keeps showing the
+    original proposal's seal points across toggles.
+  - The compact board string's empty-run count is the plain decimal number, not limited to one
+    digit (ADR 0019/0020 leave the exact encoding open beyond "a number"; a 19-wide board can have
+    a run longer than 9). Flagging this for whoever builds the lila side (units 4.7+) to match.
+  - `ligo-handicap-one-no-compensation-chinese`, the 1-stone-handicap scoring fixture unit 4.4 was
+    asked to add, was already present in `libs/conformance/fixtures/ligo.json` (presumably added
+    ahead of this unit by go-rules-expert); no new fixture PR is needed, only this package's own
+    `test/handicap.test.ts` unit tests, which also cover it directly.
+- Verified by Claude: `dev/ligo test scoring` (82/82, including the real KataGo test network via
+  `dev/ligo katago install cpu`); OGS's 31 autoscore games 31/31 on stored ownership maps; all 18
+  libs/conformance scoring fixtures pass through the `count` path; `dev/tests/run.sh` 50/50 after
+  updating its `changed.sh` expectations; `pnpm --filter @ligo/scoring run typecheck`/`lint` clean;
+  `verify.sh` (see this unit's PR). · Needs owner verification: none beyond the two decisions above
+  if they should be revisited.
+- Follow-ups: unit 4.5 adds the Redis worker, recounts on crash/restart, and `dev/ligo up/down`
+  supervision (including in docker mode, which unit 4.4 leaves unwired for scoring); unit 4.6 adds
+  the accuracy benchmark and full-size network.
 ### 2026-09-28 · unit 4.1 · ADR 0020: scoring phase, service protocol, byo-yomi in lila
 - Did: wrote ADR 0020: Redis pub/sub messages between lila and `services/scoring` (final board +
   go-rules' prisoners, replies matched by `ref`), the `sc` block on `game5`, the scoring-phase state
