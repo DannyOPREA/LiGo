@@ -16,8 +16,30 @@
 - A board box that goban measures needs an explicit width: `margin: 0 auto` on a flex item shrinks it to its content (the loading text), and goban then draws a tiny board (2026-09-28, 2.2).
 - snabbdom: bind an input's shown value with `props: { value }`, not `attrs`; `attrs.value` is only the default and stops showing once the user has typed (2026-09-28, 2.2 review).
 - goban's confirm mode: a second tap on the preview removes it, and double taps on touch screens are ignored; phones need a confirm button calling `board.confirm()` (2026-09-28, 2.3).
+- Screenshot tolerance as a pixel count, not a share of the page: a whole stone is ~0.15% of a 1280×800 page. Serve a page's CSS as lila does (`lib.theme.all` + `site` + the page's own), or it renders unstyled (2026-09-28, 2.4).
 
 ## Entries (newest first)
+
+### 2026-09-28 · 2.4 · Visual snapshots and the Phase 2 demo
+- Done: Playwright tests in `lila/ui/playground/e2e/`: 8 screenshots (desktop 1280×800 and phone
+  390×844; empty 9×9 and 19×19, a capture, a preview stone) against committed baselines, and a
+  scripted two-colour game on desktop (clicks) and phone (taps + Confirm move) covering turns,
+  captures both ways, a refused move, undo, two passes and playing on. The page is lila's built
+  bundle and CSS (`lib.theme.all`, `site`, `playground`, fonts from `public/hashed`) served by
+  `page.route`, so no lila server; any other request fails the test. They run in the `ui` CI job
+  after the build (plus a type-check), and via `dev/ligo test pages` (native mode; docker mode skips
+  them). Demo checklist: docs/demos/phase-2.md.
+- Worked: checked the tests catch a real change. The capture baseline with its white stone painted
+  out fails with 1,487 differing pixels; the real page passes 3 runs in a row.
+- Didn't: the first tolerance (0.2% of the page) let that painted-out stone through (it's ~0.15% of
+  a 1280×800 page), so it is a pixel count now (100). The first page skipped lila's `site` CSS and
+  came out white with serif text. The phone game failed once: goban ignores a confirm within 50 ms
+  of the tap, so the test presses Confirm again until the move lands (a retry on a condition, not a
+  sleep).
+- Unverified: the baselines were recorded with the cloud's Chromium 141 while CI installs
+  Playwright 1.63's Chromium 153; goban's coordinates use Verdana/Arial, which falls back to
+  Liberation Sans on both. If CI's pictures differ, its report is uploaded as an artifact.
+- Decision: one baseline set with no platform in the file name (logs/decisions.md).
 
 ### 2026-09-28 · 2.3 review · Reviewer findings fixed
 - No blocking findings; the reviewer agreed with keeping goban's second-tap behaviour. Fixed: the

@@ -40,7 +40,9 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   status              Show what is running
   logs [lila|ws|db]   Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
-  test [what]         Run the unit tests of lila, ws, ui, rules, board or all (default: all);
+  test [what]         Run the unit tests of lila, ws, ui, pages, rules, board or all (default: all);
+                      pages = the playground's screenshots and scripted game in Chromium, from
+                      the built ui (compile ui first; docker mode skips them);
                       rules = both Go rules engines: libs/go-rules (server) and libs/board
                       (goban-engine) replaying the libs/conformance fixtures, then the parity
                       check between them, plus the board in Chromium; board = the libs/board
@@ -347,8 +349,14 @@ cmd_test() {
     native:rules) sbt1 "$RULES" update; run "$RULES/check-pin.sh"; sbt1 "$RULES" testFull; native_after_sbt; native_board test:all ;;
     docker:board) docker_board test ;;
     native:board) native_board test ;;
-    *:all) cmd_test ui; cmd_test lila; cmd_test ws; cmd_test rules ;;
-    *) die "test what? lila, ws, ui, rules, board or all" ;;
+    # The playground's screenshots and scripted game (unit 2.4), from the built ui in Chromium.
+    docker:pages) say "page browser tests skipped in docker mode (no Chromium in the ui container); CI runs them" ;;
+    native:pages)
+      need_node_modules
+      ui_built || die "build the ui first: dev/ligo compile ui"
+      (cd "$LILA" && run pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts) ;;
+    *:all) cmd_test ui; cmd_test pages; cmd_test lila; cmd_test ws; cmd_test rules ;;
+    *) die "test what? lila, ws, ui, pages, rules, board or all" ;;
   esac
 }
 

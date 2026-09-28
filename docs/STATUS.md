@@ -3,10 +3,10 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- 2.3 the touch-confirm setting (started 2026-09-28, under the owner's "work until I tell you to
-  stop" delegation). Acceptance: "Confirm moves" (never / on touch screens / always) on the
-  preferences page; with it on, a tap previews and a button plays; the playground honours it.
-  Logs: logs/board-ui.md.
+- 2.4 visual snapshots and the Phase 2 demo (started 2026-09-28, under the owner's "work until I
+  tell you to stop" delegation). Acceptance: Playwright screenshots of the playground (desktop and
+  phone) against committed baselines in CI, a scripted two-colour game, and the demo checklist
+  (docs/demos/phase-2.md). Logs: logs/board-ui.md.
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
   docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (asset strip) in review;
   next 3.2. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
@@ -66,12 +66,13 @@ _Updated at the end of every session (`/status`). Newest information wins._
   - Unit 2.2 (playground): `/playground`, a local game for both colours on lila's page, board
     loaded lazily (PR #23, merged).
   - Unit 2.3 (touch-confirm): a "Confirm moves" preference; the playground shows a Confirm move
-    button when it applies; in review.
+    button when it applies (PR #25, merged).
+  - Unit 2.4 (snapshots + demo): 8 playground screenshots and a scripted game in the `ui` CI job,
+    `dev/ligo test pages`, and your demo checklist docs/demos/phase-2.md; in review.
 
 ## Next
 - Phase 1 unit 1.9, the nightly KataGo differential test (its own thread).
-- Phase 2 unit 2.4 (snapshots + demo)
-  (docs/PLAN.md §5, "Phase 2 units").
+- Your Phase 2 demo: docs/demos/phase-2.md, once unit 2.4 merges.
 - Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
@@ -103,6 +104,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | 1.1–1.8 done; 1.9 in progress (of 9 units) |
-| 2. Board integration | 2.1–2.2 done; 2.3 in review (of 4 units) |
+| 2. Board integration | 2.1–2.3 done; 2.4 in review (of 4 units) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 design merged (ADR 0019); 3.1 in review (you approved the deletions for 3.1–3.7) |
 | 4–9 | not started |
