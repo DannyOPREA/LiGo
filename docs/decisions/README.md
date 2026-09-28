@@ -19,6 +19,7 @@ edit allowed). While the PR that introduces an ADR is still open, its wording ma
 | 0010 | [Dev tooling on a trimmed copy of lila-docker](0010-dev-tooling-on-lila-docker.md) | Accepted | 2026-09-26 |
 | 0011 | [Claude merges its own PRs](0011-claude-merges-its-own-prs.md) | Accepted | 2026-09-27 |
 | 0012 | [strategygames as a dependency for the server-side Go rules](0012-strategygames-for-server-go-rules.md) | Accepted | 2026-09-27 |
+| 0013 | [lila's Glicko-2 with OGS's settings, rank curve and handicap maths](0013-lila-glicko2-with-ogs-settings.md) | Accepted | 2026-09-28 |
 
 ## Template
 
