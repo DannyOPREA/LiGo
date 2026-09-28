@@ -11,3 +11,4 @@
 - [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, maxPlies draw, stopped-clock outoftime, fishnet re-send, handicap-1
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
+- [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, per-phase count versions, Scored invalid states, closePlay lost on replay
