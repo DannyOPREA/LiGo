@@ -74,6 +74,14 @@ jobs:
         run: |
           pnpm exec tsc -p ui/playground/e2e/tsconfig.json
           pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts
+      # TEMPORARY (unit 2.4): print the failed pictures, so baselines can be recorded from CI's Chromium.
+      - name: Print failed screenshots (temporary)
+        if: failure()
+        working-directory: lila/ui/playground/e2e
+        run: |
+          find test-results -name '*-actual.png' -o -name '*-9x9-empty-diff.png' | sort | while read -r f; do
+            echo "PNGBEGIN $f"; base64 -w0 "$f"; echo; echo "PNGEND"
+          done
       # On a failure: the actual, expected and diff pictures, to look at or to become new baselines.
       # Same pin as upstream lila's assets.yml.
       - name: Upload the Playwright report
