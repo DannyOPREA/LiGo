@@ -14,8 +14,24 @@
 - Don't list lila's lint tools again in libs/board: its oxlint resolved without lila's optional `oxlint-tsgolint` peer, a second lockfile entry that a full install never unpacks, so `pnpm licenses` read its licence as Unknown. The board uses lila's own oxfmt/oxlint; install with `--filter @ligo/board --filter lila` (2026-09-28, 2.1).
 - goban's `pass()` leaves stone placement on, and its `updateTitleAndStonePlacement` turns it off whenever a preview is shown: an adapter must keep "a move is waiting" state of its own (2026-09-28, 2.1 review).
 - A board box that goban measures needs an explicit width: `margin: 0 auto` on a flex item shrinks it to its content (the loading text), and goban then draws a tiny board (2026-09-28, 2.2).
+- snabbdom: bind an input's shown value with `props: { value }`, not `attrs`; `attrs.value` is only the default and stops showing once the user has typed (2026-09-28, 2.2 review).
 
 ## Entries (newest first)
+
+### 2026-09-28 · 2.2 review · Reviewer findings fixed
+- Reviewer (Chromium probes on the compiled bundle): 3 blocking, 4 should-fix. Fixed: a stylelint
+  error from a late edit; COPYING.md now notes the new ui package (a package.json with workspace
+  dependencies only still counts as a manifest change for the meta check); the komi box kept
+  showing typed text after a ruleset or handicap change reset the komi (snabbdom `attrs.value`,
+  now `props`); a blank komi meant 0 and komi had no R-KOMI-4 bounds (now ignored, with min/max);
+  1-stone handicap (R-HCP-2) added; a failed load of goban's chunk now says so.
+- Nits taken: labels tied to their controls (`for`/`id`), the game in play shown under the turn,
+  the turn shown after two passes, moves passed in are copied. Left: `handicapStones`' type still
+  admits 13 (it throws, and the page never asks).
+- 3 more controller tests (`dev/ligo test ui` 248/248); the scratch Chromium check now also checks
+  the komi box and the game summary (17 checks, desktop and phone).
+- Lesson: bind an input's shown value with snabbdom `props`, not `attrs`; `attrs.value` is only
+  the default, which the browser stops showing once the user has typed.
 
 ### 2026-09-28 · 2.2 · Playground page (`/playground`)
 - Done: a `/playground` route (`controllers.Playground`, `views.playground`) and a `ui/playground`
