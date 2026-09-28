@@ -27,7 +27,6 @@ POST  /team/:id/leaders                       controllers.team.Team.addLeader(id
 GET   /team/:id/members                       controllers.team.Team.members(id: TeamId, page: Int ?= 1)
 POST  /team/:id/close                         controllers.team.Team.close(id: TeamId)
 POST  /team/:id/disable                       controllers.team.Team.disable(id: TeamId)
-GET   /team/:id/tournaments                   controllers.team.Team.tournaments(id: TeamId)
 GET   /team/:id/updates                       controllers.team.Team.updateNew(id: TeamId)
 POST  /team/:id/pm-all                        controllers.team.Team.updateSend(id: TeamId)
 POST  /team/:id/subscribe                     controllers.team.Team.subscribe(id: TeamId)

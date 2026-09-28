@@ -19,14 +19,6 @@ object RoundClientActor:
     def busChans: List[Bus.Chan] =
       Bus.channel.room(room.room) ::
         player.fold(List.empty)(_ => List(Bus.channel.roundPlayer)) :::
-        player.flatMap(_.tourId).fold(List.empty) { tourId =>
-          List(Bus.channel.tourStanding(tourId))
-        } :::
-        player
-          .flatMap(_.extRoomId)
-          .fold(List.empty) { roomId =>
-            List(Bus.channel.externalChat(roomId))
-          } :::
         userTv.map(Bus.channel.userTv).toList
 
   def start(
@@ -142,29 +134,14 @@ object RoundClientActor:
                 req.user.foreach:
                   lilaIn round LilaIn.WatcherChatSay(state.room.room, _, msg)
               case Some(p) =>
-                import Game.RoundExt.*
-                def extMsg[A](id: A)(using bts: SameRuntime[A, String]) = req.user.map:
-                  LilaIn.ChatSay(RoomId(bts(id)), _, msg)
-                p.ext match
-                  case None =>
-                    lilaIn.round(LilaIn.PlayerChatSay(state.room.room, req.user.toLeft(p.color), msg))
-                  case Some(InTour(id)) => extMsg(id).foreach(lilaIn.tour)
-                  case Some(InSwiss(id)) => extMsg(id).foreach(lilaIn.swiss)
-                  case Some(InSimul(id)) => extMsg(id).foreach(lilaIn.simul)
+                // a round is never part of a tournament, swiss or simul any more (unit 3.2
+                // removed those modules), so chat always goes to the plain round chat.
+                lilaIn.round(LilaIn.PlayerChatSay(state.room.room, req.user.toLeft(p.color), msg))
             Behaviors.same
 
           case ClientOut.ChatTimeout(suspect, reason, text) =>
             deps.req.user.foreach { u =>
-              def msg(id: RoomId) = LilaIn.ChatTimeout(id, u, suspect, reason, text)
-              state.player
-                .flatMap { p =>
-                  p.tourId
-                    .map(_.into(RoomId))
-                    .map(msg)
-                    .map(lilaIn.tour)
-                    .orElse(p.simulId.map(_.into(RoomId)).map(msg).map(lilaIn.simul))
-                }
-                .getOrElse(lilaIn.round(msg(state.room.room)))
+              lilaIn.round(LilaIn.ChatTimeout(state.room.room, u, suspect, reason, text))
             }
             Behaviors.same
 

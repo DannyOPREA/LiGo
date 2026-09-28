@@ -17,24 +17,15 @@ object LilaIn:
   sealed trait Lobby extends LilaIn
 
   sealed trait Room extends LilaIn
-  sealed trait Simul extends Room
   sealed trait Team extends Room
-  sealed trait Swiss extends Room
-  sealed trait Tour extends Room
   sealed trait Study extends Room
   sealed trait Round extends Room
   sealed trait Challenge extends Room
   sealed trait Racer extends Room
 
-  sealed trait AnyRoom
-      extends Simul
-      with Team
-      with Swiss
-      with Tour
-      with Study
-      with Round
-      with Challenge
-      with Racer
+  // Simul, Swiss and Tour room traits were removed with the simul, swiss and tournament modules
+  // (unit 3.2).
+  sealed trait AnyRoom extends Team with Study with Round with Challenge with Racer
 
   case class TellSri(sri: Sri, user: Option[User.Id], payload: JsValue) extends Site with Lobby:
     def write = s"tell/sri $sri ${optional(user.map(_.value))} ${Json.stringify(payload)}"
@@ -90,8 +81,7 @@ object LilaIn:
           s"$r:$v"
         })}"
 
-  case class WaitingUsers(roomId: RoomId, waiting: Set[User.Id]) extends Tour:
-    def write = s"tour/waiting $roomId ${commas(waiting)}"
+  // WaitingUsers was removed with the tournament module (unit 3.2).
 
   case class RoundPlayerDo(fullId: Game.FullId, payload: JsValue) extends Round:
     def write = s"r/do $fullId ${Json.stringify(payload)}"
@@ -151,7 +141,7 @@ object LilaIn:
   case class RacerStart(raceId: Racer.Id, playerId: Racer.PlayerId) extends Racer:
     def write = s"racer/start $raceId ${playerId.key}"
 
-  case class ReqResponse(reqId: Int, value: String) extends Study with Simul with Site:
+  case class ReqResponse(reqId: Int, value: String) extends Study with Site:
     def write = s"req/response $reqId $value"
 
   private def commas(as: Iterable[Any]): String = if as.isEmpty then "-" else as.mkString(",")

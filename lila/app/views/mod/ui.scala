@@ -16,17 +16,20 @@ lazy val inquiryUi = ModInquiryUi(helpers)(publicLineSource, env.mod.presets.get
 
 val timeline = lila.api.ui.ModTimelineUi(helpers)(publicLineSource = publicLineSource)
 
+// PublicSource.Tournament/Simul/Swiss can no longer occur (unit 3.2 removed those features), but
+// the enum cases stay in lila.core.chat for old stored chat lines; render them like any unknown
+// game-scoped source rather than deleting the cases wholesale.
 private def publicLineSource(source: PublicSource)(using Translate, ClientName): Tag = source match
-  case PublicSource.Tournament(id) => views.tournament.ui.tournamentLink(id)
-  case PublicSource.Simul(id) => views.simul.ui.link(id)
   case PublicSource.Team(id) => teamLink(id)
   case PublicSource.Watcher(id) => a(href := routes.Round.watcher(id, Color.white))("Game #", id)
   case PublicSource.Player(id) => a(href := routes.Round.watcher(id, Color.white))("Game #", id)
   case PublicSource.Study(id) => a(href := routes.Study.show(id))("Study #", id)
-  case PublicSource.Swiss(id) => views.swiss.ui.link(id)
   case PublicSource.Forum(id) => a(href := routes.ForumPost.redirect(id))("Forum #", id)
   case PublicSource.Ublog(id) => a(href := routes.Ublog.redirect(id))("User blog #", id)
   case PublicSource.Relay(id) => a(href := routes.RelayRound.show("-", "-", id))("Broadcast #", id)
+  case PublicSource.Tournament(id) => em("tournament #", id)
+  case PublicSource.Simul(id) => em("simul #", id)
+  case PublicSource.Swiss(id) => em("swiss #", id)
 
 def permissions(u: User)(using Context, Me) =
   ui.permissions(u, lila.security.Permission.categorized)

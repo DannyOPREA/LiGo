@@ -58,16 +58,13 @@ final class Lila(config: Config)(using Executor):
   private def connectAll: Future[Emits] =
     (
       connect[LilaIn.Site](chans.site),
-      connect[LilaIn.Tour](chans.tour),
       connect[LilaIn.Lobby](chans.lobby),
-      connect[LilaIn.Simul](chans.simul),
       connect[LilaIn.Team](chans.team),
-      connect[LilaIn.Swiss](chans.swiss),
       connect[LilaIn.Study](chans.study),
       connect[LilaIn.Round](chans.round),
       connect[LilaIn.Challenge](chans.challenge),
       connect[LilaIn.Racer](chans.racer)
-    ).mapN(Emits.apply(_, _, _, _, _, _, _, _, _, _))
+    ).mapN(Emits.apply(_, _, _, _, _, _, _))
 
   private def connect[In <: LilaIn](chan: Chan): Future[Emit[In]] =
 
@@ -141,11 +138,8 @@ object Lila:
 
   object chans:
     object site extends SingleLaneChan("site")
-    object tour extends SingleLaneChan("tour")
     object lobby extends SingleLaneChan("lobby")
-    object simul extends SingleLaneChan("simul")
     object team extends SingleLaneChan("team")
-    object swiss extends SingleLaneChan("swiss")
     object study extends SingleLaneChan("study")
     object round extends RoundRobinChan("r", 16)
     object challenge extends SingleLaneChan("chal")
@@ -153,11 +147,8 @@ object Lila:
 
   final class Emits(
       val site: Emit[LilaIn.Site],
-      val tour: Emit[LilaIn.Tour],
       val lobby: Emit[LilaIn.Lobby],
-      val simul: Emit[LilaIn.Simul],
       val team: Emit[LilaIn.Team],
-      val swiss: Emit[LilaIn.Swiss],
       val study: Emit[LilaIn.Study],
       val round: Emit[LilaIn.Round],
       val challenge: Emit[LilaIn.Challenge],

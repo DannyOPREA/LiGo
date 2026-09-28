@@ -6,12 +6,9 @@ import play.api.libs.json.{ Json, JsObject }
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 import lila.game.ui.GameUi
-import lila.core.i18n.Translate
-import lila.common.ClientName
 
 final class TvUi(helpers: lila.ui.Helpers)(
-    gameUi: GameUi,
-    tournamentLink: TourId => (Translate, ClientName) ?=> Tag
+    gameUi: GameUi
 ):
   import helpers.{ *, given }
 
@@ -33,7 +30,7 @@ final class TvUi(helpers: lila.ui.Helpers)(
       data: JsObject,
       cross: Option[lila.game.Crosstable.WithMatchup],
       history: List[Pov]
-  )(page: Page)(roundApp: Tag)(using Context, ClientName) =
+  )(page: Page)(roundApp: Tag)(using Context) =
     page
       .js(PageModule("round", Json.obj("data" -> data)))
       .css("bits.tv.single")
@@ -80,7 +77,7 @@ final class TvUi(helpers: lila.ui.Helpers)(
 
     private val separator = " • "
 
-    def meta(pov: Pov)(using Context, ClientName): Frag =
+    def meta(pov: Pov)(using Context): Frag =
       import pov.*
       div(cls := "game__meta")(
         st.section(
@@ -99,10 +96,9 @@ final class TvUi(helpers: lila.ui.Helpers)(
             game.players.mapList: p =>
               div(cls := s"player color-icon is ${p.color.name} text"):
                 playerLink(p, withOnline = false, withDiff = true, withBerserk = true)
-        ),
-        game.tournamentId.map: tourId =>
-          st.section(cls := "game__tournament-link"):
-            tournamentLink(tourId)
+        )
+        // game.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament
+        // feature exists any more to link to.
       )
 
     def channels(channel: Tv.Channel, champions: Tv.Champions, baseUrl: String)(using Context): Frag =

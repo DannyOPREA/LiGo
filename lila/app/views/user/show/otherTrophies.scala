@@ -20,20 +20,8 @@ object otherTrophies:
                 maybeLink(trophy.anyUrl)(awardCls(trophy), ariaTitle(s"${trophy.kind.name}")):
                   raw(iconChar)
           ),
-      info.trophies.shields.map { shield =>
-        a(
-          cls := "shield-trophy combo-trophy",
-          ariaTitle(s"${shield.categ.name} Shield"),
-          href := routes.Tournament.shields
-        )(shield.categ.icon)
-      },
-      info.trophies.revolutions.map { revol =>
-        a(
-          cls := "revol_trophy combo-trophy",
-          ariaTitle(s"${revol.variant.name} Revolution"),
-          href := routes.Tournament.show(revol.tourId)
-        )(revol.iconChar.toString)
-      },
+      // shield and revolution trophies were tournament-only mementos; the tournament feature that
+      // rendered them is gone (unit 3.2), so old awards no longer render a link.
       info.trophies.trophies.find(_.kind._id == TrophyKind.zugMiracle).map(zugMiracleTrophy),
       info.trophies.trophies.filter(_.kind.withCustomImage).map { t =>
         maybeLink(t.anyUrl)(

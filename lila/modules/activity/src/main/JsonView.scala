@@ -1,18 +1,14 @@
 package lila.activity
 
-import play.api.i18n.Lang
 import play.api.libs.json.*
 
 import lila.activity.activities.*
 import lila.common.Json.{ *, given }
 import lila.core.game.LightPov
 import lila.core.rating.{ RatingProg, Score }
-import lila.core.simul.Simul
-import lila.core.tournament.leaderboard.Ratio
 import lila.rating.PerfType
 
 final class JsonView(
-    getTourName: lila.core.tournament.GetTourName,
     getLightTeam: lila.core.team.LightTeam.GetterSync,
     routeUrl: lila.core.config.RouteUrl
 ):
@@ -32,35 +28,10 @@ final class JsonView(
 
     given Writes[chess.variant.Variant] = writeAs(_.key)
 
-    // writes as percentage
-    given Writes[Ratio] = Writes: r =>
-      JsNumber((r.value * 100).toInt.atLeast(1))
-
-    given (using Lang): OWrites[lila.core.tournament.leaderboard.Entry] = OWrites: e =>
-      val name = getTourName.sync(e.tourId).orZero
-      Json.obj(
-        "tournament" -> Json.obj(
-          "id" -> e.tourId,
-          "name" -> name
-        ),
-        "nbGames" -> e.nbGames,
-        "score" -> e.score,
-        "rank" -> e.rank,
-        "rankPercent" -> e.rankRatio
-      )
-    given (using Lang): Writes[ActivityView.Tours] = Json.writes
     given Writes[Puzzles] = writeWrap("score")(_.value)
     given Writes[Storm] = Json.writes
     given Writes[Racer] = Json.writes
     given Writes[Streak] = Json.writes
-    def simulWrites(user: User) = OWrites[Simul]: s =>
-      Json.obj(
-        "id" -> s.id,
-        "name" -> s.name,
-        "isHost" -> (s.hostId == user.id),
-        "variants" -> s.variants,
-        "score" -> s.hostScore
-      )
     given lightPlayerWrites: OWrites[lila.core.game.LightPlayer] = OWrites: p =>
       Json
         .obj()
@@ -87,7 +58,7 @@ final class JsonView(
   import Writers.{ *, given }
 
   private given OWrites[lila.core.study.IdName] = Json.writes
-  def apply(a: ActivityView, user: User)(using Lang): Fu[JsObject] =
+  def apply(a: ActivityView, user: User): Fu[JsObject] =
     fuccess:
       Json
         .obj("interval" -> a.interval)
@@ -96,7 +67,6 @@ final class JsonView(
         .add("storm", a.storm)
         .add("racer", a.racer)
         .add("streak", a.streak)
-        .add("tournaments", a.tours)
         .add(
           "practice",
           a.practice.map(_.toList.sortBy(-_._2).map { (study, nb) =>
@@ -107,7 +77,6 @@ final class JsonView(
             )
           })
         )
-        .add("simuls", a.simuls.map(_.map(simulWrites(user).writes)))
         .add(
           "correspondenceMoves",
           a.corresMoves.map: (nb, povs) =>

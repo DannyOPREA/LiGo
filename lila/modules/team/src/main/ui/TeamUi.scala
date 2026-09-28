@@ -230,43 +230,6 @@ final class TeamUi(helpers: Helpers, markdownCache: lila.memo.MarkdownCache):
           submitButton(cls := "button button-empty button-red yes-no-confirm")(trt.quitTeam.txt())
         )
       ),
-      (team.enabled && hasPerm(_.Tour)).option(
-        frag(
-          team.isClas.not.option:
-            a(
-              href := routes.Tournament.teamBattleForm(team.id),
-              cls := "button button-empty text",
-              dataIcon := Icon.Trophy
-            ):
-              span(
-                strong(trt.teamBattle()),
-                em(trt.teamBattleOverview())
-              )
-          ,
-          a(
-            href := addQueryParams(
-              routes.Tournament.form.url,
-              Map("team" -> team.id.value) ++ team.isClas.so(Map("clas" -> "1"))
-            ),
-            cls := "button button-empty text",
-            dataIcon := Icon.Trophy
-          ):
-            span(
-              strong(trt.teamTournament()),
-              em(trt.teamTournamentOverview())
-            )
-          ,
-          a(
-            href := s"${routes.Swiss.form(team.id)}",
-            cls := "button button-empty text",
-            dataIcon := Icon.Trophy
-          ):
-            span(
-              strong(trans.swiss.swissTournaments()),
-              em(trt.swissTournamentOverview())
-            )
-        )
-      ),
       (team.enabled && hasPerm(_.PmAll)).option(
         frag(
           a(

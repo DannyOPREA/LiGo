@@ -2,25 +2,19 @@ package lila.activity
 package ui
 
 import lila.activity.activities.*
-import lila.core.chess.Rank
 import lila.core.forum.{ ForumPostMini, ForumTopicMini }
-import lila.core.i18n.Translate
 import lila.core.perf.UserWithPerfs
 import lila.core.rating.{ RatingProg, Score }
 import lila.core.game.{ LightPlayer, LightPov }
 import lila.rating.UserPerfsExt.dubiousPuzzle
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
-import lila.common.ClientName
 
-final class ActivityUi(helpers: Helpers)(
-    tournamentIdToName: lila.core.id.TourId => Translate ?=> ClientName ?=> String
-):
+final class ActivityUi(helpers: Helpers):
   import helpers.{ *, given }
 
   def apply(u: UserWithPerfs, as: Iterable[ActivityView])(ublogPosts: ActivityView => Option[Frag])(using
-      Context,
-      ClientName
+      Context
   ) =
     div(cls := "activity")(
       as.toSeq
@@ -41,10 +35,7 @@ final class ActivityUi(helpers: Helpers)(
               a.corresMoves.map(renderCorresMoves),
               a.corresEnds.map(renderCorresEnds),
               a.follows.map(renderFollows),
-              a.simuls.map(renderSimuls(u.user)),
               a.studies.map(renderStudies),
-              a.tours.map(renderTours(u.user)),
-              a.swisses.map(renderSwisses),
               a.teams.map(renderTeams),
               a.stream.option(renderStream(u.user)),
               a.signup.option(renderSignup)
@@ -243,31 +234,6 @@ final class ActivityUi(helpers: Helpers)(
       )
     )
 
-  private def renderSimuls(u: User)(simuls: List[lila.core.simul.Simul])(using Context) =
-    entryTag(
-      iconTag(Icon.Group),
-      div(
-        simuls.groupBy(_.hostId.is(u)).toSeq.map { (isHost, simuls) =>
-          frag(
-            if isHost then trans.activity.hostedNbSimuls.pluralSame(simuls.size)
-            else trans.activity.joinedNbSimuls.pluralSame(simuls.size),
-            subTag(
-              simuls.map: s =>
-                div(
-                  a(href := routes.Simul.show(s.id))(
-                    s.name,
-                    " simul by ",
-                    userIdLink(s.hostId.some)
-                  ),
-                  if isHost then scoreFrag(s.hostScore)
-                  else s.playerScore(u.id).map(scoreFrag)
-                )
-            )
-          )
-        }
-      )
-    )
-
   private def renderStudies(studies: List[lila.core.study.IdName])(using Context) =
     entryTag(
       iconTag(Icon.StudyBoard),
@@ -287,57 +253,6 @@ final class ActivityUi(helpers: Helpers)(
           trans.activity.joinedNbTeams.pluralSame(teams.value.size),
           subTag(fragList(teams.value.map(id => teamLink(id))))
         )
-      )
-    )
-
-  private def renderTours(u: User)(tours: lila.activity.ActivityView.Tours)(using Context, ClientName) =
-    entryTag(
-      iconTag(Icon.Trophy),
-      div(
-        trans.activity.competedInNbTournaments.pluralSame(tours.nb),
-        subTag:
-          tours.best.map: t =>
-            div(
-              cls := List(
-                "is-gold" -> (t.rank == Rank(1)),
-                "text" -> (t.rank <= 3)
-              ),
-              dataIcon := (t.rank <= 3).option(Icon.Trophy)
-            )(
-              trans.activity.rankedInTournament.plural(
-                t.nbGames,
-                strong(t.rank),
-                t.rankRatio.percent,
-                t.nbGames,
-                a(href := addQueryParam(routes.Tournament.show(t.tourId).url, "player", u.username.value))(
-                  tournamentIdToName(t.tourId)
-                )
-              ),
-              br
-            )
-      )
-    )
-
-  private def renderSwisses(swisses: List[(lila.core.swiss.IdName, Rank)])(using Context) =
-    entryTag(
-      iconTag(Icon.Trophy),
-      div(
-        trans.activity.competedInNbSwissTournaments.pluralSame(swisses.size),
-        subTag:
-          swisses.map: (swiss, rank) =>
-            div(
-              cls := List(
-                "is-gold" -> (rank == Rank(1)),
-                "text" -> (rank <= 3)
-              ),
-              dataIcon := (rank <= 3).option(Icon.Trophy)
-            )(
-              trans.activity.rankedInSwissTournament(
-                strong(rank),
-                a(href := routes.Swiss.show(swiss.id))(swiss.name)
-              ),
-              br
-            )
       )
     )
 

@@ -4,18 +4,8 @@
   grid-area: main;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'app' 'table' 'side' 'blog' 'support' 'feed' 'tv' 'puzzle' 'tours' 'timeline' 'about';
+  grid-template-areas: 'app' 'table' 'side' 'blog' 'support' 'feed' 'tv' 'puzzle' 'timeline' 'about';
   gap: $block-gap;
-
-  &__tournaments-simuls {
-    min-width: 0;
-    max-width: 100%;
-  }
-
-  &__tournaments,
-  &__simuls {
-    max-height: 30em;
-  }
 
   &__start {
     margin: 0 $block-gap;
@@ -33,7 +23,6 @@
       'tv       puzzle'
       'support  support'
       'feed     feed'
-      'tours    tours'
       'timeline timeline'
       'about    about';
 
@@ -65,7 +54,6 @@
       'tv     blog'
       'tv     support'
       'puzzle feed'
-      'tours  tours'
       'about  about';
 
     &__start {
@@ -100,7 +88,7 @@
       'side   app     app     table'
       'tv     feed    feed    puzzle'
       'tv     blog    blog    puzzle'
-      'about  about   tours   tours';
+      'about  about   .       .';
 
     &__start {
       margin: 0;
@@ -151,14 +139,6 @@
 
   &__puzzle {
     grid-area: puzzle;
-  }
-
-  &__tournaments-simuls {
-    grid-area: tours;
-  }
-
-  &__simuls {
-    margin-top: $block-gap;
   }
 
   &__blog {

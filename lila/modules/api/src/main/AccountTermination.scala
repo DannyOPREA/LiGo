@@ -39,8 +39,6 @@ final class AccountTermination(
     rankingApi: lila.user.RankingApi,
     teamApi: lila.team.TeamApi,
     challengeApi: lila.challenge.ChallengeApi,
-    tournamentApi: lila.tournament.TournamentApi,
-    swissApi: lila.swiss.SwissApi,
     planApi: lila.plan.PlanApi,
     seekApi: lila.lobby.SeekApi,
     securityStore: lila.security.SessionStore,
@@ -72,11 +70,9 @@ final class AccountTermination(
     _ <- roundApi.resignAllGamesOf(u.id)
     followedIds <- relationApi.accountTermination(u)
     _ <- rankingApi.remove(u.id)
-    teamIds <- teamApi.quitAllOnAccountClosure(u.id)
+    _ <- teamApi.quitAllOnAccountClosure(u.id)
     _ <- tos.so(teamApi.deleteNewlyCreatedBy(u.id))
     _ <- challengeApi.removeByUserId(u.id)
-    _ <- tournamentApi.withdrawAll(u)
-    _ <- swissApi.withdrawAll(u, teamIds)
     _ <- planApi.cancelIfAny(u).recoverDefault
     _ <- seekApi.removeByUser(u)
     _ <- securityStore.closeAllSessionsOf(u.id)
@@ -132,8 +128,6 @@ final class AccountTermination(
     _ <- analysisRepo.remove(singlePlayerGameIds)
     _ <- deleteAllGameChats(u)
     _ <- streamerApi.repo.delete(u)
-    swissIds <- gameRepo.swissIdsOf(u.id)
-    _ <- swissIds.nonEmpty.so(swissApi.onUserDelete(u.id, swissIds))
     _ <- teamApi.onUserDelete(u.id)
     _ <- ublogApi.onAccountDelete(u)
     _ <- tokenApi.revokeAllByUser(u.id)

@@ -104,7 +104,6 @@ final class UserShow(helpers: Helpers, bits: UserBits):
         li(a(href := s"${routes.Lobby.home}#ai")(tro.playTheArtificialIntelligence())),
         li(a(href := s"${routes.Lobby.home}#hook")(tro.playOpponentsFromAroundTheWorld())),
         li(a(href := routes.User.list)(tro.followYourFriendsOnLichess())),
-        li(a(href := routes.Tournament.home)(tro.playInTournaments())),
         li(
           tro.learnFromXAndY(
             a(href := routes.Study.allDefault())(trans.site.toStudy()),

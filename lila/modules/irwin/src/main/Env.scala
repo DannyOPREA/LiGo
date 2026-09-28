@@ -11,7 +11,6 @@ import lila.report.Suspect
 
 final class Env(
     appConfig: Configuration,
-    tournamentApi: lila.core.tournament.TournamentApi,
     modApi: lila.core.mod.ModApi,
     reportApi: lila.report.ReportApi,
     notifyApi: lila.core.notify.NotifyApi,
@@ -38,22 +37,7 @@ final class Env(
 
   if appConfig.get[Boolean]("kaladin.enabled") then
 
-    scheduler.scheduleWithFixedDelay(5.minutes, 5.minutes): () =>
-      (for
-        leaders <- tournamentApi.allCurrentLeadersInStandard
-        suspects <-
-          leaders.toList
-            .traverse: (tour, top) =>
-              userApi.byIds(
-                top.view.zipWithIndex
-                  .filter(_._2 <= tour.nbPlayers * 2 / 100)
-                  .map(_._1)
-                  .take(20)
-              )
-            .map(_.flatten.map(Suspect.apply))
-        _ <- irwinApi.requests.fromTournamentLeaders(suspects)
-        _ <- kaladinApi.tournamentLeaders(suspects)
-      yield ())
+    // tournament leader scanning was removed with the tournament module (unit 3.2)
     scheduler.scheduleWithFixedDelay(15.minutes, 15.minutes): () =>
       (for
         topOnline <- userCache.getTop50Online

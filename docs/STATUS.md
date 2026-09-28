@@ -8,8 +8,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   preferences page; with it on, a tap previews and a button plays; the playground honours it.
   Logs: logs/board-ui.md.
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
-  docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (asset strip) in review;
-  next 3.2. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (asset strip) merged (PR #24);
+  3.2 (tournaments, events) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   wait for Phase 2 units 2.1, 2.3 and 2.4.
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
@@ -112,6 +112,6 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | 2.1–2.2 done; 2.3 in review (of 4 units) |
-| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 design merged (ADR 0019); 3.1 in review (you approved the deletions for 3.1–3.7) |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1 and 3.9 merged; 3.2 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
 | 5–9 | not started |

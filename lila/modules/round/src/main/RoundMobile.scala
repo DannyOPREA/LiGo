@@ -52,8 +52,7 @@ final class RoundMobile(
     isOfferingRematch: lila.core.round.IsOfferingRematch,
     chatApi: lila.chat.ChatApi,
     chatJson: lila.chat.ChatJsonView,
-    bookmarkExists: lila.core.misc.BookmarkExists,
-    tourApi: lila.core.data.CircularDep[lila.core.tournament.TournamentApi]
+    bookmarkExists: lila.core.misc.BookmarkExists
 )(using Executor):
 
   import RoundMobile.*
@@ -93,7 +92,7 @@ final class RoundMobile(
         else getWatcherChat(game)(using use.as.flatten)
       bookmarked <- use.bookmark.so(bookmarkExists(game, myPlayer.flatMap(_.userId)))
       forecast <- use.forecast.so(myPlayer).so(p => forecastApi.loadForDisplay(Pov(game, p)))
-      tournament <- tourInfo(game)
+      tournament <- tourInfo
     yield
       def playerJson(color: Color) =
         val pov = Pov(game, color)
@@ -138,23 +137,9 @@ final class RoundMobile(
         .add("tournament", tournament)
         .add("forecast" -> forecast)
 
-  private def tourInfo(game: Game): Fu[Option[JsObject]] =
-    game.tournamentId
-      .so(tourApi.resolve().getCached)
-      .flatMapz: tour =>
-        tourApi
-          .resolve()
-          .getGameRanks(tour, game)
-          .map: ranks =>
-            Json
-              .obj(
-                "id" -> tour.id,
-                "name" -> tour.name,
-                "secondsLeft" -> tour.secondsToFinish
-              )
-              .add("berserkable" -> tour.isStarted.option(tour.berserkable))
-              .add("ranks" -> ranks)
-          .dmap(some)
+  // tournaments were removed (unit 3.2); game.tournamentId is a neutral field kept for storage
+  // continuity and is never set, so there is never a tournament to describe here.
+  private def tourInfo: Fu[Option[JsObject]] = fuccess(none)
 
   private def prefsJson(game: Game, pref: Pref): JsObject = Json
     .obj(

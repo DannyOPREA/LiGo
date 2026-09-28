@@ -21,8 +21,6 @@ final class Env(
     settingStore: lila.memo.SettingStore.Builder,
     reportApi: lila.report.ReportApi,
     lightUserApi: lila.user.LightUserApi,
-    tournamentApi: lila.core.tournament.TournamentApi,
-    swissFeature: lila.core.swiss.SwissFeatureApi,
     gameRepo: lila.game.GameRepo,
     gameApi: lila.core.game.GameApi,
     analysisRepo: lila.analyse.AnalysisRepo,

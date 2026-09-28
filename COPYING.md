@@ -63,6 +63,12 @@ copies.
 (`lila/public/logo/ligo*.svg`, `ligo*.png`, `public/favicon.ico`, `public/apple-touch-icon.png`),
 the small UI images in `lila/public/images/ligo/`, and their generator `lila/bin/gen/ligo-logo.mjs`.
 
+### 1.2 npm packages removed with Phase 3 features
+
+Unit 3.2 removed the `ui/tournament`, `ui/swiss` and `ui/simul` workspace packages and the npm
+packages only they used: `date-fns` 2.30.0 (MIT), its dependency `@babel/runtime` 7.29.7 (MIT),
+`dragscroll` 0.0.8 (MIT) and `@types/dragscroll` 0.0.3 (MIT). No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file

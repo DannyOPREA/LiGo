@@ -8,8 +8,6 @@ import lila.round.RoundGame.secondsSinceCreation
 def watcher(
     pov: Pov,
     data: JsObject,
-    tour: Option[lila.tournament.TourAndTeamVs],
-    simul: Option[lila.simul.Simul],
     cross: Option[lila.game.Crosstable.WithMatchup],
     userTv: Option[User] = None,
     chatOption: Option[lila.chat.UserChat.Mine],
@@ -43,7 +41,7 @@ def watcher(
     .flag(_.zen):
       main(cls := "round")(
         st.aside(cls := "round__side")(
-          side(pov, data, tour, simul, userTv, bookmarked),
+          side(pov, data, userTv, bookmarked),
           chatOption.map(_ => views.chat.frag)
         ),
         ui.roundAppPreload(pov),
@@ -58,7 +56,7 @@ def crawler(pov: Pov)(using Context) =
     .graph(ui.povOpenGraph(pov)):
       main(cls := "round")(
         st.aside(cls := "round__side")(
-          views.game.side.meta(pov, none, none, none, none, bookmarked = false),
+          views.game.side.meta(pov, none, bookmarked = false),
           div(
             h1(titleGame(pov.game)),
             p(ui.describePov(pov))

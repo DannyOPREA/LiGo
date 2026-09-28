@@ -27,8 +27,6 @@ final private class RoundAsyncActor(
 
   private var takebackBoard: Option[TakebackBoard] = None
 
-  private var mightBeSimul = true // until proven otherwise
-
   final private class Player(color: Color):
 
     private var offlineSince: Option[Long] = nowMillis.some
@@ -53,8 +51,6 @@ final private class RoundAsyncActor(
     def setBye(): Unit =
       bye = true
 
-    private def isHostingSimul: Fu[Boolean] = mightBeSimul.so(userId).so(simulApi.resolve().isSimulHost)
-
     private def timeoutMillis: Long = {
       val base = {
         if bye then RoundSocket.ragequitTimeout
@@ -66,20 +62,19 @@ final private class RoundAsyncActor(
       base.atLeast(RoundSocket.ragequitTimeout.toMillis.toFloat)
     }.toLong
 
-    def isLongGone: Fu[Boolean] = {
+    def isLongGone: Fu[Boolean] = fuccess:
       !botConnected && offlineSince.exists(_ < (nowMillis - timeoutMillis))
-    }.so(isHostingSimul.not)
 
     def showMillisToGone: Fu[Option[Long]] =
       if botConnected then fuccess(none)
       else
         val now = nowMillis
-        offlineSince
-          .filter: since =>
-            bye || (now - since) > 5000
-          .so: since =>
-            isHostingSimul.map: x =>
-              (!x).option(timeoutMillis + since - now)
+        fuccess:
+          offlineSince
+            .filter: since =>
+              bye || (now - since) > 5000
+            .map: since =>
+              timeoutMillis + since - now
 
     def setBotConnected(v: Boolean) =
       botConnections = Math.max(0, botConnections + (if v then 1 else -1))
@@ -96,7 +91,6 @@ final private class RoundAsyncActor(
         players.mapWithColor: (color, player) =>
           player.userId = game.player(color).userId
           player.goneWeight = goneWeights(color)
-        mightBeSimul = game.isSimul
         if game.playableByAi then player.requestFishnet(game, this)
 
     // socket stuff
@@ -481,6 +475,5 @@ object RoundAsyncActor:
       val player: MovePlayer,
       val drawer: Drawer,
       val forecastApi: ForecastApi,
-      val simulApi: lila.core.data.CircularDep[lila.core.simul.SimulApi],
       val jsonView: JsonView
   )

@@ -70,9 +70,6 @@ object Chat:
 
   case class Setup(id: ChatId, publicSource: PublicSource)
 
-  def tournamentSetup(tourId: TourId) = Setup(tourId.into(ChatId), PublicSource.Tournament(tourId))
-  def simulSetup(simulId: SimulId) = Setup(simulId.into(ChatId), PublicSource.Simul(simulId))
-
   // if restricted, only presets are available
   case class Restricted(chat: MixedChat, lines: JsonChatLines, restricted: Boolean)
 

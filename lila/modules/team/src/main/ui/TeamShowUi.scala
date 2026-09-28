@@ -105,17 +105,6 @@ final class TeamShowUi(helpers: Helpers, teamUi: TeamUi, requestUi: TeamRequestU
               ),
               div(cls := "team-show__events")(
                 team.enabled.so(update).map(updateUi.teamLatest(team, _)),
-                (canSeeMembers && toursFrag.nonEmpty).option(
-                  st.section(cls := "team-show__tour team-events team-tournaments")(
-                    h2(cls := "team-show__section-title")(
-                      a(dataIcon := Icon.Trophy, cls := "text", href := routes.Team.tournaments(team.id))(
-                        trans.site.tournaments()
-                      )
-                    ),
-                    div(cls := "team-show__list-wrapper"):
-                      table(cls := "slist slist-resp")(toursFrag)
-                  )
-                ),
                 st.section(cls := "team-show__forum")(
                   h2(cls := "team-show__section-title")(
                     a(dataIcon := Icon.BubbleConvo, cls := "text", href := teamForumUrl(team.id))(

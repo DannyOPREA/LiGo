@@ -9,13 +9,12 @@ sealed trait LilaOut
 sealed trait SiteOut extends LilaOut
 sealed trait LobbyOut extends LilaOut
 sealed trait RoomOut extends LilaOut
-sealed trait SimulOut extends RoomOut
-sealed trait TourOut extends RoomOut
 sealed trait StudyOut extends RoomOut
 sealed trait RoundOut extends RoomOut
 sealed trait RacerOut extends RoomOut
 
-sealed trait AnyRoomOut extends RoundOut with StudyOut with TourOut with SimulOut with RacerOut
+// SimulOut and TourOut were removed with the simul and tournament modules (unit 3.2).
+sealed trait AnyRoomOut extends RoundOut with StudyOut with RacerOut
 
 object LilaOut:
 
@@ -71,13 +70,8 @@ object LilaOut:
 
   case class RoomIsPresent(reqId: Int, roomId: RoomId, userId: User.Id) extends StudyOut
 
-  // simul
-
-  case class RoomFilterPresent(reqId: Int, roomId: RoomId, userIds: Set[User.Id]) extends SimulOut
-
-  // tour
-
-  case class GetWaitingUsers(roomId: RoomId, name: String) extends TourOut
+  // RoomFilterPresent (simul) and GetWaitingUsers (tour) were removed with the simul and
+  // tournament modules (unit 3.2).
 
   // round
 
@@ -88,7 +82,7 @@ object LilaOut:
       tpe: String,
       data: JsonString
   ) extends RoundOut
-  case class RoundTourStanding(tourId: Tour.Id, data: JsonString) extends RoundOut
+  // RoundTourStanding was removed with the tournament module (unit 3.2).
   case class RoundResyncPlayer(fullId: Game.FullId) extends RoundOut
   case class RoundGone(fullId: Game.FullId, v: Boolean) extends RoundOut
   case class RoundGoneIn(fullId: Game.FullId, seconds: Int) extends RoundOut
@@ -99,7 +93,7 @@ object LilaOut:
 
   // racer
 
-  case class RacerState(raceId: Racer.Id, state: JsonString) extends TourOut
+  case class RacerState(raceId: Racer.Id, state: JsonString) extends RacerOut
 
   case class ApiUserOnline(userId: User.Id, online: Boolean) extends AnyRoomOut
   case object LilaBoot extends AnyRoomOut
@@ -245,12 +239,7 @@ object LilaOut:
           }
         }
 
-      case "room/filter-present" =>
-        get(args, 3) { case Array(reqIdS, roomId, userIds) =>
-          reqIdS.toIntOption.map { reqId =>
-            RoomFilterPresent(reqId, RoomId(roomId), User.Id.from(commas(userIds).toSet))
-          }
-        }
+      // "room/filter-present" (simul) was removed with the simul module (unit 3.2).
 
       case "tell/room/chat" =>
         get(args, 4) { case Array(roomId, version, troll, payload) =>
@@ -270,15 +259,8 @@ object LilaOut:
             LilaResponse(_, body)
         }
 
-      case "tour/get/waiting" =>
-        get(args, 2) { case Array(roomId, name) =>
-          Some(GetWaitingUsers(RoomId(roomId), name))
-        }
-
-      case "r/tour/standing" =>
-        get(args, 2) { case Array(tourId, data) =>
-          Some(RoundTourStanding(Tour.Id(tourId), JsonString(data)))
-        }
+      // "tour/get/waiting" and "r/tour/standing" were removed with the tournament module
+      // (unit 3.2).
 
       case "r/resync/player" => Some(RoundResyncPlayer(Game.FullId(args)))
 

@@ -11,7 +11,8 @@ val boardEditor = lila.web.ui.BoardEditorUi(helpers)
 
 val setup = lila.setup.ui.SetupUi(helpers)
 
-val gathering = lila.gathering.ui.GatheringUi(helpers)(env.web.settings.prizeTournamentMakers.get)
+// gathering (shared UI for the tournament/swiss/simul "no prizes" notice) was removed with the
+// tournament, swiss and simul modules (unit 3.2).
 
 val learn = lila.web.ui.LearnUi(helpers)
 
@@ -42,9 +43,8 @@ val feed =
 
 val cms = lila.cms.ui.CmsUi(helpers)(views.mod.ui.menu("cms"))
 
-val event = lila.event.ui.EventUi(helpers)(views.mod.ui.menu("event"))
-
-val userTournament = lila.tournament.ui.UserTournament(helpers, tournament.ui)
+// event and userTournament (the event manager and per-user tournament stats pages) were removed
+// with the event and tournament modules (unit 3.2).
 
 object account:
   val ui = lila.pref.ui.AccountUi(helpers)
