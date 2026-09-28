@@ -2,7 +2,7 @@
 # rules (libs/go-rules) and followed by KataGo, compared after every move on the legal points,
 # stones, captures and player to move, and at the end on the area score. 1,000 games a night, new
 # seeds each night; a pull request that changes the rules code or this test plays 60.
-# A red run uploads the report and each disagreeing game as SGF (the run's "differential" artifact).
+# A red or cancelled run uploads the report and each disagreeing game as SGF (the run's "differential" artifact).
 # Not a required check: it guards main over time rather than gating a PR.
 name: nightly-differential
 
@@ -74,7 +74,7 @@ jobs:
         if: always()
         run: cat "$DIFFERENTIAL_OUT/summary.md" >> "$GITHUB_STEP_SUMMARY" || echo "no report was written" >> "$GITHUB_STEP_SUMMARY"
       - name: Keep the report and disagreeing games
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1 (same pin as lila/.github/workflows/server.yml)
         with:
           name: differential

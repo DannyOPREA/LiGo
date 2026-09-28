@@ -396,7 +396,7 @@ possible. What Claude can't verify goes to you, explicitly listed in the PR (§7
 
 | Layer | What | Gate |
 |---|---|---|
-| Rules | Conformance fixtures, property tests (stones conserved, no zero-liberty groups after legal moves, superko invariants, SGF round-trip), nightly KataGo differential test | CI required; only `go-rules-expert` may edit fixtures (hook-enforced) |
+| Rules | Conformance fixtures, property tests (stones conserved, no zero-liberty groups after legal moves, superko invariants, SGF round-trip), nightly KataGo differential test | CI required (the nightly differential runs on a schedule and on rules PRs, not as a required PR check: unit 1.9); only `go-rules-expert` may edit fixtures (hook-enforced) |
 | Scoring | Benchmark of finished positions with agreed results | ≥ 97% agreement before Phase 4 closes |
 | Clocks | Deterministic-time tests (byo-yomi periods, resets, lag compensation, timeouts inside byo-yomi) | CI required |
 | Server | Module tests; Mongo/Redis integration tests | CI required |

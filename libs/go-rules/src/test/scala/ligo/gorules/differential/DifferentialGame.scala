@@ -29,6 +29,9 @@ final case class Disagreement(seed: Long, ply: Int, setup: Setup, what: List[Str
     s"seed $seed, ${setup.size.lines}x${setup.size.lines} ${setup.ruleset} komi ${setup.komi} " +
       s"handicap ${setup.handicap}, action $ply: ${what.mkString("; ")}"
 
+/** The adapter contradicted itself (refused a point it listed as legal, or a pass). */
+final case class AdapterBug(what: String) extends RuntimeException(what)
+
 /** One seeded random game, played by the adapter and followed by the oracle, compared after every action on
   * the legal points (while in play), the stones, the player to move and the captures, and at the end on the
   * area score (PLAN §3.3: legality, captures and final area score).
@@ -127,7 +130,8 @@ object DifferentialGame:
           case _ => false
       else
         val roll = rnd.nextInt(100)
-        game.undo.toOption.filter(_ => roll == 0) match
+        // Only asked on the rare roll: a takeback replays the whole game.
+        (if roll == 0 then game.undo.toOption else None) match
           case Some(undone) =>
             game = undone
             oracle.undo()
@@ -138,7 +142,7 @@ object DifferentialGame:
             val mover = game.toMove
             val index = game.actions.size
             if candidates.isEmpty || (roll < 3 && !lastWasPass) || index >= maxActions then
-              game = game.pass.fold(r => sys.error(s"seed $seed: pass refused (${r.key})"), identity)
+              game = game.pass.fold(r => throw AdapterBug(s"pass refused (${r.key})"), identity)
               oracle.play(mover, None)
               forced += index -> candidates.isEmpty
               stats = stats.copy(passes = stats.passes + 1)
@@ -147,7 +151,7 @@ object DifferentialGame:
               val before = game.stones.size
               game = game
                 .play(at)
-                .fold(r => sys.error(s"seed $seed: legal point ${at.sgf} refused (${r.key})"), identity)
+                .fold(r => throw AdapterBug(s"${at.sgf}, listed as legal, refused (${r.key})"), identity)
               oracle.play(mover, Some(at))
               forced -= index
               stats = stats.copy(
@@ -161,13 +165,22 @@ object DifferentialGame:
     def loop(): Either[Disagreement, GameStats] =
       compare() match
         case Left(d) => Left(d)
-        case Right(()) if step() => loop()
-        case Right(()) if !settled => Right(stats) // only after the safety net: nothing to count
         case Right(()) =>
-          val ours = EngineScore.whiteMinusBlack(game)
-          val theirs = oracle.finalScore
-          if ours == theirs then Right(stats.copy(scored = true))
-          else disagree(List(s"area score (White minus Black): ours $ours, KataGo $theirs"))
+          // An adapter that contradicts itself is a rules bug too: report it with the game so far.
+          val stepped: Either[Disagreement, Boolean] =
+            try Right(step())
+            catch case AdapterBug(what) => disagree(List(s"adapter: $what"))
+          stepped match
+            case Left(d) => Left(d)
+            case Right(true) => loop()
+            case Right(false) if !settled => Right(stats) // only after the safety net: nothing to count
+            case Right(false) => score()
+
+    def score(): Either[Disagreement, GameStats] =
+      val ours = EngineScore.whiteMinusBlack(game)
+      val theirs = oracle.finalScore
+      if ours == theirs then Right(stats.copy(scored = true))
+      else disagree(List(s"area score (White minus Black): ours $ours, KataGo $theirs"))
 
     loop()
 

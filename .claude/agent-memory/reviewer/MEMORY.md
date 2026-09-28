@@ -7,3 +7,4 @@
 - [Conformance fixture review patterns](conformance-fixture-review-patterns.md) — CI wiring, checker argv bug, circular oracles, phase, licence
 - [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, silent SGF parse, RU override, vacuous handicap test, truncated notice
 - [General review patterns](review-patterns-general.md) — transitive-dep licences, pipefail+find, docker caches, harness vacuity, pin-check order
+- [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo

@@ -45,22 +45,31 @@ object Differential:
     val options = parse(args.toList, Options())
     Files.createDirectories(options.out)
     val started = System.nanoTime
-    val results = run(options)
+    val (results, errors) = run(options)
     val seconds = (System.nanoTime - started) / 1e9
-    val summary = report(options, results, seconds)
+    val summary = report(options, results, errors, seconds)
     Files.writeString(options.out.resolve("summary.md"), summary, UTF_8)
     println(summary)
     val failures = results.collect { case (_, Left(d)) => d }
     failures.foreach: d =>
       Files.writeString(options.out.resolve(s"${d.seed}.sgf"), d.sgf, UTF_8)
       Files.writeString(options.out.resolve(s"${d.seed}.txt"), d.summary + "\n", UTF_8)
-    // Fewer results than games: a KataGo process failed (its error is printed above).
-    sys.exit(if results.size < options.games then 2 else if failures.nonEmpty then 1 else 0)
+    // Fewer results than games: a KataGo process failed (the summary says why).
+    sys.exit(
+      if results.size < options.games then 2
+      else if failures.nonEmpty || !enoughScored(options, results) then 1
+      else 0
+    )
+
+  // Nearly every random game ends settled and is scored; a run that scores few games has stopped testing
+  // the score (say, a change to how games end), so it fails rather than staying green.
+  private def enoughScored(o: Options, results: List[(Long, Either[Disagreement, GameStats])]): Boolean =
+    results.count(_._2.exists(_.scored)) * 10 >= o.games * 9
 
   /** Plays the games on `workers` threads, each with its own KataGo, and returns them in seed order. A worker
     * whose KataGo fails stops; the others play on.
     */
-  def run(options: Options): List[(Long, Either[Disagreement, GameStats])] =
+  def run(options: Options): (List[(Long, Either[Disagreement, GameStats])], List[String]) =
     val next = AtomicLong(0)
     val results = java.util.concurrent.ConcurrentHashMap[Long, Either[Disagreement, GameStats]]()
     val workers = options.workers.max(1).min(options.games.max(1))
@@ -87,8 +96,7 @@ object Differential:
         )
     pool.shutdown()
     pool.awaitTermination(1, TimeUnit.DAYS)
-    errors.asScala.foreach(e => System.err.println(s"differential: $e"))
-    results.asScala.toList.sortBy(_._1)
+    (results.asScala.toList.sortBy(_._1), errors.asScala.toList)
 
   private def command(o: Options): Seq[String] =
     Seq(o.katago, "gtp", "-model", o.model, "-config", o.config, "-override-config", overrides(o))
@@ -98,7 +106,12 @@ object Differential:
   private def overrides(o: Options): String =
     s"numSearchThreads=1,avoidMYTDaggerHack=false,logToStderr=false,logDir=${o.out.resolve("katago-logs")}"
 
-  def report(o: Options, results: List[(Long, Either[Disagreement, GameStats])], seconds: Double): String =
+  def report(
+      o: Options,
+      results: List[(Long, Either[Disagreement, GameStats])],
+      errors: List[String],
+      seconds: Double
+  ): String =
     val stats = results.collect { case (_, Right(s)) => s }
     val failures = results.collect { case (_, Left(d)) => d }
     def sum(f: GameStats => Int) = stats.map(f).sum
@@ -106,8 +119,10 @@ object Differential:
     val verdict =
       if results.size < o.games then
         s"**Incomplete**: ${o.games - results.size} of ${o.games} games did not run"
-      else if failures.isEmpty then s"**All ${o.games} games agree with KataGo.**"
-      else s"**${failures.size} of ${o.games} games disagree with KataGo.**"
+      else if failures.nonEmpty then s"**${failures.size} of ${o.games} games disagree with KataGo.**"
+      else if !enoughScored(o, results) then
+        s"**Too few final scores compared** (${stats.count(_.scored)} of ${o.games}; at least 90% expected)."
+      else s"**All ${o.games} games agree with KataGo.**"
     val lines = List(
       "# Differential test: libs/go-rules vs KataGo",
       "",
@@ -117,11 +132,12 @@ object Differential:
       s"- Games that agree: ${stats.size} (${bySize.mkString(", ")}); with handicap: ${stats.count(_.handicap > 0)}.",
       s"- Actions compared: ${sum(_.actions)} (stones ${sum(_.stones)}, passes ${sum(_.passes)}, " +
         s"takebacks ${sum(_.undos)}, resumptions ${sum(_.resumes)}); stones captured: ${sum(_.captured)}.",
-      s"- Empty points refused by both: suicide ${sum(_.suicideRefusals)}, simple ko ${sum(_.koRefusals)}, " +
+      s"- Refusals of an empty point, counted per position, by both: suicide ${sum(_.suicideRefusals)}, simple ko ${sum(_.koRefusals)}, " +
         s"other superko ${sum(_.superkoRefusals)}.",
       s"- Final area scores compared: ${stats.count(_.scored)} (a game stopped by the safety net of 4 actions " +
         "per point ends unsettled and is not counted)."
-    ) ++ Option.when(failures.nonEmpty)("\n## Disagreements\n").toList ++
+    ) ++ Option.when(errors.nonEmpty)("\n## Errors\n").toList ++ errors.map(e => s"- $e") ++
+      Option.when(failures.nonEmpty)("\n## Disagreements\n").toList ++
       failures.map(d => s"- ${d.summary} (replay: `--seed ${d.seed} --games 1`; SGF: ${d.seed}.sgf)")
     lines.mkString("\n") + "\n"
 
