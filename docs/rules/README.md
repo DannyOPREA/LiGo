@@ -6,14 +6,14 @@
 the server, goban-engine in the browser) and the conformance fixtures in `libs/conformance/`
 answer to it.
 
-Status: **draft for owner approval** (unit 1.5). Its section 12 lists the choices still open; each
-is written into the rules with the recommended answer until the owner decides.
+Status: **approved by the owner** (unit 1.5, 2026-09-28). Its section 12 records the choices the
+owner approved; each is written into the rules.
 
 ## What is in it
 1. Scope · 2. Board, coordinates (fixtures use SGF letters) · 3. Moves · 4. Ko and superko ·
 5. Handicap · 6. Komi · 7. End of play and the scoring phase · 8. Scoring and results ·
 9. Engine mapping (guidance for the adapters) · 10. Bug classes the fixtures must cover ·
-11. Intentional departures from the official rule texts · 12. Open points for the owner.
+11. Intentional departures from the official rule texts · 12. Choices approved by the owner.
 
 ## How fixtures cite it
 Every testable rule has a stable ID such as `R-KO-2` or `R-SCORE-J2`. Each fixture lists the IDs

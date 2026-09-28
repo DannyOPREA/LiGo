@@ -1,6 +1,7 @@
 # LiGo rules spec (Japanese and Chinese)
 
-Status: **draft for owner approval** (unit 1.5, 2026-09-27). Maintained by the go-rules-expert
+Status: **approved by the owner** (unit 1.5, 2026-09-28; all 11 open points accepted as
+recommended, logs/decisions.md). Maintained by the go-rules-expert
 agent; approved by the project owner. Settled inputs: PLAN §1.2 (sizes, rulesets, end of game),
 [ADR 0003](../decisions/0003-superko-in-both-rulesets.md) (situational superko in both rulesets),
 [ADR 0012](../decisions/0012-strategygames-for-server-go-rules.md) (strategygames is the server
@@ -10,8 +11,8 @@ engine). Where a rule depends on a build-vs-buy memo the owner has not decided y
 
 How to read it: every rule that fixtures can test has an ID in bold, like **R-KO-2**. IDs are
 stable: a changed rule keeps its ID, a removed rule's ID is never reused. Sections 9–10 are
-guidance for units 1.6–1.9, not rules. Section 12 lists what the owner still has to choose; each
-open rule below is written with the recommended choice and tagged "(open point N)".
+guidance for units 1.6–1.9, not rules. Section 12 records the choices the owner approved; the rules
+below that came from those choices keep their tag "(open point N)".
 
 Rule texts referred to: the Japanese Rules of Go (Nihon Ki-in and Kansai Ki-in, 1989; "J1989") and
 the Chinese Weiqi Rules (Chinese Weiqi Association, 2017; "C2017"). The texts could not be fetched
@@ -319,9 +320,10 @@ test line numbers are from its GitHub `main` (`e61c56e`); the npm package ships 
 8. **Limit on resuming** (R-SP-9): neither text needs one, because neither has an online
    scoring phase.
 
-## 12. Open points for the owner
+## 12. Choices approved by the owner
 
-Each has a recommendation (written into the rules above) and one alternative.
+Each was approved as recommended on 2026-09-28 (the recommendation is written into the rules
+above); the alternative is kept for the record.
 
 1. **Do situations after a pass count for superko?** Recommend **yes** (R-KO-2): it is the plain
    reading of ADR 0003 ("a position that existed earlier"), and KataGo and goban do it (goban
