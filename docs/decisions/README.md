@@ -23,6 +23,7 @@ edit allowed). While the PR that introduces an ADR is still open, its wording ma
 | 0014 | [OGS goban from npm for the client-side rules, SGF and board](0014-ogs-goban-for-client-rules-and-board.md) | Accepted | 2026-09-28 |
 | 0015 | [No approval prompts in the repo's Claude settings](0015-no-approval-prompts.md) | Accepted | 2026-09-28 |
 | 0016 | [Scoring as a Node service: KataGo + goban autoscore + goscorer](0016-scoring-service-node-autoscore-goscorer.md) | Accepted | 2026-09-28 |
+| 0018 | [Phase 3 module map: what lila keeps, keeps dormant and removes](0018-phase-3-module-map.md) | Accepted | 2026-09-28 |
 
 ## Template
 
