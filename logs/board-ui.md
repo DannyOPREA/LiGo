@@ -11,6 +11,7 @@
 - goban turns stone placement off after `sendMove` returns: report the move from `sendMove` in a microtask so a page can play it back at once. goban's `onError` skips suicide; wrap `errorHandler` for every refusal (2026-09-28, 2.1).
 - goban's default theme (no `getSelectedThemes` callback) is Kaya/Slate/Shell and loads a board picture from OGS's CDN: LiGo overrides `getSelectedThemes` with the plain theme (2026-09-28, 2.1).
 - libs/board is in lila's pnpm workspace: run its scripts from `lila/` with `--filter @ligo/board`; `pnpm run` inside libs/board starts a lockfile of its own (2026-09-28, 2.1).
+- Don't list lila's lint tools again in libs/board: its oxlint resolved without lila's optional `oxlint-tsgolint` peer, a second lockfile entry that a full install never unpacks, so `pnpm licenses` read its licence as Unknown. The board uses lila's own oxfmt/oxlint; install with `--filter @ligo/board --filter lila` (2026-09-28, 2.1).
 
 ## Entries (newest first)
 

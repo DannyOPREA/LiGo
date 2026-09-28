@@ -189,15 +189,6 @@ importers:
       esbuild:
         specifier: 0.28.2
         version: 0.28.2
-      oxfmt:
-        specifier: 0.68.0
-        version: 0.68.0
-      oxlint:
-        specifier: 1.85.0
-        version: 1.85.0
-      oxlint-plugin-golden:
-        specifier: ^0.1.2
-        version: 0.1.2
       typescript:
         specifier: 7.0.2
         version: 7.0.2

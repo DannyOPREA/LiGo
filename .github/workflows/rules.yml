@@ -81,9 +81,10 @@ jobs:
           node-version-file: libs/board/.node-version
           cache: pnpm
           cache-dependency-path: lila/pnpm-lock.yaml
+      # lila itself too: the board is checked with lila's own oxfmt and oxlint (its root devDependencies).
       - name: Install libs/board's packages
         working-directory: lila
-        run: pnpm install --frozen-lockfile --filter @ligo/board
+        run: pnpm install --frozen-lockfile --filter @ligo/board --filter lila
       - name: libs/board's npm dependencies are AGPL-compatible
         working-directory: lila
         shell: bash

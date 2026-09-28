@@ -3,8 +3,8 @@
 libs/board's own code is MIT (ADR 0006, [`LICENSE-MIT`](../../LICENSE-MIT)). It depends on, but
 does not copy, the npm packages below, which pnpm downloads at install time (pinned in
 lila's `lila/pnpm-lock.yaml`: libs/board is in lila's pnpm workspace since unit 2.1). Its
-development tools (Playwright, esbuild, TypeScript, oxfmt, oxlint) run tests and checks only and
-are not part of what the browser gets.
+development tools (Playwright, esbuild, TypeScript, and lila's own oxfmt and oxlint) run tests and
+checks only and are not part of what the browser gets.
 
 ## goban-engine 8.3.226 (Apache-2.0)
 

@@ -125,7 +125,7 @@ docker_rules_sbt() {
 # inside libs/board wouldn't find the workspace). In docker mode the ui container sees it at
 # /libs/board (compose.yml mounts libs/). Its browser tests need Chromium, which the ui container
 # doesn't have: docker mode runs the Node tests and says so; native mode and CI run them all.
-board_pnpm() { echo "pnpm install --frozen-lockfile --filter @ligo/board && pnpm --filter @ligo/board run $1"; }
+board_pnpm() { echo "pnpm install --frozen-lockfile --filter @ligo/board --filter lila && pnpm --filter @ligo/board run $1"; }
 docker_board() {
   docker_env
   local script=test:node
