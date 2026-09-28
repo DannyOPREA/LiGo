@@ -6,6 +6,8 @@ packages:
   - 'ui/@types/*'
   # LiGo: the Go board and its rules (goban), built into lila's pages (unit 2.1)
   - '../libs/board'
+  # LiGo: the scoring service core, KataGo + goban-engine autoscore + goscorer (ADR 0016, unit 4.4)
+  - '../services/scoring'
 ignoredOptionalDependencies:
   - '@ox*/*-arm-*'
   - '@ox*/*-ia32-*'
