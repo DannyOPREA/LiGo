@@ -13,8 +13,29 @@
 - libs/board is in lila's pnpm workspace: run its scripts from `lila/` with `--filter @ligo/board`; `pnpm run` inside libs/board starts a lockfile of its own (2026-09-28, 2.1).
 - Don't list lila's lint tools again in libs/board: its oxlint resolved without lila's optional `oxlint-tsgolint` peer, a second lockfile entry that a full install never unpacks, so `pnpm licenses` read its licence as Unknown. The board uses lila's own oxfmt/oxlint; install with `--filter @ligo/board --filter lila` (2026-09-28, 2.1).
 - goban's `pass()` leaves stone placement on, and its `updateTitleAndStonePlacement` turns it off whenever a preview is shown: an adapter must keep "a move is waiting" state of its own (2026-09-28, 2.1 review).
+- A board box that goban measures needs an explicit width: `margin: 0 auto` on a flex item shrinks it to its content (the loading text), and goban then draws a tiny board (2026-09-28, 2.2).
 
 ## Entries (newest first)
+
+### 2026-09-28 · 2.2 · Playground page (`/playground`)
+- Done: a `/playground` route (`controllers.Playground`, `views.playground`) and a `ui/playground`
+  snabbdom page: play both colours on 9×9, 13×13 or 19×19; ruleset, handicap and komi for the next
+  game; pass, undo, new game, prisoner counts, "both passed" notice. Undo and new game remount the
+  board with the shorter move list, so nothing reaches into goban. goban loads lazily with
+  `import()`: lila's esbuild splits it into its own chunk (page bundle 8.4 KB).
+- `handicapStones` and `standardKomi` (R-HCP-4, R-KOMI) moved from libs/board's test helpers into
+  `src/rules.mjs` with types and 2 more tests, so the page and the tests share one table.
+- Worked: 8 vitest tests of the page's controller; `dev/ligo test ui` 245/245, `test board`
+  219/219; lila compiles with no warnings; lint and format clean.
+- Didn't: the full site can't start in cloud sessions (no Docker daemon for Mongo and Redis), so no
+  walkthrough on the real page. Instead a scratch Playwright script served lila's compiled bundle
+  and CSS and played the page at 1280×800 and on an iPhone 13 layout: capture, undo, two passes,
+  19×19 with 4 stones, 13×13 handicap off, no errors, no network. It caught a bug: on phones the
+  board shrank to the loading text's width (`margin: auto` on a flex item); fixed with `width: 100%`.
+- Decisions (Claude's, under the owner's delegation; logs/decisions.md): 13×13 even games only; plain
+  English text (unit 0.7's precedent); no menu link yet; the tables' move above.
+- Lesson: a flex item with `margin: 0 auto` shrinks to its content; a box that something measures
+  (goban's board) needs an explicit width.
 
 ### 2026-09-28 · 2.1 review · Reviewer findings fixed
 - Reviewer (adversarial, Chromium probes): 2 blocking, 6 should-fix. Fixed: `dev/ligo deps` still
