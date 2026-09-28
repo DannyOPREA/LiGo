@@ -7,6 +7,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
   stop" delegation). Acceptance: `mountBoard` wraps goban's SVG board for lila's pages, tested in
   Chromium on desktop and phone sizes; libs/board joins lila's pnpm workspace (ADR 0017).
   Logs: logs/board-ui.md.
+- Phase 3 breakdown (started 2026-09-28, under the owner's "work until I tell you to stop"
+  delegation): Phase 3 split into units 3.1–3.20 in docs/PLAN.md §5; module map in ADR 0018.
+  Logs: logs/upstream-fork.md. Units 3.1–3.17 don't need Phase 2 and are built next in order;
+  3.18–3.20 wait for Phase 2 units 2.1, 2.3 and 2.4. Phase 2 and unit 1.9 run in their own threads.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -64,11 +68,15 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Phase 1 unit 1.9, the nightly KataGo differential test (its own thread).
 - Phase 2 units 2.2 (playground page), 2.3 (touch-confirm setting), 2.4 (snapshots + demo)
   (docs/PLAN.md §5, "Phase 2 units").
+- Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
   session starting oriented. They get exercised as Phase 1 units hit them.
 
 ## Waiting on owner
+- Phase 3 deletions: Claude's safety check needs your own typed OK before it bulk-deletes files
+  (unit 3.1's non-free assets, units 3.2–3.7's chess modules). Reply "go ahead with the Phase 3
+  deletions" in the Phase 3 thread.
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
 - Add the `rules` job to the `main` ruleset's required checks.
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
@@ -94,4 +102,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | 1.1–1.8 done; 1.9 in progress (of 9 units) |
 | 2. Board integration | 2.1 in review (of 4 units) |
-| 3–9 | not started |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.9 next, 3.1–3.7 wait for your OK to delete files |
+| 4–9 | not started |

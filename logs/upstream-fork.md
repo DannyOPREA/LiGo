@@ -11,6 +11,15 @@
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-28 · Phase 3 breakdown · Split fork & de-chess into units
+- Did: split PLAN §5's Phase 3 row into units 3.1–3.20 (asset strip; six removal units; rebrand leftovers; a design ADR for Go core types, the game schema and the round protocol; go-rules wiring; core, game, round, lila-ws, game creation and remaining-module migrations; dropping scalachess; round and lobby UI; the demo) and classified every lila module and `ui/` package in ADR 0018. Refreshed docs/STATUS.md.
+- Worked: lila's `build.sbt` module graph gives a clean removal order (gathering only feeds tournaments; study feeds relay, practice and studySearch). The reviewer's scripted checks found every module in exactly one bucket and no removal unit deleting something a later one needs.
+- Didn't work / dead ends: the first draft said scalachess could be dropped while keeping `scalachess-rating`; the reviewer found its POM depends on scalachess core and that kept modules use scalachess's game-neutral types (`ByColor`, `Centis`, `IntRating`, `PlayerTitle`). Unit 3.9 now decides scalachess's fate. It also found gaps in what units touch (`mod` reaching `game` only through `evaluation`, `ui/round` importing `voice`/`keyboardMove`, engine code in `ui/lib`, missing lila-ws actors), now in the table.
+- Lessons: read the POM of any artifact a plan says "stays when X goes". "keep dormant" still costs a migration once scalachess goes, so the map keeps dormant only what a public demo would need (report, mod, appeal, shutup).
+- Decisions: the split and the module map, Claude's calls under the owner's 2026-09-28 delegation (ADR 0018, logs/decisions.md).
+- Verified by Claude: every module in `lila/modules` appears in exactly one bucket of ADR 0018 and every `lila/ui` package is listed (scripted check); `bash .claude/skills/verify/verify.sh` (see PR). · Needs owner verification: none; skim the units and ADR 0018's remove list if you like.
+- Follow-ups: 3.1 starts next. Only 3.18–3.20 need Phase 2 (2.1, 2.3, 2.4).
 ### 2026-09-26 · unit 0.2 · Import upstream snapshots + baseline build — DONE (supersedes the "IN PROGRESS" entry below)
 - Did:
   - Owner allowed the four blocked hosts. Built and ran the unmodified lila + lila-ws in a cloud
