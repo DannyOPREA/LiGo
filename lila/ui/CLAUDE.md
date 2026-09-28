@@ -20,7 +20,7 @@ snabbdom, styled with SCSS, bundled by the custom esbuild-based `ui/.build/` (`u
   reaching into goban, and whose settings (size, ruleset, handicap, komi) come from `libs/board`'s
   `rules.mjs` (`handicapStones`, `standardKomi`).
 - Page browser tests (unit 2.4): `ui/playground/e2e/` holds Playwright screenshots and a scripted
-  game against the *built* page (`dev/ligo compile ui`, then `dev/ligo test pages`), served from
+  game against the _built_ page (`dev/ligo compile ui`, then `dev/ligo test pages`), served from
   `public/` without a lila server. After a deliberate visual change, re-record with
   `--update-snapshots` and look at every changed picture before committing it.
 - Dependencies: never non-frozen `pnpm install`; any `package.json` change needs an approved
