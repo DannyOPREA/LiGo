@@ -36,6 +36,22 @@ function log(message: string): void {
   console.error(`[scoring] ${message}`);
 }
 
+/** `redisUrl` may carry a password (`redis://:secret@host:port`); this is only ever used in a log
+ * line, so the credentials never reach stdout/stderr. Falls back to a fixed placeholder if the
+ * value isn't a URL `new URL()` can parse, rather than risk logging it verbatim. */
+function redactedUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    if (u.username || u.password) {
+      u.username = u.username ? '***' : '';
+      u.password = u.password ? '***' : '';
+    }
+    return u.toString();
+  } catch {
+    return '(unparseable SCORING_REDIS_URL, not logged)';
+  }
+}
+
 async function main(): Promise<void> {
   const redisUrl = process.env.SCORING_REDIS_URL ?? 'redis://127.0.0.1:6379';
   const katago =
@@ -78,7 +94,7 @@ async function main(): Promise<void> {
     { onError: (m, e) => log(`${m}${e ? `: ${e}` : ''}`) },
   );
   await worker.start();
-  log(`listening on ${IN_CHANNEL}, replying on ${OUT_CHANNEL} (${redisUrl})`);
+  log(`listening on ${IN_CHANNEL}, replying on ${OUT_CHANNEL} (${redactedUrl(redisUrl)})`);
 
   let stopping = false;
   const stop = async (signal: string): Promise<void> => {
@@ -95,5 +111,9 @@ async function main(): Promise<void> {
 
 main().catch(e => {
   console.error(e);
-  process.exitCode = 1;
+  // `process.exitCode = 1` alone waits for the event loop to drain on its own, which an open
+  // ioredis connection (or a KataGo child process) can keep alive indefinitely — a boot failure
+  // (e.g. Redis unreachable) must actually end the process (native mode's restart loop, or
+  // docker's `restart: unless-stopped`, is what brings it back), not hang forever half-started.
+  process.exit(1);
 });

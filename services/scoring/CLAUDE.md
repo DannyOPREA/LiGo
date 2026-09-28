@@ -57,9 +57,15 @@ How it works: [README.md](README.md).
   handling); `worker.ts` itself knows nothing about ioredis specifically (`Publisher`/`Subscriber`
   are the narrow slice of its interface it needs), so `test/worker.test.ts` drives it with an
   in-process fake pub/sub. Supervision: `dev/ligo up`/`down`/`status`/`logs scoring` in native
-  mode (`dev/ligo`'s `native_scoring_worker_up`/`_down`, alongside lila/lila-ws); docker mode does
-  not start it (no KataGo in any container yet — no OpenCL passthrough to the owner's GPU, no
-  binary staged into an image), an honest skip like `docker_scoring` already makes for tests.
+  mode (`dev/ligo`'s `native_scoring_worker_up`/`_down`, a small restart-loop supervisor —
+  `start_bg_restart`, capped exponential backoff — rather than the generic `start_bg` lila/lila-ws
+  use, since `start_bg`'s `tail -f /dev/null |` wrapper keeps its recorded pid alive even after a
+  plain Node worker under it has died); docker mode runs it too, as `dev/lila-docker/compose.yml`'s
+  `scoring` service (the `ui` container's Node image, `:z`-mounted binds), but with no
+  `KATAGO_BIN`/`KATAGO_MODEL`/`KATAGO_CONFIG` set at all — no container has KataGo yet (no OpenCL
+  passthrough to the owner's GPU, no binary staged into an image) — so every `propose` there
+  answers `src:"none"` (ADR 0020 §4's own fallback), same as native mode with no KataGo installed
+  (unit 4.5 review, logs/decisions.md).
 - Bumping `goban-engine`: change the exact version in `package.json` (from `lila/`, as above),
   keeping step with `libs/board`'s version (both packages must pin the same one), check its engine
   changes (upstream-scout), keep `NOTICE.md`/`test/autoscore_test_files/NOTICE.md` and COPYING.md
@@ -75,10 +81,12 @@ crash-and-restart), the Redis worker against an in-process fake pub/sub
 reply), a real Redis round trip (`test/worker-redis.test.ts`: starts its own `redis-server` on a
 free port, skipped — not failed — when `redis-server` isn't on PATH), and, only when
 `KATAGO_BIN`/`KATAGO_TEST_NET` are set (as `dev/ligo katago env` prints them), one real-KataGo test
-(`test/integration.test.ts`; otherwise skipped, not failed). Docker mode: test suite skipped (no
-KataGo in the ui container yet); `dev/ligo up`/`down` don't start a worker there either (unit 4.5,
-see the "Redis worker" note above). CI: the `scoring` job in `.github/workflows/scoring.yml`
-installs `redis-server` so the round trip runs there too.
+(`test/integration.test.ts`; otherwise skipped, not failed). Docker mode: the test suite itself is
+still skipped there (no KataGo in the `ui` container), but `dev/ligo up`/`down`/`status`/
+`logs scoring` DO start a live worker there now — see the "Redis worker" note above — it just
+always answers `src:"none"`. CI: the `scoring` job in `.github/workflows/scoring.yml` installs
+`redis-server` so the round trip runs there too (`LIGO_REQUIRE_REDIS=1` turns a missing binary
+into a failure, not a skip).
 
 ## Logs to read
 `logs/scoring.md` (Lessons + latest entries).

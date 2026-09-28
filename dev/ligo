@@ -35,12 +35,13 @@ usage() {
 Usage: dev/ligo <command> [args]        (mode: $MODE)
 
   up                  Start the stack (first run builds the UI and compiles; takes a while).
-                      Native mode also starts the scoring Redis worker (unit 4.5); docker mode
-                      doesn't yet (no KataGo in any container)
+                      Also starts the scoring Redis worker (unit 4.5): native mode with real
+                      KataGo if installed, docker mode with none yet (answers every propose
+                      src:"none" until a later unit gives it a KataGo story)
   down                Stop the stack (database data is kept)
   db                  Start only Mongo and Redis (idempotent; the SessionStart hook runs it)
   status              Show what is running
-  logs [lila|ws|db|scoring]  Follow logs (scoring: native mode only, unit 4.5)
+  logs [lila|ws|db|scoring]  Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
   test [what]         Run the unit tests of lila, ws, ui, rules, board, scoring or all (default:
                       all); rules = both Go rules engines: libs/go-rules (server) and libs/board
@@ -148,11 +149,12 @@ native_board() { (cd "$LILA" && run sh -c "$(board_pnpm typecheck) && pnpm --fil
 # No build step (Node 24 runs its .ts directly): "test" typechecks nothing itself, so this runs
 # typecheck, lint and the tests together. Its tests need KataGo installed to run the real-KataGo
 # integration test, and are skipped otherwise (test/integration.test.ts); everything else runs
-# with no KataGo at all. Docker mode has no KataGo in its containers yet (that plumbing is unit
-# 4.5's, alongside the Redis worker), so it says so rather than pretending to test it.
+# with no KataGo at all. This test runner has no container of its own (the ui container has no
+# KataGo), so it says so rather than pretending to test it; the live worker docker mode actually
+# runs (dev/ligo up) is the separate `scoring` compose service, below.
 scoring_pnpm() { echo "pnpm install --frozen-lockfile --filter @ligo/scoring --filter lila && pnpm --filter @ligo/scoring run $1"; }
 docker_scoring() {
-  say "scoring service tests skipped in docker mode (no KataGo in the ui container yet; unit 4.5 wires up supervision); native mode and CI run them"
+  say "scoring service tests skipped in docker mode (no KataGo in the ui container); native mode and CI run them"
 }
 native_scoring() {
   # When KataGo is installed, load KATAGO_BIN/KATAGO_TEST_NET/KATAGO_GTP_CONFIG (dev/katago.sh
@@ -167,16 +169,24 @@ native_scoring() {
 }
 
 # services/scoring's Redis worker (unit 4.5, ADR 0020 §1: `scoring-in`/`scoring-out`, `start` on
-# boot). Native mode: supervised exactly like lila/lila-ws (start_bg/stop_bg, its own pid and log
-# under .ligo/). KataGo is best-effort: if `dev/ligo katago install` has already run, the worker
-# gets KATAGO_BIN/KATAGO_MODEL/KATAGO_CONFIG (the test network `katago env` also gives CI and the
-# differential test — weak, but real KataGo plumbing rather than a full-size net a dev box may not
-# have); otherwise the worker starts anyway with none of them set, and every `propose` answers
-# `src:"none"` (ADR 0020 §4's own fallback), same as a KataGo that crashed. Docker mode has no
-# KataGo in any container yet (no OpenCL passthrough to the owner's GPU, no binary staged into an
-# image build) — `dev/ligo up`/`down` in docker mode do not start or stop a scoring worker, an
-# honest skip (docker_scoring already says the same for tests); a later unit adds a `scoring`
-# compose service once KataGo has a docker story.
+# boot). Native mode: supervised like lila/lila-ws (its own pid and log under .ligo/), but with its
+# own small restart loop rather than start_bg/stop_bg's generic wrapper — that wrapper (a
+# `tail -f /dev/null` piped into the command, see start_bg's own comment) exists only to keep
+# stdin open for Play, which this plain Node process doesn't need, and it would also hide a dead
+# worker from `dev/ligo status` (the piped `tail` stays alive even after the command it's piped
+# into has exited). KataGo is best-effort: if `dev/ligo katago install` has already run, the
+# worker gets KATAGO_BIN/KATAGO_MODEL/KATAGO_CONFIG (the test network `katago env` also gives CI
+# and the differential test — weak, but real KataGo plumbing rather than a full-size net a dev box
+# may not have); otherwise the worker starts anyway with none of them set, and every `propose`
+# answers `src:"none"` (ADR 0020 §4's own fallback), same as a KataGo that crashed.
+#
+# Docker mode (decision, unit 4.5, logs/decisions.md): dev/lila-docker/compose.yml's `scoring`
+# service runs the worker with NO KataGo env at all (no container has KataGo yet — no OpenCL
+# passthrough to the owner's GPU, no binary staged into an image), so it always answers
+# `src:"none"`, same fallback as native mode with no KataGo installed; `dev/ligo up`/`down` start
+# and stop it like every other compose service (it isn't behind a profile), and `status`/
+# `logs scoring` read it from `docker compose`. A later unit can give docker mode a real KataGo
+# without changing this shape, only the compose service's environment.
 scoring_katago_env() {
   local envout
   if ! envout=$("$ROOT/dev/katago.sh" env 2>/dev/null); then
@@ -193,7 +203,7 @@ scoring_katago_env() {
 native_scoring_worker_up() {
   need_node_modules
   scoring_katago_env
-  start_bg scoring-worker "$LILA" pnpm --filter @ligo/scoring run start
+  start_bg_restart scoring-worker "$LILA" pnpm --filter @ligo/scoring run start
 }
 native_scoring_worker_down() { stop_bg scoring-worker; }
 
@@ -346,6 +356,39 @@ stop_bg() {
   rm -f "$pidf"
 }
 
+# start_bg_restart <name> <dir> <command...>: like start_bg, but the recorded pid is a small
+# supervisor loop (not a `tail -f /dev/null` pipe) that re-runs <command...> with a capped
+# exponential backoff whenever it exits, as long as the pid file still exists. Used for the
+# scoring worker (unit 4.5): plain Node processes don't need start_bg's stdin-open trick, and a
+# crashed worker coming back on its own means `dev/ligo status` reporting "running" stays true
+# rather than describing a dead process a generic wrapper happened to outlive. stop_bg (above)
+# stops it the same way: SIGTERM to the whole process group, which reaches the loop and its
+# current child together, then removing the pid file so the loop (if still alive) won't restart.
+start_bg_restart() {
+  local name=$1 dir=$2; shift 2
+  local pidf="$STATE/$name.pid"
+  if [[ -f "$pidf" ]] && kill -0 "$(cat "$pidf")" 2>/dev/null; then say "$name already running"; return; fi
+  mkdir -p "$STATE/logs"
+  rm -f "$pidf"
+  # shellcheck disable=SC2016 # expanded by the child bash; $0 is the name (for the log line), $1
+  # the pid file, the rest the command to supervise.
+  (cd "$dir" && setsid bash -c '
+    echo $$ > "$1"
+    name=$0; pidfile=$1; shift
+    backoff=1
+    while [[ -f "$pidfile" ]]; do
+      "$@"
+      code=$?
+      [[ -f "$pidfile" ]] || break
+      echo "[ligo] $name exited (code $code); restarting in ${backoff}s" >&2
+      sleep "$backoff"
+      if (( backoff < 30 )); then backoff=$(( backoff * 2 )); else backoff=30; fi
+    done
+  ' "$name" "$pidf" "$@" </dev/null >"$STATE/logs/$name.log" 2>&1 &)
+  for _ in $(seq 50); do [[ -s "$pidf" ]] && break; sleep 0.1; done
+  say "started $name (log: .ligo/logs/$name.log)"
+}
+
 wait_http() {  # wait_http <url> <seconds>
   local url=$1 limit=$2 t=0
   until [[ "$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)" =~ ^[23] ]]; do
@@ -488,7 +531,7 @@ cmd_logs() {
       lila) dc logs -f lila ;;
       ws) dc logs -f lila_ws ;;
       db) dc logs -f mongodb ;;
-      scoring) die "scoring isn't part of docker mode yet (no KataGo in any container); use native mode" ;;
+      scoring) dc logs -f scoring ;;
       *) dc logs -f "$what" ;;
     esac
   else

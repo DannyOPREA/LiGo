@@ -35,12 +35,14 @@ about running and testing it.
 
 `src/main.ts` is the real entry point: it subscribes to `scoring-in`, publishes replies to
 `scoring-out` (ADR 0020 §1), and sends `{"t":"start"}` on boot so lila knows to re-send whatever it
-was waiting on. `dev/ligo up`/`down`/`status`/`logs scoring` supervise it in native mode, exactly
-like lila and lila-ws (its pid and log live under `.ligo/`); see `dev/ligo`'s
-`scoring_katago_env`/`native_scoring_worker_up` and `services/scoring/CLAUDE.md`'s "Redis worker"
-section for what it does and doesn't guarantee (concurrency, dedup of re-sent requests, crash
-recovery). Docker mode doesn't start it yet — no KataGo in any container (`dev/ligo test scoring`
-already says the same for tests).
+was waiting on. `dev/ligo up`/`down`/`status`/`logs scoring` supervise it in native mode, restarting
+it automatically (with backoff) if it ever exits (its pid and log live under `.ligo/`); see
+`dev/ligo`'s `scoring_katago_env`/`native_scoring_worker_up` and `services/scoring/CLAUDE.md`'s
+"Redis worker" section for what it does and doesn't guarantee (concurrency, dedup of re-sent
+requests, crash recovery). Docker mode also starts it, as a `scoring` compose service — but with no
+KataGo in any container yet, so it always answers `src:"none"` (ADR 0020 §4's fallback), unlike
+native mode which uses real KataGo when `dev/ligo katago env` finds one (`dev/ligo test scoring`
+still skips its own test suite in docker mode either way).
 
 Run it by hand:
 

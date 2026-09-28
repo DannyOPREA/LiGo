@@ -49,6 +49,10 @@ jobs:
       # setup bug, not the normal "no KataGo on this machine" case: fail test/integration.test.ts
       # instead of letting it silently skip (review finding, logs/scoring.md "4.4 review fixes").
       LIGO_REQUIRE_KATAGO: '1'
+      # Same idea for the Redis worker's round-trip test (unit 4.5 review finding): CI always
+      # installs redis-server below, so a missing binary here is a setup bug, not the normal "no
+      # Redis on this machine" case.
+      LIGO_REQUIRE_REDIS: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install KataGo (CPU)

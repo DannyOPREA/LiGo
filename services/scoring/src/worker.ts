@@ -70,8 +70,19 @@ export class Worker {
   private readonly replyCache = new Map<string, Reply>();
   private readonly inFlight = new Set<string>();
   private proposeQueue: Promise<void> = Promise.resolve();
+  // ioredis (like Node's EventEmitter in general) does not catch a listener's throw: it
+  // propagates straight out of `emit()`, synchronously, into whatever code path delivered the
+  // message — an uncaught exception that kills the process. `onMessage` guards its own inputs
+  // (JSON.parse, the parsed shape), but this wrapper is the last line of defence against any
+  // other throw reaching ioredis, since "a game never stays without a proposal" also means this
+  // worker itself must never die from one malformed or unexpected message.
   private readonly listener = (channel: string, message: string): void => {
-    if (channel === IN_CHANNEL) this.onMessage(message);
+    if (channel !== IN_CHANNEL) return;
+    try {
+      this.onMessage(message);
+    } catch (e) {
+      this.onError(`onMessage threw for a scoring-in message (a worker bug): ${message.slice(0, 200)}`, e);
+    }
   };
 
   private readonly pub: Publisher;
@@ -96,13 +107,22 @@ export class Worker {
   }
 
   private onMessage(raw: string): void {
-    let req: Request;
+    let parsed: unknown;
     try {
-      req = JSON.parse(raw) as Request;
+      parsed = JSON.parse(raw);
     } catch (e) {
       this.onError(`dropped a scoring-in message that isn't JSON: ${raw.slice(0, 200)}`, e);
       return;
     }
+    // `JSON.parse` happily returns `null`, an array, a string or a number for valid JSON that
+    // isn't the object this protocol always sends (ADR 0020 §1) — `null` in particular reads `t`
+    // and `ref` off it without this check exploding (`(null).ref` throws), which is exactly the
+    // crash this guards against.
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      this.onError(`dropped a scoring-in message that isn't a JSON object: ${raw.slice(0, 200)}`);
+      return;
+    }
+    const req = parsed as Request;
     const ref = (req as { ref?: unknown }).ref;
     if (typeof ref !== 'string' || !ref) {
       this.onError(`dropped a scoring-in message with no string ref: ${raw.slice(0, 200)}`);
@@ -111,7 +131,10 @@ export class Worker {
     const cached = this.replyCache.get(ref);
     if (cached) {
       // A re-send of a request we've already answered: republish the same reply rather than
-      // asking KataGo (or even goscorer) again for a judgement already given.
+      // asking KataGo (or even goscorer) again for a judgement already given. This includes a
+      // `src:"none"` proposal (no KataGo, or one that crashed/timed out): it is cached and
+      // republished as-is too, on purpose — a re-send must get the *same* answer it would have
+      // gotten the first time, not a fresh (and possibly different) KataGo judgement.
       this.publish(cached).catch(e => this.onError(`could not republish cached reply for ${ref}`, e));
       return;
     }
@@ -133,12 +156,15 @@ export class Worker {
         this.onError(`could not publish the reply for ${ref}`, e);
       }
     };
-    // `count` never touches KataGo (ADR 0020 §1), so it runs as soon as it arrives; `propose`
-    // queues behind whatever `propose` is already using the one KataGo process.
-    if (req.t === 'count') {
-      void run();
-    } else {
+    // Only `propose` touches KataGo (ADR 0020 §1: `count` never does), so only `propose` queues
+    // behind whatever `propose` is already using the one KataGo process; every other request
+    // type runs immediately. Written this way round (checking for `propose`, not `count`) so a
+    // future third request type defaults to running immediately rather than silently queuing
+    // behind KataGo for no reason.
+    if (req.t === 'propose') {
       this.proposeQueue = this.proposeQueue.then(run, run);
+    } else {
+      void run();
     }
   }
 

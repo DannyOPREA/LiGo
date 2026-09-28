@@ -240,3 +240,31 @@ test('Worker: a message that is not JSON, or has no ref, is dropped and logged, 
   const reply = await waitForReply(bus, 'g7:1:1');
   assert.equal(reply.t, 'count');
 });
+
+test('Worker: null, an array or a bare number are valid JSON but not a request — dropped, not thrown', async () => {
+  // Reproduces a real crash: `JSON.parse('null')` succeeds, and reading `.ref` off the result
+  // (or off an array or a number) used to throw synchronously inside ioredis's `emit('message')`
+  // — an uncaught exception that took the whole process down (`redis-cli publish scoring-in null`
+  // reproduced it against the real worker). None of these are thrown here: the listener call
+  // itself must not throw, which is the whole point of the test — a bug in the fix under test
+  // would surface as this test itself throwing (node:test doesn't catch a listener's throw any
+  // more gracefully than ioredis does), not as a normal assertion failure.
+  const bus = new FakeBus();
+  const errors: string[] = [];
+  const worker = new Worker(
+    new FakePub(bus),
+    new FakeSub(bus),
+    { katago: null },
+    { onError: m => errors.push(m) },
+  );
+  await worker.start();
+  for (const raw of ['null', '[]', '5']) {
+    assert.doesNotThrow(() => bus.listeners[0](IN_CHANNEL, raw));
+  }
+  await new Promise(r => setTimeout(r, 50));
+  assert.equal(errors.length, 3);
+  // Still works after all three malformed messages.
+  send(bus, countReq('g8:1:1'));
+  const reply = await waitForReply(bus, 'g8:1:1');
+  assert.equal(reply.t, 'count');
+});
