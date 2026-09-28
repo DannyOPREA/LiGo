@@ -1,6 +1,6 @@
 # Build-vs-buy: client-side Go rules, SGF and board rendering
 
-- Unit: 1.2 (Phase 1). Status: **Proposed, waiting for the owner's choice.** The choice becomes an ADR.
+- Unit: 1.2 (Phase 1). Status: **Decided: option A** (npm, pinned), [ADR 0014](../decisions/0014-ogs-goban-for-client-rules-and-board.md). Chosen by Claude under the owner's 2026-09-28 delegation.
 - Date: 2026-09-27. Evidence gathered in a throwaway spike outside the repo (code and output below).
 
 ## Capability
