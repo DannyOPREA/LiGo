@@ -48,3 +48,7 @@ score is counted by goscorer in `services/scoring` (R-SCORE-3), not here.
   liberty, stones are conserved and no stone placement repeats a situation (checked on real boards,
   not strategygames' hashes).
 - `GoGameTest`: setup checks, komi, takeback limits. `SgfTest`: SGF output.
+- `ParityExportTest`: writes `target/parity/server.json` for the client's parity check (unit 1.8,
+  `libs/board/test/parity.test.mjs`): every server fixture's game as SGF with its end position, and
+  80 seeded random games on 9×9, 13×13 and 19×19 with the position after every action and the
+  reason for every refused point at probed plies.

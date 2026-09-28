@@ -115,4 +115,9 @@ R-KOMI-4). Their tests come with the Phase 4 units that build them. Still open f
 fixture change: R-KO-7 (dead marks create no situations), R-HCP-1, R-RES-1 and R-SCORE-J3.
 
 Expectations that only LiGo's server enforces (`phase`, `in-scoring`, `not-in-scoring`,
-`resume-limit`, `undo`) have no engine to check them against until unit 1.7's adapter exists.
+`resume-limit`, `undo`) are checked by the server's harness (`libs/go-rules`, unit 1.7) only.
+
+The harnesses: `libs/go-rules` (`ConformanceTest`, the server) and `libs/board`
+(`test/conformance.test.mjs`, goban-engine, unit 1.8). Beyond the fixtures, `libs/board`'s parity
+test replays the server's SGF output and seeded random games move by move; `dev/ligo test rules`
+runs all of it.

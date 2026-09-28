@@ -18,6 +18,7 @@ STATE="$ROOT/.ligo"
 LILA="$ROOT/lila"
 WS="$ROOT/lila-ws"
 RULES="$ROOT/libs/go-rules"
+BOARD="$ROOT/libs/board"
 
 is_cloud() { [[ "${CLAUDE_CODE_REMOTE:-}" == "true" ]]; }
 if [[ -n "${LIGO_MODE:-}" ]]; then MODE=$LIGO_MODE
@@ -40,8 +41,10 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   status              Show what is running
   logs [lila|ws|db]   Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
-  test [what]         Run the unit tests of lila, ws, ui, rules or all (default: all);
-                      rules = libs/go-rules, replaying the libs/conformance fixtures
+  test [what]         Run the unit tests of lila, ws, ui, rules, board or all (default: all);
+                      rules = both Go rules engines: libs/go-rules (server) and libs/board
+                      (goban-engine) replaying the libs/conformance fixtures, then the parity
+                      check between them; board = the libs/board tests alone, without parity
   e2e [-- args]       Smoke-test the running stack (home page + lobby websocket);
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
@@ -115,6 +118,11 @@ docker_rules_sbt() {
     -e SBT_OPTS="-Dsbt.boot.directory=/rules-cache/sbt/boot -Dsbt.global.base=/rules-cache/sbt/global -Dsbt.ivy.home=/rules-cache/ivy2" \
     -w /libs/go-rules --entrypoint sbt lila "$@"
 }
+
+# libs/board is its own small pnpm package (goban-engine, unit 1.8); in docker mode it runs in the
+# ui container with libs/ mounted, like docker_rules_sbt.
+docker_board() { run dc run --rm --no-deps -v "$ROOT/libs:/libs" -w /libs/board ui sh -c "pnpm install --frozen-lockfile && pnpm run $1"; }
+native_board() { (cd "$BOARD" && run pnpm install --frozen-lockfile && run pnpm run "$1"); }
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)
@@ -323,12 +331,14 @@ cmd_test() {
     native:ws) sbt1 "$WS" test; native_after_sbt ;;
     native:ui) need_node_modules; (cd "$LILA" && run pnpm test) ;;
     # testFull: sbt 2's plain `test` only reruns tests whose code changed, and a fixture change
-    # is not a code change.
+    # is not a code change. It also writes target/parity/server.json, which test:all replays.
     # The strategygames jar's SHA-256 is checked after it is downloaded and before tests run it.
-    docker:rules) docker_rules_sbt update; run "$RULES/check-pin.sh"; docker_rules_sbt testFull ;;
-    native:rules) sbt1 "$RULES" update; run "$RULES/check-pin.sh"; sbt1 "$RULES" testFull; native_after_sbt ;;
+    docker:rules) docker_rules_sbt update; run "$RULES/check-pin.sh"; docker_rules_sbt testFull; docker_board test:all ;;
+    native:rules) sbt1 "$RULES" update; run "$RULES/check-pin.sh"; sbt1 "$RULES" testFull; native_after_sbt; native_board test:all ;;
+    docker:board) docker_board test ;;
+    native:board) native_board test ;;
     *:all) cmd_test ui; cmd_test lila; cmd_test ws; cmd_test rules ;;
-    *) die "test what? lila, ws, ui, rules or all" ;;
+    *) die "test what? lila, ws, ui, rules, board or all" ;;
   esac
 }
 
@@ -363,6 +373,7 @@ cmd_deps() {
   sbt1 "$WS" update
   sbt1 "$RULES" update
   native_after_sbt
+  (cd "$BOARD" && run pnpm install --frozen-lockfile)
 }
 
 cmd_status() {

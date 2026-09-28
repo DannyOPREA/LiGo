@@ -43,12 +43,14 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
   See libs/conformance/CLAUDE.md.
 - `libs/go-rules/` the server's Go rules: adapter over strategygames (ADR 0012), replays the
   fixtures. See libs/go-rules/CLAUDE.md.
-- Planned, not created yet (each gets its own CLAUDE.md when its unit starts): `libs/board` (goban adapter), `services/scoring` (KataGo + goban
-  autoscore + goscorer), `tools/puzzles`.
+- `libs/board/` the client's Go rules: OGS goban-engine with LiGo's settings (ADR 0014), replays the
+  fixtures and checks parity with the server; Phase 2 adds the board. See libs/board/CLAUDE.md.
+- Planned, not created yet (each gets its own CLAUDE.md when its unit starts): `services/scoring`
+  (KataGo + goban autoscore + goscorer), `tools/puzzles`.
 - `lila/` and `lila-ws/` are plain folders of this repo, not git repos of their own.
 
 ## Commands
-`dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|rules|all] | test [lila|ws|ui|rules|all]`
+`dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|rules|all] | test [lila|ws|ui|rules|board|all]`
 `dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench]`. Docker mode on the owner's
 machine, native mode in cloud sessions (ADR 0010). Fresh cloud container: `dev/cloud-setup.sh` then `dev/ligo deps`.
 Tooling self-tests: `dev/tests/run.sh`, `bats .claude/hooks/tests`. CI: `.github/workflows/` (lila, ui,

@@ -20,7 +20,7 @@ areas=(
   'lila|^(lila/(app|conf|modules|project|translation)/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ws|^(lila-ws/|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ui|^(lila/|\.github/workflows/ui\.yml$|dev/ci/changed\.sh$)'
-  'rules|^(libs/go-rules/|libs/conformance/fixtures/|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
+  'rules|^(libs/go-rules/|libs/board/|libs/conformance/fixtures/|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
 )
 
 # Paths that never need a build: docs, logs, Claude config, repo meta files, dev tooling and the
