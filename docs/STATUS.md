@@ -30,6 +30,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - **Phase 1 — build-vs-buy + rules integration** started 2026-09-27; units listed in docs/PLAN.md §5.
   - Unit 1.1: server-side Go rules and byo-yomi clock come from strategygames as a pinned dependency
     with the other games excluded (ADR 0012, PR #9). The dependency lands with the adapter (1.7).
+  - Unit 1.4: ratings use lila's own Glicko-2 with OGS's Glicko-2 settings plus goratings' rank
+    curve and handicap maths (9×9 stone = 6 ranks) (ADR 0013, PR #12). The glue lands in Phase 5.
   - Unit 1.2: the client-side rules, SGF reading and the board come from OGS `goban` on npm, pinned,
     wrapped by `libs/board` (ADR 0014, PR #10). Claude chose it under your 2026-09-28 delegation;
     revisit any time. The dependency lands with Phase 2's `libs/board` unit (and 1.8's harness).
