@@ -31,6 +31,9 @@ class DifferentialTest extends munit.FunSuite:
 
   private def p(sgf: String) = Point.fromSgf(sgf).get
 
+  // 9x9 keeps these games fast; the nightly run plays every size against KataGo.
+  private val nine = Some(BoardSize.Nine)
+
   test("reads KataGo's board, player to move and captures"):
     val pos = Gtp.position(showboard, BoardSize.Nine)
     val black = Set("gc", "ag", "cg", "ah", "ai").map(p)
@@ -70,25 +73,29 @@ class DifferentialTest extends munit.FunSuite:
     assertEquals(g.map(EngineScore.whiteMinusBlack), Right(45 + 7.0 - 36))
 
   test("random games agree with an oracle that follows the rules"):
-    val all = (1L to 30L).map(seed => DifferentialGame.play(seed, AdapterOracle()))
+    val all = (1L to 40L).map(seed => DifferentialGame.play(seed, AdapterOracle(), nine)) :+
+      DifferentialGame.play(1, AdapterOracle(), Some(BoardSize.Thirteen))
     all.collect { case Left(d) => d }.foreach(d => fail(d.summary))
     val stats = all.collect { case Right(s) => s }
     assert(stats.forall(_.scored))
-    assert(stats.map(_.stones).sum > 1500)
+    assert(stats.map(_.stones).sum > 3000)
     assert(stats.exists(_.passes > 2) && stats.exists(_.undos > 0) && stats.exists(_.resumes > 0))
     assert(stats.exists(_.handicap > 0))
     assert(stats.map(_.suicideRefusals).sum > 0 && stats.map(_.koRefusals).sum > 0)
 
   test("the same seed plays the same game"):
-    assertEquals(DifferentialGame.play(7, AdapterOracle()), DifferentialGame.play(7, AdapterOracle()))
+    assertEquals(
+      DifferentialGame.play(7, AdapterOracle(), nine),
+      DifferentialGame.play(7, AdapterOracle(), nine)
+    )
 
   test("reports an oracle that misses captures"):
-    val result = DifferentialGame.play(3, AdapterOracle(forgetCaptures = true))
+    val result = DifferentialGame.play(3, AdapterOracle(forgetCaptures = true), nine)
     assert(result.left.exists(_.what.exists(_.startsWith("captures"))), result)
 
   test("reports an oracle that allows a ko retake"):
     val result =
-      (1L to 30L).iterator.map(DifferentialGame.play(_, AdapterOracle(allowKo = true))).find(_.isLeft)
+      (1L to 40L).iterator.map(DifferentialGame.play(_, AdapterOracle(allowKo = true), nine)).find(_.isLeft)
     assert(result.exists(_.left.exists(_.what.exists(_.startsWith("legal points")))), result)
 
 /** An oracle that is the adapter itself (so it always agrees), optionally with a planted bug. */

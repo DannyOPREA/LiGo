@@ -41,20 +41,22 @@ final case class Disagreement(seed: Long, ply: Int, setup: Setup, what: List[Str
   */
 object DifferentialGame:
 
-  def setupFor(rnd: Random): Setup =
-    val size = rnd.nextInt(4) match
+  /** A random setup; `only` fixes the board size (the offline tests keep to 9x9 to stay fast). */
+  def setupFor(rnd: Random, only: Option[BoardSize] = None): Setup =
+    val drawn = rnd.nextInt(4) match
       case 0 | 1 => BoardSize.Nine
       case 2 => BoardSize.Thirteen
       case _ => BoardSize.Nineteen
+    val size = only.getOrElse(drawn)
     val ruleset = if rnd.nextBoolean() then Ruleset.Japanese else Ruleset.Chinese
     val handicap = if rnd.nextInt(5) == 0 then 2 + rnd.nextInt(8) else 0
     Setup(size, ruleset, Komi.standard(ruleset, handicap), handicap)
 
-  def play(seed: Long, oracle: Oracle): Either[Disagreement, GameStats] =
+  def play(seed: Long, oracle: Oracle, only: Option[BoardSize] = None): Either[Disagreement, GameStats] =
     // java.util.Random's first draws from neighbouring seeds are alike (seeds 1 to 20 all drew 13x13), so
     // the seed is mixed first.
     val rnd = Random(java.util.SplittableRandom(seed).nextLong())
-    val setup = setupFor(rnd)
+    val setup = setupFor(rnd, only)
     val size = setup.size
     val start = GoGame.start(setup).fold(e => sys.error(s"seed $seed: ${e.message}"), identity)
     oracle.newGame(size, setup.komi, start.stones.keySet)
