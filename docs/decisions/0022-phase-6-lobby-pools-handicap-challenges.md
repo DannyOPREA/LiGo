@@ -130,7 +130,8 @@ gains a field for this, since `PoolMember` carries no deviation today):
   plus up to half a rank (about 30 points at 1500). Two players with good sit counters (+30) can be
   paired with about 6–8 stones in their first wave, depending on how closely the stones fit the
   gap (8 × 15 = 120 ≤ 100 + 30 at the lowest cap when they fit exactly); more follow after a missed
-  wave or two. Handicap is
+  wave or two. Below about 1000 (weaker than about 15k) a rank is worth so few points that 9 stones
+  fit at once (unit 6.2's tests). Handicap is
   meant to be available at once: a 5-stone game between a 5k and a 1d is a fair game, and nobody
   should wait for it. The per-stone cost only tips the balance **towards an even game when one is on
   offer at a similar remaining gap**; lila's matching pairs the whole pool at once, so this is a
@@ -156,14 +157,18 @@ gains a field for this, since `PoolMember` carries no deviation today):
   "how many are waiting".
 - **The widening range**: after each wave the pool tells each waiting member the ranks it can
   currently meet, computed with the real pairing score (§3) against a **typical opponent** at the
-  middle of each rank from 25k to 9d: one who has waited as long as the member (so the miss bonus is
-  the member's own), has a good sit counter (0), is not provisional and has no range setting. Ranks
-  outside the member's own range setting are left out. The tile shows the weakest and strongest such
-  rank ("3k–1d") and, with Handicap OK, the most stones among them ("or up to 7 stones"). It is an
-  approximation of who the matching would accept, stated as such in the hover title: a player who
-  has just joined brings a smaller miss bonus, a provisional or range-setting player a larger one.
-  The stone count doesn't grow much with waiting, because handicap is available from the first wave
-  (§3); the rank range is what widens.
+  middle of each rank from 25k to 9d: one like the member (waited as long, so the miss bonus is the
+  member's own, and the same sit counter) who is not provisional and has no range setting. Ranks
+  outside the member's own range setting are left out. The tile shows the **unbroken run** of such
+  ranks around the member's own rank ("3k–1d") and, with Handicap OK, the most stones among all
+  reachable ranks ("or with up to 7 stones"). On 9×9 a stone covers six ranks, so the reachable
+  ranks come in several runs with gaps between them (a 5k can meet 6k–4k even, 1d–3d with a stone,
+  but not 3k–1k); a single span from the weakest to the strongest would promise pairings that can't
+  happen, so only the run around the player's own rank is shown as a span (amended in unit 6.2).
+  It is an approximation of who the matching would accept, stated as such in the hover title: a
+  player who has just joined brings a smaller miss bonus, a provisional or range-setting player a
+  larger one. The stone count doesn't grow much with waiting, because handicap is available from
+  the first wave (§3); the rank range is what widens.
 - **Elapsed time** is counted in the browser from the click; **Cancel** is a click on the same tile
   or a Cancel button on it (lila's `poolOut`, or `hookOut` for a casual click).
 - A guest's casual hook shows the same tile state minus the range (guests have no rank).
