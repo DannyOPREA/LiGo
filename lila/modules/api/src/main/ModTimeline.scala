@@ -132,7 +132,7 @@ object ModTimeline:
       case l: Modlog if l.action == Modlog.troll => angle != Angle.Play
       case l: Modlog if l.action == Modlog.modMessage =>
         angle match
-          case Comm => !l.details.has(lila.playban.PlaybanFeedback.sittingAutoPreset.name)
+          case Comm => !l.details.has(lila.playban.PlaybanFeedback.sittingAutoWarning)
           case _ => true
       case r: ReportNewAtom if r.report.is(_.Comm) => angle != Angle.Play
       case r: ReportLineFlag => r.openId.isDefined || angle == Angle.Comm

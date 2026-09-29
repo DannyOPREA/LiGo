@@ -8,8 +8,6 @@ import { domDialog } from 'lib/view';
 interface DiagnosticOpts {
   text: string;
   header?: string;
-  submit?: string;
-  plaintext?: boolean;
 }
 
 export async function initModule(opts?: DiagnosticOpts): Promise<void> {
@@ -36,14 +34,6 @@ export async function initModule(opts?: DiagnosticOpts): Promise<void> {
       (logs ? `\n\n${logs}` : '');
   const escaped = escapeHtml(text);
   const flash = ops > 0 ? `<p class="good">Changes applied</p>` : '';
-  const submit = myUserId()
-    ? $html`
-      <form method="post" action="/diagnostic">
-        <input type="hidden" name="text" value="${escaped}"/>
-        <input type="hidden" name="plaintext" value="${opts?.plaintext ?? false}"/>
-        <button type="submit" class="button">${opts?.submit ?? 'send to lichess'}</button>
-      </form>`
-    : '';
   const clear = logs ? `<button class="button button-empty button-red clear">clear logs</button>` : '';
   const copy = `<button class="button copy" data-icon="${licon.Clipboard}"> copy</button>`;
   const dlg = await domDialog({
@@ -54,7 +44,7 @@ export async function initModule(opts?: DiagnosticOpts): Promise<void> {
     htmlText: $html`
       <h2>${opts?.header ?? 'Diagnostics'}</h2>${flash}
       <pre tabindex="0" class="err">${escaped}</pre>
-      <span class="actions"> ${clear} <div class="spacer"></div> ${copy} ${submit} </span>`,
+      <span class="actions"> ${clear} <div class="spacer"></div> ${copy} </span>`,
   });
   const select = () =>
     setTimeout(() => {

@@ -135,9 +135,7 @@ final class EmailConfirmByUserSend(
       .flatMap:
         case Result.confirm(user, email) =>
           given Lang = user.realLang | lila.core.i18n.defaultLang
-          for
-            _ <- mailer.welcomeEmail(user, email)
-            _ <- mailer.welcomePM(user)
+          for _ <- mailer.welcomeEmail(user, email)
           yield Some(user -> email)
         case Result.emailInUse =>
           for _ <- mailer.emailAlreadyInUse(data.sender)

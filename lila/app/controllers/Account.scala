@@ -171,7 +171,7 @@ final class Account(
     else
       for
         f <- emailForm
-        managed <- env.clas.api.student.isManaged(me)
+        managed <- env.user.repo.isManaged(me.userId)
         res <- Ok.page(pages.email(f, managed))
       yield res.hasPersonalData
   }
@@ -189,7 +189,7 @@ final class Account(
       for
         _ <- env.security.forms.preloadEmailDns()
         form <- emailForm
-        managed <- env.clas.api.student.isManaged(me)
+        managed <- env.user.repo.isManaged(me.userId)
         res <- FormFuResult(form)(err => renderPage(pages.email(err, managed))): data =>
           val newUserEmail = lila.security.EmailConfirm.UserEmail(me.username, data.email)
           auth.EmailConfirmRateLimit(newUserEmail, ctx.req, rateLimited):
@@ -204,7 +204,6 @@ final class Account(
     Found(env.security.emailChange.confirm(token)): (me, prevEmail, newEmail) =>
       given Me = me
       for
-        _ <- prevEmail.exists(_.isNoReply).so(env.clas.api.student.release(me))
         _ <- env.mod.logApi.setEmail(me.userId, prevEmail, newEmail)
         res <- auth.authenticateUser(
           me,
@@ -260,7 +259,7 @@ final class Account(
 
   def close = Auth { _ ?=> me ?=>
     for
-      managed <- env.clas.api.student.isManaged(me)
+      managed <- env.user.repo.isManaged(me.userId)
       form <- env.security.forms.closeAccount
       res <- Ok.page(pages.close(form, managed))
     yield res
@@ -277,7 +276,7 @@ final class Account(
 
   def delete = Auth { _ ?=> me ?=>
     for
-      managed <- env.clas.api.student.isManaged(me)
+      managed <- env.user.repo.isManaged(me.userId)
       form <- env.security.forms.deleteAccount
       res <- Ok.page(pages.delete(form, managed))
     yield res
@@ -299,7 +298,7 @@ final class Account(
 
   def kid = Auth { _ ?=> me ?=>
     for
-      managed <- env.clas.api.student.isManaged(me)
+      managed <- env.user.repo.isManaged(me.userId)
       form <- env.security.forms.toggleKid
       content <- env.cms.renderKey("kid-mode")
       page <- Ok.page(pages.kid(me, form, managed, content.map(_.html)))

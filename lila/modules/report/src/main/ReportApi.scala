@@ -48,7 +48,7 @@ final class ReportApi(
     default = "Qwen/Qwen3-235B-A22B-Instruct-2507-tput"
   )
 
-  def create(data: ReportSetup, reporter: Reporter, msgs: List[String]): Funit =
+  def create(data: ReportSetup, reporter: Reporter): Funit =
     Reason(data.reason).so: reason =>
       getSuspect(data.user.id).flatMapz: suspect =>
         if data.text.startsWith(Reason.flagText) then
@@ -60,8 +60,7 @@ final class ReportApi(
               reporter,
               suspect,
               reason,
-              data.text.take(1000) + msgs.nonEmpty.so:
-                s"""\n\n\n--- selected inbox messages ---\n\n${msgs.mkString("\n\n")}"""
+              data.text.take(1000)
             )
 
   def isAutoBlock(data: ReportSetup): Boolean =

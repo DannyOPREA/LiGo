@@ -81,17 +81,15 @@ final class BodyContext[A](
 
 /* data necessary to render the lichess website layout */
 case class PageData(
-    teamNbRequests: Int,
     nbChallenges: Int,
     nbNotifications: UnreadCount,
-    seesClassMenu: Boolean,
     inquiry: Option[lila.mod.Inquiry],
     nonce: Option[Nonce],
     error: Boolean = false
 )
 
 object PageData:
-  def anon(nonce: Option[Nonce]) = PageData(0, 0, UnreadCount(0), false, none, nonce)
+  def anon(nonce: Option[Nonce]) = PageData(0, UnreadCount(0), none, nonce)
   def error(nonce: Option[Nonce]) = anon(nonce).copy(error = true)
 
 final class PageContext(val ctx: Context, val data: PageData) extends lila.ui.PageContext:

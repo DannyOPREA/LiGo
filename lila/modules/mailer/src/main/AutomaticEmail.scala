@@ -8,7 +8,6 @@ import lila.core.i18n.I18nKey.emails as trans
 import lila.core.i18n.Translator
 import lila.core.lilaism.LilaException
 import lila.core.misc.mailer.CorrespondenceOpponent
-import lila.core.msg.SystemMsg
 
 final class AutomaticEmail(
     userApi: lila.core.user.UserApi,
@@ -37,12 +36,6 @@ The Lichess team"""
             trans.welcome_text.txt(profileUrl, editUrl)
           ).some
         )
-
-  def welcomePM(user: User): Funit = fuccess:
-    alsoSendAsPrivateMessage(user): lang =>
-      given Lang = lang
-      import lila.core.i18n.I18nKey as trans
-      s"""${trans.onboarding.welcome.txt()}\n${trans.site.lichessPatronInfo.txt()}"""
 
   def emailAlreadyInUse(email: EmailAddress): Funit =
     given Lang = lila.core.i18n.defaultLang
@@ -74,8 +67,7 @@ The Lichess team"""
     for
       user <- userApi.byId(username).orFail(s"No such user $username")
       emailOption <- userApi.email(user.id)
-      body = alsoSendAsPrivateMessage(user): _ =>
-        s"""Hello,
+      body = s"""Hello,
 
 Thank you for confirming your $title title on Lichess.
 It is now visible on your profile page: ${routeUrl(routes.User.show(user.username))}.
@@ -98,7 +90,7 @@ $regards
   }
 
   def onBecomeCoach(user: User): Funit =
-    sendAsPrivateMessageAndEmail(user)(
+    sendEmail(user)(
       subject = _ => "Coach profile unlocked on lichess.org",
       body = _ => s"""Hello,
 
@@ -111,7 +103,7 @@ $regards
 
   def onAppealReply(user: User): Funit =
     val url = routeUrl(routes.Appeal.home)
-    sendAsPrivateMessageAndEmail(user)(
+    sendEmail(user)(
       subject = _ => "Appeal response on lichess.org",
       body = _ => s"""Hello,
 
@@ -140,55 +132,8 @@ $regards
         )
     }
 
-  def onPatronNew(userId: UserId): Funit =
-    userApi
-      .byId(userId)
-      .map:
-        _.foreach: user =>
-          alsoSendAsPrivateMessage(user)(
-            body = _ =>
-              s"""Thank you for supporting Lichess!
-
-Thank you for your donation to Lichess - your patronage directly goes to keeping the site running and new features coming.
-Lichess is entirely funded by user's donations like yours, and we truly appreciate the help we're getting.
-As a small token of our thanks, your account now has the awesome Patron wings!"""
-          )
-
-  def onPatronStop(userId: UserId): Funit =
-    userApi
-      .byId(userId)
-      .map:
-        _.foreach: user =>
-          alsoSendAsPrivateMessage(user)(
-            body = _ =>
-              val helpUrl = routeUrl(routes.Cms.help)
-              s"""End of Lichess Patron subscription
-
-Thank you for your support over the last month.
-We appreciate all donations, being a small team relying entirely on generous donors like you!
-If you're still interested in supporting us in other ways, you can see non-financial ways of supporting us here $helpUrl.
-To make a new donation, head to ${routeUrl(routes.Plan.index())}."""
-          )
-
-  def onPatronGift(from: UserId, to: UserId, lifetime: Boolean): Funit =
-    userApi
-      .pair(from, to)
-      .map:
-        _.foreach: (from, to) =>
-          val wings =
-            if lifetime then "Lifetime Patron wings"
-            else "Patron wings for one month"
-          alsoSendAsPrivateMessage(from): _ =>
-            s"""You gifted @${to.username} $wings. Thank you so much!"""
-          alsoSendAsPrivateMessage(to): _ =>
-            s"""@${from.username} gifted you $wings!"""
-
-  def onPatronFree(dest: User): Unit =
-    alsoSendAsPrivateMessage(dest)(
-      body = _ => s"""Thank you for being an active member of our community!
-As a token of our appreciation, you have been gifted Patron Wings for a month.
-${routeUrl(routes.Plan.index())}"""
-    )
+  // The patron thank-you, gift and free-month messages, and the welcome message, were private
+  // messages only; they went with the msg module (unit 3.6).
 
   private[mailer] def dailyCorrespondenceNotice(
       userId: UserId,
@@ -237,12 +182,9 @@ $disableSettingNotice $disableLink"""
     opponent.remainingTime.fold(s"It's your turn in your game with $opponentName:"): remainingTime =>
       s"You have ${translator.duration(remainingTime)} remaining in your game with $opponentName:"
 
-  private def alsoSendAsPrivateMessage(user: User)(body: Lang => String): String =
-    body(userLang(user)).tap: txt =>
-      lila.common.Bus.pub(SystemMsg.standard(user.id, txt))
-
-  private def sendAsPrivateMessageAndEmail(user: User)(subject: Lang => String, body: Lang => String): Funit =
-    alsoSendAsPrivateMessage(user)(body).pipe: body =>
+  // Until unit 3.6 these messages also went to the user's inbox as a private message.
+  private def sendEmail(user: User)(subject: Lang => String, body: Lang => String): Funit =
+    body(userLang(user)).pipe: body =>
       userApi
         .email(user.id)
         .flatMapz: email =>

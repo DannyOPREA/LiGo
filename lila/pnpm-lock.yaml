@@ -280,12 +280,6 @@ importers:
       '@emoji-mart/data':
         specifier: ^1.2.1
         version: 1.2.1
-      '@textcomplete/core':
-        specifier: ^0.1.13
-        version: 0.1.13
-      '@textcomplete/textarea':
-        specifier: ^0.1.13
-        version: 0.1.13(@textcomplete/core@0.1.13)
       '@toast-ui/editor':
         specifier: 3.2.2
         version: 3.2.2(patch_hash=3c9aa5176e0c4e67d96e6cfc8928789dfb22ebcb7db6a5c68f40caf5cc9bbce9)
@@ -463,12 +457,6 @@ importers:
         specifier: ^15.8.1
         version: 15.8.1
 
-  ui/msg:
-    dependencies:
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
   ui/notify:
     dependencies:
       lib:
@@ -548,15 +536,6 @@ importers:
       dialog-polyfill:
         specifier: 0.5.6
         version: 0.5.6
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
-  ui/team:
-    dependencies:
-      bits:
-        specifier: workspace:*
-        version: link:../bits
       lib:
         specifier: workspace:*
         version: link:../lib
@@ -1061,17 +1040,6 @@ packages:
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
-
-  '@textcomplete/core@0.1.13':
-    resolution: {integrity: sha512-C4S+ihQU5HsKQ/TbsmS0e7hfPZtLZbEXj5NDUgRnhu/1Nezpu892bjNZGeErZm+R8iyDIT6wDu6EgIhng4M8eQ==}
-
-  '@textcomplete/textarea@0.1.13':
-    resolution: {integrity: sha512-GNathnXpV361YuZrBVXvVqFYZ5NQZsjGC7Bt2sCUA/RTWlIgxHxC0ruDChYyRDx4siQZiZZOO5pWz+z1x8pZFQ==}
-    peerDependencies:
-      '@textcomplete/core': ^0.1.12
-
-  '@textcomplete/utils@0.1.13':
-    resolution: {integrity: sha512-5UW9Ee0WEX1s9K8MFffo5sfUjYm3YVhtqRhAor/ih7p0tnnpaMB7AwMRDKwhSIQL6O+g1fmEkxCeO8WqjPzjUA==}
 
   '@toast-ui/editor@3.2.2':
     resolution: {integrity: sha512-ASX7LFjN2ZYQJrwmkUajPs7DRr9FsM1+RQ82CfTO0Y5ZXorBk1VZS4C2Dpxinx9kl55V4F8/A2h2QF4QMDtRbA==}
@@ -2159,9 +2127,6 @@ packages:
     resolution: {integrity: sha512-irnN1HPD08466v6DHKR1+gqZ2be2+QZBDIGTM1DFGoWywY+d38bFtfsuUqBbMGkqaMyYE1uPxE7p0AM5cmbRSA==}
     engines: {node: '>= 22', npm: '>= 10'}
 
-  textarea-caret@3.1.0:
-    resolution: {integrity: sha512-cXAvzO9pP5CGa6NKx0WYHl+8CHKZs8byMkt3PCJBCmq2a34YA9pO1NrQET5pzeqnBjBdToF5No4rrmkDUgQC2Q==}
-
   tinyexec@1.3.1:
     resolution: {integrity: sha512-GCvB3aoys96IuDFBMcTB46JOR6mdMtAToqwiW8JlWhsoh1mhHi/xn9ss/Dg7N555GiJyEt2qzoG/NHCwM6h1EA==}
     engines: {node: '>=18'}
@@ -2201,9 +2166,6 @@ packages:
     resolution: {integrity: sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==}
     engines: {node: '>=16.20.0'}
     hasBin: true
-
-  undate@0.3.0:
-    resolution: {integrity: sha512-ssH8QTNBY6B+2fRr3stSQ+9m2NT8qTaun3ExTx5ibzYQvP7yX4+BnX0McNxFCvh6S5ia/DYu6bsCKQx/U4nb/Q==}
 
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
@@ -2637,19 +2599,6 @@ snapshots:
       doken: 1.0.2
 
   '@sindresorhus/merge-streams@4.0.0': {}
-
-  '@textcomplete/core@0.1.13':
-    dependencies:
-      eventemitter3: 5.0.4
-
-  '@textcomplete/textarea@0.1.13(@textcomplete/core@0.1.13)':
-    dependencies:
-      '@textcomplete/core': 0.1.13
-      '@textcomplete/utils': 0.1.13
-      textarea-caret: 3.1.0
-      undate: 0.3.0
-
-  '@textcomplete/utils@0.1.13': {}
 
   '@toast-ui/editor@3.2.2(patch_hash=3c9aa5176e0c4e67d96e6cfc8928789dfb22ebcb7db6a5c68f40caf5cc9bbce9)':
     dependencies:
@@ -3703,8 +3652,6 @@ snapshots:
 
   tablesort@5.7.0: {}
 
-  textarea-caret@3.1.0: {}
-
   tinyexec@1.3.1: {}
 
   tinypool@2.1.2: {}
@@ -3755,8 +3702,6 @@ snapshots:
       '@typescript/typescript-sunos-x64': 7.0.2
       '@typescript/typescript-win32-arm64': 7.0.2
       '@typescript/typescript-win32-x64': 7.0.2
-
-  undate@0.3.0: {}
 
   undici-types@7.18.2: {}
 

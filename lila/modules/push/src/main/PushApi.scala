@@ -5,7 +5,6 @@ import play.api.libs.json.*
 import scalalib.data.LazyFu
 
 import lila.common.LilaFuture
-import lila.common.String.shorten
 import lila.core.LightUser
 import lila.core.challenge.Challenge
 import lila.core.misc.push.TourSoon
@@ -22,7 +21,6 @@ final class PushApi(
     gameRepo: lila.core.game.GameRepo,
     namer: lila.core.game.Namer,
     notifyAllows: lila.core.notify.GetNotifyAllows,
-    postApi: lila.core.forum.ForumPostApi,
     lightUser: lila.core.LightUser.GetterFallback
 )(using Executor, Scheduler):
 
@@ -32,10 +30,7 @@ final class PushApi(
   private[push] def notifyPush(to: Iterable[NotifyAllows], content: NotificationContent): Funit =
     import NotificationContent.*
     content match
-      case PrivateMessage(sender, text) =>
-        lightUser(sender).flatMap(luser => privateMessage(to.head, sender, luser.titleName, text))
-      case MentionedInThread(mentioner, topic, _, _, postId) =>
-        lightUser(mentioner).flatMap(luser => forumMention(to.head, luser.titleName, topic, postId))
+      // private message and forum mention pushes went with the msg and forum modules (unit 3.6).
       case StreamStart(streamerId, streamerName) =>
         streamStart(to, streamerId, streamerName)
       case BroadcastRound(url, title, body) =>
@@ -197,25 +192,6 @@ final class PushApi(
           "round" -> Json.stringify(round)
         )
 
-  def privateMessage(to: NotifyAllows, senderId: UserId, senderName: String, text: String): Funit =
-    filterPushNotif(
-      to,
-      _.message,
-      LazyFu.sync:
-        Data(
-          title = senderName,
-          body = text,
-          key = Key.privateMessage,
-          urgency = Urgency.Normal,
-          mobileCompatible = LichessMobileVersion(0, 17).some,
-          lichobileCompatible = true,
-          payload = payload(to.userId)(
-            "type" -> "newMessage",
-            "threadId" -> senderId.value
-          )
-        )
-    )
-
   def invitedToStudy(to: NotifyAllows, invitedBy: String, studyName: StudyName, studyId: StudyId): Funit =
     filterPushNotif(
       to,
@@ -308,30 +284,6 @@ final class PushApi(
             )
           )
       )
-
-  def forumMention(to: NotifyAllows, mentionedBy: String, topicName: String, postId: ForumPostId): Funit =
-    filterPushNotif(
-      to,
-      _.forumMention,
-      LazyFu: () =>
-        postApi
-          .getPost(postId)
-          .map: post =>
-            Data(
-              title = topicName,
-              body = post.fold(topicName)(p => shorten(p.text, 57 - 3, "...")),
-              key = Key.forumMention,
-              urgency = Urgency.Low,
-              mobileCompatible = None,
-              payload = payload(to.userId)(
-                "type" -> "forumMention",
-                "mentionedBy" -> mentionedBy,
-                "topic" -> topicName,
-                "postId" -> postId.value,
-                "url" -> s"https://lichess.org/forum/redirect/post/$postId"
-              )
-            )
-    )
 
   def streamStart(recips: Iterable[NotifyAllows], streamerId: UserId, streamerName: String): Funit =
     val pushData = LazyFu.sync:

@@ -40,26 +40,16 @@ final class TimelineUi(helpers: Helpers):
     frag(
       e.decode.map[Frag]:
         case Follow(u1, u2) => trans.site.xStartedFollowingY(userLink(u1), userLink(u2))
+        // TeamJoin/TeamCreate/ForumPost/UblogPost/UblogPostLike are never published any more
+        // (unit 3.6 removed teams, the forum and blogs); old stored entries render as plain text.
         case TeamJoin(userId, teamId) =>
-          trans.site.xJoinedTeamY(userLink(userId), teamLink(teamId, withIcon = false))
+          trans.site.xJoinedTeamY(userLink(userId), teamId.value)
         case TeamCreate(userId, teamId) =>
-          trans.site.xCreatedTeamY(userLink(userId), teamLink(teamId, withIcon = false))
-        case ForumPost(userId, _, topicName, postId) =>
-          trans.site.xPostedInForumY(
-            userLink(userId),
-            a(
-              href := routes.ForumPost.redirect(postId),
-              title := topicName
-            )(shorten(topicName, 30))
-          )
-        case UblogPost(userId, id, slug, title) =>
-          trans.ublog.xPublishedY(
-            userLink(userId),
-            a(
-              href := routes.Ublog.post(usernameOrId(userId), slug, id),
-              st.title := title
-            )(shorten(title, 40))
-          )
+          trans.site.xCreatedTeamY(userLink(userId), teamId.value)
+        case ForumPost(userId, _, topicName, _) =>
+          trans.site.xPostedInForumY(userLink(userId), shorten(topicName, 30))
+        case UblogPost(userId, _, _, title) =>
+          trans.ublog.xPublishedY(userLink(userId), shorten(title, 40))
         // TourJoin/SimulCreate/SimulJoin are never published any more (unit 3.2 removed the
         // tournament and simul modules); old stored timeline entries render as plain text.
         case TourJoin(userId, _, tourName) =>
@@ -94,11 +84,8 @@ final class TimelineUi(helpers: Helpers):
         case PlanRenew(userId, months) =>
           trans.patron.xIsPatronForNbMonths
             .plural(months, userLink(userId), months)
-        case UblogPostLike(userId, postId, postTitle) =>
-          trans.site.xLikesY(
-            userLink(userId),
-            a(href := routes.Ublog.redirect(postId))(postTitle)
-          )
+        case UblogPostLike(userId, _, postTitle) =>
+          trans.site.xLikesY(userLink(userId), postTitle)
       ,
       " ",
       pastMomentWithPreload(e.date)

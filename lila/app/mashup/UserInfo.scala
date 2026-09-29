@@ -8,10 +8,8 @@ import lila.bookmark.BookmarkApi
 import lila.core.data.SafeJsonStr
 import lila.core.perf.UserWithPerfs
 import lila.core.user.User
-import lila.forum.ForumPostApi
 import lila.game.Crosstable
 import lila.relation.RelationApi
-import lila.ublog.{ UblogApi, UblogPost }
 import lila.mon.extensions.*
 
 case class UserInfo(
@@ -19,9 +17,6 @@ case class UserInfo(
     user: UserWithPerfs,
     trophies: lila.api.UserApi.TrophiesAndAwards,
     ratingChart: Option[SafeJsonStr],
-    nbForumPosts: Int,
-    ublog: Option[UblogPost.BlogPreview],
-    teamIds: List[lila.team.TeamId],
     isStreamer: Boolean,
     isCoach: Boolean
 ):
@@ -39,8 +34,7 @@ object UserInfo:
       relation: Option[lila.relation.Relation],
       notes: List[lila.user.Note],
       followable: Boolean,
-      blocked: Boolean,
-      messageable: Boolean
+      blocked: Boolean
   )
 
   final class SocialApi(
@@ -53,17 +47,8 @@ object UserInfo:
         ctx.userId.so(relationApi.fetchRelation(_, u.id).mon(lila.mon.user.segment("relation"))),
         ctx.useMe(noteApi.getForMyPermissions(u).mon(lila.mon.user.segment("notes"))),
         ctx.isAuth.so(prefApi.followable(u.id).mon(lila.mon.user.segment("followable"))),
-        ctx.userId.so(relationApi.fetchBlocks(u.id, _).mon(lila.mon.user.segment("blocks"))),
-        ctx.me.soUse(messageable(u.id))
+        ctx.userId.so(relationApi.fetchBlocks(u.id, _).mon(lila.mon.user.segment("blocks")))
       ).mapN(Social.apply)
-
-    def messageable(userId: UserId)(using me: Me): Fu[Boolean] =
-      prefApi
-        .getMessage(userId)
-        .flatMap:
-          case lila.core.pref.Message.NEVER => fuccess(false)
-          case lila.core.pref.Message.FRIEND => relationApi.fetchFollows(userId, me.userId)
-          case lila.core.pref.Message.ALWAYS => fuccess(true)
 
   case class NbGames(
       crosstable: Option[Crosstable.WithMatchup],
@@ -95,17 +80,13 @@ object UserInfo:
       ).mapN(NbGames.apply)
 
   final class UserInfoApi(
-      postApi: ForumPostApi,
-      ublogApi: UblogApi,
       perfsRepo: lila.user.UserPerfsRepo,
       ratingChartApi: lila.history.RatingChartApi,
       userApi: lila.api.UserApi,
       streamerApi: lila.streamer.StreamerApi,
-      teamApi: lila.team.TeamApi,
-      teamCache: lila.team.TeamCached,
       coachApi: lila.coach.CoachApi
   )(using Executor):
-    def fetch(user: User, nbs: NbGames, restricted: Boolean, withBlog: Boolean = true)(using
+    def fetch(user: User, nbs: NbGames, restricted: Boolean)(using
         ctx: Context
     ): Fu[UserInfo] =
       val full = !restricted
@@ -116,13 +97,6 @@ object UserInfo:
         showRatings
           .so(ratingChartApi(user, computeIfNeeded = ctx.isAuth))
           .mon(lila.mon.user.segment("ratingChart")),
-        (!user.is(UserId.lichess) && !user.isBot).so:
-          postApi.nbByUser(user.id).mon(lila.mon.user.segment("nbForumPosts"))
-        ,
-        (withBlog && full).so(ublogApi.userBlogPreviewFor(user, 3)),
-        full.so(ctx.useMe(teamApi.joinedTeamIdsOfUserAsSeenBy(user).mon(lila.mon.user.segment("teamIds")))),
         streamerApi.isActualStreamer(user).mon(lila.mon.user.segment("streamer")),
         coachApi.isListedCoach(user).mon(lila.mon.user.segment("coach"))
-      ).mapN(UserInfo(nbs, _, _, _, _, _, _, _, _))
-
-    def preloadTeams(info: UserInfo) = teamCache.lightCache.preloadMany(info.teamIds)
+      ).mapN(UserInfo(nbs, _, _, _, _, _))

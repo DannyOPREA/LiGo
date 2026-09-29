@@ -1,14 +1,12 @@
 package lila.timeline
 import lila.core.perm.Permission
-import lila.core.team.Access
 import lila.core.timeline.*
 
 private final class TimelineApi(
     relationApi: lila.core.relation.RelationApi,
     userApi: lila.core.user.UserApi,
     entryApi: EntryApi,
-    unsubApi: UnsubApi,
-    teamApi: lila.core.team.TeamApi
+    unsubApi: UnsubApi
 )(using Executor):
 
   private val dedup = scalalib.cache.OnceEvery.hashCode[Atom](10.minutes)
@@ -32,7 +30,6 @@ private final class TimelineApi(
         case Propagation.Users(ids) => fuccess(ids)
         case Propagation.Followers(id) => relationApi.freshFollowersFromSecondary(id)
         case Propagation.Friends(id) => relationApi.fetchFriends(id)
-        case Propagation.WithTeam(_) => fuccess(Nil)
         case Propagation.ExceptUser(_) => fuccess(Nil)
         case Propagation.ModsOnly(_) => fuccess(Nil)
       .flatMap: users =>
@@ -43,16 +40,6 @@ private final class TimelineApi(
               userApi.userIdsWithRoles(modPermissions.map(_.dbKey)).dmap { userIds =>
                 us.filter(userIds.contains)
               }
-          case (fus, Propagation.WithTeam(teamId)) =>
-            teamApi
-              .forumAccessOf(teamId)
-              .flatMap:
-                case Access.Members =>
-                  fus.flatMap(teamApi.filterUserIdsInTeam(teamId, _))
-                case Access.Leaders =>
-                  fus.flatMap: us =>
-                    teamApi.leaderIds(teamId).map(us.toSet.intersect).map(_.toList)
-                case _ => fus
           case (fus, _) => fus
 
   private def modPermissions =

@@ -3,8 +3,8 @@ package irc
 
 import play.api.mvc.Call
 
-import lila.core.id.{ RelayRoundId, RelayTourId, UblogPostId, StudyChapterId }
-import lila.core.userId.{ UserId, MyId, ModId, UserName }
+import lila.core.id.{ RelayRoundId, RelayTourId, StudyChapterId }
+import lila.core.userId.{ UserId, MyId, ModId }
 import lila.core.study.data.StudyChapterName
 import lila.core.data.DiffStr
 
@@ -26,22 +26,6 @@ trait IrcApi:
   ): Funit
   def monitorMod(icon: String, text: String, tpe: ModDomain)(using MyId): Funit
   def permissionsLog(user: LightUser, details: String)(using mod: LightUser.Me): Funit
-  def publicForumLog(icon: String, text: String)(using MyId): Funit
-  def ublogPost(
-      user: LightUser,
-      id: UblogPostId,
-      slug: String,
-      title: String,
-      intro: String,
-      topic: String,
-      automod: Option[String]
-  ): Funit
-  def ublogBlog(
-      userId: UserId,
-      mod: UserName,
-      tier: Option[String],
-      note: Option[String]
-  ): Funit
   def broadcasterDm(topicUserId: UserId, senderId: UserId, content: String): Funit
   def broadcastTourUpdate(
       tourName: String,

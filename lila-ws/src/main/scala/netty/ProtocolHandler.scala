@@ -14,7 +14,7 @@ final private class ProtocolHandler(connector: ActorChannelConnector)
       "", // path
       null, // subprotocols (?)
       false, // allowExtensions (?)
-      8192, // max frame size - /inbox allows sending 8000 chars
+      8192, // max frame size
       false, // allowMaskMismatch (?)
       true, // checkStartsWith
       false // dropPongFrames

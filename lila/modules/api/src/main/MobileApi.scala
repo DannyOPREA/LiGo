@@ -2,7 +2,6 @@ package lila.api
 
 import play.api.libs.json.{ Json, JsObject }
 import play.api.i18n.Lang
-import play.api.mvc.RequestHeader
 import scalalib.data.Preload
 
 import lila.common.Json.given
@@ -16,7 +15,6 @@ final class MobileApi(
     lobbyApi: LobbyApi,
     lightUserApi: lila.user.LightUserApi,
     gameProxy: lila.round.GameProxyRepo,
-    unreadCount: lila.msg.MsgUnreadCount,
     tv: lila.tv.Tv,
     liveStreamApi: lila.streamer.LiveApi,
     activityRead: lila.activity.ActivityReadApi,
@@ -33,7 +31,7 @@ final class MobileApi(
 
   def home(oauth: Option[TokenScopes])(using
       me: Option[Me]
-  )(using RequestHeader, Translate, KidMode): Fu[JsObject] =
+  )(using Translate, KidMode): Fu[JsObject] =
     val myUser = me.map(_.value)
     val takex3 = oauth.exists(_.has(_.Web.Takex3))
     for
@@ -42,7 +40,6 @@ final class MobileApi(
       ongoingGames = urgentGames.map(_.value.take(20).map(lobbyApi.nowPlaying))
       account <- withPerfs.traverse(userApi.mobile(_, Preload(urgentGames)))
       recentGames <- myUser.traverse(gameApi.mobileRecent)
-      inbox <- me.ifFalse(takex3).traverse(unreadCount.mobile)
       challenges <- me.traverse(challengeApi.allFor(_))
       friends <- me
         .ifFalse(takex3)
@@ -55,7 +52,6 @@ final class MobileApi(
       .add("account", account)
       .add("recentGames", recentGames)
       .add("ongoingGames", ongoingGames)
-      .add("inbox", inbox)
       .add("challenges", challenges.map(challengeJson.all))
       .add("friends", friends)
 

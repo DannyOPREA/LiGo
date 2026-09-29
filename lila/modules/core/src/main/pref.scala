@@ -20,7 +20,6 @@ trait Pref:
   val theme: String
   val pieceSet: String
   val usingAltSocket: Option[Boolean]
-  val blogFilter: ublog.QualityFilter
   val bg: Int
 
   def hasKeyboardMove: Boolean

@@ -33,7 +33,6 @@ final class Env(
     gameRepo: lila.core.game.GameRepo,
     namer: lila.core.game.Namer,
     notifyAllows: lila.core.notify.GetNotifyAllows,
-    postApi: lila.core.forum.ForumPostApi,
     getLightUser: lila.core.LightUser.GetterFallback
 )(using Executor, Scheduler, Materializer):
 

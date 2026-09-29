@@ -2,7 +2,6 @@ package lila.pref
 
 import reactivemongo.api.bson.*
 
-import lila.core.ublog.QualityFilter as BlogQualityFilter
 import lila.db.BSON
 import lila.db.dsl.{ *, given }
 
@@ -75,7 +74,7 @@ private object PrefHandlers:
         agreement = r.getD("agreement", 0),
         uiRoundness = r.getD("uiRoundness", d.uiRoundness),
         board = r.getD("board", d.board),
-        blogFilter = r.strO("blogFilter").flatMap(BlogQualityFilter.byName.get) | d.blogFilter,
+        // "blogFilter" is no longer read or written: the ublog module is gone (unit 3.6).
         usingAltSocket = r.getO("usingAltSocket"),
         sayGG = r.getD("sayGG", d.sayGG),
         tags = r.getD("tags", d.tags)
@@ -127,7 +126,6 @@ private object PrefHandlers:
         "agreement" -> o.agreement,
         "usingAltSocket" -> o.usingAltSocket,
         "board" -> o.board,
-        "blogFilter" -> o.blogFilter.ordinal,
         "sayGG" -> o.sayGG,
         "tags" -> o.tags
       )

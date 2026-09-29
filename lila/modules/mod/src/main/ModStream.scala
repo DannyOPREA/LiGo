@@ -7,7 +7,6 @@ import play.api.libs.json.*
 import lila.common.Json.given
 import lila.common.{ Bus, HTTPRequest }
 import lila.core.security.UserSignup
-import lila.core.team.TeamCreate
 import lila.user.UserRepo
 import lila.db.dsl.{ *, given }
 
@@ -32,7 +31,7 @@ final class ModStream(logRepo: ModlogRepo, userRepo: UserRepo)(using org.apache.
   object events:
 
     private val blueprint = Source
-      .queue[UserSignup | TeamCreate](32, org.apache.pekko.stream.OverflowStrategy.dropHead)
+      .queue[UserSignup](32, org.apache.pekko.stream.OverflowStrategy.dropHead)
       .map:
         case UserSignup(user, email, req, fp, suspIp) =>
           Json
@@ -45,14 +44,6 @@ final class ModStream(logRepo: ModlogRepo, userRepo: UserRepo)(using org.apache.
               "userAgent" -> HTTPRequest.userAgent(req),
               "fingerPrint" -> fp
             )
-        case TeamCreate(team) =>
-          Json.obj(
-            "t" -> "teamCreate",
-            "teamId" -> team.id,
-            "name" -> team.name,
-            "description" -> team.description,
-            "creator" -> team.userId
-          )
       .map: js =>
         s"${Json.stringify(js)}\n"
 
@@ -61,9 +52,7 @@ final class ModStream(logRepo: ModlogRepo, userRepo: UserRepo)(using org.apache.
         val userDedup = scalalib.cache.OnceEvery[UserId](15.minutes)
         val subUser = Bus.sub[UserSignup]: s =>
           if userDedup(s.user.id) then queue.offer(s)
-        val subTeam = Bus.sub[TeamCreate](queue.offer(_))
         queue
           .watchCompletion()
           .addEffectAnyway:
             Bus.unsub[UserSignup](subUser)
-            Bus.unsub[TeamCreate](subTeam)

@@ -485,9 +485,8 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
     Auth { ctx ?=> me ?=>
       meOrFetch(username)
         .flatMapz: user =>
-          (fuccess(user.is(me) || isGranted(_.CheatHunter)) >>|
-            user.enabled.yes.so(env.clas.api.clas.isTeacherOf(me, user.id))).map:
-            _.option(user)
+          // teachers seeing their students' dashboards went with the clas module (unit 3.6).
+          fuccess((user.is(me) || isGranted(_.CheatHunter)).option(user))
         .flatMap:
           case Some(user) => f(user)
           case None => Redirect(routes.Puzzle.dashboard(Days(30), "home", none))

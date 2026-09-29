@@ -45,7 +45,6 @@ export class LinksCtrl extends PaneCtrl {
             userLine(d.user),
             i18n.site.profile,
           ]),
-          hl('a.text', linkCfg('/inbox', licon.Envelope), i18n.site.inbox),
           hl(
             'a.text',
             linkCfg(

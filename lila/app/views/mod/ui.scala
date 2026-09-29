@@ -16,17 +16,17 @@ lazy val inquiryUi = ModInquiryUi(helpers)(publicLineSource, env.mod.presets.get
 
 val timeline = lila.api.ui.ModTimelineUi(helpers)(publicLineSource = publicLineSource)
 
-// PublicSource.Tournament/Simul/Swiss/Study/Relay can no longer occur (units 3.2 and 3.3 removed
-// those features), but the enum cases stay in lila.core.chat for old stored chat lines; render
+// PublicSource.Tournament/Simul/Swiss/Study/Relay/Team/Forum/Ublog can no longer occur (units 3.2,
+// 3.3 and 3.6 removed those features), but the enum cases stay in lila.core.chat for old stored chat lines; render
 // them like any unknown game-scoped source rather than deleting the cases wholesale.
 // The givens are unused but part of the function type ModInquiryUi and ModTimelineUi expect.
 @annotation.nowarn("msg=unused implicit parameter")
 private def publicLineSource(source: PublicSource)(using Translate, ClientName): Tag = source match
-  case PublicSource.Team(id) => teamLink(id)
+  case PublicSource.Team(id) => em("team #", id)
   case PublicSource.Watcher(id) => a(href := routes.Round.watcher(id, Color.white))("Game #", id)
   case PublicSource.Player(id) => a(href := routes.Round.watcher(id, Color.white))("Game #", id)
-  case PublicSource.Forum(id) => a(href := routes.ForumPost.redirect(id))("Forum #", id)
-  case PublicSource.Ublog(id) => a(href := routes.Ublog.redirect(id))("User blog #", id)
+  case PublicSource.Forum(id) => em("forum post #", id)
+  case PublicSource.Ublog(id) => em("blog post #", id)
   case PublicSource.Tournament(id) => em("tournament #", id)
   case PublicSource.Simul(id) => em("simul #", id)
   case PublicSource.Swiss(id) => em("swiss #", id)

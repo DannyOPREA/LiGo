@@ -4,14 +4,6 @@ $impersonate-bar-height: 40px;
 
 body {
   margin-top: $impersonate-bar-height;
-
-  #main-wrap .msg-app {
-    height: calc(var(---app-height) - $site-header-height - $impersonate-bar-height);
-
-    @media (min-width: $small) {
-      height: calc(var(---app-height) * 0.98 - $site-header-height - $impersonate-bar-height);
-    }
-  }
 }
 
 #impersonate {

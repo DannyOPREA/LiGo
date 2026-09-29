@@ -35,11 +35,9 @@ final class Coach(env: Env) extends LilaController(env):
   def show(username: UserStr) = Open:
     Found(api.find(username)): c =>
       WithVisibleCoach(c):
-        // study removed in unit 3.3: a coach's featured studies no longer render.
-        for
-          posts <- env.ublog.api.latestPosts(lila.ublog.UblogBlog.Id.User(c.user.id), 4)
-          page <- renderPage(views.coach.show(c, posts))
-        yield Ok(page)
+        // study removed in unit 3.3 and ublog in unit 3.6: a coach's featured studies and blog
+        // posts no longer render.
+        Ok.page(views.coach.show(c))
 
   private def WithVisibleCoach(c: CoachModel.WithUser)(f: Fu[Result])(using ctx: Context) =
     if c.isListed || ctx.me.exists(_.is(c.coach)) || isGrantedOpt(_.Admin) then f
@@ -47,7 +45,7 @@ final class Coach(env: Env) extends LilaController(env):
 
   def edit = Secure(_.Coach) { ctx ?=> me ?=>
     FoundPage(api.findOrInit): c =>
-      env.msg.systemMsg.twoFactorReminder(me).inject(views.coach.edit(c, CoachProfileForm.edit(c.coach)))
+      fuccess(views.coach.edit(c, CoachProfileForm.edit(c.coach)))
     .map(_.hasPersonalData)
   }
 

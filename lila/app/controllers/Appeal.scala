@@ -45,9 +45,8 @@ final class Appeal(env: Env, reportC: => report.Report, userC: => User) extends 
 
   private def makeStatus(user: lila.core.user.User) = for
     playban <- env.playban.api.currentBan(user).dmap(_.isDefined)
-    blogHidden <- env.ublog.api.isHiddenWithPosts(user)
     modActions <- env.mod.logApi.recentActionsOf(user.id)
-  yield lila.appeal.UserStatus(user, playban, blogHidden, modActions)
+  yield lila.appeal.UserStatus(user, playban, modActions)
 
   def post(topic: AppealTopic) = AuthBody { ctx ?=> me ?=>
     for

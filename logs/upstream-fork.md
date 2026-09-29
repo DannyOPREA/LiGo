@@ -9,9 +9,60 @@
 - Claude Code auto-loads `lila/AGENTS.md` (lichess's own agent guide) while LiGo has no CLAUDE.md; it doesn't govern LiGo (2026-09-26, unit 0.2).
 - Import with `git archive` and diff `git ls-files` against upstream afterwards: upstream tracks some files its own .gitignore ignores (2026-09-26, unit 0.2).
 - Removing a module: grep its `lila.core.<module>` Bus messages (publishers compile fine with no subscriber) and `ui/*/src` for its URLs (kept in-repo clients like dgt aren't caught by the compiler) (2026-09-29, unit 3.5).
+- Script edits: cut code blocks by indentation or with adjacent markers, never "from marker A to far marker B"; list the removed `def`s in the diff afterwards. sbt 2 caches by content, so `touch` won't re-show a file's warnings (2026-09-29, unit 3.6).
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-29 · 3.6 · Remove forums, blogs, teams, inbox and classes
+- Did: deleted lila modules `forum`, `forumSearch`, `ublog`, `team`, `teamSearch`, `msg` and `clas`,
+  their controllers, views, routes (`team.routes`, `clas.routes`, the class login, the inbox
+  report form, the mod "full comms export") and core APIs (`lila.core.{forum,msg,ublog,team}`,
+  `TeamHelper`, `LogApi`). Callers lost their forum/blog/team/inbox/class parts: activity (forum
+  posts, blog posts, teams), the profile (forum/blog counts, team list, blog cards, inbox button),
+  the mini profile (class real name), the lobby (blog carousel, class list, "unread message from
+  Lichess" notice), top nav and footer links, the mod pages (inbox messages, blog carousel,
+  student/teacher sections), the personal data export, account closing, search-by-id, link checks,
+  the PGN/JSON team tags, push notifications and the markdown realms (only `cms` is left).
+  Every system private message is gone: mod warnings and auto-warnings are only logged, the
+  reporters' "action taken" message, the kid mode, welcome, patron and "new wing" messages and the
+  GitHub token-revoked message are no longer sent. lila-ws lost its team channel and inbox
+  messages; the browser lost `ui/msg`, `ui/team`, the forum/blog/class bundles and five npm packages
+  (COPYING §1.2).
+- Worked: lila-ws and UI by workers on disjoint paths again; a full grep for
+  `lila.(forum|ublog|team|msg|clas)`, their routes and `lila.core.*` messages before the first
+  compile left only a handful of compile errors.
+- Didn't work / dead ends: a "cut from marker A to marker B" script edit silently deleted
+  everything between two far-apart markers twice (ModlogApi, PersonalDataExport); the compiler
+  caught both, and the fix was to restore from git and cut by indentation. Also, touching files
+  doesn't make sbt 2 recompile them (its cache is by content), so to see all warnings I appended a
+  newline to every changed file and let scalafmt remove it.
+- Lessons: cut blocks by indentation or with adjacent markers, then list the removed `def`s in the
+  diff to check nothing else went; sbt 2 caches by content, so `touch` won't re-show warnings.
+- Decisions: see logs/decisions.md (3.6 row).
+- Verified by Claude: see the PR.
+- Follow-ups: dead but harmless: `Modlog.isForum`, the forum/blog/team `Modlog` action names and
+  permissions (`ModerateBlog`, `ModerateForum`, `Teacher`, `FullCommsExport`, stored),
+  `PublicSource.{Team,Forum,Ublog}` and their shutup text types, the `Team.*` and `Msg.*` OAuth scopes
+  (3.8), notification contents for mentions, private messages and teams (stored ones render as
+  plain text with no link, never created), the bulk challenge `message` field, the teacher
+  account-close branch, the push `forumMention`/`privateMessage` keys, the forum/blog/team/class
+  i18n keys, the `clas.*` monitoring keys. Still to tidy: the preferences page's mention, private
+  message and team-update notification rows and the "who can message you" setting; the orphaned
+  `bits.markdownTextarea` bundle and `Page.markdownTextarea`; the unused `@yaireo/tagify` and
+  `debounce-promise` entries in `ui/mod/package.json`. Mod warnings now reach only the modlog, so a
+  player closed for repeated rage-sitting never saw a warning; send warnings as notifications
+  later. Account deletion and the data export skip the old forum, blog, team and inbox
+  collections: fine on a fresh database, a GDPR gap if lichess data is ever imported. Beta pages
+  now need the `Beta` permission (the beta-testers team is gone).
+- Review (2026-09-29): no collateral deletions (removed names compared per file). Three findings
+  fixed before the PR: the lobby's donate/swag box stayed hidden because the deleted blog carousel
+  was what made it visible; the debug dialog still posted to the removed `/diagnostic`; stored
+  mention, message and team notifications were hidden in the bell (renderers restored without
+  links). Also relabelled the mod "Send PM" warning option, and removed the `msg multi` dev command,
+  the `ClasBus` core messages, the forum/team/blog/message config blocks and blank lines in
+  build.sbt. Lesson: deleted TS can have side effects on kept DOM; grep it for `.style` and
+  `querySelector` on elements that stay.
 
 ### 2026-09-29 · 3.5 · Remove engines and bots
 - Did: deleted lila modules `fishnet`, `irwin`, `evaluation`, `insight`, `tutor`, `jsBot` and

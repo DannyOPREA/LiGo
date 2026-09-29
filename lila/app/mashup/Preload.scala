@@ -8,7 +8,6 @@ import lila.core.perf.UserWithPerfs
 import lila.playban.TempBan
 import lila.streamer.LiveStreams
 import lila.timeline.Entry
-import lila.ublog.UblogPost
 import lila.user.{ LightUserApi, Me, User }
 import lila.mon.extensions.*
 import lila.round.UrgentGames
@@ -24,11 +23,7 @@ final class Preload(
     playbanApi: lila.playban.PlaybanApi,
     lightUserApi: LightUserApi,
     roundProxy: lila.round.GameProxyRepo,
-    getLastUpdates: lila.feed.Feed.GetLastUpdates,
-    ublogApi: lila.ublog.UblogApi,
-    unreadCount: lila.msg.MsgUnreadCount,
-    notifyApi: lila.notify.NotifyApi,
-    clasApi: lila.clas.ClasApi
+    getLastUpdates: lila.feed.Feed.GetLastUpdates
 )(using Executor):
 
   import Preload.*
@@ -36,13 +31,11 @@ final class Preload(
   def apply(
       streamerSpots: Int
   )(using ctx: Context): Fu[Homepage] = for
-    nbNotifications <- ctx.me.so(notifyApi.unreadCount(_))
     withPerfs <- ctx.user.traverse(perfsRepo.withPerfs)
     given Option[UserWithPerfs] = withPerfs
-    (
-      ((((((((data, povs), feat), entries), puzzle), streams), playban), blindGames), ublogPosts),
-      lichessMsg
-    ) <-
+    // The blog carousel, the "unread message from Lichess" notice and the class list went with
+    // the ublog, msg and clas modules (unit 3.6).
+    (((((((data, povs), feat), entries), puzzle), streams), playban), blindGames) <-
       lobbyApi.get
         .mon(lila.mon.lobby.segment("lobbyApi"))
         .zip(tv.getBestGame.mon(lila.mon.lobby.segment("tvBestGame")))
@@ -57,13 +50,6 @@ final class Preload(
         )
         .zip((ctx.userId.so(playbanApi.currentBan)).mon(lila.mon.lobby.segment("playban")))
         .zip(ctx.blind.so(ctx.me).so(roundProxy.urgentGames))
-        .zip(ublogApi.myCarousel)
-        .zip(
-          ctx.userId
-            .ifTrue(nbNotifications > 0)
-            .filterNot(liveStreamApi.isStreaming)
-            .so(unreadCount.hasMustReadLichessMsg)
-        )
     (currentGame, _) <- ctx.me
       .soUse(currentGameMyTurn(povs, lightUserApi.sync))
       .mon(lila.mon.lobby.segment("currentGame"))
@@ -71,7 +57,6 @@ final class Preload(
         lightUserApi
           .preloadMany(entries.flatMap(_.userIds).toList)
           .mon(lila.mon.lobby.segment("lightUsers"))
-    classes <- ctx.myId.so(me => clasApi.isStudent(me).so(clasApi.clas.ofStudent(me, 4)))
   yield Homepage(
     data,
     entries,
@@ -82,10 +67,7 @@ final class Preload(
     currentGame,
     blindGames,
     getLastUpdates(),
-    ublogPosts,
-    classes,
-    withPerfs,
-    hasUnreadLichessMessage = lichessMsg
+    withPerfs
   )
 
   def currentGameMyTurn(using me: Me): Fu[Option[CurrentGame]] =
@@ -118,10 +100,7 @@ object Preload:
       currentGame: Option[Preload.CurrentGame],
       blindGames: UrgentGames,
       lastUpdates: List[lila.feed.Feed.Update],
-      ublogPosts: List[UblogPost.PreviewPost],
-      classes: List[lila.clas.Clas],
-      me: Option[UserWithPerfs],
-      hasUnreadLichessMessage: Boolean
+      me: Option[UserWithPerfs]
   )
 
   case class CurrentGame(pov: Pov, opponent: String)
