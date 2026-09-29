@@ -10,6 +10,41 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 5.1 · Phase 5 design (ADR 0021)
+- Did: wrote ADR 0021: one `go` perf for every rated game; signup rank list 25k–9d starting at the
+  middle of the rank with deviation 250, changeable until the first rated game starts; server-made
+  labels clamped 25k–9d with "5k?" while provisional, and a server rank table for browser rank
+  ranges; rated handicap (19×19 0–9, 9×9 0–4) with spec komi only, in direct challenges only until
+  Phase 6's pools; suggested stones = round(rank gap / stone value); guests casual only.
+- Worked: the memo's spike numbers give the examples directly (5k = rank 25.5 ≈ 1580, 1d = 30.5 ≈ 1960).
+- Didn't work / dead ends: the first draft had four gaps the reviewer caught: it allowed 13×13
+  rated games (R-SCOPE-1 leaves 13×13 out), said the browser never needs ranks (lila builds rating
+  ranges in the browser), trusted lila to keep guests out of rated games (a guest can accept a rated
+  open challenge), and left rated handicap for seeks and open challenges undecided.
+- Lessons: goratings' 1-stone Chinese case adds a compensation point LiGo's rules don't give; rate
+  LiGo's 1-stone game as handicap 0 with komi 0.5. lila's `FarmBoostDetection` can silently skip the
+  rating update between new accounts in direct challenges; Go demos must play long games or retune it.
+- Decisions: all of ADR 0021, Claude's call under the owner's 2026-09-28 delegation (logs/decisions.md).
+- Verified by Claude: numbers recomputed in Python (midpoints, 5k vs 1d, goratings' values for 0–5
+  stones); verify.sh; reviewer pass (4 blocking, 12 non-blocking, all addressed in the ADR).
+  · Needs owner verification: whether the choices feel right for Go players.
+- Follow-ups: 5.2 builds `GoRank` and the rank table to this ADR; 5.3 retunes FarmBoostDetection.
+
+### 2026-09-29 · Phase 5 breakdown · Accounts and ratings split into units 5.1–5.8
+- Did: split Phase 5 into 8 units (docs/PLAN.md §5, "Phase 5 units"): a design ADR (5.1), the
+  rating maths in `lila/modules/rating` (5.2), then the lila halves: the rating update with
+  handicap (5.3), signup rank (5.4), kyu/dan display (5.5), profile and rank graph (5.6), rated and
+  guest game creation (5.7) and the demo (5.8), which need Phase 3's game, round, creation and UI.
+- Worked: ADR 0013 and the ratings memo already fix the maths; the memo's spike numbers become 5.2's
+  tests. The open points (signup ranks, display bounds, stone count and cap, guests) all land in 5.1.
+- Didn't work / dead ends: none.
+- Lessons: Glicko-2 step 6 is switched off in `round`'s `PerfsUpdater` (`skipDeviationIncrease =
+  true`), not in the rating module, so it changes with the round unit (5.3), not with the maths (5.2).
+- Decisions: the split itself, Claude's call under the owner's 2026-09-28 delegation
+  (logs/decisions.md).
+- Verified by Claude: verify.sh. · Needs owner verification: whether the split reads right.
+- Follow-ups: 5.1 next, then 5.2.
+
 ### 2026-09-28 · 1.4 · Owner chose lila's Glicko-2 with OGS's settings
 - Did: recorded the owner's answer (option A) as ADR 0013; marked the memo decided; updated STATUS and decisions.md.
 - Worked: the decision card was answered without follow-up questions.

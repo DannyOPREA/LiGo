@@ -17,10 +17,11 @@ head=${2:-HEAD}
 # area|regex over repo-relative paths. A workflow file counts for its own area. Any lila/ change
 # counts for ui, because lila's oxfmt and oxlint also check files outside ui/ (Markdown included).
 # lila's pnpm lockfile and workspace also count for rules: libs/board's packages live there (unit 2.1).
+# libs/board also counts for ui: the playground's screenshots (unit 2.4) run in the ui job.
 areas=(
   'lila|^(lila/(app|conf|modules|project|translation)/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ws|^(lila-ws/|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
-  'ui|^(lila/|\.github/workflows/ui\.yml$|dev/ci/changed\.sh$)'
+  'ui|^(lila/|libs/board/|\.github/workflows/ui\.yml$|dev/ci/changed\.sh$)'
   'rules|^(libs/go-rules/|libs/board/|libs/conformance/fixtures/|lila/pnpm-(lock|workspace)\.yaml$|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
   'scoring|^(services/scoring/|libs/conformance/fixtures/|lila/pnpm-(lock|workspace)\.yaml$|dev/katago\.sh$|\.github/workflows/scoring\.yml$|dev/ci/changed\.sh$)'
 )
