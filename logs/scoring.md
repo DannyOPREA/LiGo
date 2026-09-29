@@ -27,9 +27,13 @@
 - Worked: `bash dev/tests/run.sh`, shellcheck and verify pass; with a fake b18 file on disk
   `dev/katago.sh env` still refuses it (checksum mismatch) and falls back to the test network.
 - Didn't / couldn't: the real file can't be downloaded here (media.katagotraining.org is not on
-  the cloud allowlist), so the pin itself is only checked on the owner's box. The network's
-  licence is still unread (katagotraining.org is blocked here); the owner's paste is pending.
-- Decisions: pin the owner's value as given (one line in logs/decisions.md).
+  the cloud allowlist), so the pin itself is only checked on the owner's box.
+- Licence: the owner pasted katagotraining.org's "KataGo Neural Network License" (Copyright 2026
+  David J Wu, "lightvector"): MIT wording (use, copy, modify, distribute, sublicense, sell; keep
+  the notice; no warranty). Compatible with AGPL use; the network is downloaded, never committed,
+  so no NOTICE entry is needed. This closes 4.6's licence check.
+- Decisions: pin the owner's value as given; the network licence is acceptable (two lines in
+  logs/decisions.md).
 
 ### 2026-09-29 · unit 4.6 · autoscore benchmark and the b18 network pin
 - Did: `dev/ligo scoring bench [--net PATH] [--games DIR] [--gate N] [--runs N] [--limit N]
