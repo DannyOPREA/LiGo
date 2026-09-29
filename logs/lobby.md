@@ -5,6 +5,30 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 6.1 · ADR 0022: pools, auto-handicap, open challenges, player test, load test
+- Did: wrote ADR 0022 (the Phase 6 design): seven rated pools from ADR 0005 with readable ids and
+  5 s waves (and lila's miss bonus per second, not per wave), casual tile clicks as lila's casual hooks, the Handicap OK chip as a pool-member flag,
+  the handicap pairing score and how it meets lila's cap, the waiting range against a "typical
+  opponent", correspondence tiles through lila's own seek matching (even only), open challenges
+  greyed in the browser once the server stops hiding joinable-but-unsuitable rows, which rated hooks
+  the pools may take, guests kept apart, the player-test method, and k6 for load testing.
+- Worked: reading lila's `pool` and `lobby` code first; most of Phase 6 is configuration of what
+  lila already does (hook matching, seek join-or-create, the filter in the browser).
+- Didn't work / dead ends: the first draft (a) said the browser already gets every open game (lila
+  hides the ones you can't join on the server), (b) left lila's clock-only pool compatibility in
+  place, (c) described the waiting range and the pairing score loosely, (d) kept lila's 12–60 s
+  waves against PLAN §4's 10 s goal, and (e) planned a join-or-create path lila already has. The
+  reviewer caught all five, then on a second look (f) that 5 s waves with lila's 12 points per
+  missed wave widen the matching 2.4× faster; all fixed before the PR.
+- Lessons: check which side filters lobby data (`Biter.canJoin` on the server) before designing
+  browser-side greying; lila's pool matching bonuses use the *smaller* miss bonus of the pair and
+  the cap at the *lower* rating.
+- Decisions: every choice in ADR 0022, Claude's call under the owner's 2026-09-28 delegation
+  (logs/decisions.md).
+- Verified by Claude: verify.sh; reviewer agent (6 blocking findings, fixed). · Needs owner
+  verification: whether the lobby it describes is the one you pictured (PLAN §4).
+- Follow-ups: 6.2 (the score and waiting range as code), 6.3 (the player-test kit).
+
 ### 2026-09-29 · Phase 6 breakdown · The lobby split into units 6.1–6.10
 - Did: split Phase 6 into 10 units (docs/PLAN.md §5, "Phase 6 units"): a design ADR (6.1), pairing
   with auto-handicap as new code in `lila/modules/pool` (6.2), the player-test kit (6.3), then the
