@@ -110,6 +110,7 @@ overrides:
   undici: ^8.10.2
 
 patchedDependencies:
+  '@sabaki/sgf@3.5.0': 9eaca2f24441c0cd1a520872e13974aced280571bce459b77a89de0097801e55
   '@toast-ui/editor@3.2.2': 3c9aa5176e0c4e67d96e6cfc8928789dfb22ebcb7db6a5c68f40caf5cc9bbce9
 
 importers:
@@ -176,6 +177,9 @@ importers:
 
   ../libs/board:
     dependencies:
+      '@sabaki/sgf':
+        specifier: 3.5.0
+        version: 3.5.0(patch_hash=9eaca2f24441c0cd1a520872e13974aced280571bce459b77a89de0097801e55)
       goban:
         specifier: 8.3.226
         version: 8.3.226
@@ -1051,6 +1055,9 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
+  '@sabaki/sgf@3.5.0':
+    resolution: {integrity: sha512-KAkgUFe/A7jc4xZtUBAhDeH6IqPYMHoKts6nXhYHNCvBud4DChJ9EpKLDCeWuVijb960FCXvhBfAy6OkdZZpfA==}
+
   '@sindresorhus/merge-streams@4.0.0':
     resolution: {integrity: sha512-tlqY9xq5ukxTUZBmoOp+m61cqwQD5pHJtFY3Mn8CA8ps6yghLH/Hw8UPdqg4OLmFW3IFlcXnQNmo/dh8HzXYIQ==}
     engines: {node: '>=18'}
@@ -1433,6 +1440,9 @@ packages:
 
   dijkstrajs@1.0.3:
     resolution: {integrity: sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA==}
+
+  doken@1.0.2:
+    resolution: {integrity: sha512-JSVsMxaB5yikb6wBDQTGIcyNyUytrYQE7WGyGAC0EoFunUTV7Wag4p5JC2bXKuTfD7t847dy7TWcwyETUbYAiw==}
 
   dom-serializer@2.0.0:
     resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==}
@@ -2317,6 +2327,8 @@ ignoredOptionalDependencies:
   - '@ox*/*-openharmony-*'
   - '@ox*/*-netbsd-*'
   - '@ox*/*-sunos-*'
+  - iconv-lite
+  - jschardet
 
 snapshots:
 
@@ -2619,6 +2631,10 @@ snapshots:
   '@playwright/test@1.63.0':
     dependencies:
       playwright: 1.63.0
+
+  '@sabaki/sgf@3.5.0(patch_hash=9eaca2f24441c0cd1a520872e13974aced280571bce459b77a89de0097801e55)':
+    dependencies:
+      doken: 1.0.2
 
   '@sindresorhus/merge-streams@4.0.0': {}
 
@@ -2942,6 +2958,8 @@ snapshots:
   dialog-polyfill@0.5.6: {}
 
   dijkstrajs@1.0.3: {}
+
+  doken@1.0.2: {}
 
   dom-serializer@2.0.0:
     dependencies:

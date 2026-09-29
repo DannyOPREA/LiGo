@@ -15,4 +15,5 @@
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue changes, UPSTREAM gaps, decision-vs-code, kid guards, literal URLs, kept in-repo API clients, dead form fields (3.3–3.5)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
+- [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W dropped, lowercase ids, quadratic merges, writer lossiness
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick

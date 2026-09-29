@@ -74,6 +74,30 @@ throws for 13×13, which has no table yet, R-SCOPE-1) and `standardKomi(ruleset,
 before any Chinese compensation, which `gameConfig` applies from `handicap`). Unit 2.2's playground
 is the first caller.
 
+## SGF for the analysis board (`src/sgf.mjs`, unit 7.2, ADR 0023)
+
+```js
+import { readTree, writeTree, playFrom, decodeSgf } from "@ligo/board/sgf";
+
+const root = readTree(sgfText);   // the whole tree: variations, comments, glyphs, kept properties
+root.settings;                    // { size, ruleset, komi, handicap, black, white, toMove }
+root.children[0];                 // { id: "pd", ply: 1, move, color, stones, captures, ko, toMove, ... }
+playFrom([root, ...line], "dd");  // { node } for a new move, or { refused }
+writeTree(root);                  // the tree as an SGF record, root included
+decodeSgf(fileBytes);             // a file's text (UTF-8, or the charset its CA names)
+```
+
+The text is `@sabaki/sgf`'s job (parse and stringify); every move is replayed through `play`, so a
+position never comes from the file and an illegal move, a move out of turn or an off-board point
+refuses the record with its move number (`SgfError`). goban-engine's own SGF reader (`readSgf`
+above) stays for the unit 1.8 read-back only: it hangs on a truncated file. Node ids are the move
+itself (`"pd"`, `".."` for a pass), the two characters lila's tree paths need. The root's settings
+follow `libs/conformance/sgf/root.json`, which the server's reader (unit 7.3) replays too. Limits:
+200 KB (UTF-8 bytes) and 10,000 nodes; setup stones only at the start, and no move in the first
+node; 9×9, 13×13 and 19×19; `tt` is a pass on 19×19 only; a property name with no capital letters
+(`sz`, pre-FF[3]) is refused rather than dropped. `@sabaki/sgf` is patched
+(`patches/`) with a `browser` field so bundlers leave out its Node-only file and charset modules.
+
 ## What LiGo sets that goban's presets would get wrong
 
 | Spec rule | goban-engine's own preset | `src/engine.mjs` |
@@ -104,6 +128,11 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
   - 80 seeded random games (9×9, 13×13, 19×19; some with handicap; passes and resumes included):
     after every one of 16,100 actions the same stones, captures, player to move and ko point, and
     at probed plies the same answer, with the same reason, for every empty point.
+- `test/sgf.test.mjs`: the root table (`libs/conformance/sgf/root.json`), the `sgf` skill's quirks,
+  variations, comments and glyphs, refusals (a truncated file, moves out of turn, a ko retake,
+  deep nesting, too long), read → write → read round trips, `playFrom`, charsets, and that the
+  reader bundles for the browser. `test/parity.test.mjs` also reads the 227 server SGF games with
+  `readTree` and checks they end in the server's position.
 - `test/engine.test.mjs`: the settings above, SGF glue, refusal reasons, and goban's own handicap
   table against R-HCP-4.
 

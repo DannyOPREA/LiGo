@@ -1,0 +1,15 @@
+diff --git a/package.json b/package.json
+index efa933439895502cc59950ab865d835518f4dff5..a4d0dd57d84a94d92daec398dc131da9e272106a 100644
+--- a/package.json
++++ b/package.json
+@@ -46,5 +46,10 @@
+     "singleQuote": true,
+     "bracketSpacing": false,
+     "proseWrap": "always"
++  },
++  "browser": {
++    "fs": false,
++    "iconv-lite": false,
++    "jschardet": false
+   }
+ }
