@@ -12,6 +12,13 @@ final class TopNav(helpers: Helpers):
     if ctx.blind then h3(name) else a(href := url)(name)
 
   def apply(seesClassMenu: Boolean, hasDgt: Boolean)(using ctx: Context) =
+    // practice and study menu links went with unit 3.3, chess basics and coordinates with 3.4.
+    // The "Learn" heading used to open /learn; it now opens the first link the viewer may see, and
+    // the section is left out when there is none (kid accounts don't see coaches).
+    val learnLinks = List(
+      ctx.kid.no.option(langHref(routes.Coach.all(1)) -> trans.site.coaches()),
+      seesClassMenu.option(routes.Clas.index.url -> trans.clas.lichessClasses())
+    ).flatten
     st.nav(id := "topnav", cls := "hover")(
       st.section(
         linkTitle(
@@ -44,15 +51,11 @@ final class TopNav(helpers: Helpers):
           )
         )
       ,
-      st.section(
-        linkTitle(langHref(routes.Coach.all(1)), trans.site.learnMenu()),
-        div(role := "group")(
-          // practice and study menu links removed with the practice and study modules (unit 3.3);
-          // chess basics and coordinates links removed with the learn and coordinate modules (unit 3.4).
-          ctx.kid.no.option(a(href := langHref(routes.Coach.all(1)))(trans.site.coaches())),
-          seesClassMenu.option(a(href := routes.Clas.index)(trans.clas.lichessClasses()))
-        )
-      ),
+      learnLinks.headOption.map: (firstUrl, _) =>
+        st.section(
+          linkTitle(firstUrl, trans.site.learnMenu()),
+          div(role := "group")(learnLinks.map((url, name) => a(href := url)(name)))
+        ),
       st.section:
         // broadcast link removed with the relay module (unit 3.3).
         frag(

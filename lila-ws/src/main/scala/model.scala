@@ -115,9 +115,3 @@ object UserTv extends OpaqueString[UserTv]
 case class Clock(white: Int, black: Int)
 case class Position(lastUci: Uci, fen: Fen.Board, clock: Option[Clock], turnColor: Color):
   def fenWithColor = fen.andColor(turnColor)
-
-opaque type MultiPv = Int
-object MultiPv extends RelaxedOpaqueInt[MultiPv]
-
-opaque type Depth = Int
-object Depth extends RelaxedOpaqueInt[Depth]

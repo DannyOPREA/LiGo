@@ -158,7 +158,7 @@ object contact:
               illegalPawnCapture(),
               frag(
                 p(calledEnPassant()),
-                p(a(href := "/learn#/15")(tryEnPassant()))
+                p(tryEnPassant())
               )
             ),
             Leaf(
@@ -167,7 +167,7 @@ object contact:
               frag(
                 p(castlingPrevented()),
                 p(a(href := "https://en.wikipedia.org/wiki/Castling#Requirements")(castlingRules()), "."),
-                p(a(href := "/learn#/14")(tryCastling()), "."),
+                p(tryCastling(), "."),
                 p(castlingImported())
               )
             ),

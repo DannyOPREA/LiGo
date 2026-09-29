@@ -1,7 +1,7 @@
 package lila.user
 package ui
 
-import lila.core.perf.UserWithPerfs
+import lila.core.perf.{ PuzPerf, UserWithPerfs }
 import lila.rating.UserWithPerfs.hasVariantRating
 import lila.ui.*
 
@@ -92,7 +92,72 @@ final class UserShowSide(helpers: Helpers):
           u.noBot.option(
             frag(
               hr,
-              showPerf(u.perfs.puzzle, PerfKey.puzzle)
+              showPerf(u.perfs.puzzle, PerfKey.puzzle),
+              showStorm(u.perfs.storm),
+              showRacer(u.perfs.racer),
+              showStreak(u.perfs.streak)
+            )
+          )
+        )
+      )
+    )
+
+  // Puzzle storm, racer and streak went in unit 3.4; old scores stay stored (ADR 0019) and still show
+  // here, without links.
+  private def showStorm(storm: PuzPerf)(using Translate) =
+    a(
+      dataIcon := Icon.Storm,
+      cls := List(
+        "empty" -> !storm.nonEmpty
+      ),
+      span(
+        h3("Puzzle Storm"),
+        st.rating(
+          strong(storm.score),
+          storm.nonEmpty.option(
+            frag(
+              " ",
+              span(trans.storm.xRuns.plural(storm.runs, storm.runs.localize))
+            )
+          )
+        )
+      )
+    )
+
+  private def showRacer(racer: PuzPerf)(using Translate) =
+    a(
+      dataIcon := Icon.FlagChessboard,
+      cls := List(
+        "empty" -> !racer.nonEmpty
+      ),
+      span(
+        h3("Puzzle Racer"),
+        st.rating(
+          strong(racer.score),
+          racer.nonEmpty.option(
+            frag(
+              " ",
+              span(trans.storm.xRuns.plural(racer.runs, racer.runs.localize))
+            )
+          )
+        )
+      )
+    )
+
+  private def showStreak(streak: PuzPerf)(using Translate) =
+    a(
+      dataIcon := Icon.ArrowThruApple,
+      cls := List(
+        "empty" -> !streak.nonEmpty
+      ),
+      span(
+        h3("Puzzle Streak"),
+        st.rating(
+          strong(streak.score),
+          streak.nonEmpty.option(
+            frag(
+              " ",
+              span(trans.storm.xRuns.plural(streak.runs, streak.runs.localize))
             )
           )
         )

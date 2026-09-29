@@ -163,8 +163,6 @@ lazy val puzzle = module("puzzle",
   tests.bundle
 )
 
-
-
 lazy val jsBot = module("jsBot",
   Seq(memo, ui),
   Seq()
@@ -184,7 +182,6 @@ lazy val streamer = module("streamer",
   Seq(ui, memo),
   Seq()
 )
-
 
 lazy val feed = module("feed",
   Seq(memo, ui),
@@ -302,7 +299,6 @@ lazy val tutor = module("tutor",
   tests.bundle
 )
 
-
 lazy val fishnet = module("fishnet",
   Seq(analyse),
   Seq(lettuce) ++ tests.bundle
@@ -332,8 +328,6 @@ lazy val challenge = module("challenge",
   Seq(game, room, oauth),
   Seq(lettuce, catsMtl) ++ tests.bundle
 )
-
-
 
 lazy val playban = module("playban",
   Seq(memo),
@@ -409,7 +403,6 @@ lazy val appeal = module("appeal",
   Seq(memo, ui),
   Seq()
 )
-
 
 lazy val notifyModule = module("notify",
   Seq(memo, ui),

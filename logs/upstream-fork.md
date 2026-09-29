@@ -38,7 +38,15 @@
 - Follow-ups: the `Racer.Write` OAuth scope and storm/racer monitoring keys are dead (3.8 with the
   other dead scopes); `ui/analyse` practice mode no longer asks the tablebase and learn-from-mistakes
   no longer skips masters' moves (both go with the engine in 3.5); the Storm glyph stays in the
-  icon font; storm/racer/learn i18n keys stay with the rest of the i18n clean-up.
+  icon font; storm/racer/learn i18n keys stay with the rest of the i18n clean-up. Also:
+  `ui/analyse`'s fork-variation hover arrow went with the explorer hover it relied on (3.5 or
+  later, with the engine); the Patron page (3.7), recap slides (3.7) and SitePages still mention
+  chess basics, Storm/Racer/Streak, openings or the explorer; `UserApi.addPuzRun` and the streak
+  and cloud-eval monitoring keys are dead code; an old cached puzzle page that still sends
+  `streakId` now gets a normal rated round.
+- Review fixes: the menu's "Learn" heading no longer opens the coach list for kid accounts (it
+  opens the first link the viewer may see, or the section is left out); profiles still show old
+  storm/racer/streak scores, without links.
 
 ### 2026-09-28 · 3.3 · Remove studies and broadcasts
 - Did: deleted lila modules `study`, `relay`, `practice`, `studySearch`, `fide`, `title` and the
