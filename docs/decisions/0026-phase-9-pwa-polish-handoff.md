@@ -82,9 +82,11 @@ adds **no new sound files** in Phase 9. Go events map onto the existing names:
 | Byo-yomi: the last 10 seconds of a period | CountDown10 … CountDown1, one per second |
 | Game ends | Victory, Defeat or Draw (jigo or no result) |
 
-- `libs/board` forwards goban's own `audio-stone`, `audio-capture-stones` (with the number taken)
-  and `audio-pass` events to the page as one `onSound` callback, and adds the one goban lacks, an
-  illegal move (from the refusals it already reports); the page plays them through `site.sound`, so the sound preference, volume
+- `libs/board` reports each move that counted as one `onPlayed` event (the move, its colour, the
+  number of stones it captured), from `play`, and refusals through its existing `onRefused`. It
+  does not forward goban's `audio-*` events: goban also fires `audio-capture-stones` for a
+  previewed stone that hasn't been played, and logs every capture to the console. The same
+  `onPlayed` event feeds the live region (§4); the page plays them through `site.sound`, so the sound preference, volume
   and "silent" apply everywhere. Clock and game-end sounds belong to the round page (9.7).
 - The `soundSet` preference keeps sfx (default), piano, nes, futuristic and silent. "speech" stays
   and reads a Go move as its coordinate ("D 4", "pass", "3 captured") in 9.7, the same text the
