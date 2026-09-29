@@ -283,6 +283,52 @@ describe("board in Chromium", () => {
     assert.equal(await t.page.locator("#board image").count(), 0, "no image stones");
     assert.deepEqual(t.problems.requests, []);
   });
+
+  test("every offered theme draws from code: no picture, nothing loaded (ADR 0026 §3)", async () => {
+    const { boards, stones } = await t.page.evaluate(() => window.harness.themes);
+    assert.deepEqual(boards, ["Plain", "Book", "Night Play", "HNG", "HNG Night"]);
+    assert.deepEqual(stones, ["Plain", "Slate & Shell", "Glass", "Worn Glass", "Night"]);
+    const looks = new Set();
+    for (const board of boards)
+      for (const stone of stones) {
+        await mount(t.page, { ...game9, movable: "both", autoPlay: true, moves: ["ee", "dd"], theme: { board, stones: stone } });
+        const images = await t.page.evaluate(() =>
+          [...document.querySelectorAll("#board *")].map((e) => getComputedStyle(e).backgroundImage).filter((b) => b !== "none"),
+        );
+        assert.deepEqual(images, [], `${board} / ${stone}`);
+        // Shell stones are drawn on a canvas in code and placed as data: images; nothing else may be one.
+        const hrefs = await t.page.locator("#board image").evaluateAll((els) =>
+          els.map((e) => e.getAttribute("href") ?? e.getAttributeNS("http://www.w3.org/1999/xlink", "href")),
+        );
+        assert.deepEqual(hrefs.filter((h) => !h?.startsWith("data:")), [], `${board} / ${stone}: images from code only`);
+        looks.add((await t.page.locator("#board").screenshot()).toString("base64"));
+      }
+    assert.equal(looks.size, boards.length * stones.length, "each pair looks different");
+    assert.deepEqual(t.problems.requests, []);
+  });
+
+  test("a picture theme or an unknown name falls back to Plain", async () => {
+    const themes = await t.page.evaluate(() => [
+      window.harness.gobanThemes({ board: "Kaya", stones: "Anime" }),
+      window.harness.gobanThemes({ board: "Custom", stones: "Custom" }),
+      window.harness.gobanThemes({ board: "HNG", stones: "Slate & Shell" }),
+      window.harness.gobanThemes(),
+    ]);
+    const plain = { board: "Plain", black: "Plain", white: "Plain", "removal-graphic": "x", "removal-scale": 1 };
+    assert.deepEqual(themes, [plain, plain, { ...plain, board: "HNG", black: "Slate", white: "Shell" }, plain]);
+  });
+
+  test("set changes the theme of a mounted board, stones kept", async () => {
+    await mount(t.page, { ...game9, movable: "both", autoPlay: true, moves: ["ee"] });
+    const before = await t.page.locator("#board").screenshot();
+    await call(t.page, "set", { theme: { board: "Night Play", stones: "Night" } });
+    const after = await t.page.locator("#board").screenshot();
+    assert.notDeepEqual(after, before);
+    assert.equal((await state(t.page)).board[4], "....X....");
+    await call(t.page, "set", { theme: { board: "Plain", stones: "Plain" } });
+    assert.deepEqual(await t.page.locator("#board").screenshot(), before, "back to Plain looks as it did");
+    assert.deepEqual(t.problems.requests, []);
+  });
 });
 
 test("phone: taps play stones on a board as wide as the screen", async () => {
