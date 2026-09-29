@@ -12,8 +12,153 @@
 - `autoscore`'s "needs sealing" list only exists because of KataGo's ownership-uncertainty threshold; a `count` recount (goscorer only, no KataGo) has no way to compute it, so its `seal` is always empty — the ADR 0020 example's "same fields without src" is imprecise on this point (2026-09-28, unit 4.4).
 - `api.github.com`, `github.com` and `codeload.github.com` are blocked in this cloud session's proxy allowlist, but `raw.githubusercontent.com` and a plain `git clone https://github.com/...` both work; vendoring files from a public GitHub repo goes through `git clone`, not the GitHub API (2026-09-28, unit 4.4).
 - goban-engine's `autoscore` mutates the board it's given (it blanks the dead stones it finds in place); always pass a copy, never the board a later widen/count step still needs (2026-09-28, unit 4.4 review fixes).
+- Probe every pub/sub listener with `null`, `[]` and a bare number, not just "not JSON": all three
+  parse as valid JSON but aren't the object shape a handler assumes, and `EventEmitter`/ioredis
+  don't catch a listener's throw — an uncaught one takes the whole process down (2026-09-28, unit
+  4.5 review fixes).
 
 ## Entries (newest first)
+### 2026-09-28 · unit 4.5 review fixes · a null-message crash, docker mode's worker, a restart loop
+- Did (review of the entry below, all under the owner's 2026-09-28 delegation): fixed a real
+  crash — `JSON.parse('null')`, `JSON.parse('[]')` and `JSON.parse('5')` all succeed (valid JSON),
+  but reading `.ref` off `null`/an array/a number used to throw synchronously inside ioredis's
+  `emit('message')`, an uncaught exception that killed the whole process (reproduced with
+  `redis-cli publish scoring-in null` against the real worker, and again here via `git stash` on
+  the pre-fix code). `worker.ts`'s `onMessage` now checks the parsed value is a non-null,
+  non-array object before treating it as a `Request`; the `listener` wrapper around it also gained
+  a try/catch → `onError`, so no future bug in `onMessage` itself can reach ioredis either.
+  `test/worker.test.ts` gained a test sending `'null'`, `'[]'` and `'5'` through the real listener
+  function and asserting it doesn't throw, then that the worker still answers a normal `count`
+  afterwards. Docker mode (Claude's decision after a reviewer finding): `dev/lila-docker/compose.yml` gained a
+  `scoring` service (the `ui` container's Node image/pattern, `:z`-mounted `lila`/`libs`/`services`
+  for pnpm workspace resolution, no `profiles:` so it starts by default) running the worker with no
+  `KATAGO_BIN`/`KATAGO_MODEL`/`KATAGO_CONFIG` at all, so every `propose` answers `src:"none"` (ADR
+  0020 §4's own fallback) until a later unit gives docker mode a real KataGo story; `dev/ligo`'s
+  docker branches for `up`/`down`/`status`/`logs scoring` now treat it like any other compose
+  service instead of refusing it, and the "honest skip" wording describing docker mode is replaced
+  in `dev/ligo`, `services/scoring/CLAUDE.md` and `services/scoring/README.md`. Native mode's
+  supervision changed from the generic `start_bg` (its `tail -f /dev/null |` wrapper, needed to
+  keep stdin open for Play, has the side effect of keeping the recorded pid alive even after a
+  plain Node worker under it dies, so `dev/ligo status` kept saying "running" for a dead worker) to
+  a new `start_bg_restart`: a small supervisor loop that restarts the worker with capped
+  exponential backoff (1s, 2s, 4s, ... capped at 30s) and records its own pid, so `status` reflects
+  a live supervisor that keeps the worker coming back rather than a dead-but-still-running wrapper.
+  `main.ts` also: logs `SCORING_REDIS_URL` with any credentials stripped (`redactedUrl`, `new URL`
+  parse-and-blank, never logs the raw string); calls `process.exit(1)` on a `main()` rejection
+  instead of only setting `process.exitCode`, since an open ioredis connection can otherwise keep
+  the event loop alive forever half-started. `worker.ts`'s propose/count branch is now written as
+  "if `propose`, queue; else run immediately" (was the other way round), so a future third request
+  type defaults to running immediately rather than silently queuing behind KataGo for no reason;
+  the reply-cache comment now notes a cached `src:"none"` reply is intentional, so a re-send gets
+  the same answer rather than a fresh (and possibly different) `src:"none"` recompute.
+  `test/worker-redis.test.ts` actually sends `propose` then `count` now (it only sent `count`
+  before, despite its name), clears its 5s startup timer on success instead of leaking it, and
+  `.github/workflows/scoring.yml` gained `LIGO_REQUIRE_REDIS: '1'` (same pattern as
+  `LIGO_REQUIRE_KATAGO`) so CI fails loudly instead of silently skipping if `redis-server` is ever
+  missing from the runner.
+- Worked: reproducing the crash first (via `git stash` back to the pre-fix `worker.ts`) confirmed
+  the exact failure (`TypeError: Cannot read properties of null (reading 'ref')` at
+  `worker.ts:106`) before fixing it, and confirmed the new test genuinely failed on the old code.
+  The restart loop was verified without a full `dev/ligo up` — sourcing `dev/ligo`'s functions
+  directly (`tail -n +1 dev/ligo | sed '$d'`, with `ROOT`/`LILA`/`WS`/`STATE`/`LD` re-set and
+  `need_node_modules` stubbed) against a real `dev/ligo db` let `native_scoring_worker_up`/`_down`
+  and the real `dev/ligo status`/`logs` be exercised in isolation; crash-killing the supervised
+  child confirmed the loop respawns it and reconnects to Redis, and `native_scoring_worker_down`
+  leaves no orphan `node src/main.ts` process (`pgrep -af` after, clean). The compose file was
+  validated with a real `docker compose -f compose.yml config` (a Docker daemon was unexpectedly
+  available in this session, Engine 29.3.1 / Compose v5.1.1): the resolved default service set is
+  `caddy, lila, lila_ws, mongodb, mongodb_secondary, redis, scoring` (the profiled `ui`/
+  `mongo_express` correctly excluded), and the `:z` mounts and env resolved as written. **This
+  entry corrects the test-count claim in the entry below**: that entry's "Verified by Claude" line
+  understated the real count; `dev/ligo test scoring` (KataGo env loaded) passes **112/112** here,
+  including this review's new test. **`dev/ligo up`/`down` were exercised via the supervision
+  functions directly (`native_scoring_worker_up`/`_down`, `stop_bg`/`start_bg_restart`), not via a
+  full `dev/ligo up`**, for both this review and the entry below.
+- Didn't work / dead ends: none new this pass.
+- Lessons: (see Lessons above — the null/`[]`/number lesson was promoted from this unit)
+- Decisions: docker mode getting a real `scoring` worker (no KataGo env, `src:"none"` always) is
+  recorded as a new row in logs/decisions.md, dated 2026-09-28, above the earlier "honest skip"
+  row (left as written, since it was correct when made).
+- Verified by Claude: `dev/ligo test scoring` 112/112 (KataGo env loaded via
+  `dev/ligo katago env`); `bash dev/tests/run.sh`; `bash .claude/skills/verify/verify.sh`;
+  `shellcheck dev/ligo` clean; a real `node src/main.ts` against a real `redis-server`, then
+  `redis-cli publish scoring-in null` (and `[]`, `5`) — the process logged
+  "dropped a scoring-in message..." for each and kept answering afterward, did not crash;
+  `docker compose config` on the edited `compose.yml`. Needs owner verification: an actual
+  `dev/ligo up`/`down` end-to-end in **docker mode** (this session has a daemon but not the owner's
+  full stack — Caddy TLS, the owner's `.env`, etc. — so `docker compose config` is as far as this
+  session could check it); the OpenCL/GPU path is still untouched by this unit either way.
+- Follow-ups: none.
+
+### 2026-09-28 · unit 4.5 · services/scoring on Redis: the worker, supervision, a round-trip test
+- Did: `src/worker.ts` (`Worker`), the Redis-shaped wiring around unit 4.4's `handle()` (ADR 0020
+  §1): subscribes `scoring-in`, publishes replies to `scoring-out`, sends `{"t":"start"}` once on
+  boot. Concurrency: `count` never asks KataGo, so it runs as soon as it arrives, however many are
+  in flight; `propose` queues FIFO behind the one KataGo process this service runs. Dedup: a
+  bounded LRU-ish cache of `ref` → reply — a re-sent `ref` (lila resends its latest unanswered
+  request on `start`, on round load, and every 30s while one is outstanding) gets the cached reply
+  republished, not recomputed; a `ref` still in flight is dropped, since the request already
+  running will answer it. A `handle()` throw (a service bug, not a bad request) is caught, logged
+  and turned into an `error` reply rather than left silent or crashing the process. `worker.ts`
+  itself knows nothing about a specific Redis client (`Publisher`/`Subscriber` are the narrow slice
+  of ioredis's interface it needs); `src/main.ts` is the real entry point (env vars, two ioredis
+  connections — `subscribe` puts a connection into subscriber mode, so `pub`/`sub` must be
+  separate, as fishnet's own Redis client was — SIGTERM/SIGINT shutdown). `dev/ligo` gained
+  `native_scoring_worker_up`/`_down` (background process via `start_bg`/`stop_bg`, exactly like
+  lila/lila-ws, KataGo env loaded best-effort from `dev/ligo katago env`), wired into
+  `up`/`down`/`status`/`logs scoring`; docker mode starts nothing (no KataGo in any container yet,
+  same honest skip `docker_scoring` already made for tests). Tests: `test/worker.test.ts` (dedup,
+  propose/count concurrency ordering, the `handle()`-throw guard, malformed messages) against an
+  in-process fake pub/sub; `test/worker-redis.test.ts`, a real round trip — starts its own
+  `redis-server` on a free port, skipped (not failed) when the binary isn't on PATH; CI
+  (`.github/workflows/scoring.yml`) now installs `redis-server` so that test runs there too. Added
+  `ioredis` 6.0.0 (MIT) to `services/scoring/package.json` via
+  `pnpm --filter @ligo/scoring add --save-exact`; COPYING.md, NOTICE.md, README.md, CLAUDE.md
+  updated for it and its runtime transitive dependencies.
+- Worked: ioredis's automatic reconnect and automatic re-subscription of `scoring-in` after a
+  reconnect meant `main.ts` needed no reconnect logic of its own, only logging the transitions;
+  `KataGoClient`'s existing lazy respawn-after-crash (unit 4.4) needed no changes for the worker to
+  reuse — a crash mid-`propose` already falls back to `src:"none"` and the client is ready again on
+  the next query. Manual end-to-end smoke test (real `redis-server`, real KataGo test network,
+  `node src/main.ts`) round-tripped a `propose` and produced a `src:"katago"` proposal; `dev/ligo
+  up`/`down`/`status`/`logs scoring` were exercised directly (via `dev/ligo db` plus the
+  supervision functions) and correctly started, reported and stopped the worker.
+- Didn't work / dead ends: erasable-TS-syntax again caught out constructor parameter properties
+  (`constructor(private readonly pub: Publisher, ...)`), same as noted for unit 4.4's classes —
+  written out as plain field assignments instead. ioredis's own `subscribe` type is a rest-parameter
+  overload (`...channels, callback?`) that doesn't structurally match a plain
+  `(channel: string) => Promise<number>`, so `Subscriber` needed a tiny adapter in `main.ts` (and in
+  the round-trip test) rather than passing an ioredis connection straight through. `oxlint`'s
+  `golden(no-unknown-returns)` rejected `Promise<unknown>` on the `Publisher`/`Subscriber` interface
+  methods; both got concrete return types (`Promise<number>`) matching what ioredis's `publish`/
+  `subscribe` actually resolve with. Running `dev/ligo deps` after `pnpm --filter @ligo/scoring add`
+  had already left an uncommitted `pnpm-lock.yaml` diff tripped `ab_stub_install`'s
+  `git diff --quiet` restore-check (it assumes a clean lockfile going in); the install itself
+  completed correctly and the lockfile content was fine — the check's false positive is a
+  pre-existing quirk of running `deps` with other legitimate lockfile changes already staged, not
+  something this unit introduced or needed to fix.
+- Lessons: (see Lessons above — none promoted this unit)
+- Decisions: the Redis client and its reconnect/concurrency/dedup design, and native-vs-docker
+  supervision, Claude's call under the owner's 2026-09-28 delegation (logs/decisions.md).
+- Verified by Claude: `dev/ligo test scoring` with the real KataGo test network (91/91, including
+  the real-KataGo integration test and both worker test files); `dev/tests/run.sh` (50/50);
+  `bash .claude/skills/verify/verify.sh` (all 9 gates pass, including `ui tests (vitest)` and
+  `go-rules + board` which this unit's `dev/ligo` edit pulled into scope); `pnpm install
+  --frozen-lockfile` from `lila/` after the `ioredis` add; `pnpm licenses list --filter
+  @ligo/scoring` through `dev/ci/meta_checks.py js-licences` (15 packages, 2 licences, all
+  AGPL-compatible); `shellcheck dev/ligo` clean; manual end-to-end smoke test described above;
+  `dev/ligo up`/`down`/`status`/`logs scoring` supervision exercised directly against a real
+  `dev/ligo db`. Skipped tests never counted as passing: the real-KataGo test and the Redis
+  round-trip test both ran for real (KataGo and redis-server were installed/available), not
+  skipped, in this verification. · Needs owner verification: none beyond the two decisions above
+  if they should be revisited; the owner's own OpenCL/GPU box was not used (cloud session, CPU
+  KataGo only).
+- Follow-ups: unit 4.6 adds the accuracy benchmark and full-size network (the worker's `propose`
+  path would then use it in production, still via `dev/ligo katago env`'s conventions); units
+  4.7+ build lila's own side of the wire (a real `scoring-in`/`scoring-out` consumer) and a docker
+  story for KataGo (OpenCL passthrough or a CPU fallback container) would let docker mode start
+  the worker too.
+
 ### 2026-09-28 · unit 4.4 review fixes · 4.4 review fixes
 - Did: fixed four blocking review findings on unit 4.4 (32402dd) and several non-blocking ones, on
   top of the unit rather than amending it. B1: `proposeFromOwnership` (`src/score.ts`) now calls
