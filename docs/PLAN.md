@@ -515,6 +515,31 @@ the table's 4–7, for that split):
 What stays out of Phase 7: an engine in the analysis board and KataGo post-game review (after the POC,
 §1.3), studies and shared analysis (removed in 3.3), game search (removed in 3.7), new email notifications (lila's opt-in daily "your turn" email stays as it is, [ADR 0023](decisions/0023-phase-7-analysis-sgf-correspondence.md)), and correspondence tournaments.
 
+**Phase 8 units** (broken down 2026-09-29 while Phases 3–7 were being built; the trainer is §3.8
+item 6 and §3.1's "Tsumego trainer" and "Tsumego content" rows, provenance and the no-modern-books rule
+are §8, the kept `puzzle` module and `ui/puzzle` package are [ADR 0018](decisions/0018-phase-3-module-map.md),
+and the puzzle perf stays apart from the `go` perf ([ADR 0021](decisions/0021-phase-5-ratings-signup-display-handicap.md)).
+lila's puzzle trainer is built for one forced chess line (`Puzzle.line`, a list of UCI moves), while a
+tsumego has several right answers and refutations, so the puzzle becomes a small solution tree. As in
+Phases 4–7, the content and library halves are split from their lila halves so they can be built
+early: units 8.1–8.5 need nothing from Phase 3 (8.5 builds on 7.2's tree), so they run now; 8.6–8.8
+wait for Phase 3's core types, kept modules and round UI):
+
+| Unit | What | Needs |
+|---|---|---|
+| 8.1 | Build-vs-buy memo for tsumego content, with a licence check of each source (`reuse-scout`, `docs/build-vs-buy/tsumego-content.md`, **you approve**): existing collections and their licences (OGS puzzles, goproblems.com, tsumego-hero, sanderland/tsumego's data as distinct from its MIT code, Wikimedia and Sensei's Library), our own transcriptions of public-domain classics from original editions (e.g. *Xuanxuan Qijing* 1349, *Guanzi Pu* 1660, *Igo Hatsuyōron* 1713, *Gokyō Shumyō* 1812), and positions KataGo generates from game records whose licence is checked; which sources reach ≥ 200 puzzles on 9×9 to 19×19, what provenance each puzzle records, and the UK/EU database-right point in logs/tsumego.md | — |
+| 8.2 | Design ADR for Phase 8: the puzzle format (board size, a partial board or a corner of 19×19, setup stones, who plays, the solution tree with right answers and refutations, which move the opponent answers with, when a puzzle counts as solved, comments), shared between `tools/puzzles`, the browser and the server as a JSON schema in `tools/puzzles/`; the Mongo puzzle document replacing `Puzzle.fen` and `Puzzle.line` (provenance fields, themes as Go themes: life and death, tesuji, ko, capture race, endgame; a starting rating from the source's difficulty); which parts of lila's trainer stay (the rated trainer, daily puzzle, themes, dashboard, history, replay, votes and reports) and which go (lila's chess themes, the openings page, the puzzle-from-game link when there is no game); the puzzle rating (lila's puzzle Glicko-2 as is, shown as kyu/dan or as a number); guests (lila's anonymous puzzles); how puzzles reach Mongo (a script over the JSON, run by `dev/ligo`) | 8.1 |
+| 8.3 | The import pipeline in `tools/puzzles` (a package in lila's pnpm workspace, as `services/scoring` is): readers for 8.1's source formats (SGF collections through 7.2's reader, or the source's own format) into 8.2's JSON, each puzzle's tree replayed through goban-engine's checked play (illegal moves, suicide, ko and a tree with no right answer rejected with a reason), provenance required on every puzzle, `dev/ligo puzzles build` and `dev/ligo test puzzles`, a CI job; tests on a few hand-made puzzles and every broken case | 8.2 |
+| 8.4 | The first puzzle set: at least 200 puzzles from 8.1's approved sources through 8.3's pipeline, committed with their provenance (source, edition, problem number, transcriber, licence), a KataGo check that each right answer works and each refutation fails (on the cloud's test network, flagged puzzles reviewed by hand), difficulty and themes set, COPYING.md and a sources list for Phase 9's credits page | 8.3 |
+| 8.5 | Puzzle solving in `libs/board`: a trainer controller over 7.2's tree that plays the setup, checks the player's move against the solution tree (right, wrong, or not in the tree and so wrong), plays the opponent's answer, and reports solved or failed with the refutation to show; tests replaying every puzzle in 8.4's set by both a right and a wrong path. New code only: no page uses it yet | 7.2, 8.2, 8.4 |
+| 8.6 | Puzzles on the server: `lila/modules/puzzle` on 8.2's document (the model, BSON, JSON view, selection by rating and theme, the daily puzzle, rounds, the puzzle Glicko-2 for players and puzzles, votes and reports), the loader that puts 8.4's set in Mongo (`dev/ligo puzzles load`, and in `dev/ligo up`'s seed), chess puzzle code gone; tests from lila's puzzle suite adapted | 3.11, 3.16, 8.2, 8.4 |
+| 8.7 | The trainer page: `ui/puzzle` on `libs/board` and 8.5's controller (the board, right and wrong feedback, the refutation, next puzzle, the rating change, themes, the dashboard and history pages, the source line under each puzzle), touch-confirm honoured, desktop and phone layouts with screenshot tests; replaces 3.16's placeholder | 3.16, 3.18, 8.5, 8.6 |
+| 8.8 | Phase 8 demo: a Playwright test at phone size that solves one puzzle and fails another, with the rating moving, and checks that all ≥ 200 puzzles load and show their source; the demo checklist for you | 3.20, 8.7 |
+
+What stays out of Phase 8: puzzle streak, storm and racer (removed in 3.4), puzzles generated from
+LiGo's own games (after the POC), user-submitted puzzles, puzzles in the analysis board, the credits
+page itself (Phase 9, from 8.4's sources list), and problems from modern books (§8).
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.
@@ -663,7 +688,7 @@ it says so and hands that check to you.
 | Rules spec details (superko already decided, ADR 0003) | Phase 1 |
 | 9×9 stone value (rank curve decided, ADR 0004) | Decided: 6 ranks per stone (ADR 0013) |
 | Changes to the initial lobby presets (ADR 0005) | Phase 6 player test |
-| Tsumego content sources | Phase 8 memo |
+| Tsumego content sources | Phase 8 memo (unit 8.1) |
 | Offering the work to OGS, running a public demo, or neither | POC complete |
 
 ---
