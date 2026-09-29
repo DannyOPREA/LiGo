@@ -29,7 +29,7 @@
   a try/catch → `onError`, so no future bug in `onMessage` itself can reach ioredis either.
   `test/worker.test.ts` gained a test sending `'null'`, `'[]'` and `'5'` through the real listener
   function and asserting it doesn't throw, then that the worker still answers a normal `count`
-  afterwards. Docker mode (the reviewer's decision): `dev/lila-docker/compose.yml` gained a
+  afterwards. Docker mode (Claude's decision after a reviewer finding): `dev/lila-docker/compose.yml` gained a
   `scoring` service (the `ui` container's Node image/pattern, `:z`-mounted `lila`/`libs`/`services`
   for pnpm workspace resolution, no `profiles:` so it starts by default) running the worker with no
   `KATAGO_BIN`/`KATAGO_MODEL`/`KATAGO_CONFIG` at all, so every `propose` answers `src:"none"` (ADR

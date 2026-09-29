@@ -119,7 +119,11 @@ services:
     working_dir: /lila
     entrypoint: sh -c "pnpm install --frozen-lockfile --filter @ligo/scoring --filter lila && exec pnpm --filter @ligo/scoring run start"
     restart: unless-stopped
+    # LiGo: init reaps pnpm/node and forwards signals, so `dev/ligo down` doesn't wait 10 s.
+    init: true
     environment:
+      # LiGo: as in `ui`, so pnpm never waits on a prompt (no terminal here) and crash-loops.
+      - CI=1
       - SCORING_REDIS_URL=redis://redis:6379
       # LiGo: no KATAGO_BIN/KATAGO_MODEL/KATAGO_CONFIG here — no container has KataGo yet (no
       # OpenCL passthrough to the owner's GPU, no binary staged into an image), so every
