@@ -63,6 +63,10 @@
   the `ClasBus` core messages, the forum/team/blog/message config blocks and blank lines in
   build.sbt. Lesson: deleted TS can have side effects on kept DOM; grep it for `.style` and
   `querySelector` on elements that stay.
+- CI: CodeQL flagged 7 "incomplete hostname regex / string escaping" alerts in
+  `ui/lib/src/chat/spam.ts`, upstream code this unit only trimmed (the team-URL check). The dots
+  were escaped at runtime; the list now holds the escaped regex sources directly (same regex,
+  checked by comparing the built sources), so CodeQL sees them.
 
 ### 2026-09-29 · 3.5 · Remove engines and bots
 - Did: deleted lila modules `fishnet`, `irwin`, `evaluation`, `insight`, `tutor`, `jsBot` and
