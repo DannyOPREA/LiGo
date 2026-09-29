@@ -35,6 +35,12 @@ Decision: [ADR 0010](../../docs/decisions/0010-dev-tooling-on-lila-docker.md).
 - Dropped services LiGo doesn't use: the opening explorer, the one-container `mono` quick setup,
   API docs, chessground, pgn-viewer, external engine, fishnet (Stockfish), lila-gif, push,
   picfit, mailpit, search (Elasticsearch), monitoring, and the Python seeding container.
+- Added `scoring`: LiGo's own service, not in upstream lila-docker at all. Runs
+  `services/scoring`'s Redis worker (unit 4.5) using the `ui` service's own Node image/pattern, with
+  `lila`/`libs`/`services` all `:z`-mounted so pnpm workspace resolution works; no `profiles:`, so
+  it starts by default like the core services. It has no KataGo env in this container (no OpenCL
+  passthrough to the owner's GPU, no binary staged into an image), so every `propose` there answers
+  `src:"none"` (ADR 0020 §4's fallback) until a later unit gives docker mode a KataGo story.
 
 Not copied: the Rust setup dialog (`command/`) and the `lila-docker` script, whose job `dev/ligo`
 does non-interactively; database seeding (`lila-db-seed` makes chess data, so LiGo will need its

@@ -4,8 +4,9 @@ What this package does, in plain English: after two players pass, LiGo needs to 
 are dead, whose territory each empty point is, and the final score. This package does that
 scoring, the same way OGS does it: it asks KataGo (a Go-playing AI) what it thinks of the position,
 picks out the stones that are clearly dead, and counts the result under Japanese or Chinese rules.
-It has no server of its own yet — no Redis, no long-running process (that's a later unit) — just
-the scoring logic itself, callable as a function or from a small command-line tool.
+It runs as a small long-running process (`src/main.ts`, unit 4.5) that talks to lila over Redis
+(ADR 0020 §1); the scoring logic itself is also callable as a plain function or from a
+command-line tool, with no Redis involved, for trying a request by hand.
 
 See [CLAUDE.md](CLAUDE.md) for the engineering rules (what never to change, why); this file is
 about running and testing it.
@@ -30,8 +31,34 @@ about running and testing it.
 
 ## Running it
 
-There's no server yet, just a function (`handle`, in `src/handle.ts`) and a tiny CLI that reads one
-request as JSON on stdin and prints the reply:
+### As the Redis worker (what `dev/ligo up` starts)
+
+`src/main.ts` is the real entry point: it subscribes to `scoring-in`, publishes replies to
+`scoring-out` (ADR 0020 §1), and sends `{"t":"start"}` on boot so lila knows to re-send whatever it
+was waiting on. `dev/ligo up`/`down`/`status`/`logs scoring` supervise it in native mode, restarting
+it automatically (with backoff) if it ever exits (its pid and log live under `.ligo/`); see
+`dev/ligo`'s `scoring_katago_env`/`native_scoring_worker_up` and `services/scoring/CLAUDE.md`'s
+"Redis worker" section for what it does and doesn't guarantee (concurrency, dedup of re-sent
+requests, crash recovery). Docker mode also starts it, as a `scoring` compose service — but with no
+KataGo in any container yet, so it always answers `src:"none"` (ADR 0020 §4's fallback), unlike
+native mode which uses real KataGo when `dev/ligo katago env` finds one (`dev/ligo test scoring`
+still skips its own test suite in docker mode either way).
+
+Run it by hand:
+
+```sh
+cd lila
+eval "$(../dev/ligo katago env | sed 's/^/export /')"   # optional: real KataGo, not src:"none"
+export KATAGO_MODEL="$KATAGO_TEST_NET" KATAGO_CONFIG="$(dirname "$(readlink -f "$KATAGO_BIN")")/analysis_example.cfg"
+export SCORING_REDIS_URL=redis://127.0.0.1:6379   # default; lila's own default too
+pnpm --filter @ligo/scoring run start
+```
+
+### As a one-shot request (no Redis)
+
+For trying a request by hand, or testing the counting side with no Redis and no KataGo, there's
+also a plain function (`handle`, in `src/handle.ts`) and a tiny CLI that reads one request as JSON
+on stdin and prints the reply:
 
 ```sh
 cd lila && pnpm --filter @ligo/scoring run cli <<'EOF'
@@ -59,3 +86,9 @@ build step). The test suite includes:
   (using a fake `katago` program, so these run without KataGo installed), and the handicap rule.
 - **One real-KataGo test**, only when KataGo is actually installed (`dev/ligo katago install`);
   skipped otherwise rather than failing.
+- **The Redis worker** (`test/worker.test.ts`, unit 4.5): dedup of re-sent requests, `propose`
+  serialized through the one KataGo while `count` runs immediately, and a `handle()` bug turned
+  into an `error` reply rather than a crash — all against an in-process fake pub/sub, so these need
+  no real Redis.
+- **A real Redis round trip** (`test/worker-redis.test.ts`): starts its own `redis-server` on a
+  free port and tears it down after; skipped, not failed, when `redis-server` isn't on PATH.
