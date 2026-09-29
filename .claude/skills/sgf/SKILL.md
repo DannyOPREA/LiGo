@@ -5,9 +5,10 @@ description: SGF (FF[4]) essentials and quirks for reading and writing Go game r
 
 # SGF in LiGo
 
-**Don't write a parser.** Use goban / goban-engine's SGF support on the client and a maintained
-library (e.g. `@sabaki/sgf`) where a standalone parser is needed; anything else goes through
-/build-vs-buy.
+**Don't write a parser.** In the browser use `@sabaki/sgf` (ADR 0023: goban-engine's SGF reader hangs
+on truncated files and plays moves unchecked, so it is kept only for unit 1.8's read-back tests); anything else goes through
+/build-vs-buy. The one exception is the server's reader in `libs/go-rules` (unit 7.3,
+ADR 0023 §3, memo docs/build-vs-buy/server-sgf-reader.md): no maintained JVM reader fits.
 
 Essentials of FF[4]:
 - A game is `(;GM[1]FF[4]SZ[19]KM[6.5]RU[Japanese]...;B[pd];W[dp]...)`; properties are
