@@ -1,0 +1,10 @@
+/* Applied only while a screenshot is taken (unit 2.4). Chromium builds rasterise text a little
+   differently (CI's newer Chromium moved ~2,300 pixels per picture, all of them in the page's text),
+   so the pictures hide the page's glyphs and compare everything else: layout, boxes, buttons, the
+   board and its stones. The text itself is checked with locators in the tests. goban draws the
+   coordinates in SVG (fill, not color), so they stay; they matched on both Chromium builds. */
+#playground,
+#playground * {
+  color: transparent !important;
+  text-shadow: none !important;
+}

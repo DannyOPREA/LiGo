@@ -16,8 +16,66 @@
 - A board box that goban measures needs an explicit width: `margin: 0 auto` on a flex item shrinks it to its content (the loading text), and goban then draws a tiny board (2026-09-28, 2.2).
 - snabbdom: bind an input's shown value with `props: { value }`, not `attrs`; `attrs.value` is only the default and stops showing once the user has typed (2026-09-28, 2.2 review).
 - goban's confirm mode: a second tap on the preview removes it, and double taps on touch screens are ignored; phones need a confirm button calling `board.confirm()` (2026-09-28, 2.3).
+- Screenshot tolerance as a pixel count, not a share of the page: a whole stone is ~0.15% of a 1280×800 page. Serve a page's CSS as lila does (`lib.theme.all` + `site` + the page's own), or it renders unstyled (2026-09-28, 2.4).
+- Chromium builds rasterise web-font text differently (~2,300 px per page between 141 and 153); board SVG matched. Hide page text in screenshots (`stylePath`) and check it with locators (2026-09-28, 2.4 CI).
 
 ## Entries (newest first)
+
+### 2026-09-28 · 2.4 CI (2) · Board and page pictures
+- Didn't work: with the text hidden, 5 of 8 pictures still failed on CI by 110–120 pixels, all at
+  button edges (Pass/Undo, New game): lila's buttons are as wide as their text, and the two Chromium
+  builds measure text slightly differently.
+- Done: each state now takes two pictures. The board alone is held to 100 pixels (the painted-out
+  stone fails it, 1,487), and the whole page is allowed 600 for layout (a lost button or a moved
+  panel is thousands). 16 baselines.
+
+### 2026-09-28 · 2.4 CI · Screenshots on CI's Chromium
+- Didn't work: all 8 pictures recorded with the cloud's Chromium 141 differed on CI's Chromium 153
+  by 2,200–2,400 pixels. CI's artifacts can't be downloaded from a cloud session (the proxy refuses
+  Azure blob storage), so CI now prints a grid of where a diff picture's red pixels are
+  (`e2e/diffmap.mjs`). Every differing cell was page text (title, intro, side panel, form); the
+  board, its coordinates and the stones matched.
+- Done: while a screenshot is taken, `e2e/screenshot.css` makes the page's text transparent
+  (Playwright's `stylePath`), so the pictures compare layout, boxes, buttons and the board; the text
+  is checked by locators. A painted-out stone still fails (1,487 pixels).
+- Found a real bug through it: with Confirm move on, the three buttons overflowed the 280px desktop
+  panel; `.playground__controls` now wraps.
+- Rebuilt the ui after merging main before re-recording: baselines must come from the branch's own
+  build, not an older `public/`.
+
+### 2026-09-28 · 2.4 review · Reviewer findings fixed
+- Blocking, fixed: Playwright writes `test-results/` and its html report next to the nearest
+  package.json (`ui/playground/`), not next to the config, so CI's failure upload would have been
+  empty; the config now sets `outputDir` and the report's `outputFolder`. A PR changing only
+  libs/board skipped the `ui` job and so the screenshots; `dev/ci/changed.sh` now counts libs/board
+  for ui too (its dev/tests check updated).
+- Also fixed: `dev/ligo test all` skips the page tests instead of stopping when the ui isn't built;
+  the demo says a new local account's confirmation link is in `dev/ligo logs lila`; oxfmt had moved
+  an import above two files' header comments (a blank line after the header keeps it there).
+- Left, disclosed: /verify has no gate for the page tests; `ui_built` doesn't notice a stale build;
+  the refused-move check can't catch a move that lands late (a later Undo would on desktop).
+- Merged main (1.9 and the Phase 4 breakdown landed): STATUS and decisions conflicts, both kept.
+
+### 2026-09-28 · 2.4 · Visual snapshots and the Phase 2 demo
+- Done: Playwright tests in `lila/ui/playground/e2e/`: 8 screenshots (desktop 1280×800 and phone
+  390×844; empty 9×9 and 19×19, a capture, a preview stone) against committed baselines, and a
+  scripted two-colour game on desktop (clicks) and phone (taps + Confirm move) covering turns,
+  captures both ways, a refused move, undo, two passes and playing on. The page is lila's built
+  bundle and CSS (`lib.theme.all`, `site`, `playground`, fonts from `public/hashed`) served by
+  `page.route`, so no lila server; any other request fails the test. They run in the `ui` CI job
+  after the build (plus a type-check), and via `dev/ligo test pages` (native mode; docker mode skips
+  them). Demo checklist: docs/demos/phase-2.md.
+- Worked: checked the tests catch a real change. The capture baseline with its white stone painted
+  out fails with 1,487 differing pixels; the real page passes 3 runs in a row.
+- Didn't: the first tolerance (0.2% of the page) let that painted-out stone through (it's ~0.15% of
+  a 1280×800 page), so it is a pixel count now (100). The first page skipped lila's `site` CSS and
+  came out white with serif text. The phone game failed once: goban ignores a confirm within 50 ms
+  of the tap, so the test presses Confirm again until the move lands (a retry on a condition, not a
+  sleep).
+- Unverified: the baselines were recorded with the cloud's Chromium 141 while CI installs
+  Playwright 1.63's Chromium 153; goban's coordinates use Verdana/Arial, which falls back to
+  Liberation Sans on both. If CI's pictures differ, its report is uploaded as an artifact.
+- Decision: one baseline set with no platform in the file name (logs/decisions.md).
 
 ### 2026-09-28 · 2.3 review · Reviewer findings fixed
 - No blocking findings; the reviewer agreed with keeping goban's second-tap behaviour. Fixed: the
