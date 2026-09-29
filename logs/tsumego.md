@@ -19,7 +19,10 @@
   positions-only, so a kyu base has to be generated.
 - Decisions: option D, Claude's call under the owner's 2026-09-28 delegation (logs/decisions.md);
   runner-up gogameguru, only if the owner rewrites the non-commercial rule.
-- Verified by Claude: verify.sh; every licence quote in the memo has its source URL.
+- Verified by Claude: verify.sh; every licence quote in the memo has its source URL. Reviewer: 2
+  blocking (no reuse survey behind the custom generator, e.g. KaTrain's MIT tsumego frame; puzzle
+  files made CC0 against ADR 0007), both fixed (a code reuse check and spike in 8.2; files MIT), plus
+  stale PLAN §3.1/§10 rows, 8.3/8.4 wording and the network licence gate, all fixed.
   · Needs owner verification: the memo's six owner points, chiefly whether to keep the
   non-commercial rule.
 - Follow-ups: 8.2 (design ADR: the puzzle format and the generator's shape).

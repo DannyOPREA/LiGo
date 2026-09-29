@@ -33,19 +33,38 @@ Option D of the memo:
 3. **Every puzzle records its provenance.** A generated puzzle records the generator version, its
    seed, and the KataGo version, network name and sha256. A transcribed puzzle records the work,
    edition, library ID, problem number, scan URL and page, the scan's rights line, the transcriber
-   and the checker. LiGo's own puzzle files are CC0 (the generator's code is MIT, ADR 0007).
+   and the checker. The puzzle files, like the generator, are MIT: they live under `tools/`, which
+   ADR 0007 makes MIT, and no exception is made.
 4. **No other collection is used, not even for comparison.** That covers gogameguru, OGS,
    goproblems, tsumego-hero, tasuki, sanderland and Sensei's Library, unless the owner changes the
    non-commercial rule.
 
+5. **The generator's own code gets its own reuse check first.** The memo surveyed content, not
+   code. Unit 8.2 looks for existing tsumego solvers, generators and KataGo helpers before 8.3
+   builds anything. One candidate is KaTrain's tsumego frame (`katrain/core/tsumego_frame.py`, MIT
+   per KaTrain's LICENSE, ported from lizgoban, whose licence is UNCHECKED), which fills the rest of
+   the board so that KataGo reads a local position properly. Unit 8.2 also runs a feasibility spike:
+   the solver must solve a sample of catalogue shapes within a time budget.
+6. **If the generator can't reach 200 puzzles**, Claude stops and brings the choice back as a
+   decision: transcribing more classics (option C), or the owner allowing gogameguru's set
+   (option B).
+7. **The KataGo network used for the committed set is settled before 8.4 generates it.** Either
+   the owner has read the kata1 network licence (katagotraining.org), or an older g170 network
+   that is said to be CC0 (UNCHECKED) is used. The network's name and sha256 go into each
+   puzzle's provenance.
+
 ## Consequences
+- This departs from PLAN §3.1's first choice ("existing licensed collections") and its fallback
+  ("positions KataGo generates from game records"). No usable collection exists, and a game-record
+  source adds a second licence question. §3.1 and §10 now point here.
 - The generator and checker are custom code, more than glue (rung 6 of the reuse ladder). They stay
   small, reuse goban-engine for every rule, and are specified in unit 8.2's design ADR and built in
   8.3.
 - Generated puzzles teach eye shapes and life and death well, but they are more uniform than
   book problems. Tesuji variety comes later, if ever, from the classics tail.
 - The cloud's KataGo test network is weak, so trust comes mainly from the exact search. A stronger
-  network on the owner's machine (unit 4.6's pin) makes the second opinion stronger. Before any
-  public use of the set, the owner reads the licence of the network that was used (katagotraining.org).
+  network on the owner's machine (unit 4.6's pin) makes the second opinion stronger.
 - The owner can overrule this. The runner-up is gogameguru's set as a separate CC BY-NC-SA data
   pack, which would need the non-commercial rule rewritten.
+- The set covers life and death, eye shape and ko. Capturing races, tesuji and endgame are not in
+  it unless the classics tail adds them.

@@ -88,8 +88,8 @@ Findings for the memo's questions:
 
 `source_kind` (transcribed, generated or licensed dataset) · work title and year · edition, publisher and
 library ID · problem number and section · **URL of the scan and the page or leaf** · the scan's stated rights
-line and date checked · transcriber (person or Claude model, session) and verifier · puzzle licence (proposed
-CC0 for our own work) · for generated puzzles: generator version, seed, KataGo version and network name and
+line and date checked · transcriber (person or Claude model, session) and verifier · puzzle licence (
+MIT for our own work, ADR 0007 and ADR 0024) · for generated puzzles: generator version, seed, KataGo version and network name and
 sha256 · date created. Phase 9's credits page is built from these fields.
 
 ## Candidates
@@ -97,9 +97,9 @@ sha256 · date created. Phase 9's credits page is built from these fields.
 | Option | Licence | Reaches 200 with kyu spread? | Effort | OGS handoff | Ladder rung |
 |---|---|---|---|---|---|
 | A. Use an existing collection as-is: OGS, goproblems, tsumego-hero, tasuki, sanderland | None found, or ToS granting only OGS | Count yes, licence no | Low | None; OGS already owns its own | Rung 1 blocked by licence |
-| B. gogameguru/go-problems as-is | CC BY-NC-SA 4.0 | **Yes**: 422, 140 easy, with solution trees | Low (an SGF reader exists from 7.2) | Poor: OGS runs paid tiers, so NC data is hard to take, and ShareAlike travels with it | Rung 1, blocked by our own NC rule |
-| C. Our transcriptions of Gokyo Shumyo, *Xuanxuan Qijing*, Guanzi Pu from original scans | Ours; our puzzle files can be CC0 or MIT | Count yes; **kyu spread doubtful**, dan-level | **High** (many sessions, needs allowlist, errors) | Good: clean provenance | Rung 6 custom (manual) |
-| D. **Positions we generate with KataGo, verified, then our own reading of a few classics** | Ours (MIT or CC0); the KataGo engine is MIT; network licence to be read | **Yes** if the generator is built; spread set by shape size and outside strength | **Medium** (a generator and checker in `tools/puzzles`, more than glue) | Good: OGS gets the script and the data with no strings | Rung 6 custom, needs approval |
+| B. gogameguru/go-problems as-is | CC BY-NC-SA 4.0 | **Yes**: 422, 140 easy, with solution trees | Low (an SGF reader exists from 7.2) | Poor: OGS offers paid memberships (UNCHECKED, from general knowledge), so NC data is hard for it to take, and ShareAlike travels with it | Rung 1, blocked by our own NC rule |
+| C. Our transcriptions of Gokyo Shumyo, *Xuanxuan Qijing*, Guanzi Pu from original scans | Ours; our puzzle files are MIT (ADR 0007) | Count yes; **kyu spread doubtful**, dan-level | **High** (many sessions, needs allowlist, errors) | Good: clean provenance | Rung 6 custom (manual) |
+| D. **Positions we generate and solve by exact search (KataGo as a second opinion), then our own reading of a few classics** | Ours (MIT, ADR 0007); the KataGo engine is MIT; network licence to be read | **Yes** if the generator is built; spread set by shape size and outside strength | **Medium** (a generator and checker in `tools/puzzles`, more than glue) | Good: OGS gets the script and the data with no strings | Rung 6 custom, needs approval |
 
 ## Recommendation
 
@@ -111,7 +111,7 @@ sha256 · date created. Phase 9's credits page is built from these fields.
    search of the small region using goban-engine's checked play (the rules already replayed by 1.8), with
    KataGo as an independent second opinion, and the solution tree (right answers, refutations, ko marked) is built
    from the search. Only puzzles where both agree are kept. Everything is our own work, recorded as
-   `source_kind = generated` with the seed and versions. Stone shapes are ours, not lifted from any book.
+   `source_kind = generated` with the seed and versions. The basic eye shapes are common Go knowledge; no book's diagrams are copied, and each position is built by the generator.
 2. **Dan-level tail:** a modest number (say 20 to 40) hand-transcribed from *Gokyo Shumyo* (living and killing
    sections) once NDL's scan is open to the cloud, with the scan's rights line checked. This shows the
    provenance system working on real classics without betting the 200 on it.
