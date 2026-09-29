@@ -6,7 +6,7 @@ import com.typesafe.config.Config
 import reactivemongo.api.bson.*
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.{ AsyncDriver, DB, MongoConnection, ReadPreference, WriteConcern }
+import reactivemongo.api.{ AsyncDriver, DB, MongoConnection, ReadPreference }
 
 import java.time.LocalDateTime
 import scala.util.{ Success, Try }
@@ -27,14 +27,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
     mainConnection.flatMap: (conn, dbName) =>
       conn.database(dbName.getOrElse("lichess"))
 
-  private val yoloConnection =
-    MongoConnection.fromString(config.getString("yolo.mongo.uri").pp("yolo")).flatMap { parsedUri =>
-      driver.connect(parsedUri).map(_ -> parsedUri.db)
-    }
-  private def yoloDb: Future[DB] =
-    yoloConnection.flatMap: (conn, dbName) =>
-      conn.database(dbName.getOrElse("lichess"))
-
   private def collNamed(name: String): Future[Coll] = mainDb.map(_.collection(name))(using parasitic)
   def securityColl = collNamed("security")
   def userColl = collNamed("user4")
@@ -49,7 +41,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
   def oauthColl = collNamed("oauth2_access_token")
   def settingColl = collNamed("setting")
   def cacheColl = collNamed("cache")
-  def evalCacheColl = yoloDb.map(_.collection("eval_cache2"))(using parasitic)
 
   def isDuplicateKey(wr: WriteResult) = wr.code.contains(11000)
   def ignoreDuplicateKey: PartialFunction[Throwable, Unit] =
@@ -129,18 +120,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
       exists(_, BSONDocument("_id" -> id, "s" -> BSONDocument("$lt" -> chess.Status.Aborted.id)))
 
   // studyExistsFor and studyMembers removed with the study module (unit 3.3).
-
-  import evalCache.{ Id, EvalCacheEntry }
-  def evalCacheEntry(id: Id): Future[Option[EvalCacheEntry]] =
-    import evalCache.EvalCacheBsonHandlers.given
-    evalCacheColl.flatMap:
-      _.find(selector = BSONDocument("_id" -> id))
-        .one[EvalCacheEntry]
-  def evalCacheUsedNow(id: Id): Unit =
-    import evalCache.EvalCacheBsonHandlers.given
-    evalCacheColl.foreach:
-      _.update(ordered = false, writeConcern = WriteConcern.Unacknowledged)
-        .one(BSONDocument("_id" -> id), BSONDocument("$set" -> BSONDocument("usedAt" -> LocalDateTime.now)))
 
   def challenger(challengeId: Challenge.Id): Future[Option[Challenge.Challenger]] =
     challengeColl.flatMap:

@@ -1,7 +1,7 @@
 import { ops as treeOps } from 'lib/tree/tree';
 
 import type AnalyseCtrl from './ctrl';
-import type { EvalGetData, EvalPutData, Opening, ServerEvalData } from './interfaces';
+import type { Opening, ServerEvalData } from './interfaces';
 
 interface GameUpdate {
   id: string;
@@ -11,12 +11,9 @@ interface GameUpdate {
   bc?: number;
 }
 
-export interface EvalCacheSocketParams {
-  evalPut: (d: EvalPutData) => void;
-  evalGet: (d: EvalGetData) => void;
+export interface AnalyseSocketSendParams {
+  startWatching: (gameId: string) => void;
 }
-
-export type AnalyseSocketSendParams = EvalCacheSocketParams & { startWatching: (gameId: string) => void };
 
 export type AnalyseSocketSend = <K extends keyof AnalyseSocketSendParams>(
   event: K,
@@ -47,7 +44,6 @@ export function make(send: AnalyseSocketSend, ctrl: AnalyseCtrl): Socket {
     analysisProgress(data: ServerEvalData) {
       ctrl.mergeAnalysisData(data);
     },
-    evalHit: ctrl.evalCache.onCloudEval,
   };
 
   return {

@@ -10,11 +10,10 @@ sealed trait SiteOut extends LilaOut
 sealed trait LobbyOut extends LilaOut
 sealed trait RoomOut extends LilaOut
 sealed trait RoundOut extends RoomOut
-sealed trait RacerOut extends RoomOut
 
 // SimulOut and TourOut were removed with the simul and tournament modules (unit 3.2); StudyOut
 // was removed with the study module (unit 3.3).
-sealed trait AnyRoomOut extends RoundOut with RacerOut
+sealed trait AnyRoomOut extends RoundOut
 
 object LilaOut:
 
@@ -87,10 +86,6 @@ object LilaOut:
   case class GameStart(users: List[User.Id]) extends RoundOut
   case class GameFinish(gameId: Game.Id, winner: Option[Color], users: List[User.Id]) extends RoundOut
   case class TvSelect(gameId: Game.Id, speed: chess.Speed, json: JsonString) extends RoundOut
-
-  // racer
-
-  case class RacerState(raceId: Racer.Id, state: JsonString) extends RacerOut
 
   case class ApiUserOnline(userId: User.Id, online: Boolean) extends AnyRoomOut
   case object LilaBoot extends AnyRoomOut
@@ -286,13 +281,6 @@ object LilaOut:
           chess.SpeedId.from(speedS.toIntOption).flatMap(chess.Speed.apply).map { speed =>
             TvSelect(Game.Id(gameId), speed, JsonString(data))
           }
-        }
-
-      // racer
-
-      case "racer/state" =>
-        get(args, 2) { case Array(raceId, data) =>
-          Some(RacerState(Racer.Id(raceId), JsonString(data)))
         }
 
       // misc

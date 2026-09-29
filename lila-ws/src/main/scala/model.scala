@@ -64,13 +64,6 @@ object Challenge:
     case User(userId: lila.ws.User.Id)
     case Open
 
-object Racer:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
-  enum PlayerId(val key: String):
-    case User(user: lila.ws.User.Id) extends PlayerId(user.value)
-    case Anon(sid: String) extends PlayerId(s"@$sid")
-
 opaque type Sri = String
 object Sri extends OpaqueString[Sri]:
   def random() = Sri(SecureRandom.nextString(12))

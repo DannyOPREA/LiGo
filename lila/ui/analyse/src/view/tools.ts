@@ -2,7 +2,6 @@ import { view as cevalView } from 'lib/ceval';
 import { hl, type LooseVNode, type VNode } from 'lib/view';
 
 import type AnalyseCtrl from '@/ctrl';
-import explorerView from '@/explorer/explorerView';
 import { view as forkView } from '@/fork';
 import type { ConcealOf } from '@/interfaces';
 import practiceView from '@/practice/practiceView';
@@ -19,7 +18,7 @@ export function renderTools({ ctrl, concealOf }: ViewContext, embeddedVideo?: Lo
     showCeval && !ctrl.retro?.isSolving() && !ctrl.practice && cevalView.renderPvs(ctrl),
     renderMoveList(ctrl, concealOf),
     forkView(ctrl, concealOf),
-    retroView(ctrl) || explorerView(ctrl) || practiceView(ctrl),
+    retroView(ctrl) || practiceView(ctrl),
     ctrl.actionMenu() && actionMenu(ctrl),
   ]);
 }

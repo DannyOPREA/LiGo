@@ -107,13 +107,8 @@ object help:
           row(kbd("v"), trans.site.toggleVariationArrows()),
           row(kbd("c"), trans.site.focusChat()),
           helpDialog,
-          row(kbd("e"), trans.site.openingEndgameExplorer()),
           row(kbd("b"), trans.site.boardEditor()),
           menu,
-          row(
-            frag(kbd("shift"), kbd("space")),
-            trans.site.playFirstOpeningEndgameExplorerMove()
-          ),
           row(frag(kbd("shift"), kbd("C")), trans.site.keyShowOrHideComments()),
           row(frag(kbd("shift"), kbd("I")), trans.site.inlineNotation()),
           isStudy.option(

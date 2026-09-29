@@ -25,7 +25,7 @@ import { view as keyboardView } from '@/keyboard';
 import boardMenu from './boardMenu';
 import chessground from './chessground';
 import feedbackView from './feedback';
-import { replay, puzzleBox, userBox, streakBox, config } from './side';
+import { replay, puzzleBox, userBox, config } from './side';
 import theme from './theme';
 import { render as treeView } from './tree';
 
@@ -84,7 +84,7 @@ export default function (ctrl: PuzzleCtrl): VNode {
   }
 
   return hl(
-    `main.puzzle.puzzle-${ctrl.data.replay ? 'replay' : 'play'}${ctrl.streak ? '.puzzle--streak' : ''}`,
+    `main.puzzle.puzzle-${ctrl.data.replay ? 'replay' : 'play'}`,
     {
       class: { 'gauge-on': gaugeOn },
       hook: {
@@ -101,13 +101,7 @@ export default function (ctrl: PuzzleCtrl): VNode {
     },
     [
       renderBlindfoldToggle(ctrl.blindfold),
-      hl('aside.puzzle__side', [
-        replay(ctrl),
-        puzzleBox(ctrl),
-        ctrl.streak ? streakBox(ctrl) : userBox(ctrl),
-        theme(ctrl),
-        config(ctrl),
-      ]),
+      hl('aside.puzzle__side', [replay(ctrl), puzzleBox(ctrl), userBox(ctrl), theme(ctrl), config(ctrl)]),
       hl(
         'div.puzzle__board.main-board' + (ctrl.blindfold() ? '.blindfold' : ''),
         {
@@ -169,21 +163,16 @@ function session(ctrl: PuzzleCtrl): MaybeVNode {
           class: { current: currentId === id, 'result-empty': !rd },
           attrs: {
             href: `/training/${theme}/${id}`,
-            ...(ctrl.streak ? { target: '_blank' } : {}),
           },
         },
         rd,
       );
     }),
     rounds.some(r => r.id === currentId)
-      ? !ctrl.streak && hl('a.session-new', { key: 'new', attrs: { href: `/training/${theme}` } })
-      : hl(
-          'a.result-cursor.current',
-          {
-            key: currentId,
-            attrs: ctrl.streak ? {} : { href: `/training/${theme}/${currentId}` },
-          },
-          ctrl.streak && (ctrl.streak.data.index + 1).toString(),
-        ),
+      ? hl('a.session-new', { key: 'new', attrs: { href: `/training/${theme}` } })
+      : hl('a.result-cursor.current', {
+          key: currentId,
+          attrs: { href: `/training/${theme}/${currentId}` },
+        }),
   ]);
 }

@@ -160,27 +160,6 @@ final class Controller(
 
   // swiss room endpoint was removed with the swiss module (unit 3.2).
 
-  def racer(id: Racer.Id, header: RequestHeader) =
-    WebSocket(header): req =>
-      Future.successful:
-        req.user
-          .match
-            case Some(u) => Option(Racer.PlayerId.User(u))
-            case None => auth.sidFromReq(header).map(Racer.PlayerId.Anon.apply)
-          .match
-            case None => notFound
-            case Some(pid) =>
-              endpoint(
-                name = "racer",
-                behavior = emit =>
-                  RacerClientActor.start(RoomActor.State(id.into(RoomId), IsTroll(false)), pid):
-                    Deps(emit, req, services)
-                ,
-                req,
-                credits = 30,
-                interval = 15.seconds
-              )
-
   def api(header: RequestHeader) =
     val req = Req(header, Sri.random(), None).copy(flag = Some(Flag.api))
     Future.successful(

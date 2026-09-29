@@ -133,10 +133,6 @@ final class LilaHandler(
       scheduler.scheduleOnce(15.seconds, () => roundCrowd.emitAllOnline())
     case msg => roomHandler(msg)
 
-  private val racerHandler: Emit[LilaOut] =
-    case RacerState(raceId, data) => publish(_.room(raceId.into(RoomId)), ClientIn.racerState(data))
-    case msg => roomHandler(msg)
-
   private def tellRoomVersion(
       roomId: RoomId,
       version: SocketVersion,
@@ -173,5 +169,4 @@ final class LilaHandler(
     case Lila.chans.lobby.out => lobbyHandler
     case Lila.chans.team.out => teamHandler
     case Lila.chans.challenge.out => roomHandler
-    case Lila.chans.racer.out => racerHandler
     case chan => in => logger.warn(s"Unknown channel $chan sent $in")

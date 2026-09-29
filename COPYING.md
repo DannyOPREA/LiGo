@@ -50,11 +50,12 @@ table rows ([ADR 0007](docs/decisions/0007-licensing-corrections-after-import.md
 
 What stays in `lila/public/` is free under upstream's own table (fonts, flags, the free piece sets,
 the futuristic, nes, piano and sfx sound sets, `public/images/board`, `puzzle-themes`,
-`learn/pieces`, the `staunton` boards, `trophy`, the neovim and helix flairs), the Noto emoji flairs
+the `staunton` boards, `trophy`, the neovim and helix flairs), the Noto emoji flairs
 (Google, Apache-2.0; `lila/bin/flair` generates them from emojipedia's Google set), or LiGo's own
 (below). A few directories upstream's table doesn't name stay under upstream's default AGPL grant:
-`public/cursors`, `public/data`, `public/video`, `public/javascripts` and the racer-car
-and storm fonts; most go with their chess modules in units 3.2–3.7. `lila/COPYING.md` is
+`public/cursors`, `public/data`, `public/video` and `public/javascripts`; most go with their chess
+modules in units 3.2–3.7 (unit 3.4 deleted `images/learn`, including `learn/pieces`, and the
+racer-car and storm fonts). `lila/COPYING.md` is
 upstream's file and still names the deleted sets; LiGo leaves it unchanged. Removing the files
 doesn't erase them from git history, which only ever contains upstream's own publicly distributed
 copies.
@@ -74,6 +75,11 @@ and title-verification code inside `ui/analyse` and `ui/bits`. `ui/fide`'s own n
 (`chart.js`, `chartjs-adapter-dayjs-4`, `dayjs`) stay in the lockfile because `ui/chart`,
 `ui/insight` and `ui/opening` still use them; no third-party npm package was actually dropped, only
 the `ui/fide` workspace entry itself. No package was added.
+
+Unit 3.4 removed the `ui/storm`, `ui/racer`, `ui/coordinateTrainer`, `ui/learn` and `ui/opening`
+workspace packages, and with them the only users of `@fnando/sparkline` 0.3.10 (MIT) and
+`@types/fnando__sparkline` 0.3.7 (MIT). The other npm packages they used stay because kept packages
+still use them. No package was added.
 
 ## 2. LiGo's own code — MIT
 

@@ -21,10 +21,10 @@ import {
   type Prop,
   type Toggle,
 } from 'lib';
-import { CevalCtrl, sanIrreversible, type CevalHandler, type CevalOpts } from 'lib/ceval';
+import { CevalCtrl, type CevalHandler, type CevalOpts } from 'lib/ceval';
 import { ChatCtrl } from 'lib/chat/chatCtrl';
 import { displayColumns } from 'lib/device';
-import { playable, playedTurns, fenToEpd, validUci, finished } from 'lib/game';
+import { playable, playedTurns, validUci, finished } from 'lib/game';
 import { plyColor } from 'lib/game/chess';
 import { PromotionCtrl } from 'lib/game/promotion';
 import { pubsub } from 'lib/pubsub';
@@ -37,8 +37,6 @@ import { confirm } from 'lib/view';
 import { Autoplay, type AutoplayDelay } from './autoplay';
 import { compute as computeAutoShapes } from './autoShape';
 import { valid as crazyValid } from './crazy/crazyCtrl';
-import EvalCache from './evalCache';
-import ExplorerCtrl from './explorer/explorerCtrl';
 import ForecastCtrl from './forecast/forecastCtrl';
 import { ForkCtrl } from './fork';
 import { IdbTree } from './idbTree';
@@ -65,7 +63,6 @@ export default class AnalyseCtrl implements CevalHandler {
   socket: Socket;
   chessground: ChessgroundApi;
   ceval: CevalCtrl;
-  evalCache: EvalCache;
   liveAnnotate = new LiveAnnotate();
   navigate: Navigate;
   idbTree: IdbTree = new IdbTree(this);
@@ -80,7 +77,6 @@ export default class AnalyseCtrl implements CevalHandler {
 
   // sub controllers
   autoplay: Autoplay;
-  explorer: ExplorerCtrl;
   forecast?: ForecastCtrl;
   retro?: RetroCtrl;
   fork: ForkCtrl;
@@ -165,8 +161,6 @@ export default class AnalyseCtrl implements CevalHandler {
         this.redraw();
       });
 
-    this.instanciateEvalCache();
-
     if (opts.inlinePgn) this.data = this.changePgn(opts.inlinePgn, false) || this.data;
 
     this.initialize(this.data, false);
@@ -178,7 +172,6 @@ export default class AnalyseCtrl implements CevalHandler {
 
     this.showGround();
     this.resetAutoShapes();
-    this.explorer.setNode();
 
     if (location.hash === '#practice') this.togglePractice();
     else if (location.hash === '#menu') requestIdleCallbackSafe(this.actionMenu.toggle, 500);
@@ -243,8 +236,6 @@ export default class AnalyseCtrl implements CevalHandler {
 
     this.autoplay = new Autoplay(this);
     this.socket ??= makeSocket(this.opts.socketSend, this);
-    if (this.explorer) this.explorer.destroy();
-    this.explorer = new ExplorerCtrl(this, this.opts.explorer, this.explorer);
     this.gamePath = this.synthetic || this.ongoing ? undefined : treePath.fromNodeList(mainline);
     this.fork = new ForkCtrl(this);
 
@@ -298,7 +289,6 @@ export default class AnalyseCtrl implements CevalHandler {
     if (this.retro && this.data.game.variant.key !== 'racingKings')
       this.retro = makeRetro(this, this.bottomColor());
     if (this.practice) this.startCeval();
-    this.explorer.onFlip();
     this.onChange();
     this.redraw();
   };
@@ -416,7 +406,6 @@ export default class AnalyseCtrl implements CevalHandler {
       site.sound.saySan(this.node.san, true);
     }
     this.justPlayed = this.justDropped = this.justCaptured = undefined;
-    this.explorer.setNode();
     this.updateHref();
     this.promotion.cancel();
     if (pathChanged) {
@@ -474,7 +463,6 @@ export default class AnalyseCtrl implements CevalHandler {
     this.redirecting = false;
     this.setPath(treePath.root);
     this.initCeval();
-    this.instanciateEvalCache();
     this.cgVersion.js++;
   }
 
@@ -691,7 +679,6 @@ export default class AnalyseCtrl implements CevalHandler {
         if (!isThreat) {
           this.retro?.onCeval();
           this.practice?.onCeval();
-          this.evalCache.onLocalCeval();
         }
         if (!(site.blindMode && this.retro)) this.redraw();
       }
@@ -757,12 +744,10 @@ export default class AnalyseCtrl implements CevalHandler {
     if (!this.ceval.download) this.ceval.reset();
     if (this.node.threefold || !this.cevalEnabled() || this.node.outcome()) return;
     this.ceval.start(this.path, this.nodeList, undefined, this.threatMode());
-    this.evalCache.fetch(this.path, this.ceval.search.multiPv);
   };
 
   clearCeval(): void {
     this.tree.removeCeval();
-    this.evalCache.clear();
     this.startCeval();
   }
 
@@ -804,7 +789,7 @@ export default class AnalyseCtrl implements CevalHandler {
     this.practice ? 'practice' : this.retro ? 'retro' : this.showCevalProp() ? 'ceval' : false;
 
   activeControlBarTool() {
-    return this.actionMenu() ? 'action-menu' : this.explorer.enabled() ? 'opening-explorer' : false;
+    return this.actionMenu() ? 'action-menu' : false;
   }
 
   allowLines() {
@@ -829,7 +814,6 @@ export default class AnalyseCtrl implements CevalHandler {
   };
 
   toggleActionMenu = () => {
-    if (!this.actionMenu() && this.explorer.enabled()) this.explorer.toggle();
     this.actionMenu.toggle();
   };
 
@@ -840,15 +824,6 @@ export default class AnalyseCtrl implements CevalHandler {
       this.retro = makeRetro(this, this.bottomColor());
     }
     this.setAutoShapes();
-  };
-
-  toggleExplorer = (): void => {
-    if (!this.explorer.allowed()) return;
-    if (!this.explorer.enabled()) {
-      this.retro = undefined;
-      this.actionMenu(false);
-    }
-    this.explorer.toggle();
   };
 
   togglePractice = (enable = !this.practice) => {
@@ -878,7 +853,6 @@ export default class AnalyseCtrl implements CevalHandler {
   private readonly closeTools = () => {
     this.retro = undefined;
     this.togglePractice(false);
-    if (this.explorer.enabled()) this.explorer.toggle();
     this.actionMenu(false);
   };
 
@@ -905,41 +879,6 @@ export default class AnalyseCtrl implements CevalHandler {
   partialAnalysisCallback(n: TreeNode) {
     return !n.eval && !!n.children.length && n.ply <= 300 && n.ply > 0;
   }
-
-  private readonly canEvalGet = (): boolean => {
-    if (this.node.ply >= 15) return false;
-
-    // cloud eval does not support threefold repetition
-    const fens = new Set();
-    for (let i = this.nodeList.length - 1; i >= 0; i--) {
-      const node = this.nodeList[i];
-      const epd = fenToEpd(node.fen);
-      if (fens.has(epd)) return false;
-      if (node.san && sanIrreversible(this.data.game.variant.key, node.san)) return true;
-      fens.add(epd);
-    }
-    return true;
-  };
-
-  private readonly instanciateEvalCache = () => {
-    if (this.evalCache) this.evalCache.destroy();
-    this.evalCache = new EvalCache({
-      variant: this.data.game.variant.key,
-      canGet: this.canEvalGet,
-      canPut: () =>
-        !!(
-          this.ceval?.isCacheable &&
-          this.canEvalGet() &&
-          // only put decent opening moves
-          !this.node.ceval!.mate &&
-          Math.abs(this.node.ceval!.cp!) < 99
-        ),
-      getNode: () => this.node,
-      send: this.opts.socketSend,
-      receive: this.onNewCeval,
-      upgradable: this.evalCache?.upgradable(),
-    });
-  };
 
   playUci = (uci: Uci, uciQueue?: Uci[]) => {
     this.pvUciQueue = uciQueue ?? [];
@@ -968,11 +907,6 @@ export default class AnalyseCtrl implements CevalHandler {
     this.pvUciQueue = uciList;
     const firstUci = this.pvUciQueue.shift();
     if (firstUci) this.playUci(firstUci, this.pvUciQueue);
-  }
-
-  explorerMove(uci: Uci): void {
-    this.explorer.loading(true);
-    this.playUci(uci);
   }
 
   playBestMove(): void {

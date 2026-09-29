@@ -52,18 +52,6 @@ final class ActivityWriteApi(
       )
     })
 
-  def storm(userId: UserId, score: Int): Funit = update(userId): a =>
-    bdoc(ActivityFields.storm -> { ~a.storm + score })
-
-  def racer(userId: UserId, score: Int): Funit = update(userId): a =>
-    bdoc(ActivityFields.racer -> { ~a.racer + score })
-
-  def streak(userId: UserId, score: Int): Funit = update(userId): a =>
-    bdoc(ActivityFields.streak -> { ~a.streak + score })
-
-  def learn(userId: UserId, stage: String) = update(userId): a =>
-    bdoc(ActivityFields.learn -> { ~a.learn + LearnStage(stage) })
-
   def corresMove(gameId: GameId, userId: UserId) = update(userId): a =>
     bdoc(ActivityFields.corres -> { (~a.corres).add(gameId, moved = true, ended = false) })
 

@@ -1,7 +1,7 @@
 package lila.user
 package ui
 
-import lila.core.perf.{ PuzPerf, UserWithPerfs }
+import lila.core.perf.UserWithPerfs
 import lila.rating.UserWithPerfs.hasVariantRating
 import lila.ui.*
 
@@ -92,78 +92,9 @@ final class UserShowSide(helpers: Helpers):
           u.noBot.option(
             frag(
               hr,
-              showPerf(u.perfs.puzzle, PerfKey.puzzle),
-              showStorm(u.perfs.storm, u),
-              showRacer(u.perfs.racer),
-              showStreak(u.perfs.streak)
+              showPerf(u.perfs.puzzle, PerfKey.puzzle)
             )
           )
         )
       )
-    )
-
-  private def showStorm(storm: PuzPerf, user: User)(using Translate) =
-    a(
-      dataIcon := Icon.Storm,
-      cls := List(
-        "empty" -> !storm.nonEmpty
-      ),
-      href := routes.Storm.dashboardOf(user.username),
-      span(
-        h3("Puzzle Storm"),
-        st.rating(
-          strong(storm.score),
-          storm.nonEmpty.option(
-            frag(
-              " ",
-              span(trans.storm.xRuns.plural(storm.runs, storm.runs.localize))
-            )
-          )
-        )
-      ),
-      iconTag(Icon.PlayTriangle)
-    )
-
-  private def showRacer(racer: PuzPerf)(using Translate) =
-    a(
-      dataIcon := Icon.FlagChessboard,
-      cls := List(
-        "empty" -> !racer.nonEmpty
-      ),
-      href := routes.Racer.home,
-      span(
-        h3("Puzzle Racer"),
-        st.rating(
-          strong(racer.score),
-          racer.nonEmpty.option(
-            frag(
-              " ",
-              span(trans.storm.xRuns.plural(racer.runs, racer.runs.localize))
-            )
-          )
-        )
-      ),
-      iconTag(Icon.PlayTriangle)
-    )
-
-  private def showStreak(streak: PuzPerf)(using Translate) =
-    a(
-      dataIcon := Icon.ArrowThruApple,
-      cls := List(
-        "empty" -> !streak.nonEmpty
-      ),
-      href := routes.Puzzle.streak,
-      span(
-        h3("Puzzle Streak"),
-        st.rating(
-          strong(streak.score),
-          streak.nonEmpty.option(
-            frag(
-              " ",
-              span(trans.storm.xRuns.plural(streak.runs, streak.runs.localize))
-            )
-          )
-        )
-      ),
-      iconTag(Icon.PlayTriangle)
     )

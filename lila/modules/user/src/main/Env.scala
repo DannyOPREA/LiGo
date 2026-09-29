@@ -66,9 +66,6 @@ final class Env(
   Bus.sub[lila.core.mod.RankBan]: k =>
     if k.value then rankingApi.remove(k.userId)
 
-  Bus.sub[lila.core.misc.puzzle.StreakRun]: r =>
-    api.addPuzRun("streak", r.userId, r.score)
-
   lila.common.Cli.handle(_.SetTitle):
     case "user" :: "real-name" :: id :: name =>
       val realName = RealName(name.mkString(" "))

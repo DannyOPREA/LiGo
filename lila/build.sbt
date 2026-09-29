@@ -81,18 +81,18 @@ lazy val modules = Seq(
   game, user, puzzle, analyse,
   report, pref, chat, playban, lobby, mailer, oauth, search,
   // level 6
-  insight, evaluation, storm,
+  insight, evaluation,
   // level 7
   // everything else is free from deps; do the big ones first
   tutor, security, plan, round,
   insight, fishnet, mod, challenge, web,
   team, forum, streamer, activity, msg, ublog,
-  notifyModule, clas, perfStat, opening, timeline,
+  notifyModule, clas, perfStat, timeline,
   setup, video, push,
   // and then the smaller ones
-  pool, lobby, relation, tv, coordinate, feed, history, recap,
-  shutup, appeal, irc, explorer, learn, coach,
-  evalCache, irwin, bot, racer, cms, i18n, jsBot,
+  pool, lobby, relation, tv, feed, history, recap,
+  shutup, appeal, irc, coach,
+  irwin, bot, cms, i18n, jsBot,
   socket, bookmark, gameSearch, forumSearch, teamSearch, irc
 )
 
@@ -163,15 +163,7 @@ lazy val puzzle = module("puzzle",
   tests.bundle
 )
 
-lazy val storm = module("storm",
-  Seq(puzzle),
-  Seq()
-)
 
-lazy val racer = module("racer",
-  Seq(storm, room),
-  Seq()
-)
 
 lazy val jsBot = module("jsBot",
   Seq(memo, ui),
@@ -193,10 +185,6 @@ lazy val streamer = module("streamer",
   Seq()
 )
 
-lazy val coordinate = module("coordinate",
-  Seq(db, ui),
-  macwire.bundle
-)
 
 lazy val feed = module("feed",
   Seq(memo, ui),
@@ -314,10 +302,6 @@ lazy val tutor = module("tutor",
   tests.bundle
 )
 
-lazy val opening = module("opening",
-  Seq(memo, ui),
-  tests.bundle
-)
 
 lazy val fishnet = module("fishnet",
   Seq(analyse),
@@ -349,15 +333,7 @@ lazy val challenge = module("challenge",
   Seq(lettuce, catsMtl) ++ tests.bundle
 )
 
-lazy val learn = module("learn",
-  Seq(db),
-  Seq()
-)
 
-lazy val evalCache = module("evalCache",
-  Seq(tree, memo),
-  Seq()
-)
 
 lazy val playban = module("playban",
   Seq(memo),
@@ -434,10 +410,6 @@ lazy val appeal = module("appeal",
   Seq()
 )
 
-lazy val explorer = module("explorer",
-  Seq(game),
-  Seq()
-)
 
 lazy val notifyModule = module("notify",
   Seq(memo, ui),

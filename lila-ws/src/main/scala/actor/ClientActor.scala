@@ -92,19 +92,6 @@ object ClientActor:
           services.friends.start(_, clientIn, subscribe = subscribe)
         state
 
-      case evalGet: ClientOut.EvalGet =>
-        services.evalCache.get(req.sri, evalGet, clientIn)
-        state
-
-      case evalGet: ClientOut.EvalGetMulti =>
-        services.evalCache.getMulti(req.sri, evalGet, clientIn)
-        state
-
-      case evalPut: ClientOut.EvalPut =>
-        req.user.foreach: user =>
-          services.evalCache.put(req.sri, user, evalPut)
-        state
-
       case ClientOut.MsgType(dest) =>
         req.user.foreach: orig =>
           deps.users.tellOne(dest, ClientIn.MsgType(orig))
@@ -117,10 +104,6 @@ object ClientActor:
       case ClientOut.UserForward(payload) =>
         req.user.foreach: user =>
           lilaIn.site(LilaIn.TellUser(user, payload))
-        state
-
-      case ClientOut.StormKey(key, pad) =>
-        clientIn(ClientIn.StormKey(deps.services.stormSign(key, pad)))
         state
 
       case ClientOut.Ignore =>

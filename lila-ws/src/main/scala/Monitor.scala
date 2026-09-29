@@ -184,19 +184,6 @@ object Monitor:
     timer.stop()
     res
 
-  object evalCache:
-    private val requests = Kamon.counter(s"evalCache.request")
-    final class Style(key: String):
-      def request(ply: Int, isHit: Boolean) = requests.withTags:
-        TagSet.from(Map("ply" -> (if ply < 15 then ply.toString else "15+"), "hit" -> isHit, "style" -> key))
-      object upgrade:
-        val count = Kamon.counter("evalCache.upgrade.count").withTag("style", key)
-        val members = Kamon.gauge("evalCache.upgrade.members").withTag("style", key)
-        val evals = Kamon.gauge("evalCache.upgrade.evals").withTag("style", key)
-        val expirable = Kamon.gauge("evalCache.upgrade.expirable").withTag("style", key)
-    val single = Style("single")
-    val multi = Style("multi")
-
   object connector:
     object flush:
       object config:

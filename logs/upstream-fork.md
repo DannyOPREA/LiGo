@@ -4,13 +4,41 @@
 - lila (Sept 2026): Scala 3.8.4, sbt 2.0.9, JDK 21, Pekko, ReactiveMongo, liplay; UI on Node ≥ 24, pnpm 12, TypeScript 7, esbuild, oxlint/oxfmt, stylelint, snabbdom 3.5.1 (2026-09-25, planning research).
 - lila-docker states lila needs ~12 GB RAM to build; `.sbtopts` uses -Xmx8g (2026-09-25, planning research).
 - lila gets ~10k commits a year, so staying mergeable isn't feasible; hard fork + monthly review (ADR 0001).
-- The baseline to keep: lila compile has 17 `[warn]` lines and 0 errors; `/storm` returns 500 on an empty DB (upstream behaviour). New warnings or 5xx responses after LiGo changes are ours (2026-09-26, unit 0.2).
+- The baseline to keep: lila compile has 17 `[warn]` lines and 0 errors; `/storm` returned 500 on an empty DB (upstream behaviour; /storm is gone since unit 3.4). New warnings or 5xx responses after LiGo changes are ours (2026-09-26, unit 0.2).
 - Snapshot imports copy only Git LFS *pointers*; drop inherited `filter=lfs` attributes or clones break for git-lfs users (ADR 0009) (2026-09-26, unit 0.2).
 - Claude Code auto-loads `lila/AGENTS.md` (lichess's own agent guide) while LiGo has no CLAUDE.md; it doesn't govern LiGo (2026-09-26, unit 0.2).
 - Import with `git archive` and diff `git ls-files` against upstream afterwards: upstream tracks some files its own .gitignore ignores (2026-09-26, unit 0.2).
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-29 · 3.4 · Remove chess training and openings
+- Did: deleted lila modules `storm`, `racer`, `coordinate`, `learn`, `opening`, `explorer` and
+  `evalCache`, their controllers, views and routes, and puzzle streak mode inside `puzzle` (the
+  streak page and API, `PuzzleStreakApi`, the streak fields of the round form, the Storm/Racer/Streak
+  run events in `lila.core.misc.puzzle`). Removed the class "learn" progress tab, the masters-game
+  import redirect, the `/api/cloud-eval` endpoint and its rate limit, the opening explorer entry in
+  the user menu and the keyboard help, and the menu, profile and Patron-page links. lila-ws lost the
+  racer actor and channel, `StormSign`, the whole `evalCache` package (evalGet/evalPut/evalGetMulti)
+  and its two tests, and the `yolo` Mongo connection only it used. Browser: `ui/storm`, `ui/racer`,
+  `ui/coordinateTrainer`, `ui/learn`, `ui/opening`, `ui/lib`'s puzzle-run code, streak mode in
+  `ui/puzzle`, the explorer and cloud-eval code in `ui/analyse`; `public/images/learn` and the
+  racer-car and storm fonts; `@fnando/sparkline` and its types left the lockfile.
+- Worked: the 3.2/3.3 recipe; lila-ws and UI done by two workers in parallel while the server was
+  stripped in the same checkout (disjoint paths, no commits by workers).
+- Didn't work / dead ends: `sbt test` in lila-ws prints "Total 0" when nothing changed (testQuick);
+  `sbt "testOnly *"` gives the real count. PR #33's lila CI job hung silently for an hour after
+  "set current project" (as main's 3.2 run did) and passed on one re-run.
+- Lessons: a silent lila CI hang right after project load has happened twice; it isn't the diff.
+- Decisions: fishnet's cached-eval lookup is stubbed to "none" in app/Env.scala until 3.5 removes
+  fishnet; tutor's opening links point at the analysis board until 3.5; activity and profile keep
+  stored storm/racer/streak scores (ADR 0019: stored fields stay) and show old ones without links;
+  the explorer/tablebase endpoints in config stay (fishnet and the CSP still read them until 3.5).
+- Verified by Claude: see the PR.
+- Follow-ups: the `Racer.Write` OAuth scope and storm/racer monitoring keys are dead (3.8 with the
+  other dead scopes); `ui/analyse` practice mode no longer asks the tablebase and learn-from-mistakes
+  no longer skips masters' moves (both go with the engine in 3.5); the Storm glyph stays in the
+  icon font; storm/racer/learn i18n keys stay with the rest of the i18n clean-up.
 
 ### 2026-09-28 · 3.3 · Remove studies and broadcasts
 - Did: deleted lila modules `study`, `relay`, `practice`, `studySearch`, `fide`, `title` and the

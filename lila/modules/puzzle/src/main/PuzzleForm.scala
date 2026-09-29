@@ -11,17 +11,12 @@ import scalalib.model.Days
 
 object PuzzleForm:
 
-  val maxStreakScore = 250
-
   case class RoundData(
       win: PuzzleWin,
       rated: Rated,
       replayDays: Option[Days],
-      streakId: Option[String],
-      streakScore: Option[Int],
       color: Option[Color]
-  ):
-    def streakPuzzleId = streakId.flatMap(Puzzle.toId)
+  )
 
   case class ThemeVote(
       theme: String,
@@ -40,8 +35,6 @@ object PuzzleForm:
       "win" -> of[PuzzleWin],
       "rated" -> boolean.into[Rated],
       "replayDays" -> optional(typeIn[Days](PuzzleDashboard.dayChoices.toSet)),
-      "streakId" -> optional(nonEmptyText),
-      "streakScore" -> optional(number(min = 0, max = maxStreakScore)),
       "color" -> optional(lila.common.Form.color.mapping)
     )(RoundData.apply)(unapply)
   )
@@ -90,9 +83,7 @@ object PuzzleForm:
     val round = Form(
       mapping(
         "win" -> text
-      )(w => RoundData(win = PuzzleWin(w == "1" || w == "true"), rated = Rated.Yes, none, none, none, none))(
-        _ => none
-      )
+      )(w => RoundData(win = PuzzleWin(w == "1" || w == "true"), rated = Rated.Yes, none, none))(_ => none)
     )
 
     val vote = Form(single("vote" -> numberIn(Set(0, 1))))
