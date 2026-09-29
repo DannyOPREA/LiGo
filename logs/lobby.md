@@ -8,6 +8,24 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 6.3 · The player-test kit
+- Did: `docs/research/lobby-test/`: README (when and how to run it, set-up once, what happens to the
+  notes), protocol.md (the session script: consent, four tasks read word for word on OGS and LiGo,
+  2- and 4-minute stuck rules, the 1–7 ease question, closing questions, what to watch for),
+  consent.md (what to tell participants, recording only with their OK, deleted after notes),
+  notes-template.md (one per participant: timings, ease, errors, quotes). Follows ADR 0022 §9.
+- Worked: the four tasks map one to one onto PLAN §4's goals; LiGo-only closing questions ask about
+  the choices ADR 0022 left to the test (guests kept apart, the widening range, greyed rows, presets).
+- Didn't work / dead ends: none.
+- Lessons: on LiGo a quick-pair task needs a partner already waiting (the owner's helper account),
+  or the test measures an empty pool rather than the lobby.
+- Decisions: task wording and the 2/4-minute stuck rules (Claude, under the owner's 2026-09-28
+  delegation).
+- Verified by Claude: verify.sh (docs only); read through against ADR 0022 and PLAN §4. · Needs
+  owner verification: the kit is run by you after 6.10; skim protocol.md for anything you'd word
+  differently.
+- Follow-ups: run it after 6.10; Claude writes results.md from the notes.
+
 ### 2026-09-29 · unit 6.2 · Pairing with auto-handicap in lila/modules/pool
 - Did: `lila.pool.GoPairing` (new, AGPL as it adapts lila's `MatchMaking`): the stones and Black
   for a pair (ADR 0021 §4 via `GoRating.suggestedStones`, only when both said Handicap OK and both
