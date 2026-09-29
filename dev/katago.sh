@@ -44,7 +44,9 @@ TEST_NET_SHA256=f5d32604e3675c480c7c8f6aa579a1ea857135628a0afccc8fa56330fbacd38d
 # Full-size network for the owner's box: the b18 network KataGo's README recommends. Its host
 # (media.katagotraining.org) is not on the cloud allowlist, so cloud sessions skip it, and
 # katagotraining.org/web.archive.org are also unreachable from this cloud session, so its
-# licence could not be read here (unit 4.6: pending the owner pasting it, logs/scoring.md).
+# licence was read by the owner instead: the "KataGo Neural Network License", MIT-style permissive,
+# Copyright 2026 David J Wu ("lightvector"); pasted 2026-09-29 (logs/scoring.md). The network is
+# only downloaded, never committed, so nothing ships its notice.
 # NET_SHA256 was pasted by the owner from his own download on 2026-09-29 (logs/scoring.md). A
 # download that doesn't match it is refused, so `net_path` (used by smoke/bench/env, so also by
 # `dev/ligo scoring bench`) never silently uses an unverified network

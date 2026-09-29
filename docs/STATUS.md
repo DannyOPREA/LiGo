@@ -111,8 +111,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   also installs bats, shellcheck and KataGo (CPU).
 - Cloud network allowlist: add `media.katagotraining.org` (full-size KataGo networks) and
   `mcp.context7.com` (the context7 MCP server).
-- On your box (unit 4.6): the b18 checksum is pinned (2026-09-29). Paste the network's licence
-  (katagotraining.org/network_license) into the Phase 4 thread; then `dev/ligo katago install
+- On your box (unit 4.6): the b18 checksum is pinned and its licence checked (MIT-style,
+  2026-09-29). Run `dev/ligo katago install
   opencl` (should say verified), `dev/ligo katago smoke`, `dev/ligo katago bench`,
   `LIGO_MODE=native dev/ligo scoring bench --gate 97`. The bench runs on the host, so it needs host
   Node 24 and pnpm, and `pnpm install --frozen-lockfile` once in `lila/`.
