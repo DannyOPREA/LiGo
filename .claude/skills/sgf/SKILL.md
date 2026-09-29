@@ -24,3 +24,5 @@ Essentials of FF[4]:
 Quirks to test: lower/upper case property names from old files, missing `SZ` (means 19), comments
 with escaped brackets, empty variations, moves on occupied points in broken files (reject with a
 clear message). Round-trip tests (parse → write → parse) belong in the conformance suite.
+Both readers replay `libs/conformance/sgf/root.json` (root settings) and `records.json` (whole
+records: main line or refusal); add a quirk there, not in one reader's tests only.

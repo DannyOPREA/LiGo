@@ -33,6 +33,21 @@ const mainLine = (root) => {
   return line;
 };
 
+// Records both readers replay (unit 7.3): the server's import reads the same main line or refuses the
+// same file. `importRefused` is the server's alone.
+const records = JSON.parse(readFileSync(new URL("../../conformance/sgf/records.json", import.meta.url), "utf8"));
+
+for (const c of records.cases) {
+  test(`records: ${c.id}`, () => {
+    if (c.refused) {
+      assert.throws(() => readTree(c.sgf), (e) => e instanceof SgfError && e.move === c.refused.move);
+      return;
+    }
+    const line = mainLine(readTree(c.sgf));
+    assert.deepEqual({ moves: line.slice(1).map((n) => n.move), toMove: line.at(-1).toMove }, c.expect);
+  });
+}
+
 const moves = (root) => mainLine(root).slice(1).map((n) => n.move);
 
 test("a game's moves, passes, captures and the position after each", () => {
