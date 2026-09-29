@@ -8,7 +8,7 @@
 - [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, SGF parse, pass-window clicks, play() trust, stale deps line
 - [General review patterns](review-patterns-general.md) — transitive-dep licences, pipefail+find, docker caches, harness vacuity, pin-check order
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
-- [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, lobby filtering, goban SGF reader hangs/unchecked, import dedup
+- [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, goban SGF hangs, goban puzzle-mode glue, solver GHI/ko/spike budget
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
 - [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, browser mismatch, verify gate
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
