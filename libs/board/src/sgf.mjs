@@ -48,6 +48,8 @@ export function rootSettings(props, firstMove) {
   const black = pointsOf(props.AB ?? [], size);
   const white = pointsOf(props.AW ?? [], size);
   if (black.some((p) => white.includes(p))) throw new SgfError("a setup point holds both colours");
+  const dead = chainWithoutLiberty(black, white, size);
+  if (dead) throw new SgfError(`the setup stone at ${dead} has no liberties`);
   const pl = one("PL")?.trim().toUpperCase();
   const toMove =
     pl === "B" ? "black" : pl === "W" ? "white" : firstMove ?? (Number(handicapText) >= 2 ? "white" : "black");
@@ -61,6 +63,33 @@ export function rootSettings(props, firstMove) {
     toMove,
     ...(ruleset ? {} : { rulesetUnknown: true }),
   };
+}
+
+/** A setup stone whose chain has no liberties, if any (the server can't start from such a position). */
+function chainWithoutLiberty(black, white, size) {
+  const colour = new Map([...black.map((p) => [p, "b"]), ...white.map((p) => [p, "w"])]);
+  const seen = new Set();
+  const neighbours = (p) => {
+    const [x, y] = [p.charCodeAt(0) - 97, p.charCodeAt(1) - 97];
+    return [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]
+      .filter(([a, b]) => a >= 0 && b >= 0 && a < size && b < size)
+      .map(([a, b]) => String.fromCharCode(97 + a, 97 + b));
+  };
+  for (const start of colour.keys()) {
+    if (seen.has(start)) continue;
+    let free = false;
+    for (const work = [start], c = colour.get(start); work.length; ) {
+      const p = work.pop();
+      if (seen.has(p)) continue;
+      seen.add(p);
+      for (const n of neighbours(p)) {
+        if (!colour.has(n)) free = true;
+        else if (colour.get(n) === c && !seen.has(n)) work.push(n);
+      }
+    }
+    if (!free) return start;
+  }
+  return undefined;
 }
 
 const RULESETS = {
@@ -145,28 +174,18 @@ const LISTS = ["TR", "SQ", "CR", "MA", "LB", "AR", "LN", "DD", "VW", "SL"];
 export function readTree(text, { maxLength = MAX_SGF_LENGTH } = {}) {
   if (text.length > maxLength || new TextEncoder().encode(text).length > maxLength)
     throw new SgfError(`the record is longer than ${Math.round(maxLength / 1024)} KB`);
-  if (!/\(\s*;/.test(text)) throw new SgfError("not an SGF record");
+  const record = recordOf(text);
   let trees;
   try {
-    const tokens = sabaki.tokenize(text);
-    // @sabaki/sgf drops a name with no capital (`sz`, from pre-FF[3] files) without a word; the
-    // server's reader refuses it too, so both read a file the same way (libs/go-rules, unit 7.3).
-    trees = sabaki.parseTokens(tokens);
-    const lower = tokens.find((t) => t.type === "prop_ident" && !/[A-Z]/.test(t.value));
-    if (lower) throw new SgfError(`property ${lower.value} has no capital letters: not an SGF property name`);
+    // Only well-formed text reaches @sabaki/sgf (recordOf checked it), so its leniency never
+    // decides what a file means.
+    trees = sabaki.parseTokens(sabaki.tokenize(record));
   } catch (e) {
-    if (e instanceof SgfError) throw e;
     if (e instanceof RangeError) throw new SgfError("the record's variations are nested too deeply");
     throw new SgfError(`not a readable SGF record (${e.message})`);
   }
   if (!trees.length) throw new SgfError("not an SGF record");
   const top = trees[0];
-  let count = 0;
-  for (const pending = [top]; pending.length; ) {
-    const n = pending.pop();
-    if (++count > MAX_SGF_NODES) throw new SgfError(`the record has more than ${MAX_SGF_NODES} nodes`);
-    pending.push(...n.children);
-  }
   if (top.data.B || top.data.W) throw new SgfError("the first node plays a move: LiGo reads moves from the second node on");
   if (top.data.AE) throw new SgfError("AE (erase) in the first node: nothing is on the board to erase");
   const settings = rootSettings(top.data, firstMoveOf(top));
@@ -187,15 +206,11 @@ export function readTree(text, { maxLength = MAX_SGF_LENGTH } = {}) {
   while (stack.length) {
     const { source, node, position } = stack.pop();
     const next = []; // pushed last to first, so earlier variations are read first
-    for (const child of source.children) {
+    // A node without a move (a comment, marks): its notes join the move before it, and its
+    // children take its place, in file order.
+    const moves = movesAfter(source, node.ply + 1, settings.size, (data) => mergeNotes(node, annotationsOf(data, READ)));
+    for (const { child, move, color, from } of moves) {
       engine.jumpTo(position);
-      const { move, color, from } = moveOf(child, node.ply + 1, settings.size);
-      if (move === null) {
-        // A node without a move (a comment, marks): its notes join the move before it.
-        mergeNotes(node, annotationsOf(child.data, READ));
-        next.push({ source: child, node, position });
-        continue;
-      }
       const toMove = stateOf(engine).toMove;
       if (color !== toMove) throw new SgfError(`${from} is not a move by ${toMove}, the player to move`, node.ply + 1);
       const refused = play(engine, move);
@@ -211,10 +226,98 @@ export function readTree(text, { maxLength = MAX_SGF_LENGTH } = {}) {
   return root;
 }
 
+/** The deepest nesting of variations either reader accepts (browsers' stacks differ). */
+export const MAX_SGF_DEPTH = 1000;
+
+/**
+ * The first game of an SGF collection, as text, checked against the grammar both readers share
+ * (libs/go-rules' `SgfReader` reads by the same rules, libs/conformance/sgf/records.json holds them
+ * to it): from the first `(;` (text before it is skipped) to its closing `)` (text after it is
+ * ignored); a node's properties are names of ASCII letters with at least one capital, each with one
+ * or more `[values]`; a variation starts with `;` or is empty, and no node follows a variation in
+ * its sequence; ASCII whitespace between tokens;
+ * at most MAX_SGF_NODES nodes and MAX_SGF_DEPTH nested variations.
+ *
+ * @param {string} text
+ */
+function recordOf(text) {
+  const start = text.search(/\([ \t\n\r\f\v]*;/);
+  if (start < 0) throw new SgfError("not an SGF record");
+  const bad = (what, at) => new SgfError(`not a readable SGF record (${what} at character ${at + 1})`);
+  const space = (c) => c === " " || c === "\t" || c === "\n" || c === "\r" || c === "\f" || c === "\v";
+  const letter = (c) => (c >= "A" && c <= "Z") || (c >= "a" && c <= "z");
+  let i = start;
+  let depth = 0;
+  let nodes = 0;
+  // Per depth: a variation has closed there, so only more variations or the end may follow.
+  const afterVariation = [];
+  for (;;) {
+    while (i < text.length && space(text[i])) i++;
+    if (i >= text.length) throw bad("the record ends before its variations close", i);
+    const c = text[i];
+    if (c === "(") {
+      if (++depth > MAX_SGF_DEPTH) throw new SgfError("the record's variations are nested too deeply");
+      afterVariation[depth] = false;
+      i++;
+      while (i < text.length && space(text[i])) i++;
+      if (text[i] !== ";" && text[i] !== ")") throw bad("expected ';'", i);
+    } else if (c === ")") {
+      i++;
+      if (--depth === 0) return text.slice(start, i);
+      afterVariation[depth] = true;
+    } else if (c === ";") {
+      if (afterVariation[depth]) throw bad("a node after a variation", i);
+      i++;
+      if (++nodes > MAX_SGF_NODES) throw new SgfError(`the record has more than ${MAX_SGF_NODES} nodes`);
+      for (;;) {
+        while (i < text.length && space(text[i])) i++;
+        if (!letter(text[i] ?? "")) break;
+        const from = i;
+        while (i < text.length && letter(text[i])) i++;
+        const name = text.slice(from, i);
+        if (!/[A-Z]/.test(name)) throw new SgfError(`property ${name} has no capital letters: not an SGF property name`);
+        while (i < text.length && space(text[i])) i++;
+        if (text[i] !== "[") throw bad(`property ${name} has no value`, i);
+        while (text[i] === "[") {
+          i++;
+          while (i < text.length && text[i] !== "]") i += text[i] === "\\" ? 2 : 1;
+          if (i >= text.length) throw bad("the record ends inside a value", i);
+          i++;
+          while (i < text.length && space(text[i])) i++;
+        }
+      }
+    } else throw bad(`unexpected '${c}'`, i);
+  }
+}
+
+/**
+ * The nodes that play a move after `source`: its children, with each node that plays none replaced
+ * by its own children (the server's `SgfImport` expands them the same way). `onNotes` gets the
+ * replaced nodes' properties.
+ */
+function movesAfter(source, number, size, onNotes) {
+  const moves = [];
+  const work = [...source.children].reverse();
+  while (work.length) {
+    const child = work.pop();
+    const move = moveOf(child, number, size);
+    if (move.move !== null) moves.push({ child, ...move });
+    else {
+      onNotes(child.data);
+      for (let k = child.children.length - 1; k >= 0; k--) work.push(child.children[k]);
+    }
+  }
+  return moves;
+}
+
+/** The colour of the main line's first move: the first node with B or W, looking through nodes without one. */
 function firstMoveOf(top) {
-  for (let n = top.children[0]; n; n = n.children[0]) {
+  const work = [...top.children].reverse();
+  while (work.length) {
+    const n = work.pop();
     if (n.data.B) return "black";
     if (n.data.W) return "white";
+    for (let k = n.children.length - 1; k >= 0; k--) work.push(n.children[k]);
   }
   return undefined;
 }

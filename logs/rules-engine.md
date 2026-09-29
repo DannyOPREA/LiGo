@@ -9,8 +9,46 @@
 - OGS goban (Apache-2.0) ships an engine-only package, `goban-engine`, with JP/CN/AGA/etc. rules, SGF and time systems (2026-09-25, planning research).
 - goban-engine: `place(x, y, true, true)` is the fully checked move (the defaults skip ko and only flag superko); its SGF loader plays moves unchecked and silently turns an out-of-turn move into an edit; its fixed handicap placement runs only without `initial_state` (2026-09-28, 1.8).
 - KataGo as a rules oracle: legality from the NAN mask of `kata-raw-nn`'s policy (its GTP `play` is tolerant); `final_score` removes stones in the opponent's pass-alive area, so compare scores only on settled boards (2026-09-28, 1.9).
+- Two readers that must agree: feed both the same seeded broken inputs and compare verdicts (a differential), and give the lenient library only text a shared strict grammar accepted; no-throw fuzzing finds none of the disagreements (2026-09-29, 7.3).
 
 ## Entries (newest first)
+
+### 2026-09-29 · unit 7.3 · Review: one grammar and one tree for both SGF readers
+- Did: the reviewer's two-reader probe found the readers disagreed (the server stored files the
+  analysis board refuses: a bad side variation, text after the record, non-ASCII names; and read
+  other main lines where a comment-only node or a repeated move came first). Now both check the
+  same grammar before reading (libs/board's `recordOf`, the server's `SgfReader`: first game only,
+  ASCII names with a value, no node after a variation, at most 1,000 nested variations); the
+  server replays every variation as `readTree` does (moveless nodes replaced by their children in
+  file order, which also fixed `readTree` putting them last; twins merged); both refuse a setup
+  chain without liberties; the server trims and parses komi as JavaScript does. `SgfError` carries
+  `importOnly`. A seeded differential writes 4,000 broken records with the server's verdicts for
+  `parity.test.mjs` to check against `readTree`; 20,000 more on five other seeds agreed.
+- Worked: the differential found two more differences the hand-written probes missed (a node after
+  a variation, which @sabaki/sgf silently drops; a dead setup chain the server couldn't start from).
+- Didn't work / dead ends: letting @sabaki/sgf decide structure: it silently skips tokens it doesn't
+  expect, so only text that passed the shared grammar reaches it now.
+- Decisions (Claude, under the owner's 2026-09-28 delegation): the server is exactly as strict as the
+  analysis board (every variation checked, not only the main line), plus the import-only refusals;
+  a record's first game ends at its closing parenthesis; nesting capped at 1,000 in both.
+
+### 2026-09-29 · unit 7.3 · The server's SGF reader in libs/go-rules
+- Did: `SgfReader` (FF[4] structure: nodes, properties, variations, escapes, soft breaks, `CA`
+  charset; 200 KB and 10,000-node limits; no recursion, no exceptions) and `SgfImport` (the first
+  game's main line replayed through `GoGame`: 9×9/19×19, ≤ 1,000 actions, setup only at the root,
+  legal moves by the colour to move, nothing after two passes; `SgfSettings` from the shared root
+  table; `SgfGameInfo` and `SgfResult` from `PB`/`PW`/`BR`/`WR`/`DT`/`PC`/`EV`/`RE`).
+  `libs/conformance/sgf/records.json` (29 whole records) is replayed by both readers.
+- Worked: one table of whole records caught the one difference between the readers before any
+  code shipped (text before the record: sabaki read it as a property name).
+- Didn't work / dead ends: a random 1,001-action game to test the cap fills the board and ends in
+  two passes; the cap is a parameter (`actionCap`) so the test uses a short game.
+- Lessons: a regex that searches untrusted text needs bounded repeats (CodeQL flagged
+  `CA\s*\[([^\]]*)\]` in 7.2's `decodeSgf`; both readers now use `{0,8}`/`{0,40}`).
+- Decisions (Claude, under the owner's 2026-09-28 delegation): text before the first `(;` is skipped
+  by both readers; `HA` with `AB` becomes a handicap game only when the stones are exactly the fixed
+  points and White moves first, otherwise a custom start (handicap stones written as Black moves stay
+  moves); `RE` kept as written (`SgfResult`), never checked against the position.
 
 ### 2026-09-29 · unit 7.2 · The analysis tree's SGF in libs/board
 - Did: `libs/board/src/sgf.mjs` (+ hand-written `sgf.d.mts`): `readTree` reads an SGF record into

@@ -92,10 +92,13 @@ position never comes from the file and an illegal move, a move out of turn or an
 refuses the record with its move number (`SgfError`). goban-engine's own SGF reader (`readSgf`
 above) stays for the unit 1.8 read-back only: it hangs on a truncated file. Node ids are the move
 itself (`"pd"`, `".."` for a pass), the two characters lila's tree paths need. The root's settings
-follow `libs/conformance/sgf/root.json`, which the server's reader (unit 7.3) replays too. Limits:
-200 KB (UTF-8 bytes) and 10,000 nodes; setup stones only at the start, and no move in the first
-node; 9×9, 13×13 and 19×19; `tt` is a pass on 19×19 only; a property name with no capital letters
-(`sz`, pre-FF[3]) is refused rather than dropped. `@sabaki/sgf` is patched
+follow `libs/conformance/sgf/root.json`, which the server's reader (unit 7.3) replays too, with
+`records.json` for whole files. Before `@sabaki/sgf` sees the text, `recordOf` checks it against
+the grammar the server's reader uses, so @sabaki/sgf's leniency never decides what a file means:
+the first game only (text before its `(;` and after its end is ignored), names of ASCII letters
+with a capital and a value, no node after a variation. Limits: 200 KB (UTF-8 bytes), 10,000 nodes
+and 1,000 nested variations; setup stones only at the start, and no move in the first node; no
+setup chain without liberties; 9×9, 13×13 and 19×19; `tt` is a pass on 19×19 only. `@sabaki/sgf` is patched
 (`patches/`) with a `browser` field so bundlers leave out its Node-only file and charset modules.
 
 ## What LiGo sets that goban's presets would get wrong
@@ -132,7 +135,8 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
   variations, comments and glyphs, refusals (a truncated file, moves out of turn, a ko retake,
   deep nesting, too long), read → write → read round trips, `playFrom`, charsets, and that the
   reader bundles for the browser. `test/parity.test.mjs` also reads the 227 server SGF games with
-  `readTree` and checks they end in the server's position.
+  `readTree` and checks they end in the server's position, and 4,000 seeded broken records with
+  the server import's verdicts (unit 7.3): the two SGF readers must agree on each.
 - `test/engine.test.mjs`: the settings above, SGF glue, refusal reasons, and goban's own handicap
   table against R-HCP-4.
 

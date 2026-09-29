@@ -141,6 +141,13 @@ names, `tt` and `[]` passes); legality stays in `GoGame`. It gets a round-trip t
 bounded nesting, the 200 KB limit), since import takes untrusted text. The `sgf` skill's "don't
 write a parser" line now names this reader as the one exception.
 
+_Amended 2026-09-29 (units 7.2–7.3, Claude under the owner's delegation):_ both readers refuse a
+property name with no capital letters rather than read it as a legacy name; both read by one
+grammar (first game only, ASCII names with values, at most 1,000 nested variations) and the
+server replays every variation as the analysis board does, so a stored import always opens
+there; the cross-check is a seeded two-reader differential (4,000 records per run) plus the
+shared `records.json`, instead of a goban-engine corpus.
+
 ### 4. Correspondence keeps lila's machinery; forecasts go
 - **Days per move:** lila's choices (1, 2, 3, 5, 7, 10, 14) in the setup and challenge forms; the
   lobby's two tiles (1 and 3 days) stay as ADR 0022 set them.

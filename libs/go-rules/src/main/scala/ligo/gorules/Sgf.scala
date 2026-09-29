@@ -7,8 +7,8 @@ package ligo.gorules
   * strategygames has its own writer, but it writes handicap stones as moves rather than setup stones and
   * works out each move's colour from its index, which is wrong for a custom starting position; so this one
   * writes `AB`/`AW` and an explicit colour per move. A resumption leaves no mark: play just goes on, and the
-  * natural turn order (R-SP-6) keeps the colours alternating. Reading SGF back is goban-engine's job (unit
-  * 1.8); we don't write a parser (.claude/skills/sgf).
+  * natural turn order (R-SP-6) keeps the colours alternating. [[SgfImport]] reads a record back (unit 7.3,
+  * ADR 0023 §3); a resumed game's record doesn't import, since its moves follow two passes.
   */
 object Sgf:
 
