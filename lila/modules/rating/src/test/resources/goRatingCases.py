@@ -9,6 +9,9 @@
 #   (cd util && curl -sO $base/analysis/util/RatingMath.py && curl -sO $base/analysis/util/CLI.py)
 #   touch util/__init__.py
 #   python3 path/to/goRatingCases.py /tmp/gor > path/to/goRatingCases.json
+#   (cd lila && node_modules/.bin/oxfmt modules/rating/src/test/resources/goRatingCases.json)
+#
+# The last step is the ui CI job's formatter (oxfmt formats JSON under lila/).
 #
 # The kyu/dan labels and LiGo's clamping to 25k-9d are ADR 0021's rule, written
 # here independently of the Scala code.

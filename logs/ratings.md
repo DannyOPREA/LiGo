@@ -39,6 +39,8 @@
   (ADR 0021 §2) rather than ADR 0013's 0.06 for new players.
 - Lesson: verify.sh's lila tests gate runs sbt `testQuick`, which prints "Total 0" when the tests'
   inputs already compiled; run `testOnly` for the proof and let CI run the clean build.
+- CI: the `ui` job's `oxfmt --check` also formats JSON under lila/, so the generated table failed it
+  once; it is now run through oxfmt (step in the generator). verify.sh's JSON gate only parses.
 - Follow-ups: 5.3 calls `rateGame` from `PerfsUpdater` and logs its failures; the verify gate's
   testQuick behaviour is a tooling follow-up.
 
