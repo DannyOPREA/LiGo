@@ -8,6 +8,9 @@ export declare const MAX_SGF_LENGTH: number;
 /** The most nodes (moves and notes) a record may have. */
 export declare const MAX_SGF_NODES: number;
 
+/** The deepest nesting of variations either reader accepts. */
+export declare const MAX_SGF_DEPTH: number;
+
 /** Why a record can't be read; `move` is the move number when a move is the cause. */
 export declare class SgfError extends Error {
   readonly move: number | undefined;

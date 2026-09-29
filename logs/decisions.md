@@ -5,6 +5,7 @@ area logs.
 
 | Date | Question | Answer | Record |
 |---|---|---|---|
+| 2026-09-29 | 7.3 review: should the server import check only the main line, or every variation as the analysis board does? | Every variation, by the same grammar and tree rules as the board, so a stored import always opens there; first game only, nesting ≤ 1,000, a dead setup chain refused by both (Claude, under the owner's 2026-09-28 delegation) | logs/rules-engine.md, ADR 0023 §3 amendment |
 | 2026-09-29 | 7.3: how does the server's SGF import treat text around the record, handicap stones and `RE`? | Text before the first `(;` is skipped by both readers; `HA` + `AB` is a handicap game only on the exact fixed points with White to move, otherwise a custom start; `RE` is kept as written, never checked (Claude, under the owner's 2026-09-28 delegation) | logs/rules-engine.md |
 | 2026-09-29 | 7.2: how is @sabaki/sgf kept out of Node-only code in the browser, and what does the reader do with odd nodes? | A one-field pnpm patch (`browser`: fs, iconv-lite, jschardet off) plus `ignoredOptionalDependencies` for the charset detectors; a node without a move gives its notes to the move before; the same move twice from one position is one node (Claude, under the owner's 2026-09-28 delegation) | logs/rules-engine.md |
 | 2026-09-29 | 4.6 follow-up: is the KataGo network licence (katagotraining.org) acceptable? | Yes: the owner pasted it; "KataGo Neural Network License" is MIT-style (keep the notice, no warranty), compatible with AGPL use; networks are downloaded, not committed | logs/scoring.md |

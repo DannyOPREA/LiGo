@@ -60,7 +60,11 @@ class SgfReaderTest extends munit.FunSuite:
       val text = (c \ "sgf").as[String]
       val refused = (c \ "refused").asOpt[JsObject].orElse((c \ "importRefused").asOpt[JsObject])
       refused match
-        case Some(r) => assertEquals(refusal(text).move, (r \ "move").asOpt[Int], id)
+        case Some(r) =>
+          val e = refusal(text)
+          assertEquals(e.move, (r \ "move").asOpt[Int], id)
+          // Refused by both readers, or by the import alone while the analysis board opens it.
+          assertEquals(e.importOnly, (c \ "importRefused").isDefined, s"$id: ${e.text}")
         case None =>
           val game = imported(text).game
           val moves = game.actions.collect:
@@ -116,7 +120,7 @@ class SgfReaderTest extends munit.FunSuite:
 
   test("the parser keeps variations, repeated properties and values in order"):
     val root =
-      SgfReader.parse("(;SZ[9]AB[aa]AB[bb][cc];B[ee](;W[dd])(;W[cc]C[x]))").fold(e => fail(e.text), _.head)
+      SgfReader.parse("(;SZ[9]AB[aa]AB[bb][cc];B[ee](;W[dd])(;W[cc]C[x]))").fold(e => fail(e.text), identity)
     assertEquals(root.props("AB"), List("aa", "bb", "cc"))
     val b = root.children.head
     assertEquals(b.children.map(_.one("W")), List(Some("dd"), Some("cc")))
@@ -124,7 +128,7 @@ class SgfReaderTest extends munit.FunSuite:
 
   test("values: escapes, soft line breaks and carriage returns"):
     val root =
-      SgfReader.parse("(;C[a\\]b\\\\c\\:d]GC[one\\\r\ntwo\r\nthree])").fold(e => fail(e.text), _.head)
+      SgfReader.parse("(;C[a\\]b\\\\c\\:d]GC[one\\\r\ntwo\r\nthree])").fold(e => fail(e.text), identity)
     assertEquals(root.one("C"), Some("a]b\\c:d"))
     assertEquals(root.one("GC"), Some("onetwo\nthree"))
 
@@ -132,19 +136,26 @@ class SgfReaderTest extends munit.FunSuite:
     val long = "(;SZ[9]C[" + "é" * (SgfReader.maxBytes / 2) + "])"
     assert(long.length < SgfReader.maxBytes)
     assert(SgfReader.parse(long).left.exists(_.message.contains("200 KB")))
+    val most = "(;SZ[9]" + ";C[x]" * (SgfReader.maxNodes - 1) + ")"
+    assert(SgfReader.parse(most).isRight)
     val many = "(;SZ[9]" + ";C[x]" * SgfReader.maxNodes + ")"
     assert(SgfReader.parse(many).left.exists(_.message.contains("10000 nodes")))
-    val longGame = "(;SZ[19]" + (";B[];W[]" * 501) + ")"
-    assertEquals(refusal(longGame).move, Some(3)) // two passes end it long before 1,000
+    // Passes only: the second resumption without a stone can't be replayed (R-SP-9), though the analysis
+    // board opens it.
+    val passes = refusal("(;SZ[19]" + (";B[];W[]" * 501) + ")")
+    assertEquals((passes.move, passes.importOnly), (Some(5), true))
     // The cap counts actions, passes included; lila's is 1,000 (ADR 0020).
     assertEquals(SgfImport.maxActions, 1000)
     val game = "(;SZ[9];B[aa];W[];B[bb];W[cc];B[])"
     assertEquals(SgfImport(game, actionCap = 4).left.map(_.move), Left(Some(5)))
     assertEquals(SgfImport(game, actionCap = 5).map(_.game.actions.size), Right(5))
 
-  test("deep variations and long main lines are read without recursion"):
-    val nested = "(;SZ[19]" + "(;C[x]" * 5000 + ")" * 5000 + ")"
-    assert(SgfReader.parse(nested).isRight)
+  test("deep variations and long main lines are read without recursion; nesting stops at 1,000"):
+    def nested(depth: Int) = "(;SZ[19]" + "(;C[x]" * (depth - 1) + ")" * depth
+    assert(SgfReader.parse(nested(SgfReader.maxDepth)).isRight)
+    assert(
+      SgfReader.parse(nested(SgfReader.maxDepth + 1)).left.exists(_.message.contains("nested too deeply"))
+    )
     val deep = "(;SZ[19]" + ";C[x]" * 9000 + ")"
     assert(SgfReader.parse(deep).isRight)
 
@@ -187,3 +198,92 @@ class SgfReaderTest extends munit.FunSuite:
         assertEquals(back.phase, game.phase, f.id)
         checked += 1
     assert(checked >= 150, s"only $checked games")
+
+// The two-reader differential (ADR 0023 §3): seeded broken and odd records, each with the server's verdict,
+// in target/parity/sgf-import.json. libs/board's parity.test.mjs reads each one with `readTree` and fails
+// where the readers disagree: every record the server stores opens on the analysis board with the same
+// main line, and every record refused for anything but an import-only reason is refused there too, at the
+// same move.
+class SgfDifferentialExportTest extends munit.FunSuite:
+
+  override val munitTimeout = scala.concurrent.duration.Duration(5, "min")
+
+  private val out = Paths.get("target", "parity", "sgf-import.json").toAbsolutePath
+
+  private val pieces = Vector(
+    "(",
+    ")",
+    ";",
+    "[",
+    "]",
+    "\\",
+    "B[ee]",
+    "W[dd]",
+    "C[x]",
+    "AB[aa]",
+    "AE[ee]",
+    "B[]",
+    "W[tt]",
+    ";B[ee]",
+    ";W[cc]",
+    "(;W[cc])",
+    "(;B[gg])",
+    "()",
+    " ",
+    "\n",
+    "\r",
+    "é",
+    "\u00a0",
+    "\u001c",
+    "PL[W]",
+    "HA[2]",
+    "KM[3.75]",
+    "RU[Chinese]",
+    "SZ[13]",
+    "SZ[19]",
+    "b",
+    "TE",
+    "AddBlack[cc]",
+    ":",
+    "tt"
+  )
+
+  test("writes seeded records with the server's verdicts for libs/board's differential"):
+    val sgfDir = Paths.get("..", "conformance", "sgf").toAbsolutePath.normalize
+    val records = (Json.parse(Files.readString(sgfDir.resolve("records.json"))) \ "cases")
+      .as[List[JsObject]]
+      .map(c => (c \ "sgf").as[String])
+    val written = for
+      f <- Fixtures.forServer.take(40)
+      g <- GoGame.start(Fixtures.setupOf(f, Ruleset.Japanese)).toOption
+    yield Sgf.write(f.moves.foldLeft(g)((g, t) => Fixtures.applyToken(g, t).getOrElse(g)))
+    val seeds = (records ++ written).toVector
+    val random = new Random(2026)
+    val cases = (seeds ++ Vector.fill(4000):
+      val text = new StringBuilder(seeds(random.nextInt(seeds.size)))
+      for _ <- 0 to random.nextInt(4) do
+        val at = random.nextInt(text.length + 1)
+        random.nextInt(3) match
+          case 0 => text.insert(at, pieces(random.nextInt(pieces.size)))
+          case 1 if at < text.length => text.deleteCharAt(at)
+          case _ => text.delete(at, (at + random.nextInt(8)).min(text.length))
+      text.result()
+    ).map: text =>
+      SgfImport(text) match
+        case Right(i) =>
+          Json.obj(
+            "sgf" -> text,
+            "stored" -> true,
+            "moves" -> i.game.actions.collect:
+              case Action.Place(p) => p.sgf
+              case Action.Pass => ".."
+            ,
+            "toMove" -> i.game.toMove.toString.toLowerCase
+          )
+        case Left(e) =>
+          Json.obj("sgf" -> text, "stored" -> false, "move" -> e.move, "importOnly" -> e.importOnly)
+    Files.createDirectories(out.getParent)
+    Files.writeString(out, Json.stringify(Json.obj("format" -> 1, "cases" -> cases)))
+    val stored = cases.count(c => (c \ "stored").as[Boolean])
+    // Enough of each kind for the differential to mean something.
+    assert(stored >= 300 && cases.size - stored >= 1000, s"$stored of ${cases.size} stored")

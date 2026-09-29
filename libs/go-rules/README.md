@@ -25,17 +25,22 @@ game0.flatMap(_.play(Point.fromSgf("pd").get)) // Either[Refusal, GoGame]
   `actions`.
 - `Sgf.write(game, info)`: the game as an SGF record; `SgfInfo` optionally adds players, ranks,
   date, place, time settings (`TM`/`OT`) and the result (`RE`).
-- `SgfImport(text)`: an SGF record's first game as a stored import (unit 7.3, ADR 0023 §2, §3):
-  the main line replayed through `GoGame` (9×9 and 19×19, at most 1,000 actions, setup stones
-  only at the root, every move legal and by the colour to move, nothing after two passes), the
-  root's `SgfSettings` (the table in `libs/conformance/sgf/root.json`, shared with `libs/board`),
-  and `SgfGameInfo` (players, ranks, date, place, event as text; `RE` as an `SgfResult`). `HA` with
-  `AB` on the fixed points becomes a handicap game; other root stones a custom start. Or an
-  `SgfError` naming why, with the move number when a move is the cause.
-- `SgfReader.parse(text)` / `decode(bytes)`: the FF[4] structure only (nodes, properties,
-  variations, escapes, the `CA` charset), no Go rules; refuses more than 200 KB or 10,000 nodes and
-  property names with no capitals, never throws, and has no recursion (deep files can't overflow
-  the stack).
+- `SgfImport(text)`: an SGF record's first game as a stored import (unit 7.3, ADR 0023 §2, §3).
+  Every variation is replayed through `GoGame` the way `libs/board`'s `readTree` builds the
+  analysis tree (every move legal and by the colour to move, setup stones only at the root, a node
+  without a move replaced by its children, the same move twice one node), so the server stores
+  only records the analysis board opens; then the tree's main line must be storable (9×9 or 19×19,
+  at most 1,000 actions, nothing after two passes). It returns the game, the root's `SgfSettings`
+  (the table in `libs/conformance/sgf/root.json`, shared with `libs/board`) and `SgfGameInfo`
+  (players, ranks, date, place, event as text; `RE` as an `SgfResult`). `HA` with `AB` on the
+  fixed points becomes a handicap game; other root stones a custom start. Or an `SgfError` naming
+  why, with the move number when a move is the cause and `importOnly` when the analysis board
+  still opens the record.
+- `SgfReader.parse(text)` / `decode(bytes)`: the first game's FF[4] structure (nodes, properties,
+  variations, escapes, the `CA` charset), no Go rules, by the grammar `libs/board` shares: text
+  before the first `(;` and after its game is ignored; names of ASCII letters with a capital, each
+  with a value; no node after a variation; at most 200 KB, 10,000 nodes and 1,000 nested
+  variations. It never throws and has no recursion.
 - `chainAt(point)`: the whole chain a stone belongs to. `closePlay`: ends play at lila's move cap
   and opens the scoring phase for good (resume is then refused as `play-closed`, ADR 0020 §3).
 - `Scoring.open(game, phase, deadStones, request)`, then `toggle(point, seen)`, `counted(request, dead)`,
@@ -80,6 +85,9 @@ goscorer in `services/scoring` (R-SCORE-3), never here.
   `records.json`) that `libs/board`'s reader replays too, handicap vs custom starts, game info and
   results, limits, deep nesting, 3,000 seeded broken records (never an exception), charsets, and
   every storable server fixture game through `Sgf.write` and back.
+- `SgfDifferentialExportTest`: 4,000 seeded broken and odd records with the import's verdicts in
+  `target/parity/sgf-import.json`, which `libs/board/test/parity.test.mjs` reads with `readTree`:
+  the two readers must agree on every one.
 - `ScoringTest`: chains, proposals, toggles, stale and pending counts, acceptance, closing play at
   the cap, results.
 - `ByoyomiClockTest`: main time, keeping and using up periods, out of time, stopping for the

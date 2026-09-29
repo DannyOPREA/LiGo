@@ -111,3 +111,37 @@ if (!existsSync(file)) {
     });
   }
 }
+
+// The two SGF readers (unit 7.3, ADR 0023 §3): seeded records with the server import's verdicts, from
+// libs/go-rules' SgfDifferentialExportTest. A record the server stores must open here with the same main
+// line; a record the server refuses for anything but an import-only reason (13×13, too long, resumed)
+// must be refused here, at the same move; an import-only refusal must still open here.
+const sgfFile = fileURLToPath(new URL("../../go-rules/target/parity/sgf-import.json", import.meta.url));
+
+test("the two SGF readers agree on the server's seeded records", () => {
+  assert.ok(existsSync(sgfFile), `${sgfFile} not found: run \`dev/ligo test rules\` first`);
+  const { cases } = JSON.parse(readFileSync(sgfFile, "utf8"));
+  assert.ok(cases.length >= 4000, `only ${cases.length} records`);
+  for (const c of cases) {
+    let read;
+    let error;
+    try {
+      read = readTree(c.sgf);
+    } catch (e) {
+      error = e;
+    }
+    const label = JSON.stringify(c.sgf);
+    if (c.stored || c.importOnly) {
+      assert.equal(error, undefined, `${label}: the server ${c.stored ? "stores" : "only won't import"} it, the board refuses: ${error?.message}`);
+    } else {
+      assert.ok(error, `${label}: the server refuses it (move ${c.move}), the board opens it`);
+      assert.equal(error.move ?? null, c.move ?? null, `${label}: refused at another move (${error.message})`);
+    }
+    if (c.stored) {
+      const line = [];
+      let n = read;
+      while (n.children.length) line.push((n = n.children[0]).move);
+      assert.deepEqual({ moves: line, toMove: n.toMove }, { moves: c.moves, toMove: c.toMove }, label);
+    }
+  }
+});

@@ -14,3 +14,15 @@ Found in unit 7.2 review (2026-09-29):
 
 **Why:** these were the non-obvious gaps; the unit's own tests all passed.
 **How to apply:** rerun these probes on 7.3 (Scala reader) and 7.4 (analysis page) reviews. See [[review-patterns-general]].
+
+Found in unit 7.3 review (server reader, 2026-09-29), all via a two-reader probe (node script over
+libs/board/src/sgf.mjs + a temporary munit test reading the same JSON list; fast, do it first):
+- Scala imports only the main line but the browser's readTree validates every variation: an illegal
+  variation is stored by the server yet won't open on the board. Probe `(;SZ[9];B[ee](;W[dd])(;W[ee]))`.
+- readTree merges moveless nodes and twin moves, so its main line differs from "first child":
+  `(;SZ[9](;C[n])(;B[ee]))`, `(;SZ[9](;B[ee])(;B[ee];W[dd]))`.
+- Collection edges differ: text after the record (JS refuses lowercase words anywhere), `()` before or
+  after, `((;`, `(B[ee])` without `;`, a value before any name.
+- Char classes: Scala isLetter/isWhitespace/isDigit are Unicode, JS regexes ASCII (`Bé[ee]`, U+001C,
+  U+00A0, `HA[２]`); JS Number vs Scala BigDecimal for komi precision.
+- Value-less properties (`;B;`, `TE`) make readTree throw a TypeError, not SgfError.

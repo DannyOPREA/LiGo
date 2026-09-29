@@ -37,11 +37,15 @@
     { "id": "handicap-stones-first-move-white", "root": { "HA": "4", "AB": ["dd", "dp", "pd", "pp"] }, "firstMove": "white", "expect": { "size": 19, "ruleset": "japanese", "komi": 0, "handicap": 4, "black": ["dd", "dp", "pd", "pp"], "white": [], "toMove": "white" } },
     { "id": "handicap-too-many", "root": { "HA": "10" }, "refused": "handicap" },
     { "id": "handicap-not-a-number", "root": { "HA": "two" }, "refused": "handicap" },
+    { "id": "handicap-full-width-digit", "root": { "HA": "２" }, "refused": "handicap" },
+    { "id": "komi-long-decimal", "root": { "KM": "6.50000000000000000001" }, "expect": { "size": 19, "ruleset": "japanese", "komi": 6.5, "handicap": 0, "black": [], "white": [], "toMove": "black" } },
     { "id": "pl-white", "root": { "PL": "W" }, "expect": { "size": 19, "ruleset": "japanese", "komi": 0, "handicap": 0, "black": [], "white": [], "toMove": "white" } },
     { "id": "pl-wins-over-first-move", "root": { "PL": "B", "AB": ["dd"] }, "firstMove": "white", "expect": { "size": 19, "ruleset": "japanese", "komi": 0, "handicap": 0, "black": ["dd"], "white": [], "toMove": "black" } },
     { "id": "first-move-white", "root": {}, "firstMove": "white", "expect": { "size": 19, "ruleset": "japanese", "komi": 0, "handicap": 0, "black": [], "white": [], "toMove": "white" } },
     { "id": "setup-both-colours", "root": { "SZ": "9", "AB": ["cc", "gg"], "AW": ["cg", "gc"] }, "expect": { "size": 9, "ruleset": "japanese", "komi": 0, "handicap": 0, "black": ["cc", "gg"], "white": ["cg", "gc"], "toMove": "black" } },
     { "id": "setup-off-board", "root": { "SZ": "9", "AB": ["jj"] }, "refused": "setup" },
-    { "id": "setup-same-point-twice", "root": { "SZ": "9", "AB": ["cc"], "AW": ["cc"] }, "refused": "setup" }
+    { "id": "setup-same-point-twice", "root": { "SZ": "9", "AB": ["cc"], "AW": ["cc"] }, "refused": "setup" },
+    { "id": "setup-without-liberties", "root": { "SZ": "9", "AB": ["aa"], "AW": ["ab", "ba"] }, "refused": "setup" },
+    { "id": "setup-chain-with-a-liberty", "root": { "SZ": "9", "AB": ["aa", "ab"], "AW": ["ba", "bb"] }, "expect": { "size": 9, "ruleset": "japanese", "komi": 0, "handicap": 0, "black": ["aa", "ab"], "white": ["ba", "bb"], "toMove": "black" } }
   ]
 }

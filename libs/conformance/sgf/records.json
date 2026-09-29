@@ -29,6 +29,26 @@
     {"id": "unclosed-value", "sgf": "(;SZ[9];B[ee];C[no end", "refused": {}},
     {"id": "not-sgf", "sgf": "hello", "refused": {}},
     {"id": "resumed-after-two-passes", "sgf": "(;SZ[9];B[ee];W[];B[];W[dd])", "expect": {"moves": ["ee", "..", "..", "dd"], "toMove": "black"}, "importRefused": {"move": 4}},
-    {"id": "thirteen", "sgf": "(;SZ[13];B[gg])", "expect": {"moves": ["gg"], "toMove": "white"}, "importRefused": {}}
+    {"id": "thirteen", "sgf": "(;SZ[13];B[gg])", "expect": {"moves": ["gg"], "toMove": "white"}, "importRefused": {}},
+    {"id": "bad-side-variation-occupied", "sgf": "(;SZ[9];B[ee](;W[dd])(;W[ee]))", "refused": {"move": 2}},
+    {"id": "bad-side-variation-setup", "sgf": "(;SZ[9];B[ee](;W[dd])(;AB[aa]))", "refused": {"move": 2}},
+    {"id": "bad-side-variation-colour", "sgf": "(;SZ[9];B[ee](;W[dd])(;B[cc]))", "refused": {"move": 2}},
+    {"id": "comment-only-first-variation", "sgf": "(;SZ[9](;C[note])(;B[ee]))", "expect": {"moves": ["ee"], "toMove": "white"}},
+    {"id": "comment-node-keeps-file-order", "sgf": "(;SZ[9](;C[note];B[ee])(;B[dd]))", "expect": {"moves": ["ee"], "toMove": "white"}},
+    {"id": "same-move-twice-is-one-node", "sgf": "(;SZ[9](;B[ee])(;B[ee];W[dd]))", "expect": {"moves": ["ee", "dd"], "toMove": "black"}},
+    {"id": "text-after-record", "sgf": "(;SZ[9];B[ee])\nthanks for the game", "expect": {"moves": ["ee"], "toMove": "white"}},
+    {"id": "second-game-ignored", "sgf": "(;SZ[9];B[ee])(;SZ[19]FF;B[pd])", "expect": {"moves": ["ee"], "toMove": "white"}},
+    {"id": "parenthesis-in-text-before", "sgf": "Sent (from my phone)\n(;SZ[9];B[ee])", "expect": {"moves": ["ee"], "toMove": "white"}},
+    {"id": "empty-parentheses-before", "sgf": "()(;SZ[9];B[ee])", "expect": {"moves": ["ee"], "toMove": "white"}},
+    {"id": "non-ascii-letter-in-name", "sgf": "(;SZ[9];Bé[ee])", "refused": {}},
+    {"id": "control-character-between-nodes", "sgf": "(;SZ[9]\u001c;B[ee])", "refused": {}},
+    {"id": "no-break-space-between-nodes", "sgf": "(;SZ[9] ;B[ee])", "refused": {}},
+    {"id": "variation-without-semicolon", "sgf": "(;SZ[9](B[ee]))", "refused": {}},
+    {"id": "value-without-name", "sgf": "(;[x]SZ[9];B[ee])", "refused": {}},
+    {"id": "name-without-value", "sgf": "(;SZ[9]FF;B[ee])", "refused": {}},
+    {"id": "move-without-value", "sgf": "(;SZ[9];B;W[dd])", "refused": {}},
+    {"id": "resumed-in-a-side-variation", "sgf": "(;SZ[9];B[ee](;W[dd])(;W[];B[];W[cc]))", "expect": {"moves": ["ee", "dd"], "toMove": "black"}},
+    {"id": "carriage-returns-in-values", "sgf": "(;SZ[9]C[a\\\r\r\nb];B[ee])", "expect": {"moves": ["ee"], "toMove": "white"}},
+    {"id": "node-after-a-variation", "sgf": "(;SZ[9];B[ee](;W[dd]);W[cc])", "refused": {}}
   ]
 }

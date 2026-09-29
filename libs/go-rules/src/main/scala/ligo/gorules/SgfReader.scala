@@ -10,15 +10,17 @@ import scala.collection.mutable
 final case class SgfNode(props: ListMap[String, List[String]], children: List[SgfNode]):
   def one(id: String): Option[String] = props.get(id).flatMap(_.headOption)
 
-/** Why an SGF record can't be read or imported. `move` is the move number when a move is the cause. */
-final case class SgfError(message: String, move: Option[Int] = None):
+/** Why an SGF record can't be read or imported. `move` is the move number when a move is the cause;
+  * `importOnly` means the analysis board still opens the record (a 13×13 game, a resumed one, a long one).
+  */
+final case class SgfError(message: String, move: Option[Int] = None, importOnly: Boolean = false):
   def text: String = move.fold(message)(n => s"move $n: $message")
 
 /** Reads SGF (FF[4]) text into [[SgfNode]]s: only the structure, no Go rules (ADR 0023 §3, memo
-  * docs/build-vs-buy/server-sgf-reader.md). No maintained JVM reader fits, so this is LiGo's own; it reads a
-  * file the same way `libs/board`'s reader (@sabaki/sgf, unit 7.2) does, and refuses what that one refuses:
-  * more than [[SgfReader.maxBytes]] of text or [[SgfReader.maxNodes]] nodes, a property name with no capital
-  * letters. Lower-case letters inside a name (FF[3]'s `AddBlack`) are dropped, as the SGF spec says.
+  * docs/build-vs-buy/server-sgf-reader.md). No maintained JVM reader fits, so this is LiGo's own. It reads by
+  * the same grammar as `libs/board`'s reader (`recordOf` in `src/sgf.mjs`) and refuses what that one refuses:
+  * more than [[SgfReader.maxBytes]] of text, [[SgfReader.maxNodes]] nodes or [[SgfReader.maxDepth]] nested
+  * variations, a property name of anything but ASCII letters or with no capital, a property with no value.
   */
 object SgfReader:
 
@@ -28,14 +30,21 @@ object SgfReader:
   /** The most nodes, moves and notes together; libs/board's `MAX_SGF_NODES`. */
   val maxNodes: Int = 10000
 
-  private val recordStart = """\(\s*;""".r
+  /** The deepest nesting of variations; libs/board's `MAX_SGF_DEPTH`. */
+  val maxDepth: Int = 1000
 
-  /** The games of a collection, each a root node. */
-  def parse(text: String): Either[SgfError, List[SgfNode]] =
+  private val recordStart = """\([ \t\n\r\f\x0B]*;""".r
+
+  /** The first game of a collection, as its root node: from the first `(;` (text before it is skipped) to its
+    * closing `)` (text after it is ignored), checked against the grammar libs/board's `recordOf` shares.
+    */
+  def parse(text: String): Either[SgfError, SgfNode] =
     if text.length > maxBytes || text.getBytes(StandardCharsets.UTF_8).length > maxBytes then
       Left(SgfError(s"the record is longer than ${maxBytes / 1024} KB"))
-    else if recordStart.findFirstIn(text).isEmpty then Left(SgfError("not an SGF record"))
-    else Parser(text).collection()
+    else
+      recordStart.findFirstMatchIn(text) match
+        case None => Left(SgfError("not an SGF record"))
+        case Some(m) => Parser(text, m.start).gameTree()
 
   /** An SGF file's text: UTF-8 unless its `CA` names another charset the JVM knows; an unknown or invalid
     * name falls back to UTF-8 rather than failing. A byte-order mark is dropped.
@@ -68,50 +77,46 @@ object SgfReader:
           b.children.foreach(c => stack.push((c, false)))
       done(this)
 
-  private final class Parser(s: String):
-    private var i = 0
-    private var nodes = 0
+  // SGF's whitespace between tokens: ASCII only, as libs/board's `recordOf`.
+  private def isSpace(c: Char) = c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\u000b'
+  private def isLetter(c: Char) = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
+
+  private final class Parser(s: String, start: Int):
+    private var i = start
 
     private def fail(what: String): Left[SgfError, Nothing] =
       Left(SgfError(s"not a readable SGF record ($what at character ${i + 1})"))
 
-    private def skipSpace(): Unit = while i < s.length && s(i).isWhitespace do i += 1
+    private def skipSpace(): Unit = while i < s.length && isSpace(s(i)) do i += 1
 
-    def collection(): Either[SgfError, List[SgfNode]] =
-      val games = mutable.ListBuffer.empty[SgfNode]
-      var error: Option[SgfError] = None
-      // Text around the games (a mail header, a note) is skipped, as SGF editors do.
-      def skipToGame(): Unit = while i < s.length && s(i) != '(' do i += 1
-      skipToGame()
-      while error.isEmpty && i < s.length do
-        gameTree().fold(e => error = Some(e), games += _)
-        skipToGame()
-      error
-        .toLeft(games.toList)
-        .flatMap(g => if g.isEmpty then Left(SgfError("not an SGF record")) else Right(g))
-
-    // One game tree from the '(' at `i`. Each open variation keeps the node it branches from; a node's
+    // The game tree from the '(' at `i`. Each open variation keeps the node it branches from; a node's
     // first variation continues its sequence.
-    private def gameTree(): Either[SgfError, SgfNode] =
+    def gameTree(): Either[SgfError, SgfNode] =
       var root: Option[Building] = None
       var current: Option[Building] = None
+      var nodes = 0
       val branchPoints = mutable.Stack.empty[Option[Building]]
+      // Per depth: a variation has closed there, so only more variations or the end may follow.
+      val afterVariation = new Array[Boolean](maxDepth + 1)
       while true do
         skipSpace()
         if i >= s.length then return fail("the record ends before its variations close")
         s(i) match
           case '(' =>
+            if branchPoints.size >= maxDepth then
+              return Left(SgfError("the record's variations are nested too deeply"))
             i += 1
             branchPoints.push(current)
+            afterVariation(branchPoints.size) = false
             skipSpace()
-            if i < s.length && s(i) == ')' then () // an empty variation
-            else if i >= s.length || s(i) != ';' then return fail("expected ';'")
+            if i >= s.length || (s(i) != ';' && s(i) != ')') then return fail("expected ';'")
           case ')' =>
             i += 1
-            if branchPoints.isEmpty then return fail("unexpected ')'")
             current = branchPoints.pop()
             if branchPoints.isEmpty then return root.map(_.result).toRight(SgfError("not an SGF record"))
+            afterVariation(branchPoints.size) = true
           case ';' =>
+            if afterVariation(branchPoints.size) then return fail("a node after a variation")
             i += 1
             nodes += 1
             if nodes > maxNodes then return Left(SgfError(s"the record has more than $maxNodes nodes"))
@@ -128,11 +133,12 @@ object SgfReader:
 
     private def properties(node: Building): Either[SgfError, Unit] =
       skipSpace()
-      while i < s.length && s(i).isLetter do
-        val start = i
-        while i < s.length && s(i).isLetter do i += 1
-        val name = s.substring(start, i)
-        val id = name.filter(_.isUpper)
+      while i < s.length && isLetter(s(i)) do
+        val from = i
+        while i < s.length && isLetter(s(i)) do i += 1
+        val name = s.substring(from, i)
+        // FF[3]'s long names (`AddBlack`) keep their capitals, as the SGF spec says.
+        val id = name.filter(c => c >= 'A' && c <= 'Z')
         if id.isEmpty then
           return Left(SgfError(s"property $name has no capital letters: not an SGF property name"))
         skipSpace()
@@ -145,26 +151,23 @@ object SgfReader:
           skipSpace()
       Right(())
 
-    // A value from its '[': `\` escapes the next character; `\` before a line break removes both (a soft
-    // break); carriage returns are dropped.
+    // A value from its '[': carriage returns are dropped, then `\` escapes the next character and `\`
+    // before a line break removes both (a soft break), as @sabaki/sgf reads it.
     private def value(): Either[SgfError, String] =
       i += 1
-      val out = new StringBuilder
-      while i < s.length && s(i) != ']' do
-        s(i) match
-          case '\\' if i + 1 < s.length =>
-            val next = s(i + 1)
-            if next == '\n' || next == '\r' then
-              i += 2
-              if next == '\r' && i < s.length && s(i) == '\n' then i += 1
-            else
-              out += next
-              i += 2
-          case '\r' => i += 1
-          case c =>
-            out += c
-            i += 1
+      val from = i
+      while i < s.length && s(i) != ']' do i += (if s(i) == '\\' then 2 else 1)
       if i >= s.length then fail("the record ends inside a value")
       else
+        val raw = s.substring(from, i).replace("\r", "")
         i += 1
+        val out = new StringBuilder
+        var j = 0
+        while j < raw.length do
+          if raw(j) == '\\' && j + 1 < raw.length then
+            if raw(j + 1) != '\n' then out += raw(j + 1)
+            j += 2
+          else
+            out += raw(j)
+            j += 1
         Right(out.result())

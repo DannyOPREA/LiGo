@@ -10,8 +10,10 @@ what it adds: [README.md](README.md). The rules it implements: `docs/rules/spec.
 - lila code uses only `ligo.gorules.*`, never `strategygames.*`.
 - **SGF in is `SgfReader` + `SgfImport`** (unit 7.3, ADR 0023 §3), the one SGF parser LiGo writes.
   It must read a file as `libs/board/src/sgf.mjs` does: a change to what either accepts changes
-  `libs/conformance/sgf/root.json` or `records.json`, which both replay. It takes untrusted text:
-  no recursion, no exceptions, the 200 KB and 10,000-node limits.
+  `libs/conformance/sgf/root.json` or `records.json`, which both replay, and the seeded
+  differential (`SgfDifferentialExportTest` + `libs/board/test/parity.test.mjs`) must stay green.
+  It takes untrusted text: no recursion, no exceptions, the 200 KB, 10,000-node and 1,000-depth
+  limits.
 - Truth is the fixtures in `libs/conformance/fixtures/` (only go-rules-expert edits them). Never
   change a fixture to make the adapter pass; the server never has a known gap.
 - Bumping strategygames: change the version in `build.sbt` and the SHA-256 in `check-pin.sh` and

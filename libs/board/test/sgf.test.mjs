@@ -9,7 +9,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 import { createEngine, play, stateOf } from "../src/engine.mjs";
-import { MAX_SGF_LENGTH, SgfError, decodeSgf, playFrom, readTree, rootSettings, writeTree } from "../src/sgf.mjs";
+import { MAX_SGF_DEPTH, MAX_SGF_LENGTH, SgfError, decodeSgf, playFrom, readTree, rootSettings, writeTree } from "../src/sgf.mjs";
 
 const table = JSON.parse(readFileSync(new URL("../../conformance/sgf/root.json", import.meta.url), "utf8"));
 
@@ -152,6 +152,10 @@ test("records that can't be read are refused with a reason", () => {
   refused("(;SZ[7];B[aa])", /board size/);
   refused("(;GM[3];B[aa])", /not a game of Go/);
   refused("(;SZ[9]" + "(;B[aa]".repeat(20000) + ")".repeat(20000) + ")", /nested too deeply/);
+  // Both readers stop at the same depth (the server's SgfReader.maxDepth).
+  const nested = (depth) => "(;SZ[19]" + "(;C[x]".repeat(depth - 1) + ")".repeat(depth);
+  assert.equal(readTree(nested(MAX_SGF_DEPTH)).ply, 0);
+  refused(nested(MAX_SGF_DEPTH + 1), /nested too deeply/);
   refused("(;SZ[9]C[" + "x".repeat(MAX_SGF_LENGTH) + "])", /longer than 200 KB/);
   // Ko: Black takes at fe (move 9), White may not take back at ee at once (move 10).
   refused("(;SZ[9];B[de];W[ge];B[ed];W[fd];B[ef];W[ff];B[aa];W[ee];B[fe];W[ee])", /^move 10: W\[ee\] is not a legal move/);
@@ -189,10 +193,8 @@ test("the limits hold on the largest records, quickly", () => {
   const fill = (unit) => unit.repeat(Math.floor((MAX_SGF_LENGTH - 20) / unit.length));
   within("(;SZ[9]" + fill(";N[x]") + ")", /more than 10000 nodes/);
   within("(;SZ[19]" + fill("(;B[aa])") + ")", /more than 10000 nodes/);
-  // Setup rectangles: a Set, not a list search.
-  const started = performance.now();
-  readTree("(;SZ[19]AB" + "[aa:ss]".repeat(20000) + ")");
-  assert.ok(performance.now() - started < 3000, "rectangles");
+  // Setup rectangles: a Set, not a list search (a full board has no liberties, so it's refused).
+  within("(;SZ[19]AB" + "[aa:ss]".repeat(20000) + ")", /has no liberties/);
   // The limit counts bytes: 70,000 three-byte characters are over 200 KB.
   within("(;SZ[9]C[" + "囲".repeat(70000) + "])", /longer than 200 KB/);
 });
