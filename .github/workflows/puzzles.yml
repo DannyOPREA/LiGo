@@ -1,0 +1,85 @@
+# tools/puzzles (ADR 0025, unit 8.3): the tsumego generator and pipeline, no build step (Node 24
+# runs its .ts directly). Typechecks, lints, runs its tests (the solver's known answers, the
+# catalogue and wall check, the tsumego frame against KaTrain's, every broken-puzzle case, SGF
+# both ways, the generator, and one real-KataGo second opinion on the CPU test network), then
+# checks every committed puzzle. Runs when tools/puzzles, the code it imports (services/scoring's
+# KataGo client, libs/board's SGF reader), lila's lockfile or dev/katago.sh change.
+name: puzzles
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  puzzles-paths:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      puzzles: ${{ steps.changed.outputs.puzzles }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      # On a pull request the checkout is GitHub's merge commit, whose first parent is the base.
+      - id: changed
+        run: dev/ci/changed.sh "$BASE" >> "$GITHUB_OUTPUT"
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
+
+  puzzles:
+    needs: puzzles-paths
+    if: needs.puzzles-paths.outputs.puzzles == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # The pinned test network only (from KataGo's own MIT repository, ADR 0025 §2).
+      LIGO_KATAGO_TEST_NET_ONLY: '1'
+      LIGO_KATAGO_BACKEND: cpu
+      # CI always installs KataGo below, so a missing one is a setup bug: fail the KataGo test
+      # instead of letting it skip (the same rule as the scoring job).
+      LIGO_REQUIRE_KATAGO: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install KataGo (CPU)
+        run: dev/katago.sh install cpu
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: lila/package.json
+      - name: Setup node and restore pnpm cache
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: tools/puzzles/.node-version
+          cache: pnpm
+          cache-dependency-path: lila/pnpm-lock.yaml
+      # tools/puzzles imports services/scoring's KataGo client and libs/board's SGF reader by
+      # path, so their packages are installed too.
+      - name: Install tools/puzzles' packages
+        working-directory: lila
+        run: pnpm install --frozen-lockfile --filter @ligo/puzzles --filter @ligo/scoring --filter @ligo/board --filter lila
+      - name: tools/puzzles' npm dependencies are AGPL-compatible
+        working-directory: lila
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm licenses list --json --filter @ligo/puzzles | ../dev/ci/meta_checks.py js-licences
+      - name: Format, lint and type-check
+        working-directory: lila
+        run: pnpm --filter @ligo/puzzles run typecheck && pnpm --filter @ligo/puzzles run lint
+      - name: Test
+        working-directory: lila
+        run: |
+          eval "$(../dev/katago.sh env)"
+          export KATAGO_BIN KATAGO_TEST_NET
+          pnpm --filter @ligo/puzzles run test
+      - name: Check the committed puzzles
+        run: node tools/puzzles/src/cli.ts check

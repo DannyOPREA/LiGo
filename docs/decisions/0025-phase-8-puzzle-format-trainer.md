@@ -254,3 +254,30 @@ What lila and goban have today (read for this ADR; paths under `lila/` and goban
 - The generator's quality (varied, sensible puzzles) is the main risk. 8.3's tests pin known
   answers (for example, a straight three in the corner dies if the attacker plays the middle
   point), and 8.4 reviews a sample by eye before the set is committed.
+
+## Amendments
+
+### 2026-09-29, unit 8.3 (as built)
+Building the generator made six points of §2 concrete. Claude's calls under the owner's
+2026-09-28 delegation (logs/decisions.md):
+- **The table key** is the region's points, the number of passes in a row and the side to move. No
+  simple-ko point is needed: a move that captures one stone in a ko shape is cut off as unknown
+  before it is played on, so no kept line has a ko point.
+- **Where a line ends**: after the player's move, the line ends (`correct_answer`) when the
+  opponent can't change the result even by playing two moves in a row. This is the concrete test
+  behind "the solver's best reply for the opponent is to pass".
+- **The budget** of 20 s a position is 10 s for each side to move (a position is solved twice).
+- **The wall check also requires one group**: the defender's stones outside the region must be a
+  single chain. Otherwise "lose any stone" would be the goal, and KataGo rightly disagreed on
+  puzzles where the attacker only captured a detached stone.
+- **Difficulty bands are calibrated on the generated set.** Most generated puzzles are one or two
+  moves deep, so the band edges sit where the measured scores spread them into four bands
+  (`BAND_EDGES` in `tools/puzzles/src/generate.ts`); lila's puzzle Glicko moves each rating as
+  people play.
+- **Validation uses ajv** (MIT, already in lila's lockfile) against `schema/puzzle.schema.json`,
+  and `tools/puzzles` imports `services/scoring`'s KataGo client and `libs/board`'s SGF reader by
+  path rather than as workspace packages (pnpm 12 linked those to the wrong directory).
+
+The feasibility gate passed: with seed 1, 250 of 265 catalogue positions were settled within the
+budget (14 rest on a ko, 1 ran over), in 46 s on the cloud's CPU.
+
