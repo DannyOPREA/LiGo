@@ -17,6 +17,14 @@ export type Color = 'black' | 'white';
 export type Move = string;
 export type Refusal = 'occupied' | 'suicide' | 'superko';
 
+/** A move that counted: who played it and how many stones it took (for sounds and announcements). */
+export interface Played {
+  move: Move;
+  color: Color;
+  /** Stones removed by this move; 0 for a pass. */
+  captured: number;
+}
+
 export interface BoardConfig extends Game {
   /** Moves already played, in order, after the starting stones. */
   moves?: Move[];
@@ -33,6 +41,8 @@ export interface BoardConfig extends Game {
   onMove?: (move: Move) => void;
   /** goban refused the player's move before reporting it (a click on a stone is just ignored). */
   onRefused?: (reason: Refusal) => void;
+  /** A move was played on the board by `play` (the player's or the opponent's); not previews. */
+  onPlayed?: (played: Played) => void;
   /** Something the page may show changed: the position, a preview waiting, whose turn it is. */
   onChange?: () => void;
 }
@@ -119,6 +129,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       toXY(goban.engine, move); // throws on a malformed or off-board move, before anything changes
       goban.dropPreview();
       const before = goban.engine.last_official_move;
+      const { toMove: color, captures } = goban.officialState();
       goban.handTurnOver();
       socket.receive(`game/${GAME_ID}/move`, {
         game_id: GAME_ID,
@@ -126,7 +137,10 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
         move: toGoban(move),
       });
       // goban logs a move it can't place (an occupied point) and carries on: the turn stays.
-      if (goban.engine.last_official_move === before) goban.dropPreview();
+      if (goban.engine.last_official_move === before) return goban.dropPreview();
+      if (destroyed) return;
+      const captured = goban.officialState().captures[color] - captures[color];
+      config.onPlayed?.({ move, color, captured });
     },
     cancel: () => goban.dropPreview(),
     pass: () => {
