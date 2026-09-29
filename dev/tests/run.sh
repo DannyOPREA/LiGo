@@ -96,6 +96,28 @@ check "licences: GPL-2.0-only fails" fails bash -c "echo '{\"GPL-2.0-only\":[{\"
 check "licences: empty input fails" fails bash -c "echo '{}' | '$META' js-licences"
 check "licences: (MIT AND SSPL-1.0) fails" fails bash -c "echo '{\"(MIT AND SSPL-1.0)\":[{\"name\":\"x\"}]}' | '$META' js-licences"
 
+# `up` rebuilds the browser code when a source is newer than the build (a git pull that brought a
+# new page), not only when there is no build. A fake tree, with a space in its path like the owner's.
+ui_tree=$(mktemp -d)
+trap 'rm -rf "$ci_repo" "$ui_tree"' EXIT
+fake="$ui_tree/My LiGo"
+mkdir -p "$fake/dev" "$fake/lila/ui/playground/src" "$fake/lila/ui/node_modules" "$fake/lila/public/compiled" "$fake/libs/board/src"
+cp "$LIGO" "$fake/dev/ligo"
+touch -d '2026-01-01' "$fake/lila/ui/playground/src/view.ts" "$fake/libs/board/src/board.ts"
+ui_state_is() {  # status's later docker step fails in this fake tree, so only its output counts
+  [[ "$(LIGO_MODE=native "$fake/dev/ligo" status 2>/dev/null)" == *"browser build: $1"* ]]
+}
+check "status: no manifest means the browser code isn't built" ui_state_is "not built"
+touch -d '2026-01-02' "$fake/lila/public/compiled/manifest.json"
+check "status: a build newer than every source is up to date" ui_state_is "up to date"
+touch -d '2026-01-03' "$fake/lila/ui/node_modules/x.js"
+check "status: node_modules changes don't make the build stale" ui_state_is "up to date"
+touch -d '2026-01-03' "$fake/libs/board/src/board.ts"
+check "status: a libs/board source newer than the build makes it stale" ui_state_is "out of date"
+touch -d '2026-01-01' "$fake/libs/board/src/board.ts"
+touch -d '2026-01-03' "$fake/lila/ui/playground/src/view.ts"
+check "status: a lila/ui source newer than the build makes it stale" ui_state_is "out of date"
+
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
   check "compose.yml is valid" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.yml --profile utils --profile mongo-express config -q"
   check "compose.native.yml is valid" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.native.yml --profile redis config -q"
