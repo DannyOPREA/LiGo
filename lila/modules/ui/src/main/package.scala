@@ -19,9 +19,3 @@ trait RatingApi:
 case class PageModule(name: String, data: JsValue | SafeJsonStr)
 case class Esm(key: String, init: WithNonce[Frag] = _ => ScalatagsExtensions.emptyFrag)
 type EsmList = List[Option[Esm]]
-
-final class AnalyseEndpoints(
-    val explorer: String,
-    val tablebase: String,
-    val externalEngine: String
-)

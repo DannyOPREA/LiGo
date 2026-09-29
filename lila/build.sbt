@@ -80,19 +80,17 @@ lazy val modules = Seq(
   // level 5
   game, user, puzzle, analyse,
   report, pref, chat, playban, lobby, mailer, oauth, search,
-  // level 6
-  insight, evaluation,
   // level 7
   // everything else is free from deps; do the big ones first
-  tutor, security, plan, round,
-  insight, fishnet, mod, challenge, web,
+  security, plan, round,
+  mod, challenge, web,
   team, forum, streamer, activity, msg, ublog,
   notifyModule, clas, perfStat, timeline,
   setup, video, push,
   // and then the smaller ones
   pool, lobby, relation, tv, feed, history, recap,
   shutup, appeal, irc, coach,
-  irwin, bot, cms, i18n, jsBot,
+  cms, i18n,
   socket, bookmark, gameSearch, forumSearch, teamSearch, irc
 )
 
@@ -163,11 +161,6 @@ lazy val puzzle = module("puzzle",
   tests.bundle
 )
 
-lazy val jsBot = module("jsBot",
-  Seq(memo, ui),
-  Seq()
-)
-
 lazy val video = module("video",
   Seq(memo, ui),
   macwire.bundle
@@ -191,11 +184,6 @@ lazy val feed = module("feed",
 lazy val ublog = module("ublog",
   Seq(search, report),
   Seq(bloomFilter)
-)
-
-lazy val evaluation = module("evaluation",
-  Seq(analyse, game),
-  tests.bundle
 )
 
 lazy val perfStat = module("perfStat",
@@ -229,7 +217,7 @@ lazy val timeline = module("timeline",
 )
 
 lazy val mod = module("mod",
-  Seq(evaluation, report, chat, user),
+  Seq(analyse, game, report, chat, user),
   Seq()
 )
 
@@ -252,11 +240,6 @@ lazy val gameSearch = module("gameSearch",
 lazy val tv = module("tv",
   Seq(game),
   Seq(hasher)
-)
-
-lazy val bot = module("bot",
-  Seq(chat, game),
-  Seq()
 )
 
 lazy val analyse = module("analyse",
@@ -286,26 +269,6 @@ lazy val lobby = module("lobby",
 
 lazy val setup = module("setup",
   Seq(lobby),
-  Seq()
-)
-
-lazy val insight = module("insight",
-  Seq(analyse, game),
-  Seq()
-)
-
-lazy val tutor = module("tutor",
-  Seq(insight),
-  tests.bundle
-)
-
-lazy val fishnet = module("fishnet",
-  Seq(analyse),
-  Seq(lettuce) ++ tests.bundle
-)
-
-lazy val irwin = module("irwin",
-  Seq(analyse, game, report),
   Seq()
 )
 

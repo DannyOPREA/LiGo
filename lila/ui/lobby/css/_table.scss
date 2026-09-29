@@ -42,10 +42,6 @@
         content: $licon-User;
       }
 
-      &--ai.button::before {
-        content: $licon-Cpu;
-      }
-
       &--friend-user.button::before {
         content: $licon-Swords;
       }

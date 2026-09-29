@@ -2,16 +2,15 @@ import { parseFen } from 'chessops/fen';
 import { h } from 'snabbdom';
 
 import { defined } from 'lib';
-import { renderEval as normalizeEval } from 'lib/ceval';
-import { dispatchChessgroundResize } from 'lib/chessgroundResize';
 import { isMobile } from 'lib/device';
+import { renderEval as normalizeEval } from 'lib/eval';
 import { playable } from 'lib/game';
 import { fixCrazySan, plyToTurn } from 'lib/game/chess';
 import statusView from 'lib/game/view/status';
 import { licon } from 'lib/licon';
 import * as Prefs from 'lib/prefs';
 import { storage } from 'lib/storage';
-import type { ClientEval, Glyph, ServerEval, TreeNode } from 'lib/tree/types';
+import type { Glyph, ServerEval, TreeNode } from 'lib/tree/types';
 import {
   type VNode,
   type LooseVNodes,
@@ -36,10 +35,8 @@ import { renderMaterialDiffs } from './materialDiffs';
 export interface ViewContext {
   ctrl: AnalyseCtrl;
   concealOf?: ConcealOf;
-  showCevalPvs: boolean;
   playerBars?: VNode[];
   playerStrips?: [VNode, VNode];
-  gaugeOn: boolean;
   needsInnerCoords: boolean;
 }
 
@@ -48,16 +45,14 @@ export function viewContext(ctrl: AnalyseCtrl): ViewContext {
   return {
     ctrl,
     concealOf: makeConcealOf(ctrl),
-    showCevalPvs: !ctrl.retro?.isSolving() && !ctrl.practice,
     playerBars,
     playerStrips: playerBars ? undefined : renderPlayerStrips(ctrl),
-    gaugeOn: ctrl.showEvalGauge(),
-    needsInnerCoords: ctrl.showEvalGauge() || !!playerBars,
+    needsInnerCoords: !!playerBars,
   };
 }
 
 export function renderMain(
-  { ctrl, playerBars, gaugeOn, needsInnerCoords }: ViewContext,
+  { ctrl, playerBars, needsInnerCoords }: ViewContext,
   ...kids: LooseVNodes[]
 ): VNode {
   return hl(
@@ -65,7 +60,6 @@ export function renderMain(
     {
       attrs: {
         'data-active-tool': ctrl.activeControlBarTool(),
-        'data-active-mode': ctrl.activeControlMode(),
       },
       hook: {
         insert: () => {
@@ -76,14 +70,9 @@ export function renderMain(
         update(_, _2) {
           forceInnerCoords(ctrl, needsInnerCoords);
         },
-        postpatch(old, vnode) {
-          if (old.data!.gaugeOn !== gaugeOn) dispatchChessgroundResize();
-          vnode.data!.gaugeOn = gaugeOn;
-        },
       },
       class: {
         'comp-off': !ctrl.settings.showStaticAnalysis,
-        'gauge-on': gaugeOn,
         'has-players': !!playerBars,
         'analyse-hunter': ctrl.opts.hunter,
         'analyse--wiki': !!ctrl.wiki,
@@ -233,10 +222,10 @@ export function renderMoveNodes(
   node: TreeNode,
   withEval: boolean,
   withGlyphs: boolean,
-  ev?: ClientEval | ServerEval | false,
+  ev?: ServerEval | false,
   glyphs?: Glyph[],
 ): VNode[] {
-  ev ??= node.ceval ?? node.eval; // ev = false will override withEval
+  ev ??= node.eval; // ev = false will override withEval
   const evalText = !ev
     ? ''
     : ev?.cp !== undefined
@@ -255,11 +244,10 @@ export function renderMoveNodes(
   return nodes;
 }
 
-function evalInfo(ev: ClientEval | ServerEval): string {
-  if ('knodes' in ev) return `Server eval · About ${(ev.knodes * 1000).toLocaleString()} nodes searched`;
-  if (!('nodes' in ev)) return 'Unknown strength';
-  const prelude = ev.cloud ? 'Cloud eval' : 'Local eval';
-  return `${prelude} · ${ev.nodes.toLocaleString()} nodes searched`;
+function evalInfo(ev: ServerEval): string {
+  return 'knodes' in ev
+    ? `Server eval · About ${(ev.knodes * 1000).toLocaleString()} nodes searched`
+    : 'Unknown strength';
 }
 
 function makeConcealOf(_ctrl: AnalyseCtrl): ConcealOf | undefined {

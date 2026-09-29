@@ -37,7 +37,6 @@ object home:
               "showRatings" -> ctx.pref.showRatings
             )
             .add("hasUnreadLichessMessage", hasUnreadLichessMessage)
-            .add("bots", Granter.opt(_.Beta))
             .add("playban", playban.map(lila.playban.TempBan.lobbyJson))
         )
       )
@@ -98,10 +97,8 @@ object home:
               ),
               button(cls := "button button-metal lobby__start__button lobby__start__button--friend")(
                 trans.site.challengeAFriend()
-              ),
-              button(cls := "button button-metal lobby__start__button lobby__start__button--ai")(
-                trans.site.playAgainstComputer()
               )
+              // "Play against the computer" went with the engines (unit 3.5).
             )
           ),
           div(cls := "lobby__support")(donateLink, swagLink),

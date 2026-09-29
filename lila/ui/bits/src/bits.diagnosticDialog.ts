@@ -31,8 +31,6 @@ export async function initModule(opts?: DiagnosticOpts): Promise<void> {
       ('lichessTools' in window ? 'Extension: Lichess Tools, ' : '') +
       `Page lang: ${site.displayLocale}, ` +
       `Browser lang: ${navigator.language}, ` +
-      `Engine: ${storage.get('ceval.engine')}, ` +
-      `Threads: ${storage.get('ceval.threads')}, ` +
       `Blindfold: ${storage.boolean('blindfold.' + (myUserId() || 'anon')).get()}, ` +
       `Pieces: ${document.body.dataset.pieceSet}` +
       (logs ? `\n\n${logs}` : '');

@@ -32,11 +32,6 @@ object help:
   private def zen(using Translate) = row(kbd("z"), trans.preferences.zenMode())
   private def helpDialog(using Translate) = row(kbd("?"), trans.site.showHelpDialog())
   private def menu(using Translate) = row(kbd("h"), trans.site.menu())
-  private def localAnalysis(using Translate) = frag(
-    row(kbd("l"), trans.site.toggleLocalAnalysis()),
-    row(kbd("space"), trans.site.playComputerMove()),
-    row(kbd("x"), trans.site.showThreat())
-  )
   private def phonetics = "abcdefgh"
     .map(_.toString)
     .map: letter =>
@@ -66,7 +61,6 @@ object help:
         tbody(
           navigateMoves,
           header(trans.site.analysisOptions()),
-          localAnalysis,
           row(kbd("n"), trans.puzzle.nextPuzzle()),
           header(trans.site.other()),
           flip,
@@ -101,7 +95,6 @@ object help:
           row(frag(tap, kbd("ctrl")), trans.site.keyShowOrHideCurrentVariation()),
           header(trans.site.analysisOptions()),
           flip,
-          localAnalysis,
           row(kbd("z"), trans.site.toggleAllAnalysis()),
           row(kbd("a"), trans.site.bestMoveArrow()),
           row(kbd("v"), trans.site.toggleVariationArrows()),

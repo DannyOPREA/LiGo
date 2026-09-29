@@ -2,7 +2,6 @@ package controllers
 
 import chess.format.pgn.PgnStr
 import play.api.libs.json.Json
-import play.api.mvc.*
 
 import scala.util.{ Left, Right }
 
@@ -38,21 +37,8 @@ final class Importer(env: Env) extends LilaController(env):
             .flatMap {
               case Right(game) =>
                 negotiate(
-                  html = ctx.me
-                    .filter(_ => data.analyse.isDefined && lila.game.GameExt.analysable(game))
-                    .soUse: me ?=>
-                      env.fishnet
-                        .analyser(
-                          game,
-                          lila.fishnet.Work.Sender(
-                            userId = me,
-                            ip = ctx.ip.some,
-                            mod = isGranted(_.UserEvaluate),
-                            system = false
-                          )
-                        )
-                        .void
-                    .inject(Redirect(routes.Round.watcher(game.id, Color.white))),
+                  // "Request a computer analysis" went with fishnet (unit 3.5).
+                  html = Redirect(routes.Round.watcher(game.id, Color.white)),
                   json =
                     if HTTPRequest.isLichobile(ctx.req)
                     then Redirect(routes.Round.watcher(game.id, Color.white))

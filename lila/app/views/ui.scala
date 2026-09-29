@@ -16,8 +16,6 @@ val setup = lila.setup.ui.SetupUi(helpers)
 
 val atomUi = lila.ui.AtomUi(helpers.routeUrl)
 
-val irwin = lila.irwin.IrwinUi(helpers)(menu = views.mod.ui.menu)
-
 val dgt = lila.web.ui.DgtUi(helpers)
 
 val relation = lila.relation.ui.RelationUi(helpers)
@@ -30,7 +28,8 @@ object oAuth:
 
 val style = lila.plan.ui.PlanStyle(helpers)
 val plan = lila.plan.ui.PlanUi(helpers)(style, netConfig.email)
-val planPages = lila.plan.ui.PlanPages(helpers)(lila.fishnet.FishnetLimiter.maxPerDay)
+// fishnet went in unit 3.5; the Patron page (unit 3.7) keeps upstream's 40 analyses a day in its table.
+val planPages = lila.plan.ui.PlanPages(helpers)(fishnetPerDay = 40)
 
 val feed =
   lila.feed.ui.FeedUi(helpers, atomUi)(title => _ ?=> site.ui.SitePage(title, "news", ""))(using
@@ -74,8 +73,6 @@ val gameSearch = lila.gameSearch.ui.GameSearchUi(helpers)(views.game.widgets(_))
 val challenge = lila.challenge.ui.ChallengeUi(helpers)
 
 val dev = lila.web.ui.DevUi(helpers)(views.mod.ui.menu)
-
-val jsBot = lila.jsBot.ui.JsBotUi(helpers)
 
 def mobile(p: lila.cms.CmsPage.Render)(using Context) =
   lila.web.ui.mobile(helpers)(cms.render(p))

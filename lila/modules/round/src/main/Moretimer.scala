@@ -16,10 +16,7 @@ final class Moretimer(messenger: Messenger, prefApi: PrefApi):
   def apply(pov: Pov, duration: FiniteDuration, force: Boolean): Fu[Option[Progress]] =
     isAllowedIn(pov.game, Preload.none, force).mapz:
       if pov.game.clock.exists(_.moretimeable(!pov.color))
-      then
-        val progress = give(pov.game, List(!pov.color), duration)
-        tellTheBus(progress.game)
-        progress.some
+      then give(pov.game, List(!pov.color), duration).some
       else if pov.game.correspondenceClock.exists(_.moretimeable(!pov.color))
       then
         messenger.volatile(pov.game, s"${!pov.color} gets more time")
@@ -49,13 +46,6 @@ final class Moretimer(messenger: Messenger, prefApi: PrefApi):
       colors.foreach: c =>
         messenger.volatile(game, s"$c + ${duration.toSeconds} seconds", reboot = reboot)
       (game.withClock(newClock)) ++ colors.map { Event.ClockInc(_, centis, newClock) }
-
-  private def tellTheBus(game: Game): Unit =
-    if lila.game.Game.isBoardCompatible(game) then
-      lila.common.Bus.publishDyn(
-        lila.game.actorApi.BoardMoretime(game),
-        lila.game.actorApi.BoardMoretime.makeChan(game.id)
-      )
 
   private def isAllowedByPrefs(game: Game, prefs: Preload[ByColor[Pref]]): Fu[Boolean] =
     prefs

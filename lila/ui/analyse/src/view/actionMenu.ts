@@ -1,5 +1,4 @@
 import { isEmpty } from 'lib';
-import { displayColumns } from 'lib/device';
 import { cont as contRoute } from 'lib/game/router';
 import { licon } from 'lib/licon';
 import { domDialog, bind, dataIcon, hl, type VNode } from 'lib/view';
@@ -55,8 +54,6 @@ function autoplayButtons(ctrl: AnalyseCtrl): VNode {
 export function view(ctrl: AnalyseCtrl): VNode {
   const d = ctrl.data,
     canContinue = !ctrl.ongoing && d.game.variant.key === 'standard',
-    canPractice = ctrl.isCevalAllowed() && !ctrl.isEmbed && !ctrl.isGamebook() && !ctrl.practice,
-    canRetro = ctrl.hasFullComputerAnalysis() && !ctrl.isEmbed && !ctrl.retro,
     linkAttrs = { rel: ctrl.isEmbed ? '' : 'nofollow', target: ctrl.isEmbed ? '_blank' : '' };
 
   const tools = [
@@ -86,19 +83,6 @@ export function view(ctrl: AnalyseCtrl): VNode {
           },
           i18n.site.boardEditor,
         ),
-      displayColumns() === 1 &&
-        canPractice &&
-        hl(
-          'a',
-          { hook: bind('click', () => ctrl.togglePractice()), attrs: dataIcon(licon.Bullseye) },
-          i18n.site.practiceWithComputer,
-        ),
-      canRetro &&
-        hl(
-          'a',
-          { hook: bind('click', ctrl.toggleRetro, ctrl.redraw), attrs: dataIcon(licon.GraduateCap) },
-          i18n.site.learnFromYourMistakes,
-        ),
       canContinue &&
         hl(
           'a',
@@ -115,7 +99,7 @@ export function view(ctrl: AnalyseCtrl): VNode {
           },
           i18n.site.continueFromHere,
         ),
-      (ctrl.idbTree.movesDirty || ctrl.idbTree.hasLocalCeval) &&
+      ctrl.idbTree.movesDirty &&
         hl(
           'a',
           {
@@ -145,18 +129,6 @@ export function view(ctrl: AnalyseCtrl): VNode {
       ctrl.mainline.length > 4 && [hl('h2', i18n.site.replayMode), autoplayButtons(ctrl)],
       canContinue &&
         hl('div.continue-with.none.g_' + d.game.id, [
-          hl(
-            'a.button',
-            {
-              attrs: {
-                href: d.userAnalysis
-                  ? '/?fen=' + ctrl.encodeNodeFen() + '#ai'
-                  : contRoute(d, 'ai') + '?fen=' + ctrl.node.fen,
-                ...linkAttrs,
-              },
-            },
-            i18n.site.playAgainstComputer,
-          ),
           hl(
             'a.button',
             {

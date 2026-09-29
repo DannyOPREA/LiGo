@@ -109,24 +109,6 @@ $regards
 """
     )
 
-  def onFishnetKey(userId: UserId, key: String): Funit =
-    sendAsPrivateMessageAndEmail(userId)(
-      subject = _ => "Your private fishnet key",
-      body = _ =>
-        s"""Hello,
-
-This message contains your private fishnet key. Please treat it like a password. You can use the same key on multiple machines (even at the same time), but you should not share it with anyone.
-
-Thank you very much for your help! Thanks to you, chess lovers all around the world will enjoy swift and powerful analysis for their games.
-
-Your key is:
-
-$key
-
-$regards
-"""
-    )
-
   def onAppealReply(user: User): Funit =
     val url = routeUrl(routes.Appeal.home)
     sendAsPrivateMessageAndEmail(user)(
@@ -272,13 +254,5 @@ $disableSettingNotice $disableLink"""
               text = Mailer.txt.addServiceNote(body),
               htmlBody = standardEmail(body).some
             )
-
-  private def sendAsPrivateMessageAndEmail[U: UserIdOf](
-      to: U
-  )(subject: Lang => String, body: Lang => String): Funit =
-    userApi
-      .byId(to)
-      .flatMapz: user =>
-        sendAsPrivateMessageAndEmail(user)(subject, body)
 
   private def userLang(user: User): Lang = user.realLang | lila.core.i18n.defaultLang

@@ -11,7 +11,6 @@ final class Env(
     isOnline: lila.core.socket.IsOnline,
     userApi: lila.core.user.UserApi,
     lightUserAsync: lila.core.LightUser.Getter,
-    gameApi: lila.core.game.GameApi,
     gameRepo: lila.core.game.GameRepo,
     securityApi: lila.core.security.SecurityApi,
     playbansOf: => lila.core.playban.BansOf,
@@ -37,8 +36,6 @@ final class Env(
   )
 
   lazy val forms = wire[ReportForm]
-
-  private lazy val autoAnalysis = wire[AutoAnalysis]
 
   private given UserIdOf[Report.SnoozeKey] = _.snoozerId
   private lazy val snoozer = lila.memo.Snoozer[Report.SnoozeKey]("report.snooze", cacheApi)

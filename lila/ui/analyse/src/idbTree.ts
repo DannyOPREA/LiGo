@@ -2,7 +2,7 @@ import { memoize } from 'lib';
 import { objectStorage } from 'lib/objectStorage';
 import { completeNode } from 'lib/tree/node';
 import * as treeOps from 'lib/tree/ops';
-import type { LocalEval, TreeNodeLite, TreePath } from 'lib/tree/types';
+import type { TreeNodeLite, TreePath } from 'lib/tree/types';
 
 import type AnalyseCtrl from './ctrl';
 
@@ -12,9 +12,6 @@ export class IdbTree {
   private readonly collapseDb = memoize(() => objectStorage<TreePath[]>({ store: 'analyse-collapse' }));
   private readonly moveDb = memoize(() =>
     objectStorage<{ root: TreeNodeLite | undefined }>({ store: 'analyse-state', db: 'lichess' }),
-  );
-  private readonly cevalDb = memoize(() =>
-    objectStorage<{ path: TreePath; ceval: LocalEval }, [string, TreePath]>({ store: 'analyse-ceval' }),
   );
 
   constructor(private readonly ctrl: AnalyseCtrl) {}
@@ -86,10 +83,9 @@ export class IdbTree {
     this.cache.movesDirty = !this.ctrl.tree.pathExists(path + node.id);
   }
 
-  clear = async (what?: 'analysis' | 'ceval' | 'collapse' | 'moves'): Promise<void> => {
+  clear = async (what?: 'analysis' | 'collapse' | 'moves'): Promise<void> => {
     if (this.noop) return;
     await Promise.all([
-      (!what || what === 'ceval') && this.cevalDb().then(db => db.remove(this.cevalRange())),
       (!what || what === 'collapse') && this.collapseDb().then(db => db.remove(this.id)),
       (!what || what === 'moves') && this.moveDb().then(db => db.remove(this.id)),
     ]);
@@ -99,44 +95,23 @@ export class IdbTree {
   async saveMoves(force = false): Promise<IDBValidKey | undefined> {
     if (this.noop || !(this.cache.movesDirty || force)) return undefined;
     const root = treeOps.structuredCloneLite(this.ctrl.tree.root);
-    treeOps.updateAll(root, node => {
-      delete node.ceval;
-      delete node.threat;
-    });
     return this.moveDb().then(db => db.put(this.id, { root }));
-  }
-
-  async saveCeval(path: TreePath, ceval: LocalEval): Promise<IDBValidKey | undefined> {
-    if (this.noop) return undefined;
-    const id = this.id;
-    this.cache.cevals.set(path, ceval);
-    return this.cevalDb().then(db => db.put([id, path], { path, ceval }));
   }
 
   async load(): Promise<void> {
     if (this.noop || !('indexedDB' in window) || !window.indexedDB) return;
     try {
       const id = this.id;
-      const state: State = { movesDirty: false, cevals: new Map() };
+      const state: State = { movesDirty: false };
       this.cacheMap.set(id, state);
-      const [collapsedPaths, moves, cevals] = await Promise.all([
+      const [collapsedPaths, moves] = await Promise.all([
         this.collapseDb().then(db => db.getOpt(id)),
         this.moveDb().then(db => db.getOpt(id)),
-        this.cevalDb().then(db => db.getMany(this.cevalRange(id))),
       ]);
       if (id !== this.id) return;
       if (moves?.root) {
         this.ctrl.tree.merge(completeNode(this.ctrl.variantKey)(moves.root));
         state.movesDirty = true;
-      }
-      for (const { path, ceval } of cevals) {
-        this.ctrl.tree.updateAt(path, node => {
-          if (node.fen === ceval.fen && this.ctrl.ceval.preferLatestEval(ceval, node.ceval)) {
-            ceval.engineId ??= 'legacy'; // for now this is preferable to a messy idb version upgrade
-            node.ceval = ceval;
-          }
-        });
-        state.cevals.set(path, ceval);
       }
       if (!collapsedPaths) this.collapseDefault();
       else
@@ -146,10 +121,6 @@ export class IdbTree {
     } catch (e) {
       console.log('IDB error.', e);
     }
-  }
-
-  get hasLocalCeval(): boolean {
-    return this.cache.cevals.size > 0;
   }
 
   get movesDirty(): boolean {
@@ -166,13 +137,9 @@ export class IdbTree {
 
   private get cache() {
     if (this.cacheMap.has(this.id)) return this.cacheMap.get(this.id)!;
-    const state: State = { movesDirty: false, cevals: new Map() };
+    const state: State = { movesDirty: false };
     this.cacheMap.set(this.id, state);
     return state;
-  }
-
-  private cevalRange(id = this.id): IDBKeyRange {
-    return IDBKeyRange.bound([id], [id, []]);
   }
 
   private async saveCollapsed() {
@@ -226,4 +193,4 @@ export class IdbTree {
   }
 }
 
-type State = { movesDirty: boolean; cevals: Map<TreePath, LocalEval> };
+type State = { movesDirty: boolean };

@@ -206,10 +206,6 @@ final class GameUi(helpers: Helpers):
 
   object importer:
 
-    private def analyseHelp(using ctx: Context) =
-      (!ctx.isAuth).option:
-        a(cls := "blue", href := routes.Auth.signup)(trans.site.youNeedAnAccountToDoThat())
-
     def apply(form: play.api.data.Form[?])(using ctx: Context) =
       Page(trans.site.importGame.txt())
         .css("bits.importer")
@@ -241,11 +237,7 @@ final class GameUi(helpers: Helpers):
               },
               form3.group(form("pgnFile"), trans.site.orUploadPgnFile(), klass = "upload"): f =>
                 form3.file.pgn(f.name),
-              form3.checkboxGroup(
-                form("analyse"),
-                trans.site.requestAComputerAnalysis(),
-                help = analyseHelp
-              ),
+              // "Request a computer analysis" went with fishnet (unit 3.5).
               form3.action(form3.submit(trans.site.importGame(), Icon.UploadCloud.some))
             )
           )

@@ -5,7 +5,7 @@ import type { TimeMode } from 'lib/setup/timeControl';
 export type Sort = 'rating' | 'time';
 export type Mode = 'list' | 'chart';
 export type Tab = 'pools' | 'real_time' | 'seeks' | 'now_playing';
-export type GameType = 'hook' | 'friend' | 'ai';
+export type GameType = 'hook' | 'friend';
 export type GameMode = 'casual' | 'rated';
 
 export interface Hook {
@@ -52,7 +52,6 @@ export interface LobbyOpts {
   playban: boolean;
   showRatings: boolean;
   data: LobbyData;
-  bots?: boolean;
 }
 
 export interface LobbyMe {
@@ -115,7 +114,6 @@ export interface SetupStore {
   color: ColorChoice;
   ratingMin: number;
   ratingMax: number;
-  aiLevel: number;
   time: number;
   increment: number;
   days: number;

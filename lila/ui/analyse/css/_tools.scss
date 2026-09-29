@@ -4,10 +4,6 @@
   position: relative;
   background: $c-bg-box;
 
-  .ceval {
-    flex: 0 0 44px;
-  }
-
   .sub-box {
     @extend %border-bottom-active;
     @include prevent-select;

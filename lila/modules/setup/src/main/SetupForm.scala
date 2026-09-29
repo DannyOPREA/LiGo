@@ -17,23 +17,7 @@ object SetupForm:
 
   val filter = Form(single("local" -> text))
 
-  def aiFilled(fen: Option[Fen.Full]): Form[AiConfig] =
-    ai.fill(fen.foldLeft(AiConfig.default): (config, f) =>
-      config.copy(fen = f.some, variant = chess.variant.FromPosition))
-
-  lazy val ai = Form:
-    mapping(
-      "variant" -> aiVariants,
-      "timeMode" -> timeMode,
-      "time" -> time,
-      "increment" -> increment,
-      "days" -> days,
-      "level" -> level,
-      "color" -> color,
-      "fen" -> fenField
-    )(AiConfig.from)(_.>>)
-      .verifying("invalidFen", _.validFen)
-      .verifying("Can't play that time control from a position", _.timeControlFromPosition)
+  // Games against the computer (ai, aiFilled, api.ai) went with fishnet (unit 3.5).
 
   def friendFilled(fen: Option[Fen.Full])(using Option[Me]): Form[FriendConfig] =
     friend.fill(fen.foldLeft(FriendConfig.default): (config, f) =>
@@ -155,16 +139,6 @@ object SetupForm:
       )(ApiConfig.from)(_ => none)
         .verifying("invalidFen", _.validFen)
         .verifying("can't be rated", _.validRated)
-
-    lazy val ai = Form:
-      mapping(
-        "level" -> level,
-        variant,
-        clock,
-        optionalDays,
-        "color" -> optional(color),
-        "fen" -> fenField
-      )(ApiAiConfig.from)(_ => none).verifying("invalidFen", _.validFen)
 
     def open(isAdmin: Boolean) = Form:
       openMapping.verifying(

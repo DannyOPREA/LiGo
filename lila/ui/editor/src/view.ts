@@ -4,7 +4,6 @@ import { COLORS } from 'chessops';
 import { parseFen } from 'chessops/fen';
 import { parseSquare, makeSquare } from 'chessops/util';
 
-import { view as cevalView } from 'lib/ceval';
 import { fenToEpd } from 'lib/game/chess';
 import { variants } from 'lib/game/perf';
 import { licon, type LiconValue } from 'lib/licon';
@@ -141,7 +140,6 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
         ]);
 
   return div('.board-editor__tools', [
-    ...(ctrl.cfg.embed ? [] : [div('.ceval-wrap', [cevalView.renderCeval(ctrl), cevalView.renderPvs(ctrl)])]),
     div('.metadata', [
       div(
         '.color',
@@ -308,11 +306,6 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
             ),
           ]),
           div('.continue-with.none', [
-            a('/?fen=' + state.legalFen + '#ai')(
-              '.button',
-              { rel: 'nofollow' },
-              i18n.site.playAgainstComputer,
-            ),
             a('/?fen=' + state.legalFen + '#friend')(
               '.button',
               { rel: 'nofollow' },

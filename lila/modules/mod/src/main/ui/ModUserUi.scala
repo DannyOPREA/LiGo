@@ -3,7 +3,6 @@ package ui
 
 import lila.core.perm.Permission
 import lila.core.playban.RageSit
-import lila.evaluation.Display
 import lila.ui.*
 import lila.user.{ ClosedFlags, WithPerfsAndEmails }
 
@@ -32,9 +31,6 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
 
   def menu = mzSection("menu")(
     a(href := "#mz_actions")("Overview"),
-    a(href := "#mz_kaladin")("Kaladin"),
-    a(href := "#mz_irwin")("Irwin"),
-    a(href := "#mz_assessments")("Evaluation"),
     a(href := "#mz_mod_log")("Mod log"),
     a(href := "#mz_reports")("Reports"),
     a(href := "#identification_screen")("Identification")
@@ -51,14 +47,6 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
         Granter(_.ModMessage).option:
           postForm(action := routes.Mod.spontaneousInquiry(u.username), title := "Start an inquiry"):
             submitButton(cls := "btn-rack__btn inquiry", title := "Hotkey: i")(iconTag)
-        ,
-        Granter(_.UserEvaluate).option:
-          postForm(
-            action := routes.Mod.refreshUserAssess(u.username),
-            title := "Collect data and ask irwin and Kaladin",
-            cls := "xhr"
-          ):
-            submitButton(cls := "btn-rack__btn")("Evaluate")
         ,
         Granter(_.GamesModView).option:
           a(
@@ -369,145 +357,6 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
       )
     )
 
-  def assessments(u: User, pag: lila.evaluation.PlayerAggregateAssessment.WithGames)(using
-      Context
-  ): Frag =
-    mzSection("assessments")(
-      pag.pag.sfAvgBlurs.map { blursYes =>
-        p(cls := "text", dataIcon := Icon.CautionCircle)(
-          "ACPL in games with blurs is ",
-          strong(blursYes._1),
-          " [",
-          blursYes._2,
-          " , ",
-          blursYes._3,
-          "]",
-          pag.pag.sfAvgNoBlurs.so: blursNo =>
-            frag(
-              " against ",
-              strong(blursNo._1),
-              " [",
-              blursNo._2,
-              ", ",
-              blursNo._3,
-              "] in games without blurs."
-            )
-        )
-      },
-      pag.pag.sfAvgLowVar.map { lowVar =>
-        p(cls := "text", dataIcon := Icon.CautionCircle)(
-          "ACPL in games with consistent move times is ",
-          strong(lowVar._1),
-          " [",
-          lowVar._2,
-          ", ",
-          lowVar._3,
-          "]",
-          pag.pag.sfAvgHighVar.so: highVar =>
-            frag(
-              " against ",
-              strong(highVar._1),
-              " [",
-              highVar._2,
-              ", ",
-              highVar._3,
-              "] in games with random move times."
-            )
-        )
-      },
-      pag.pag.sfAvgHold.map { holdYes =>
-        p(cls := "text", dataIcon := Icon.CautionCircle)(
-          "ACPL in games with bot signature ",
-          strong(holdYes._1),
-          " [",
-          holdYes._2,
-          ", ",
-          holdYes._3,
-          "]",
-          pag.pag.sfAvgNoHold.so: holdNo =>
-            frag(
-              " against ",
-              strong(holdNo._1),
-              " [",
-              holdNo._2,
-              ", ",
-              holdNo._3,
-              "]  in games without bot signature."
-            )
-        )
-      },
-      table(cls := "slist")(
-        thead(
-          tr(
-            th(a(href := routes.GameMod.index(u.username))("Games view")),
-            th("Game"),
-            th("Centi-Pawn", br, "(Avg ± SD)"),
-            th("Move Times", br, "(Avg ± SD)"),
-            th(span(title := "The frequency of which the user leaves the game page.")("Blurs")),
-            th(span(title := "Bot detection using grid click analysis.")("Bot")),
-            th("Date"),
-            th(span(title := "Aggregate match")(raw("&Sigma;")))
-          )
-        ),
-        tbody(
-          pag.pag.playerAssessments
-            .sortBy(-_.assessment.id)
-            .take(15)
-            .map: result =>
-              tr(
-                td(
-                  a(href := routes.Round.watcher(result.gameId, result.color)):
-                    pag
-                      .pov(result)
-                      .fold[Frag](result.gameId): p =>
-                        playerUsername(p.opponent.light, p.opponent.userId.flatMap(lightUserSync))
-                ),
-                td(
-                  pag
-                    .pov(result)
-                    .map: p =>
-                      a(href := routes.Round.watcher(p.gameId, p.color))(
-                        p.game.isTournament.option(iconTag(Icon.Trophy)),
-                        iconTag(p.game.perfKey.perfIcon)(cls := "text"),
-                        shortClockName(p.game.clock.map(_.config))
-                      )
-                ),
-                td(
-                  span(cls := s"sig sig_${Display.stockfishSig(result)}", dataIcon := Icon.DiscBig),
-                  s" ${result.analysis}"
-                ),
-                td(
-                  span(cls := s"sig sig_${Display.moveTimeSig(result)}", dataIcon := Icon.DiscBig),
-                  s" ${result.basics.moveTimes / 10}",
-                  result.basics.mtStreak.so(frag(br, "streak"))
-                ),
-                td(
-                  span(cls := s"sig sig_${Display.blurSig(result)}", dataIcon := Icon.DiscBig),
-                  s" ${result.basics.blurs}%",
-                  result.basics.blurStreak.filter(8.<=).map { s =>
-                    frag(br, s"streak $s/12")
-                  }
-                ),
-                td(
-                  span(cls := s"sig sig_${Display.holdSig(result)}", dataIcon := Icon.DiscBig),
-                  if result.basics.hold then "Yes" else "No"
-                ),
-                td(
-                  pag
-                    .pov(result)
-                    .map: p =>
-                      a(href := routes.Round.watcher(p.gameId, p.color), cls := "glpt")(
-                        pastMomentServerText(p.game.movedAt)
-                      )
-                ),
-                td(
-                  div(cls := "aggregate"):
-                    span(cls := s"sig sig_${result.assessment.id}")(result.assessment.emoticon)
-                )
-              )
-        )
-      )
-    )
   def markTd(nb: Int, content: => Frag, date: Option[Instant] = None)(using ctx: Context) =
     if nb > 0
     then

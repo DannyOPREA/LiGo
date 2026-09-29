@@ -1,7 +1,6 @@
 package lila.mod
 
 import org.apache.pekko.actor.*
-import chess.ByColor
 import com.softwaremill.macwire.*
 import play.api.Configuration
 
@@ -9,7 +8,6 @@ import lila.common.Bus
 import lila.core.config.*
 import lila.core.forum.BusForum
 import lila.core.report.SuspectId
-import lila.rating.UserWithPerfs.only
 import lila.core.mod.{ BoardApiMark, LoginWithWeakPassword, LoginWithBlankedPassword }
 import lila.common.autoconfig.given
 
@@ -22,8 +20,6 @@ final class Env(
     reportApi: lila.report.ReportApi,
     lightUserApi: lila.user.LightUserApi,
     gameRepo: lila.game.GameRepo,
-    gameApi: lila.core.game.GameApi,
-    analysisRepo: lila.analyse.AnalysisRepo,
     userRepo: lila.user.UserRepo,
     userApi: lila.user.UserApi,
     userJsonView: lila.user.JsonView,
@@ -42,7 +38,6 @@ final class Env(
   val mailerEventsUrl = appConfig.get[Url]("mailer.events.url")
 
   private lazy val logRepo = ModlogRepo(db(CollName("modlog")))
-  private lazy val assessmentRepo = AssessmentRepo(db(CollName("player_assessment")))
   private lazy val historyRepo = HistoryRepo(db(CollName("mod_gaming_history")))
 
   lazy val presets = wire[ModPresetsApi]
@@ -56,8 +51,6 @@ final class Env(
   private lazy val ratingRefund = wire[RatingRefund]
 
   lazy val api: ModApi = wire[ModApi]
-
-  lazy val assessApi = wire[AssessApi]
 
   lazy val gamify = wire[Gamify]
 
@@ -73,11 +66,8 @@ final class Env(
 
   Bus.sub[lila.core.game.FinishGame]:
     case lila.core.game.FinishGame(game, users) if !game.aborted =>
-      users
-        .map(_.filter(_.enabled.yes).map(_.only(game.perfKey)))
-        .mapN: (whiteUser, blackUser) =>
-          sandbagWatch(game)
-          assessApi.onGameReady(game, ByColor(whiteUser, blackUser))
+      // The engine assessment that also ran here went with the evaluation module (unit 3.5).
+      if users.forall(_.exists(_.enabled.yes)) then sandbagWatch(game)
       if game.status == chess.Status.Cheat then
         game.loserUserId.foreach: userId =>
           logApi.cheatDetectedAndCount(userId, game.id).flatMap { count =>
@@ -89,9 +79,6 @@ final class Env(
                 )(using UserId.lichessAsMe)
               else reportApi.autoCheatDetectedReport(userId, count)
           }
-
-  Bus.sub[lila.analyse.actorApi.AnalysisReady]: a =>
-    assessApi.onAnalysisReady(a.game, a.analysis)
 
   // publicChat (broadcast "Public Chats" deletion on DeletePublicChats) removed with the relay
   // module (unit 3.3).

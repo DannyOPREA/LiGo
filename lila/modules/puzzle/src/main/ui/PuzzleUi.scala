@@ -11,10 +11,7 @@ import lila.ui.*
 
 import ScalatagsTemplate.{ *, given }
 
-final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits)(
-    analyseCsp: Update[ContentSecurityPolicy],
-    externalEngineEndpoint: String
-):
+final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits):
   import helpers.{ *, given }
 
   def show(
@@ -24,8 +21,7 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits)(
       settings: lila.puzzle.PuzzleSettings,
       langPath: Option[lila.ui.LangPath] = None
   )(using ctx: Context) =
-    val isStreak = data.value.contains("streak")
-    Page(if isStreak then "Puzzle Streak" else trans.site.puzzles.txt())
+    Page(trans.site.puzzles.txt())
       .css("puzzle")
       .css(ctx.pref.hasKeyboardMove.option("keyboardMove"))
       .css(ctx.pref.hasVoice.option("voice"))
@@ -42,30 +38,24 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits)(
               "data" -> data,
               "pref" -> pref,
               "showRatings" -> ctx.pref.showRatings,
-              "settings" -> Json.obj("difficulty" -> settings.difficulty.key).add("color" -> settings.color),
-              "externalEngineEndpoint" -> externalEngineEndpoint
+              "settings" -> Json.obj("difficulty" -> settings.difficulty.key).add("color" -> settings.color)
             )
             .add("themes" -> ctx.isAuth.option(bits.jsonThemes))
         )
       )
-      .csp(analyseCsp)
       .graph(
         OpenGraph(
           image = cdnUrl(
             routes.Export.puzzleThumbnail(puzzle.id, ctx.pref.theme.some, ctx.pref.pieceSet.some).url
           ).some,
-          title =
-            if isStreak then "Puzzle Streak"
-            else s"Chess tactic #${puzzle.id} - ${puzzle.color.name.capitalize} to play",
+          title = s"Chess tactic #${puzzle.id} - ${puzzle.color.name.capitalize} to play",
           url = routeUrl(routes.Puzzle.show(puzzle.id.value)),
           description =
-            if isStreak then trans.puzzle.streakDescription.txt()
-            else
-              val findMove = puzzle.color.fold(
-                trans.puzzle.findTheBestMoveForWhite.txt(),
-                trans.puzzle.findTheBestMoveForBlack.txt()
-              )
-              s"Lichess tactic trainer: $findMove. Played by ${puzzle.plays} players."
+            val findMove = puzzle.color.fold(
+              trans.puzzle.findTheBestMoveForWhite.txt(),
+              trans.puzzle.findTheBestMoveForBlack.txt()
+            )
+            s"Lichess tactic trainer: $findMove. Played by ${puzzle.plays} players."
         )
       )
       .hrefLangs(langPath)

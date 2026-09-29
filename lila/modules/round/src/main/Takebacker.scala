@@ -7,9 +7,8 @@ import scalalib.data.Preload
 import lila.common.Bus
 import lila.core.i18n.{ I18nKey as trans, Translator, defaultLang }
 import lila.core.round.*
-import lila.game.{ Event, GameRepo, Progress, Rewind, UciMemo }
+import lila.game.{ Event, GameRepo, Progress, Rewind }
 import lila.pref.{ Pref, PrefApi }
-import lila.round.RoundGame.playableByAi
 
 private final class TakebackState(nbDeclined: Int, lastDeclined: Option[Instant]):
   def decline = TakebackState(nbDeclined + 1, nowInstant.some)
@@ -23,7 +22,6 @@ private given takebackBoardZero: Zero[TakebackBoard] = Zero(ByColor.fill(Takebac
 final private class Takebacker(
     messenger: Messenger,
     gameRepo: GameRepo,
-    uciMemo: UciMemo,
     prefApi: PrefApi
 )(using Executor, Translator):
 
@@ -45,8 +43,7 @@ final private class Takebacker(
     IfAllowed(pov.game, Preload.none):
       pov match
         case Pov(game, color) if pov.opponent.isProposingTakeback =>
-          for
-            events <- rewind(
+          for events <- rewind(
               pov,
               Takebacker.acceptedPlies(
                 currentPly = game.ply,
@@ -55,18 +52,7 @@ final private class Takebacker(
                 playedPlies = game.playedPlies
               )
             )
-            _ = publishTakeback(pov)
           yield events -> takebackBoardZero.zero
-        case Pov(game, _) if pov.game.playableByAi =>
-          for
-            events <- rewind(pov, 1)
-            _ = publishTakeback(pov)
-          yield events -> board
-        case Pov(game, _) if pov.opponent.isAi =>
-          for
-            events <- rewind(pov, 2)
-            _ = publishTakeback(pov)
-          yield events -> board
         case pov if canProposeTakeback(pov) && board(pov.color).offerable =>
           messenger.volatile(pov.game, offerTakebackMessage(pov))
           val progress = Progress(pov.game).map: g =>
@@ -146,7 +132,6 @@ final private class Takebacker(
       progress <- (1 to plies).foldLeft(fuccess(Progress(pov.game))): (prev, _) =>
         prev.flatMap: prog =>
           Rewind(prog.game, fen).toFuture.dmap(rewinded => prog.withGame(rewinded.game))
-      _ <- fuccess(uciMemo.drop(pov.game, plies))
       events <- saveAndNotify(progress, pov)
     yield events
 
@@ -164,20 +149,6 @@ final private class Takebacker(
       Bus.pub(
         lila.core.round.CorresTakebackOfferEvent(game.id)
       )
-    if lila.game.Game.mightBeBoardOrBotCompatible(game) then
-      Bus.publishDyn(
-        lila.game.actorApi.BoardTakebackOffer(game),
-        lila.game.actorApi.BoardTakebackOffer.makeChan(game.id)
-      )
-
-  private def publishTakeback(prevPov: Pov)(using proxy: GameProxy): Unit =
-    if lila.game.Game.mightBeBoardOrBotCompatible(prevPov.game) then
-      proxy.withPov(prevPov.color): p =>
-        fuccess:
-          Bus.publishDyn(
-            lila.game.actorApi.BoardTakeback(p.game),
-            lila.game.actorApi.BoardTakeback.makeChan(prevPov.gameId)
-          )
 
 private object Takebacker:
   def acceptedPlies(currentPly: Ply, proposedAt: Ply, accepter: Color, playedPlies: Ply): Int =
