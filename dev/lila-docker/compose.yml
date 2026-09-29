@@ -108,6 +108,32 @@ services:
       - ./.pnpm-store:/.pnpm-store
     profiles:
       - utils
+  scoring:
+    build:
+      context: docker
+      args:
+        USER_ID: ${USER_ID:-}
+        GROUP_ID: ${GROUP_ID:-}
+      dockerfile: ui.Dockerfile
+    user: ${USER_ID:-}:${GROUP_ID:-}
+    working_dir: /lila
+    entrypoint: sh -c "pnpm install --frozen-lockfile --filter @ligo/scoring --filter lila && exec pnpm --filter @ligo/scoring run start"
+    restart: unless-stopped
+    environment:
+      - SCORING_REDIS_URL=redis://redis:6379
+      # LiGo: no KATAGO_BIN/KATAGO_MODEL/KATAGO_CONFIG here — no container has KataGo yet (no
+      # OpenCL passthrough to the owner's GPU, no binary staged into an image), so every
+      # `propose` answers `src:"none"` (ADR 0020 §4's own fallback) until a later unit gives
+      # docker mode a KataGo story (unit 4.5, logs/decisions.md).
+    volumes:
+      - ../../lila:/lila:z
+      # LiGo: services/scoring is in lila's pnpm workspace as ../services/scoring (unit 4.4),
+      # which also needs libs/board's sibling path resolved (unit 2.1).
+      - ../../libs:/libs:z
+      - ../../services:/services:z
+      - ./.pnpm-store:/.pnpm-store:z
+    depends_on:
+      - redis
   mongo_express:
     image: mongo-express:1.0.2-20-alpine3.19
     restart: unless-stopped

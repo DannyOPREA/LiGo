@@ -111,6 +111,7 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | OGS goban-engine `8.3.226` again, this time as the scoring service's own dependency (ADR 0016, unit 4.4): its `autoscore` and `GobanEngine.computeScore()` (goscorer) | `services/scoring/package.json` | Apache-2.0 | Copyright Online-Go.com; notices in `services/scoring/NOTICE.md`; ships no NOTICE file |
 | goscorer and eventemitter3, bundled inside that second copy of goban-engine | `services/scoring` (inside goban-engine) | MIT | Notices in `services/scoring/NOTICE.md` |
 | OGS's own autoscore test games (31 finished games with KataGo's stored analysis), vendored unchanged as `services/scoring`'s regression set (unit 4.4) | `services/scoring/test/autoscore_test_files/` | Apache-2.0 | `services/scoring/LICENSE-Apache-2.0.txt`; notice in `services/scoring/test/autoscore_test_files/NOTICE.md`; goban ships no NOTICE file |
+| ioredis `6.0.0` (the scoring service's Redis client, unit 4.5, logs/decisions.md), and its own runtime dependencies (`@ioredis/commands`, `debug`, `ms`, `supports-color`, `redis-errors`, `standard-as-callback`: MIT; `denque`, `cluster-key-slot`: Apache-2.0) | `services/scoring/package.json` (transitive deps not listed there) | MIT / Apache-2.0 | Notices in `services/scoring/NOTICE.md`; `services/scoring/LICENSE-Apache-2.0.txt` |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they
