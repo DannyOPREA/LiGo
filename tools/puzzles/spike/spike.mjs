@@ -1,4 +1,7 @@
-import { createEngine, play } from "/home/user/LiGo/libs/board/src/engine.mjs";
+// Unit 8.2 feasibility spike (ADR 0025 §2): not part of the tool, kept for its numbers.
+// Run from libs/board so goban-engine resolves: cd libs/board && node ../../tools/puzzles/spike/solve.mjs
+// Licence: MIT (LiGo's own code, ADR 0007).
+import { createEngine, play } from "../../../libs/board/src/engine.mjs";
 const e = createEngine({ size: 19, ruleset: "japanese", komi: 6.5, stones:{black:[],white:[]}, toMove:"black" });
 const pts=[]; for (let x=0;x<6;x++) for(let y=0;y<6;y++) pts.push(String.fromCharCode(97+x)+String.fromCharCode(97+y));
 let n=0; const t=Date.now();

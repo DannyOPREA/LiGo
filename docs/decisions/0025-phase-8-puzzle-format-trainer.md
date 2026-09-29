@@ -1,5 +1,5 @@
 # 0025. Phase 8: the puzzle format, the generator, the trainer and the puzzle rating
-- Status: Proposed (work in progress, unit 8.2; stopped 2026-09-29 at the owner's request)
+- Status: Accepted
 - Date: 2026-09-29
 - Decided by: Claude, under the owner's 2026-09-28 delegation ("Don't ask for my approval for
   anything, just work until I tell you to stop")
@@ -64,9 +64,16 @@ What lila and goban have today (read for this ADR; paths under `lila/` and goban
   the source of truth.
 
 ### 2. The generator and checker in `tools/puzzles`
+- **Reuse check first** (ADR 0024 §5): [the generator memo](../build-vs-buy/tsumego-generator.md)
+  found no licensed tsumego solver or generator to reuse. The only candidates are in Rust and have
+  no licence. So:
+  - the frame is ported from KaTrain's MIT `tsumego_frame.py` (see below);
+  - the KataGo client is `services/scoring`'s `KataGoClient`, gaining a public `analyse` method;
+  - the catalogue, the solver and the difficulty estimate are LiGo's own code (about 700 to 900
+    lines, rung 6).
 - **A TypeScript package in lila's pnpm workspace**, beside `services/scoring`, using
-  goban-engine (pinned to `libs/board`'s version) for every rule. MIT code; the puzzles it writes
-  are CC0 (ADR 0024).
+  goban-engine (pinned to `libs/board`'s version) for every rule. Code and puzzle files are MIT, as
+  everything under `tools/` is (ADR 0007, ADR 0024).
 - **Positions**: a catalogue of eye-space shapes for the side that must live or die (straight
   three, bent three, bulky five, rabbity six, the L-group, the carpenter's square, corner shapes
   and so on) in the corner, on the edge and in the centre. The attacker's wall around them is made
@@ -83,10 +90,23 @@ What lila and goban have today (read for this ADR; paths under `lila/` and goban
 - **Kept puzzles** have exactly one or a few right first moves: at most 3, or the puzzle is too
   easy. Every other plausible first move needs a refutation in the tree, up to the 6 most likely
   wrong tries, ranked by the solver. The tree stops at the result, and at most 15 plies deep.
-- **KataGo's second opinion**: KataGo's ownership after each right answer must agree with the
-  solver's result (ADR 0016's engine through `services/scoring`'s client). A disagreement drops
-  the puzzle and logs it. With the cloud's test network this is a weak check, so the exact search
-  is what we trust.
+- **KataGo's second opinion**: the puzzle goes on a full board with a tsumego frame. The frame is
+  ported from KaTrain's MIT `tsumego_frame.py`, which lizgoban's author contributed there; it
+  carries a credit line, and lizgoban's GPL source is not read. KataGo is then asked, with
+  `allowMoves` keeping both sides in the region, whether each right answer reaches the goal and
+  each refutation fails. A disagreement drops the puzzle and logs it.
+- **The KataGo network**: the committed set is checked in the cloud with the pinned test network
+  (`g170-b6c96`, from KataGo's own repository). The owner's full-size b18 network is under the
+  KataGo Neural Network License, MIT-style (PR #50), so re-checking the set on his machine is
+  allowed. Each puzzle records the network's name and sha256 (ADR 0024 §7). The test network is
+  weak, so the exact search is what the set is trusted on.
+- **Feasibility spike** (`tools/puzzles/spike/`, 2026-09-29): goban-engine places and takes back
+  about 20,000 moves a second on 19×19. A plain search with no move ordering and no Benson cut-off
+  solved the straight three in the corner correctly (the vital point wins for either side) in
+  under 10 ms. It took 40 s (161,000 nodes) to prove a 12-point eye space alive. So regions stay
+  at 10 empty points or fewer, with move ordering, a Benson cut-off and a transposition table
+  keyed on goban-engine's position, and a time limit per puzzle. `@sabaki/go-board` (MIT) is
+  kept in reserve if that is still too slow (a new dependency, so its own record).
 - **Difficulty** is measured, not guessed. It combines the length of the right line, how many
   first moves look plausible (liberties, eye points, vital points), and how many wrong tries need
   deep refutations. That gives a band (beginner, 25k–16k; easy, 15k–6k; intermediate, 5k–1k;
@@ -121,7 +141,7 @@ What lila and goban have today (read for this ADR; paths under `lila/` and goban
   declare at signup, and the first few puzzles move it quickly, as lila's does.
 
 ### 5. How puzzles reach Mongo
-- **The set is committed** as JSON in `tools/puzzles/data/` (one file per batch). CC0. Any size
+- **The set is committed** as JSON in `tools/puzzles/data/` (one file per batch), MIT. Any size
   limit is set in 8.4.
 - **`dev/ligo puzzles load`** (a Node script in `tools/puzzles`) checks each puzzle against the
   schema and writes it into lila's puzzle collection (upsert by `id`, keeping a puzzle's played
@@ -138,7 +158,9 @@ What lila and goban have today (read for this ADR; paths under `lila/` and goban
 - Unit 8.5 changes: instead of "a trainer controller over 7.2's tree", it wraps goban's puzzle mode
   behind `mountBoard` (a `puzzle` option and the two result events), with tests replaying every
   puzzle's right and wrong lines in Chromium. It no longer needs 7.2, except for "view the
-  solution" in 8.7.
+  solution" in 8.7. PLAN §5's rows 8.3 and 8.5 are updated to match.
+- `services/scoring` gains one public method (`analyse`) used by `tools/puzzles`. Nothing else in
+  the service changes.
 - The server trusts the browser's win or loss, as lila does. Cheating a puzzle rating is possible,
   as it is on lichess; it is not worth more for a local proof of concept.
 - goban's random choice among opponent branches means a player can see different replies on a

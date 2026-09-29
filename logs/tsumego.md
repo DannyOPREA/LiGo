@@ -5,6 +5,24 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · Unit 8.2 · ADR 0025: puzzle format, generator, trainer, puzzle rating
+- Did: finished ADR 0025 from the stopped draft: goban's own `PuzzleConfig` (OGS's puzzle JSON)
+  plus provenance as the format, goban's puzzle mode as the browser's checker, the generator's
+  design with the reuse memo docs/build-vs-buy/tsumego-generator.md (KaTrain's MIT frame ported,
+  `services/scoring`'s KataGo client reused, solver our own), lila's trainer parts kept and
+  removed, the puzzle rating as a number, `dev/ligo puzzles load`. PLAN rows 8.2, 8.3 and 8.5
+  updated (8.5 no longer needs 7.2).
+- Worked: the spike in tools/puzzles/spike/ (see the stopped entry below) set the region limit.
+- Didn't work / dead ends: none.
+- Lessons: goban's puzzle mode picks the opponent's reply at random among a node's branches, so a
+  puzzle tree may only list equally good replies.
+- Decisions: ADR 0025, Claude's call under the owner's 2026-09-28 delegation (logs/decisions.md).
+  The KataGo network licence (PR #50) settles ADR 0024 §7: the cloud checks with the g170 test
+  network, and the owner may re-check on the b18.
+- Verified by Claude: verify.sh. · Needs owner verification: the puzzle rating shown as a number,
+  not kyu/dan (ADR 0025 §4).
+- Follow-ups: 8.3 (the generator and pipeline).
+
 ### 2026-09-29 · Unit 8.2 (in progress, stopped) · Puzzle format and generator design
 - Did: drafted ADR 0025 (Proposed): OGS/goban's own puzzle JSON (`PuzzleConfig`, `move_tree` with
   `correct_answer`/`wrong_answer`) as LiGo's format, goban's built-in puzzle mode as the checker,

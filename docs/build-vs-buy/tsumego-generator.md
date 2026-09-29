@@ -1,6 +1,6 @@
 # Build-vs-buy: the tsumego generator and solver (code)
 
-- Unit: 8.2 (Phase 8). Status: **Proposed.** Claude proceeds on this under the owner's 2026-09-28 delegation; the main session records it as an ADR. The owner may overrule it.
+- Unit: 8.2 (Phase 8). Status: **Decided** as recommended ([ADR 0025](../decisions/0025-phase-8-puzzle-format-trainer.md) §2), by Claude under the owner's 2026-09-28 delegation. The owner may overrule it.
 - Follows [ADR 0024](../decisions/0024-tsumego-content-generated-plus-classics.md) point 5 and the content memo ([tsumego-content.md](tsumego-content.md), "Recommendation"). That memo checked content; this one checks code.
 - A licence *reading*, not legal advice. Evidence: files fetched or cloned on 2026-09-29 (GitHub raw files were reachable). The forums.online-go.com thread about an OGS life-and-death generator was blocked from the cloud: UNCHECKED.
 - Constraint: `tools/` is MIT (ADR 0007). Allowed inputs are MIT, BSD, Apache-2.0, LGPL, GPL-3.0 and AGPL-3.0. GPL code cannot be copied into an MIT file; it could live only as a separate GPL-3.0 file, which would make the tool awkward to hand to OGS.
@@ -57,5 +57,5 @@
 ## What the owner must decide
 
 - Nothing new. Under the standing delegation Claude proceeds. The two things the owner could overrule: (a) porting KaTrain's frame rather than writing it from the idea; (b) writing our own solver rather than adopting an unlicensed Rust one (this is not really a choice: no licence, no use).
-- Open, carried from ADR 0024 point 7: the KataGo network licence for the committed set. Not affected by this memo.
+- Carried from ADR 0024 point 7, now settled: the owner's b18 network is under the KataGo Neural Network License (MIT-style, PR #50); the cloud checks with the pinned g170 test network (ADR 0025 §2).
 - One request for later: ask cameron-martin and kendfrey to add a licence. Only worth doing if the owner wants their code, and it would still be Rust.

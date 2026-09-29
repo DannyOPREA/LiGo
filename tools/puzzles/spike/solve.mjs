@@ -1,4 +1,7 @@
-import { createEngine, play, stateOf } from "/home/user/LiGo/libs/board/src/engine.mjs";
+// Unit 8.2 feasibility spike (ADR 0025 §2): not part of the tool, kept for its numbers.
+// Run from libs/board so goban-engine resolves: cd libs/board && node ../../tools/puzzles/spike/solve.mjs
+// Licence: MIT (LiGo's own code, ADR 0007).
+import { createEngine, play, stateOf } from "../../../libs/board/src/engine.mjs";
 const P=(x,y)=>String.fromCharCode(97+x)+String.fromCharCode(97+y);
 // solve(position, defender colour, region points) -> does side to move win? attacker wins iff defender stones in region all captured
 export function solve({black,white,toMove,defender,region,target}){
