@@ -377,7 +377,8 @@ function dataOfNotes(node) {
  */
 export function decodeSgf(bytes) {
   const head = new TextDecoder("latin1").decode(bytes.subarray(0, 4096));
-  const charset = /CA\s*\[([^\]]*)\]/.exec(head)?.[1]?.trim();
+  // Bounded, so a head full of `CA[` can't make the search slow.
+  const charset = /CA\s{0,8}\[([^\]]{0,40})\]/.exec(head)?.[1]?.trim();
   let decoder;
   try {
     decoder = new TextDecoder(charset || "utf-8");
