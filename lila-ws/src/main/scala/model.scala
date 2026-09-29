@@ -42,9 +42,7 @@ object Game:
   case class RoundPlayer(id: PlayerId, color: Color)
 end Game
 
-object Study:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
+// Study.Id (the study room type) was removed with the study module (unit 3.3).
 
 object Team:
   opaque type Id = String
@@ -65,13 +63,6 @@ object Challenge:
     case Anon(secret: String)
     case User(userId: lila.ws.User.Id)
     case Open
-
-object Racer:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
-  enum PlayerId(val key: String):
-    case User(user: lila.ws.User.Id) extends PlayerId(user.value)
-    case Anon(sid: String) extends PlayerId(s"@$sid")
 
 opaque type Sri = String
 object Sri extends OpaqueString[Sri]:
@@ -124,9 +115,3 @@ object UserTv extends OpaqueString[UserTv]
 case class Clock(white: Int, black: Int)
 case class Position(lastUci: Uci, fen: Fen.Board, clock: Option[Clock], turnColor: Color):
   def fenWithColor = fen.andColor(turnColor)
-
-opaque type MultiPv = Int
-object MultiPv extends RelaxedOpaqueInt[MultiPv]
-
-opaque type Depth = Int
-object Depth extends RelaxedOpaqueInt[Depth]

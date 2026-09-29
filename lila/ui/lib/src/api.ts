@@ -73,9 +73,6 @@ export interface Overrides {
   practiceCommentReady?: (ev: ClientEval) => boolean;
   practiceEvalReady?: (ev: ClientEval) => boolean;
   practiceSearch?: () => Search; // default { by: { nodes: 600_000 }, multiPv: 1, indeterminate: true }
-
-  // file://./../../analyse/src/study/practice/studyPracticeCtrl.ts
-  studyPracticeSearch?: () => Search; // default { by: { nodes: 600_000 }, multiPv: 1, indeterminate: true }
 }
 
 // this object is available to extensions as window.lichess

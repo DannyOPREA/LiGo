@@ -336,52 +336,6 @@ final class DashboardUi(helpers: Helpers, ui: ClasUi)(using NetDomain):
           )
         )
 
-    def learn(
-        c: Clas,
-        students: List[Student.WithUser],
-        basicCompletion: Map[UserId, Int],
-        practiceCompletion: Map[UserId, Int],
-        coordScores: Map[UserId, chess.ByColor[Int]]
-    )(using Context) =
-      TeacherPage(c, students, "progress")():
-        frag(
-          progressHeader(c, none),
-          div(cls := "students")(
-            table(cls := "slist slist-pad sortable")(
-              thead(
-                tr(
-                  th(dataSortDefault)(dataSortAsc)(
-                    trans.clas.nbStudents.pluralSame(students.size),
-                    thSortNumber(trans.site.chessBasics()),
-                    thSortNumber(trans.site.practice()),
-                    thSortNumber(trans.coordinates.coordinates())
-                  )
-                ),
-                tbody(
-                  students.sortBy(_.user.username.value).map { case s @ Student.WithUser(_, user) =>
-                    val coord = coordScores.getOrElse(user.id, chess.ByColor(0, 0))
-                    tr(
-                      studentTd(c, s),
-                      td(dataSort := basicCompletion.getOrElse(user.id, 0))(
-                        basicCompletion.getOrElse(user.id, 0).toString,
-                        "%"
-                      ),
-                      td(dataSort := practiceCompletion.getOrElse(user.id, 0))(
-                        practiceCompletion.getOrElse(user.id, 0).toString,
-                        "%"
-                      ),
-                      td(dataSort := coord.white, cls := "coords")(
-                        iconTag(cls := "color-icon is white")(coord.white),
-                        iconTag(cls := "color-icon is black")(coord.black)
-                      )
-                    )
-                  }
-                )
-              )
-            )
-          )
-        )
-
     private val daysList = Days.from(List(1, 2, 3, 7, 10, 14, 21, 30, 60, 90))
 
     private def progressHeader(c: Clas, progress: Option[ClasProgress])(using Context) =
@@ -401,10 +355,7 @@ final class DashboardUi(helpers: Helpers, ui: ClasUi)(using NetDomain):
                 cls := progress.map(_.perfType.key.value.active(pk.value)),
                 href := routes.Clas.progress(c.id, pk, progress.fold(Days(7))(_.days))
               )(pk.perfTrans)
-            },
-            a(cls := progress.isEmpty.option("active"), href := routes.Clas.learn(c.id))(
-              trans.site.learnMenu()
-            )
+            }
           )
         ),
         progress.map: p =>

@@ -96,14 +96,7 @@ object contact:
           "account",
           accountSupport(),
           List(
-            Leaf(
-              "title",
-              wantTitle(),
-              p(
-                a(href := routes.TitleVerify.index)(visitTitleConfirmation()),
-                "."
-              )
-            ),
+            // title verification contact leaf removed with the title module (unit 3.3).
             Leaf(
               "close",
               wantCloseAccount(),
@@ -165,7 +158,7 @@ object contact:
               illegalPawnCapture(),
               frag(
                 p(calledEnPassant()),
-                p(a(href := "/learn#/15")(tryEnPassant()))
+                p(tryEnPassant())
               )
             ),
             Leaf(
@@ -174,7 +167,7 @@ object contact:
               frag(
                 p(castlingPrevented()),
                 p(a(href := "https://en.wikipedia.org/wiki/Castling#Requirements")(castlingRules()), "."),
-                p(a(href := "/learn#/14")(tryCastling()), "."),
+                p(tryCastling(), "."),
                 p(castlingImported())
               )
             ),

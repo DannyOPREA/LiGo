@@ -174,17 +174,6 @@ object ClientIn:
     case class Playing(user: User.Id) extends Event("playing")
     case class StoppedPlaying(user: User.Id) extends Event("stopped_playing")
 
-  case class StormKey(signed: String) extends ClientIn:
-    def write = cliMsg("sk1", signed)
-
-  case class EvalHit(data: JsObject) extends ClientIn:
-    val write = cliMsg("evalHit", data)
-
-  case class EvalHitMulti(data: JsObject) extends ClientIn:
-    val write = cliMsg("evalHitMulti", data)
-
-  def racerState(data: JsonString) = payload("racerState", data)
-
   private val destsRemover = ""","dests":\{[^\}]+}""".r
 
   private def cliMsg[A: Writes](t: String, data: A): String = cliMsg(t, Json.toJson(data))

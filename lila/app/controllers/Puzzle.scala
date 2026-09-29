@@ -128,28 +128,6 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       page <- renderPage(views.puzzle.ui.ofPlayer(name.so(_.value), user, puzzles))
     yield Ok(page)
 
-  def streak = Open(serveStreak)
-  def streakLang = LangPage(routes.Puzzle.streak)(serveStreak)
-
-  private def serveStreak(using ctx: Context) = NoBot:
-    FoundPage(env.puzzle.streakJsonAndPuzzle): (json, puzzle) =>
-      val prefJson = env.puzzle.jsonView.pref(ctx.pref)
-      val langPath = LangPath(routes.Puzzle.streak).some
-      views.puzzle.ui.show(puzzle, json, prefJson, PuzzleSettings.default, langPath)
-    .map(_.noCache.enforceCrossSiteIsolation)
-
-  def apiStreak = Anon:
-    env.puzzle.streakJsonAndPuzzle.orNotFound: (json, _) =>
-      JsonOk(json)
-
-  def apiStreakResult(score: Int) = ScopedBody(_.Puzzle.Write, _.Web.Mobile) { _ ?=> me ?=>
-    if score > 0 && score < PuzzleForm.maxStreakScore then
-      lila.mon.streak.run.score("mobile").record(score)
-      env.puzzle.complete.setStreakResult(me, score)
-      NoContent
-    else BadRequest
-  }
-
   def vote(id: PuzzleId) = AuthBody { _ ?=> me ?=>
     NoBot:
       bindForm(env.puzzle.forms.vote)(

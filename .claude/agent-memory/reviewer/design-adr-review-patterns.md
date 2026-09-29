@@ -36,3 +36,18 @@ Checks that found real problems in ADR 0020 (unit 4.1, scoring phase, 2026-09-28
 - **Post-processing a service reply** (e.g. widening dead to chains) makes the stored count stale.
 
 **How to apply:** any Phase 3+ design ADR or schema/protocol change. See [[phase-plan-review-patterns]].
+
+Checks that found real problems in ADR 0021 (unit 5.1, Phase 5 ratings, 2026-09-29):
+
+- **Scope creep via wording**: "13×13 rated games are even only" quietly allows 13×13 server games;
+  PLAN §1.2/§1.3 and spec R-SCOPE-1 keep 13×13 out of the POC. Grep the spec's R-SCOPE for any size/ruleset named.
+- **"No page needs it" claims**: check later unit rows (5.7 "rating ranges shown as rank ranges", §4
+  widening rank range) and lila's client code (ui/lobby ratingDifferenceSliders computes ranges in the browser).
+- **"lila already enforces" guest rules**: setup forms do (`mode(withRated = me.isDefined)`), but
+  `Challenge.accept` lets a guest accept a rated destUser-less challenge (only the view hides the button);
+  lobby `Hook.compatibleWith`/`Biter.canJoin` keep guests and members apart entirely.
+- **FarmBoostDetection.newAccountBoosting** skips rating for accounts < 7 days old in Friend-source games
+  that end fast: breaks any "fresh accounts play a rated game" demo.
+- **Recompute the rationale, not just the numbers**: a rank band is only ~±34 rating points near 5k, a
+  deviation-250 loss moves ~110, so "midpoint keeps the label after one loss" was false.
+- **goratings Chinese handicap 1** adds a compensation point (scoringBonus = handicap) that spec R-KOMI-3 doesn't give.

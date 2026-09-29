@@ -114,12 +114,7 @@ export function compute(ctrl: AnalyseCtrl): DrawShape[] {
     return [];
   }
   const { eval: nEval = {} as Partial<ServerEval>, fen: nFen, ceval: nCeval, threat: nThreat } = ctrl.node;
-  let hovering = ctrl.explorer.hovering();
-
-  if (!hovering || hovering.fen !== nFen) {
-    ctrl.explorer.hovering(null);
-    hovering = ctrl.ceval.hovering();
-  }
+  const hovering = ctrl.ceval.hovering();
 
   let shapes: DrawShape[] = endgameShapesForNode(
     ctrl.node,
@@ -216,8 +211,7 @@ function hiliteVariations(ctrl: AnalyseCtrl, autoShapes: DrawShape[]) {
   const visible = ctrl.visibleChildren();
   if (visible.length < 2) return;
 
-  const chap = ctrl.study?.data.chapter;
-  const isGamebookEditor = chap?.gamebook && !ctrl.study?.gamebookPlay;
+  const isGamebookEditor = false;
   for (const [i, node] of visible.entries()) {
     const existing = autoShapes.find(s => s.orig + s.dest === node.uci);
     if (existing) existing.modifiers = { hilite: i === ctrl.fork.selectedIndex ? 'white' : undefined };

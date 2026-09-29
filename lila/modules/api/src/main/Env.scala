@@ -16,7 +16,6 @@ final class Env(
     forumEnv: lila.forum.Env,
     teamEnv: lila.team.Env,
     puzzleEnv: lila.puzzle.Env,
-    studyEnv: lila.study.Env,
     gameSearch: lila.gameSearch.GameSearchApi,
     coachEnv: lila.coach.Env,
     planEnv: lila.plan.Env,
@@ -29,7 +28,6 @@ final class Env(
     userEnv: lila.user.Env,
     streamerEnv: lila.streamer.Env,
     relationEnv: lila.relation.Env,
-    relayEnv: lila.relay.Env,
     analyseEnv: lila.analyse.Env,
     lobbyEnv: lila.lobby.Env,
     onlineApiUsers: lila.bot.OnlineApiUsers,
@@ -41,8 +39,9 @@ final class Env(
     modEnv: lila.mod.Env,
     appealApi: lila.appeal.AppealApi,
     shutupEnv: lila.shutup.Env,
-    titleEnv: lila.title.Env,
-    fideEnv: lila.fide.Env,
+    // titleEnv and fideEnv removed with the title and fide modules (unit 3.3); PublicFideIdOf is
+    // supplied directly, stubbed out in app/Env.scala.
+    fideIdOf: lila.core.user.PublicFideIdOf,
     modLogApi: lila.mod.ModlogApi,
     activityWriteApi: lila.activity.ActivityWriteApi,
     ublogApi: lila.ublog.UblogApi,

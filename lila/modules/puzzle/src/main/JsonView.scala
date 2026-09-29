@@ -62,10 +62,6 @@ final class JsonView(
       enginesJson <- myEngines.get(me)
     yield puzzleJson ++ enginesJson
 
-  def streak(puzzle: Puzzle, ids: String)(using Translate, Option[Me], Perf) =
-    for puzzleJson <- analysis(puzzle, PuzzleAngle.mix)
-    yield (puzzleJson ++ Json.obj("streak" -> ids), puzzle)
-
   def userJson(using perf: Perf, me: Option[Me]) = me.isDefined.option:
     Json
       .obj("rating" -> perf.intRating)

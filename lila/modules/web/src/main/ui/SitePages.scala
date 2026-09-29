@@ -27,7 +27,7 @@ final class SitePages(helpers: Helpers):
       a(activeCls("contact"), href := routes.Main.contact)(trans.contact.contact()),
       a(activeCls("tos"), href := routes.Cms.tos)(trans.site.termsOfService()),
       a(activeCls("privacy"), href := "/privacy")(trans.site.privacy()),
-      a(activeCls("title"), href := routes.TitleVerify.index)(trans.site.titleVerification()),
+      // title verification link removed with the title module (unit 3.3).
       sep,
       a(activeCls("source"), href := routes.Cms.source)(trans.site.sourceCode()),
       a(activeCls("help"), href := routes.Cms.help)(trans.site.contribute()),
@@ -113,27 +113,7 @@ final class SitePages(helpers: Helpers):
               )
             )
           },
-          br,
-          st.section(cls := "box box-pad developers") {
-            val args = """style="width: 100%; aspect-ratio: 3/2;" frameborder="0""""
-            frag(
-              a(href := "#embed-study")(
-                h1(cls := "box__top", id := "embed-study")("Embed a chess analysis in your site")
-              ),
-              div(cls := "body")(
-                div(cls := "center"):
-                  raw(s"""<iframe src="/study/embed/XtFCFYlM/GCUTf2Jk?bg=auto&theme=auto" $args></iframe>""")
-                ,
-                p(
-                  "Create ",
-                  a(href := routes.Study.allDefault())("a study"),
-                  ", then click the share button to get the HTML code for the current chapter."
-                ),
-                parameters(),
-                p("The text is automatically translated to your visitor's language.")
-              )
-            )
-          },
+          // "Embed a chess analysis" (study embed) section removed with the study module (unit 3.3).
           br,
           st.section(cls := "box box-pad developers") {
             val args = """style="width: 100%; aspect-ratio: 3/2;" frameborder="0""""

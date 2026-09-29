@@ -11,18 +11,15 @@ import lila.memo.CacheApi
 final class TextLpvExpand(
     gameRepo: lila.core.game.GameRepo,
     analysisRepo: AnalysisRepo,
-    studyApi: lila.study.StudyApi,
     pgnDump: PgnDump,
-    studyPgnDump: lila.study.PgnDump,
-    relayPgnDump: lila.relay.RelayPgnStream,
     gameOpening: lila.game.GameOpening,
     cacheApi: CacheApi,
     net: lila.core.config.NetConfig
 )(using Executor):
 
   def getPgn(id: GameId) = if notGames.contains(id.value) then fuccess(none) else gamePgnCache.get(id)
-  def getChapterPgn(id: StudyChapterId) = chapterPgnCache.get(id)
-  def getStudyPgn(id: StudyId) = studyPgnCache.get(id)
+  // getChapterPgn and getStudyPgn (study/relay PGN embeds) removed with the study and relay
+  // modules (unit 3.3).
 
   // forum linkRenderFromText builds a LinkRender from relative game|chapter urls -> lpv div tags.
   // substitution occurs in common/../RawHtml.scala addLinks
@@ -32,8 +29,6 @@ final class TextLpvExpand(
       .map(_.group(1))
       .map:
         case regex.gamePgnRe(url, id) => getPgn(GameId(id)).map(url -> _)
-        case regex.chapterPgnRe(url, id) => getChapterPgn(StudyChapterId(id)).map(url -> _)
-        case regex.studyPgnRe(url, id) => getStudyPgn(StudyId(id)).map(url -> _)
         case link => fuccess(link -> link)
       .parallel
       .map:
@@ -63,8 +58,6 @@ final class TextLpvExpand(
         case ((counter, replacements), candidate) =>
           val (cost, replacement) = candidate match
             case regex.gamePgnRe(_, id) => 1 -> getPgn(GameId(id)).map(id -> _)
-            case regex.chapterPgnRe(_, id) => 1 -> getChapterPgn(StudyChapterId(id)).map(id -> _)
-            case regex.studyPgnRe(_, id) => 1 -> getStudyPgn(StudyId(id)).map(id -> _)
             case link => 0 -> fuccess(link -> none)
           (counter - cost) -> (replacement :: replacements)
       ._2
@@ -86,12 +79,6 @@ final class TextLpvExpand(
   private val gamePgnCache = cacheApi[GameId, Option[LpvEmbed]](512, "textLpvExpand.pgn.game"):
     _.expireAfterWrite(10.minutes).buildAsyncFuture(gameIdToPgn)
 
-  private val chapterPgnCache = cacheApi[StudyChapterId, Option[LpvEmbed]](512, "textLpvExpand.pgn.chapter"):
-    _.expireAfterWrite(10.minutes).buildAsyncFuture(studyChapterIdToPgn)
-
-  private val studyPgnCache = cacheApi[StudyId, Option[LpvEmbed]](256, "textLpvExpand.pgn.firstChapter"):
-    _.expireAfterWrite(10.minutes).buildAsyncFuture(studyIdToPgn)
-
   private def gameIdToPgn(id: GameId): Fu[Option[LpvEmbed]] =
     gameRepo
       .gameWithInitialFen(id)
@@ -105,24 +92,6 @@ final class TextLpvExpand(
               val fixedSiteTag = pgn.copy(tags = pgn.tags + siteTag)
               LpvEmbed.PublicPgn(fixedSiteTag.render).some
 
-  private def studyChapterIdToPgn(id: StudyChapterId): Fu[Option[LpvEmbed]] =
-    import lila.study.PgnDump.fullFlags
-    studyApi
-      .byChapterId(id)
-      .flatMapz: sc =>
-        if sc.study.isPrivate then fuccess(LpvEmbed.PrivateStudy.some)
-        else if sc.study.isRelay then relayPgnDump.ofChapter(sc).map2(LpvEmbed.PublicPgn.apply)
-        else studyPgnDump.ofChapter(sc.study, fullFlags)(sc.chapter).map(LpvEmbed.PublicPgn.apply).map(_.some)
-
-  private def studyIdToPgn(id: StudyId): Fu[Option[LpvEmbed]] =
-    import lila.study.PgnDump.fullFlags
-    studyApi
-      .byId(id)
-      .flatMapz: s =>
-        if s.isPrivate then fuccess(LpvEmbed.PrivateStudy.some)
-        else if s.isRelay then relayPgnDump.ofFirstChapter(s).map2(LpvEmbed.PublicPgn.apply)
-        else studyPgnDump.ofFirstChapter(s, fullFlags).map2(LpvEmbed.PublicPgn.apply)
-
 private final class LpvGameRegex(domain: NetDomain):
 
   private val quotedDomain = java.util.regex.Pattern.quote(domain.value)
@@ -135,5 +104,4 @@ private final class LpvGameRegex(domain: NetDomain):
   val params = raw"""(?:#(?:last|\d{1,4}))?"""
 
   val gamePgnRe = raw"^(/(\w{8})(?:\w{4}|/(?:white|black))?$params)$$".r
-  val chapterPgnRe = raw"^(/study/(?:embed/)?(?:\w{8})/(\w{8})$params)$$".r
-  val studyPgnRe = raw"^(/study/(?:embed/)?(\w{8})$params)$$".r
+  // chapterPgnRe and studyPgnRe removed with the study and relay modules (unit 3.3).

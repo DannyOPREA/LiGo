@@ -7,7 +7,6 @@ import { path as treePath } from 'lib/tree/tree';
 import type { TreeNode } from 'lib/tree/types';
 
 import type AnalyseCtrl from '../ctrl';
-import type { OpeningData } from '../explorer/interfaces';
 import { evalSwings } from '../nodeFinder';
 
 export interface RetroCtrl {
@@ -43,15 +42,12 @@ interface Retrospection {
   fault: NodeWithPath;
   prev: NodeWithPath;
   solution: NodeWithPath;
-  openingUcis: Uci[];
 }
 
 type Feedback = 'find' | 'eval' | 'win' | 'fail' | 'view' | 'offTrack';
 
 export function make(root: AnalyseCtrl, color: Color): RetroCtrl {
-  const game = root.data.game;
   let candidateNodes: TreeNode[] = [];
-  const explorerCancelPlies: number[] = [];
   let solvedPlies: number[] = [];
   const current = prop<Retrospection | null>(null);
   const feedback = prop<Feedback>('find');
@@ -66,10 +62,7 @@ export function make(root: AnalyseCtrl, color: Color): RetroCtrl {
 
   function findNextNode(): TreeNode | undefined {
     const colorModulo = color === 'white' ? 1 : 0;
-    candidateNodes = evalSwings(
-      root.mainline,
-      n => n.ply % 2 === colorModulo && !explorerCancelPlies.includes(n.ply),
-    );
+    candidateNodes = evalSwings(root.mainline, n => n.ply % 2 === colorModulo);
     return candidateNodes.find(n => !isPlySolved(n.ply));
   }
 
@@ -97,32 +90,7 @@ export function make(root: AnalyseCtrl, color: Color): RetroCtrl {
         node: solutionNode,
         path: prevPath + solutionNode.id,
       },
-      openingUcis: [],
     });
-    // fetch opening explorer moves
-    if (
-      game.variant.key === 'standard' &&
-      game.division &&
-      (!game.division.middle || fault.node.ply < game.division.middle)
-    ) {
-      root.explorer
-        .fetchMasterOpening(prev.node.fen)
-        .then((res: OpeningData) => {
-          const cur = current()!;
-          const ucis: Uci[] = [];
-          res.moves.forEach(m => {
-            if (m.white + m.draws + m.black > 1) ucis.push(m.uci);
-          });
-          if (ucis.includes(fault.node.uci!)) {
-            explorerCancelPlies.push(fault.node.ply);
-            setTimeout(jumpToNext, 100);
-          } else {
-            cur.openingUcis = ucis;
-            current(cur);
-          }
-        })
-        .catch(() => {});
-    }
     root.userJump(prev.path);
     safeRedraw();
   }
@@ -141,7 +109,7 @@ export function make(root: AnalyseCtrl, color: Color): RetroCtrl {
       return;
     }
     if (isSolving() && cur.fault.node.ply === node.ply) {
-      if (cur.openingUcis.includes(node.uci!) || node.san?.endsWith('#') || node.comp) onWin(); // found in opening explorer, checkmate ends the game, or comp solution line
+      if (node.san?.endsWith('#') || node.comp) onWin(); // checkmate ends the game, or comp solution line
       else if (node.eval) onFail(); // the move that was played in the game
       else {
         feedback('eval');

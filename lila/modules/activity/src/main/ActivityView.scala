@@ -13,14 +13,12 @@ case class ActivityView(
     storm: Option[Storm] = None,
     racer: Option[Racer] = None,
     streak: Option[Streak] = None,
-    practice: Option[Map[lila.core.practice.Study, Int]] = None,
     patron: Option[Patron] = None,
     forumPosts: Option[Map[ForumTopicMini, List[ForumPostMini]]] = None,
     ublogPosts: Option[List[UblogPost.LightPost]] = None,
     corresMoves: Option[(Int, List[LightPov])] = None,
     corresEnds: Option[Map[PerfKey, (Score, List[LightPov])]] = None,
     follows: Option[Follows] = None,
-    studies: Option[List[lila.core.study.IdName]] = None,
     teams: Option[Teams] = None,
     stream: Boolean = false,
     signup: Boolean = false
@@ -31,13 +29,11 @@ case class ActivityView(
     storm,
     racer,
     streak,
-    practice,
     patron,
     forumPosts,
     ublogPosts,
     corresMoves,
     corresEnds,
     follows,
-    studies,
     teams
   ).forall(_.isEmpty)

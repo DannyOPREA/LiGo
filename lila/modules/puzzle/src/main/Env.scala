@@ -84,8 +84,6 @@ final class Env(
 
   val history = wire[PuzzleHistoryApi]
 
-  val streak = wire[PuzzleStreakApi]
-
   val complete = wire[PuzzleComplete]
 
   private val tagger = wire[PuzzleTagger]
@@ -99,12 +97,6 @@ final class Env(
         logger.warn("daily", e)
         none
       }
-
-  def streakJsonAndPuzzle(using Option[Me], Translate) =
-    given Perf = lila.rating.Perf.default
-    streak.apply.flatMapz { case PuzzleStreak(ids, puzzle) =>
-      jsonView.streak(puzzle = puzzle, ids = ids).dmap(some)
-    }
 
   lila.common.Cli.handle():
     case "puzzle" :: "opening" :: "recompute" :: "all" :: Nil =>

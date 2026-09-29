@@ -99,17 +99,11 @@ final class UserShow(helpers: Helpers, bits: UserBits):
       ),
       p(tro.whatNowSuggestions()),
       ul(
-        li(a(href := routes.Learn.index)(tro.learnChessRules())),
         li(a(href := routes.Puzzle.home)(tro.improveWithChessTacticsPuzzles())),
         li(a(href := s"${routes.Lobby.home}#ai")(tro.playTheArtificialIntelligence())),
         li(a(href := s"${routes.Lobby.home}#hook")(tro.playOpponentsFromAroundTheWorld())),
         li(a(href := routes.User.list)(tro.followYourFriendsOnLichess())),
-        li(
-          tro.learnFromXAndY(
-            a(href := routes.Study.allDefault())(trans.site.toStudy()),
-            a(href := routes.Video.index)(trans.learn.videos())
-          )
-        ),
+        // "learn from study and video" suggestion removed with the study module (unit 3.3).
         li(a(href := routes.Pref.form("display"))(tro.configureLichess())),
         li(tro.exploreTheSiteAndHaveFun())
       )

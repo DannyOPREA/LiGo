@@ -4,13 +4,76 @@
 - lila (Sept 2026): Scala 3.8.4, sbt 2.0.9, JDK 21, Pekko, ReactiveMongo, liplay; UI on Node ≥ 24, pnpm 12, TypeScript 7, esbuild, oxlint/oxfmt, stylelint, snabbdom 3.5.1 (2026-09-25, planning research).
 - lila-docker states lila needs ~12 GB RAM to build; `.sbtopts` uses -Xmx8g (2026-09-25, planning research).
 - lila gets ~10k commits a year, so staying mergeable isn't feasible; hard fork + monthly review (ADR 0001).
-- The baseline to keep: lila compile has 17 `[warn]` lines and 0 errors; `/storm` returns 500 on an empty DB (upstream behaviour). New warnings or 5xx responses after LiGo changes are ours (2026-09-26, unit 0.2).
+- The baseline to keep: lila compile has 17 `[warn]` lines and 0 errors; `/storm` returned 500 on an empty DB (upstream behaviour; /storm is gone since unit 3.4). New warnings or 5xx responses after LiGo changes are ours (2026-09-26, unit 0.2).
 - Snapshot imports copy only Git LFS *pointers*; drop inherited `filter=lfs` attributes or clones break for git-lfs users (ADR 0009) (2026-09-26, unit 0.2).
 - Claude Code auto-loads `lila/AGENTS.md` (lichess's own agent guide) while LiGo has no CLAUDE.md; it doesn't govern LiGo (2026-09-26, unit 0.2).
 - Import with `git archive` and diff `git ls-files` against upstream afterwards: upstream tracks some files its own .gitignore ignores (2026-09-26, unit 0.2).
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-29 · 3.4 · Remove chess training and openings
+- Did: deleted lila modules `storm`, `racer`, `coordinate`, `learn`, `opening`, `explorer` and
+  `evalCache`, their controllers, views and routes, and puzzle streak mode inside `puzzle` (the
+  streak page and API, `PuzzleStreakApi`, the streak fields of the round form, the Storm/Racer/Streak
+  run events in `lila.core.misc.puzzle`). Removed the class "learn" progress tab, the masters-game
+  import redirect, the `/api/cloud-eval` endpoint and its rate limit, the opening explorer entry in
+  the user menu and the keyboard help, and the menu, profile and Patron-page links. lila-ws lost the
+  racer actor and channel, `StormSign`, the whole `evalCache` package (evalGet/evalPut/evalGetMulti)
+  and its two tests, and the `yolo` Mongo connection only it used. Browser: `ui/storm`, `ui/racer`,
+  `ui/coordinateTrainer`, `ui/learn`, `ui/opening`, `ui/lib`'s puzzle-run code, streak mode in
+  `ui/puzzle`, the explorer and cloud-eval code in `ui/analyse`; `public/images/learn` and the
+  racer-car and storm fonts; `@fnando/sparkline` and its types left the lockfile.
+- Worked: the 3.2/3.3 recipe; lila-ws and UI done by two workers in parallel while the server was
+  stripped in the same checkout (disjoint paths, no commits by workers).
+- Didn't work / dead ends: `sbt test` in lila-ws prints "Total 0" when nothing changed (testQuick);
+  `sbt "testOnly *"` gives the real count. PR #33's lila CI job hung silently for an hour after
+  "set current project" (as main's 3.2 run did) and passed on one re-run.
+- Lessons: a silent lila CI hang right after project load has happened twice; it isn't the diff.
+- Decisions: fishnet's cached-eval lookup is stubbed to "none" in app/Env.scala until 3.5 removes
+  fishnet; tutor's opening links point at the analysis board until 3.5; activity and profile keep
+  stored storm/racer/streak scores (ADR 0019: stored fields stay) and show old ones without links;
+  the explorer/tablebase endpoints in config stay (fishnet and the CSP still read them until 3.5).
+- Verified by Claude: see the PR.
+- Follow-ups: the `Racer.Write` OAuth scope and storm/racer monitoring keys are dead (3.8 with the
+  other dead scopes); `ui/analyse` practice mode no longer asks the tablebase and learn-from-mistakes
+  no longer skips masters' moves (both go with the engine in 3.5); the Storm glyph stays in the
+  icon font; storm/racer/learn i18n keys stay with the rest of the i18n clean-up. Also:
+  `ui/analyse`'s fork-variation hover arrow went with the explorer hover it relied on (3.5 or
+  later, with the engine); the Patron page (3.7), recap slides (3.7) and SitePages still mention
+  chess basics, Storm/Racer/Streak, openings or the explorer; `UserApi.addPuzRun` and the streak
+  and cloud-eval monitoring keys are dead code; an old cached puzzle page that still sends
+  `streakId` now gets a normal rated round.
+- Review fixes: the menu's "Learn" heading no longer opens the coach list for kid accounts (it
+  opens the first link the viewer may see, or the section is left out); profiles still show old
+  storm/racer/streak scores, without links.
+
+### 2026-09-28 · 3.3 · Remove studies and broadcasts
+- Did: deleted lila modules `study`, `relay`, `practice`, `studySearch`, `fide`, `title` and the
+  core interfaces `lila.core.{relay,fide,practice}` (`lila.core.study` stays: irc, push, timeline,
+  notify and the router's path bindables still name its types); their controllers, views and
+  routes; the relay-only "Public chats" mod page. Kept modules (activity, api, mod, report, user,
+  web, coach, clas, game, timeline) lost their hooks. lila-ws lost the study actor, relay crowd,
+  study Redis channel, IPC messages and Mongo lookups. Browser: `ui/fide` and the study, relay,
+  gamebook and practice-module code in `ui/analyse` and `ui/bits` deleted; "continue as a study"
+  buttons removed from analysis, editor and puzzle; `public/fide` deleted, and with the
+  /practice page its CSS and `public/images/practice` (CC BY 3.0 icons, so COPYING.md no longer
+  lists them). The Public chats page's UI, the relay stats chart and orphaned CSS went too;
+  lila-ws keeps upstream's rule that rooms over 20 users send only a head count.
+- Worked: the 3.2 recipe (delete, compile, strip callers, keep stored fields). `PublicFideIdOf`,
+  which game and api still need, is a stub that returns no FIDE id.
+- Didn't work / dead ends: running the removal in a git worktree broke lila-ws's build (sbt-git's
+  JGit can't read a linked worktree's `.git`); the work moved back to the main checkout and the
+  build.sbt workaround was dropped.
+- Lessons: don't run sbt builds from a git worktree here; use the main checkout.
+- Decisions: stub FIDE ids rather than touch game/api; remove the Public chats mod page (it only
+  listed broadcast chats); keep `lila.core.study` until its remaining users go (3.6/3.7/3.13).
+- Verified by Claude: see the PR (verify.sh, UI build, lila-ws `sbt check` and tests, site smoke).
+- Follow-ups: study/relay i18n keys; stale study/broadcast texts in coach, FAQ, game and dev pages
+  and the broadcast-embed section of SitePages (3.8); dead prefs, permissions and OAuth scopes;
+  unused analyse npm deps (tagify, sortablejs, debounce-promise, shepherd.js; a dependency change);
+  the data export no longer includes title requests; notify's study-invite and timeline's study entries render
+  nothing for old data and go with 3.13.
 
 ### 2026-09-28 · 3.2 · Remove tournaments and events
 - Did: deleted lila modules `tournament`, `swiss`, `simul`, `gathering`, `event` and core

@@ -42,15 +42,11 @@ export const bind = (ctrl: AnalyseCtrl) => {
     })
     .bind('shift+i', () => ctrl.settings.set('inline', !ctrl.settings.inline));
   kbd.bind('space', () => {
-    const gb = ctrl.gamebookPlay();
-    if (gb) gb.onSpace();
-    else if (ctrl.practice || ctrl.study?.practice || ctrl.retro?.isSolving()) return undefined;
+    if (ctrl.practice || ctrl.retro?.isSolving()) return undefined;
     else if (ctrl.cevalEnabled()) ctrl.playBestMove();
     else if (ctrl.isCevalAllowed() && ctrl.ceval.analysable) ctrl.cevalEnabled(!ctrl.cevalEnabled());
     return undefined;
   });
-
-  if (ctrl.study?.practice) return;
 
   kbd
     .bind('h', () => {
@@ -70,11 +66,7 @@ export const bind = (ctrl: AnalyseCtrl) => {
     .bind('z', () => ctrl.settings.set('showStaticAnalysis', !ctrl.settings.showStaticAnalysis))
     .bind('a', () => ctrl.settings.set('showBestMoveArrows', !ctrl.settings.showBestMoveArrows))
     .bind('v', () => ctrl.settings.set('showVariationArrows', !ctrl.settings.showVariationArrows))
-    .bind('x', () => ctrl.toggleThreatMode())
-    .bind('e', () => {
-      ctrl.toggleExplorer();
-      ctrl.redraw();
-    });
+    .bind('x', () => ctrl.toggleThreatMode());
   kbd
     .bind(['shift+left', 'shift+k'], () => {
       ctrl.navigate.previousBranch();
@@ -92,20 +84,12 @@ export const bind = (ctrl: AnalyseCtrl) => {
       ctrl.userJumpIfCan(ctrl.idbTree.stepLine(ctrl.path, 'prev'), true);
       ctrl.redraw();
     });
-
-  //First explorer move
-  kbd.bind('shift+space', () => {
-    const move = document
-      .querySelector('.explorer-box:not(.loading) tbody tr[data-uci]')
-      ?.getAttribute('data-uci');
-    if (move) ctrl.explorerMove(move);
-  });
 };
 
 export const view = (ctrl: AnalyseCtrl): VNode =>
   snabDialog({
     class: 'help.keyboard-help',
-    htmlUrl: xhr.url('/analysis/help', { study: !!ctrl.study }),
+    htmlUrl: xhr.url('/analysis/help', { study: false }),
     modal: true,
     easyClose: 'clickOutside',
     onClose() {

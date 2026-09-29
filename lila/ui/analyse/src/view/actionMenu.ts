@@ -6,7 +6,6 @@ import { domDialog, bind, dataIcon, hl, type VNode } from 'lib/view';
 
 import type { AutoplayDelay } from '@/autoplay';
 import type AnalyseCtrl from '@/ctrl';
-import * as pgnExport from '@/pgnExport';
 
 import { showSettingsDialog } from './settingsView';
 
@@ -50,32 +49,6 @@ function autoplayButtons(ctrl: AnalyseCtrl): VNode {
         String(i18n.site[speed.name]),
       );
     }),
-  );
-}
-
-const hiddenInput = (name: string, value: string) => hl('input', { attrs: { type: 'hidden', name, value } });
-
-function studyButton(ctrl: AnalyseCtrl) {
-  if (ctrl.study || ctrl.ongoing) return undefined;
-  return hl(
-    'form',
-    {
-      attrs: { method: 'post', action: '/study/as' },
-      hook: bind('submit', e => {
-        const pgnInput = (e.target as HTMLElement).querySelector('input[name=pgn]') as HTMLInputElement;
-        if (pgnInput && (ctrl.synthetic || ctrl.idbTree.movesDirty)) {
-          pgnInput.value = pgnExport.renderFullTxt(ctrl);
-        }
-      }),
-    },
-    [
-      !ctrl.synthetic && hiddenInput('gameId', ctrl.data.game.id),
-      hiddenInput('pgn', ''),
-      hiddenInput('orientation', ctrl.bottomColor()),
-      hiddenInput('variant', ctrl.data.game.variant.key),
-      hiddenInput('fen', ctrl.tree.root.fen),
-      hl('button', { attrs: { type: 'submit', 'data-icon': licon.StudyBoard } }, i18n.site.toStudy),
-    ],
   );
 }
 
@@ -142,7 +115,6 @@ export function view(ctrl: AnalyseCtrl): VNode {
           },
           i18n.site.continueFromHere,
         ),
-      studyButton(ctrl),
       (ctrl.idbTree.movesDirty || ctrl.idbTree.hasLocalCeval) &&
         hl(
           'a',

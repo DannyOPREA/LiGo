@@ -1,9 +1,7 @@
 package lila.ws
 package ipc
 
-import cats.data.NonEmptyList
-import chess.format.{ Fen, Uci, UciPath }
-import chess.variant.Variant
+import chess.format.Uci
 import chess.{ Centis, Color }
 import play.api.libs.json.*
 
@@ -13,9 +11,7 @@ sealed trait ClientOut extends ClientMsg
 
 sealed trait ClientOutSite extends ClientOut
 sealed trait ClientOutLobby extends ClientOut
-sealed trait ClientOutStudy extends ClientOut
 sealed trait ClientOutRound extends ClientOut
-sealed trait ClientOutRacer extends ClientOut
 
 object ClientOut:
 
@@ -29,24 +25,6 @@ object ClientOut:
   case object Notified extends ClientOutSite
 
   case class FollowingOnline(subscribe: Boolean) extends ClientOutSite
-
-  case class EvalGet(
-      fen: Fen.Full,
-      variant: Variant,
-      multiPv: MultiPv,
-      path: UciPath,
-      up: Boolean
-  ) extends ClientOutSite
-
-  case class EvalPut(
-      fen: Fen.Full,
-      variant: Variant,
-      pvs: NonEmptyList[evalCache.EvalCacheEntry.Pv],
-      knodes: evalCache.Knodes,
-      depth: Depth
-  ) extends ClientOutSite
-
-  case class EvalGetMulti(fens: List[Fen.Full], variant: Variant) extends ClientOutSite
 
   case class MsgType(dest: User.Id) extends ClientOutSite
 
@@ -64,9 +42,7 @@ object ClientOut:
   case class LobbyJoin(payload: JsValue) extends ClientOutLobby
   case class LobbyForward(payload: JsValue) extends ClientOutLobby
 
-  // study
-
-  case class StudyForward(payload: JsValue) extends ClientOutStudy
+  // study (StudyForward) removed with the study module (unit 3.3).
 
   // round
 
@@ -89,16 +65,6 @@ object ClientOut:
 
   case object ChallengePing extends ClientOut
 
-  // storm
-
-  case class StormKey(key: String, pad: String) extends ClientOutSite
-
-  // racer
-
-  case class RacerScore(score: Int) extends ClientOutRacer
-  case object RacerJoin extends ClientOutRacer
-  case object RacerStart extends ClientOutRacer
-
   // impl
 
   def parse(str: String): Try[ClientOut] =
@@ -119,9 +85,6 @@ object ClientOut:
               case "moveLat" => Some(MoveLat)
               case "notified" => Some(Notified)
               case "following_onlines" => Some(FollowingOnline(o.boolean("d").getOrElse(true)))
-              case "evalGet" => o.obj("d").flatMap(evalCache.EvalCacheJsonHandlers.readGet)
-              case "evalPut" => o.obj("d").flatMap(evalCache.EvalCacheJsonHandlers.readPut)
-              case "evalGetMulti" => o.obj("d").flatMap(evalCache.EvalCacheJsonHandlers.readGetMulti)
               case "msgType" => o.get[User.Id]("d").map(MsgType.apply)
               case "msgSend" | "msgRead" => Some(UserForward(o))
               // lobby
@@ -129,14 +92,8 @@ object ClientOut:
               case "join" => Some(LobbyJoin(o))
               case "cancel" | "joinSeek" | "cancelSeek" | "poolIn" | "poolOut" | "hookIn" | "hookOut" =>
                 Some(LobbyForward(o))
-              // study
-              case "anaMove" | "anaDrop" | "like" | "setPath" | "deleteNode" | "promote" | "forceVariation" |
-                  "setRole" | "kick" | "leave" | "shapes" | "addChapter" | "setChapter" | "editChapter" |
-                  "descStudy" | "descChapter" | "deleteChapter" | "clearAnnotations" | "sortChapters" |
-                  "editStudy" | "setTag" | "setComment" | "deleteComment" | "setGamebook" | "toggleGlyph" |
-                  "explorerGame" | "requestAnalysis" | "invite" | "relaySync" | "setTopics" |
-                  "clearVariations" =>
-                Some(StudyForward(o))
+              // study forwarding ("anaMove", "setPath", "addChapter", etc.) removed with the
+              // study module (unit 3.3).
               // round
               case "move" =>
                 for
@@ -178,18 +135,6 @@ object ClientOut:
                   text <- data.str("text")
                 yield ChatTimeout(userId, reason, text)
               case "ping" => Some(ChallengePing)
-              // storm
-              case "sk1" =>
-                o.str("d").flatMap { s =>
-                  s.split('!') match
-                    case Array(key, pad) => Some(StormKey(key, pad))
-                    case _ => None
-                }
-              // racer
-              case "racerScore" => o.int("d").map(RacerScore.apply)
-              case "racerJoin" => Some(RacerJoin)
-              case "racerStart" => Some(RacerStart)
-
               case "opening" | "anaDests" => Some(Ignore)
               case "wrongHole" => Some(Ignore)
               case _ => None

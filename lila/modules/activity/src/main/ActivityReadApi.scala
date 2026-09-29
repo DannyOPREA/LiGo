@@ -10,10 +10,8 @@ import lila.mon.extensions.*
 final class ActivityReadApi(
     coll: AsyncCollFailingSilently,
     gameRepo: lila.core.game.GameRepo,
-    getPracticeStudies: lila.core.practice.GetStudies,
     forumPostApi: lila.core.forum.ForumPostApi,
     ublogApi: lila.core.ublog.UblogApi,
-    studyApi: lila.core.study.StudyApi,
     teamApi: lila.core.team.TeamApi,
     lightUserApi: lila.core.user.LightUserApi
 )(using Executor):
@@ -29,18 +27,16 @@ final class ActivityReadApi(
           .list(Activity.recentNb)
       ).dmap(_.filterNot(_.isEmpty))
         .mon(lila.mon.user.segment("activity.raws"))
-    practiceStudies <- activities
-      .exists(_.practice.isDefined)
-      .optionFu(getPracticeStudies())
     views <- activities.sequentially: a =>
-      one(practiceStudies, a).mon(lila.mon.user.segment("activity.view"))
+      one(a).mon(lila.mon.user.segment("activity.view"))
     _ <- preloadAll(views)
   yield addSignup(u.createdAt, views)
 
   private def preloadAll(views: Seq[ActivityView]) =
     lightUserApi.preloadMany(views.flatMap(_.follows.so(_.allUserIds)))
 
-  private def one(practiceStudies: Option[lila.core.practice.Studies], a: Activity): Fu[ActivityView] =
+  // practice and study activity entries removed with the practice and study modules (unit 3.3).
+  private def one(a: Activity): Fu[ActivityView] =
     for
       allForumPosts <- a.forumPosts.traverse: p =>
         forumPostApi
@@ -58,13 +54,6 @@ final class ActivityReadApi(
             .liveLightsByIds(p.value)
             .mon(lila.mon.user.segment("activity.ublogs"))
         .dmap(_.filter(_.nonEmpty))
-      practice =
-        for
-          p <- a.practice
-          studies <- practiceStudies
-        yield p.value.flatMap { (studyId, nb) =>
-          studies(studyId).map(_ -> nb)
-        }.toMap
       forumPostView = forumPosts
         .map: p =>
           p.groupBy(_.topic)
@@ -83,10 +72,6 @@ final class ActivityReadApi(
               .mapValues: groupedPovs =>
                 (Score.make(groupedPovs) -> groupedPovs)
               .toMap
-      studies <- a.studies
-        .traverse: studies =>
-          studyApi.publicIdNames(studies.value)
-        .dmap(_.filter(_.nonEmpty))
     yield ActivityView(
       interval = a.interval,
       games = a.games,
@@ -94,14 +79,12 @@ final class ActivityReadApi(
       storm = a.storm,
       racer = a.racer,
       streak = a.streak,
-      practice = practice,
       forumPosts = forumPostView,
       ublogPosts = ublogPosts,
       patron = a.patron,
       corresMoves = corresMoves,
       corresEnds = corresEnds,
       follows = a.follows,
-      studies = studies,
       teams = a.teams,
       stream = a.stream
     )

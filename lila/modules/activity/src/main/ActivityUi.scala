@@ -24,7 +24,6 @@ final class ActivityUi(helpers: Helpers):
             h2(semanticDate(a.interval.start)),
             div(cls := "entries")(
               a.patron.map(renderPatron),
-              a.practice.map(renderPractice),
               a.puzzles.map(renderPuzzles(u)),
               a.storm.map(renderStorm),
               a.racer.map(renderRacer),
@@ -35,7 +34,6 @@ final class ActivityUi(helpers: Helpers):
               a.corresMoves.map(renderCorresMoves),
               a.corresEnds.map(renderCorresEnds),
               a.follows.map(renderFollows),
-              a.studies.map(renderStudies),
               a.teams.map(renderTeams),
               a.stream.option(renderStream(u.user)),
               a.signup.option(renderSignup)
@@ -57,26 +55,6 @@ final class ActivityUi(helpers: Helpers):
       )
     )
 
-  private def renderPractice(p: Map[lila.core.practice.Study, Int])(using Context) =
-    val ps = p.toSeq.sortBy(-_._2)
-    entryTag(
-      iconTag(Icon.Bullseye),
-      div(
-        ps.headOption.map(onePractice),
-        ps match
-          case _ :: rest if rest.nonEmpty => subTag(rest.map(onePractice))
-          case _ => emptyFrag
-      )
-    )
-
-  private def onePractice(tup: (lila.core.practice.Study, Int))(using Context) =
-    val (study, nb) = tup
-    val href = routes.Practice.show("-", study.slug, study.id)
-    frag(
-      trans.activity.practicedNbPositions.plural(nb, nb, a(st.href := href)(study.name)),
-      br
-    )
-
   private def renderPuzzles(u: UserWithPerfs)(p: Puzzles)(using ctx: Context) =
     entryTag(
       iconTag(Icon.ArcheryTarget),
@@ -92,7 +70,7 @@ final class ActivityUi(helpers: Helpers):
       iconTag(Icon.Storm),
       div(
         trans.storm.playedNbRunsOfPuzzleStorm
-          .plural(s.runs, s.runs.localize, a(href := routes.Storm.home)("Puzzle Storm"))
+          .plural(s.runs, s.runs.localize, "Puzzle Storm")
       ),
       scoreTag(winTag(trans.storm.highscoreX(strong(s.score))))
     )
@@ -102,7 +80,7 @@ final class ActivityUi(helpers: Helpers):
       iconTag(Icon.FlagChessboard),
       div(
         trans.storm.playedNbRunsOfPuzzleStorm
-          .plural(s.runs, s.runs.localize, a(href := routes.Racer.home)("Puzzle Racer"))
+          .plural(s.runs, s.runs.localize, "Puzzle Racer")
       ),
       scoreTag(winTag(trans.storm.highscoreX(strong(s.score))))
     )
@@ -112,7 +90,7 @@ final class ActivityUi(helpers: Helpers):
       iconTag(Icon.ArrowThruApple),
       div(
         trans.storm.playedNbRunsOfPuzzleStorm
-          .plural(s.runs, s.runs.localize, a(href := routes.Puzzle.streak)("Puzzle Streak"))
+          .plural(s.runs, s.runs.localize, "Puzzle Streak")
       ),
       scoreTag(winTag(trans.storm.highscoreX(strong(s.score))))
     )
@@ -231,17 +209,6 @@ final class ActivityUi(helpers: Helpers):
             )
           )
         }
-      )
-    )
-
-  private def renderStudies(studies: List[lila.core.study.IdName])(using Context) =
-    entryTag(
-      iconTag(Icon.StudyBoard),
-      div(
-        trans.activity.createdNbStudies.pluralSame(studies.size),
-        subTag:
-          studies.map: s =>
-            frag(a(href := routes.Study.show(s.id))(s.name), br)
       )
     )
 

@@ -218,7 +218,8 @@ final class CoachUi(helpers: Helpers)(
             p(
               trc.areYouCoach(trc.nmOrFideTitle()),
               br,
-              if !ctx.me.exists(_.hasTitle) then a(href := routes.TitleVerify.index)(trc.confirmTitle())
+              // title verification link removed with the title module (unit 3.3).
+              if !ctx.me.exists(_.hasTitle) then trc.confirmTitle()
               else trc.sendApplication(a(href := s"mailto:${contactEmail.value}")(contactEmail.value))
             )
           ),

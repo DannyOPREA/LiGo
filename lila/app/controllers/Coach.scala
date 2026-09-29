@@ -4,7 +4,6 @@ import play.api.mvc.*
 
 import lila.app.{ *, given }
 import lila.coach.{ Coach as CoachModel, CoachPager, CoachProfileForm, allFlags }
-import lila.study.ui.StudyFormat
 import lila.user.Flags
 import lila.core.user.FlagCode
 
@@ -13,7 +12,7 @@ final class Coach(env: Env) extends LilaController(env):
   import env.coach.api
 
   def homeLang =
-    LangPage(routes.Learn.index)(searchResults("all", CoachPager.Order.Login.key, allFlags, 1))
+    LangPage(routes.Coach.all(1))(searchResults("all", CoachPager.Order.Login.key, allFlags, 1))
 
   def all(page: Int) = Open:
     searchResults("all", CoachPager.Order.Login.key, allFlags, page)
@@ -36,13 +35,10 @@ final class Coach(env: Env) extends LilaController(env):
   def show(username: UserStr) = Open:
     Found(api.find(username)): c =>
       WithVisibleCoach(c):
+        // study removed in unit 3.3: a coach's featured studies no longer render.
         for
-          stu <- env.study.api.publicByIds(c.coach.profile.studyIds)
-          studies <-
-            given StudyFormat = StudyFormat.card
-            env.study.pager.withChaptersAndLiking(4)(stu)
           posts <- env.ublog.api.latestPosts(lila.ublog.UblogBlog.Id.User(c.user.id), 4)
-          page <- renderPage(views.coach.show(c, studies, posts))
+          page <- renderPage(views.coach.show(c, posts))
         yield Ok(page)
 
   private def WithVisibleCoach(c: CoachModel.WithUser)(f: Fu[Result])(using ctx: Context) =

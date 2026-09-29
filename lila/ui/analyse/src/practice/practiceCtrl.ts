@@ -1,15 +1,14 @@
 import { makeSan } from 'chessops/san';
 import { parseUci } from 'chessops/util';
 
-import { defined, prop, type Prop, requestIdleCallbackSafe } from 'lib';
+import { prop, type Prop, requestIdleCallbackSafe } from 'lib';
 import { api } from 'lib/api';
 import { winningChances, type CustomCeval } from 'lib/ceval';
 import { storedBooleanPropWithEffect } from 'lib/storage';
 import { path as treePath } from 'lib/tree/tree';
-import type { TablebaseHit, TreeNode, TreePath } from 'lib/tree/types';
+import type { TreeNode, TreePath } from 'lib/tree/types';
 
 import type AnalyseCtrl from '@/ctrl';
-import { tablebaseGuaranteed } from '@/explorer/explorerCtrl';
 import { detectThreefold } from '@/nodeFinder';
 
 import { renderCustomPearl, renderCustomStatus } from './practiceView';
@@ -56,8 +55,7 @@ export interface PracticeCtrl {
 
 export function make(root: AnalyseCtrl): PracticeCtrl {
   const masteryMode = storedBooleanPropWithEffect('analyse.practice-hard-mode', false, root.redraw);
-  const variant = root.data.game.variant.key,
-    running = prop(true),
+  const running = prop(true),
     comment = prop<Comment | null>(null),
     hovering = prop<{ uci: string } | null>(null),
     hinting = prop<Hinting | null>(null),
@@ -70,7 +68,7 @@ export function make(root: AnalyseCtrl): PracticeCtrl {
     };
 
   function commentable(node: TreeNode): boolean {
-    if (node.tbhit || node.outcome()) return true;
+    if (node.outcome()) return true;
     if (!node.ceval) return false;
     if (api.overrides.practiceCommentReady)
       return api.overrides.practiceCommentReady(structuredClone(node.ceval));
@@ -89,15 +87,7 @@ export function make(root: AnalyseCtrl): PracticeCtrl {
       : Boolean(bestmove || nodes >= 600_000 || cloud || millis > 2000);
   }
 
-  const tbhitToEval = (hit: TablebaseHit | undefined | null) =>
-    hit &&
-    (hit.winner
-      ? {
-          mate: hit.winner === 'white' ? 10 : -10,
-        }
-      : { cp: 0 });
-
-  const nodeBestUci = (node: TreeNode): Uci | undefined => node.tbhit?.best || node.ceval?.pvs[0].moves[0];
+  const nodeBestUci = (node: TreeNode): Uci | undefined => node.ceval?.pvs[0].moves[0];
 
   function makeComment(prev: TreeNode, node: TreeNode, path: TreePath): Comment {
     let verdict: Verdict, best: Uci | undefined;
@@ -107,11 +97,10 @@ export function make(root: AnalyseCtrl): PracticeCtrl {
     else {
       const isFiftyMoves = node.fen.split(' ')[4] === '100';
       const nodeEval: EvalScore =
-        tbhitToEval(node.tbhit) ||
-        (node.threefold || (outcome && !outcome.winner) || isFiftyMoves
+        node.threefold || (outcome && !outcome.winner) || isFiftyMoves
           ? { cp: 0 }
-          : (node.ceval as EvalScore));
-      const prevEval: EvalScore = tbhitToEval(prev.tbhit) || prev.ceval!;
+          : (node.ceval as EvalScore);
+      const prevEval: EvalScore = prev.ceval!;
       const shift = -winningChances.povDiff(root.bottomColor(), nodeEval, prevEval);
 
       best = nodeBestUci(prev);
@@ -153,7 +142,6 @@ export function make(root: AnalyseCtrl): PracticeCtrl {
       comment(null);
       return root.redraw();
     }
-    if (tablebaseGuaranteed(variant, node.fen) && !defined(node.tbhit)) return;
     if (isMyTurn()) {
       const h = hinting();
       if (h) {
@@ -184,27 +172,12 @@ export function make(root: AnalyseCtrl): PracticeCtrl {
     }
   }
 
-  function checkCevalOrTablebase() {
-    if (tablebaseGuaranteed(variant, root.node.fen))
-      root.explorer.fetchTablebaseHit(root.node.fen).then(
-        hit => {
-          if (hit && root.node.fen === hit.fen) root.node.tbhit = hit;
-          checkCeval();
-        },
-        () => {
-          if (!defined(root.node.tbhit)) root.node.tbhit = null;
-          checkCeval();
-        },
-      );
-    else checkCeval();
-  }
-
   function resume() {
     running(true);
-    checkCevalOrTablebase();
+    checkCeval();
   }
 
-  requestIdleCallbackSafe(checkCevalOrTablebase, 800);
+  requestIdleCallbackSafe(checkCeval, 800);
 
   return {
     onCeval: checkCeval,
@@ -212,7 +185,7 @@ export function make(root: AnalyseCtrl): PracticeCtrl {
       played(false);
       hinting(null);
       detectThreefold(root.nodeList, root.node);
-      checkCevalOrTablebase();
+      checkCeval();
     },
     isMyTurn,
     comment,

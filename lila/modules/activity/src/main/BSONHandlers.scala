@@ -72,8 +72,6 @@ private object BSONHandlers:
 
   given BSONHandler[Learn] = typedMapHandler[LearnStage, Int].as(Learn(_), _.value)
 
-  given BSONHandler[Practice] = typedMapHandler[StudyId, Int].as(Practice(_), _.value)
-
   given BSONDocumentHandler[Corres] = Macros.handler
   given BSONHandler[Patron] = BSONIntegerHandler.as(Patron.apply, _.months)
 
@@ -101,12 +99,11 @@ private object BSONHandlers:
     val racer = "c"
     val streak = "k"
     val learn = "l"
-    val practice = "r"
-    // "s" and "w" (simuls, swisses) are retired (unit 3.2): no longer written, still ignored on read.
+    // "s" and "w" (simuls, swisses) are retired (unit 3.2), and "r" and "t" (practice, studies)
+    // are retired (unit 3.3): no longer written, still ignored on read.
     val corres = "o"
     val patron = "a"
     val follows = "f"
-    val studies = "t"
     val teams = "e"
     val stream = "st"
 
@@ -124,11 +121,9 @@ private object BSONHandlers:
       racer = r.getO[Racer](racer),
       streak = r.getO[Streak](streak),
       learn = r.getO[Learn](learn),
-      practice = r.getO[Practice](practice),
       corres = r.getO[Corres](corres),
       patron = r.getO[Patron](patron),
       follows = r.getO[Follows](follows).filterNot(_.isEmpty),
-      studies = r.getO[Studies](studies),
       teams = r.getO[Teams](teams),
       stream = r.getD[Boolean](stream)
     )
@@ -143,11 +138,9 @@ private object BSONHandlers:
       racer -> o.racer,
       streak -> o.streak,
       learn -> o.learn,
-      practice -> o.practice,
       corres -> o.corres,
       patron -> o.patron,
       follows -> o.follows,
-      studies -> o.studies,
       teams -> o.teams,
       stream -> o.stream.option(true)
     )

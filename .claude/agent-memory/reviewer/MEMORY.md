@@ -8,7 +8,10 @@
 - [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, SGF parse, pass-window clicks, play() trust, stale deps line
 - [General review patterns](review-patterns-general.md) — transitive-dep licences, pipefail+find, docker caches, harness vacuity, pin-check order
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
-- [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, maxPlies draw, stopped-clock outoftime, fishnet re-send, handicap-1
+- [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, fishnet, handicap-1, scope creep, guest accept, farm-boost
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
+- [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, browser mismatch, verify gate
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
-- [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, autoscore mutates board, EPIPE, validate graders on stored maps, NaN gates
+- [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
+- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue changes, UPSTREAM gaps, decision-vs-code, kid guards, literal URLs (3.3–3.4)
+- [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files

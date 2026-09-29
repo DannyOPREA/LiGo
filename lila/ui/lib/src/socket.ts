@@ -204,7 +204,6 @@ class WsSocket {
     }
 
     const message = JSON.stringify(msg);
-    if (t === 'racerScore' && o.sign !== this._sign) return;
     if (t === 'move' && o.sign !== this._sign) {
       let stack: string;
       try {

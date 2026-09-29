@@ -168,7 +168,7 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
               trf.explainingEnPassant(
                 a(href := "https://en.wikipedia.org/wiki/En_passant")(trf.goodIntroduction()),
                 a(href := fideHandbookUrl)(trf.fideHandbook()),
-                a(href := s"${routes.Learn.index}#/15")(trf.lichessTraining())
+                trf.lichessTraining()
               )
             ),
             p(
@@ -224,9 +224,10 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
               li("Woman FIDE Master (WFM)"),
               li("Woman Candidate Master (WCM)")
             ),
+            // title verification form link removed with the title module (unit 3.3).
             p(
               trf.showYourTitle(
-                a(href := routes.TitleVerify.index)(trf.verificationForm()),
+                trf.verificationForm(),
                 a(href := "#lm")("Lichess Master (LM)")
               )
             )

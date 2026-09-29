@@ -56,13 +56,6 @@ object activities:
       def +(stage: LearnStage): Learn = a.value + (stage -> a.value.get(stage).fold(1)(1 +))
     given Zero[Learn] = Zero(Map.empty)
 
-  opaque type Practice = Map[StudyId, Int]
-  object Practice extends TotalWrapper[Practice, Map[StudyId, Int]]:
-    extension (a: Practice)
-      def +(studyId: StudyId): Practice =
-        a.value + (studyId -> a.value.get(studyId).fold(1)(1 +))
-    given Zero[Practice] = Zero(Map.empty)
-
   case class Corres(moves: Int, movesIn: List[GameId], end: List[GameId]):
     def add(gameId: GameId, moved: Boolean, ended: Boolean) =
       Corres(
@@ -93,11 +86,6 @@ object activities:
     def addOut(id: UserId) = copy(out = Some(~out + id))
     def isEmpty = in.forall(_.isEmpty) && out.forall(_.isEmpty)
     def allUserIds = in.so(_.ids) ::: out.so(_.ids)
-
-  opaque type Studies = List[StudyId]
-  object Studies extends TotalWrapper[Studies, List[StudyId]]:
-    extension (a: Studies) def +(s: StudyId): Studies = (s :: a.value).take(maxSubEntries)
-    given Zero[Studies] = Zero(Nil)
 
   opaque type Teams = List[TeamId]
   object Teams extends TotalWrapper[Teams, List[TeamId]]:

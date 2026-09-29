@@ -5,25 +5,13 @@ import type { ChatCtrl, ChatPlugin, ChatOpts } from 'lib/chat/interfaces';
 import type { Player, Status, Source, Clock } from 'lib/game';
 import type { Coords, MoveEvent } from 'lib/prefs';
 import type { EnhanceOpts } from 'lib/richText';
-import type {
-  PvDataServer,
-  ServerEval,
-  TreeNode,
-  TreeNodeBase,
-  TreeNodeLite,
-  TreePath,
-} from 'lib/tree/types';
+import type { TreeNode, TreeNodeBase, TreeNodeLite, TreePath } from 'lib/tree/types';
 
-import type { ExplorerOpts } from './explorer/interfaces';
 import type { ForecastData } from './forecast/interfaces';
 import type { AnalyseSocketSend } from './socket';
-import type { StudyDataFromServer } from './study/interfaces';
-import type { StudyPracticeData, Goal as PracticeGoal } from './study/practice/interfaces';
-import type { RelayData } from './study/relay/interfaces';
-import type * as studyDeps from './study/studyDeps';
 
 export interface NvuiPlugin {
-  render(deps?: typeof studyDeps): VNode;
+  render(): VNode;
 }
 
 export interface AnalyseApi {
@@ -52,7 +40,6 @@ export interface AnalyseData {
   forecast?: ForecastData;
   sidelines?: TreeNode[][];
   treeParts: TreeNodeBase[];
-  practiceGoal?: PracticeGoal;
   clock?: Clock;
   pref: AnalysePref;
   userTv?: {
@@ -80,22 +67,6 @@ export interface ServerEvalData {
   analysis?: Analysis;
   tree: TreeNodeLite;
   division?: Division;
-}
-
-export interface EvalHit {
-  fen: FEN;
-  knodes: number;
-  depth: number;
-  pvs: PvDataServer[];
-  path: string;
-}
-
-export interface EvalHitMulti extends EvalScore {
-  fen: FEN;
-}
-
-export interface EvalHitMultiArray {
-  multi: EvalHitMulti[];
 }
 
 // similar, but not identical, to game/Game
@@ -155,12 +126,7 @@ export interface AnalyseOpts {
   data: AnalyseData;
   userId?: string;
   hunter: boolean;
-  explorer: ExplorerOpts;
   socketSend: AnalyseSocketSend;
-  study?: StudyDataFromServer;
-  tagTypes?: string;
-  practice?: StudyPracticeData;
-  relay?: RelayData;
   $side?: Cash;
   $underboard?: Cash;
   chat: ChatOpts & {
@@ -178,18 +144,6 @@ export interface AnalyseOpts {
 
 export interface JustCaptured extends Piece {
   promoted?: boolean;
-}
-
-export interface EvalGetData {
-  fen: FEN;
-  path: string;
-  variant?: VariantKey;
-  mpv?: number;
-  up?: boolean;
-}
-
-export interface EvalPutData extends ServerEval {
-  variant?: VariantKey;
 }
 
 export type Conceal = false | 'conceal' | 'hide' | null;

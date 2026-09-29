@@ -18,14 +18,12 @@ object LilaIn:
 
   sealed trait Room extends LilaIn
   sealed trait Team extends Room
-  sealed trait Study extends Room
   sealed trait Round extends Room
   sealed trait Challenge extends Room
-  sealed trait Racer extends Room
 
   // Simul, Swiss and Tour room traits were removed with the simul, swiss and tournament modules
-  // (unit 3.2).
-  sealed trait AnyRoom extends Team with Study with Round with Challenge with Racer
+  // (unit 3.2); Study was removed with the study module (unit 3.3).
+  sealed trait AnyRoom extends Team with Round with Challenge
 
   case class TellSri(sri: Sri, user: Option[User.Id], payload: JsValue) extends Site with Lobby:
     def write = s"tell/sri $sri ${optional(user.map(_.value))} ${Json.stringify(payload)}"
@@ -71,7 +69,7 @@ object LilaIn:
       extends AnyRoom:
     def write = s"chat/timeout $roomId $userId $suspectId $reason $text"
 
-  case class TellRoomSri(roomId: RoomId, tellSri: TellSri) extends Study with Round:
+  case class TellRoomSri(roomId: RoomId, tellSri: TellSri) extends Round:
     import tellSri.*
     def write = s"tell/room/sri $roomId $sri ${optional(user.map(_.value))} ${Json.stringify(payload)}"
 
@@ -132,16 +130,7 @@ object LilaIn:
   case class ChallengePings(ids: Iterable[RoomId]) extends Challenge:
     def write = s"challenge/pings ${commas(ids)}"
 
-  case class RacerScore(raceId: Racer.Id, playerId: Racer.PlayerId, score: Int) extends Racer:
-    def write = s"racer/score $raceId ${playerId.key} $score"
-
-  case class RacerJoin(raceId: Racer.Id, playerId: Racer.PlayerId) extends Racer:
-    def write = s"racer/join $raceId ${playerId.key}"
-
-  case class RacerStart(raceId: Racer.Id, playerId: Racer.PlayerId) extends Racer:
-    def write = s"racer/start $raceId ${playerId.key}"
-
-  case class ReqResponse(reqId: Int, value: String) extends Study with Site:
+  case class ReqResponse(reqId: Int, value: String) extends Site:
     def write = s"req/response $reqId $value"
 
   private def commas(as: Iterable[Any]): String = if as.isEmpty then "-" else as.mkString(",")

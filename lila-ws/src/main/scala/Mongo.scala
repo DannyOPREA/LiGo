@@ -6,7 +6,7 @@ import com.typesafe.config.Config
 import reactivemongo.api.bson.*
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.commands.WriteResult
-import reactivemongo.api.{ AsyncDriver, DB, MongoConnection, ReadPreference, WriteConcern }
+import reactivemongo.api.{ AsyncDriver, DB, MongoConnection, ReadPreference }
 
 import java.time.LocalDateTime
 import scala.util.{ Success, Try }
@@ -27,22 +27,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
     mainConnection.flatMap: (conn, dbName) =>
       conn.database(dbName.getOrElse("lichess"))
 
-  private val studyConnection =
-    MongoConnection.fromString(config.getString("study.mongo.uri").pp("study")).flatMap { parsedUri =>
-      driver.connect(parsedUri).map(_ -> parsedUri.db)
-    }
-  private def studyDb: Future[DB] =
-    studyConnection.flatMap: (conn, dbName) =>
-      conn.database(dbName.getOrElse("lichess"))
-
-  private val yoloConnection =
-    MongoConnection.fromString(config.getString("yolo.mongo.uri").pp("yolo")).flatMap { parsedUri =>
-      driver.connect(parsedUri).map(_ -> parsedUri.db)
-    }
-  private def yoloDb: Future[DB] =
-    yoloConnection.flatMap: (conn, dbName) =>
-      conn.database(dbName.getOrElse("lichess"))
-
   private def collNamed(name: String): Future[Coll] = mainDb.map(_.collection(name))(using parasitic)
   def securityColl = collNamed("security")
   def userColl = collNamed("user4")
@@ -55,12 +39,8 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
   def teamMemberColl = collNamed("team_member")
   def reportColl = collNamed("report2")
   def oauthColl = collNamed("oauth2_access_token")
-  def relayTourColl = collNamed("relay_tour")
-  def relayRoundColl = collNamed("relay")
   def settingColl = collNamed("setting")
   def cacheColl = collNamed("cache")
-  def studyColl = studyDb.map(_.collection("study"))(using parasitic)
-  def evalCacheColl = yoloDb.map(_.collection("eval_cache2"))(using parasitic)
 
   def isDuplicateKey(wr: WriteResult) = wr.code.contains(11000)
   def ignoreDuplicateKey: PartialFunction[Throwable, Unit] =
@@ -95,8 +75,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
                   chat == Team.Access.Members.id ||
                     (chat == Team.Access.Leaders.id && me.fold(false): me =>
                       teamDoc.getAsOpt[Set[User.Id]]("leaders").exists(_ contains me))
-
-  def studyExists(id: Study.Id): Future[Boolean] = studyColl.flatMap(idExists(id))
 
   // None = no such game
   def gameUserIds(id: Game.Id): Future[Option[List[User.Id]]] =
@@ -137,53 +115,11 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
               yield Game.Round(id, players)
             }(using parasitic)
 
-  private val visibilityNotPrivate = BSONDocument("visibility" -> BSONDocument("$ne" -> "private"))
-
   def isGameOngoing(id: Game.Id): Future[Boolean] =
     gameColl.flatMap:
       exists(_, BSONDocument("_id" -> id, "s" -> BSONDocument("$lt" -> chess.Status.Aborted.id)))
 
-  def studyExistsFor(id: Study.Id, user: Option[User.Id]): Future[Boolean] =
-    studyColl.flatMap:
-      exists(
-        _,
-        BSONDocument(
-          "_id" -> id,
-          user.fold(visibilityNotPrivate): u =>
-            BSONDocument(
-              "$or" -> BSONArray(
-                visibilityNotPrivate,
-                BSONDocument(s"members.${u.value}" -> BSONDocument("$exists" -> true))
-              )
-            )
-        )
-      )
-
-  def studyMembers(id: Study.Id): Future[Set[User.Id]] =
-    studyColl.flatMap:
-      _.find(
-        selector = BSONDocument("_id" -> id),
-        projection = Some(BSONDocument("members" -> true))
-      ).one[BSONDocument]
-        .map { docOpt =>
-          for
-            doc <- docOpt
-            members <- doc.getAsOpt[BSONDocument]("members")
-          yield members.elements.collect { case BSONElement(key, _) => User.Id(key) }.toSet
-        }
-        .map(_.getOrElse(Set.empty))
-
-  import evalCache.{ Id, EvalCacheEntry }
-  def evalCacheEntry(id: Id): Future[Option[EvalCacheEntry]] =
-    import evalCache.EvalCacheBsonHandlers.given
-    evalCacheColl.flatMap:
-      _.find(selector = BSONDocument("_id" -> id))
-        .one[EvalCacheEntry]
-  def evalCacheUsedNow(id: Id): Unit =
-    import evalCache.EvalCacheBsonHandlers.given
-    evalCacheColl.foreach:
-      _.update(ordered = false, writeConcern = WriteConcern.Unacknowledged)
-        .one(BSONDocument("_id" -> id), BSONDocument("$set" -> BSONDocument("usedAt" -> LocalDateTime.now)))
+  // studyExistsFor and studyMembers removed with the study module (unit 3.3).
 
   def challenger(challengeId: Challenge.Id): Future[Option[Challenge.Challenger]] =
     challengeColl.flatMap:
@@ -270,7 +206,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
           exists(coll.secondary, BSONDocument("_id" -> id, "marks" -> "troll")).map(IsTroll.apply(_))
 
   object idFilter:
-    val study: IdFilter = ids => studyColl.flatMap(filterIds(ids))
     val team: IdFilter = ids => teamColl.flatMap(filterIds(ids))
 
   object cache:
@@ -282,9 +217,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
         doc <- res
         v <- doc.getAsOpt[A]("v")
       yield v
-
-  private def idExists[Id: BSONWriter](id: Id)(coll: BSONCollection): Future[Boolean] =
-    exists(coll, BSONDocument("_id" -> id))
 
   private def exists(coll: BSONCollection, selector: BSONDocument): Future[Boolean] =
     coll

@@ -76,19 +76,7 @@ object header:
       ),
       div(cls := "user-show__social")(
         div(cls := "number-menu")(
-          (info.nbRelays > 0).option(
-            a(
-              href := routes.RelayTour.by(u.username),
-              cls := "nm-item"
-            )(
-              splitNumber(trans.broadcast.nbBroadcasts.pluralSame(info.nbRelays))
-            )
-          ),
-          (info.nbStudies > 0).option(
-            a(href := routes.Study.byOwnerDefault(u.username), cls := "nm-item")(
-              splitNumber(trans.site.`nbStudies`.pluralSame(info.nbStudies))
-            )
-          ),
+          // broadcast/study counts removed with the relay and study modules (unit 3.3).
           (ctx.kid.no && info.nbForumPosts > 0).option(
             a(
               cls := "nm-item",
@@ -138,8 +126,7 @@ object header:
                 showProfile
                   .so(profile.nonEmptyRealName)
                   .map(strong(cls := List("name" -> true, "muted" -> muted))(_)),
-                info.publicFideId.map: id =>
-                  p(a(href := routes.Fide.show(id, u.username.value))("FIDE player #" + id)),
+                // FIDE player link removed with the fide module (unit 3.3).
                 (showLinks && showProfile || isGranted(_.AccountInfo))
                   .so(profile.nonEmptyBio)
                   .map: bio =>

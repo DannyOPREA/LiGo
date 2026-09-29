@@ -85,11 +85,10 @@ final class TimelineUi(helpers: Helpers):
             userIdLink(opponent),
             perfKey.perfTrans
           )
-        case StudyLike(userId, studyId, studyName) =>
-          trans.site.xLikesY(
-            userLink(userId),
-            a(href := routes.Study.show(studyId))(studyName)
-          )
+        case StudyLike(userId, _, studyName) =>
+          // study route removed with the study module (unit 3.3); old timeline entries still
+          // render, without a link.
+          trans.site.xLikesY(userLink(userId), studyName)
         case PlanStart(userId) =>
           trans.patron.xBecamePatron(userLink(userId))
         case PlanRenew(userId, months) =>

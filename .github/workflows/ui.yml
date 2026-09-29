@@ -66,6 +66,29 @@ jobs:
         run: ./ui/build --no-install -p
       - name: Tests
         run: ./ui/test
+      # The playground's screenshots (against ui/playground/e2e/__screenshots__) and a scripted game,
+      # in Chromium, from the build above (unit 2.4). No lila server: the tests serve lila/public.
+      - name: Install Chromium for Playwright
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Playground screenshots and scripted game
+        run: |
+          pnpm exec tsc -p ui/playground/e2e/tsconfig.json
+          pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts
+      # Where CI's pictures differ from the baselines, as a coarse grid, readable from the log.
+      - name: Map the screenshot differences
+        if: failure()
+        run: node ui/playground/e2e/diffmap.mjs $(find ui/playground/e2e/test-results -name '*-diff.png' | sort)
+      # On a failure: the actual, expected and diff pictures, to look at or to become new baselines.
+      # Same pin as upstream lila's assets.yml.
+      - name: Upload the Playwright report
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playground-playwright-report
+          path: |
+            lila/ui/playground/e2e/playwright-report/
+            lila/ui/playground/e2e/test-results/
+          retention-days: 7
 
   codeql:
     needs: ui-paths

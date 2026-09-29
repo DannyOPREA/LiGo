@@ -47,18 +47,6 @@ export class ForkCtrl {
     if (isTouchDevice() || this.hoveringIndex < 0) this.hoveringIndex = undefined;
   }
 
-  highlight(it?: number) {
-    if (!this.isVisible || !defined(it)) {
-      this.ctrl.explorer.setHovering(this.ctrl.node.fen, null);
-      return;
-    }
-
-    const nodeUci = this.forks[it]?.uci;
-    const uci = defined(nodeUci) ? nodeUci : null;
-
-    this.ctrl.explorer.setHovering(this.ctrl.node.fen, uci);
-  }
-
   proceed(it?: number) {
     if (this.isVisible) {
       it = it ?? this.hoveringIndex ?? this.selectedIndex;
@@ -81,7 +69,7 @@ const eventToIndex = (e: MouseEvent): number | undefined => {
 };
 
 export function view(ctrl: AnalyseCtrl, concealOf?: ConcealOf) {
-  if (ctrl.retro?.isSolving() || ctrl.study?.hideMoves()) return undefined;
+  if (ctrl.retro?.isSolving()) return undefined;
   ctrl.fork.update();
   if (!ctrl.fork.isVisible) return undefined;
   const isMainline = concealOf && ctrl.onMainline;
@@ -95,9 +83,6 @@ export function view(ctrl: AnalyseCtrl, concealOf?: ConcealOf) {
             ctrl.redraw();
           },
         });
-        if (isTouchDevice()) return;
-        el.addEventListener('mouseover', e => ctrl.fork.highlight(eventToIndex(e)));
-        el.addEventListener('mouseout', () => ctrl.fork.highlight());
       }),
     },
     ctrl.visibleChildren().map((node, it) => {

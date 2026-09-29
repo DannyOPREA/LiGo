@@ -63,6 +63,7 @@
 
   &__controls {
     display: flex;
+    flex-wrap: wrap; // three buttons (with Confirm move) don't fit the 280px desktop panel
     gap: 0.5em;
     margin: $block-gap 0;
 
