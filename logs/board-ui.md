@@ -38,7 +38,10 @@
   17/17, `dev/ligo test pages` 10/10, verify.sh (go-rules gate can't fetch strategygames in the
   cloud; CI runs it). · Needs owner verification: that the sounds play on the playground on your
   box with the sound set of your choice.
-- Follow-ups: byo-yomi, game start/end and scoring-phase sounds come with the round page (9.7).
+- Follow-ups: byo-yomi, game start/end and scoring-phase sounds come with the round page (9.7);
+  with the "speech" sound set lila plays nothing for Move/Capture, so stones are silent there until
+  9.7 speaks coordinates. Reviewer: no blocking finding; a click on a stone stays silent (goban
+  ignores it), so ADR 0026 §2's table now says so, and a playground test plays a real suicide.
 
 ### 2026-09-28 · 2.4 CI (2) · Board and page pictures
 - Didn't work: with the text hidden, 5 of 8 pictures still failed on CI by 110–120 pixels, all at

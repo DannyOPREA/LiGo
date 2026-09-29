@@ -126,6 +126,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
 
   return {
     play: move => {
+      if (destroyed) return;
       toXY(goban.engine, move); // throws on a malformed or off-board move, before anything changes
       goban.dropPreview();
       const before = goban.engine.last_official_move;
@@ -138,7 +139,6 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       });
       // goban logs a move it can't place (an occupied point) and carries on: the turn stays.
       if (goban.engine.last_official_move === before) return goban.dropPreview();
-      if (destroyed) return;
       const captured = goban.officialState().captures[color] - captures[color];
       config.onPlayed?.({ move, color, captured });
     },

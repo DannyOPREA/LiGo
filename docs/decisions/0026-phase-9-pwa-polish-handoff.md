@@ -76,7 +76,7 @@ adds **no new sound files** in Phase 9. Go events map onto the existing names:
 | A stone is placed | Move |
 | A stone placed captures (any number) | Capture, instead of Move |
 | Pass | Confirmation |
-| Illegal move refused (occupied, suicide, ko, superko) | Error |
+| Illegal move refused (suicide, ko, superko; a click on a stone is ignored silently, as goban does) | Error |
 | Game starts; the scoring phase starts | GenericNotify |
 | Byo-yomi: a new period starts, or the last period starts | LowTime |
 | Byo-yomi: the last 10 seconds of a period | CountDown10 … CountDown1, one per second |
