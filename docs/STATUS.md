@@ -18,14 +18,20 @@ _Updated at the end of every session (`/status`). Newest information wins._
   from Phases 3–4 and run now; 5.3–5.8 wait for Phase 3 units 3.11–3.20 (and 4.9). Log: logs/ratings.md.
 
 - Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
-  docs/PLAN.md §5. 6.1 (design ADR), 6.2 (pairing with auto-handicap in `lila/modules/pool`) and 6.3
-  (the player-test kit) run now; 6.4–6.10 wait for Phase 3 units 3.15–3.20, 4.7, 4.9 and 5.3–5.7.
+  docs/PLAN.md §5. 6.1 (ADR 0022, PR #41) and 6.2 (auto-handicap pairing in `lila/modules/pool`,
+  PR #43) merged; 6.3 (the player-test kit, run by you after 6.10) in review. 6.4–6.10 wait for
+  Phase 3 units 3.15–3.20, 4.7, 4.9 and 5.3–5.7.
   Log: logs/lobby.md.
 
 - Phase 7 (under the owner's "work until I tell you to stop" delegation): units 7.1–7.8 in
   docs/PLAN.md §5. 7.1 (design ADR), 7.2 (the analysis tree in `libs/board`) and 7.3 (the server's
   SGF reader in `libs/go-rules`) run now; 7.4–7.8 wait for Phase 3 units 3.12–3.20 and Phase 4 units
   4.8–4.12. Logs: logs/frontend.md, logs/rules-engine.md, logs/clocks.md.
+
+- Phase 8 (under the owner's "work until I tell you to stop" delegation): units 8.1–8.8 in
+  docs/PLAN.md §5. 8.1 (tsumego content memo), 8.2 (design ADR), 8.3 (the `tools/puzzles` import
+  pipeline), 8.4 (the first ≥ 200 puzzles) and 8.5 (puzzle solving in `libs/board`, after 7.2) run
+  now; 8.6–8.8 wait for Phase 3 units 3.11, 3.16, 3.18 and 3.20. Log: logs/tsumego.md.
 
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
@@ -129,6 +135,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.3 and 3.9 merged; 3.4 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
-| 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 under way, 6.4–6.10 wait for Phases 3–5 |
+| 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.2 merged (ADR 0022), 6.3 in review, 6.4–6.10 wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
-| 8–9 | not started |
+| 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.5 under way, 8.6–8.8 wait for Phase 3 |
+| 9 | not started |
