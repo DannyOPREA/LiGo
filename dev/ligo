@@ -216,7 +216,7 @@ native_scoring_worker_down() { stop_bg scoring-worker; }
 # (the owner runs that with the b18 network on his GPU — see dev/ligo katago --help and this
 # command's own --net). No docker-mode support yet (same reason as native_scoring above).
 cmd_scoring_bench() {
-  [[ "$MODE" == native ]] || die "scoring bench runs in native mode (no KataGo in docker's ui container yet, unit 4.5)"
+  [[ "$MODE" == native ]] || die "scoring bench runs on the host: LIGO_MODE=native dev/ligo scoring bench ... (needs host Node and pnpm; no KataGo in any container yet)"
   local katago_env
   katago_env=$("$ROOT/dev/katago.sh" env) || die "KataGo is not installed: run dev/ligo katago install"
   eval "$katago_env"

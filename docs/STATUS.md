@@ -94,8 +94,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
   `mcp.context7.com` (the context7 MCP server).
 - On your box (unit 4.6): `dev/ligo katago install opencl`; paste the printed sha256 and the
   network's licence (katagotraining.org) into the thread and Claude pins it; then `dev/ligo katago
-  smoke`, `dev/ligo katago bench`, `dev/ligo scoring bench --gate 97` (with
-  `LIGO_KATAGO_ALLOW_UNVERIFIED=1` before the pin).
+  smoke`, `dev/ligo katago bench`, `LIGO_MODE=native dev/ligo scoring bench --gate 97` (with
+  `LIGO_KATAGO_ALLOW_UNVERIFIED=1` before the pin). The bench runs on the host, so it needs host
+  Node 24 and pnpm, and `pnpm install --frozen-lockfile` once in `lila/`.
 
 ## Blockers
 - None.

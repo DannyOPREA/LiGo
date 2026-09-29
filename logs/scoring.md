@@ -22,7 +22,7 @@
 ### 2026-09-29 · unit 4.6 · autoscore benchmark and the b18 network pin
 - Did: `dev/ligo scoring bench [--net PATH] [--games DIR] [--gate N] [--runs N] [--limit N]
   [--timeout MS]` (`services/scoring/src/bench.ts`, grading in `src/grade.ts`). For each of OGS's
-  31 autoscore games (Apache-2.0, already vendored, so COPYING.md needs nothing new) it asks a real
+  31 autoscore games (Apache-2.0, already vendored; COPYING.md's row for them now also names the benchmark) it asks a real
   KataGo for the two ownership maps, runs `autoscore`, and grades its raw `result`,
   `needs_sealing` and `sealed_result` against the file, with the pass rule of
   `test/autoscore.test.ts` (moved into `src/grade.ts`, used by both, including the reverse
@@ -48,7 +48,7 @@
   `parseArgs` skips a bare `--`.
 - Lessons: grade autoscore's raw `result`/`needs_sealing`, never goscorer's `owner`, against
   `correct_ownership` (2026-09-29, unit 4.6).
-- Decisions: two lines in logs/decisions.md (2026-09-29): the set and grading, and the gate over
+- Decisions: three lines in logs/decisions.md (2026-09-29): the set and grading, and the gate over
   `--runs`. Unverified b18 is refused (safer than warning). No self-play set. No CI job: the bench
   takes minutes on CPU, so it stays a `dev/ligo` command.
 - Pending on the owner: the b18 sha256 (katagotraining.org and web.archive.org are blocked from the

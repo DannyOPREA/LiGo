@@ -38,3 +38,9 @@ Unit 4.6 (autoscore bench, 2026-09-29):
   `correct_ownership` marks them. propose's `seal` drops points on dead chains; OGS's 's' can sit on one.
 - 97% of 31 games = 31/31; with non-deterministic KataGo that's a flaky gate. Ask about set size.
 - `Number(flag)` gates: NaN makes `pct < gate` false → prints FAILED but exits 0.
+- 4.6 re-review (2026-09-29): verify.sh does NOT run CI meta's manifests check. Any
+  `package.json` edit (even a `scripts` line) fails `dev/ci/meta_checks.py manifests <base> HEAD`
+  without a COPYING.md change; run it by hand on every unit that touches a manifest.
+- Owner steps that call a native-only `dev/ligo` command on the owner's docker-mode box die; check
+  STATUS/README "on your box" steps against `MODE` guards (LIGO_MODE=native needs host node/pnpm).
+- KataGo analysis engine's NN cache makes `--runs` repeats fast and correlated (run 2 ~5x faster).

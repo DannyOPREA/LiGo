@@ -117,4 +117,9 @@ that is never gated, whether the widened dead-stone set agrees with the file. Th
   spike.
 - **Smoke vs gate.** The cloud figure (b6 test network, CPU) is a smoke figure, not the gate; see
   logs/scoring.md. The gate is measured with the b18 network on the owner's GPU: after pinning
-  `NET_SHA256` in `dev/katago.sh`, run `dev/ligo katago install opencl && dev/ligo scoring bench --gate 97`.
+  `NET_SHA256` in `dev/katago.sh`, run `dev/ligo katago install opencl && LIGO_MODE=native dev/ligo scoring bench --gate 97`. The
+  bench runs on the host even on a docker-mode box (no KataGo in any container yet), so it needs
+  host Node 24 and pnpm and one `pnpm install --frozen-lockfile` in `lila/`.
+- **Repeat runs are correlated.** KataGo's analysis engine caches network results between
+  queries, so `--runs` mostly smooths thread-timing noise; a game that always fails costs 3 of 93
+  and alone breaks the gate.
