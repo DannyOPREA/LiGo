@@ -121,6 +121,9 @@ check "status: a lila/ui source newer than the build makes it stale" ui_state_is
 if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
   check "compose.yml is valid" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.yml --profile utils --profile mongo-express config -q"
   check "compose.native.yml is valid" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.native.yml --profile redis config -q"
+  # Every out-of-tree package in lila's pnpm workspace (../libs/board, ../services/scoring) must be
+  # visible in the ui container, or its frozen install fails on the lockfile's importer for it.
+  check "compose.yml's ui container mounts every ../ package of lila's pnpm workspace" bash -c "cd '$ROOT/dev/lila-docker' && cfg=\$(docker compose -f compose.yml --profile utils config ui) && for d in \$(sed -nE \"s#^ *- '\\.\\./([^/']+)/.*#\\1#p\" '$ROOT/lila/pnpm-workspace.yaml' | sort -u); do grep -q \"source: $ROOT/\$d\$\" <<<\"\$cfg\" || exit 1; done"
   check "compose.yml mounts LiGo's lila and lila-ws" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.yml config | grep -q 'source: $ROOT/lila-ws' && docker compose -f compose.yml config | grep -q 'source: $ROOT/lila$'"
 else
   echo "  skip  compose checks (docker compose not installed)"
