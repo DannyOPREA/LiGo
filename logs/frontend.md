@@ -5,6 +5,26 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 7.1 · ADR 0023: analysis board, SGF import and export, correspondence
+- Did: ADR 0023 for Phase 7 and a build-vs-buy memo for the server's SGF reader
+  (docs/build-vs-buy/server-sgf-reader.md); the `sgf` skill names that reader as its one exception.
+- Worked: lila's tree operations (`ui/lib/src/tree` `ops.ts`, `tree.ts`) are game-neutral and
+  `path.ts` only needs two-character ids, which an SGF point already is, so the analysis board can
+  keep them unchanged.
+- Didn't work / dead ends: no maintained JVM SGF reader (strategygames only writes SGF; sgf4j's
+  last Maven release is six years old and pulls in log4j). goban-engine's SGF reader, the first
+  plan for the browser, was dropped after the reviewer found it hangs on a truncated file, plays
+  moves unchecked, turns off-board points into passes and ignores glyphs; `@sabaki/sgf` (ADR 0014's
+  fallback) reads and writes lila's tree instead.
+- Lessons: goban's `MoveTree.toSGF` writes no root properties; keep one tree (lila's) and use
+  goban only for positions. lila hashes the whole PGN text for import dedup, not the moves.
+- Decisions: all of ADR 0023, Claude's calls under the owner's 2026-09-28 delegation
+  (logs/decisions.md); the removal of forecasts is recorded there.
+- Verified by Claude: verify.sh; a reviewer agent pass (3 blocking, 7 should-fix findings, all
+  addressed in the ADR). · Needs owner verification: whether dropping forecasts and keeping the
+  opt-in email are the right calls.
+- Follow-ups: 7.2 and 7.3 next.
+
 ### 2026-09-29 · Phase 7 breakdown · Correspondence, SGF and analysis split into units 7.1–7.8
 - Did: split Phase 7 into 8 units (docs/PLAN.md §5, "Phase 7 units"): a design ADR (7.1), the
   analysis tree over goban-engine in `libs/board` (7.2), the server's SGF reader in `libs/go-rules`
