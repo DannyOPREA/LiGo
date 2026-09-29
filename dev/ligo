@@ -56,6 +56,9 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
   verify-mirror       Cross-check Google-mirror downloads against Maven Central (cloud, ADR 0008)
   katago <cmd>        KataGo: install [cpu|opencl], smoke, bench, path, env (dev/katago.sh)
+  scoring bench [args] The autoscore benchmark (unit 4.6): the real propose path (real KataGo) over
+                      the vendored OGS games; args: --net PATH --games DIR --gate N --runs N (3)
+                      --limit N --timeout MS; report in .ligo/scoring-bench/. Native mode only.
   differential [args] Random games checked against KataGo (unit 1.9): libs/go-rules vs KataGo on
                       legality, captures and area score; args: --games N (1000) --seed S
                       --workers W; report in .ligo/differential/. Native mode only; CI runs it
@@ -163,7 +166,7 @@ native_scoring() {
   local katago_env
   if katago_env=$("$ROOT/dev/katago.sh" env 2>/dev/null); then
     eval "$katago_env"
-    export KATAGO_BIN KATAGO_TEST_NET KATAGO_GTP_CONFIG
+    export KATAGO_BIN KATAGO_TEST_NET KATAGO_NET KATAGO_GTP_CONFIG
   fi
   (cd "$LILA" && run sh -c "$(scoring_pnpm typecheck) && pnpm --filter @ligo/scoring run lint && pnpm --filter @ligo/scoring run test")
 }
@@ -206,6 +209,30 @@ native_scoring_worker_up() {
   start_bg_restart scoring-worker "$LILA" pnpm --filter @ligo/scoring run start
 }
 native_scoring_worker_down() { stop_bg scoring-worker; }
+
+# The autoscore benchmark (unit 4.6, PLAN §5 row 4.6): the real `propose` path (a real KataGo, not
+# stored ownership maps) over the vendored OGS games, grading autoscore's answer against each
+# game's correct_ownership, N runs (KataGo is not deterministic). Needs a real KataGo (dev/ligo katago install); `--gate N` fails the command below N%
+# (the owner runs that with the b18 network on his GPU — see dev/ligo katago --help and this
+# command's own --net). No docker-mode support yet (same reason as native_scoring above).
+cmd_scoring_bench() {
+  [[ "$MODE" == native ]] || die "scoring bench runs in native mode (no KataGo in docker's ui container yet, unit 4.5)"
+  local katago_env
+  katago_env=$("$ROOT/dev/katago.sh" env) || die "KataGo is not installed: run dev/ligo katago install"
+  eval "$katago_env"
+  export KATAGO_BIN KATAGO_NET
+  (cd "$LILA" && run pnpm install --frozen-lockfile --filter @ligo/scoring --filter lila)
+  mkdir -p "$STATE/scoring-bench"
+  (cd "$LILA" && run pnpm --filter @ligo/scoring run bench -- --out "$STATE/scoring-bench/report.json" "$@")
+}
+
+cmd_scoring() {
+  local sub=${1:-bench}; shift || true
+  case "$sub" in
+    bench) cmd_scoring_bench "$@" ;;
+    *) die "scoring bench [--net PATH] [--games DIR] [--gate N] [--runs N] [--limit N] [--timeout MS]" ;;
+  esac
+}
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)
@@ -559,6 +586,7 @@ main() {
     deps) cmd_deps ;;
     verify-mirror) verify_mirror ;;
     katago) exec "$ROOT/dev/katago.sh" "$@" ;;
+    scoring) cmd_scoring "$@" ;;
     differential) cmd_differential "$@" ;;
     doctor) exec "$ROOT/dev/doctor.sh" "$@" ;;
     mode) echo "$MODE" ;;

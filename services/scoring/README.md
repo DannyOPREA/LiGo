@@ -92,3 +92,29 @@ build step). The test suite includes:
   no real Redis.
 - **A real Redis round trip** (`test/worker-redis.test.ts`): starts its own `redis-server` on a
   free port and tears it down after; skipped, not failed, when `redis-server` isn't on PATH.
+
+
+## Benchmark
+
+`dev/ligo scoring bench [--net PATH] [--games DIR] [--gate N] [--runs N] [--limit N] [--timeout MS]`
+(native mode) asks a real KataGo for the two ownership maps of each of OGS's 31 autoscore games,
+runs `autoscore` on them, and grades autoscore's raw `result`, `needs_sealing` and (where present)
+`sealed_result` against the file's expected ownership, with exactly the pass rule of
+`test/autoscore.test.ts` (`src/grade.ts`; fed OGS's own stored maps it gives 31/31, a unit test).
+It reports per-game mismatches, per-run and total numbers and timing, and, as a secondary figure
+that is never gated, whether the widened dead-stone set agrees with the file. The report goes to
+`.ligo/scoring-bench/report.json`.
+
+- **Runs and gate.** KataGo's search is not deterministic, so the set runs `--runs N` times
+  (default 3). `--gate N` exits non-zero when total correct / total game-runs is below N%; 97% of
+  93 game-runs allows 2 misses. Without `--gate` it never fails on accuracy.
+- **What the set is.** It is autoscore's own regression set: OGS tuned autoscore against it, 8 of
+  the 31 are synthetic corner/dev tests, and the expected results were corrected by hand, not agreed
+  by the players. The figure leans optimistic, and "finished games with agreed results" is only
+  partly met; a larger set of real finished games is a follow-up. `--games` takes any directory of
+  files in the same format.
+- **Komi.** The files carry none; KataGo is asked with 7.5 (`--komi` overrides), as in the unit 1.3
+  spike.
+- **Smoke vs gate.** The cloud figure (b6 test network, CPU) is a smoke figure, not the gate; see
+  logs/scoring.md. The gate is measured with the b18 network on the owner's GPU: after pinning
+  `NET_SHA256` in `dev/katago.sh`, run `dev/ligo katago install opencl && dev/ligo scoring bench --gate 97`.

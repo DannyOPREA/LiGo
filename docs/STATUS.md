@@ -92,9 +92,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
   also installs bats, shellcheck and KataGo (CPU).
 - Cloud network allowlist: add `media.katagotraining.org` (full-size KataGo networks) and
   `mcp.context7.com` (the context7 MCP server).
-- On your box: `dev/ligo katago install`, `dev/ligo katago smoke`, `dev/ligo katago bench`, then
-  `dev/ligo doctor`; paste `.ligo/katago-benchmark.txt` and the network's sha256 into the unit 0.5
-  thread so they get recorded (logs/scoring.md) and pinned.
+- On your box (unit 4.6): `dev/ligo katago install opencl`; paste the printed sha256 and the
+  network's licence (katagotraining.org) into the thread and Claude pins it; then `dev/ligo katago
+  smoke`, `dev/ligo katago bench`, `dev/ligo scoring bench --gate 97` (with
+  `LIGO_KATAGO_ALLOW_UNVERIFIED=1` before the pin).
 
 ## Blockers
 - None.

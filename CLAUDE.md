@@ -54,7 +54,7 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
 
 ## Commands
 `dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|rules|all] | test [lila|ws|ui|rules|board|scoring|all]`
-`dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench]`. Docker mode on the owner's
+`dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench] | scoring bench`. Docker mode on the owner's
 machine, native mode in cloud sessions (ADR 0010). Fresh cloud container: `dev/cloud-setup.sh` then `dev/ligo deps`.
 Tooling self-tests: `dev/tests/run.sh`, `bats .claude/hooks/tests`. CI: `.github/workflows/` (lila, ui,
 meta, rules, scoring); its checks live in `dev/ci/`.
