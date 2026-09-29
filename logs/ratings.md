@@ -10,6 +10,19 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 5.1 · Phase 5 design (ADR 0021)
+- Did: wrote ADR 0021: one `go` perf for every rated game; signup rank list 25k–9d starting at the
+  middle of the rank with deviation 250; server-made labels clamped 25k–9d with "5k?" while
+  provisional; rated handicap limits (19×19 0–9, 9×9 0–4, 13×13 even), spec komi only, suggested
+  stones = round(rank gap / stone value); guests casual only.
+- Worked: the memo's spike numbers give the examples directly (5k = rank 25.5 ≈ 1580, 1d = 30.5 ≈ 1960).
+- Didn't work / dead ends: none.
+- Lessons: starting a self-declared rank at the middle of its band (30.5 − k, 29.5 + d) keeps the
+  chosen label on screen after one bad result.
+- Decisions: all of ADR 0021, Claude's call under the owner's 2026-09-28 delegation (logs/decisions.md).
+- Verified by Claude: numbers recomputed in Python; verify.sh; reviewer pass. · Needs owner verification: whether the choices feel right for Go players.
+- Follow-ups: 5.2 builds `GoRank` to this ADR.
+
 ### 2026-09-29 · Phase 5 breakdown · Accounts and ratings split into units 5.1–5.8
 - Did: split Phase 5 into 8 units (docs/PLAN.md §5, "Phase 5 units"): a design ADR (5.1), the
   rating maths in `lila/modules/rating` (5.2), then the lila halves: the rating update with
