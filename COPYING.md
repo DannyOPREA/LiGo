@@ -49,11 +49,11 @@ table rows ([ADR 0007](docs/decisions/0007-licensing-corrections-after-import.md
   kosal, which upstream's licence table doesn't list at all.
 
 What stays in `lila/public/` is free under upstream's own table (fonts, flags, the free piece sets,
-the futuristic, nes, piano and sfx sound sets, `public/images/board`, `puzzle-themes`, `practice`,
+the futuristic, nes, piano and sfx sound sets, `public/images/board`, `puzzle-themes`,
 `learn/pieces`, the `staunton` boards, `trophy`, the neovim and helix flairs), the Noto emoji flairs
 (Google, Apache-2.0; `lila/bin/flair` generates them from emojipedia's Google set), or LiGo's own
 (below). A few directories upstream's table doesn't name stay under upstream's default AGPL grant:
-`public/cursors`, `public/data`, `public/fide`, `public/video`, `public/javascripts` and the racer-car
+`public/cursors`, `public/data`, `public/video`, `public/javascripts` and the racer-car
 and storm fonts; most go with their chess modules in units 3.2–3.7. `lila/COPYING.md` is
 upstream's file and still names the deleted sets; LiGo leaves it unchanged. Removing the files
 doesn't erase them from git history, which only ever contains upstream's own publicly distributed
@@ -68,6 +68,12 @@ the small UI images in `lila/public/images/ligo/`, and their generator `lila/bin
 Unit 3.2 removed the `ui/tournament`, `ui/swiss` and `ui/simul` workspace packages and the npm
 packages only they used: `date-fns` 2.30.0 (MIT), its dependency `@babel/runtime` 7.29.7 (MIT),
 `dragscroll` 0.0.8 (MIT) and `@types/dragscroll` 0.0.3 (MIT). No package was added.
+
+Unit 3.3 removed the `ui/fide` workspace package (FIDE player pages) along with the study, relay
+and title-verification code inside `ui/analyse` and `ui/bits`. `ui/fide`'s own npm dependencies
+(`chart.js`, `chartjs-adapter-dayjs-4`, `dayjs`) stay in the lockfile because `ui/chart`,
+`ui/insight` and `ui/opening` still use them; no third-party npm package was actually dropped, only
+the `ui/fide` workspace entry itself. No package was added.
 
 ## 2. LiGo's own code — MIT
 

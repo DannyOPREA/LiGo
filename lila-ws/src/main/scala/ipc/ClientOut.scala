@@ -13,7 +13,6 @@ sealed trait ClientOut extends ClientMsg
 
 sealed trait ClientOutSite extends ClientOut
 sealed trait ClientOutLobby extends ClientOut
-sealed trait ClientOutStudy extends ClientOut
 sealed trait ClientOutRound extends ClientOut
 sealed trait ClientOutRacer extends ClientOut
 
@@ -64,9 +63,7 @@ object ClientOut:
   case class LobbyJoin(payload: JsValue) extends ClientOutLobby
   case class LobbyForward(payload: JsValue) extends ClientOutLobby
 
-  // study
-
-  case class StudyForward(payload: JsValue) extends ClientOutStudy
+  // study (StudyForward) removed with the study module (unit 3.3).
 
   // round
 
@@ -129,14 +126,8 @@ object ClientOut:
               case "join" => Some(LobbyJoin(o))
               case "cancel" | "joinSeek" | "cancelSeek" | "poolIn" | "poolOut" | "hookIn" | "hookOut" =>
                 Some(LobbyForward(o))
-              // study
-              case "anaMove" | "anaDrop" | "like" | "setPath" | "deleteNode" | "promote" | "forceVariation" |
-                  "setRole" | "kick" | "leave" | "shapes" | "addChapter" | "setChapter" | "editChapter" |
-                  "descStudy" | "descChapter" | "deleteChapter" | "clearAnnotations" | "sortChapters" |
-                  "editStudy" | "setTag" | "setComment" | "deleteComment" | "setGamebook" | "toggleGlyph" |
-                  "explorerGame" | "requestAnalysis" | "invite" | "relaySync" | "setTopics" |
-                  "clearVariations" =>
-                Some(StudyForward(o))
+              // study forwarding ("anaMove", "setPath", "addChapter", etc.) removed with the
+              // study module (unit 3.3).
               // round
               case "move" =>
                 for

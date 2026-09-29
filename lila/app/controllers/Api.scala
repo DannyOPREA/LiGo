@@ -235,7 +235,7 @@ final class Api(env: Env, gameC: => Game) extends LilaController(env):
           env.activity.read
             .recentAndPreload(user)
             .flatMap:
-              _.sequentially(env.activity.jsonView(_, user))
+              _.sequentially(env.activity.jsonView(_))
         }
         .map(toApiResult)
 

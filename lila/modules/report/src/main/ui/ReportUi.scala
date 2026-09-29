@@ -9,7 +9,7 @@ import lila.ui.*
 import ScalatagsTemplate.{ *, given }
 import lila.core.perf.UserWithPerfs
 
-case class PendingCounts(streamers: Int, appeals: Int, titles: Int, images: Int)
+case class PendingCounts(streamers: Int, appeals: Int, images: Int)
 
 object ReportUi:
 
@@ -242,15 +242,7 @@ final class ReportUi(helpers: Helpers)(menu: Context ?=> Frag):
                       "Streamers"
                     )
                   ),
-                  Granter(_.TitleRequest).option(
-                    a(
-                      href := routes.TitleVerify.queue,
-                      cls := List("new" -> true, "active" -> (filter == "title"))
-                    )(
-                      countTag(pending.titles),
-                      "Titles"
-                    )
-                  ),
+                  // title verification queue link removed with the title module (unit 3.3).
                   Granter(_.ModerateForum).option(
                     a(href := routes.Mod.imageQueue(1), cls := List("active" -> (filter == "image")))(
                       countTag(pending.images),

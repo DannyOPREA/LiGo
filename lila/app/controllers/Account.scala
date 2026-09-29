@@ -60,9 +60,10 @@ final class Account(
       )
   }
 
+  // title (and its verified real name) removed in unit 3.3: nothing fixes the real name any more.
   private def profileForm(me: Me) =
-    for realName <- env.title.api.publicTitle.realName(me.light)
-    yield (env.user.forms.profileOf(me, realName), realName)
+    val realName = none[lila.core.user.RealName]
+    fuccess(env.user.forms.profileOf(me, realName) -> realName)
 
   def usernameApply = AuthBody { _ ?=> me ?=>
     FormFuResult(env.user.forms.username(me))(err => renderPage(pages.username(me, err))): username =>

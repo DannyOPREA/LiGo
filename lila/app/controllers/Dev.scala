@@ -110,11 +110,7 @@ final class Dev(env: Env) extends LilaController(env):
       env.recap.parallelismSetting,
       env.fishnet.openingBookDepth
     ),
-    "Broadcast" -> List(
-      env.relay.proxy.domainRegex,
-      env.memo.proxy.hostPort,
-      env.memo.proxy.credentials
-    ),
+    // "Broadcast" dev settings (relay proxy) removed with the relay module (unit 3.3).
     "Tutor" -> List(
       env.tutor.nbAnalysisSetting,
       env.tutor.parallelismSetting

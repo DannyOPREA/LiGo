@@ -13,15 +13,12 @@ import lila.core.round.CorresMoveEvent
 @Module
 final class Env(
     db: lila.db.AsyncDb @@ lila.db.YoloDb,
-    practiceStudies: lila.core.practice.GetStudies,
     gameRepo: lila.core.game.GameRepo,
     forumPostApi: lila.core.forum.ForumPostApi,
     ublogApi: lila.core.ublog.UblogApi,
-    studyApi: lila.core.study.StudyApi,
     teamApi: lila.core.team.TeamApi,
     getLightTeam: lila.core.team.LightTeam.GetterSync,
     lightUserApi: lila.core.user.LightUserApi,
-    userApi: lila.core.user.UserApi,
     routeUrl: RouteUrl
 )(using ec: Executor, scheduler: Scheduler):
 
@@ -49,16 +46,12 @@ final class Env(
 
   Bus.sub[lila.core.ublog.UblogPost.Create]: create =>
     write.ublogPost(create.post)
-  Bus.sub[lila.core.practice.OnComplete](write.practice(_))
   Bus.sub[CorresMoveEvent]:
     case CorresMoveEvent(move, Some(userId), _, _, _) => write.corresMove(move.gameId, userId)
   Bus.sub[lila.core.plan.MonthInc]:
     case lila.core.plan.MonthInc(userId, months) => write.plan(userId, months)
   Bus.sub[lila.core.relation.Follow]:
     case lila.core.relation.Follow(from, to) => write.follow(from, to)
-  Bus.sub[lila.core.study.StartStudy]: start =>
-    // wait some time in case the study turns private
-    scheduler.scheduleOnce(5.minutes)(write.study(start.studyId))
   Bus.sub[lila.core.team.TeamCreate]:
     case lila.core.team.TeamCreate(t) => write.team(t.id, t.userId)
   Bus.sub[lila.core.team.JoinTeam]:

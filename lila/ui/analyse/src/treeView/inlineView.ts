@@ -10,8 +10,8 @@ import { type VNode, type LooseVNodes, hl } from 'lib/view';
 import type AnalyseCtrl from '@/ctrl';
 import type { DiscloseState } from '@/idbTree';
 import type { Conceal } from '@/interfaces';
-import { authorText } from '@/study/studyComments';
 import { renderMoveNodes, renderIndex } from '@/view/components';
+import { authorText } from '@/view/util';
 
 export function renderInlineView(ctrl: AnalyseCtrl): VNode {
   const renderer = new InlineView(ctrl);
@@ -149,9 +149,7 @@ export class InlineView {
     const { ctrl } = this;
     const path = parentPath + node.id;
     const currentPath =
-      (!ctrl.synthetic && playable(ctrl.data) && ctrl.initialPath) ||
-      ctrl.retro?.current()?.prev.path ||
-      ctrl.study?.data.chapter.relayPath;
+      (!ctrl.synthetic && playable(ctrl.data) && ctrl.initialPath) || ctrl.retro?.current()?.prev.path;
     const withIndex =
       (!isMainline || this.inline) &&
       (node.ply % 2 === 1 ||

@@ -55,10 +55,9 @@ final class JsonView(
         Json.obj("url" -> routeUrl(routes.Team.show(team.id)), "name" -> team.name).add("flair" -> team.flair)
       })
     given Writes[Patron] = Json.writes
-  import Writers.{ *, given }
+  import Writers.given
 
-  private given OWrites[lila.core.study.IdName] = Json.writes
-  def apply(a: ActivityView, user: User): Fu[JsObject] =
+  def apply(a: ActivityView): Fu[JsObject] =
     fuccess:
       Json
         .obj("interval" -> a.interval)
@@ -67,16 +66,6 @@ final class JsonView(
         .add("storm", a.storm)
         .add("racer", a.racer)
         .add("streak", a.streak)
-        .add(
-          "practice",
-          a.practice.map(_.toList.sortBy(-_._2).map { (study, nb) =>
-            Json.obj(
-              "url" -> routeUrl(routes.Practice.show("-", study.slug, study.id)),
-              "name" -> study.name,
-              "nbPositions" -> nb
-            )
-          })
-        )
         .add(
           "correspondenceMoves",
           a.corresMoves.map: (nb, povs) =>
@@ -90,7 +79,6 @@ final class JsonView(
             }
         )
         .add("follows" -> a.follows)
-        .add("studies" -> a.studies)
         .add("teams" -> a.teams)
         .add("posts" -> a.forumPosts.map(_.map { (topic, posts) =>
           Json.obj(

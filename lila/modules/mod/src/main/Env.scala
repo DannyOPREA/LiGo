@@ -28,7 +28,6 @@ final class Env(
     userApi: lila.user.UserApi,
     userJsonView: lila.user.JsonView,
     perfsRepo: lila.user.UserPerfsRepo,
-    chatApi: lila.chat.ChatApi,
     notifyApi: lila.core.notify.NotifyApi,
     historyApi: lila.core.history.HistoryApi,
     prefApi: lila.core.pref.PrefApi,
@@ -55,8 +54,6 @@ final class Env(
   private lazy val notifier = wire[ModNotifier]
 
   private lazy val ratingRefund = wire[RatingRefund]
-
-  lazy val publicChat = wire[PublicChat]
 
   lazy val api: ModApi = wire[ModApi]
 
@@ -96,8 +93,8 @@ final class Env(
   Bus.sub[lila.analyse.actorApi.AnalysisReady]: a =>
     assessApi.onAnalysisReady(a.game, a.analysis)
 
-  Bus.sub[lila.core.security.DeletePublicChats]: del =>
-    publicChat.deleteAll(del.userId)
+  // publicChat (broadcast "Public Chats" deletion on DeletePublicChats) removed with the relay
+  // module (unit 3.3).
 
   Bus.sub[lila.core.mod.AutoWarning]: warn =>
     logApi.modMessage(warn.userId, warn.subject)(using UserId.lichessAsMe)

@@ -68,7 +68,7 @@ export function makeConfig(ctrl: AnalyseCtrl): CgConfig {
     },
     drawable: {
       enabled: true,
-      eraseOnMovablePieceClick: !ctrl.opts.study || !!ctrl.opts.practice,
+      eraseOnMovablePieceClick: true,
       defaultSnapToValidMove: storage.boolean('arrow.snap').getOrDefault(true),
     },
     highlight: {
@@ -80,7 +80,6 @@ export function makeConfig(ctrl: AnalyseCtrl): CgConfig {
     },
     disableContextMenu: true,
   };
-  ctrl.study?.mutateCgConfig(config);
 
   return config;
 }

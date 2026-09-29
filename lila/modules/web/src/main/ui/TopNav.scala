@@ -49,24 +49,22 @@ final class TopNav(helpers: Helpers):
       st.section(
         linkTitle(routes.Learn.index.url, trans.site.learnMenu()),
         div(role := "group")(
+          // practice and study menu links removed with the practice and study modules (unit 3.3).
           Option.when(ctx.noBot):
             frag(
               a(href := langHref(routes.Learn.index))(trans.site.chessBasics()),
-              a(href := routes.Practice.index)(trans.site.practice()),
               a(href := langHref(routes.Coordinate.home))(trans.coordinates.coordinates())
             )
           ,
-          a(href := langHref(routes.Study.allDefault()))(trans.site.studyMenu()),
           ctx.kid.no.option(a(href := langHref(routes.Coach.all(1)))(trans.site.coaches())),
           seesClassMenu.option(a(href := routes.Clas.index)(trans.clas.lichessClasses()))
         )
       ),
       st.section:
-        val broadcastUrl = langHref(routes.RelayTour.index())
+        // broadcast link removed with the relay module (unit 3.3).
         frag(
-          linkTitle(broadcastUrl, trans.site.watch()),
+          linkTitle(langHref(routes.Tv.index), trans.site.watch()),
           div(role := "group")(
-            a(href := routes.RelayTour.index())(trans.broadcast.broadcasts()),
             a(href := langHref(routes.Tv.index))("Lichess TV"),
             a(href := routes.Tv.games)(trans.site.currentGames()),
             (ctx.kid.no && ctx.noBot).option(a(href := routes.Streamer.index())(trans.site.streamersMenu())),

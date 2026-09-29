@@ -1,7 +1,6 @@
 import type { MouchEvent, NumberPair } from '@lichess-org/chessground/types';
 import { eventPosition, opposite } from '@lichess-org/chessground/util';
 import { COLORS } from 'chessops';
-import { lichessRules } from 'chessops/compat';
 import { parseFen } from 'chessops/fen';
 import { parseSquare, makeSquare } from 'chessops/util';
 
@@ -17,7 +16,6 @@ import {
   input,
   optgroup,
   label,
-  form,
   button,
   option,
   div,
@@ -51,23 +49,6 @@ function castleCheckBox(ctrl: EditorCtrl, id: CastlingToggle, inputLabel: string
     },
   });
   return label(reversed ? [inputElement, inputLabel] : [inputLabel, inputElement]);
-}
-
-function studyButton(ctrl: EditorCtrl, state: EditorState): VNode {
-  return form({ method: 'post', action: '/study/as' }, [
-    input('hidden')({ name: 'orientation', value: ctrl.bottomColor() }),
-    input('hidden')({ name: 'variant', value: lichessRules(ctrl.variant) }),
-    input('hidden')({ name: 'fen', value: state.legalFen || '' }),
-    button(
-      {
-        type: 'submit',
-        ...dataIcon(licon.StudyBoard),
-        disabled: !state.legalFen,
-        class: { button: true, 'button-empty': true, text: true, disabled: !state.legalFen },
-      },
-      i18n.site.toStudy,
-    ),
-  ]);
 }
 
 function variantOption(key: VariantKey, current: VariantKey): VNode {
@@ -325,7 +306,6 @@ function controls(ctrl: EditorCtrl, state: EditorState): VNode {
               },
               [span('.text', dataIcon(licon.Swords), i18n.site.continueFromHere)],
             ),
-            studyButton(ctrl, state),
           ]),
           div('.continue-with.none', [
             a('/?fen=' + state.legalFen + '#ai')(

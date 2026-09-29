@@ -98,7 +98,7 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
     path match
       case "keyboard-move" => Ok.snip(lila.web.ui.help.keyboardMove)
       case "voice/move" => Ok.snip(lila.web.ui.help.voiceMove)
-      case "master" => Redirect(routes.TitleVerify.index.url)
+      // "master" (title verification help) removed with the title module (unit 3.3).
       case _ => notFound
 
   def movedPermanently(to: String) = Anon:

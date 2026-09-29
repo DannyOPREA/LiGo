@@ -60,11 +60,10 @@ final class Lila(config: Config)(using Executor):
       connect[LilaIn.Site](chans.site),
       connect[LilaIn.Lobby](chans.lobby),
       connect[LilaIn.Team](chans.team),
-      connect[LilaIn.Study](chans.study),
       connect[LilaIn.Round](chans.round),
       connect[LilaIn.Challenge](chans.challenge),
       connect[LilaIn.Racer](chans.racer)
-    ).mapN(Emits.apply(_, _, _, _, _, _, _))
+    ).mapN(Emits.apply(_, _, _, _, _, _))
 
   private def connect[In <: LilaIn](chan: Chan): Future[Emit[In]] =
 
@@ -140,7 +139,6 @@ object Lila:
     object site extends SingleLaneChan("site")
     object lobby extends SingleLaneChan("lobby")
     object team extends SingleLaneChan("team")
-    object study extends SingleLaneChan("study")
     object round extends RoundRobinChan("r", 16)
     object challenge extends SingleLaneChan("chal")
     object racer extends SingleLaneChan("racer")
@@ -149,7 +147,6 @@ object Lila:
       val site: Emit[LilaIn.Site],
       val lobby: Emit[LilaIn.Lobby],
       val team: Emit[LilaIn.Team],
-      val study: Emit[LilaIn.Study],
       val round: Emit[LilaIn.Round],
       val challenge: Emit[LilaIn.Challenge],
       val racer: Emit[LilaIn.Racer]

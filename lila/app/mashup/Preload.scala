@@ -27,7 +27,6 @@ final class Preload(
     getLastUpdates: lila.feed.Feed.GetLastUpdates,
     ublogApi: lila.ublog.UblogApi,
     unreadCount: lila.msg.MsgUnreadCount,
-    relayHome: lila.relay.RelayHomeApi,
     notifyApi: lila.notify.NotifyApi,
     clasApi: lila.clas.ClasApi
 )(using Executor):
@@ -76,7 +75,6 @@ final class Preload(
   yield Homepage(
     data,
     entries,
-    relayHome.spotlight.get,
     feat,
     puzzle,
     streams,
@@ -113,7 +111,6 @@ object Preload:
   case class Homepage(
       data: JsObject,
       userTimeline: Vector[Entry],
-      relays: List[lila.relay.RelayCard],
       featured: Option[Game],
       puzzle: Option[lila.puzzle.DailyPuzzle.WithHtml],
       streams: LiveStreams.WithTitles,

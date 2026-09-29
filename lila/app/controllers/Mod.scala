@@ -58,12 +58,7 @@ final class Mod(
         api.setEngine(sus, v).inject(sus.some)
     }(reportC.onModAction)
 
-  def publicChat = Secure(_.PublicChatView) { ctx ?=> _ ?=>
-    for
-      r <- env.mod.publicChat.all
-      page <- Ok.page(views.mod.publicChat(r))
-    yield page
-  }
+  // publicChat (the broadcast "Public Chats" mod page) removed with the relay module (unit 3.3).
 
   def publicChatTimeout = SecureOrScopedBody(_.ChatTimeout) { _ ?=> me ?=>
     bindForm(lila.chat.ChatTimeout.form)(
@@ -110,7 +105,6 @@ final class Mod(
   def deletePmsAndChats(username: UserStr) = OAuthMod(_.Shadowban) { _ ?=> _ ?=>
     withSuspect(username): sus =>
       for
-        _ <- env.mod.publicChat.deleteAll(sus)
         _ <- env.forum.delete.allByUser(sus.user)
         _ <- env.msg.api.deleteAllBy(sus.user)
         _ <- env.api.accountTermination.deleteAllGameChats(sus.user)

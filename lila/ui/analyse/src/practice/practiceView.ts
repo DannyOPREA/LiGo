@@ -6,7 +6,6 @@ import { fixCrazySan } from 'lib/game/chess';
 import { hl, type VNode, bind, onInsert, type MaybeVNodes } from 'lib/view';
 
 import type AnalyseCtrl from '@/ctrl';
-import { renderNextChapter } from '@/study/nextChapter';
 
 import type { PracticeCtrl, Comment } from './practiceCtrl';
 
@@ -119,17 +118,16 @@ export default function (root: AnalyseCtrl): VNode | undefined {
     running
       ? hl(
           'div.comment',
-          (end && !root.study?.practice ? renderNextChapter(root) : null) ||
-            (comment
-              ? [
-                  hl(
-                    'span.verdict',
-                    comment.verdict === 'goodMove' ? i18n.study.goodMove : i18n.site[comment.verdict],
-                  ),
-                  ' ',
-                  ...commentBest(comment, ctrl),
-                ]
-              : [ctrl.isMyTurn() || end ? '' : hl('span.wait', i18n.site.evaluatingYourMove)]),
+          comment
+            ? [
+                hl(
+                  'span.verdict',
+                  comment.verdict === 'goodMove' ? i18n.study.goodMove : i18n.site[comment.verdict],
+                ),
+                ' ',
+                ...commentBest(comment, ctrl),
+              ]
+            : [ctrl.isMyTurn() || end ? '' : hl('span.wait', i18n.site.evaluatingYourMove)],
         )
       : null,
   ]);
