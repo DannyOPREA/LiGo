@@ -77,15 +77,12 @@ final class Dev(env: Env) extends LilaController(env):
     "Moderation" -> List(
       env.security.ugcArmedSetting,
       env.security.spamKeywordsSetting,
-      env.irwin.irwinApi.thresholds,
-      env.irwin.kaladinApi.thresholds,
       env.report.scoreThresholdsSetting,
       env.report.discordScoreThresholdSetting
     ),
     "Cheat" -> List(
       env.round.selfReport.endGameSetting,
-      env.round.selfReport.markUserSetting,
-      env.bot.boardReport.domainSetting
+      env.round.selfReport.markUserSetting
     ),
     "Security" -> List(
       env.oAuth.originBlocklistSetting,
@@ -107,14 +104,10 @@ final class Dev(env: Env) extends LilaController(env):
     "Limits" -> List(
       env.web.settings.apiTimeline,
       env.web.settings.apiExplorerGamesPerSecond,
-      env.recap.parallelismSetting,
-      env.fishnet.openingBookDepth
+      env.recap.parallelismSetting
     ),
-    // "Broadcast" dev settings (relay proxy) removed with the relay module (unit 3.3).
-    "Tutor" -> List(
-      env.tutor.nbAnalysisSetting,
-      env.tutor.parallelismSetting
-    ),
+    // "Broadcast" dev settings (relay proxy) removed with the relay module (unit 3.3); "Tutor" and
+    // fishnet's opening book depth with the tutor and fishnet modules (unit 3.5).
     "Automod" -> List(
       env.report.automod.imageModelSetting,
       env.report.automod.imagePromptSetting,

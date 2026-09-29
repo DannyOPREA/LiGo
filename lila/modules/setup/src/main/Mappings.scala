@@ -14,7 +14,6 @@ private object Mappings:
 
   val variant = typeIn(Config.variants.toSet)
   val variantWithFen = typeIn(Config.variantsWithFen.toSet)
-  val aiVariants = typeIn(Config.aiVariants.toSet)
   val variantWithVariants = typeIn(Config.variantsWithVariants.toSet)
   val variantWithFenAndVariants = typeIn(Config.variantsWithFenAndVariants.toSet)
   val boardApiVariants = V.Variant.list.all.view.filterNot(_.fromPosition).map(_.key).toSet
@@ -31,7 +30,6 @@ private object Mappings:
       .verifying(_ == Rated.No.id || withRated)
   val ratingRange = text.verifying(RatingRange.isValid)
   val color = text.verifying(TriColor.names contains _)
-  val level = number.verifying(AiConfig.levels contains _)
   val speed = number.verifying(Config.speeds contains _)
   val fenField = optional:
     import lila.common.Form.fen.{ mapping, truncateMoveNumber }

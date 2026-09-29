@@ -51,7 +51,7 @@ export function renderCurrentNode({
     i18n.site[plyOpponentColor(node.ply)],
     renderSan(node.san, node.uci, moveStyle.get()),
     renderLineIndex(ctrl),
-    !ctrl.retro && renderComments(node, moveStyle.get()),
+    renderComments(node, moveStyle.get()),
   ]
     .filter(Boolean)
     .join(' ')

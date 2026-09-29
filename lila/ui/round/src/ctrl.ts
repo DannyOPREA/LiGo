@@ -32,7 +32,6 @@ import * as wakeLock from 'lib/wakeLock';
 
 import * as atomic from './atomic';
 import * as blur from './blur';
-import * as cevalSub from './cevalSub';
 import { CorresClockController } from './corresClock/corresClockCtrl';
 import { valid as crazyValid, init as crazyInit, onEnd as crazyEndHook } from './crazy/crazyCtrl';
 import * as ground from './ground';
@@ -500,7 +499,6 @@ export default class RoundController implements MoveRootCtrl {
     if (playing && playedColor === d.player.color) {
       this.transientMove?.clear();
       this.moveOn.next();
-      cevalSub.publish(d, o);
     }
     if (!this.replaying() && playedColor !== d.player.color) {
       if (this.vibration() && 'vibrate' in navigator) navigator.vibrate(100);
@@ -985,7 +983,6 @@ export default class RoundController implements MoveRootCtrl {
               })
               .bind('return', () => this.submitMove(true));
           }
-          cevalSub.subscribe(this);
         }
 
         if (!this.nvui) keyboardInit(this);

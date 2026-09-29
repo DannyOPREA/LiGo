@@ -217,9 +217,8 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
     env.puzzle.opening.collection.flatMap: collection =>
       negotiate(
         html = for
-          insights <- ctx.me.so(env.insight.api.insightUser(_).dmap(_.some.filterNot(_.isEmpty)))
-          myOpenings = insights.map(u => collection.makeMine(u.families, u.openings))
-          page = views.puzzle.ui.opening.all(collection, myOpenings, lila.puzzle.PuzzleOpening.Order(order))
+          // "My openings" came from the insight module, removed in unit 3.5.
+          page = views.puzzle.ui.opening.all(collection, none, lila.puzzle.PuzzleOpening.Order(order))
           result <- Ok.page(page)
         yield result,
         json = Ok(lila.puzzle.JsonView.openings(collection))

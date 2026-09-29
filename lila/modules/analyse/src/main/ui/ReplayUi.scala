@@ -96,8 +96,7 @@ final class ReplayUi(helpers: Helpers)(analyseUi: AnalyseUi):
               "userId" -> ctx.userId,
               "chat" -> chatOption._1F
             )
-            .add("hunter" -> Granter.opt(_.ViewBlurs)) ++
-            analyseUi.cevalConfig
+            .add("hunter" -> Granter.opt(_.ViewBlurs))
         )
       .graph(graph):
         frag(
@@ -111,7 +110,7 @@ final class ReplayUi(helpers: Helpers)(analyseUi: AnalyseUi):
               frag(
                 div(cls := "analyse__underboard")(
                   div(role := "tablist", cls := "analyse__underboard__menu")(
-                    analysable.option(
+                    (analysable && hasAnalysis).option(
                       button(
                         role := "tab",
                         cls := "computer-analysis",
@@ -131,18 +130,10 @@ final class ReplayUi(helpers: Helpers)(analyseUi: AnalyseUi):
                     button(role := "tab", dataPanel := "fen-pgn", textAndTitle(trans.study.shareAndExport))
                   ),
                   div(cls := "analyse__underboard__panels")(
-                    analysable.option(
+                    // Requesting a server analysis went with fishnet (unit 3.5); a stored one still shows.
+                    (analysable && hasAnalysis).option(
                       div(cls := "computer-analysis")(
-                        if hasAnalysis then div(id := "acpl-chart-container")(canvas(id := "acpl-chart"))
-                        else
-                          postForm(
-                            cls := s"future-game-analysis${ctx.isAuth.not.so(" must-login")}",
-                            action := routes.Analyse.requestAnalysis(gameId)
-                          ):
-                            submitButton(cls := "button text"):
-                              span(cls := "is3 text", dataIcon := Icon.BarChart)(
-                                trans.site.requestAComputerAnalysis()
-                              )
+                        div(id := "acpl-chart-container")(canvas(id := "acpl-chart"))
                       )
                     ),
                     div(cls := "move-times")(

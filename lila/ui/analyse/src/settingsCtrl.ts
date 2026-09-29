@@ -3,13 +3,10 @@ import { throttle } from 'lib/async';
 
 export class Settings {
   constructor(
-    public readonly showGauge = true,
     public readonly inline = false,
     public readonly showStaticAnalysis = true,
     public readonly disclosureMode = false,
-    public readonly showLiveAnnotations = false,
     public readonly showBestMoveArrows = true,
-    public readonly showManeuverMoveArrows = false,
     public readonly showVariationArrows = true,
     public readonly showMoveAnnotationsOnBoard = true,
     public readonly showUndefendedPieces = false,

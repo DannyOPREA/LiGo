@@ -1,8 +1,7 @@
 import type { Line } from '@/chat/interfaces';
 import type { Data as WatchersData } from '@/view/watchers';
 
-import type { EvalMeta } from './ceval';
-import type { TreePath, ClientEval } from './tree/types';
+import type { TreePath } from './tree/types';
 
 export type PubsubEventKey = keyof PubsubEvents;
 
@@ -12,8 +11,6 @@ export interface PubsubEvents {
   'analysis.change': (fen: FEN, path: TreePath) => void;
   'analysis.chart.click': (index: number) => void;
   'analysis.comp.toggle': (enabled: boolean) => void;
-  'analysis.eval': (ev: ClientEval | undefined, meta: EvalMeta) => void;
-  'analysis.server.progress': (analyseData: any) => void;
   'board.change': (is3d: boolean) => void;
   'challenge-app.open': () => void;
   'chart.panning': () => void;
@@ -22,7 +19,6 @@ export interface PubsubEvents {
   'content-loaded': (el?: HTMLElement) => void;
   flip: (flip: boolean) => void;
   jump: (ply: string) => void;
-  'botdev.import.book': (key: string, oldKey?: string) => void;
   'notify-app.set-read': (user: string) => void;
   ply: (ply: number, isMainline?: boolean) => void;
   'ply.trigger': () => void;
@@ -76,7 +72,6 @@ export interface PubsubEvents {
 export interface OneTimeEvents {
   'polyfill.dialog': ((dialog: HTMLElement) => void) | undefined;
   'socket.hasConnected': void;
-  'botdev.images.ready': void;
 }
 
 export class Pubsub {

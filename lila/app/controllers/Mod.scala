@@ -25,7 +25,7 @@ final class Mod(
 )(using org.apache.pekko.stream.Materializer)
     extends LilaController(env):
 
-  import env.mod.{ api, assessApi }
+  import env.mod.api
 
   private given Conversion[Me, AsMod] = me => AsMod(me)
 
@@ -326,14 +326,6 @@ final class Mod(
 
   protected[controllers] def userUrl(username: UserStr, mod: Boolean = true) =
     s"${routes.User.show(username).url}${mod.so("?mod")}"
-
-  def refreshUserAssess(username: UserStr) = Secure(_.MarkEngine) { ctx ?=> me ?=>
-    Found(env.user.repo.byId(username)): user =>
-      assessApi.refreshAssessOf(user) >>
-        env.irwin.irwinApi.requests.fromMod(Suspect(user)) >>
-        env.irwin.kaladinApi.modRequest(Suspect(user)) >>
-        userC.renderModZoneActions(username)
-  }
 
   def spontaneousInquiry(username: UserStr) = Secure(_.SeeReport) { ctx ?=> me ?=>
     Found(env.user.repo.byId(username)): user =>

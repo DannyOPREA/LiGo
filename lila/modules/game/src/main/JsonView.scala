@@ -50,9 +50,6 @@ final class JsonView(rematches: Rematches):
       .add("check" -> game.position.checkSquare.map(_.key))
       .add("lastMove" -> game.lastMoveKeys)
 
-  def apiAiNewGame(pov: Pov, initialFen: Option[Fen.Full]): JsObject =
-    baseWithChessDenorm(pov.game, initialFen) ++ Json.obj("fullId" -> pov.fullId)
-
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json
       .obj(

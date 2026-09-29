@@ -399,18 +399,8 @@ final class User(
             others <- othersAndLogins
           yield views.user.mod.identification(logins, others._2.othersPartiallyLoaded)
 
-        val kaladin = isGranted(_.MarkEngine).so:
-          env.irwin.kaladinApi.get(user).map(_.flatMap(_.response).so(views.irwin.kaladin.report))
-
-        val irwin = isGranted(_.MarkEngine).so:
-          env.irwin.irwinApi.reports.withPovs(user).mapz(views.irwin.report)
-
-        val assess = isGranted(_.MarkEngine)
-          .so(env.mod.assessApi.getPlayerAggregateAssessmentWithGames(user.id))
-          .flatMapz: as =>
-            lightUserApi
-              .preloadMany(as.games.flatMap(_.userIds))
-              .inject(ui.assessments(user, as))
+        // kaladin, irwin and the engine assessment sections went with the irwin and evaluation
+        // modules (unit 3.5).
 
         val oauthTokens = isGranted(_.AccountInfo).so:
           env.oAuth.tokenApi.modRelevantTokens(user.id).map(views.user.mod.oauthTokens)
@@ -433,9 +423,6 @@ final class User(
             .merge(modZoneSegment(rageSit, "rageSit", user))
             .merge(modZoneSegment(otherUsers, "others", user))
             .merge(modZoneSegment(identification, "identification", user))
-            .merge(modZoneSegment(kaladin, "kaladin", user))
-            .merge(modZoneSegment(irwin, "irwin", user))
-            .merge(modZoneSegment(assess, "assess", user))
             .merge(modZoneSegment(oauthTokens, "oauthTokens", user))
             .via(EventSource.flow)
             .log("User.renderModZone")

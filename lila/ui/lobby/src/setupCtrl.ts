@@ -32,7 +32,6 @@ export default class SetupController {
   gameMode: Prop<GameMode>;
   ratingMin: Prop<number>;
   ratingMax: Prop<number>;
-  aiLevel: Prop<number>;
 
   variantMenuOpen = toggle(false);
 
@@ -45,7 +44,6 @@ export default class SetupController {
     this.store = {
       hook: this.makeSetupStore('hook'),
       friend: this.makeSetupStore('friend'),
-      ai: this.makeSetupStore('ai'),
     };
   }
 
@@ -61,11 +59,10 @@ export default class SetupController {
       time: 5,
       increment: 3,
       days: 2,
-      gameMode: gameType === 'ai' || !this.root.me ? 'casual' : 'rated',
+      gameMode: !this.root.me ? 'casual' : 'rated',
       color: 'random',
       ratingMin: -500,
       ratingMax: 500,
-      aiLevel: 1,
     }));
 
   private readonly loadPropsFromStore = (forceOptions?: ForceSetupOptions) => {
@@ -86,7 +83,6 @@ export default class SetupController {
     this.gameMode = this.propWithApply(forceOptions?.mode ?? storeProps.gameMode);
     this.ratingMin = this.propWithApply(storeProps.ratingMin);
     this.ratingMax = this.propWithApply(storeProps.ratingMax);
-    this.aiLevel = this.propWithApply(storeProps.aiLevel);
     this.color(forceOptions?.color || storeProps.color || 'random');
 
     this.enforcePropRules();
@@ -130,7 +126,6 @@ export default class SetupController {
       color: this.color(),
       ratingMin: this.ratingMin(),
       ratingMax: this.ratingMax(),
-      aiLevel: this.aiLevel(),
       ...override,
     });
   };
@@ -196,24 +191,17 @@ export default class SetupController {
   validateFen = debounce(() => {
     const fen = this.fen();
     if (!fen) return;
-    xhr
-      .text(
-        xhr.url('/setup/validate-fen', {
-          fen,
-          strict: this.gameType === 'ai' ? 1 : undefined,
-        }),
-      )
-      .then(
-        () => {
-          this.fenError = false;
-          this.lastValidFen = fen;
-          this.root.redraw();
-        },
-        () => {
-          this.fenError = true;
-          this.root.redraw();
-        },
-      );
+    xhr.text(xhr.url('/setup/validate-fen', { fen })).then(
+      () => {
+        this.fenError = false;
+        this.lastValidFen = fen;
+        this.root.redraw();
+      },
+      () => {
+        this.fenError = true;
+        this.root.redraw();
+      },
+    );
   }, 300);
 
   ratedModeDisabled = () =>
@@ -257,14 +245,12 @@ export default class SetupController {
       days: this.timeControl.days().toString(),
       mode: this.gameMode() === 'casual' ? '0' : '1',
       ratingRange: this.ratingRange(),
-      level: this.aiLevel().toString(),
       color,
     });
 
   validFen = () => this.variant() !== 'fromPosition' || (!this.fenError && !!this.fen());
 
-  valid = () =>
-    this.validFen() && this.timeControl.valid(this.minimumTimeIfReal()) && this.validConstraints();
+  valid = () => this.validFen() && this.timeControl.valid(0) && this.validConstraints();
 
   private readonly invalid = <A>(forced: A | undefined, current: A) =>
     forced !== undefined && forced !== current;
@@ -288,8 +274,6 @@ export default class SetupController {
     }
     return true;
   };
-
-  minimumTimeIfReal = () => (this.gameType === 'ai' && this.variant() === 'fromPosition' ? 1 : 0);
 
   submit = async () => {
     const color = this.color();

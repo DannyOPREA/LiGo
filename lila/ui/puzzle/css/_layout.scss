@@ -23,10 +23,6 @@ $puzzle-block-gap: 4px;
   ---puzzle-gauge-col: #{$puzzle-block-gap};
   ---puzzle-gauge-offset: calc(var(---puzzle-gauge-col) - #{$puzzle-block-gap});
 
-  &.gauge-on {
-    ---puzzle-gauge-col: calc(#{$puzzle-block-gap} * 3.75);
-  }
-
   &--nvui {
     display: block;
     max-width: 800px;
@@ -57,10 +53,6 @@ $puzzle-block-gap: 4px;
 
     grid-area: session;
     align-self: start;
-  }
-
-  .eval-gauge {
-    grid-area: gauge;
   }
 
   .keyboard-move {

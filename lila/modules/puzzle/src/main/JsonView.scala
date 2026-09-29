@@ -13,8 +13,7 @@ import lila.core.net.ApiVersion
 
 final class JsonView(
     gameJson: GameJson,
-    gameRepo: lila.core.game.GameRepo,
-    myEngines: lila.core.misc.analysis.MyEnginesAsJson
+    gameRepo: lila.core.game.GameRepo
 )(using Executor):
 
   import JsonView.{ *, given }
@@ -54,13 +53,9 @@ final class JsonView(
       apiVersion: Option[ApiVersion] = None
   )(using oldMe: Option[Me])(using Perf, Translate): Fu[JsObject] =
     given me: Option[Me] = newMe.orElse(oldMe)
-    for
-      puzzleJson <-
-        if apiVersion.exists(v => !ApiVersion.puzzleV2(v))
-        then bc(puzzle)
-        else apply(puzzle, angle.some, replay)
-      enginesJson <- myEngines.get(me)
-    yield puzzleJson ++ enginesJson
+    if apiVersion.exists(v => !ApiVersion.puzzleV2(v))
+    then bc(puzzle)
+    else apply(puzzle, angle.some, replay)
 
   def userJson(using perf: Perf, me: Option[Me]) = me.isDefined.option:
     Json

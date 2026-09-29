@@ -19,6 +19,8 @@ val timeline = lila.api.ui.ModTimelineUi(helpers)(publicLineSource = publicLineS
 // PublicSource.Tournament/Simul/Swiss/Study/Relay can no longer occur (units 3.2 and 3.3 removed
 // those features), but the enum cases stay in lila.core.chat for old stored chat lines; render
 // them like any unknown game-scoped source rather than deleting the cases wholesale.
+// The givens are unused but part of the function type ModInquiryUi and ModTimelineUi expect.
+@annotation.nowarn("msg=unused implicit parameter")
 private def publicLineSource(source: PublicSource)(using Translate, ClientName): Tag = source match
   case PublicSource.Team(id) => teamLink(id)
   case PublicSource.Watcher(id) => a(href := routes.Round.watcher(id, Color.white))("Game #", id)

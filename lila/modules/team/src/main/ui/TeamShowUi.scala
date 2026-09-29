@@ -20,7 +20,6 @@ final class TeamShowUi(helpers: Helpers, teamUi: TeamUi, requestUi: TeamRequestU
       s: Team.TeamShow,
       members: Paginator[lila.core.LightUser],
       chatOption: Option[(JsObject, SocketVersion, Frag)],
-      toursFrag: Option[Frag],
       forumFrag: Frag,
       asMod: Boolean = false,
       modLog: List[Frag] = Nil

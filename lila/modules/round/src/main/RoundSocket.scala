@@ -183,9 +183,6 @@ final class RoundSocket(
       sendForGameId(gameId).exec(Protocol.Out.tvSelect(gameId, speed, json))
 
   Bus.sub[Tell]:
-    case Tell(gameId, e @ RoundBus.BotConnected(color, v)) =>
-      rounds.tell(gameId, e)
-      sendForGameId(gameId).exec(Protocol.Out.botConnected(gameId, color, v))
     case Tell(gameId, msg) => rounds.tell(gameId, msg)
 
   Bus.sub[lila.tree.AnalysisProgress]: progress =>
@@ -194,7 +191,6 @@ final class RoundSocket(
   Bus.sub[lila.game.actorApi.NotifyRematch]: rematch =>
     rounds.tellIfPresent(rematch.rematchOf, rematch)
 
-  Bus.sub[FishnetStart.type](rounds.tellAll(_))
   Bus.sub[TellMany]:
     case TellMany(gameIds, msg) => rounds.tellIds(gameIds, msg)
   Bus.sub[SocketExists]:
@@ -437,9 +433,6 @@ object RoundSocket:
 
       def tvSelect(gameId: GameId, speed: chess.Speed, data: JsObject) =
         s"tv/select $gameId ${speed.id} ${Json.stringify(data)}"
-
-      def botConnected(gameId: GameId, color: Color, v: Boolean) =
-        s"r/bot/online $gameId ${P.Out.color(color)} ${P.Out.boolean(v)}"
 
       def tourStanding(tourId: TourId, data: JsValue) =
         s"r/tour/standing $tourId ${Json.stringify(data)}"

@@ -30,7 +30,6 @@ export interface TreeWrapper {
   forceVariationAt(path: TreePath, force: boolean): MaybeNode;
   getCurrentNodesAfterPly(nodeList: TreeNode[], mainline: TreeNode[], ply: number): TreeNode[];
   merge<T extends TreeNodeLite>(tree: T): void;
-  removeCeval(): void;
   parentNode(path: TreePath): TreeNode;
   getParentClock(node: TreeNode, path: TreePath): Clock | undefined;
   walkUntilTrue(
@@ -231,11 +230,6 @@ export function makeTree(root: TreeNode): TreeWrapper {
     },
     getCurrentNodesAfterPly,
     merge: <T extends TreeNodeLite>(tree: T) => ops.merge(root, tree),
-    removeCeval: () =>
-      ops.updateAll(root, function (n) {
-        delete n.ceval;
-        delete n.threat;
-      }),
     parentNode,
     getParentClock,
     walkUntilTrue,

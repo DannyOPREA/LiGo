@@ -36,7 +36,6 @@ final class Env(
     gameCache: lila.game.Cached,
     rankingApi: lila.user.RankingApi,
     notifyApi: lila.core.notify.NotifyApi,
-    uciMemo: lila.game.UciMemo,
     rematches: lila.game.Rematches,
     divider: lila.game.Divider,
     prefApi: lila.pref.PrefApi,
@@ -108,7 +107,6 @@ final class Env(
             Bus.pub(sg)
             game.userIds.foreach: userId =>
               Bus.publishDyn(sg, s"userStartGame:$userId")
-            if game.playableByAi then Bus.pub(lila.core.fishnet.FishnetMoveRequest(game))
 
   lazy val proxyRepo: GameProxyRepo = wire[GameProxyRepo]
 

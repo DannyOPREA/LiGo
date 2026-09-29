@@ -6,7 +6,7 @@ import type { GameType } from '@/interfaces';
 
 import renderSetupModal from './setup/modal';
 
-type ButtonInfo = { gameType: GameType | 'dev' | 'bots'; label: string; disabled?: boolean; title?: string };
+type ButtonInfo = { gameType: GameType; label: string; disabled?: boolean; title?: string };
 
 export default function table(ctrl: LobbyController) {
   const { data, opts } = ctrl;
@@ -31,17 +31,8 @@ export default function table(ctrl: LobbyController) {
         You will receive a challenge link to share via email or text, as well as a QR code
         that someone nearby can scan.`,
     },
-    {
-      gameType: 'ai',
-      label: i18n.site.playAgainstComputer,
-      disabled: hasOngoingRealTimeGame,
-    },
+    // (unit 3.5) the "Play with the computer" button is gone
   ];
-  if (opts.bots)
-    lobbyButtons.push({
-      gameType: 'bots',
-      label: 'play bot',
-    });
 
   return hl('div.lobby__table', [
     hl('div.lobby__start', [site.blindMode && hl('h2', i18n.site.play), lobbyButtons.map(makeLobbyButton)]),
@@ -98,17 +89,7 @@ export default function table(ctrl: LobbyController) {
       {
         class: { active: ctrl.setupCtrl.gameType === gameType, disabled: !!disabled },
         attrs: { type: 'button', title: title ?? '', 'aria-disabled': disabled ? 'true' : 'false' },
-        hook: disabled
-          ? {}
-          : bind(
-              'click',
-              () => {
-                if (gameType === 'bots') location.href = '/bots';
-                else if (gameType === 'dev') location.href = '/bots/dev';
-                else ctrl.setupCtrl.openModal(gameType);
-              },
-              ctrl.redraw,
-            ),
+        hook: disabled ? {} : bind('click', () => ctrl.setupCtrl.openModal(gameType), ctrl.redraw),
       },
       label,
     );

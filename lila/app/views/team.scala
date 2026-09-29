@@ -45,8 +45,6 @@ def show(
   val modLog = log.map: e =>
     li(userIdLink(e.mod.userId.some), " ", e.showAction, ": ", Modlog.explain(e))
 
-  val toursFrag: Option[Frag] = None
-
   val forumFrag = info.forum.map:
     _.map: post =>
       a(cls := "team-show__forum__post", href := routes.ForumPost.redirect(post.post.id))(
@@ -61,4 +59,4 @@ def show(
         p(shorten(Markdown(post.post.text).unlink, 210))
       )
 
-  showUi(info.show, members, chat, toursFrag, forumFrag, asMod, modLog)
+  showUi(info.show, members, chat, forumFrag, asMod, modLog)

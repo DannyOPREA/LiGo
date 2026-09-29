@@ -1,11 +1,10 @@
 import type { VNode } from 'snabbdom';
 
-import type { ExternalEngineInfoFromServer } from 'lib/ceval';
 import type { ChatCtrl, ChatPlugin, ChatOpts } from 'lib/chat/interfaces';
 import type { Player, Status, Source, Clock } from 'lib/game';
 import type { Coords, MoveEvent } from 'lib/prefs';
 import type { EnhanceOpts } from 'lib/richText';
-import type { TreeNode, TreeNodeBase, TreeNodeLite, TreePath } from 'lib/tree/types';
+import type { TreeNode, TreeNodeBase, TreePath } from 'lib/tree/types';
 
 import type { ForecastData } from './forecast/interfaces';
 import type { AnalyseSocketSend } from './socket';
@@ -46,7 +45,6 @@ export interface AnalyseData {
     id: string;
   };
   puzzle?: OpeningPuzzle;
-  externalEngines?: ExternalEngineInfoFromServer[];
 }
 
 export interface AnalysePref {
@@ -60,13 +58,6 @@ export interface AnalysePref {
   animationDuration?: number;
   keyboardMove: boolean;
   moveEvent: MoveEvent;
-}
-
-export interface ServerEvalData {
-  ch: string;
-  analysis?: Analysis;
-  tree: TreeNodeLite;
-  division?: Division;
 }
 
 // similar, but not identical, to game/Game
@@ -136,7 +127,6 @@ export interface AnalyseOpts {
   };
   wiki?: boolean;
   inlinePgn?: string;
-  externalEngineEndpoint: string;
   embed?: boolean;
   socketUrl?: string;
   socketVersion?: number;

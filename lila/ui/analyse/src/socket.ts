@@ -1,7 +1,7 @@
 import { ops as treeOps } from 'lib/tree/tree';
 
 import type AnalyseCtrl from './ctrl';
-import type { Opening, ServerEvalData } from './interfaces';
+import type { Opening } from './interfaces';
 
 interface GameUpdate {
   id: string;
@@ -40,9 +40,6 @@ export function make(send: AnalyseSocketSend, ctrl: AnalyseCtrl): Socket {
     fen(e: GameUpdate) {
       if (ctrl.forecast && e.id === ctrl.data.game.id && !treeOps.last(ctrl.mainline)!.fen.startsWith(e.fen))
         ctrl.forecast.reloadToLastPly();
-    },
-    analysisProgress(data: ServerEvalData) {
-      ctrl.mergeAnalysisData(data);
     },
   };
 
