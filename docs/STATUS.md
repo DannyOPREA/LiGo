@@ -34,6 +34,12 @@ _Updated at the end of every session (`/status`). Newest information wins._
   pipeline), 8.4 (the first ≥ 200 puzzles) and 8.5 (goban's puzzle mode in `libs/board`) run
   now; 8.6–8.8 wait for Phase 3 units 3.11, 3.16, 3.18 and 3.20. Log: logs/tsumego.md.
 
+- Phase 9 (under the owner's "work until I tell you to stop" delegation): units 9.1–9.10 in
+  docs/PLAN.md §5. 9.1 (design ADR), 9.2 (sounds), 9.3 (board themes) and 9.4 (board accessibility)
+  in `libs/board` and the playground, and 9.5 (the performance budget check) run now; 9.6–9.10 wait
+  for Phase 3 units 3.8, 3.18 and 3.20 and for Phases 4–8's pages. Logs: logs/frontend.md,
+  logs/board-ui.md.
+
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
   - Units 0.1–0.3 merged (PRs #1–#3; #1 as a merge commit, #2–#3 squashed). `dev/ligo` runs the stack: docker mode on your
@@ -139,4 +145,4 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.2 merged (ADR 0022), 6.3 in review, 6.4–6.10 wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
 | 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.5 under way, 8.6–8.8 wait for Phase 3 |
-| 9 | not started |
+| 9. PWA, polish & handoff | split into units 9.1–9.10 (PLAN §5); 9.1–9.5 under way, 9.6–9.10 wait for Phases 3–8 |
