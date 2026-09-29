@@ -29,7 +29,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   4.8–4.12. Logs: logs/frontend.md, logs/rules-engine.md, logs/clocks.md.
 
 - Phase 8 (under the owner's "work until I tell you to stop" delegation): units 8.1–8.8 in
-  docs/PLAN.md §5. 8.1 (tsumego content memo), 8.2 (design ADR), 8.3 (the `tools/puzzles` import
+  docs/PLAN.md §5. 8.1 (tsumego content memo; ADR 0024: puzzles LiGo generates and checks itself, plus a
+  small classics tail) in review; 8.2 (design ADR), 8.3 (the `tools/puzzles` import
   pipeline), 8.4 (the first ≥ 200 puzzles) and 8.5 (puzzle solving in `libs/board`, after 7.2) run
   now; 8.6–8.8 wait for Phase 3 units 3.11, 3.16, 3.18 and 3.20. Log: logs/tsumego.md.
 
@@ -110,10 +111,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
   also installs bats, shellcheck and KataGo (CPU).
 - Cloud network allowlist: add `media.katagotraining.org` (full-size KataGo networks) and
   `mcp.context7.com` (the context7 MCP server).
-- On your box (unit 4.6): `dev/ligo katago install opencl`; paste the printed sha256 and the
-  network's licence (katagotraining.org) into the thread and Claude pins it; then `dev/ligo katago
-  smoke`, `dev/ligo katago bench`, `LIGO_MODE=native dev/ligo scoring bench --gate 97` (with
-  `LIGO_KATAGO_ALLOW_UNVERIFIED=1` before the pin). The bench runs on the host, so it needs host
+- On your box (unit 4.6): the b18 checksum is pinned and its licence checked (MIT-style,
+  2026-09-29). Run `dev/ligo katago install
+  opencl` (should say verified), `dev/ligo katago smoke`, `dev/ligo katago bench`,
+  `LIGO_MODE=native dev/ligo scoring bench --gate 97`. The bench runs on the host, so it needs host
   Node 24 and pnpm, and `pnpm install --frozen-lockfile` once in `lila/`.
 
 ## Blockers

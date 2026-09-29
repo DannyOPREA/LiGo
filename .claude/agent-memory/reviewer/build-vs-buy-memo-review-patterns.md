@@ -47,3 +47,12 @@ Added after the unit 1.4 ratings memo review (2026-09-27):
 - **Check PLAN §10 "Decisions deferred"**: a memo can silently settle a deferred item (goratings'
   9×9 stone value = 6 ranks vs PLAN §10 "9×9 stone value → Phase 5").
 - Sparse clones (ps-lila had only rating + round) limit what "X does no Y" claims can rest on.
+
+Added after the unit 8.1 tsumego-content memo review (2026-09-29):
+- **A content memo that picks "we build a generator" needs its own code survey.** 8.1 chose rung-6
+  custom (generator + exhaustive solver + KataGo check) with no search for existing solvers/frames;
+  KaTrain's MIT `katrain/core/tsumego_frame.py` (port of lizgoban) was one GitHub fetch away.
+- **Own-output licence choices hide in passing.** ADR 0024 made puzzle files CC0 although ADR 0007
+  (owner-decided) says everything in `tools/` is MIT; not flagged as an exception, not in decisions.md.
+- **Check PLAN §3.1 row and §10 deferred row** get updated when an ADR deviates from the planned
+  "Chosen/Fallback" (8.1's generator is not "positions from game records").
