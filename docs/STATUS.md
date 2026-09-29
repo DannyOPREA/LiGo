@@ -17,6 +17,11 @@ _Updated at the end of every session (`/status`). Newest information wins._
   docs/PLAN.md §5. 5.1 (design, ADR 0021, merged) and 5.2 (rating maths in `lila/modules/rating`) need nothing
   from Phases 3–4 and run now; 5.3–5.8 wait for Phase 3 units 3.11–3.20 (and 4.9). Log: logs/ratings.md.
 
+- Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
+  docs/PLAN.md §5. 6.1 (design ADR), 6.2 (pairing with auto-handicap in `lila/modules/pool`) and 6.3
+  (the player-test kit) run now; 6.4–6.10 wait for Phase 3 units 3.15–3.20, 4.7, 4.9 and 5.3–5.7.
+  Log: logs/lobby.md.
+
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
   - Units 0.1–0.3 merged (PRs #1–#3; #1 as a merge commit, #2–#3 squashed). `dev/ligo` runs the stack: docker mode on your
@@ -117,4 +122,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1, 3.2 and 3.9 merged; 3.3 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
-| 6–9 | not started |
+| 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 under way, 6.4–6.10 wait for Phases 3–5 |
+| 7–9 | not started |

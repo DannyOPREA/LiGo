@@ -463,6 +463,32 @@ What stays out of Phase 5: pools with auto-handicap, rank ranges while waiting a
 table (Phase 6), the tsumego rating (Phase 8), OGS's "?" threshold of 160 (ADR 0013 keeps lila's 110),
 and rating changes against bots (LiGo has none).
 
+**Phase 6 units** (broken down 2026-09-29 while Phases 3–5 were being built; the lobby follows §4,
+the presets [ADR 0005](decisions/0005-initial-lobby-presets.md), the stone count for a rank gap
+[ADR 0021](decisions/0021-phase-5-ratings-signup-display-handicap.md) §4 and 5.2's `GoRating`. lila's
+lobby already has most of the pieces (the quick-pairing grid over `pool`, the hooks and seeks tables,
+the create-game and challenge modals, a challenge button on profiles), so each unit adapts one of
+them rather than building a new one. Units 6.1–6.3 need nothing from Phases 3–5 beyond what has
+merged, so they run now; 6.4–6.10 wait for Phase 3's game creation and lobby UI, Phase 4's clocks and
+Phase 5's rated games):
+
+| Unit | What | Needs |
+|---|---|---|
+| 6.1 | Design ADR for Phase 6: the pool list from ADR 0005 (how a byo-yomi or Fischer pool is keyed and shown, one pool per board size and time control, correspondence presets as seeks rather than pools); what the chip row means in pairing (lila's pools are always rated and a guest's tile click becomes a casual hook: whether casual pools exist, and whether "Handicap OK / Even only" splits a pool or is a member flag that only pairs compatible members); auto-handicap at pairing (ADR 0021's stone function, colours, komi, when a gap is too big for the cap, how the pairing score treats a gap that handicap covers); the widening rank range while waiting (lila's miss bonus, shown as ranks with 5.2's rank table); what makes an open challenge "suit you" and what greys one out, and whether the server or the browser decides; which lila lobby parts stay, change or go (tabs, the "playing" and "carousel" views, play-with-computer, the filter form); whether guests and signed-in players can meet (ADR 0021 §5 left it to the player test: the default until then); the player test's method; the load-testing tool (PLAN §3.1's "Phase 6+" row) | — |
+| 6.2 | Pairing with auto-handicap in `lila/modules/pool`, as new code beside lila's `MatchMaking` (nothing calls it yet, as 5.2 did): a Go pairing score over 5.2's `GoRating` that knows each member's chip choices, the stone count and colours for a couple, the rank-range widening as a function of missed waves; tests for even pairs, handicap pairs, capped gaps, incompatible chips and range conflicts | 6.1, 5.2 |
+| 6.3 | The player-test kit in `docs/research/lobby-test/`: the think-aloud protocol for OGS and LiGo (the same tasks on both, in an order that alternates between participants), the task list from §4's goals (one click to a game, find a game that suits you, create a custom game, challenge a named player), the consent note, a notes and timing template, how findings become units. You recruit and run it (≥ 3 Western Go players) once 6.10's demo works | 6.1 |
+| 6.4 | Pools in lila: `PoolList` from 6.1's presets (Fischer and byo-yomi, 9×9 and 19×19), pool members carrying the chip choices, `MatchMaking` using 6.2's score, `GameStarter` creating handicap games with 6.2's stones and colours and rating them as 5.3 does, guests as 6.1 decided; tests from lila's pool suite adapted | 3.15, 4.7, 5.3, 6.2 |
+| 6.5 | Open challenges and correspondence presets on the server: hooks and seeks carry size, ruleset, time control, handicap and rated (as 3.15 and 4.9 add them), the correspondence presets become one-click seeks, the lobby's JSON gains the fields the table and the "suits you" rule need (rank label from 5.5, and whatever 6.1 puts on the server) | 3.15, 4.9, 5.5, 6.1 |
+| 6.6 | The landing view: the quick-pair grid (ADR 0005's tiles in three columns, each one click, with live player and game counts), the one persistent chip row (remembered per player), and waiting on a tile (pool size, the rank range widening, elapsed time, Cancel); desktop and phone layouts with screenshot tests | 3.19, 6.4 |
+| 6.7 | The open-challenges table: player + rank · board · time · rules · even/handicap · rated columns, games that suit you first and incompatible ones greyed, filter chips in place of lila's filter form, cards on phones; screenshot tests | 3.19, 6.5 |
+| 6.8 | Custom game and direct challenge: the create-game and challenge forms become one pre-filled modal (the last settings or a preset, advanced options collapsed: komi, handicap, ruleset, rating range as ranks), opened from the grid, from the open-challenges tab and from any player's profile or mini-profile, with 5.7's suggested stones for a named opponent | 3.19, 4.9, 5.7 |
+| 6.9 | Load test: the tool 6.1 chose, a scenario where many pairs join pools and play short games to the end over lila's API and websockets, `dev/ligo loadtest` in the cloud at a small size, the numbers recorded; run by hand, not in CI | 3.20, 6.1, 6.4 |
+| 6.10 | Phase 6 demo: a Playwright test from the landing page to a first move in one click (and the time it takes, against §4's 10 s), a rated handicap pool game between a 5k and a 1d, an open challenge accepted from the table, a custom game and a profile challenge, at desktop and phone sizes; the demo checklist for you, then the player test (6.3) and a unit for each of its findings (preset changes supersede ADR 0005) | 3.20, 6.6, 6.7, 6.8 |
+
+What stays out of Phase 6: 13×13 pools (no server games on 13×13 yet, ADR 0021 §4), tournaments and
+arenas (removed in 3.2), bots to play while waiting (LiGo has none), correspondence notifications
+(Phase 7), and lobby chat (lila's lobby has none).
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.
