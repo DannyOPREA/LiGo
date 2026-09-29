@@ -231,7 +231,7 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
         .option {
           postForm(action := routes.Mod.warn(u.username, ""), cls := "pm-preset")(
             st.select(
-              st.option(value := "")("Send PM"),
+              st.option(value := "")("Log warning (not sent to the user)"),
               pmPresets.value.map: preset =>
                 st.option(st.value := preset.name, title := preset.text)(preset.name)
             )

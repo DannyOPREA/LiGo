@@ -145,7 +145,9 @@ final class CoachUi(helpers: Helpers)(
                 frag(
                   if c.coach.listed.value then p("This page is now public.")
                   else "This page is not public yet. ",
-                  a(href := routes.Coach.edit, cls := "text", dataIcon := Icon.Pencil)("Edit my coach profile")
+                  a(href := routes.Coach.edit, cls := "text", dataIcon := Icon.Pencil)(
+                    "Edit my coach profile"
+                  )
                 )
               )
           ),

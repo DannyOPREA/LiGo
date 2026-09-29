@@ -13,5 +13,5 @@
 - [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, browser mismatch, verify gate
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE
-- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue changes, UPSTREAM gaps, kid guards, literal URLs, kept in-repo API clients, dead form fields (3.3–3.5)
+- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects (3.3–3.6)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files

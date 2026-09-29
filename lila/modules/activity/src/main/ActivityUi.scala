@@ -177,7 +177,6 @@ final class ActivityUi(helpers: Helpers):
       )
     )
 
-
   private def renderStream(u: User)(using ctx: Context) =
     ctx.kid.no.option(
       entryTag(

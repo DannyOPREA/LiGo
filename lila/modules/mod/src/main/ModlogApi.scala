@@ -45,6 +45,85 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
   def streamerTier(streamerId: UserId, v: Int)(using MyId) = add:
     Modlog(streamerId.some, Modlog.streamerTier, v.toString.some)
 
+  def setCarouselSize(size: Int)(using MyId) = add:
+    Modlog(none, Modlog.setCarouselSize, size.toString.some)
+
+  def practiceConfig(using MyId) = add:
+    Modlog(none, Modlog.practiceConfig)
+
+  def alt(sus: Suspect, v: Boolean)(using MyId) = add:
+    Modlog.make(sus, if v then Modlog.alt else Modlog.unalt)
+
+  def engine(sus: Suspect, v: Boolean)(using MyId) = add:
+    Modlog.make(sus, if v then Modlog.engine else Modlog.unengine)
+
+  def booster(sus: Suspect, v: Boolean)(using MyId) = add:
+    Modlog.make(sus, if v then Modlog.booster else Modlog.unbooster)
+
+  def troll(sus: Suspect)(using MyId) = add:
+    Modlog.make(sus, if sus.user.marks.troll then Modlog.troll else Modlog.untroll)
+
+  def isolate(sus: Suspect)(using MyId) = add:
+    Modlog.make(sus, if sus.user.marks.isolate then Modlog.isolate else Modlog.unisolate)
+
+  def deleteComms(sus: Suspect)(using MyId) = add:
+    Modlog.make(sus, Modlog.deleteComms)
+
+  def setKidMode(mod: ModId, kid: UserId, v: KidMode) = add:
+    Modlog(mod, kid.some, if v.yes then Modlog.setKidMode else Modlog.unsetKidMode)
+
+  def blankPassword(user: UserId)(using Me) = add:
+    Modlog(user.some, Modlog.blankPassword)
+
+  def loginWithBlankedPassword(user: UserId) = add:
+    Modlog(UserId.lichess.into(ModId), user.some, Modlog.blankedPassword)
+
+  def loginWithWeakPassword(user: UserId) = add:
+    Modlog(UserId.lichess.into(ModId), user.some, Modlog.weakPassword)
+
+  def giftPatronMonth(mod: ModId, user: UserId) = add:
+    Modlog(mod, user.some, Modlog.giftPatronMonth)
+
+  def disableTwoFactor(mod: ModId, user: UserId) = add:
+    Modlog(mod, user.some, Modlog.disableTwoFactor)
+
+  def closeAccount(user: UserId)(using me: Me) = add:
+    Modlog(me, user.some, Modlog.closeAccount)
+
+  def teacherCloseAccount(user: UserId)(using me: Me) = add:
+    Modlog(me, user.some, Modlog.teacherCloseAccount)
+
+  def selfCloseAccount(user: UserId, forever: Boolean, openReports: List[Report]) = add:
+    Modlog(
+      UserId.lichess.into(ModId),
+      user.some,
+      Modlog.selfCloseAccount,
+      details = {
+        forever.so("forever ") + openReports.map(r => s"${r.room.name} report").mkString(", ")
+      }.nonEmptyOption
+    )
+
+  def closedByMod(user: User): Fu[Boolean] =
+    fuccess(user.marks.alt) >>| coll.exists(bdoc("user" -> user.id, "action" -> Modlog.closeAccount))
+
+  def closedByTeacher(user: User): Fu[Boolean] =
+    coll.exists(bdoc("user" -> user.id, "action" -> Modlog.teacherCloseAccount))
+
+  def reopenAccount(user: UserId)(using Me) = add:
+    Modlog(user.some, Modlog.reopenAccount)
+
+  def setTitle(user: UserId, title: String)(using Me) = add:
+    Modlog(user.some, Modlog.setTitle, title.some)
+
+  def removeTitle(user: UserId)(using Me) = add:
+    Modlog(user.some, Modlog.removeTitle)
+
+  def setEmail(user: UserId, from: Option[EmailAddress], to: EmailAddress)(using Me) =
+    from
+      .forall(_ != to)
+      .so:
+        add(Modlog(user.some, Modlog.setEmail, s"${from | "none"} -> $to".some))
+
   def setPassword(using me: Me) = add:
     Modlog(me.some, Modlog.setPassword)
 
@@ -190,8 +269,8 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
         "user" -> userId,
         "action" -> Modlog.modMessage,
         or(
-          bdoc("details" -> SandbagWatch.msgPreset.sandbagAuto.name),
-          bdoc("details" -> SandbagWatch.msgPreset.boostAuto.name)
+          bdoc("details" -> SandbagWatch.warning.sandbagAuto),
+          bdoc("details" -> SandbagWatch.warning.boostAuto)
         ),
         "date".gte(nowInstant.minusMonths(6))
       )
@@ -292,8 +371,6 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
             else if presetPerms(Permission.CheatHunter) then permissions(MonitoredCheatMod)
             else false
           case _ => false
-        for
-          _ <- monitorable.so(ircApi.monitorMod(icon = icon, text = text, dom))
-          _ <- m.isForum.so(ircApi.publicForumLog(icon = icon, text = text))
+        for _ <- monitorable.so(ircApi.monitorMod(icon = icon, text = text, dom))
         yield ()
     }

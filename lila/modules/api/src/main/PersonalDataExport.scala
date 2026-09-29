@@ -149,6 +149,46 @@ final class PersonalDataExport(
       )
 
     // blog posts went with the ublog module (unit 3.6).
+
+    val appeals = Source.futureSource:
+      appealApi
+        .findAll(user)
+        .map: appeals =>
+          Source:
+            appeals.flatMap: appeal =>
+              List(textTitle("Appeal")) ++ appeal.msgs.map: msg =>
+                val author = if appeal.user.is(msg.by) then "you" else "Lichess"
+                s"${textDate(msg.at)} by $author\n${msg.text}$bigSep"
+
+    val reports = Source.futureSource:
+      reportEnv.api
+        .personalExport(user)
+        .map: atoms =>
+          Source:
+            List(textTitle("Reports you created")) :::
+              atoms.map: a =>
+                s"${textDate(a.at)}\n${a.text}$bigSep"
+
+    val dubiousChats = Source.futureSource:
+      shutupEnv.api
+        .getPublicLines(user.id)
+        .map: lines =>
+          Source:
+            List(textTitle("Dubious public chats")) :::
+              lines.map: l =>
+                s"${textDate(l.date)}\n${l.text}$bigSep"
+
+    val timeouts = Source.futureSource:
+      modLogApi
+        .timeoutPersonalExport(user.id)
+        .map: modlogs =>
+          Source:
+            List(textTitle("Messages you were timeouted for")) :::
+              modlogs.map: m =>
+                // do not export the reason of the timeout as not personal data
+                val timeoutMsg = m.details.so(_.split(":").drop(1).mkString(":").trim())
+                s"${textDate(m.date)}\n${timeoutMsg}$bigSep"
+
     // title request export removed with the title module (unit 3.3).
 
     val outro = Source(List(textTitle("End of data export.")))

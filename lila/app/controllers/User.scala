@@ -537,21 +537,21 @@ final class User(
           .fold(BadRequest("No search term provided").toFuccess): term =>
             for
               userIds <-
-                  ctx.me.ifTrue(getBool("friend")) match
-                    case Some(follower) =>
-                      env.relation.api.searchFollowedBy(follower, term, 10).flatMap { userIds =>
-                        val remaining = 10 - userIds.length
-                        if remaining > 0 then
-                          env.user.cached.userIdsLike(term).map { extraUserIds =>
-                            userIds ++ (extraUserIds.diff(userIds)).take(remaining)
-                          }
-                        else fuccess(userIds)
-                      }
-                    case None =>
-                      for
-                        found <- env.user.cached.userIdsLike(term)
-                        closed <- isGrantedOpt(_.AccountInfo).so(env.user.repo.userIdsLikeClosed(term))
-                      yield found ::: closed
+                ctx.me.ifTrue(getBool("friend")) match
+                  case Some(follower) =>
+                    env.relation.api.searchFollowedBy(follower, term, 10).flatMap { userIds =>
+                      val remaining = 10 - userIds.length
+                      if remaining > 0 then
+                        env.user.cached.userIdsLike(term).map { extraUserIds =>
+                          userIds ++ (extraUserIds.diff(userIds)).take(remaining)
+                        }
+                      else fuccess(userIds)
+                    }
+                  case None =>
+                    for
+                      found <- env.user.cached.userIdsLike(term)
+                      closed <- isGrantedOpt(_.AccountInfo).so(env.user.repo.userIdsLikeClosed(term))
+                    yield found ::: closed
               result <-
                 if getBool("names") then
                   for users <- lightUserApi.asyncMany(userIds)

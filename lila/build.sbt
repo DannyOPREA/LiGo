@@ -181,7 +181,6 @@ lazy val feed = module("feed",
   Seq()
 )
 
-
 lazy val perfStat = module("perfStat",
   Seq(memo, rating),
   Seq()
@@ -317,12 +316,6 @@ lazy val pref = module("pref",
   Seq(memo, ui),
   Seq()
 )
-
-
-
-
-
-
 
 lazy val bookmark = module("bookmark",
   Seq(db),

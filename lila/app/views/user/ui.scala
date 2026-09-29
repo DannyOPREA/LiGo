@@ -6,7 +6,6 @@ import lila.core.perf.UserWithPerfs
 import lila.perfStat.PerfStatData
 import lila.rating.UserPerfsExt.best8Perfs
 import lila.user.Profile.flagInfo
-import lila.core.user.RealName
 
 val bits = lila.user.ui.UserBits(helpers)
 val noteUi = lila.user.ui.NoteUi(helpers)

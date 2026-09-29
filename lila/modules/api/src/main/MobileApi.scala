@@ -2,7 +2,6 @@ package lila.api
 
 import play.api.libs.json.{ Json, JsObject }
 import play.api.i18n.Lang
-import play.api.mvc.RequestHeader
 import scalalib.data.Preload
 
 import lila.common.Json.given
@@ -32,7 +31,7 @@ final class MobileApi(
 
   def home(oauth: Option[TokenScopes])(using
       me: Option[Me]
-  )(using RequestHeader, Translate, KidMode): Fu[JsObject] =
+  )(using Translate, KidMode): Fu[JsObject] =
     val myUser = me.map(_.value)
     val takex3 = oauth.exists(_.has(_.Web.Takex3))
     for

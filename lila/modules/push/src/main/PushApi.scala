@@ -5,7 +5,6 @@ import play.api.libs.json.*
 import scalalib.data.LazyFu
 
 import lila.common.LilaFuture
-import lila.common.String.shorten
 import lila.core.LightUser
 import lila.core.challenge.Challenge
 import lila.core.misc.push.TourSoon

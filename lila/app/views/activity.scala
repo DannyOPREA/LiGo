@@ -1,6 +1,6 @@
 package views.activity
 
-import lila.app.UiEnv.{ *, given }
+import lila.app.UiEnv.*
 import lila.core.perf.UserWithPerfs
 
 private lazy val ui = lila.activity.ui.ActivityUi(helpers)

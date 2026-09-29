@@ -117,7 +117,6 @@ final class DevUi(helpers: Helpers)(modMenu: String => Context ?=> Frag):
 announce 10 minutes Lichess will restart!
 announce cancel
 change asset version
-msg multi {sender} {recipient1,recipient2} {message}
 notify url users {username1,username2,username3} {url} {link title} | {link description}
 notify url titled {url} {link title} | {link description}
 notify url titled-arena {url} {link title} | {link description}

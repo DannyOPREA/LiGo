@@ -77,13 +77,13 @@ final class ModApi(
     else
       val changed = value != prev.user.marks.troll
       val sus = prev.set(_.withMarks(_.set(_.troll, value)))
-      for
-        _ <- changed.so:
+      changed
+        .so:
           for _ <- userRepo.updateTroll(sus.user)
           yield
             logApi.troll(sus)
             Bus.pub(lila.core.mod.Shadowban(sus.user.id, value))
-      yield sus
+        .inject(sus)
 
   def autoTroll(sus: Suspect, note: String): Funit =
     given me: MyId = UserId.lichessAsMe

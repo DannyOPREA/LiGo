@@ -108,7 +108,7 @@ final class ChallengeBulkApi(
           .pipe(ChallengeJoiner.addGameHistory(state))
           .start
         (game, users)
-      .mapAsyncUnordered(8): (game, users) =>
+      .mapAsyncUnordered(8): (game, _) =>
         for
           _ <- gameRepo
             .insertDenormalized(game)

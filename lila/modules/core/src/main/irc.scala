@@ -4,7 +4,7 @@ package irc
 import play.api.mvc.Call
 
 import lila.core.id.{ RelayRoundId, RelayTourId, StudyChapterId }
-import lila.core.userId.{ UserId, MyId, ModId, UserName }
+import lila.core.userId.{ UserId, MyId, ModId }
 import lila.core.study.data.StudyChapterName
 import lila.core.data.DiffStr
 
