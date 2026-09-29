@@ -51,3 +51,17 @@ Checks that found real problems in ADR 0021 (unit 5.1, Phase 5 ratings, 2026-09-
 - **Recompute the rationale, not just the numbers**: a rank band is only ~±34 rating points near 5k, a
   deviation-250 loss moves ~110, so "midpoint keeps the label after one loss" was false.
 - **goratings Chinese handicap 1** adds a compensation point (scoringBonus = handicap) that spec R-KOMI-3 doesn't give.
+
+Checks that found real problems in ADR 0022 (unit 6.1, Phase 6 lobby, 2026-09-29):
+
+- **"The browser already gets every hook/seek"**: false. `LobbySocket` sends `had` only where
+  `biter.showHookTo` (canJoin: kind, range, blocks, lame); `SeekApi.forUser` filters by canJoin; hook
+  JSON has no rating range. Any "grey out what you can't join" design needs server changes.
+- **Pool compatibility is clock-only** (`Hook.compatibleWithPool`, `PoolList.isClockCompatible`,
+  `HookRepo.poolCandidates`, `LobbySyncActor` skips instant match): new pool dimensions must reach them.
+- **Waiting-range maths**: `pairScore` uses min(missBonus a, b), cap at min rating, +200 range bonus,
+  ±ragesit, +30 provisional. "cap + my miss bonus" is an approximation; demand the exact definition.
+- **lila already joins-or-creates seeks** (`AddSeek` → findCompatible → BiteSeek, newest first).
+- **Wave timing vs PLAN's "<10 s to first move"**: waves are 12–60 s; FullWave needs 20–40 players.
+- **Concurrent units in one tree**: verify.sh picked up another unit's uncommitted pool files; check
+  `git status` before blaming the diff under review.
