@@ -80,3 +80,16 @@ Checks that found real problems in ADR 0023 (unit 7.1, Phase 7 analysis/SGF/corr
   `playable`); CorresAlarm is set only on CorresMoveEvent at 80% of remaining time, once both moved.
 - **idbTree** is a no-op on `/analysis` (game id `synthetic`); only game analysis pages persist edits.
 - **"Nothing is stored, so 13×13"** then storing 13×13 imports: grep R-SCOPE-1 / ADR 0021 §4.
+
+Checks that found real problems in ADR 0025 (unit 8.2, Phase 8 puzzles, 2026-09-29):
+
+- **goban puzzle mode needs glue**: taps only check the tree when `getPuzzlePlacementSetting()` returns
+  `{mode:"play"}` (default "place" = no events); opponent default is "manual"; puzzle taps ignore
+  `one_click_submit` (touch-confirm is ours); `place(x,y,true,false,true,...)` skips superko; `bounds`
+  is a GobanConfig field, not PuzzleConfig. Extract sources from `build/goban.js.map` (JSON.parse).
+- **Solver designs**: TT keyed on position is unsound under situational superko (R-KO-1/R-KO-5, GHI);
+  "ko decides it" with no ko-threat model is undefined; region-only search misjudges wall variations
+  that open an escape. Check the spike actually meets the PLAN row's "sample within a time budget".
+- **verify.sh "No gates apply: only docs/logs/Markdown"** also prints for `tools/**/*.mjs` (no gate).
+- lila puzzle leftovers to list: `/training/of-player`, `mobileBc*` routes, `/training/frame`,
+  `/api/puzzle/*`, `PuzzleTagger.addAllMissing` daily, path regen cron (`isStale` errors in prod).

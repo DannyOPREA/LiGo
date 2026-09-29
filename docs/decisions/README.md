@@ -31,6 +31,7 @@ edit allowed). While the PR that introduces an ADR is still open, its wording ma
 | 0022 | [Phase 6: the lobby's pools, auto-handicap, open challenges, player test and load test](0022-phase-6-lobby-pools-handicap-challenges.md) | Accepted | 2026-09-29 |
 | 0023 | [Phase 7: the analysis board, SGF import and export, correspondence](0023-phase-7-analysis-sgf-correspondence.md) | Accepted | 2026-09-29 |
 | 0024 | [Tsumego content: generated and checked by LiGo, plus a small classics tail](0024-tsumego-content-generated-plus-classics.md) | Accepted | 2026-09-29 |
+| 0025 | [Phase 8: the puzzle format, the generator, the trainer and the puzzle rating](0025-phase-8-puzzle-format-trainer.md) | Accepted | 2026-09-29 |
 | 0026 | [Phase 9: the PWA, sounds, themes, accessibility, performance budget, credits and handoff](0026-phase-9-pwa-polish-handoff.md) | Accepted | 2026-09-29 |
 
 ## Template
