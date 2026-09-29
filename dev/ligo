@@ -43,7 +43,7 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   status              Show what is running
   logs [lila|ws|db|scoring]  Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
-  test [what]         Run the unit tests of lila, ws, ui, pages, rules, board, scoring or all
+  test [what]         Run the unit tests of lila, ws, ui, pages, rules, board, scoring, puzzles or all
                       (default: all); pages = the playground's screenshots and scripted game in
                       Chromium, from the built ui (compile ui first; docker mode skips them);
                       rules = both Go rules engines: libs/go-rules (server) and libs/board
@@ -52,7 +52,9 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
                       tests alone, without parity (docker mode skips the Chromium ones); scoring =
                       services/scoring's own tests (OGS's 31 autoscore games, the libs/conformance
                       scoring fixtures, KataGo client, no build step), plus a real-KataGo test when
-                      KataGo is installed (docker mode: not yet, unit 4.5)
+                      KataGo is installed (docker mode: not yet, unit 4.5); puzzles = tools/puzzles'
+                      tests (solver, catalogue, frame, puzzle checks, SGF), with a real-KataGo test
+                      when KataGo is installed, then `puzzles check` over the committed set
   e2e [-- args]       Smoke-test the running stack (home page + lobby websocket);
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
@@ -61,6 +63,10 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   scoring bench [args] The autoscore benchmark (unit 4.6): the real propose path (real KataGo) over
                       the vendored OGS games; args: --net PATH --games DIR --gate N --runs N (3)
                       --limit N --timeout MS; report in .ligo/scoring-bench/. Native mode only.
+  puzzles <cmd>       The tsumego pipeline (unit 8.3, ADR 0025): build --out FILE [--seed N]
+                      [--count N] (needs KataGo), check [FILE...] (default: tools/puzzles/data),
+                      gate [--seed N] [--need N] (the solver's feasibility gate), sgf FILE [ID],
+                      import SGF META (a hand-transcribed problem). Native mode only.
   differential [args] Random games checked against KataGo (unit 1.9): libs/go-rules vs KataGo on
                       legality, captures and area score; args: --games N (1000) --seed S
                       --workers W; report in .ligo/differential/. Native mode only; CI runs it
@@ -184,6 +190,31 @@ native_scoring() {
     export KATAGO_BIN KATAGO_TEST_NET KATAGO_NET KATAGO_GTP_CONFIG
   fi
   (cd "$LILA" && run sh -c "$(scoring_pnpm typecheck) && pnpm --filter @ligo/scoring run lint && pnpm --filter @ligo/scoring run test")
+}
+
+# tools/puzzles (unit 8.3, ADR 0025): also in lila's pnpm workspace, beside services/scoring,
+# whose KataGo client it imports by path (as it does libs/board's SGF reader), so those two
+# packages' node_modules are installed with it. No docker-mode support: the ui container mounts
+# neither tools/ nor KataGo.
+puzzles_install() { echo "pnpm install --frozen-lockfile --filter @ligo/puzzles --filter @ligo/scoring --filter @ligo/board --filter lila"; }
+puzzles_katago_env() {
+  local katago_env
+  if katago_env=$("$ROOT/dev/katago.sh" env 2>/dev/null); then
+    eval "$katago_env"
+    export KATAGO_BIN KATAGO_TEST_NET KATAGO_NET
+  fi
+}
+native_puzzles() {
+  puzzles_katago_env
+  (cd "$LILA" && run sh -c "$(puzzles_install) && pnpm --filter @ligo/puzzles run typecheck && pnpm --filter @ligo/puzzles run lint && pnpm --filter @ligo/puzzles run test")
+  (cd "$ROOT" && run node tools/puzzles/src/cli.ts check)
+}
+cmd_puzzles() {
+  [[ "$MODE" == native ]] || die "puzzles runs on the host: LIGO_MODE=native dev/ligo puzzles ... (needs host Node and pnpm)"
+  [[ $# -gt 0 ]] || die "puzzles build|check|gate|sgf|import [args] (dev/ligo help)"
+  puzzles_katago_env
+  (cd "$LILA" && run sh -c "$(puzzles_install)")
+  (cd "$ROOT" && run node tools/puzzles/src/cli.ts "$@")
 }
 
 # services/scoring's Redis worker (unit 4.5, ADR 0020 §1: `scoring-in`/`scoring-out`, `start` on
@@ -505,8 +536,10 @@ cmd_test() {
       else say "page browser tests skipped: build the ui first (dev/ligo compile ui)"; fi ;;
     docker:scoring) docker_scoring ;;
     native:scoring) native_scoring ;;
-    *:all) cmd_test ui; cmd_test pages; cmd_test lila; cmd_test ws; cmd_test rules; cmd_test scoring ;;
-    *) die "test what? lila, ws, ui, pages, rules, board, scoring or all" ;;
+    docker:puzzles) say "puzzle tests skipped in docker mode (the ui container has neither tools/ nor KataGo); native mode and CI run them" ;;
+    native:puzzles) native_puzzles ;;
+    *:all) cmd_test ui; cmd_test pages; cmd_test lila; cmd_test ws; cmd_test rules; cmd_test scoring; cmd_test puzzles ;;
+    *) die "test what? lila, ws, ui, pages, rules, board, scoring, puzzles or all" ;;
   esac
 }
 
@@ -609,6 +642,7 @@ main() {
     verify-mirror) verify_mirror ;;
     katago) exec "$ROOT/dev/katago.sh" "$@" ;;
     scoring) cmd_scoring "$@" ;;
+    puzzles) cmd_puzzles "$@" ;;
     differential) cmd_differential "$@" ;;
     doctor) exec "$ROOT/dev/doctor.sh" "$@" ;;
     mode) echo "$MODE" ;;
