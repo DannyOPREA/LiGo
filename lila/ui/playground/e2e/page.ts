@@ -41,6 +41,9 @@ ${css('playground')}
 <div id="main-wrap"><main id="playground"><p>Loading the Go playground…</p></main></div>
 <script type="module">
 window.site ||= {};
+// lila's sound module (site.sound) isn't on this trimmed page: record the names it would play.
+window.sounds = [];
+window.site.sound = { play: async name => void window.sounds.push(name) };
 const m = await import(${JSON.stringify(js)});
 m.initModule(${JSON.stringify({ confirmMoves })});
 </script>
@@ -108,6 +111,9 @@ export async function play(page: Page, move: string, size: number, touch = false
   if (touch) await page.touchscreen.tap(p.x, p.y);
   else await page.mouse.click(p.x, p.y);
 }
+
+/** The names of lila's sounds the page played, in order (see `html`). */
+export const sounds = (page: Page) => page.evaluate(() => (window as unknown as { sounds: string[] }).sounds);
 
 export const status = (page: Page) => page.locator('.playground__status > div').first();
 export const captures = (page: Page) => page.locator('.playground__captures');

@@ -21,6 +21,7 @@ const board = mountBoard(el, {
   confirm: false,            // true: a tap previews, board.confirm() (or a mouse double click) plays
   onMove: move => send(move),            // the player picked a legal move: 'dd' or 'pass'
   onRefused: reason => {},               // 'occupied' | 'suicide' | 'superko'
+  onPlayed: ({ move, color, captured }) => {}, // each move that counted, from `play` (sounds, ADR 0026)
   onChange: () => redraw(),
 });
 board.play('qf');   // a move that counts: the player's, once accepted, or the opponent's

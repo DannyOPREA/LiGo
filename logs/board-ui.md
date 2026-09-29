@@ -21,6 +21,25 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 9.2 · Sounds on the board and the playground
+- Did: `mountBoard` reports each move that counted as `onPlayed({ move, color, captured })`, from
+  `play` only; the playground plays lila's sounds for it (Move, Capture, Confirmation for a pass,
+  Error for a refused move) through `site.sound`, so the sound preference and volume apply (ADR 0026
+  §2). Two board tests in Chromium, a controller test, and the playground's scripted game now checks
+  the sounds in order.
+- Worked: the captured count is the mover's prisoner count after the move minus before, read from
+  the position goban has played, so it needs nothing from goban's sound events.
+- Didn't work / dead ends: goban's own `audio-capture-stones` also fires when a stone is only
+  previewed, and it `console.log`s every capture, so it isn't forwarded.
+- Lessons: the playground's page test serves a trimmed page without lila's site module;
+  `site.sound` has to be stubbed there (it records the names played).
+- Decisions: none new (ADR 0026 §2).
+- Verified by Claude: `pnpm --filter @ligo/board run test:browser` 20/20, `node ui/test playground`
+  17/17, `dev/ligo test pages` 10/10, verify.sh (go-rules gate can't fetch strategygames in the
+  cloud; CI runs it). · Needs owner verification: that the sounds play on the playground on your
+  box with the sound set of your choice.
+- Follow-ups: byo-yomi, game start/end and scoring-phase sounds come with the round page (9.7).
+
 ### 2026-09-28 · 2.4 CI (2) · Board and page pictures
 - Didn't work: with the text hidden, 5 of 8 pictures still failed on CI by 110–120 pixels, all at
   button edges (Pass/Undo, New game): lila's buttons are as wide as their text, and the two Chromium
