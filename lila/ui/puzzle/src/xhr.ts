@@ -2,7 +2,6 @@ import { defined } from 'lib';
 import { json as xhrJson, form as xhrForm } from 'lib/xhr';
 
 import type { PuzzleReplay, PuzzleResult, ThemeKey } from './interfaces';
-import type PuzzleStreak from './streak';
 
 export const complete = (
   puzzleId: string,
@@ -10,7 +9,6 @@ export const complete = (
   win: boolean,
   rated: boolean,
   replay?: PuzzleReplay,
-  streak?: PuzzleStreak,
   color?: Color,
 ): Promise<PuzzleResult> =>
   xhrJson(`/training/complete/${theme}/${puzzleId}`, {
@@ -18,7 +16,6 @@ export const complete = (
     body: xhrForm({
       win,
       ...(replay ? { replayDays: replay.days } : {}),
-      ...(streak ? { streakId: streak.nextId(), streakScore: streak.data.index } : {}),
       rated,
       color,
     }),

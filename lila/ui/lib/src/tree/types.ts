@@ -39,11 +39,6 @@ export interface PvData extends EvalScore {
   moves: string[];
 }
 
-export interface TablebaseHit {
-  winner?: Color;
-  best?: Uci;
-}
-
 export interface TreeNodeBase {
   // file://./../../tree/src/tree.ts
   id?: TreeNodeId;
@@ -56,7 +51,6 @@ export interface TreeNodeBase {
   threat?: LocalEval;
   ceval?: ClientEval;
   eval?: ServerEval;
-  tbhit?: TablebaseHit | null;
   glyphs?: Glyph[];
   clock?: Clock;
   parentClock?: Clock;

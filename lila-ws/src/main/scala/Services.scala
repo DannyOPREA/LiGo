@@ -11,9 +11,7 @@ final class Services(
     val keepAlive: KeepAlive,
     val lobby: Lobby,
     val friends: FriendList,
-    val stormSign: StormSign,
     val lag: Lag,
-    val evalCache: lila.ws.evalCache.EvalCacheApi,
     val tv: Tv
 ):
 

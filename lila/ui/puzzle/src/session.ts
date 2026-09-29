@@ -1,4 +1,3 @@
-import { prop } from 'lib';
 import { storedJsonProp } from 'lib/storage';
 
 import type { ThemeKey } from './interfaces';
@@ -21,7 +20,6 @@ export default class PuzzleSession {
   constructor(
     readonly theme: ThemeKey,
     readonly userId: UserId | undefined,
-    readonly streak: boolean,
   ) {}
 
   default = () => ({
@@ -30,9 +28,7 @@ export default class PuzzleSession {
     at: Date.now(),
   });
 
-  store = this.streak
-    ? prop(this.default())
-    : storedJsonProp<Store>(`puzzle.session.${this.userId || 'anon'}`, this.default);
+  store = storedJsonProp<Store>(`puzzle.session.${this.userId || 'anon'}`, this.default);
 
   clear = () => this.update(s => ({ ...s, rounds: [] }));
 

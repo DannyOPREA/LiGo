@@ -46,7 +46,6 @@ import { text as xhrText } from 'lib/xhr';
 
 import type { AnalyseNvuiContext } from '../analyse.nvui';
 import type AnalyseCtrl from '../ctrl';
-import explorerView from '../explorer/explorerView';
 import { makeConfig as makeCgConfig } from '../ground';
 import type { AnalyseData } from '../interfaces';
 import { clickHook, currentLineIndex, renderCurrentNode } from '../nvuiUtil';
@@ -114,17 +113,6 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
       d.clock ? hl('p', `Clock: ${d.clock.initial / 60} + ${d.clock.increment}`) : null,
       hl('h2', i18n.nvui.moveList),
       hl('p.moves', { attrs: { role: 'log', 'aria-live': 'off' } }, renderCurrentLine(ctx)),
-      [
-        hl(
-          'button',
-          {
-            attrs: { 'aria-pressed': `${ctrl.explorer.enabled()}` },
-            hook: bind('click', _ => ctrl.explorer.toggle(), ctrl.redraw),
-          },
-          i18n.site.openingExplorerAndTablebase,
-        ),
-        explorerView(ctrl),
-      ],
       hl('h2', i18n.nvui.pieces),
       renderPieces(ctrl.chessground.state.pieces, style, ctrl.bottomColor()),
       pockets && hl('h2', i18n.nvui.pockets),

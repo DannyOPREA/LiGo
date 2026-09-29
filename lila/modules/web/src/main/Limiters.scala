@@ -212,9 +212,6 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
     private val searchLimiter = RateLimit[IsProxy](15 * maxCost, 1.minute, "search.proxy")
     def search[A]: ProxyLimit[A] = proxyLimit(searchLimiter)
 
-    private val cloudEvalLimiter = RateLimit[IsProxy](30 * maxCost, 1.minute, "cloudEval.proxy")
-    def cloudEval[A]: ProxyLimit[A] = proxyLimit(cloudEvalLimiter)
-
     private val fidePlayerLimiter = RateLimit[IsProxy](60 * maxCost, 1.minute, "fide.player.proxy")
     def fidePlayer[A]: ProxyLimit[A] = proxyLimit(fidePlayerLimiter)
 

@@ -133,19 +133,6 @@ POST  /feed/:id/edit                   controllers.Feed.update(id)
 POST  /feed/:id/delete                 controllers.Feed.delete(id)
 GET   /feed.atom                       controllers.Feed.atom
 
-# Opening
-GET   /opening                         controllers.Opening.index(q: Option[String] ?= None)
-POST  /opening/config/:key             controllers.Opening.config(key)
-POST  /opening/wiki/:key/:moves        controllers.Opening.wikiWrite(key, moves)
-GET   /opening/tree                    controllers.Opening.tree
-GET   /opening/:key                    controllers.Opening.byKeyAndMoves(key, moves = "")
-GET   /opening/:key/:moves             controllers.Opening.byKeyAndMoves(key, moves)
-
-# Training - Coordinate
-GET   /training/coordinate             controllers.Coordinate.home
-POST  /training/coordinate/score       controllers.Coordinate.score
-GET   /$lang<\w\w\w?>/training/coordinate controllers.Coordinate.homeLang(lang: Language)
-
 # Training - Puzzle
 GET   /training                        controllers.Puzzle.home
 GET   /training/daily                  controllers.Puzzle.daily
@@ -177,43 +164,12 @@ GET   /$lang<\w\w\w?>/training            controllers.Puzzle.homeLang(lang: Lang
 GET   /$lang<\w\w\w?>/training/themes     controllers.Puzzle.themesLang(lang: Language)
 GET   /$lang<\w\w\w?>/training/:angleOrId controllers.Puzzle.showLang(lang: Language, angleOrId)
 
-# Puzzle Streak
-GET   /streak                           controllers.Puzzle.streak
-GET   /api/streak                       controllers.Puzzle.apiStreak
-POST  /api/streak/:score                controllers.Puzzle.apiStreakResult(score: Int)
-GET   /$lang<\w\w\w?>/streak            controllers.Puzzle.streakLang(lang: Language)
-
-# Puzzle Storm
-GET   /storm                            controllers.Storm.home
-POST  /storm                            controllers.Storm.record
-GET   /storm/dashboard                  controllers.Storm.dashboard(page: Int ?= 1)
-GET   /storm/dashboard/:username        controllers.Storm.dashboardOf(username: UserStr, page: Int ?= 1)
-GET   /api/storm                        controllers.Storm.apiGet
-GET   /api/storm/dashboard/:username    controllers.Storm.apiDashboardOf(username: UserStr, days: Int ?= 30)
-GET   /$lang<\w\w\w?>/storm             controllers.Storm.homeLang(lang: Language)
-
-# Puzzle Racer
-GET   /racer                            controllers.Racer.home
-POST  /racer                            controllers.Racer.create
-POST  /api/racer                        controllers.Racer.apiCreate
-GET   /api/racer/:id                    controllers.Racer.apiGet(id)
-GET   /racer/:id                        controllers.Racer.show(id)
-GET   /racer/:id/rematch                controllers.Racer.rematch(id)
-POST  /racer/lobby                      controllers.Racer.lobby
-GET   /$lang<\w\w\w?>/racer             controllers.Racer.homeLang(lang: Language)
-
 # User Analysis
 GET   /analysis/help                   controllers.UserAnalysis.help
 GET   /analysis/pgn/*pgn               controllers.UserAnalysis.pgn(pgn)
 GET   /analysis/*something             controllers.UserAnalysis.parseArg(something)
 GET   /analysis                        controllers.UserAnalysis.index
 GET   /embed/analysis                  controllers.UserAnalysis.embed
-
-# Learn
-GET   /learn                           controllers.Learn.index
-POST  /learn/score                     controllers.Learn.score
-POST  /learn/reset                     controllers.Learn.reset
-GET   /$lang<\w\w\w?>/learn            controllers.Learn.indexLang(lang: Language)
 
 # Patron
 GET   /patron                          controllers.Plan.index(page: Int ?= 1)
@@ -504,7 +460,6 @@ GET   /$lang<\w\w\w?>/coach            controllers.Coach.homeLang(lang: Language
 # Paste
 GET   /paste                           controllers.Importer.importGame
 POST  /import                          controllers.Importer.sendGame
-GET   /import/master/$id<\w{8}>/:color controllers.Importer.masterGame(id: GameId, color: Color)
 
 # Edit
 GET   /editor.json                     controllers.Editor.data
@@ -578,7 +533,6 @@ POST  /api/challenge/$id<\w{8}>/decline controllers.Challenge.apiDecline(id: Cha
 POST  /api/challenge/$id<\w{8}>/cancel controllers.Challenge.apiCancel(id: ChallengeId)
 POST  /api/challenge/$id<\w{8}>/start-clocks  controllers.Challenge.apiStartClocks(id: GameId)
 POST  /api/round/$id<\w{8}>/add-time/:seconds controllers.Round.apiAddTime(id: GameId, seconds: Int)
-GET   /api/cloud-eval                  controllers.Api.cloudEval
 POST  /api/import                      controllers.Importer.apiSendGame
 GET   /api/bulk-pairing                controllers.BulkPairing.list
 POST  /api/bulk-pairing                controllers.BulkPairing.create

@@ -93,7 +93,7 @@ final class UserShowSide(helpers: Helpers):
             frag(
               hr,
               showPerf(u.perfs.puzzle, PerfKey.puzzle),
-              showStorm(u.perfs.storm, u),
+              showStorm(u.perfs.storm),
               showRacer(u.perfs.racer),
               showStreak(u.perfs.streak)
             )
@@ -102,13 +102,14 @@ final class UserShowSide(helpers: Helpers):
       )
     )
 
-  private def showStorm(storm: PuzPerf, user: User)(using Translate) =
+  // Puzzle storm, racer and streak went in unit 3.4; old scores stay stored (ADR 0019) and still show
+  // here, without links.
+  private def showStorm(storm: PuzPerf)(using Translate) =
     a(
       dataIcon := Icon.Storm,
       cls := List(
         "empty" -> !storm.nonEmpty
       ),
-      href := routes.Storm.dashboardOf(user.username),
       span(
         h3("Puzzle Storm"),
         st.rating(
@@ -120,8 +121,7 @@ final class UserShowSide(helpers: Helpers):
             )
           )
         )
-      ),
-      iconTag(Icon.PlayTriangle)
+      )
     )
 
   private def showRacer(racer: PuzPerf)(using Translate) =
@@ -130,7 +130,6 @@ final class UserShowSide(helpers: Helpers):
       cls := List(
         "empty" -> !racer.nonEmpty
       ),
-      href := routes.Racer.home,
       span(
         h3("Puzzle Racer"),
         st.rating(
@@ -142,8 +141,7 @@ final class UserShowSide(helpers: Helpers):
             )
           )
         )
-      ),
-      iconTag(Icon.PlayTriangle)
+      )
     )
 
   private def showStreak(streak: PuzPerf)(using Translate) =
@@ -152,7 +150,6 @@ final class UserShowSide(helpers: Helpers):
       cls := List(
         "empty" -> !streak.nonEmpty
       ),
-      href := routes.Puzzle.streak,
       span(
         h3("Puzzle Streak"),
         st.rating(
@@ -164,6 +161,5 @@ final class UserShowSide(helpers: Helpers):
             )
           )
         )
-      ),
-      iconTag(Icon.PlayTriangle)
+      )
     )

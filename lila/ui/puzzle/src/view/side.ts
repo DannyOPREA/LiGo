@@ -1,7 +1,6 @@
 import { capitalize } from 'lib/game';
 import perfIcons from 'lib/game/perfIcons';
 import { numberFormat } from 'lib/i18n';
-import { licon } from 'lib/licon';
 import { colors } from 'lib/setup/color';
 import { type VNode, dataIcon, onInsert, type MaybeVNode, hl } from 'lib/view';
 import { cmnToggleWrap } from 'lib/view/cmn-toggle';
@@ -9,7 +8,6 @@ import { userLink } from 'lib/view/userLink';
 
 import type PuzzleCtrl from '@/ctrl';
 import type { Angle, PuzzleDifficulty } from '@/interfaces';
-import type PuzzleStreak from '@/streak';
 
 export function puzzleBox(ctrl: PuzzleCtrl): VNode {
   return hl('div.puzzle__side__metas', [puzzleInfos(ctrl), gameInfos(ctrl)]);
@@ -29,27 +27,14 @@ const puzzleInfos = (ctrl: PuzzleCtrl): VNode => {
       hl(
         'p',
         i18n.puzzle.puzzleId.asArray(
-          ctrl.streak && ctrl.mode === 'play'
-            ? hl('span.hidden', i18n.puzzle.hidden)
-            : hl(
-                'a',
-                {
-                  attrs: {
-                    href: ctrl.routerWithLang(`/training/${puzzle.id}`),
-                    ...(ctrl.streak ? { target: '_blank' } : {}),
-                  },
-                },
-                '#' + puzzle.id,
-              ),
+          hl('a', { attrs: { href: ctrl.routerWithLang(`/training/${puzzle.id}`) } }, '#' + puzzle.id),
         ),
       ),
       ctrl.opts.showRatings &&
         hl(
           'p',
           i18n.puzzle.ratingX.asArray(
-            !ctrl.streak && ctrl.mode === 'play'
-              ? hl('span.hidden', i18n.puzzle.hidden)
-              : hl('strong', puzzle.rating),
+            ctrl.mode === 'play' ? hl('span.hidden', i18n.puzzle.hidden) : hl('strong', puzzle.rating),
           ),
         ),
       hl('p', i18n.puzzle.playedXTimes.asArray(puzzle.plays, hl('strong', numberFormat(puzzle.plays)))),
@@ -84,21 +69,6 @@ function gameInfos(ctrl: PuzzleCtrl): VNode {
   ]);
 }
 
-const renderStreak = (streak: PuzzleStreak) =>
-  hl(
-    'div.puzzle__side__streak',
-    streak.data.index === 0
-      ? hl('div.puzzle__side__streak__info', [
-          hl('h1.text', { attrs: dataIcon(licon.ArrowThruApple) }, 'Puzzle Streak'),
-          hl('p', i18n.puzzle.streakDescription),
-        ])
-      : hl(
-          'div.puzzle__side__streak__score.text',
-          { attrs: dataIcon(licon.ArrowThruApple) },
-          `${streak.data.index}`,
-        ),
-  );
-
 export const userBox = (ctrl: PuzzleCtrl): VNode => {
   const { data } = ctrl;
   if (!data.user)
@@ -110,7 +80,6 @@ export const userBox = (ctrl: PuzzleCtrl): VNode => {
   const ratedId = `puzzle-toggle-rated_hint-${ctrl.hintHasBeenShown()}`;
   return hl('div.puzzle__side__user', [
     !data.replay &&
-      !ctrl.streak &&
       data.user &&
       cmnToggleWrap({
         id: ratedId,
@@ -133,8 +102,6 @@ export const userBox = (ctrl: PuzzleCtrl): VNode => {
     ),
   ]);
 };
-
-export const streakBox = ({ streak }: PuzzleCtrl) => hl('div.puzzle__side__user', renderStreak(streak!));
 
 const difficulties: [PuzzleDifficulty, number][] = [
   ['easiest', -600],
@@ -169,11 +136,11 @@ export function config(ctrl: PuzzleCtrl): MaybeVNode {
       checked: ctrl.autoNext(),
       change(v) {
         ctrl.autoNext(v);
-        if (ctrl.autoNext() && ctrl.resultSent && !ctrl.streak) ctrl.nextPuzzle();
+        if (ctrl.autoNext() && ctrl.resultSent) ctrl.nextPuzzle();
       },
       redraw: ctrl.redraw,
     }),
-    !data.user || data.replay || ctrl.streak ? null : renderDifficultyForm(ctrl),
+    !data.user || data.replay ? null : renderDifficultyForm(ctrl),
   ]);
 }
 

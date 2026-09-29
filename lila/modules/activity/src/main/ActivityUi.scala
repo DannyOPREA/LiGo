@@ -70,7 +70,7 @@ final class ActivityUi(helpers: Helpers):
       iconTag(Icon.Storm),
       div(
         trans.storm.playedNbRunsOfPuzzleStorm
-          .plural(s.runs, s.runs.localize, a(href := routes.Storm.home)("Puzzle Storm"))
+          .plural(s.runs, s.runs.localize, "Puzzle Storm")
       ),
       scoreTag(winTag(trans.storm.highscoreX(strong(s.score))))
     )
@@ -80,7 +80,7 @@ final class ActivityUi(helpers: Helpers):
       iconTag(Icon.FlagChessboard),
       div(
         trans.storm.playedNbRunsOfPuzzleStorm
-          .plural(s.runs, s.runs.localize, a(href := routes.Racer.home)("Puzzle Racer"))
+          .plural(s.runs, s.runs.localize, "Puzzle Racer")
       ),
       scoreTag(winTag(trans.storm.highscoreX(strong(s.score))))
     )
@@ -90,7 +90,7 @@ final class ActivityUi(helpers: Helpers):
       iconTag(Icon.ArrowThruApple),
       div(
         trans.storm.playedNbRunsOfPuzzleStorm
-          .plural(s.runs, s.runs.localize, a(href := routes.Puzzle.streak)("Puzzle Streak"))
+          .plural(s.runs, s.runs.localize, "Puzzle Streak")
       ),
       scoreTag(winTag(trans.storm.highscoreX(strong(s.score))))
     )

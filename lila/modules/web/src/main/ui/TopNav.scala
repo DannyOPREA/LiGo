@@ -12,6 +12,13 @@ final class TopNav(helpers: Helpers):
     if ctx.blind then h3(name) else a(href := url)(name)
 
   def apply(seesClassMenu: Boolean, hasDgt: Boolean)(using ctx: Context) =
+    // practice and study menu links went with unit 3.3, chess basics and coordinates with 3.4.
+    // The "Learn" heading used to open /learn; it now opens the first link the viewer may see, and
+    // the section is left out when there is none (kid accounts don't see coaches).
+    val learnLinks = List(
+      ctx.kid.no.option(langHref(routes.Coach.all(1)) -> trans.site.coaches()),
+      seesClassMenu.option(routes.Clas.index.url -> trans.clas.lichessClasses())
+    ).flatten
     st.nav(id := "topnav", cls := "hover")(
       st.section(
         linkTitle(
@@ -39,27 +46,16 @@ final class TopNav(helpers: Helpers):
           div(role := "group")(
             a(href := puzzleUrl)(trans.site.puzzles()),
             a(href := langHref(routes.Puzzle.themes))(trans.puzzle.puzzleThemes()),
-            a(href := routes.Puzzle.dashboard(Days(30), "home", none))(trans.puzzle.puzzleDashboard()),
-            a(href := langHref(routes.Puzzle.streak))("Puzzle Streak"),
-            a(href := langHref(routes.Storm.home))("Puzzle Storm"),
-            a(href := langHref(routes.Racer.home))("Puzzle Racer")
+            a(href := routes.Puzzle.dashboard(Days(30), "home", none))(trans.puzzle.puzzleDashboard())
+            // streak, storm and racer links removed with those modes (unit 3.4).
           )
         )
       ,
-      st.section(
-        linkTitle(routes.Learn.index.url, trans.site.learnMenu()),
-        div(role := "group")(
-          // practice and study menu links removed with the practice and study modules (unit 3.3).
-          Option.when(ctx.noBot):
-            frag(
-              a(href := langHref(routes.Learn.index))(trans.site.chessBasics()),
-              a(href := langHref(routes.Coordinate.home))(trans.coordinates.coordinates())
-            )
-          ,
-          ctx.kid.no.option(a(href := langHref(routes.Coach.all(1)))(trans.site.coaches())),
-          seesClassMenu.option(a(href := routes.Clas.index)(trans.clas.lichessClasses()))
-        )
-      ),
+      learnLinks.headOption.map: (firstUrl, _) =>
+        st.section(
+          linkTitle(firstUrl, trans.site.learnMenu()),
+          div(role := "group")(learnLinks.map((url, name) => a(href := url)(name)))
+        ),
       st.section:
         // broadcast link removed with the relay module (unit 3.3).
         frag(
@@ -88,7 +84,6 @@ final class TopNav(helpers: Helpers):
         linkTitle(routes.UserAnalysis.index.url, trans.site.tools()),
         div(role := "group")(
           a(href := routes.UserAnalysis.index)(trans.site.analysis()),
-          a(href := routes.Opening.index())(trans.site.openings()),
           a(href := routes.Editor.index)(trans.site.boardEditor()),
           a(href := routes.Importer.importGame)(trans.site.importGame()),
           a(href := routes.Search.index())(trans.search.advancedSearch())

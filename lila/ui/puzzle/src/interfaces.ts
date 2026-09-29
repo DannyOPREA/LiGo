@@ -67,7 +67,6 @@ export interface PuzzleData {
   game: PuzzleGame;
   user?: PuzzleUser;
   replay?: PuzzleReplay;
-  streak?: string;
   isDaily?: boolean;
   externalEngines?: ExternalEngineInfo[];
 }

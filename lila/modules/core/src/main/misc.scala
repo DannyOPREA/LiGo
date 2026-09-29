@@ -25,12 +25,6 @@ package clas:
   case class ClasTeamUpdate(clasId: ClasId, wantsTeam: Option[ClasTeamConfig])(using val teacher: Option[Me])
 
 package puzzle:
-  case class StormRun(userId: UserId, score: Int)
-
-  case class RacerRun(userId: UserId, score: Int)
-
-  case class StreakRun(userId: UserId, score: Int)
-
   case class DailyChange(id: PuzzleId)
 
 package lpv:

@@ -66,11 +66,7 @@ export const bind = (ctrl: AnalyseCtrl) => {
     .bind('z', () => ctrl.settings.set('showStaticAnalysis', !ctrl.settings.showStaticAnalysis))
     .bind('a', () => ctrl.settings.set('showBestMoveArrows', !ctrl.settings.showBestMoveArrows))
     .bind('v', () => ctrl.settings.set('showVariationArrows', !ctrl.settings.showVariationArrows))
-    .bind('x', () => ctrl.toggleThreatMode())
-    .bind('e', () => {
-      ctrl.toggleExplorer();
-      ctrl.redraw();
-    });
+    .bind('x', () => ctrl.toggleThreatMode());
   kbd
     .bind(['shift+left', 'shift+k'], () => {
       ctrl.navigate.previousBranch();
@@ -88,14 +84,6 @@ export const bind = (ctrl: AnalyseCtrl) => {
       ctrl.userJumpIfCan(ctrl.idbTree.stepLine(ctrl.path, 'prev'), true);
       ctrl.redraw();
     });
-
-  //First explorer move
-  kbd.bind('shift+space', () => {
-    const move = document
-      .querySelector('.explorer-box:not(.loading) tbody tr[data-uci]')
-      ?.getAttribute('data-uci');
-    if (move) ctrl.explorerMove(move);
-  });
 };
 
 export const view = (ctrl: AnalyseCtrl): VNode =>

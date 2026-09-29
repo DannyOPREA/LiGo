@@ -25,5 +25,14 @@ Checks that found real problems in Phase 3 removal units (3.2 tournaments, 3.3 s
 - origin/main moves during review (Phase 4 merges touch COPYING.md, pnpm-lock, decisions.md):
   flag the re-merge + re-verify.
 
+- 3.4 (2026-09-29) finds: the log/decisions text said "profile shows old scores without links" while
+  the code deleted the profile display. Diff each "Decisions:" claim against the code.
+- Replacement nav targets can undo guards: TopNav's "Learn" header was repointed at /coach, which
+  lila hides from kid accounts (`ctx.kid.no`). Check the guard on the item you point at.
+- Removed controllers carry side effects: analyse fork hover drew its arrow via ExplorerCtrl.hovering;
+  deleting explorer silently dropped fork-hover arrows. Grep what the kept code called on it.
+- Hard-coded URLs outside routes survive (contact.scala `/learn#/15`, recap `/opening/`, IrcApi):
+  grep string literals like "/learn", not only `routes.X`.
+
 **Why:** compile + UI build pass with all of these; only grep-driven review finds them.
 **How to apply:** every Phase 3 removal unit (3.4–3.7 next). See also [[lila-edit-review-patterns]].

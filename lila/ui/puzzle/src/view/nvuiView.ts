@@ -10,7 +10,7 @@ import { commands, boardCommands, addBreaks } from 'lib/nvui/command';
 import { scanDirectionsHandler } from 'lib/nvui/directionScan';
 import { renderAdvancedSettings } from 'lib/nvui/renderAdvancedSettings';
 import type { TreeNode } from 'lib/tree/types';
-import { type VNode, bind, onInsert, requiresI18n, hl, type LooseVNodes, type LooseVNode } from 'lib/view';
+import { type VNode, bind, onInsert, hl, type LooseVNodes, type LooseVNode } from 'lib/view';
 
 import { next as controlNext, prev } from '@/control';
 import type PuzzleCtrl from '@/ctrl';
@@ -70,16 +70,14 @@ export function renderNvui(ctx: PuzzleNvuiContext): VNode {
   ];
 
   return hl(
-    `main.puzzle.puzzle--nvui.puzzle-${ctrl.data.replay ? 'replay' : 'play'}${
-      ctrl.streak ? '.puzzle--streak' : ''
-    }`,
+    `main.puzzle.puzzle--nvui.puzzle-${ctrl.data.replay ? 'replay' : 'play'}`,
     hl('div.nvui', [
       ...(boardFirst ? boardView : []),
       boardFirst && renderTouchDeviceCommands(ctx),
       hl('h2', 'Puzzle info'),
       puzzleBox(ctrl),
       theme(ctrl),
-      ctrl.streak ? undefined : userBox(ctrl),
+      userBox(ctrl),
       hl('h2', 'Moves'),
       hl(
         'p.moves',
@@ -95,7 +93,6 @@ export function renderNvui(ctx: PuzzleNvuiContext): VNode {
         renderStatus(ctrl),
       ),
       ctrl.data.replay && hl('div.replay', renderReplay(ctrl)),
-      ctrl.streak && renderStreak(ctrl),
       hl('h2', 'Last move'),
       hl(
         'p.lastMove',
@@ -126,7 +123,7 @@ export function renderNvui(ctx: PuzzleNvuiContext): VNode {
       ctrl.mode === 'view' ? afterActions(ctrl) : playActions({ ctrl, notify } as PuzzleNvuiContext),
       ...(!boardFirst ? boardView : []),
       hl('div.boardstatus', { attrs: { 'aria-live': 'polite', 'aria-atomic': 'true' } }, ''),
-      ...(!ctrl.data.replay && !ctrl.streak ? [hl('h3', 'Puzzle Settings'), renderDifficultyForm(ctrl)] : []),
+      ...(!ctrl.data.replay ? [hl('h3', 'Puzzle Settings'), renderDifficultyForm(ctrl)] : []),
       ...renderAdvancedSettings(moveStyle, pageStyle, pieceStyle, prefixStyle, positionStyle, boardStyle, {
         redraw: ctrl.redraw,
       }),
@@ -291,12 +288,8 @@ const isInSolution = (node?: TreeNode): boolean =>
 const nextNode = (node?: TreeNode): TreeNode | undefined =>
   node?.children?.length ? node.children[0] : undefined;
 
-const renderStreak = ({ streak }: PuzzleCtrl): VNode[] =>
-  !streak ? [] : [hl('h2', 'Puzzle streak'), hl('p', streak.data.index || i18n.puzzle.streakDescription)];
-
 function renderStatus(ctrl: PuzzleCtrl): string {
   if (ctrl.mode !== 'view') return 'Solving';
-  else if (ctrl.streak) return `GAME OVER. ${i18n.puzzle.yourStreakX(ctrl.streak.data.index)}`;
   else if (ctrl.lastFeedback === 'win') return i18n.puzzle.puzzleSuccess;
   else return i18n.puzzle.puzzleComplete;
 }
@@ -310,28 +303,19 @@ function renderReplay({ data, mode }: PuzzleCtrl): string {
 }
 
 const playActions = ({ ctrl, notify }: PuzzleNvuiContext): VNode => {
-  return ctrl.streak
-    ? requiresI18n('storm', ctrl.redraw, cat =>
-        button(cat.skip, ctrl.skip, i18n.puzzle.streakSkipExplanation, !ctrl.streak?.data.skip),
-      )
-    : hl('div.actions-play', [
-        button(i18n.site.getAHint, () => {
-          const hint = nextCorrectMove(ctrl);
-          if (hint) {
-            notify.set(makeSquare(hint.from));
-          }
-        }),
-        button(i18n.site.viewTheSolution, ctrl.viewSolution),
-      ]);
+  return hl('div.actions-play', [
+    button(i18n.site.getAHint, () => {
+      const hint = nextCorrectMove(ctrl);
+      if (hint) {
+        notify.set(makeSquare(hint.from));
+      }
+    }),
+    button(i18n.site.viewTheSolution, ctrl.viewSolution),
+  ]);
 };
 
 const afterActions = (ctrl: PuzzleCtrl): VNode =>
-  hl(
-    'div.actions-after',
-    ctrl.streak && ctrl.lastFeedback === 'win'
-      ? hl('a', { attrs: { href: '/streak' } }, i18n.puzzle.newStreak)
-      : [...renderVote(ctrl), button(i18n.puzzle.continueTraining, ctrl.nextPuzzle)],
-  );
+  hl('div.actions-after', [...renderVote(ctrl), button(i18n.puzzle.continueTraining, ctrl.nextPuzzle)]);
 
 const renderVoteTutorial = (ctrl: PuzzleCtrl): LooseVNode | false =>
   ctrl.session.isNew() && ctrl.data.user?.provisional && hl('p', i18n.puzzle.didYouLikeThisPuzzle);
