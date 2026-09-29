@@ -30,3 +30,11 @@ Unit 4.5 (scoring Redis worker, 2026-09-28):
 - ioredis 6 autoResubscribe works (probed: Redis restart → numsub back to 1; boot with Redis down 55 s recovers).
 - "Docker mode skipped" when the owner's box IS docker mode means the owner never runs the feature; a
   worker with katago=null would still satisfy the protocol, so "no KataGo in containers" isn't a reason.
+
+Unit 4.6 (autoscore bench, 2026-09-29):
+- Validate any accuracy grader against a known oracle first: feed it OGS's STORED maps (autoscore is
+  31/31 on them). The 4.6 grader (goscorer `owner` + filtered `seal`) scored 29/31 there, so its
+  ceiling was below the 97% gate. goscorer's Japanese `owner` omits living stones (territory only);
+  `correct_ownership` marks them. propose's `seal` drops points on dead chains; OGS's 's' can sit on one.
+- 97% of 31 games = 31/31; with non-deterministic KataGo that's a flaky gate. Ask about set size.
+- `Number(flag)` gates: NaN makes `pct < gate` false → prints FAILED but exits 0.
