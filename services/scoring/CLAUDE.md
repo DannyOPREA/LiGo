@@ -88,5 +88,14 @@ always answers `src:"none"`. CI: the `scoring` job in `.github/workflows/scoring
 `redis-server` so the round trip runs there too (`LIGO_REQUIRE_REDIS=1` turns a missing binary
 into a failure, not a skip).
 
+## Benchmark
+`dev/ligo scoring bench` (`src/bench.ts`, unit 4.6) grades autoscore's raw `result`/`needs_sealing`
+(and `sealed_result`) with `src/grade.ts`'s `matchesOwnership` rule, shared with
+`test/autoscore.test.ts`; never grade `countGiven`'s `owner` against `correct_ownership` (goscorer
+marks only territory under Japanese rules). Runs the set `--runs` times; the gate is total correct /
+total game-runs. It needs a real KataGo and the network `dev/katago.sh env` picks (`KATAGO_NET`; an
+unpinned b18 falls back to the test network). Cloud numbers are smoke figures; the >= 97% gate is
+the owner's, on his GPU.
+
 ## Logs to read
 `logs/scoring.md` (Lessons + latest entries).

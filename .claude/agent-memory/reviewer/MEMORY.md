@@ -8,10 +8,11 @@
 - [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, SGF parse, pass-window clicks, play() trust, stale deps line
 - [General review patterns](review-patterns-general.md) — transitive-dep licences, pipefail+find, docker caches, harness vacuity, pin-check order
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
-- [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, fishnet, handicap-1, scope creep, guest accept, farm-boost
+- [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, lobby filtering, goban SGF reader hangs/unchecked, import dedup
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
 - [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, browser mismatch, verify gate
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
-- [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE
-- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue changes, UPSTREAM gaps, kid guards, literal URLs, kept in-repo API clients, dead form fields (3.3–3.5)
+- [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
+- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue changes, UPSTREAM gaps, decision-vs-code, kid guards, literal URLs, kept in-repo API clients, dead form fields (3.3–3.5)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
+- [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick

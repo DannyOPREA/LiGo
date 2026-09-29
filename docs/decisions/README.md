@@ -28,6 +28,8 @@ edit allowed). While the PR that introduces an ADR is still open, its wording ma
 | 0019 | [Go core types, game storage and round protocol; scalachess stays as a library](0019-go-core-types-schema-protocol.md) | Accepted | 2026-09-28 |
 | 0020 | [Scoring phase, the lila ⇄ scoring-service protocol, and byo-yomi in lila](0020-scoring-phase-protocol-and-byoyomi-shape.md) | Accepted | 2026-09-28 |
 | 0021 | [Phase 5: one rating pool, self-declared starting rank, rank display, rated handicap, guests](0021-phase-5-ratings-signup-display-handicap.md) | Accepted | 2026-09-29 |
+| 0022 | [Phase 6: the lobby's pools, auto-handicap, open challenges, player test and load test](0022-phase-6-lobby-pools-handicap-challenges.md) | Accepted | 2026-09-29 |
+| 0023 | [Phase 7: the analysis board, SGF import and export, correspondence](0023-phase-7-analysis-sgf-correspondence.md) | Accepted | 2026-09-29 |
 
 ## Template
 

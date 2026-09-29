@@ -51,3 +51,32 @@ Checks that found real problems in ADR 0021 (unit 5.1, Phase 5 ratings, 2026-09-
 - **Recompute the rationale, not just the numbers**: a rank band is only ~±34 rating points near 5k, a
   deviation-250 loss moves ~110, so "midpoint keeps the label after one loss" was false.
 - **goratings Chinese handicap 1** adds a compensation point (scoringBonus = handicap) that spec R-KOMI-3 doesn't give.
+
+Checks that found real problems in ADR 0022 (unit 6.1, Phase 6 lobby, 2026-09-29):
+
+- **"The browser already gets every hook/seek"**: false. `LobbySocket` sends `had` only where
+  `biter.showHookTo` (canJoin: kind, range, blocks, lame); `SeekApi.forUser` filters by canJoin; hook
+  JSON has no rating range. Any "grey out what you can't join" design needs server changes.
+- **Pool compatibility is clock-only** (`Hook.compatibleWithPool`, `PoolList.isClockCompatible`,
+  `HookRepo.poolCandidates`, `LobbySyncActor` skips instant match): new pool dimensions must reach them.
+- **Waiting-range maths**: `pairScore` uses min(missBonus a, b), cap at min rating, +200 range bonus,
+  ±ragesit, +30 provisional. "cap + my miss bonus" is an approximation; demand the exact definition.
+- **lila already joins-or-creates seeks** (`AddSeek` → findCompatible → BiteSeek, newest first).
+- **Wave timing vs PLAN's "<10 s to first move"**: waves are 12–60 s; FullWave needs 20–40 players.
+- **Concurrent units in one tree**: verify.sh picked up another unit's uncommitted pool files; check
+  `git status` before blaming the diff under review.
+
+Checks that found real problems in ADR 0023 (unit 7.1, Phase 7 analysis/SGF/correspondence, 2026-09-29):
+
+- **goban-engine sources**: extract them from `build/goban-engine.js.map` `sourcesContent` into the
+  scratchpad (the package ships only minified JS + .d.ts). Its SGF reader: places moves unchecked
+  (`place(x,y,false,false,...)`), no BM/TE/DO/IT glyphs, out-of-turn moves become edits, out-of-range
+  points become passes, and a truncated value (`W[dd`) **hangs forever** (verified with a 10 s timeout).
+  `MoveTree.toSGF` drops the root comment and writes no glyphs.
+- **Two trees**: "keep lila's tree" + "export with goban's MoveTree" = two sources of truth; ask which.
+- **lila import dedup** hashes the whole PGN text (MD5, spaces stripped), not the moves; `pgni.h` and
+  `pgni.user+pgni.ca` Mongo indexes; `isPgnImport` gates Titivate, delete-own-import, downloads.
+- **"your turn"** is a Mongo `$mod` on ply parity (`countWhereUserTurn`) + `Pov.isMyTurn` (needs
+  `playable`); CorresAlarm is set only on CorresMoveEvent at 80% of remaining time, once both moved.
+- **idbTree** is a no-op on `/analysis` (game id `synthetic`); only game analysis pages persist edits.
+- **"Nothing is stored, so 13×13"** then storing 13×13 imports: grep R-SCOPE-1 / ADR 0021 §4.
