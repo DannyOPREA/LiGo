@@ -12,6 +12,24 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 7.3 · The server's SGF reader in libs/go-rules
+- Did: `SgfReader` (FF[4] structure: nodes, properties, variations, escapes, soft breaks, `CA`
+  charset; 200 KB and 10,000-node limits; no recursion, no exceptions) and `SgfImport` (the first
+  game's main line replayed through `GoGame`: 9×9/19×19, ≤ 1,000 actions, setup only at the root,
+  legal moves by the colour to move, nothing after two passes; `SgfSettings` from the shared root
+  table; `SgfGameInfo` and `SgfResult` from `PB`/`PW`/`BR`/`WR`/`DT`/`PC`/`EV`/`RE`).
+  `libs/conformance/sgf/records.json` (29 whole records) is replayed by both readers.
+- Worked: one table of whole records caught the one difference between the readers before any
+  code shipped (text before the record: sabaki read it as a property name).
+- Didn't work / dead ends: a random 1,001-action game to test the cap fills the board and ends in
+  two passes; the cap is a parameter (`actionCap`) so the test uses a short game.
+- Lessons: a regex that searches untrusted text needs bounded repeats (CodeQL flagged
+  `CA\s*\[([^\]]*)\]` in 7.2's `decodeSgf`; both readers now use `{0,8}`/`{0,40}`).
+- Decisions (Claude, under the owner's 2026-09-28 delegation): text before the first `(;` is skipped
+  by both readers; `HA` with `AB` becomes a handicap game only when the stones are exactly the fixed
+  points and White moves first, otherwise a custom start (handicap stones written as Black moves stay
+  moves); `RE` kept as written (`SgfResult`), never checked against the position.
+
 ### 2026-09-29 · unit 7.2 · The analysis tree's SGF in libs/board
 - Did: `libs/board/src/sgf.mjs` (+ hand-written `sgf.d.mts`): `readTree` reads an SGF record into
   lila-shaped nodes (id = the move, `..` a pass; stones, captures, ko, player to move, comments,

@@ -145,10 +145,12 @@ const LISTS = ["TR", "SQ", "CR", "MA", "LB", "AR", "LN", "DD", "VW", "SL"];
 export function readTree(text, { maxLength = MAX_SGF_LENGTH } = {}) {
   if (text.length > maxLength || new TextEncoder().encode(text).length > maxLength)
     throw new SgfError(`the record is longer than ${Math.round(maxLength / 1024)} KB`);
-  if (!/\(\s*;/.test(text)) throw new SgfError("not an SGF record");
+  const start = text.search(/\(\s*;/);
+  if (start < 0) throw new SgfError("not an SGF record");
   let trees;
   try {
-    const tokens = sabaki.tokenize(text);
+    // Text before the record (a mail header, a note) is skipped, as the server's reader does.
+    const tokens = sabaki.tokenize(text.slice(start));
     // @sabaki/sgf drops a name with no capital (`sz`, from pre-FF[3] files) without a word; the
     // server's reader refuses it too, so both read a file the same way (libs/go-rules, unit 7.3).
     trees = sabaki.parseTokens(tokens);
