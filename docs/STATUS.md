@@ -13,6 +13,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
   `services/scoring`, the autoscore benchmark) need nothing from Phases 2–3 and run now; 4.7–4.12
   wait for Phase 3 units 3.12–3.20. Logs: logs/scoring.md, logs/clocks.md.
 
+- Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
+  docs/PLAN.md §5. 5.1 (design ADR) and 5.2 (rating maths in `lila/modules/rating`) need nothing
+  from Phases 3–4 and run now; 5.3–5.8 wait for Phase 3 units 3.11–3.20 (and 4.9). Log: logs/ratings.md.
+
 ## Now
 - **Phase 0 — Claude Code setup + baseline.**
   - Units 0.1–0.3 merged (PRs #1–#3; #1 as a merge commit, #2–#3 squashed). `dev/ligo` runs the stack: docker mode on your
@@ -112,4 +116,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1, 3.2 and 3.9 merged; 3.3 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
-| 5–9 | not started |
+| 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
+| 6–9 | not started |

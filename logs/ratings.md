@@ -10,6 +10,21 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · Phase 5 breakdown · Accounts and ratings split into units 5.1–5.8
+- Did: split Phase 5 into 8 units (docs/PLAN.md §5, "Phase 5 units"): a design ADR (5.1), the
+  rating maths in `lila/modules/rating` (5.2), then the lila halves: the rating update with
+  handicap (5.3), signup rank (5.4), kyu/dan display (5.5), profile and rank graph (5.6), rated and
+  guest game creation (5.7) and the demo (5.8), which need Phase 3's game, round, creation and UI.
+- Worked: ADR 0013 and the ratings memo already fix the maths; the memo's spike numbers become 5.2's
+  tests. The open points (signup ranks, display bounds, stone count and cap, guests) all land in 5.1.
+- Didn't work / dead ends: none.
+- Lessons: Glicko-2 step 6 is switched off in `round`'s `PerfsUpdater` (`skipDeviationIncrease =
+  true`), not in the rating module, so it changes with the round unit (5.3), not with the maths (5.2).
+- Decisions: the split itself, Claude's call under the owner's 2026-09-28 delegation
+  (logs/decisions.md).
+- Verified by Claude: verify.sh. · Needs owner verification: whether the split reads right.
+- Follow-ups: 5.1 next, then 5.2.
+
 ### 2026-09-28 · 1.4 · Owner chose lila's Glicko-2 with OGS's settings
 - Did: recorded the owner's answer (option A) as ADR 0013; marked the memo decided; updated STATUS and decisions.md.
 - Worked: the decision card was answered without follow-up questions.
