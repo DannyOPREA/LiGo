@@ -1,0 +1,984 @@
+{
+  "source": "goratings @ 6cab309",
+  "ranks": [
+    { "rating": 400.0, "deviation": 60.0, "rank": -6.295265513446307, "label": "25k" },
+    { "rating": 400.0, "deviation": 200.0, "rank": -6.295265513446307, "label": "25k?" },
+    { "rating": 525.0, "deviation": 60.0, "rank": 0.0, "label": "25k" },
+    { "rating": 525.0, "deviation": 200.0, "rank": 0.0, "label": "25k?" },
+    { "rating": 624.0113, "deviation": 60.0, "rank": 3.9996304677167704, "label": "25k" },
+    { "rating": 624.0113, "deviation": 200.0, "rank": 3.9996304677167704, "label": "25k?" },
+    { "rating": 624.0313, "deviation": 60.0, "rank": 4.000372429569738, "label": "25k" },
+    { "rating": 624.0313, "deviation": 200.0, "rank": 4.000372429569738, "label": "25k?" },
+    { "rating": 651.5575, "deviation": 60.0, "rank": 4.999645030932345, "label": "25k" },
+    { "rating": 651.5575, "deviation": 200.0, "rank": 4.999645030932345, "label": "25k?" },
+    { "rating": 651.5775, "deviation": 60.0, "rank": 5.0003556249997825, "label": "25k" },
+    { "rating": 651.5775, "deviation": 200.0, "rank": 5.0003556249997825, "label": "25k?" },
+    { "rating": 680.3197, "deviation": 60.0, "rank": 5.999659845338514, "label": "25k" },
+    { "rating": 680.3197, "deviation": 200.0, "rank": 5.999659845338514, "label": "25k?" },
+    { "rating": 680.3397, "deviation": 60.0, "rank": 6.0003403977236776, "label": "24k" },
+    { "rating": 680.3397, "deviation": 200.0, "rank": 6.0003403977236776, "label": "24k?" },
+    { "rating": 710.3516, "deviation": 60.0, "rank": 6.999675580518514, "label": "24k" },
+    { "rating": 710.3516, "deviation": 200.0, "rank": 6.999675580518514, "label": "24k?" },
+    { "rating": 710.3716, "deviation": 60.0, "rank": 7.000327361245442, "label": "23k" },
+    { "rating": 710.3716, "deviation": 200.0, "rank": 7.000327361245442, "label": "23k?" },
+    { "rating": 741.7091, "deviation": 60.0, "rank": 7.999687497581928, "label": "23k" },
+    { "rating": 741.7091, "deviation": 200.0, "rank": 7.999687497581928, "label": "23k?" },
+    { "rating": 741.7291, "deviation": 60.0, "rank": 8.000311723114246, "label": "22k" },
+    { "rating": 741.7291, "deviation": 200.0, "rank": 8.000311723114246, "label": "22k?" },
+    { "rating": 774.4509, "deviation": 60.0, "rank": 8.999701388807399, "label": "22k" },
+    { "rating": 774.4509, "deviation": 200.0, "rank": 8.999701388807399, "label": "22k?" },
+    { "rating": 774.4709, "deviation": 60.0, "rank": 9.00029922402416, "label": "21k" },
+    { "rating": 774.4709, "deviation": 200.0, "rank": 9.00029922402416, "label": "21k?" },
+    { "rating": 808.638, "deviation": 60.0, "rank": 9.999713994530742, "label": "21k" },
+    { "rating": 808.638, "deviation": 200.0, "rank": 9.999713994530742, "label": "21k?" },
+    { "rating": 808.658, "deviation": 60.0, "rank": 10.00028655515047, "label": "20k" },
+    { "rating": 808.658, "deviation": 200.0, "rank": 10.00028655515047, "label": "20k?" },
+    { "rating": 844.3342, "deviation": 60.0, "rank": 10.999725398200907, "label": "20k" },
+    { "rating": 844.3342, "deviation": 200.0, "rank": 10.999725398200907, "label": "20k?" },
+    { "rating": 844.3542, "deviation": 60.0, "rank": 11.000273752770076, "label": "19k" },
+    { "rating": 844.3542, "deviation": 200.0, "rank": 11.000273752770076, "label": "19k?" },
+    { "rating": 881.6062, "deviation": 60.0, "rank": 11.999737875621523, "label": "19k" },
+    { "rating": 881.6062, "deviation": 200.0, "rank": 11.999737875621523, "label": "19k?" },
+    { "rating": 881.6262, "deviation": 60.0, "rank": 12.00026304745936, "label": "18k" },
+    { "rating": 881.6262, "deviation": 200.0, "rank": 12.00026304745936, "label": "18k?" },
+    { "rating": 920.5234, "deviation": 60.0, "rank": 12.99974727448994, "label": "18k" },
+    { "rating": 920.5234, "deviation": 200.0, "rank": 12.99974727448994, "label": "18k?" },
+    { "rating": 920.5434, "deviation": 60.0, "rank": 13.000250243746697, "label": "17k" },
+    { "rating": 920.5434, "deviation": 200.0, "rank": 13.000250243746697, "label": "17k?" },
+    { "rating": 961.1586, "deviation": 60.0, "rank": 13.999758066564508, "label": "17k" },
+    { "rating": 961.1586, "deviation": 200.0, "rank": 13.999758066564508, "label": "17k?" },
+    { "rating": 961.1786, "deviation": 60.0, "rank": 14.000239771855359, "label": "16k" },
+    { "rating": 961.1786, "deviation": 200.0, "rank": 14.000239771855359, "label": "16k?" },
+    { "rating": 1000.0, "deviation": 60.0, "rank": 14.916864929440381, "label": "16k" },
+    { "rating": 1000.0, "deviation": 200.0, "rank": 14.916864929440381, "label": "16k?" },
+    { "rating": 1003.5876, "deviation": 60.0, "rank": 14.9997692444419, "label": "16k" },
+    { "rating": 1003.5876, "deviation": 200.0, "rank": 14.9997692444419, "label": "16k?" },
+    { "rating": 1003.6076, "deviation": 60.0, "rank": 15.000230584724118, "label": "15k" },
+    { "rating": 1003.6076, "deviation": 200.0, "rank": 15.000230584724118, "label": "15k?" },
+    { "rating": 1047.8895, "deviation": 60.0, "rank": 15.999778903046645, "label": "15k" },
+    { "rating": 1047.8895, "deviation": 200.0, "rank": 15.999778903046645, "label": "15k?" },
+    { "rating": 1047.9095, "deviation": 60.0, "rank": 16.000220739310535, "label": "14k" },
+    { "rating": 1047.9095, "deviation": 200.0, "rank": 16.000220739310535, "label": "14k?" },
+    { "rating": 1094.147, "deviation": 60.0, "rank": 16.9997876670609, "label": "14k" },
+    { "rating": 1094.147, "deviation": 200.0, "rank": 16.9997876670609, "label": "14k?" },
+    { "rating": 1094.167, "deviation": 60.0, "rank": 17.000210823883926, "label": "13k" },
+    { "rating": 1094.167, "deviation": 200.0, "rank": 17.000210823883926, "label": "13k?" },
+    { "rating": 1142.4465, "deviation": 60.0, "rank": 17.99979708956917, "label": "13k" },
+    { "rating": 1142.4465, "deviation": 200.0, "rank": 17.99979708956917, "label": "13k?" },
+    { "rating": 1142.4665, "deviation": 60.0, "rank": 18.000202356640617, "label": "12k" },
+    { "rating": 1142.4665, "deviation": 200.0, "rank": 18.000202356640617, "label": "12k?" },
+    { "rating": 1192.8781, "deviation": 60.0, "rank": 18.999806319071784, "label": "12k" },
+    { "rating": 1192.8781, "deviation": 200.0, "rank": 18.999806319071784, "label": "12k?" },
+    { "rating": 1192.8981, "deviation": 60.0, "rank": 19.000194452711494, "label": "11k" },
+    { "rating": 1192.8981, "deviation": 200.0, "rank": 19.000194452711494, "label": "11k?" },
+    { "rating": 1245.5359, "deviation": 60.0, "rank": 19.99981502991684, "label": "11k" },
+    { "rating": 1245.5359, "deviation": 200.0, "rank": 19.99981502991684, "label": "11k?" },
+    { "rating": 1245.5559, "deviation": 60.0, "rank": 20.000186754475532, "label": "10k" },
+    { "rating": 1245.5559, "deviation": 200.0, "rank": 20.000186754475532, "label": "10k?" },
+    { "rating": 1300.5181, "deviation": 60.0, "rank": 20.99982197924486, "label": "10k" },
+    { "rating": 1300.5181, "deviation": 200.0, "rank": 20.99982197924486, "label": "10k?" },
+    { "rating": 1300.5381, "deviation": 60.0, "rank": 21.000177988469122, "label": "9k" },
+    { "rating": 1300.5381, "deviation": 200.0, "rank": 21.000177988469122, "label": "9k?" },
+    { "rating": 1357.9274, "deviation": 60.0, "rank": 21.999828899364847, "label": "9k" },
+    { "rating": 1357.9274, "deviation": 200.0, "rank": 21.999828899364847, "label": "9k?" },
+    { "rating": 1357.9474, "deviation": 60.0, "rank": 22.000169857644668, "label": "8k" },
+    { "rating": 1357.9474, "deviation": 200.0, "rank": 22.000169857644668, "label": "8k?" },
+    { "rating": 1417.871, "deviation": 60.0, "rank": 22.999836764764275, "label": "8k" },
+    { "rating": 1417.871, "deviation": 200.0, "rank": 22.999836764764275, "label": "8k?" },
+    { "rating": 1417.891, "deviation": 60.0, "rank": 23.00016330838818, "label": "7k" },
+    { "rating": 1417.891, "deviation": 200.0, "rank": 23.00016330838818, "label": "7k?" },
+    { "rating": 1480.4607, "deviation": 60.0, "rank": 23.99984435969298, "label": "7k" },
+    { "rating": 1480.4607, "deviation": 200.0, "rank": 23.99984435969298, "label": "7k?" },
+    { "rating": 1480.4807, "deviation": 60.0, "rank": 24.000157098067337, "label": "6k" },
+    { "rating": 1480.4807, "deviation": 200.0, "rank": 24.000157098067337, "label": "6k?" },
+    { "rating": 1500.0, "deviation": 60.0, "rank": 24.303382182144386, "label": "6k" },
+    { "rating": 1500.0, "deviation": 200.0, "rank": 24.303382182144386, "label": "6k?" },
+    { "rating": 1545.8132, "deviation": 60.0, "rank": 24.999850089881612, "label": "6k" },
+    { "rating": 1545.8132, "deviation": 200.0, "rank": 24.999850089881612, "label": "6k?" },
+    { "rating": 1545.8332, "deviation": 60.0, "rank": 25.000149606669822, "label": "5k" },
+    { "rating": 1545.8332, "deviation": 200.0, "rank": 25.000149606669822, "label": "5k?" },
+    { "rating": 1614.0506, "deviation": 60.0, "rank": 25.999856128317102, "label": "5k" },
+    { "rating": 1614.0506, "deviation": 200.0, "rank": 25.999856128317102, "label": "5k?" },
+    { "rating": 1614.0706, "deviation": 60.0, "rank": 26.000142982478586, "label": "4k" },
+    { "rating": 1614.0706, "deviation": 200.0, "rank": 26.000142982478586, "label": "4k?" },
+    { "rating": 1685.3003, "deviation": 60.0, "rank": 26.999863147289272, "label": "4k" },
+    { "rating": 1685.3003, "deviation": 200.0, "rank": 26.999863147289272, "label": "4k?" },
+    { "rating": 1685.3203, "deviation": 60.0, "rank": 27.000137874145214, "label": "3k" },
+    { "rating": 1685.3203, "deviation": 200.0, "rank": 27.000137874145214, "label": "3k?" },
+    { "rating": 1759.6951, "deviation": 60.0, "rank": 27.999868787092776, "label": "3k" },
+    { "rating": 1759.6951, "deviation": 200.0, "rank": 27.999868787092776, "label": "3k?" },
+    { "rating": 1759.7151, "deviation": 60.0, "rank": 28.00013189936085, "label": "2k" },
+    { "rating": 1759.7151, "deviation": 200.0, "rank": 28.00013189936085, "label": "2k?" },
+    { "rating": 1800.0, "deviation": 60.0, "rank": 28.524126221924437, "label": "2k" },
+    { "rating": 1800.0, "deviation": 200.0, "rank": 28.524126221924437, "label": "2k?" },
+    { "rating": 1837.3739, "deviation": 60.0, "rank": 28.999873977717353, "label": "2k" },
+    { "rating": 1837.3739, "deviation": 200.0, "rank": 28.999873977717353, "label": "2k?" },
+    { "rating": 1837.3939, "deviation": 60.0, "rank": 29.000125966428044, "label": "1k" },
+    { "rating": 1837.3939, "deviation": 200.0, "rank": 29.000125966428044, "label": "1k?" },
+    { "rating": 1918.4817, "deviation": 60.0, "rank": 29.999879158251073, "label": "1k" },
+    { "rating": 1918.4817, "deviation": 200.0, "rank": 29.999879158251073, "label": "1k?" },
+    { "rating": 1918.5017, "deviation": 60.0, "rank": 30.00012049367098, "label": "1d" },
+    { "rating": 1918.5017, "deviation": 200.0, "rank": 30.00012049367098, "label": "1d?" },
+    { "rating": 1950.0, "deviation": 60.0, "rank": 30.377114904566803, "label": "1d" },
+    { "rating": 1950.0, "deviation": 200.0, "rank": 30.377114904566803, "label": "1d?" },
+    { "rating": 2003.1699, "deviation": 60.0, "rank": 30.999884705420783, "label": "1d" },
+    { "rating": 2003.1699, "deviation": 200.0, "rank": 30.999884705420783, "label": "1d?" },
+    { "rating": 2003.1899, "deviation": 60.0, "rank": 31.000115837931645, "label": "2d" },
+    { "rating": 2003.1899, "deviation": 200.0, "rank": 31.000115837931645, "label": "2d?" },
+    { "rating": 2091.5964, "deviation": 60.0, "rank": 31.99988891944349, "label": "2d" },
+    { "rating": 2091.5964, "deviation": 200.0, "rank": 31.99988891944349, "label": "2d?" },
+    { "rating": 2091.6164, "deviation": 60.0, "rank": 32.000110280403185, "label": "3d" },
+    { "rating": 2091.6164, "deviation": 200.0, "rank": 32.000110280403185, "label": "3d?" },
+    { "rating": 2100.0, "deviation": 60.0, "rank": 32.09271445992547, "label": "3d" },
+    { "rating": 2100.0, "deviation": 200.0, "rank": 32.09271445992547, "label": "3d?" },
+    { "rating": 2183.9264, "deviation": 60.0, "rank": 32.999893809758156, "label": "3d" },
+    { "rating": 2183.9264, "deviation": 200.0, "rank": 32.999893809758156, "label": "3d?" },
+    { "rating": 2183.9464, "deviation": 60.0, "rank": 33.000105812268856, "label": "4d" },
+    { "rating": 2183.9464, "deviation": 200.0, "rank": 33.000105812268856, "label": "4d?" },
+    { "rating": 2280.3321, "deviation": 60.0, "rank": 33.99989816882059, "label": "4d" },
+    { "rating": 2280.3321, "deviation": 200.0, "rank": 33.99989816882059, "label": "4d?" },
+    { "rating": 2280.3521, "deviation": 60.0, "rank": 34.00010120853118, "label": "5d" },
+    { "rating": 2280.3521, "deviation": 200.0, "rank": 34.00010120853118, "label": "5d?" },
+    { "rating": 2380.9935, "deviation": 60.0, "rank": 34.99990286885249, "label": "5d" },
+    { "rating": 2380.9935, "deviation": 200.0, "rank": 34.99990286885249, "label": "5d?" },
+    { "rating": 2381.0135, "deviation": 60.0, "rank": 35.00009732467752, "label": "6d" },
+    { "rating": 2381.0135, "deviation": 200.0, "rank": 35.00009732467752, "label": "6d?" },
+    { "rating": 2400.0, "deviation": 60.0, "rank": 35.18396619918316, "label": "6d" },
+    { "rating": 2400.0, "deviation": 200.0, "rank": 35.18396619918316, "label": "6d?" },
+    { "rating": 2486.0984, "deviation": 60.0, "rank": 35.9999073166715, "label": "6d" },
+    { "rating": 2486.0984, "deviation": 200.0, "rank": 35.9999073166715, "label": "6d?" },
+    { "rating": 2486.1184, "deviation": 60.0, "rank": 36.00009355151145, "label": "7d" },
+    { "rating": 2486.1184, "deviation": 200.0, "rank": 36.00009355151145, "label": "7d?" },
+    { "rating": 2595.8429, "deviation": 60.0, "rank": 36.99991108069954, "label": "7d" },
+    { "rating": 2595.8429, "deviation": 200.0, "rank": 36.99991108069954, "label": "7d?" },
+    { "rating": 2595.8629, "deviation": 60.0, "rank": 37.00008944211594, "label": "8d" },
+    { "rating": 2595.8629, "deviation": 200.0, "rank": 37.00008944211594, "label": "8d?" },
+    { "rating": 2710.4319, "deviation": 60.0, "rank": 37.99991501107114, "label": "8d" },
+    { "rating": 2710.4319, "deviation": 200.0, "rank": 37.99991501107114, "label": "8d?" },
+    { "rating": 2710.4519, "deviation": 60.0, "rank": 38.00008583192512, "label": "9d" },
+    { "rating": 2710.4519, "deviation": 200.0, "rank": 38.00008583192512, "label": "9d?" },
+    { "rating": 2800.0, "deviation": 60.0, "rank": 38.752554437184195, "label": "9d" },
+    { "rating": 2800.0, "deviation": 200.0, "rank": 38.752554437184195, "label": "9d?" },
+    { "rating": 2830.0791, "deviation": 60.0, "rank": 38.99991784998474, "label": "9d" },
+    { "rating": 2830.0791, "deviation": 200.0, "rank": 38.99991784998474, "label": "9d?" },
+    { "rating": 2830.0991, "deviation": 60.0, "rank": 39.00008144907425, "label": "9d" },
+    { "rating": 2830.0991, "deviation": 200.0, "rank": 39.00008144907425, "label": "9d?" },
+    { "rating": 2955.008, "deviation": 60.0, "rank": 39.999921370154524, "label": "9d" },
+    { "rating": 2955.008, "deviation": 200.0, "rank": 39.999921370154524, "label": "9d?" },
+    { "rating": 2955.028, "deviation": 60.0, "rank": 40.00007805278725, "label": "9d" },
+    { "rating": 2955.028, "deviation": 200.0, "rank": 40.00007805278725, "label": "9d?" },
+    { "rating": 4000.0, "deviation": 60.0, "rank": 47.009579389365854, "label": "9d" },
+    { "rating": 4000.0, "deviation": 200.0, "rank": 47.009579389365854, "label": "9d?" }
+  ],
+  "handicap": [
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 0,
+      "rankDifference": 2.75,
+      "blackAdjustmentAt1500": 189.2009472880377
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 1,
+      "rankDifference": 2.75,
+      "blackAdjustmentAt1500": 189.2009472880377
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 2,
+      "rankDifference": 8.75,
+      "blackAdjustmentAt1500": 688.9782239066426
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 5,
+      "rankDifference": 26.75,
+      "blackAdjustmentAt1500": 3263.4522477653245
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 9,
+      "rankDifference": 50.75,
+      "blackAdjustmentAt1500": 11932.669069461155
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 0,
+      "rankDifference": -0.25,
+      "blackAdjustmentAt1500": -16.111552103020585
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 1,
+      "rankDifference": -0.25,
+      "blackAdjustmentAt1500": -16.111552103020585
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 2,
+      "rankDifference": 5.75,
+      "blackAdjustmentAt1500": 422.9207184426475
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 5,
+      "rankDifference": 23.75,
+      "blackAdjustmentAt1500": 2684.482476117493
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 9,
+      "rankDifference": 47.75,
+      "blackAdjustmentAt1500": 10300.00667688332
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 0,
+      "rankDifference": -0.75,
+      "blackAdjustmentAt1500": -47.81735087370748
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 1,
+      "rankDifference": -0.75,
+      "blackAdjustmentAt1500": -47.81735087370748
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 2,
+      "rankDifference": 5.25,
+      "blackAdjustmentAt1500": 381.83424901340436
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 5,
+      "rankDifference": 23.25,
+      "blackAdjustmentAt1500": 2595.0738958867655
+    },
+    {
+      "size": 9,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 9,
+      "rankDifference": 47.25,
+      "blackAdjustmentAt1500": 10047.879478426961
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 0,
+      "rankDifference": 3.25,
+      "blackAdjustmentAt1500": 226.08161470972232
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 1,
+      "rankDifference": 2.75,
+      "blackAdjustmentAt1500": 189.2009472880377
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 2,
+      "rankDifference": 8.75,
+      "blackAdjustmentAt1500": 688.9782239066426
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 5,
+      "rankDifference": 26.75,
+      "blackAdjustmentAt1500": 3263.4522477653245
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 9,
+      "rankDifference": 50.75,
+      "blackAdjustmentAt1500": 11932.669069461155
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 0,
+      "rankDifference": 0.25,
+      "blackAdjustmentAt1500": 16.286485812853243
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 1,
+      "rankDifference": -0.25,
+      "blackAdjustmentAt1500": -16.111552103020585
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 2,
+      "rankDifference": 5.75,
+      "blackAdjustmentAt1500": 422.9207184426475
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 5,
+      "rankDifference": 23.75,
+      "blackAdjustmentAt1500": 2684.482476117493
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 9,
+      "rankDifference": 47.75,
+      "blackAdjustmentAt1500": 10300.00667688332
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 0,
+      "rankDifference": -0.25,
+      "blackAdjustmentAt1500": -16.111552103020585
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 1,
+      "rankDifference": -0.75,
+      "blackAdjustmentAt1500": -47.81735087370748
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 2,
+      "rankDifference": 5.25,
+      "blackAdjustmentAt1500": 381.83424901340436
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 5,
+      "rankDifference": 23.25,
+      "blackAdjustmentAt1500": 2595.0738958867655
+    },
+    {
+      "size": 9,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 9,
+      "rankDifference": 47.25,
+      "blackAdjustmentAt1500": 10047.879478426961
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 0,
+      "rankDifference": 1.375,
+      "blackAdjustmentAt1500": 91.79188995674212
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 1,
+      "rankDifference": 1.375,
+      "blackAdjustmentAt1500": 91.79188995674212
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 2,
+      "rankDifference": 4.375,
+      "blackAdjustmentAt1500": 312.03403275434175
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 5,
+      "rankDifference": 13.375,
+      "blackAdjustmentAt1500": 1173.0466459917957
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 9,
+      "rankDifference": 25.375,
+      "blackAdjustmentAt1500": 2988.7641510990234
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 0,
+      "rankDifference": -0.125,
+      "blackAdjustmentAt1500": -8.077524854100147
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 1,
+      "rankDifference": -0.125,
+      "blackAdjustmentAt1500": -8.077524854100147
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 2,
+      "rankDifference": 2.875,
+      "blackAdjustmentAt1500": 198.34657171731897
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 5,
+      "rankDifference": 11.875,
+      "blackAdjustmentAt1500": 1005.3390417618612
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 9,
+      "rankDifference": 23.875,
+      "blackAdjustmentAt1500": 2707.137983870385
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 0,
+      "rankDifference": -0.375,
+      "blackAdjustmentAt1500": -24.102315982087248
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 1,
+      "rankDifference": -0.375,
+      "blackAdjustmentAt1500": -24.102315982087248
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 2,
+      "rankDifference": 2.625,
+      "blackAdjustmentAt1500": 180.10457219784575
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 5,
+      "rankDifference": 11.625,
+      "blackAdjustmentAt1500": 978.4291080904754
+    },
+    {
+      "size": 13,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 9,
+      "rankDifference": 23.625,
+      "blackAdjustmentAt1500": 2661.948968649237
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 0,
+      "rankDifference": 1.625,
+      "blackAdjustmentAt1500": 109.07502064527216
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 1,
+      "rankDifference": 1.375,
+      "blackAdjustmentAt1500": 91.79188995674212
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 2,
+      "rankDifference": 4.375,
+      "blackAdjustmentAt1500": 312.03403275434175
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 5,
+      "rankDifference": 13.375,
+      "blackAdjustmentAt1500": 1173.0466459917957
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 9,
+      "rankDifference": 25.375,
+      "blackAdjustmentAt1500": 2988.7641510990234
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 0,
+      "rankDifference": 0.125,
+      "blackAdjustmentAt1500": 8.121257962793834
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 1,
+      "rankDifference": -0.125,
+      "blackAdjustmentAt1500": -8.077524854100147
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 2,
+      "rankDifference": 2.875,
+      "blackAdjustmentAt1500": 198.34657171731897
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 5,
+      "rankDifference": 11.875,
+      "blackAdjustmentAt1500": 1005.3390417618612
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 9,
+      "rankDifference": 23.875,
+      "blackAdjustmentAt1500": 2707.137983870385
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 0,
+      "rankDifference": -0.125,
+      "blackAdjustmentAt1500": -8.077524854100147
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 1,
+      "rankDifference": -0.375,
+      "blackAdjustmentAt1500": -24.102315982087248
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 2,
+      "rankDifference": 2.625,
+      "blackAdjustmentAt1500": 180.10457219784575
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 5,
+      "rankDifference": 11.625,
+      "blackAdjustmentAt1500": 978.4291080904754
+    },
+    {
+      "size": 13,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 9,
+      "rankDifference": 23.625,
+      "blackAdjustmentAt1500": 2661.948968649237
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 0,
+      "rankDifference": 0.4583333333333333,
+      "blackAdjustmentAt1500": 29.9935569242773
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 1,
+      "rankDifference": 0.4583333333333333,
+      "blackAdjustmentAt1500": 29.9935569242773
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 2,
+      "rankDifference": 1.4583333333333333,
+      "blackAdjustmentAt1500": 97.53220790841692
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 5,
+      "rankDifference": 4.458333333333333,
+      "blackAdjustmentAt1500": 318.5685876499249
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 0.5,
+      "handicap": 9,
+      "rankDifference": 8.458333333333334,
+      "blackAdjustmentAt1500": 661.5723105628226
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 0,
+      "rankDifference": -0.041666666666666664,
+      "blackAdjustmentAt1500": -2.697355863026587
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 1,
+      "rankDifference": -0.041666666666666664,
+      "blackAdjustmentAt1500": -2.697355863026587
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 2,
+      "rankDifference": 0.9583333333333334,
+      "blackAdjustmentAt1500": 63.39821705120721
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 5,
+      "rankDifference": 3.9583333333333335,
+      "blackAdjustmentAt1500": 279.71177885648945
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 6.5,
+      "handicap": 9,
+      "rankDifference": 7.958333333333333,
+      "blackAdjustmentAt1500": 615.3866442453023
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 0,
+      "rankDifference": -0.125,
+      "blackAdjustmentAt1500": -8.077524854100147
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 1,
+      "rankDifference": -0.125,
+      "blackAdjustmentAt1500": -8.077524854100147
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 2,
+      "rankDifference": 0.875,
+      "blackAdjustmentAt1500": 57.78055074906365
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 5,
+      "rankDifference": 3.875,
+      "blackAdjustmentAt1500": 273.31684583266497
+    },
+    {
+      "size": 19,
+      "rules": "japanese",
+      "komi": 7.5,
+      "handicap": 9,
+      "rankDifference": 7.875,
+      "blackAdjustmentAt1500": 607.7855505906132
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 0,
+      "rankDifference": 0.5416666666666666,
+      "blackAdjustmentAt1500": 35.5110178035377
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 1,
+      "rankDifference": 0.4583333333333333,
+      "blackAdjustmentAt1500": 29.9935569242773
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 2,
+      "rankDifference": 1.4583333333333333,
+      "blackAdjustmentAt1500": 97.53220790841692
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 5,
+      "rankDifference": 4.458333333333333,
+      "blackAdjustmentAt1500": 318.5685876499249
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 0.5,
+      "handicap": 9,
+      "rankDifference": 8.458333333333334,
+      "blackAdjustmentAt1500": 661.5723105628226
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 0,
+      "rankDifference": 0.041666666666666664,
+      "blackAdjustmentAt1500": 2.702215086831302
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 1,
+      "rankDifference": -0.041666666666666664,
+      "blackAdjustmentAt1500": -2.697355863026587
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 2,
+      "rankDifference": 0.9583333333333334,
+      "blackAdjustmentAt1500": 63.39821705120721
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 5,
+      "rankDifference": 3.9583333333333335,
+      "blackAdjustmentAt1500": 279.71177885648945
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 6.5,
+      "handicap": 9,
+      "rankDifference": 7.958333333333333,
+      "blackAdjustmentAt1500": 615.3866442453023
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 0,
+      "rankDifference": -0.041666666666666664,
+      "blackAdjustmentAt1500": -2.697355863026587
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 1,
+      "rankDifference": -0.125,
+      "blackAdjustmentAt1500": -8.077524854100147
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 2,
+      "rankDifference": 0.875,
+      "blackAdjustmentAt1500": 57.78055074906365
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 5,
+      "rankDifference": 3.875,
+      "blackAdjustmentAt1500": 273.31684583266497
+    },
+    {
+      "size": 19,
+      "rules": "chinese",
+      "komi": 7.5,
+      "handicap": 9,
+      "rankDifference": 7.875,
+      "blackAdjustmentAt1500": 607.7855505906132
+    }
+  ],
+  "glicko": [
+    {
+      "me": [1500, 350, 0.06],
+      "opponent": [1500, 350, 0.06],
+      "won": true,
+      "after": [1662.3108939062977, 290.31896371798047, 0.05999967537233814]
+    },
+    {
+      "me": [1500, 200, 0.06],
+      "opponent": [1400, 30, 0.06],
+      "won": false,
+      "after": [1387.2576445904383, 175.40266927535413, 0.06000085304430591]
+    },
+    {
+      "me": [1500, 200, 0.06],
+      "opponent": [1550, 100, 0.06],
+      "won": true,
+      "after": [1596.456829391898, 175.9032369041794, 0.060000034752862155]
+    },
+    {
+      "me": [1200, 80, 0.05],
+      "opponent": [1900, 60, 0.07],
+      "won": true,
+      "after": [1235.7954552806034, 80.31754366077594, 0.05000706872639532]
+    },
+    {
+      "me": [2100, 60, 0.06],
+      "opponent": [2000, 120, 0.06],
+      "won": false,
+      "after": [2087.711309771047, 60.15198956121883, 0.06000179592975622]
+    }
+  ],
+  "handicapGames": [
+    {
+      "black": [1579.5734822592087, 80, 0.06],
+      "white": [1960.3785337143893, 80, 0.06],
+      "blackWon": true,
+      "handicap": 4,
+      "size": 19,
+      "komi": 0.5,
+      "rules": "japanese",
+      "blackAfter": [1602.0381656717097, 78.87243311366268, 0.06000208587221337],
+      "whiteAfter": [1937.1191691494953, 78.92564656669569, 0.06000251613718692]
+    },
+    {
+      "black": [1579.5734822592087, 80, 0.06],
+      "white": [1960.3785337143893, 80, 0.06],
+      "blackWon": false,
+      "handicap": 4,
+      "size": 19,
+      "komi": 0.5,
+      "rules": "japanese",
+      "blackAfter": [1567.329291851138, 78.87236156443835, 0.05999867419531617],
+      "whiteAfter": [1971.8748915326046, 78.92556393949734, 0.05999858420332482]
+    },
+    {
+      "black": [1579.5734822592087, 250, 0.06],
+      "white": [1960.3785337143893, 250, 0.06],
+      "blackWon": true,
+      "handicap": 5,
+      "size": 19,
+      "komi": 0.5,
+      "rules": "chinese",
+      "blackAfter": [1695.861902928623, 218.1135934108144, 0.05999984284326497],
+      "whiteAfter": [1842.0915377005306, 218.20072586262708, 0.059999895519574804]
+    },
+    {
+      "black": [1512.7940698667778, 120, 0.06],
+      "white": [1877.4998781668542, 90, 0.06],
+      "blackWon": false,
+      "handicap": 2,
+      "size": 9,
+      "komi": 0.5,
+      "rules": "japanese",
+      "blackAfter": [1454.7976721466082, 116.07423592048178, 0.06000450672638978],
+      "whiteAfter": [1914.1857222108188, 89.2978251207464, 0.06000672087167502]
+    },
+    {
+      "black": [1272.7401075592427, 200, 0.06],
+      "white": [1387.5855603159134, 150, 0.06],
+      "blackWon": true,
+      "handicap": 0,
+      "size": 19,
+      "komi": 6.5,
+      "rules": "japanese",
+      "blackAfter": [1381.0409908942013, 179.33119434736668, 0.06000095734564371],
+      "whiteAfter": [1325.1159319039564, 141.87291275858155, 0.060001133214264514]
+    }
+  ]
+}
