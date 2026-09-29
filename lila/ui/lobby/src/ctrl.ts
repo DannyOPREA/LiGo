@@ -78,7 +78,7 @@ export default class LobbyController {
     this.sort = this.me ? this.stores.sort.get() : 'time';
 
     const locationHash = location.hash.replace('#', '');
-    if (['ai', 'friend', 'hook'].includes(locationHash)) {
+    if (['friend', 'hook'].includes(locationHash)) {
       const forceOptions: ForceSetupOptions = {};
       const urlParams = new URLSearchParams(location.search);
       const friendUser = urlParams.get('user') ?? undefined;

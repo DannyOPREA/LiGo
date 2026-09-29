@@ -284,8 +284,6 @@ object Game:
     else if game.sourceIs(_.Arena) then none
     else false.some
 
-  def mightBeBoardOrBotCompatible(game: Game) = isBoardCompatible(game) || isBotCompatible(game).|(true)
-
   object BSONFields:
     export lila.core.game.BSONFields.*
     val whitePlayer = "p0"

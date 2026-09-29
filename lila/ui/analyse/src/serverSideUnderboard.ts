@@ -4,14 +4,11 @@ import { escapeHtml } from 'lib';
 import { licon } from 'lib/licon';
 import { pubsub } from 'lib/pubsub';
 import { storage } from 'lib/storage';
-import { spinnerHtml, domDialog, alert, confirm } from 'lib/view';
-import { url as xhrUrl, textRaw as xhrTextRaw } from 'lib/xhr';
+import { domDialog } from 'lib/view';
+import { url as xhrUrl } from 'lib/xhr';
 
 import type AnalyseCtrl from './ctrl';
-import type { AnalyseData } from './interfaces';
 import { baseUrl } from './view/util';
-
-export const stockfishName = 'Stockfish 19';
 
 export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
   $(element).replaceWith(ctrl.opts.$underboard);
@@ -57,26 +54,13 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
         $menu.find('button:not(.computer-analysis)').first().trigger('click');
       }
     });
-    pubsub.on('analysis.server.progress', (d: AnalyseData) => {
-      if (!advChart) startAdvantageChart();
-      else advChart.updateData(d, ctrl.mainline);
-      if (d.analysis && !d.analysis.partial) $('#acpl-chart-container-loader').remove();
-    });
   }
-
-  const chartLoader = () =>
-    `<div id="acpl-chart-container-loader"><span>${stockfishName}<br>server analysis</span>${spinnerHtml}</div>`;
 
   function startAdvantageChart() {
     if (advChart || site.blindMode) return;
-    const loading = !ctrl.tree.root.eval || !Object.keys(ctrl.tree.root.eval).length;
     const $panel = $panels.filter('.computer-analysis');
     if (!$('#acpl-chart-container').length)
-      $panel.html(
-        '<div id="acpl-chart-container"><canvas id="acpl-chart"></canvas></div>' +
-          (loading ? chartLoader() : ''),
-      );
-    else if (loading && !$('#acpl-chart-container-loader').length) $panel.append(chartLoader());
+      $panel.html('<div id="acpl-chart-container"><canvas id="acpl-chart"></canvas></div>');
     site.asset.loadEsm<ChartGame>('chart.game').then(m => {
       m.acpl($('#acpl-chart')[0] as HTMLCanvasElement, data, ctrl.serverMainline()).then(chart => {
         advChart = chart;
@@ -119,28 +103,7 @@ export default function (element: HTMLElement, ctrl: AnalyseCtrl) {
     const $menuCt = $menu.children('[data-panel="ctable"]');
     ($menuCt.length ? $menuCt : $menu.children(':first-child')).trigger('click');
   }
-  if (!data.analysis) {
-    $panels.find('form.future-game-analysis').on('submit', function (this: HTMLFormElement) {
-      if ($(this).hasClass('must-login')) {
-        confirm(i18n.site.youNeedAnAccountToDoThat, i18n.site.signIn, i18n.site.cancel).then(yes => {
-          if (yes) location.href = '/login?referrer=' + window.location.pathname;
-        });
-        return false;
-      }
-      // ensure the analysis tab remains visible, if it was only displayed to render the request button
-      ctrl.settings.set('showStaticAnalysis', true);
-      ctrl.redraw();
-      xhrTextRaw(this.action, { method: this.method }).then(res => {
-        if (res.ok) startAdvantageChart();
-        else
-          res.text().then(async t => {
-            if (t && !t.startsWith('<!DOCTYPE html>')) await alert(t);
-            site.reload();
-          });
-      });
-      return false;
-    });
-  }
+  // (unit 3.5) the "request computer analysis" form is gone; only a stored analysis is charted
 
   $panels.on('click', '.pgn', function (this: HTMLElement) {
     const selection = window.getSelection(),

@@ -20,19 +20,7 @@ final class Setup(
 
   import env.setup.{ forms, processor }
 
-  def ai = OpenBody:
-    limit.setupBotAi(ctx.userId | UserId(""), rateLimited, cost = ctx.me.exists(_.isBot).so(1)):
-      limit.setupPost(ctx.ip, rateLimited):
-        bindForm(forms.ai)(
-          doubleJsonFormError,
-          config =>
-            processor.ai(config).flatMap { pov =>
-              negotiateApi(
-                html = redirectPov(pov),
-                api = _ => env.api.roundApi.player(pov, scalalib.data.Preload.none).map(Created(_))
-              )
-            }
-        )
+  // Games against the computer (ai, apiAi) went with fishnet (unit 3.5).
 
   def friend(userId: Option[UserStr]) =
     OpenBody: ctx ?=>
@@ -213,20 +201,6 @@ final class Setup(
     (get("fen").map(Fen.Full.clean): Option[Fen.Full]).flatMap(ValidFen(getBool("strict"))) match
       case None => BadRequest
       case Some(v) => Ok.snip(views.analyse.ui.miniSpan(v.fen.board, v.color))
-
-  def apiAi = ScopedBody(_.Challenge.Write, _.Bot.Play, _.Board.Play, _.Web.Mobile, _.Web.Takex3) {
-    ctx ?=> me ?=>
-      limit.setupBotAi(me, rateLimited, cost = me.isBot.so(1)):
-        limit.setupPost(req.ipAddress, rateLimited):
-          bindForm(forms.api.ai)(
-            doubleJsonFormError,
-            config =>
-              processor.apiAi(config).map { pov =>
-                val json = env.game.jsonView.apiAiNewGame(pov, config.fen)
-                Created(json).as(JSON)
-              }
-          )
-  }
 
   private[controllers] def redirectPov(pov: Pov)(using ctx: Context) =
     val redir = Redirect(routes.Round.watcher(pov.gameId, Color.white))

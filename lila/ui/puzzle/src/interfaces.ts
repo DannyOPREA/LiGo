@@ -1,7 +1,6 @@
 import type { Move } from 'chessops/types';
 import type { VNode } from 'snabbdom';
 
-import type { ExternalEngineInfo } from 'lib/ceval';
 import perfIcons from 'lib/game/perfIcons';
 import type { Coords } from 'lib/prefs';
 import type { TreePath } from 'lib/tree/types';
@@ -31,7 +30,6 @@ export interface PuzzleOpts {
     static: string;
   };
   showRatings: boolean;
-  externalEngineEndpoint: string;
 }
 
 export interface PuzzlePrefs {
@@ -68,7 +66,6 @@ export interface PuzzleData {
   user?: PuzzleUser;
   replay?: PuzzleReplay;
   isDaily?: boolean;
-  externalEngines?: ExternalEngineInfo[];
 }
 
 export interface PuzzleReplay {

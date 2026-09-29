@@ -86,6 +86,16 @@ workspace packages, and with them the only users of `@fnando/sparkline` 0.3.10 (
 `@types/fnando__sparkline` 0.3.7 (MIT). The other npm packages they used stay because kept packages
 still use them. No package was added.
 
+Unit 3.5 removed the chess engines and bots: the `ui/botDev`, `ui/botPlay`, `ui/insight` and
+`ui/tutor` workspace packages, `ui/lib`'s engine code, and the engine packages only they used:
+`@lichess-org/stockfish-web` 0.5.0 (AGPL-3.0-or-later), `@lichess-org/zerofish` 0.0.40
+(AGPL-3.0-or-later), `stockfish.js` 10.0.2, `stockfish.wasm` 0.10.0, `stockfish-mv.wasm` 0.6.1 and
+`stockfish-nnue.wasm` 1.0.0-1946a675.smolnet (all GPL-3.0), `fast-diff` 1.3.0 (Apache-2.0) and
+`json-stringify-pretty-compact` 4.0.0 (MIT). pnpm also dropped the packages only they pulled in:
+`@types/emscripten` 1.41.5 (MIT), `@types/node` 22.19.20 (MIT), `@types/web` 0.0.223 (Apache-2.0),
+`prettier` 3.5.3 (MIT), `typescript` 5.9.3 (Apache-2.0) and `undici-types` 6.21.0 (MIT); the
+workspace keeps its own pinned TypeScript and Node types. No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file

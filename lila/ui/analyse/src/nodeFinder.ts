@@ -1,10 +1,7 @@
 import { defined } from 'lib';
 import { zip } from 'lib/algo';
-import { winningChances } from 'lib/ceval';
 import { fenToEpd } from 'lib/game/chess';
 import type { TreeNode } from 'lib/tree/types';
-
-const hasCompChild = (node: TreeNode): boolean => node.children.some(c => !!c.comp);
 
 export const nextGlyphSymbol = (
   color: Color,
@@ -15,19 +12,6 @@ export const nextGlyphSymbol = (
   mainline
     .map((_, i) => mainline[(fromPly - mainline[0].ply + i + 1) % mainline.length])
     .find(n => n.ply % 2 === (color === 'white' ? 1 : 0) && n.glyphs?.some(g => g.symbol === symbol));
-
-export const evalSwings = (mainline: TreeNode[], nodeFilter: (node: TreeNode) => boolean): TreeNode[] =>
-  mainline.slice(1).filter((curr, i) => {
-    const prev = mainline[i];
-    return (
-      nodeFilter(curr) &&
-      curr.eval &&
-      prev.eval &&
-      hasCompChild(prev) &&
-      (Math.abs(winningChances.povDiff('white', prev.eval, curr.eval)) > 0.1 ||
-        (prev.eval.mate && !curr.eval.mate && Math.abs(prev.eval.mate) <= 3))
-    );
-  });
 
 export function detectThreefold(nodeList: TreeNode[], node: TreeNode): void {
   if (defined(node.threefold)) return;

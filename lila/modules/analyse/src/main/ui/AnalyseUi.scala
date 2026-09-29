@@ -8,15 +8,14 @@ import play.api.libs.json.*
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints):
+final class AnalyseUi(helpers: Helpers):
   import helpers.{ *, given }
 
   def miniSpan(fen: Fen.Board, color: Color = chess.White, lastMove: Option[Uci] = None) =
     chessgroundMini(fen, color, lastMove)(span)
 
-  // The opening explorer and tablebase settings went with the explorer (unit 3.4).
-  def cevalConfig =
-    Json.obj("externalEngineEndpoint" -> endpoints.externalEngine)
+  // The explorer and tablebase settings went with the explorer (unit 3.4), and the external
+  // engine and WebAssembly (browser engine) permissions with the engines (unit 3.5).
 
   def userAnalysis(
       data: JsObject,
@@ -32,7 +31,7 @@ final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints):
       .css(withForecast.option("analyse.forecast"))
       .css(ctx.blind.option("round.nvui"))
       .css(ctx.pref.hasKeyboardMove.option("keyboardMove"))
-      .csp(bits.cspExternalEngine.compose(_.withExternalAnalysisApis))
+      .csp(_.withWikiBooks)
       .js(analyseNvuiTag)
       .js:
         bits.analyseModule(
@@ -42,8 +41,7 @@ final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints):
               "data" -> data,
               "wiki" -> hasWiki
             )
-            .add("inlinePgn", inlinePgn) ++
-            cevalConfig
+            .add("inlinePgn", inlinePgn)
         )
       .i18n(_.study)
       .i18nOpt(ctx.speechSynthesis, _.nvui)
@@ -127,11 +125,7 @@ final class AnalyseUi(helpers: Helpers)(endpoints: AnalyseEndpoints):
       Page(title)
         .flag(_.zoom)
         .flag(_.noRobots)
-        .csp:
-          cspExternalEngine.compose(_.withInlineIconFont.withChessDbCn)
-
-    def cspExternalEngine: Update[ContentSecurityPolicy] =
-      _.withWebAssembly.withExternalEngine(endpoints.externalEngine)
+        .csp(_.withInlineIconFont)
 
     def analyseModule(mode: "userAnalysis" | "replay", json: JsObject) =
       PageModule("analyse.user", Json.obj("mode" -> mode, "cfg" -> json))

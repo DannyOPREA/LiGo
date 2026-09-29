@@ -7,7 +7,6 @@ export default class Navigate {
   constructor(private readonly ctrl: AnalyseCtrl) {}
 
   next = (): void => {
-    if (this.ctrl.retro?.preventGoingToNextMove()) return;
     if (this.ctrl.fork.proceed()) return;
     const child = this.ctrl.node.children[0];
     if (child) this.ctrl.userJumpIfCan(this.ctrl.path + child.id);

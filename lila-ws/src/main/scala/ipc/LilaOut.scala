@@ -82,7 +82,6 @@ object LilaOut:
   case class RoundResyncPlayer(fullId: Game.FullId) extends RoundOut
   case class RoundGone(fullId: Game.FullId, v: Boolean) extends RoundOut
   case class RoundGoneIn(fullId: Game.FullId, seconds: Int) extends RoundOut
-  case class RoundBotOnline(gameId: Game.Id, color: Color, v: Boolean) extends RoundOut
   case class GameStart(users: List[User.Id]) extends RoundOut
   case class GameFinish(gameId: Game.Id, winner: Option[Color], users: List[User.Id]) extends RoundOut
   case class TvSelect(gameId: Game.Id, speed: chess.Speed, json: JsonString) extends RoundOut
@@ -259,11 +258,6 @@ object LilaOut:
         get(args, 2) { case Array(fullId, secS) =>
           secS.toIntOption.map:
             RoundGoneIn(Game.FullId(fullId), _)
-        }
-
-      case "r/bot/online" =>
-        get(args, 3) { case Array(gameId, color, v) =>
-          Some(RoundBotOnline(Game.Id(gameId), readColor(color), boolean(v)))
         }
 
       case "r/start" => Some(GameStart(User.Id.from(commas(args).toList)))

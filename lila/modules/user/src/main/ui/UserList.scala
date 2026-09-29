@@ -1,7 +1,7 @@
 package lila.user
 package ui
 
-import lila.core.perf.{ UserPerfs, UserWithPerfs }
+import lila.core.perf.UserWithPerfs
 import lila.core.user.LightPerf
 import lila.rating.PerfType
 import lila.ui.*
@@ -125,54 +125,3 @@ final class UserList(helpers: Helpers, bits: UserBits):
       .map: (css, titleText, imgPath) =>
         span(cls := s"$css lb__trophy trophy--small", title := titleText):
           img(src := assetUrl(imgPath), alt := s"Trophy for $title")
-
-  def bots(users: List[UserWithPerfs], bestPerfs: UserPerfs => List[PerfKey])(using Context) =
-    val title = s"${users.size} Online bots"
-    val aboutLink = a(href := "/blog/WvDNticAAMu_mHKP/welcome-lichess-bots")(trans.site.aboutBotsOnLichess())
-    val (featured, community) = users.partition(_.isVerified)
-    Page(title)
-      .css("bits.slist")
-      .css("user.bot.list")
-      .flag(_.fullScreen):
-        main(cls := "page-menu")(
-          bits.communityMenu("bots"),
-          div(cls := "bots page-menu__content")(
-            div(cls := "box box-pad bots__categ")(
-              boxTop(h1(trans.site.featuredBots())),
-              p(trans.site.tryPlayingTheseInnovativeChessEngines()),
-              div(cls := "bots__featured")(
-                botGrid(featured, bestPerfs)
-              )
-            ),
-            div(cls := "box box-pad bots__categ")(
-              boxTop(h1(trans.site.communityBots()), aboutLink),
-              p(trans.site.moreChessEnginesCreatedByTheLichessCommunity()),
-              botGrid(community, bestPerfs)
-            )
-          )
-        )
-
-  private def botGrid(users: List[UserWithPerfs], bestPerfs: UserPerfs => List[PerfKey])(using
-      ctx: Context
-  ) = div(cls := "bots__list")(
-    users.map: u =>
-      div(cls := "bots__list__entry")(
-        div(cls := "bots__list__entry__head")(
-          userLink(u, withTitle = false, withOnline = u.isPatron),
-          ctx.pref.showRatings.option:
-            div(cls := "bots__list__entry__rating"):
-              bestPerfs(u.perfs).map(u.perfs.keyed).filter(_._2.provisional.no).map(showPerfRating)
-        ),
-        u.profile
-          .ifTrue(ctx.kid.no)
-          .ifTrue(!u.marks.troll || ctx.is(u))
-          .flatMap(_.nonEmptyBio)
-          .map { bio => div(cls := "bots__list__entry__bio")(shorten(bio, 400)) },
-        a(
-          dataIcon := Icon.Swords,
-          cls := List("bots__list__entry__play text" -> true),
-          st.title := trans.challenge.challengeToPlay.txt(),
-          href := s"${routes.Lobby.home}?user=${u.username}#friend"
-        )(trans.site.play())
-      )
-  )

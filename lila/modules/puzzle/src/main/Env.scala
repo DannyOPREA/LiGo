@@ -6,7 +6,6 @@ import play.api.Configuration
 import lila.common.autoconfig.{ *, given }
 import lila.core.config.*
 import lila.db.AsyncColl
-import lila.core.i18n.Translate
 
 @Module
 private class PuzzleConfig(
@@ -25,7 +24,6 @@ final class Env(
     cacheApi: lila.memo.CacheApi,
     mongoCacheApi: lila.memo.MongoCache.Api,
     gameRepo: lila.core.game.GameRepo,
-    myEngines: lila.core.misc.analysis.MyEnginesAsJson,
     mongo: lila.db.Env
 )(using
     Executor,

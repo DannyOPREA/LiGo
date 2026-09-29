@@ -32,20 +32,15 @@ final private class RoundAsyncActor(
     private var offlineSince: Option[Long] = nowMillis.some
     // whether the player closed the window intentionally
     private var bye: Boolean = false
-    private var botConnections: Int = 0
-
-    def botConnected = botConnections > 0
-
     var userId = none[UserId]
     var goneWeight = 1f
 
-    def isOnline = offlineSince.isEmpty || botConnected
+    def isOnline = offlineSince.isEmpty
 
     def setOnline(on: Boolean): Unit =
       proxy.withGameOptionSync: g =>
         isLongGone.mapz:
           if g.forceResignableNow then notifyGone(g.pov(color), gone = !on)
-        if on && !isOnline then publishBoardBotGone(g.pov(color), none)
       offlineSince = if on then None else offlineSince.orElse(nowMillis.some)
       bye = bye && !on
     def setBye(): Unit =
@@ -63,21 +58,16 @@ final private class RoundAsyncActor(
     }.toLong
 
     def isLongGone: Fu[Boolean] = fuccess:
-      !botConnected && offlineSince.exists(_ < (nowMillis - timeoutMillis))
+      offlineSince.exists(_ < (nowMillis - timeoutMillis))
 
     def showMillisToGone: Fu[Option[Long]] =
-      if botConnected then fuccess(none)
-      else
-        val now = nowMillis
-        fuccess:
-          offlineSince
-            .filter: since =>
-              bye || (now - since) > 5000
-            .map: since =>
-              timeoutMillis + since - now
-
-    def setBotConnected(v: Boolean) =
-      botConnections = Math.max(0, botConnections + (if v then 1 else -1))
+      val now = nowMillis
+      fuccess:
+        offlineSince
+          .filter: since =>
+            bye || (now - since) > 5000
+          .map: since =>
+            timeoutMillis + since - now
   end Player
 
   private val players = ByColor(Player(_))
@@ -91,7 +81,6 @@ final private class RoundAsyncActor(
         players.mapWithColor: (color, player) =>
           player.userId = game.player(color).userId
           player.goneWeight = goneWeights(color)
-        if game.playableByAi then player.requestFishnet(game, this)
 
     // socket stuff
 
@@ -173,21 +162,6 @@ final private class RoundAsyncActor(
           MoveLatMonitor.recordMicros(lap.micros)
       )
 
-    case p: RoundBus.BotPlay =>
-      val res = proxy
-        .withPov(p.playerId):
-          _.so: pov =>
-            if pov.game.outoftime(withGrace = true) then finisher.outOfTime(pov.game)
-            else player.bot(p.uci, this)(pov)
-        .dmap(publish)
-      p.promise.foreach(_.completeWith(res))
-      res
-
-    case RoundBus.FishnetPlay(uci, hash) =>
-      handle: game =>
-        player.fishnet(game, hash, uci)
-      .mon(lila.mon.round.move.time)
-
     case RoundBus.Abort(playerId) =>
       handle(playerId): pov =>
         pov.game.abortableByUser.so(finisher.abort(pov))
@@ -198,10 +172,6 @@ final private class RoundAsyncActor(
           if RoundGame.cannotLose(pov) then finisher.other(pov.game, _.InsufficientMaterialClaim, None)
           else finisher.other(pov.game, _.Resign, Some(!pov.color))
         )
-
-    case ResignAi =>
-      handleAi: pov =>
-        pov.game.resignable.so(finisher.other(pov.game, _.Resign, Some(!pov.color)))
 
     case GoBerserk(color, promise) =>
       handle(color): pov =>
@@ -334,10 +304,6 @@ final private class RoundAsyncActor(
           val progress = moretimer.give(game, Color.all, 20.seconds, reboot = true)
           proxy.save(progress).inject(progress.events)
 
-    case RoundBus.BotConnected(color, v) =>
-      fuccess:
-        players(color).setBotConnected(v)
-
     case NoStart =>
       handle: game =>
         game.timeBeforeExpiration
@@ -353,10 +319,6 @@ final private class RoundAsyncActor(
         game.startClock.so: g =>
           proxy.save(g).inject(List(Event.Reload))
 
-    case FishnetStart =>
-      proxy.withGame: g =>
-        fuccess(g.playableByAi.so(player.requestFishnet(g, this)))
-
     case Tick =>
       proxy.withGameOptionSync { g =>
         g.forceResignableNow.so(fuccess:
@@ -365,13 +327,9 @@ final private class RoundAsyncActor(
               players(c).showMillisToGone.foreach {
                 _.so: millis =>
                   val pov = g.pov(c)
-                  if millis <= 0 then
-                    notifyGone(pov, gone = true)
-                    publishBoardBotGone(pov, 0L.some)
+                  if millis <= 0 then notifyGone(pov, gone = true)
                   else if g.clock.exists(_.remainingTime(c).millis > millis + 3000)
-                  then
-                    notifyGoneIn(pov, millis)
-                    publishBoardBotGone(pov, millis.some)
+                  then notifyGoneIn(pov, millis)
               })
       } | funit
 
@@ -403,14 +361,6 @@ final private class RoundAsyncActor(
   private def notifyGoneIn(pov: Pov, millis: Long): Unit =
     socketSend.exec(Protocol.Out.goneIn(pov.fullId, millis))
 
-  private def publishBoardBotGone(pov: Pov, millis: Option[Long]) =
-    if lila.game.Game.mightBeBoardOrBotCompatible(pov.game)
-    then
-      lila.common.Bus.publishDyn(
-        lila.game.actorApi.BoardGone(pov, millis.map(m => (m.atLeast(0) / 1000).toInt)),
-        lila.game.actorApi.BoardGone.makeChan(gameId)
-      )
-
   private def handle(op: Game => Fu[Events]): Funit =
     proxy.withGame: g =>
       handleAndPublish(op(g))
@@ -426,11 +376,6 @@ final private class RoundAsyncActor(
 
   private def handleAndPublish(events: Fu[Events]): Funit =
     events.dmap(publish).recover(errorHandler("handle"))
-
-  private def handleAi(op: Pov => Fu[Events]): Funit =
-    proxy.withGame:
-      _.aiPov.so: p =>
-        handleAndPublish(op(p))
 
   private def publish[A](events: Events): Unit =
     if events.nonEmpty then

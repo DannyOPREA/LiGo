@@ -1,8 +1,7 @@
 import type { DrawModifiers, DrawShape } from '@lichess-org/chessground/draw';
 import type { NormalMove } from 'chessops/types';
-import { opposite, parseUci, makeSquare } from 'chessops/util';
+import { parseUci, makeSquare } from 'chessops/util';
 
-import { winningChances } from 'lib/ceval';
 import { fenColor } from 'lib/game';
 import { annotationShapes } from 'lib/game/glyphs';
 import type { Glyph, TreeNode } from 'lib/tree/types';
@@ -28,44 +27,13 @@ function makeAutoShapesFromUci(
 
 export default function (ctrl: PuzzleCtrl): DrawShape[] {
   const n = ctrl.node;
-  const hovering = ctrl.ceval.hovering();
   const color = fenColor(n.fen);
   let shapes: DrawShape[] = [];
-  if (hovering && hovering.fen === n.fen)
-    shapes = shapes.concat(makeAutoShapesFromUci(color, hovering.uci, 'paleBlue'));
-  if (ctrl.showEvaluation() && ctrl.ceval.storedPv() > 0) {
+  // (unit 3.5) no local engine: only the server's stored best move is drawn
+  if (ctrl.showEvaluation()) {
     if (n.eval) shapes = shapes.concat(makeAutoShapesFromUci(color, n.eval.best!, 'paleGreen'));
-    if (!hovering) {
-      let nextBest: Uci | undefined = ctrl.nextNodeBest();
-      if (!nextBest && ctrl.cevalEnabled() && n.ceval) nextBest = n.ceval.pvs[0]?.moves[0];
-      if (nextBest) shapes = shapes.concat(makeAutoShapesFromUci(color, nextBest, 'paleBlue'));
-      if (ctrl.cevalEnabled() && n.ceval?.pvs?.[1] && !(ctrl.threatMode() && n.threat?.pvs[2])) {
-        n.ceval.pvs.forEach(pv => {
-          if (pv.moves[0] === nextBest) return;
-          const shift = winningChances.povDiff(color, n.ceval!.pvs[0], pv);
-          if (shift > 0.2 || isNaN(shift) || shift < 0) return;
-          shapes = shapes.concat(
-            makeAutoShapesFromUci(color, pv.moves[0], 'paleGrey', {
-              lineWidth: Math.round(12 - shift * 50), // 12 to 2
-            }),
-          );
-        });
-      }
-    }
-  }
-  if (ctrl.cevalEnabled() && ctrl.threatMode() && n.threat) {
-    if (n.threat.pvs[1]) {
-      shapes = shapes.concat(makeAutoShapesFromUci(opposite(color), n.threat.pvs[0].moves[0], 'paleRed'));
-      n.threat.pvs.slice(1).forEach(pv => {
-        const shift = winningChances.povDiff(opposite(color), pv, n.threat!.pvs[0]);
-        if (shift > 0.2 || isNaN(shift) || shift < 0) return;
-        shapes = shapes.concat(
-          makeAutoShapesFromUci(opposite(color), pv.moves[0], 'paleRed', {
-            lineWidth: Math.round(11 - shift * 45), // 11 to 2
-          }),
-        );
-      });
-    } else shapes = shapes.concat(makeAutoShapesFromUci(opposite(color), n.threat.pvs[0].moves[0], 'red'));
+    const nextBest: Uci | undefined = ctrl.nextNodeBest();
+    if (nextBest) shapes = shapes.concat(makeAutoShapesFromUci(color, nextBest, 'paleBlue'));
   }
   const feedback = feedbackAnnotation(n);
   const hint =

@@ -18,12 +18,9 @@ final class UserBits(helpers: Helpers):
         href := routes.User.ratingDistribution(PerfKey.blitz)
       )(
         trans.site.ratingStats()
-      ),
-      div(cls := "sep"),
-      a(cls := active.active("bots"), href := routes.PlayApi.botOnline)(
-        trans.site.onlineBots()
       )
-      // FIDE players link removed with the fide module (unit 3.3).
+      // FIDE players link removed with the fide module (unit 3.3); online bots link with the bot
+      // module (unit 3.5).
     )
 
   def miniClosed(u: User, relation: Option[Relation])(using Translate) = Snippet:

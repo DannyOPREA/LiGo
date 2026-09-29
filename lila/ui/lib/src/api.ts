@@ -1,13 +1,11 @@
 import type { Api as CgApi } from '@lichess-org/chessground/api';
 
-import type { Search } from '@/ceval/types';
-import type { ClientEval } from '@/tree/types';
 import { domDialog, alert, confirm, prompt } from '@/view';
 
 import { type PubsubEventKey, type PubsubEvents, pubsub } from './pubsub';
 
 // #TODO document these somewhere
-const publicEvents = ['ply', 'analysis.change', 'chat.resize', 'analysis.closeAll', 'analysis.eval'] as const;
+const publicEvents = ['ply', 'analysis.change', 'chat.resize', 'analysis.closeAll'] as const;
 type PublicEventKey = (typeof publicEvents)[number] & keyof PubsubEvents;
 const socketEvents = ['lag', 'close'] as const;
 type SocketEventKey = (typeof socketEvents)[number];
@@ -62,17 +60,6 @@ export interface Api {
 export interface Overrides {
   // file://./../../bits/src/bits.tvGames.ts
   tvGamesOnFinish: (id: string) => void;
-
-  // file://./../../analyse/src/retrospect/retroCtrl.ts
-  learnFromMistakesEvalReady?: (ev: ClientEval) => boolean;
-
-  // file://./../../analyse/src/practice/practiceView.ts
-  practiceStrengthLabel?: () => string; // default '600 kNodes'
-
-  // file://./../../analyse/src/practice/practiceCtrl.ts
-  practiceCommentReady?: (ev: ClientEval) => boolean;
-  practiceEvalReady?: (ev: ClientEval) => boolean;
-  practiceSearch?: () => Search; // default { by: { nodes: 600_000 }, multiPv: 1, indeterminate: true }
 }
 
 // this object is available to extensions as window.lichess

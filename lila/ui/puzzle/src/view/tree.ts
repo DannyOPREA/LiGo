@@ -2,7 +2,7 @@ import type { VNode, Classes } from 'snabbdom';
 
 import { defined } from 'lib';
 import { throttle } from 'lib/async';
-import { renderEval as normalizeEval } from 'lib/ceval';
+import { renderEval as normalizeEval } from 'lib/eval';
 import { plyToTurn } from 'lib/game/chess';
 import { path as treePath } from 'lib/tree/tree';
 import type { TreeNode, TreePath } from 'lib/tree/types';
@@ -117,7 +117,7 @@ function puzzleGlyph(node: TreeNode): MaybeVNode {
 }
 
 function renderMove(node: TreeNode): LooseVNodes {
-  const ev = node.eval || node.ceval;
+  const ev = node.eval;
   return [
     node.san,
     ev && (defined(ev.cp) ? renderEval(normalizeEval(ev.cp)) : defined(ev.mate) && renderEval('#' + ev.mate)),

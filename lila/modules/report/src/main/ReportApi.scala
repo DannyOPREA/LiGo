@@ -2,7 +2,6 @@ package lila.report
 
 import com.softwaremill.macwire.*
 
-import lila.common.Bus
 import lila.core.data.Text
 import lila.core.id.ReportId
 import lila.core.report.SuspectId
@@ -18,7 +17,6 @@ final class ReportApi(
     val coll: Coll,
     userApi: lila.core.user.UserApi,
     gameRepo: lila.core.game.GameRepo,
-    autoAnalysis: AutoAnalysis,
     securityApi: lila.core.security.SecurityApi,
     playbansOf: () => lila.core.playban.BansOf,
     ircApi: lila.core.irc.IrcApi,
@@ -86,10 +84,7 @@ final class ReportApi(
             prev.exists(_.score.value < thresholds.discord())
           then ircApi.commReportBurst(c.suspect.user.light)
           _ <- coll.update.one(bid(report.id), report, upsert = true)
-          _ <- autoAnalysis(candidate)
-        yield
-          if report.is(_.Cheat) then Bus.pub(lila.core.report.CheatReportCreated(report.user))
-          maxScoreCache.invalidateUnit()
+        yield maxScoreCache.invalidateUnit()
       }
 
   def commFlag(reporter: Reporter, suspect: Suspect, resource: String, text: String) = create:
