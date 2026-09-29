@@ -6,7 +6,6 @@ import { bind, dataIcon, onInsert } from 'lib/view';
 import { ratingDiff, profileUrl } from 'lib/view/userLink';
 
 import type AnalyseCtrl from '@/ctrl';
-import { findTag } from '@/study/studyChapters';
 
 import type { AnalysisSide, GamePhase } from '../interfaces';
 
@@ -18,7 +17,7 @@ interface Advice {
   symbol: string;
 }
 
-const renderPlayer = ({ data, study }: AnalyseCtrl, color: Color): VNode => {
+const renderPlayer = ({ data }: AnalyseCtrl, color: Color): VNode => {
   const player = getPlayer(data, color);
   if (player.user)
     return h('a.user-link.ulpt', { attrs: { href: profileUrl(player.user.username) } }, [
@@ -26,13 +25,7 @@ const renderPlayer = ({ data, study }: AnalyseCtrl, color: Color): VNode => {
       ' ',
       ratingDiff(player),
     ]);
-  return h(
-    'span',
-    player.name ||
-      (player.ai && 'Stockfish level ' + player.ai) ||
-      (study && findTag(study.data.chapter.tags, color)) ||
-      'Anonymous',
-  );
+  return h('span', player.name || (player.ai && 'Stockfish level ' + player.ai) || 'Anonymous');
 };
 
 const advices: Advice[] = [
@@ -94,17 +87,15 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
     },
     [
       playerTable(ctrl, 'white'),
-      ctrl.study
-        ? null
-        : h(
-            'a.button.text',
-            {
-              class: { active: !!ctrl.retro },
-              attrs: dataIcon(licon.PlayTriangle),
-              hook: bind('click', ctrl.toggleRetro, ctrl.redraw),
-            },
-            i18n.site.learnFromYourMistakes,
-          ),
+      h(
+        'a.button.text',
+        {
+          class: { active: !!ctrl.retro },
+          attrs: dataIcon(licon.PlayTriangle),
+          hook: bind('click', ctrl.toggleRetro, ctrl.redraw),
+        },
+        i18n.site.learnFromYourMistakes,
+      ),
       playerTable(ctrl, 'black'),
     ],
   );
@@ -129,21 +120,14 @@ export function puzzleLink(ctrl: AnalyseCtrl): VNode | undefined {
 }
 
 export function render(ctrl: AnalyseCtrl): VNode | undefined {
-  if (ctrl.study?.practice) return undefined;
-
-  if (
-    !ctrl.data.analysis ||
-    !ctrl.settings.showStaticAnalysis ||
-    (ctrl.study && ctrl.study.vm.toolTab() !== 'serverEval')
-  ) {
+  if (!ctrl.data.analysis || !ctrl.settings.showStaticAnalysis) {
     if (!ctrl.data.puzzle) return h('div.analyse__round-training');
     return h('div.analyse__round-training', puzzleLink(ctrl));
   }
 
   // don't cache until the analysis is complete!
   const buster = ctrl.data.analysis.partial ? Math.random() : '';
-  let cacheKey = String(buster) + !!ctrl.retro;
-  if (ctrl.study) cacheKey += ctrl.study.data.chapter.id;
+  const cacheKey = String(buster) + !!ctrl.retro;
 
   return h('div.analyse__round-training', [
     h('div.analyse__acpl', thunk('div.advice-summary', doRender, [ctrl, cacheKey])),

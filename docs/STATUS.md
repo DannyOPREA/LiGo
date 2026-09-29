@@ -3,14 +3,10 @@
 _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
-- 2.4 visual snapshots and the Phase 2 demo (started 2026-09-28, under the owner's "work until I
-  tell you to stop" delegation). Acceptance: Playwright screenshots of the playground (desktop and
-  phone) against committed baselines in CI, a scripted two-colour game, and the demo checklist
-  (docs/demos/phase-2.md). Logs: logs/board-ui.md.
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
-  docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (asset strip) merged (PR #24);
-  3.2 (tournaments, events) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
-  wait for Phase 2 units 2.1, 2.3 and 2.4.
+  docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (PR #24) and 3.2 (PR #28) merged;
+  3.3 (studies, broadcasts) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  no longer wait on Phase 2 (merged 2026-09-29).
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
   docs/PLAN.md §5. 4.1–4.6 (design ADR, byo-yomi clock and scoring phase in `libs/go-rules`,
@@ -76,11 +72,12 @@ _Updated at the end of every session (`/status`). Newest information wins._
     loaded lazily (PR #23, merged).
   - Unit 2.3 (touch-confirm): a "Confirm moves" preference; the playground shows a Confirm move
     button when it applies (PR #25, merged).
-  - Unit 2.4 (snapshots + demo): 8 playground screenshots and a scripted game in the `ui` CI job,
-    `dev/ligo test pages`, and your demo checklist docs/demos/phase-2.md; in review.
+  - Unit 2.4 (snapshots + demo): 16 playground screenshots (board + page) and a scripted game in the `ui` CI job,
+    `dev/ligo test pages`, and your demo checklist docs/demos/phase-2.md (PR #27, merged). This closes
+    Phase 2.
 
 ## Next
-- Your Phase 2 demo: docs/demos/phase-2.md, once unit 2.4 merges.
+- Your Phase 2 demo: docs/demos/phase-2.md.
 - Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
   your phone, a dependency-manifest edit hitting your permission prompt, and a Remote Control
@@ -112,7 +109,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 |---|---|
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
-| 2. Board integration | 2.1–2.3 done; 2.4 in review (of 4 units) |
-| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1 and 3.9 merged; 3.2 in review (you approved the deletions for 3.1–3.7) |
+| 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1, 3.2 and 3.9 merged; 3.3 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
 | 5–9 | not started |

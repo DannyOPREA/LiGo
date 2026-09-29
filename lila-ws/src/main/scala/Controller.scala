@@ -54,24 +54,7 @@ final class Controller(
   // simul and tournament room endpoints were removed with the simul and tournament modules
   // (unit 3.2).
 
-  def study(id: Study.Id, header: RequestHeader) =
-    WebSocket(header): req =>
-      mongo
-        .studyExistsFor(id, req.user)
-        .zip(mongo.troll.is(req.user))
-        .map:
-          case (true, isTroll) =>
-            endpoint(
-              name = "study",
-              behavior = emit =>
-                StudyClientActor.start(RoomActor.State(id.into(RoomId), isTroll), fromVersion(header)):
-                  Deps(emit, req, services)
-              ,
-              req,
-              credits = 60,
-              interval = 15.seconds
-            )
-          case _ => notFound
+  // study endpoint removed with the study module (unit 3.3).
 
   private def roundFrom(id: Game.AnyId, req: Req): Future[Either[Option[SocketVersion], JsonString]] =
     if req.isLichessMobile || req.header.queryParameter("load").contains("true") then

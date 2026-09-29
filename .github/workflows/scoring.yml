@@ -49,6 +49,10 @@ jobs:
       # setup bug, not the normal "no KataGo on this machine" case: fail test/integration.test.ts
       # instead of letting it silently skip (review finding, logs/scoring.md "4.4 review fixes").
       LIGO_REQUIRE_KATAGO: '1'
+      # Same idea for the Redis worker's round-trip test (unit 4.5 review finding): CI always
+      # installs redis-server below, so a missing binary here is a setup bug, not the normal "no
+      # Redis on this machine" case.
+      LIGO_REQUIRE_REDIS: '1'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install KataGo (CPU)
@@ -78,8 +82,13 @@ jobs:
       - name: Format, lint and type-check
         working-directory: lila
         run: pnpm --filter @ligo/scoring run typecheck && pnpm --filter @ligo/scoring run lint
+      # Unit 4.5's own round-trip test (test/worker-redis.test.ts) starts its own redis-server on
+      # a free port, so it just needs the binary on PATH; ubuntu-latest doesn't ship one.
+      - name: Install redis-server (for the Redis worker's round-trip test)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends redis-server
       # OGS's 31 autoscore games, the libs/conformance scoring fixtures, the KataGo client (a fake
-      # process; ADR 0020 §4's fallback and timeout), and one real-KataGo analysis (KATAGO_BIN and
+      # process; ADR 0020 §4's fallback and timeout), the Redis worker (a fake pub/sub, plus a
+      # real redis-server round trip, unit 4.5), and one real-KataGo analysis (KATAGO_BIN and
       # KATAGO_TEST_NET, as dev/ligo katago env prints them; test/integration.test.ts finds the
       # analysis config next to the binary itself, since it isn't one of those variables).
       - name: Test

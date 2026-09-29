@@ -5,7 +5,6 @@ import { type VNode, onInsert, hl, dataIcon } from 'lib/view';
 
 import type AnalyseCtrl from '@/ctrl';
 import { renderNodesPgn } from '@/pgnExport';
-import * as studyView from '@/study/studyView';
 import { patch, nodeFullName } from '@/view/util';
 
 export function renderContextMenu(e: MouseEvent, ctrl: AnalyseCtrl, path: TreePath): void {
@@ -136,7 +135,6 @@ function view(ctrl: AnalyseCtrl, path: TreePath, coords: Coords): VNode {
 
       canPromote && action(licon.UpTriangle, i18n.site.promoteVariation, () => ctrl.promote(path, false)),
       !onMainline && action(licon.Checkmark, i18n.site.makeMainLine, () => ctrl.promote(path, true)),
-      path && ctrl.study && studyView.contextMenu(ctrl.study, path, node),
 
       path &&
         onMainline &&

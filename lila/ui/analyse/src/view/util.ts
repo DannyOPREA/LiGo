@@ -8,10 +8,8 @@ import {
 } from 'snabbdom';
 
 import { fixCrazySan, plyToTurn } from 'lib/game/chess';
-import type { TreeNode } from 'lib/tree/types';
-import { img, option as opt } from 'lib/view';
-
-import type { Federation } from '@/study/interfaces';
+import type { TreeComment, TreeNode } from 'lib/tree/types';
+import { option as opt } from 'lib/view';
 
 export const patch = init([classModule, attributesModule, propsModule, eventListenersModule]);
 
@@ -34,5 +32,5 @@ export function titleNameToId(titleName: string): string {
 export const option = (value: string, current: string | undefined, name: string, data?: VNodeData) =>
   opt({ attrs: { value, selected: value === current }, ...data }, name);
 
-export const playerFedFlag = (fed?: Federation) =>
-  fed && img(site.asset.fideFedSrc(fed.id), undefined, `Federation: ${fed.i18nName}`)('.mini-game__flag');
+export const authorText = (author?: TreeComment['by']): string =>
+  !author ? 'Unknown' : typeof author === 'string' ? author : author.name;

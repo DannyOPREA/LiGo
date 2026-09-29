@@ -12,6 +12,33 @@
 
 ## Entries (newest first)
 
+### 2026-09-28 · 3.3 · Remove studies and broadcasts
+- Did: deleted lila modules `study`, `relay`, `practice`, `studySearch`, `fide`, `title` and the
+  core interfaces `lila.core.{relay,fide,practice}` (`lila.core.study` stays: irc, push, timeline,
+  notify and the router's path bindables still name its types); their controllers, views and
+  routes; the relay-only "Public chats" mod page. Kept modules (activity, api, mod, report, user,
+  web, coach, clas, game, timeline) lost their hooks. lila-ws lost the study actor, relay crowd,
+  study Redis channel, IPC messages and Mongo lookups. Browser: `ui/fide` and the study, relay,
+  gamebook and practice-module code in `ui/analyse` and `ui/bits` deleted; "continue as a study"
+  buttons removed from analysis, editor and puzzle; `public/fide` deleted, and with the
+  /practice page its CSS and `public/images/practice` (CC BY 3.0 icons, so COPYING.md no longer
+  lists them). The Public chats page's UI, the relay stats chart and orphaned CSS went too;
+  lila-ws keeps upstream's rule that rooms over 20 users send only a head count.
+- Worked: the 3.2 recipe (delete, compile, strip callers, keep stored fields). `PublicFideIdOf`,
+  which game and api still need, is a stub that returns no FIDE id.
+- Didn't work / dead ends: running the removal in a git worktree broke lila-ws's build (sbt-git's
+  JGit can't read a linked worktree's `.git`); the work moved back to the main checkout and the
+  build.sbt workaround was dropped.
+- Lessons: don't run sbt builds from a git worktree here; use the main checkout.
+- Decisions: stub FIDE ids rather than touch game/api; remove the Public chats mod page (it only
+  listed broadcast chats); keep `lila.core.study` until its remaining users go (3.6/3.7/3.13).
+- Verified by Claude: see the PR (verify.sh, UI build, lila-ws `sbt check` and tests, site smoke).
+- Follow-ups: study/relay i18n keys; stale study/broadcast texts in coach, FAQ, game and dev pages
+  and the broadcast-embed section of SitePages (3.8); dead prefs, permissions and OAuth scopes;
+  unused analyse npm deps (tagify, sortablejs, debounce-promise, shepherd.js; a dependency change);
+  the data export no longer includes title requests; notify's study-invite and timeline's study entries render
+  nothing for old data and go with 3.13.
+
 ### 2026-09-28 · 3.2 · Remove tournaments and events
 - Did: deleted lila modules `tournament`, `swiss`, `simul`, `gathering`, `event` and core
   interfaces `lila.core.{tournament,swiss,simul}`; their controllers (incl. TournamentCrud,

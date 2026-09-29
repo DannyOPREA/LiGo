@@ -40,7 +40,9 @@ final class Env(
   val security: lila.security.Env = wire[lila.security.Env]
   val pref: lila.pref.Env = wire[lila.pref.Env]
   val relation: lila.relation.Env = wire[lila.relation.Env]
-  val title: lila.title.Env = wire[lila.title.Env]
+  // title (titled-player verification) removed in unit 3.3; the User.title field stays, but
+  // nothing verifies it any more, so PublicFideIdOf is stubbed out (game/api need one).
+  val fideIdOf: lila.core.user.PublicFideIdOf = _ => fuccess(none)
   val game: lila.game.Env = wire[lila.game.Env]
   import game.given
   val notifyM: lila.notify.Env = wire[lila.notify.Env]
@@ -79,19 +81,13 @@ final class Env(
   val push: lila.push.Env = wire[lila.push.Env]
   val challenge: lila.challenge.Env = wire[lila.challenge.Env]
   val explorer: lila.explorer.Env = wire[lila.explorer.Env]
-  val fide: lila.fide.Env = wire[lila.fide.Env]
-  import fide.given
-  val study: lila.study.Env = wire[lila.study.Env]
-  val studySearch: lila.studySearch.Env = wire[lila.studySearch.Env]
   val learn: lila.learn.Env = wire[lila.learn.Env]
   val plan: lila.plan.Env = wire[lila.plan.Env]
   val coach: lila.coach.Env = wire[lila.coach.Env]
   val clas: lila.clas.Env = wire[lila.clas.Env]
-  val practice: lila.practice.Env = wire[lila.practice.Env]
   val irwin: lila.irwin.Env = wire[lila.irwin.Env]
   val ublog: lila.ublog.Env = wire[lila.ublog.Env]
   val activity: lila.activity.Env = wire[lila.activity.Env]
-  val relay: lila.relay.Env = wire[lila.relay.Env]
   val streamer: lila.streamer.Env = wire[lila.streamer.Env]
   val bot: lila.bot.Env = wire[lila.bot.Env]
   val storm: lila.storm.Env = wire[lila.storm.Env]

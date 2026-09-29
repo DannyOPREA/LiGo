@@ -13,9 +13,6 @@ import crazyView from '@/crazy/crazyView';
 import type AnalyseCtrl from '@/ctrl';
 import forecastView from '@/forecast/forecastView';
 import { view as keyboardView } from '@/keyboard';
-import { relayView } from '@/study/relay/relayView';
-import type * as studyDeps from '@/study/studyDeps';
-import { studyView } from '@/study/studyView';
 import { wikiToggleBox } from '@/wiki';
 
 import { viewContext, renderBoard, renderMain, renderUnderboard } from './components';
@@ -30,18 +27,16 @@ let resizeCache: {
   meta: HTMLElement | null;
 };
 
-export default function (deps?: typeof studyDeps) {
+export default function () {
   return function (ctrl: AnalyseCtrl): VNode {
     resizeCache ??= resizeHandler(ctrl);
-    if (ctrl.nvui) return ctrl.nvui.render(deps);
-    else if (deps && ctrl.study?.relay) return relayView(ctrl, ctrl.study, ctrl.study.relay, deps);
-    else if (deps && ctrl.study) return studyView(ctrl, ctrl.study, deps);
-    else return analyseView(ctrl, deps);
+    if (ctrl.nvui) return ctrl.nvui.render();
+    else return analyseView(ctrl);
   };
 }
 
-function analyseView(ctrl: AnalyseCtrl, deps?: typeof studyDeps): VNode {
-  const ctx = viewContext(ctrl, deps);
+function analyseView(ctrl: AnalyseCtrl): VNode {
+  const ctx = viewContext(ctrl);
   return renderMain(
     ctx,
     ctrl.keyboardHelp && keyboardView(ctrl),
@@ -93,7 +88,7 @@ function resizeHandler(ctrl: AnalyseCtrl) {
     if (resizeCache.columns !== displayColumns()) ctrl.redraw();
     resizeCache.columns = displayColumns();
 
-    if (ctrl.study || resizeCache.columns < 3) return;
+    if (resizeCache.columns < 3) return;
 
     resizeCache.chat ??= document.querySelector<HTMLElement>('.mchat');
     fixChatHeight(resizeCache.chat);

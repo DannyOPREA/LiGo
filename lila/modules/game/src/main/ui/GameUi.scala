@@ -224,7 +224,8 @@ final class GameUi(helpers: Helpers):
             p(cls := "explanation")(
               trans.site.importGameExplanation(),
               br,
-              a(cls := "text", dataIcon := Icon.InfoCircle, href := routes.Study.allDefault(1)):
+              // link to the study list (privacy context) removed with the study module (unit 3.3).
+              span(cls := "text", dataIcon := Icon.InfoCircle):
                 trans.site.importGameDataPrivacyWarning()
             ),
             standardFlash,

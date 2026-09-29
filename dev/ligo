@@ -34,11 +34,14 @@ usage() {
   cat <<EOF
 Usage: dev/ligo <command> [args]        (mode: $MODE)
 
-  up                  Start the stack (first run builds the UI and compiles; takes a while)
+  up                  Start the stack (first run builds the UI and compiles; takes a while).
+                      Also starts the scoring Redis worker (unit 4.5): native mode with real
+                      KataGo if installed, docker mode with none yet (answers every propose
+                      src:"none" until a later unit gives it a KataGo story)
   down                Stop the stack (database data is kept)
   db                  Start only Mongo and Redis (idempotent; the SessionStart hook runs it)
   status              Show what is running
-  logs [lila|ws|db]   Follow logs
+  logs [lila|ws|db|scoring]  Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
   test [what]         Run the unit tests of lila, ws, ui, pages, rules, board, scoring or all
                       (default: all); pages = the playground's screenshots and scripted game in
@@ -148,11 +151,12 @@ native_board() { (cd "$LILA" && run sh -c "$(board_pnpm typecheck) && pnpm --fil
 # No build step (Node 24 runs its .ts directly): "test" typechecks nothing itself, so this runs
 # typecheck, lint and the tests together. Its tests need KataGo installed to run the real-KataGo
 # integration test, and are skipped otherwise (test/integration.test.ts); everything else runs
-# with no KataGo at all. Docker mode has no KataGo in its containers yet (that plumbing is unit
-# 4.5's, alongside the Redis worker), so it says so rather than pretending to test it.
+# with no KataGo at all. This test runner has no container of its own (the ui container has no
+# KataGo), so it says so rather than pretending to test it; the live worker docker mode actually
+# runs (dev/ligo up) is the separate `scoring` compose service, below.
 scoring_pnpm() { echo "pnpm install --frozen-lockfile --filter @ligo/scoring --filter lila && pnpm --filter @ligo/scoring run $1"; }
 docker_scoring() {
-  say "scoring service tests skipped in docker mode (no KataGo in the ui container yet; unit 4.5 wires up supervision); native mode and CI run them"
+  say "scoring service tests skipped in docker mode (no KataGo in the ui container); native mode and CI run them"
 }
 native_scoring() {
   # When KataGo is installed, load KATAGO_BIN/KATAGO_TEST_NET/KATAGO_GTP_CONFIG (dev/katago.sh
@@ -165,6 +169,45 @@ native_scoring() {
   fi
   (cd "$LILA" && run sh -c "$(scoring_pnpm typecheck) && pnpm --filter @ligo/scoring run lint && pnpm --filter @ligo/scoring run test")
 }
+
+# services/scoring's Redis worker (unit 4.5, ADR 0020 §1: `scoring-in`/`scoring-out`, `start` on
+# boot). Native mode: supervised like lila/lila-ws (its own pid and log under .ligo/), but with its
+# own small restart loop rather than start_bg/stop_bg's generic wrapper — that wrapper (a
+# `tail -f /dev/null` piped into the command, see start_bg's own comment) exists only to keep
+# stdin open for Play, which this plain Node process doesn't need, and it would also hide a dead
+# worker from `dev/ligo status` (the piped `tail` stays alive even after the command it's piped
+# into has exited). KataGo is best-effort: if `dev/ligo katago install` has already run, the
+# worker gets KATAGO_BIN/KATAGO_MODEL/KATAGO_CONFIG (the test network `katago env` also gives CI
+# and the differential test — weak, but real KataGo plumbing rather than a full-size net a dev box
+# may not have); otherwise the worker starts anyway with none of them set, and every `propose`
+# answers `src:"none"` (ADR 0020 §4's own fallback), same as a KataGo that crashed.
+#
+# Docker mode (decision, unit 4.5, logs/decisions.md): dev/lila-docker/compose.yml's `scoring`
+# service runs the worker with NO KataGo env at all (no container has KataGo yet — no OpenCL
+# passthrough to the owner's GPU, no binary staged into an image), so it always answers
+# `src:"none"`, same fallback as native mode with no KataGo installed; `dev/ligo up`/`down` start
+# and stop it like every other compose service (it isn't behind a profile), and `status`/
+# `logs scoring` read it from `docker compose`. A later unit can give docker mode a real KataGo
+# without changing this shape, only the compose service's environment.
+scoring_katago_env() {
+  local envout
+  if ! envout=$("$ROOT/dev/katago.sh" env 2>/dev/null); then
+    say "scoring worker: KataGo not installed (dev/ligo katago install); every propose will answer src:\"none\""
+    return
+  fi
+  eval "$envout"
+  export KATAGO_BIN
+  export KATAGO_MODEL="$KATAGO_TEST_NET"
+  local cfg
+  cfg="$(dirname "$(readlink -f "$KATAGO_BIN")")/analysis_example.cfg"
+  export KATAGO_CONFIG="$cfg"
+}
+native_scoring_worker_up() {
+  need_node_modules
+  scoring_katago_env
+  start_bg_restart scoring-worker "$LILA" pnpm --filter @ligo/scoring run start
+}
+native_scoring_worker_down() { stop_bg scoring-worker; }
 
 # --------------------------------------------------------------------------------------------
 # native mode (host sbt + pnpm; Mongo and Redis in Docker)
@@ -315,6 +358,39 @@ stop_bg() {
   rm -f "$pidf"
 }
 
+# start_bg_restart <name> <dir> <command...>: like start_bg, but the recorded pid is a small
+# supervisor loop (not a `tail -f /dev/null` pipe) that re-runs <command...> with a capped
+# exponential backoff whenever it exits, as long as the pid file still exists. Used for the
+# scoring worker (unit 4.5): plain Node processes don't need start_bg's stdin-open trick, and a
+# crashed worker coming back on its own means `dev/ligo status` reporting "running" stays true
+# rather than describing a dead process a generic wrapper happened to outlive. stop_bg (above)
+# stops it the same way: SIGTERM to the whole process group, which reaches the loop and its
+# current child together, then removing the pid file so the loop (if still alive) won't restart.
+start_bg_restart() {
+  local name=$1 dir=$2; shift 2
+  local pidf="$STATE/$name.pid"
+  if [[ -f "$pidf" ]] && kill -0 "$(cat "$pidf")" 2>/dev/null; then say "$name already running"; return; fi
+  mkdir -p "$STATE/logs"
+  rm -f "$pidf"
+  # shellcheck disable=SC2016 # expanded by the child bash; $0 is the name (for the log line), $1
+  # the pid file, the rest the command to supervise.
+  (cd "$dir" && setsid bash -c '
+    echo $$ > "$1"
+    name=$0; pidfile=$1; shift
+    backoff=1
+    while [[ -f "$pidfile" ]]; do
+      "$@"
+      code=$?
+      [[ -f "$pidfile" ]] || break
+      echo "[ligo] $name exited (code $code); restarting in ${backoff}s" >&2
+      sleep "$backoff"
+      if (( backoff < 30 )); then backoff=$(( backoff * 2 )); else backoff=30; fi
+    done
+  ' "$name" "$pidf" "$@" </dev/null >"$STATE/logs/$name.log" 2>&1 &)
+  for _ in $(seq 50); do [[ -s "$pidf" ]] && break; sleep 0.1; done
+  say "started $name (log: .ligo/logs/$name.log)"
+}
+
 wait_http() {  # wait_http <url> <seconds>
   local url=$1 limit=$2 t=0
   until [[ "$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)" =~ ^[23] ]]; do
@@ -332,6 +408,7 @@ native_up() {
   ui_built || native_ui
   start_bg lila-ws "$WS" sbt --server run
   start_bg lila "$LILA" ./lila.sh --server run
+  native_scoring_worker_up
   say "waiting for lila on :9663 (compiles first; can take 5+ minutes)"
   if wait_http http://localhost:9663/ 900; then say "up: $(site_url)"
   else die "lila did not answer within 15 minutes; see .ligo/logs/lila.log"; fi
@@ -341,6 +418,7 @@ native_up() {
 native_down() {
   stop_bg lila
   stop_bg lila-ws
+  native_scoring_worker_down
   (cd "$LD" && run docker compose -f compose.native.yml --profile redis down)
 }
 
@@ -447,7 +525,7 @@ cmd_status() {
     dc ps
   else
     local n
-    for n in lila lila-ws; do
+    for n in lila lila-ws scoring-worker; do
       if [[ -f "$STATE/$n.pid" ]] && kill -0 "$(cat "$STATE/$n.pid")" 2>/dev/null; then say "$n: running"; else say "$n: stopped"; fi
     done
     (cd "$LD" && docker compose -f compose.native.yml --profile redis ps)
@@ -457,13 +535,20 @@ cmd_status() {
 cmd_logs() {
   local what=${1:-lila}
   if [[ "$MODE" == docker ]]; then
-    case "$what" in lila) dc logs -f lila ;; ws) dc logs -f lila_ws ;; db) dc logs -f mongodb ;; *) dc logs -f "$what" ;; esac
+    case "$what" in
+      lila) dc logs -f lila ;;
+      ws) dc logs -f lila_ws ;;
+      db) dc logs -f mongodb ;;
+      scoring) dc logs -f scoring ;;
+      *) dc logs -f "$what" ;;
+    esac
   else
     case "$what" in
       lila) tail -F "$STATE/logs/lila.log" ;;
       ws) tail -F "$STATE/logs/lila-ws.log" ;;
       db) (cd "$LD" && docker compose -f compose.native.yml logs -f mongodb) ;;
-      *) die "logs lila, ws or db" ;;
+      scoring) tail -F "$STATE/logs/scoring-worker.log" ;;
+      *) die "logs lila, ws, db or scoring" ;;
     esac
   fi
 }

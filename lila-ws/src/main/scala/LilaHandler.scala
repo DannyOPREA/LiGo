@@ -1,10 +1,7 @@
 package lila.ws
 
-import cats.data.NonEmptyList
 import com.typesafe.scalalogging.Logger
 import org.apache.pekko.actor.typed.{ ActorRef, Scheduler }
-
-import lila.ws.util.Batcher
 
 import ipc.*
 
@@ -12,7 +9,6 @@ final class LilaHandler(
     lila: Lila,
     users: Users,
     friendList: FriendList,
-    roomCrowd: RoomCrowd,
     roundCrowd: RoundCrowd,
     mongo: Mongo,
     clients: ActorRef[Clients.Control],
@@ -91,24 +87,7 @@ final class LilaHandler(
     case LilaBoot => roomBoot(_.idFilter.team, lila.emit.team)
     case msg => roomHandler(msg)
 
-  private val studyHandler: Emit[LilaOut] =
-
-    val batcher = Batcher[RoomId, ClientIn.Versioned, NonEmptyList[ClientIn.Versioned]](
-      maxBatchSize = 100,
-      initialCapacity = 64,
-      timeout = 100.millis,
-      append = (prev, elem) => prev.fold(NonEmptyList.one(elem))(_.prepend(elem)),
-      emit = (roomId, batch) => tellRoomVersionBatch(roomId, batch)
-    )
-
-    _ match
-      case t: TellRoomVersion => batcher.add(t.roomId, ClientIn.Versioned(t.json, t.version, t.troll))
-      case TellRoomChat(roomId, version, troll, payload) =>
-        batcher.add(roomId, ClientIn.Versioned(payload, version, troll))
-      case LilaOut.RoomIsPresent(reqId, roomId, userId) =>
-        lila.emit.study(LilaIn.ReqResponse(reqId, roomCrowd.isPresent(roomId, userId).toString))
-      case LilaBoot => roomBoot(_.idFilter.study, lila.emit.study)
-      case lilaOut => roomHandler(lilaOut)
+  // studyHandler removed with the study module (unit 3.3).
 
   import scala.language.implicitConversions
   private given Conversion[Game.Id, RoomId] with
@@ -170,13 +149,6 @@ final class LilaHandler(
     History.room.add(roomId, versioned)
     publish(_.room(roomId), versioned)
 
-  private def tellRoomVersionBatch(roomId: RoomId, batch: NonEmptyList[ClientIn.Versioned]): Unit =
-    if batch.tail.isEmpty then tellRoomVersion(roomId, batch.head)
-    else
-      Monitor.handler.batch.record(batch.size)
-      History.room.add(roomId, batch)
-      publish(_.room(roomId), ClientIn.VersionedBatch(batch))
-
   private val roomHandler: Emit[LilaOut] =
     case TellRoomVersion(roomId, version, troll, payload) => tellRoomVersion(roomId, version, troll, payload)
     case TellRoomChat(roomId, version, troll, payload) =>
@@ -199,7 +171,6 @@ final class LilaHandler(
     case Lila.chans.round.out => roundHandler
     case Lila.chans.site.out => siteHandler
     case Lila.chans.lobby.out => lobbyHandler
-    case Lila.chans.study.out => studyHandler
     case Lila.chans.team.out => teamHandler
     case Lila.chans.challenge.out => roomHandler
     case Lila.chans.racer.out => racerHandler

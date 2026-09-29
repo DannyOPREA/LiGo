@@ -60,9 +60,7 @@ object home:
           div(cls := "lobby__side")(
             ctx.blind.option(h2(trans.nvui.featuredEvents())),
             ctx.kid.no.option(views.streamer.bits.liveStreams(streams)),
-            div(cls := "lobby__spotlights"):
-              views.relay.ui.spotlight(relays)
-            ,
+            // relay spotlights removed with the relay module (unit 3.3).
             classes.nonEmpty.option:
               div(cls := "lobby__classes"):
                 classes.map: clas =>

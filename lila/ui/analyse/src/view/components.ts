@@ -11,8 +11,7 @@ import statusView from 'lib/game/view/status';
 import { licon } from 'lib/licon';
 import * as Prefs from 'lib/prefs';
 import { storage } from 'lib/storage';
-import { path as treePath } from 'lib/tree/tree';
-import type { ClientEval, Glyph, ServerEval, TreeNode, TreePath } from 'lib/tree/types';
+import type { ClientEval, Glyph, ServerEval, TreeNode } from 'lib/tree/types';
 import {
   type VNode,
   type LooseVNodes,
@@ -31,62 +30,36 @@ import type { ConcealOf } from '../interfaces';
 import * as pgnExport from '../pgnExport';
 import { renderPgnError } from '../pgnImport';
 import serverSideUnderboard from '../serverSideUnderboard';
-import type RelayCtrl from '../study/relay/relayCtrl';
-import { findTag } from '../study/studyChapters';
-import type StudyCtrl from '../study/studyCtrl';
-import type * as studyDeps from '../study/studyDeps';
 import renderClocks from './clocks';
 import { renderMaterialDiffs } from './materialDiffs';
 
 export interface ViewContext {
   ctrl: AnalyseCtrl;
-  deps?: typeof studyDeps;
-  study?: StudyCtrl;
-  relay?: RelayCtrl;
-  allowVideo?: boolean;
   concealOf?: ConcealOf;
   showCevalPvs: boolean;
-  gamebookPlayView?: VNode;
   playerBars?: VNode[];
   playerStrips?: [VNode, VNode];
   gaugeOn: boolean;
   needsInnerCoords: boolean;
-  hasRelayTour: boolean;
 }
 
-export interface StudyViewContext extends ViewContext {
-  study: StudyCtrl;
-  deps: typeof studyDeps;
-}
-
-export interface RelayViewContext extends StudyViewContext {
-  relay: RelayCtrl;
-  allowVideo: boolean;
-}
-
-export function viewContext(ctrl: AnalyseCtrl, deps?: typeof studyDeps): ViewContext {
-  const playerBars = deps?.renderPlayerBars(ctrl);
+export function viewContext(ctrl: AnalyseCtrl): ViewContext {
+  const playerBars = undefined;
   return {
     ctrl,
-    deps,
-    study: ctrl.study,
-    relay: ctrl.study?.relay,
     concealOf: makeConcealOf(ctrl),
     showCevalPvs: !ctrl.retro?.isSolving() && !ctrl.practice,
-    gamebookPlayView: ctrl.study?.gamebookPlay && deps?.gbPlay.render(ctrl.study.gamebookPlay),
     playerBars,
     playerStrips: playerBars ? undefined : renderPlayerStrips(ctrl),
     gaugeOn: ctrl.showEvalGauge(),
     needsInnerCoords: ctrl.showEvalGauge() || !!playerBars,
-    hasRelayTour: ctrl.study?.relay?.tourShow() || false,
   };
 }
 
 export function renderMain(
-  { ctrl, relay, playerBars, gaugeOn, gamebookPlayView, needsInnerCoords, hasRelayTour }: ViewContext,
+  { ctrl, playerBars, gaugeOn, needsInnerCoords }: ViewContext,
   ...kids: LooseVNodes[]
 ): VNode {
-  const isRelay = defined(ctrl.study?.relay);
   return hl(
     'main.analyse.variant-' + ctrl.data.game.variant.key,
     {
@@ -97,7 +70,7 @@ export function renderMain(
       hook: {
         insert: () => {
           forceInnerCoords(ctrl, needsInnerCoords);
-          if (!relay && !!playerBars !== document.body.classList.contains('header-margin'))
+          if (!!playerBars !== document.body.classList.contains('header-margin'))
             $('body').toggleClass('header-margin', !!playerBars);
         },
         update(_, _2) {
@@ -112,21 +85,17 @@ export function renderMain(
         'comp-off': !ctrl.settings.showStaticAnalysis,
         'gauge-on': gaugeOn,
         'has-players': !!playerBars,
-        'gamebook-play': !!gamebookPlayView,
-        'has-relay-tour': hasRelayTour,
-        'is-relay': isRelay,
         'analyse-hunter': ctrl.opts.hunter,
-        'analyse--wiki': !!ctrl.wiki && !ctrl.study,
-        'relay-in-variation': !!ctrl.study?.isRelayAndInVariation(),
+        'analyse--wiki': !!ctrl.wiki,
       },
     },
     kids,
   );
 }
 
-export const renderBoard = ({ ctrl, study, playerBars, playerStrips }: ViewContext): VNode =>
+export const renderBoard = ({ ctrl, playerBars, playerStrips }: ViewContext): VNode =>
   hl(
-    addChapterId(study, 'div.analyse__board.main-board'),
+    'div.analyse__board.main-board',
     {
       hook:
         'ontouchstart' in window || !storage.boolean('scrollMoves').getOrDefault(true)
@@ -154,14 +123,14 @@ export const renderBoard = ({ ctrl, study, playerBars, playerStrips }: ViewConte
     ],
   );
 
-export const renderUnderboard = ({ ctrl, deps, study }: ViewContext): VNode =>
+export const renderUnderboard = ({ ctrl }: ViewContext): VNode =>
   hl(
     'div.analyse__underboard',
     {
       hook:
         ctrl.synthetic || playable(ctrl.data) ? undefined : onInsert(elm => serverSideUnderboard(elm, ctrl)),
     },
-    study ? deps?.studyView.underboard(ctrl) : [renderInputs(ctrl)],
+    [renderInputs(ctrl)],
   );
 
 export function renderInputs(ctrl: AnalyseCtrl): VNode | undefined {
@@ -245,24 +214,11 @@ export function renderInputs(ctrl: AnalyseCtrl): VNode | undefined {
 }
 
 export function renderResult(ctrl: AnalyseCtrl): VNode[] {
-  const termination = () => ctrl.study && findTag(ctrl.study.data.chapter.tags, 'termination');
-  const render = (result: string, status: string) => [
-    hl('div.result', result),
-    hl('div.status', [termination() && `${termination()} • `, status]),
-  ];
+  const render = (result: string, status: string) => [hl('div.result', result), hl('div.status', status)];
   if (ctrl.data.game.status.id >= 30) {
     const winner = ctrl.data.game.winner;
     const result = winner === 'white' ? '1-0' : winner === 'black' ? '0-1' : '½-½';
     return render(result, statusView(ctrl.data));
-  } else if (ctrl.study?.multiBoard.showResults()) {
-    const result = findTag(ctrl.study.data.chapter.tags, 'result')?.replace('1/2', '½');
-    if (!result || result === '*') return [];
-    if (result === '1-0') return render(result, i18n.site.whiteIsVictorious);
-    if (result === '0-1') return render(result, i18n.site.blackIsVictorious);
-    if (result === '0-0') return render(result, i18n.study.doubleDefeat);
-    if (result === '½-0') return render(result, i18n.study.blackDefeatWhiteCanNotWin);
-    if (result === '0-½') return render(result, i18n.study.whiteDefeatBlackCanNotWin);
-    return render('½-½', i18n.site.draw);
   }
   return [];
 }
@@ -306,31 +262,7 @@ function evalInfo(ev: ClientEval | ServerEval): string {
   return `${prelude} · ${ev.nodes.toLocaleString()} nodes searched`;
 }
 
-export const addChapterId = (study: StudyCtrl | undefined, cssClass: string) =>
-  cssClass + (study?.data.chapter ? '.' + study.data.chapter.id : '');
-
-function makeConcealOf(ctrl: AnalyseCtrl): ConcealOf | undefined {
-  if (defined(ctrl.study?.relay)) {
-    if (!ctrl.study.multiBoard.showResults()) {
-      return _ => (path: TreePath, _) =>
-        treePath.contains(ctrl.path, ctrl.onMainline ? path : treePath.init(path)) ? null : 'hide';
-    }
-    return undefined;
-  }
-
-  const conceal =
-    ctrl.study?.data.chapter.conceal !== undefined
-      ? {
-          owner: ctrl.study.isChapterOwner(),
-          ply: ctrl.study.data.chapter.conceal,
-        }
-      : null;
-  if (conceal)
-    return (isMainline: boolean) => (path: TreePath, node: TreeNode) => {
-      if (!conceal || (isMainline && conceal.ply >= node.ply) || treePath.contains(ctrl.path, path))
-        return null;
-      return conceal.owner ? 'conceal' : 'hide';
-    };
+function makeConcealOf(_ctrl: AnalyseCtrl): ConcealOf | undefined {
   return undefined;
 }
 

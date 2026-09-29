@@ -21,3 +21,12 @@ Unit 4.4 (services/scoring, 2026-09-28) defects none of its 82 tests caught:
   uncaughtException that kills the service. Probe with `bin: '/bin/true'` and a 19x19 payload.
   Also a hung child is never restarted (timeout only rejects).
 - `dev/ligo test X` gates may skip the "real" integration test (env vars not exported) while the log claims it ran.
+
+Unit 4.5 (scoring Redis worker, 2026-09-28):
+- `JSON.parse('null')` then `req.ref` throws inside ioredis's 'message' emit → uncaughtException kills
+  the process (ioredis DataHandler rethrows). Probe every pub/sub listener with `null`, `"x"`, `[]`.
+- `start_bg` wraps commands as `tail -f /dev/null | cmd`: when cmd dies, bash+tail live on, so
+  `dev/ligo status` says "running" for a dead process. Matters for anything that can crash.
+- ioredis 6 autoResubscribe works (probed: Redis restart → numsub back to 1; boot with Redis down 55 s recovers).
+- "Docker mode skipped" when the owner's box IS docker mode means the owner never runs the feature; a
+  worker with katago=null would still satisfy the protocol, so "no KataGo in containers" isn't a reason.

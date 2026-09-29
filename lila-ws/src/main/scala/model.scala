@@ -42,9 +42,7 @@ object Game:
   case class RoundPlayer(id: PlayerId, color: Color)
 end Game
 
-object Study:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
+// Study.Id (the study room type) was removed with the study module (unit 3.3).
 
 object Team:
   opaque type Id = String
