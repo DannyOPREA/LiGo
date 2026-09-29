@@ -1,5 +1,5 @@
 // Unit 8.2 feasibility spike (ADR 0025 §2): not part of the tool, kept for its numbers.
-// Run from libs/board so goban-engine resolves: cd libs/board && node ../../tools/puzzles/spike/solve.mjs
+// Run from libs/board so goban-engine resolves: cd libs/board && node ../../tools/puzzles/spike/spike.mjs
 // Licence: MIT (LiGo's own code, ADR 0007).
 import { createEngine, play } from "../../../libs/board/src/engine.mjs";
 const e = createEngine({ size: 19, ruleset: "japanese", komi: 6.5, stones:{black:[],white:[]}, toMove:"black" });

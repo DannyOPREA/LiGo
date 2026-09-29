@@ -19,8 +19,16 @@
 - Decisions: ADR 0025, Claude's call under the owner's 2026-09-28 delegation (logs/decisions.md).
   The KataGo network licence (PR #50) settles ADR 0024 §7: the cloud checks with the g170 test
   network, and the owner may re-check on the b18.
-- Verified by Claude: verify.sh. · Needs owner verification: the puzzle rating shown as a number,
-  not kyu/dan (ADR 0025 §4).
+- Verified by Claude: verify.sh (no gates apply to docs or `tools/puzzles` yet); the spike re-run
+  by the reviewer (28,596 moves a second; straight three right; 161,172 nodes in 30 s). Reviewer: 2
+  blocking (the spike had no budget or catalogue sample; ko and the superko-unsafe table
+  undefined), fixed by moving the gate into 8.3 with a 20 s budget and a stop rule, and by leaving
+  ko out of the generated set with a sound table key. Non-blocking fixed: goban's puzzle mode
+  needs the play setting, automatic opponent moves and our own touch-confirm glue; `bounds` is a
+  board setting; the wall-safety check; every winning move listed; lila leftovers (of-player,
+  mobile routes, tagger, a daily path build in 8.6); band ratings; the g170 licence basis; row 8.7
+  needs 7.2. · Needs owner verification: the puzzle rating shown as a number, not kyu/dan (ADR 0025
+  §4).
 - Follow-ups: 8.3 (the generator and pipeline).
 
 ### 2026-09-29 · Unit 8.2 (in progress, stopped) · Puzzle format and generator design
