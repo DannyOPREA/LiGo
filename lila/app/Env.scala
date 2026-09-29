@@ -43,9 +43,6 @@ final class Env(
   // title (titled-player verification) removed in unit 3.3; the User.title field stays, but
   // nothing verifies it any more, so PublicFideIdOf is stubbed out (game/api need one).
   val fideIdOf: lila.core.user.PublicFideIdOf = _ => fuccess(none)
-  // evalCache (the cloud evaluation cache) removed in unit 3.4; fishnet, which goes in unit 3.5,
-  // still asks it for cached evaluations and now always gets none.
-  val getSinglePvEval: lila.tree.CloudEval.GetSinglePvEval = _ => fuccess(none)
   val game: lila.game.Env = wire[lila.game.Env]
   import game.given
   val notifyM: lila.notify.Env = wire[lila.notify.Env]
@@ -56,7 +53,6 @@ final class Env(
   val msg: lila.msg.Env = wire[lila.msg.Env]
   val playban: lila.playban.Env = wire[lila.playban.Env]
   val analyse: lila.analyse.Env = wire[lila.analyse.Env]
-  val fishnet: lila.fishnet.Env = wire[lila.fishnet.Env]
   val history: lila.history.Env = wire[lila.history.Env]
   val bookmark: lila.bookmark.Env = wire[lila.bookmark.Env]
   val round: lila.round.Env = wire[lila.round.Env]
@@ -78,19 +74,14 @@ final class Env(
   val tv: lila.tv.Env = wire[lila.tv.Env]
   val feed: lila.feed.Env = wire[lila.feed.Env]
   val video: lila.video.Env = wire[lila.video.Env]
-  val insight: lila.insight.Env = wire[lila.insight.Env]
   val push: lila.push.Env = wire[lila.push.Env]
   val challenge: lila.challenge.Env = wire[lila.challenge.Env]
   val plan: lila.plan.Env = wire[lila.plan.Env]
   val coach: lila.coach.Env = wire[lila.coach.Env]
   val clas: lila.clas.Env = wire[lila.clas.Env]
-  val irwin: lila.irwin.Env = wire[lila.irwin.Env]
   val ublog: lila.ublog.Env = wire[lila.ublog.Env]
   val activity: lila.activity.Env = wire[lila.activity.Env]
   val streamer: lila.streamer.Env = wire[lila.streamer.Env]
-  val bot: lila.bot.Env = wire[lila.bot.Env]
-  val jsBot: lila.jsBot.Env = wire[lila.jsBot.Env]
-  val tutor: lila.tutor.Env = wire[lila.tutor.Env]
   val recap: lila.recap.Env = wire[lila.recap.Env]
   val cms: lila.cms.Env = wire[lila.cms.Env]
   val web: lila.web.Env = wire[lila.web.Env]

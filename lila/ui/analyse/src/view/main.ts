@@ -1,6 +1,5 @@
 import { render as renderKeyboardMove } from 'keyboard-move';
 
-import { view as cevalView } from 'lib/ceval';
 import { renderChat } from 'lib/chat/renderChat';
 import { displayColumns } from 'lib/device';
 import { playable } from 'lib/game';
@@ -41,7 +40,6 @@ function analyseView(ctrl: AnalyseCtrl): VNode {
     ctx,
     ctrl.keyboardHelp && keyboardView(ctrl),
     renderBoard(ctx),
-    ctx.gaugeOn && cevalView.renderGauge(ctrl),
     crazyView(ctrl, ctrl.topColor(), 'top'),
     renderTools(ctx),
     crazyView(ctrl, ctrl.bottomColor(), 'bottom'),

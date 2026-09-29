@@ -30,7 +30,6 @@ final class Env(
     relationEnv: lila.relation.Env,
     analyseEnv: lila.analyse.Env,
     lobbyEnv: lila.lobby.Env,
-    onlineApiUsers: lila.bot.OnlineApiUsers,
     challengeEnv: lila.challenge.Env,
     socketEnv: lila.socket.Env,
     msgEnv: lila.msg.Env,

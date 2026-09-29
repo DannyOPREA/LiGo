@@ -1,16 +1,12 @@
 import { Chessground as makeChessground } from '@lichess-org/chessground';
 import { COLORS } from 'chessops';
-import { lichessRules } from 'chessops/compat';
-import { parseFen } from 'chessops/fen';
-import { makeSan } from 'chessops/san';
-import { charToRole, opposite, parseUci } from 'chessops/util';
-import { setupPosition } from 'chessops/variant';
+import { charToRole } from 'chessops/util';
 
 import { defined } from 'lib';
 import { throttle } from 'lib/async';
-import { view as cevalView, renderEval } from 'lib/ceval';
 import { renderChat } from 'lib/chat/renderChat';
 import { isTouchDevice } from 'lib/device';
+import { renderEval } from 'lib/eval';
 import { type Player, plyOpponentColor } from 'lib/game';
 import { plyToTurn } from 'lib/game/chess';
 import {
@@ -37,19 +33,15 @@ import { commands, boardCommands, addBreaks } from 'lib/nvui/command';
 import { scanDirectionsHandler } from 'lib/nvui/directionScan';
 import { liveText } from 'lib/nvui/notify';
 import { renderAdvancedSettings } from 'lib/nvui/renderAdvancedSettings';
-import { pubsub } from 'lib/pubsub';
 import { ops, path as treePath } from 'lib/tree/tree';
-import type { ClientEval, PvData } from 'lib/tree/types';
 import { type VNode, type LooseVNodes, type VNodeChildren, hl, bind, noTrans, onInsert } from 'lib/view';
 import { profileUrl } from 'lib/view/userLink';
-import { text as xhrText } from 'lib/xhr';
 
 import type { AnalyseNvuiContext } from '../analyse.nvui';
 import type AnalyseCtrl from '../ctrl';
 import { makeConfig as makeCgConfig } from '../ground';
 import type { AnalyseData } from '../interfaces';
-import { clickHook, currentLineIndex, renderCurrentNode } from '../nvuiUtil';
-import { renderRetro } from '../retrospect/nvuiRetroView';
+import { currentLineIndex, renderCurrentNode } from '../nvuiUtil';
 import renderClocks from '../view/clocks';
 import { renderResult } from '../view/components';
 
@@ -60,9 +52,6 @@ const errorSound = throttled('error');
 
 export function initNvui(ctx: AnalyseNvuiContext): void {
   const { ctrl, notify } = ctx;
-  pubsub.on('analysis.server.progress', (data: AnalyseData) => {
-    if (data.analysis && !data.analysis.partial) notify.set('Server-side analysis complete');
-  });
   site.mousetrap.unbind('c');
   site.mousetrap.bind('c', () => notify.set(renderEvalAndDepth(ctrl)));
 }
@@ -72,7 +61,8 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
   const d = ctrl.data,
     style = moveStyle.get(),
     clocks = renderClocks(ctrl, ctrl.path),
-    pockets = ctrl.node.crazy?.pockets;
+    pockets = ctrl.node.crazy?.pockets,
+    acpl = renderAcpl(ctx);
   ctrl.chessground = makeChessground(document.createElement('div'), {
     ...makeCgConfig(ctrl),
     animation: { enabled: false },
@@ -119,7 +109,7 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
       pockets && renderPockets(pockets),
       renderAriaResult(ctrl),
       hl('h2', i18n.nvui.lastMove),
-      !ctrl.retro && liveText(renderCurrentNode(ctx), 'polite', 'p.position.lastMove'),
+      liveText(renderCurrentNode(ctx), 'polite', 'p.position.lastMove'),
       clocks &&
         hl('div.clocks', [
           hl('h2', i18n.site.clock),
@@ -145,13 +135,8 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
         ],
       ),
       notify.render(),
-      renderRetro(ctx),
-      !ctrl.retro && [
-        hl('h2', i18n.site.computerAnalysis),
-        cevalView.renderCeval(ctrl), // beware unsolicited redraws hosing the screen reader
-        cevalView.renderPvs(ctrl),
-        renderAcpl(ctx) || requestAnalysisBtn(ctx),
-      ],
+      // (unit 3.5) no local engine and no analysis request: only a stored analysis is listed
+      acpl && [hl('h2', i18n.site.computerAnalysis), acpl],
       ...(boardFirst ? [] : boardView),
       hl('div.boardstatus', { attrs: { 'aria-live': 'polite', 'aria-atomic': 'true' } }, ''),
       hl('div.content', {
@@ -181,11 +166,8 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
         'p',
         [
           'Use arrow keys to navigate in the game.',
-          `l: ${i18n.site.toggleLocalAnalysis}`,
           `z: ${i18n.site.toggleAllAnalysis}`,
-          `space: ${i18n.site.playComputerMove}`,
           'c: announce computer evaluation',
-          `x: ${i18n.site.showThreat}`,
         ].reduce(addBreaks, []),
       ),
       boardCommands(),
@@ -209,17 +191,12 @@ export function renderNvui(ctx: AnalyseNvuiContext): VNode {
 }
 
 function renderTouchDeviceCommands(ctx: AnalyseNvuiContext): LooseVNodes {
-  const { notify, ctrl, moveStyle } = ctx;
+  const { notify, ctrl } = ctx;
   return [
     hl('div.actions', [
       hl('button', { hook: bind('click', ctrl.navigate.prev) }, 'previous move'),
       hl('button', { hook: bind('click', ctrl.navigate.next) }, 'next move'),
       hl('button', { hook: bind('click', () => notify.set(renderEvalAndDepth(ctrl))) }, 'evaluation'),
-      hl(
-        'button',
-        { hook: bind('click', () => notify.set(renderBestMove({ ctrl, moveStyle } as AnalyseNvuiContext))) },
-        'top engine move',
-      ),
       hl(
         'button',
         {
@@ -231,11 +208,6 @@ function renderTouchDeviceCommands(ctx: AnalyseNvuiContext): LooseVNodes {
       ),
       hl('button', { hook: bind('click', ctrl.navigate.first) }, 'first move'),
       hl('button', { hook: bind('click', ctrl.navigate.last) }, 'last move'),
-      hl(
-        'button',
-        { hook: bind('click', () => toggleLocalEvaluation(ctrl)) },
-        noEvalStr(ctrl) ? noEvalStr(ctrl) : 'local evaluation is enabled',
-      ),
     ]),
   ];
 }
@@ -273,17 +245,11 @@ function boardEventsHook(
     else if (e.key.toLowerCase() === 'm')
       possibleMovesHandler(ctrl.turnColor(), ctrl.chessground, ctrl.data.game.variant.key, ctrl.nodeList)(e);
     else if (e.key.toLowerCase() === 'v') notify.set(renderEvalAndDepth(ctrl));
-    else if (e.key === 'G') ctrl.playBestMove();
-    else if (e.key === 'g') notify.set(renderBestMove({ ctrl, moveStyle } as AnalyseNvuiContext));
   });
 }
 
 function renderEvalAndDepth(ctrl: AnalyseCtrl): string {
-  if (ctrl.threatMode()) return `${evalInfo(ctrl.node.threat)} ${depthInfo(ctrl.node.threat, false)}`;
-  const evs = { client: ctrl.getNode().ceval, server: ctrl.getNode().eval },
-    bestEv = cevalView.getBestEval(ctrl);
-  const evalStr = evalInfo(bestEv);
-  return !evalStr ? noEvalStr(ctrl) : `${evalStr} ${depthInfo(evs.client, !!evs.client?.cloud)}`;
+  return (ctrl.allowedEval() && evalInfo(ctrl.node.eval)) || 'no stored evaluation';
 }
 
 const evalInfo = (bestEv: EvalScore | undefined): string =>
@@ -292,40 +258,6 @@ const evalInfo = (bestEv: EvalScore | undefined): string =>
     : defined(bestEv?.mate)
       ? `mate in ${Math.abs(bestEv.mate)} for ${bestEv.mate > 0 ? 'white' : 'black'}`
       : '';
-
-const depthInfo = (clientEv: ClientEval | undefined, isCloud: boolean): string =>
-  clientEv ? `${i18n.site.depthX(clientEv.depth || 0)} ${isCloud ? 'Cloud' : ''}` : '';
-
-const noEvalStr = (ctrl: AnalyseCtrl) =>
-  !ctrl.isCevalAllowed()
-    ? 'local evaluation not allowed'
-    : !ctrl.cevalEnabled()
-      ? 'local evaluation not enabled'
-      : '';
-
-function toggleLocalEvaluation(ctrl: AnalyseCtrl): void {
-  if (ctrl.isCevalAllowed() && ctrl.ceval.analysable) ctrl.cevalEnabled(!ctrl.cevalEnabled());
-}
-
-function renderBestMove({ ctrl, moveStyle }: AnalyseNvuiContext): string {
-  const noEvalMsg = noEvalStr(ctrl);
-  if (noEvalMsg) return noEvalMsg;
-  const node = ctrl.node,
-    setup = parseFen(node.fen).unwrap();
-  let pvs: PvData[] = [];
-  if (ctrl.threatMode() && node.threat) {
-    pvs = node.threat.pvs;
-    setup.turn = opposite(setup.turn);
-    if (setup.turn === 'white') setup.fullmoves += 1;
-  } else if (node.ceval) pvs = node.ceval.pvs;
-  const pos = setupPosition(lichessRules(ctrl.ceval.opts.variant.key), setup);
-  if (pos.isOk && pvs.length > 0 && pvs[0].moves.length > 0) {
-    const uci = pvs[0].moves[0];
-    const san = makeSan(pos.unwrap(), parseUci(uci)!);
-    return renderSan(san, uci, moveStyle.get());
-  }
-  return '';
-}
 
 function renderAriaResult(ctrl: AnalyseCtrl): VNode[] {
   const result = renderResult(ctrl);
@@ -337,10 +269,10 @@ function renderAriaResult(ctrl: AnalyseCtrl): VNode[] {
 }
 
 function renderCurrentLine({ ctrl, moveStyle }: AnalyseNvuiContext) {
-  if (ctrl.path.length === 0) return renderMainline(ctrl.mainline, ctrl.path, moveStyle.get(), !ctrl.retro);
+  if (ctrl.path.length === 0) return renderMainline(ctrl.mainline, ctrl.path, moveStyle.get(), true);
   else {
     const futureNodes = ctrl.node.children.length > 0 ? ops.mainlineNodeList(ctrl.node.children[0]) : [];
-    return renderMainline(ctrl.nodeList.concat(futureNodes), ctrl.path, moveStyle.get(), !ctrl.retro);
+    return renderMainline(ctrl.nodeList.concat(futureNodes), ctrl.path, moveStyle.get(), true);
   }
 }
 
@@ -366,7 +298,7 @@ function onSubmit(ctx: AnalyseNvuiContext, $input: Cash) {
   };
 }
 
-type Command = 'b' | 'p' | 's' | 'eval' | 'best' | 'prev' | 'next' | 'prev line' | 'next line' | 'pocket';
+type Command = 'b' | 'p' | 's' | 'eval' | 'prev' | 'next' | 'prev line' | 'next line' | 'pocket';
 type InputCommand = {
   cmd: Command;
   help: VNode | string;
@@ -403,11 +335,6 @@ const inputCommands: InputCommand[] = [
     cmd: 'eval',
     help: noTrans("announce last move's computer evaluation"),
     cb: ({ ctrl, notify }) => notify.set(renderEvalAndDepth(ctrl)),
-  },
-  {
-    cmd: 'best',
-    help: noTrans('announce the top engine move'),
-    cb: ctx => ctx.notify.set(renderBestMove(ctx)),
   },
   {
     cmd: 'prev',
@@ -471,7 +398,7 @@ const analysisGlyphs = new Set(['?!', '?', '??']);
 
 function renderAcpl({ ctrl, moveStyle }: AnalyseNvuiContext): LooseVNodes {
   const analysis = ctrl.data.analysis;
-  if (!analysis || ctrl.retro) return undefined;
+  if (!analysis) return undefined;
   const analysisNodes = ctrl.mainline.filter(n => n.glyphs?.find(g => analysisGlyphs.has(g.symbol)));
   const res: Array<VNode> = [];
   COLORS.forEach(color => {
@@ -505,27 +432,7 @@ function renderAcpl({ ctrl, moveStyle }: AnalyseNvuiContext): LooseVNodes {
   return res;
 }
 
-const requestAnalysisBtn = ({ ctrl, notify, analysisInProgress }: AnalyseNvuiContext) => {
-  if (ctrl.ongoing || ctrl.synthetic || ctrl.hasFullComputerAnalysis()) return undefined;
-  return analysisInProgress()
-    ? hl('p', 'Server-side analysis in progress')
-    : hl(
-        'button.request-analysis',
-        clickHook(() =>
-          xhrText(`/${ctrl.data.game.id}/request-analysis`, { method: 'post' }).then(
-            () => {
-              analysisInProgress(true);
-              notify.set('Server-side analysis in progress');
-            },
-            () => notify.set('Cannot run server-side analysis'),
-          ),
-        ),
-        i18n.site.requestAComputerAnalysis,
-      );
-};
-
-const renderPlayer = (ctrl: AnalyseCtrl, player: Player): LooseVNodes =>
-  player.ai ? i18n.site.aiNameLevelAiLevel('Stockfish', player.ai) : userHtml(ctrl, player);
+const renderPlayer = (ctrl: AnalyseCtrl, player: Player): LooseVNodes => userHtml(ctrl, player);
 
 function userHtml(_ctrl: AnalyseCtrl, player: Player) {
   const user = player.user,

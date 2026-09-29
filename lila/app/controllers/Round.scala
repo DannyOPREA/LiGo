@@ -22,7 +22,6 @@ final class Round(
     with lila.web.TheftPrevention:
 
   private def renderPlayer(pov: Pov)(using ctx: Context): Fu[Result] =
-    pov.game.playableByAi.so(env.fishnet.player(pov.game))
     for
       users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
       _ = gameC.preloadUsers(users)

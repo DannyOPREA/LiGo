@@ -13,7 +13,7 @@ import {
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 import { defined } from 'lib';
-import { renderEval, winningChances } from 'lib/ceval';
+import { renderEval, povChances } from 'lib/eval';
 import { plyToTurn } from 'lib/game/chess';
 import { pubsub } from 'lib/pubsub';
 import type { TreeNodeBase } from 'lib/tree/types';
@@ -73,7 +73,7 @@ export default async function (
       else if (node.eval?.cp) cp = node.eval.cp;
       const turn = plyToTurn(node.ply);
       const dots = isWhite ? '.' : '...';
-      const winchance = winningChances.povChances('white', { cp });
+      const winchance = povChances('white', { cp });
       // Plot winchance because logarithmic but display the corresponding cp.eval from AnalyseData in the tooltip
       winChances.push({ x: node.ply, y: winchance });
 

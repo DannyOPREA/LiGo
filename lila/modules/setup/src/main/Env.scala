@@ -3,12 +3,7 @@ package lila.setup
 import com.softwaremill.macwire.*
 
 @Module
-final class Env(
-    gameRepo: lila.core.game.GameRepo,
-    userApi: lila.core.user.UserApi,
-    onStart: lila.core.game.OnStart,
-    gameApi: lila.core.game.GameApi
-)(using Executor, lila.core.game.IdGenerator, lila.core.game.NewPlayer):
+final class Env(gameApi: lila.core.game.GameApi)(using Executor):
 
   val forms = SetupForm
 

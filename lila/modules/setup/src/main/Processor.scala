@@ -6,25 +6,8 @@ import lila.core.id.SessionId
 import lila.lobby.{ SetupBus, Seek }
 
 final private[setup] class Processor(
-    gameApi: lila.core.game.GameApi,
-    gameRepo: lila.core.game.GameRepo,
-    userApi: lila.core.user.UserApi,
-    onStart: lila.core.game.OnStart
-)(using Executor, lila.core.game.IdGenerator, lila.core.game.NewPlayer):
-
-  def ai(config: AiConfig)(using me: Option[Me]): Fu[Pov] = for
-    me <- me.map(_.value).traverse(userApi.withPerf(_, config.perfType))
-    pov <- config.pov(me)
-    _ <- gameRepo.insertDenormalized(pov.game)
-    _ = onStart.exec(pov.gameId)
-  yield pov
-
-  def apiAi(config: ApiAiConfig)(using me: Me): Fu[Pov] = for
-    me <- userApi.withPerf(me, config.perfType)
-    pov <- config.pov(me.some)
-    _ <- gameRepo.insertDenormalized(pov.game)
-    _ = onStart.exec(pov.gameId)
-  yield pov
+    gameApi: lila.core.game.GameApi
+)(using Executor):
 
   def hook(
       config: HookConfig,

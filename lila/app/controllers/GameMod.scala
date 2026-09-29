@@ -13,11 +13,7 @@ final class GameMod(env: Env)(using org.apache.pekko.stream.Materializer) extend
       val filter = form.fold(_ => emptyFilter, identity)
       for
         povs <- fetchGames(user, filter)
-        games <-
-          if isGranted(_.UserEvaluate)
-          then env.mod.assessApi.makeAndGetFullOrBasicsFor(povs).map(Right.apply)
-          else fuccess(Left(povs))
-        page <- renderPage(views.mod.games(user, form, games))
+        page <- renderPage(views.mod.games(user, form, povs))
       yield Ok(page)
   }
 
@@ -40,30 +36,11 @@ final class GameMod(env: Env)(using org.apache.pekko.stream.Materializer) extend
         err => BadRequest(err.toString),
         {
           case (gameIds, Some("pgn")) => downloadPgn(user, gameIds)
-          case (gameIds, Some("analyse") | None) if isGranted(_.UserEvaluate) =>
-            multipleAnalysis(me, gameIds)
+          // "analyse" (fishnet analysis of the selected games) went with fishnet (unit 3.5).
           case _ => notFound
         }
       )
   }
-
-  private def multipleAnalysis(me: Me, gameIds: Seq[GameId])(using Context) =
-    for
-      games <- env.game.gameRepo.unanalysedGames(gameIds)
-      _ <- games.sequentiallyVoid: game =>
-        env.fishnet
-          .analyser(
-            game,
-            lila.fishnet.Work.Sender(
-              userId = me,
-              ip = ctx.ip.some,
-              mod = true,
-              system = false
-            ),
-            lila.fishnet.Work.Origin.autoHunter.some
-          )
-      _ <- env.fishnet.awaiter(games.map(_.id), 2.minutes)
-    yield NoContent
 
   private def downloadPgn(user: lila.user.User, gameIds: Seq[GameId])(using Context) =
     Ok.chunked:

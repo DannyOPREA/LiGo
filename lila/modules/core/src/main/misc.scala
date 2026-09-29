@@ -54,9 +54,6 @@ package oauth:
 
   case class TokenRevoke(id: AccessTokenId)
 
-package analysis:
-  final class MyEnginesAsJson(val get: Option[Me] => Fu[play.api.libs.json.JsObject])
-
 type BookmarkExists = (game.Game, Option[userId.UserId]) => Fu[Boolean]
 
 case class AuthCustomUi(name: String, imagePath: String, cssClass: String, lang: Lang)

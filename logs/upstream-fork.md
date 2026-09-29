@@ -8,9 +8,55 @@
 - Snapshot imports copy only Git LFS *pointers*; drop inherited `filter=lfs` attributes or clones break for git-lfs users (ADR 0009) (2026-09-26, unit 0.2).
 - Claude Code auto-loads `lila/AGENTS.md` (lichess's own agent guide) while LiGo has no CLAUDE.md; it doesn't govern LiGo (2026-09-26, unit 0.2).
 - Import with `git archive` and diff `git ls-files` against upstream afterwards: upstream tracks some files its own .gitignore ignores (2026-09-26, unit 0.2).
+- Removing a module: grep its `lila.core.<module>` Bus messages (publishers compile fine with no subscriber) and `ui/*/src` for its URLs (kept in-repo clients like dgt aren't caught by the compiler) (2026-09-29, unit 3.5).
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-29 · 3.5 · Remove engines and bots
+- Did: deleted lila modules `fishnet`, `irwin`, `evaluation`, `insight`, `tutor`, `jsBot` and
+  `bot`, their controllers (including `PlayApi`), views and routes; `mod` lost its engine
+  assessment (`AssessApi`, the Irwin/Kaladin/assessment menu and dashboard links, the games-page
+  ACPL/blur columns) and now depends on `game` and `analyse` directly (PLAN §5). Games against the
+  computer are gone: `POST /setup/ai`, `POST /api/challenge/ai`, `AiConfig`/`ApiAiConfig`, the
+  round's fishnet-move and bot-play messages (`FishnetPlay`, `BotPlay`, `BotConnected`,
+  `ResignAi`, `FishnetStart`), `UciMemo` and the Board API channels its game stream used. Also
+  gone: requesting a server analysis, report auto-analysis, the fishnet key email, the "Chess
+  Insights" profile link, the puzzle "my openings" (from insight), the external-engine API with
+  its CSP and config, and the fishnet/insight/explorer/externalEngine/kaladin config blocks.
+  lila-ws lost `r/bot/online`. Browser: `ui/botDev`, `ui/botPlay`, `ui/insight`, `ui/tutor`,
+  `ui/lib`'s ceval and bot code and the six Stockfish/zerofish npm packages; analyse lost the local
+  engine, threat, practice, retrospect and live-annotate modes; puzzle, round, lobby and editor
+  lost their engine hooks and the "play against the computer" buttons. Also cleaned the unused
+  warnings 3.2 and 3.4 left behind (TeamShowUi `toursFrag`, `PuzzleComplete`'s `api`).
+- Worked: same recipe as 3.4 (lila-ws and UI by workers on disjoint paths); `dev/ligo compile lila`
+  after every cut, fixing warnings as they appear rather than at the end.
+- Didn't work / dead ends: an incremental compile only prints warnings for files it recompiles, so
+  3.4's unused-symbol warnings only showed up during 3.5.
+- Lessons: removing a module that answers on the Bus (fishnet, bot) leaves publishers that compile
+  fine and do nothing; grep the `lila.core.<module>` messages and delete their publishers too.
+- Decisions: see logs/decisions.md (3.5 row).
+- Verified by Claude: see the PR.
+- Follow-ups: the Board API seek (`/api/board/seek`) stays without a way to play the game by API
+  (decide with the API work); the `Engine.*`, `Bot.Play` and `Board.Play` OAuth scopes are dead
+  (3.8 with the other scopes); `analyse` still has `Analyser`/`RequesterApi`, which only fishnet
+  fed; `HTTPRequest`'s fishnet client kind, the `mon` fishnet/cheat keys, `Namer`'s "Stockfish
+  level" for stored AI games and the `ai` fields in the UI's game types are dead; round and editor
+  pages still allow WebAssembly in their CSP; `ui/lib/src/eval.ts` uses lichess's centipawn curve
+  (Phase 4); the analysis/puzzle i18n engine keys stay for the i18n clean-up. Known breakage until
+  later units: `/dgt/play` used the Board API game stream and moves, so the DGT board can't play a
+  game (3.18 removes DGT); API clients still get rematch offers in the event stream but can't
+  accept or decline them through the API. Also: the analysis grid keeps an empty eval-gauge column;
+  API-only users are no longer marked online (bot's `onlineApiUsers` went); the insight-sharing
+  preference stays on the account page (the preference form requires it; stored field); the Patron
+  page's "40 server analyses a day" (3.7); the embedded game viewer's "practice with computer"
+  label; `Api.eventStream`'s rate-limit message points at lichess's Board API docs.
+- Review: 2 blocking, both fixed: the DGT and API-rematch breakage is now disclosed (above and in
+  decisions.md); the import page's "Request a computer analysis" checkbox, which did nothing any
+  more, is gone. Also removed the leftovers it found: the fishnet key page, the online-bots page and
+  its CSS, the polyglot bundle, the mod games page's analyse handler, the fishnet CLI example and
+  the unsubscribed `CheatReportCreated` message. Lesson: grep `ui/*/src` for the URLs of a removed
+  API; kept in-repo clients (dgt) aren't caught by routes or the compiler.
 
 ### 2026-09-29 · 3.4 · Remove chess training and openings
 - Did: deleted lila modules `storm`, `racer`, `coordinate`, `learn`, `opening`, `explorer` and

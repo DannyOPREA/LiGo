@@ -3,14 +3,12 @@ package lila.analyse
 import com.softwaremill.macwire.*
 
 import lila.core.config.{ CollName, NetConfig }
-import lila.core.misc.analysis.MyEnginesAsJson
 
 @Module
 final class Env(
     db: lila.db.Db,
     gameRepo: lila.core.game.GameRepo,
     divider: lila.core.game.Divider,
-    cacheApi: lila.memo.CacheApi,
     net: NetConfig
 )(using Executor):
 
@@ -22,11 +20,4 @@ final class Env(
 
   lazy val annotator = Annotator(net.domain)
 
-  lazy val externalEngine = ExternalEngineApi(db(CollName("external_engine")), cacheApi)
-
-  val enginesAsJson = MyEnginesAsJson(externalEngine.myExternalEnginesAsJson)
-
   val jsonView = JsonView
-
-  lila.common.Bus.sub[lila.core.misc.oauth.TokenRevoke]: token =>
-    externalEngine.onTokenRevoke(token.id)

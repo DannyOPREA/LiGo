@@ -4,25 +4,6 @@ import type { Outcome, Position } from 'chessops';
 export type TreeNodeId = string;
 export type TreePath = string;
 
-interface ClientEvalBase extends EvalScore {
-  bestmove?: Uci | '(none)';
-  ponder?: Uci;
-  fen: FEN;
-  depth: number;
-  nodes: number;
-  pvs: PvData[];
-}
-export interface CloudEval extends ClientEvalBase {
-  cloud: true;
-  millis?: undefined;
-}
-export interface LocalEval extends ClientEvalBase {
-  cloud?: false;
-  millis: number;
-  engineId?: string;
-}
-export type ClientEval = CloudEval | LocalEval;
-
 export interface ServerEval extends EvalScore {
   best?: Uci | '(none)';
   fen: FEN;
@@ -35,10 +16,6 @@ export interface PvDataServer extends EvalScore {
   moves: string;
 }
 
-export interface PvData extends EvalScore {
-  moves: string[];
-}
-
 export interface TreeNodeBase {
   // file://./../../tree/src/tree.ts
   id?: TreeNodeId;
@@ -48,8 +25,6 @@ export interface TreeNodeBase {
   fen: FEN;
   comments?: TreeComment[];
   gamebook?: Gamebook;
-  threat?: LocalEval;
-  ceval?: ClientEval;
   eval?: ServerEval;
   glyphs?: Glyph[];
   clock?: Clock;

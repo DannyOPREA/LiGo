@@ -65,8 +65,6 @@ export const boardCommands = (): VNode[] => [
       'x: announce pieces around this square (try shift and alt)',
       `shift+m: ${i18n.nvui.announcePossibleCaptures}`,
       'v: announce computer evaluation',
-      'g: announce computer best move',
-      'shift+g: play computer best move',
       `alt+shift+a/d: ${i18n.site.cyclePreviousOrNextVariation}`,
     ].reduce(addBreaks, []),
   ]),

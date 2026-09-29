@@ -6,8 +6,7 @@ import type SetupController from '@/setupCtrl';
 
 export const colorButtons = ({ gameMode, gameType, variant, color }: SetupController) => {
   const randomColorOnly =
-    gameType === 'hook' ||
-    (gameType !== 'ai' && gameMode() === 'rated' && variantsWhereWhiteIsBetter.includes(variant()));
+    gameType === 'hook' || (gameMode() === 'rated' && variantsWhereWhiteIsBetter.includes(variant()));
 
   return randomColorOnly
     ? undefined

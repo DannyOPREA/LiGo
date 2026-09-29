@@ -9,13 +9,12 @@ import lila.common.Bus
 import lila.core.round.*
 import lila.game.GameExt.applyMove
 import lila.game.actorApi.MoveGameEvent
-import lila.game.{ Progress, UciMemo }
+import lila.game.Progress
 import lila.round.RoundGame.*
 
 final private class MovePlayer(
     finisher: Finisher,
-    scheduleExpiration: ScheduleExpiration,
-    uciMemo: UciMemo
+    scheduleExpiration: ScheduleExpiration
 )(using Executor):
 
   sealed private trait MoveResult
@@ -40,84 +39,26 @@ final private class MovePlayer(
             compedLag.foreach: lag =>
               lila.mon.round.move.lag.moveComp.record(lag.millis, TimeUnit.MILLISECONDS)
             proxy.save(progress) >>
-              postHumanOrBotPlay(round, pov, progress, moveOrDrop)
+              postHumanPlay(round, pov, progress, moveOrDrop)
     else if game.finished then fufail(GameIsFinishedError(game.id))
     else if game.aborted then fufail(ClientError(s"$pov game is aborted"))
     else if !game.turnOf(color) then fufail(ClientError(s"$pov not your turn"))
     else fufail(ClientError(s"$pov move refused for some reason"))
 
-  private[round] def bot(uci: Uci, round: RoundAsyncActor)(pov: Pov)(using proxy: GameProxy): Fu[Events] =
-    import pov.{ game, color }
-    if game.ply > lila.game.Game.maxPlies then
-      round ! TooManyPlies
-      fuccess(Nil)
-    else if game.playableBy(color) then
-      applyUci(game, uci, blur = false, botLag)
-        .fold(errs => fufail(ClientError(ErrorStr.raw(errs))), fuccess)
-        .flatMap:
-          case Flagged => finisher.outOfTime(game)
-          case MoveApplied(progress, moveOrDrop, _) =>
-            proxy.save(progress) >> postHumanOrBotPlay(round, pov, progress, moveOrDrop)
-    else if game.finished then fufail(GameIsFinishedError(game.id))
-    else if game.aborted then fufail(ClientError(s"$pov game is aborted"))
-    else if !game.turnOf(color) then fufail(ClientError(s"$pov not your turn"))
-    else fufail(ClientError(s"$pov move refused for some reason"))
-
-  private def postHumanOrBotPlay(
+  private def postHumanPlay(
       round: RoundAsyncActor,
       pov: Pov,
       progress: Progress,
       moveOrDrop: MoveOrDrop
   )(using GameProxy): Fu[Events] =
-    if pov.game.hasAi then uciMemo.add(pov.game, moveOrDrop)
     notifyMove(moveOrDrop, progress.game)
     if progress.game.finished then moveFinish(progress.game).dmap { progress.events ::: _ }
     else
-      if progress.game.playableByAi then requestFishnet(progress.game, round)
       if pov.opponent.isOfferingDraw then round ! RoundBus.Draw(pov.player.id, false)
       if pov.opponent.isProposingTakeback then round ! RoundBus.Takeback(pov.player.id, false)
       if progress.game.forecastable then round ! ForecastPlay(moveOrDrop)
       scheduleExpiration.exec(progress.game)
       fuccess(progress.events)
-
-  private[round] def fishnet(game: Game, sign: String, uci: Uci)(using proxy: GameProxy): Fu[Events] =
-    if game.playable && game.player.isAi then
-      uciMemo.sign(game).flatMap { expectedSign =>
-        if expectedSign == sign then
-          applyUci(game, uci, blur = false, metrics = fishnetLag)
-            .fold(errs => fufail(ClientError(ErrorStr.raw(errs))), fuccess)
-            .flatMap:
-              case Flagged => finisher.outOfTime(game)
-              case MoveApplied(progress, moveOrDrop, _) =>
-                for
-                  _ <- proxy.save(progress)
-                  _ =
-                    uciMemo.add(progress.game, moveOrDrop)
-                    lila.mon.fishnet.move(~game.aiLevel).increment()
-                    notifyMove(moveOrDrop, progress.game)
-                  events <-
-                    if progress.game.finished then moveFinish(progress.game).dmap { progress.events ::: _ }
-                    else fuccess(progress.events)
-                yield events
-        else
-          fufail:
-            FishnetError:
-              s"Invalid game hash: $sign id: ${game.id} playable: ${game.playable} player: ${game.player}"
-      }
-    else
-      // probably the player took a move back,
-      // and the when the AI move arrives it's no longer its turn
-      fufail:
-        FishnetError:
-          s"Not AI turn move: $uci id: ${game.id} playable: ${game.playable} player: ${game.player}"
-
-  private[round] def requestFishnet(game: Game, round: RoundAsyncActor): Unit =
-    game.playableByAi.so:
-      if game.ply <= lila.core.fishnet.maxPlies then Bus.pub(lila.core.fishnet.FishnetMoveRequest(game))
-      else round ! ResignAi
-
-  private val fishnetLag = MoveMetrics(clientLag = Centis(5).some)
-  private val botLag = MoveMetrics(clientLag = Centis(0).some)
 
   private def applyUci(
       game: Game,

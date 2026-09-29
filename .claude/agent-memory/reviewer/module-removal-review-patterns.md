@@ -34,5 +34,15 @@ Checks that found real problems in Phase 3 removal units (3.2 tournaments, 3.3 s
 - Hard-coded URLs outside routes survive (contact.scala `/learn#/15`, recap `/opening/`, IrcApi):
   grep string literals like "/learn", not only `routes.X`.
 
+- 3.5 (2026-09-29) finds: deleting an API (Board API stream/moves) broke a KEPT in-repo client
+  (`ui/dgt/src/play.ts` fetches `/api/board/game/stream`, page still routed + in TopNav). Grep
+  ui/*/src for the removed URL strings, not just routes. Also: form fields whose handler was cut
+  stay on kept pages (import page "Request a computer analysis" checkbox, GameUi.scala); dead prefs
+  (insightShare); Bus publishers with no subscriber left (CheatReportCreated); orphan bundles loaded
+  only by deleted packages (`bits.polyglot`, `user.bot.list`). UPSTREAM "modified" lists name files
+  that weren't touched (Api, plan) — diff `--name-status` against the row.
+- When told not to run builds, the author's verify logs are in `.claude/state/verify/*.log`
+  (read-only) — cite them, and flag `testQuick` partial runs.
+
 **Why:** compile + UI build pass with all of these; only grep-driven review finds them.
 **How to apply:** every Phase 3 removal unit (3.4–3.7 next). See also [[lila-edit-review-patterns]].

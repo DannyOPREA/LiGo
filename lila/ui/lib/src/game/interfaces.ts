@@ -152,7 +152,7 @@ export interface Hold {
   sd: number;
 }
 
-export type ContinueMode = 'friend' | 'ai';
+export type ContinueMode = 'friend';
 
 export interface CheckState {
   ply: Ply;

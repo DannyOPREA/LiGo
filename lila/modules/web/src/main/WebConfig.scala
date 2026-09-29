@@ -40,13 +40,6 @@ object WebConfig:
       )
     )
 
-  def analyseEndpoints(c: Configuration) =
-    lila.ui.AnalyseEndpoints(
-      explorer = c.get[String]("explorer.endpoint"),
-      tablebase = c.get[String]("explorer.tablebase_endpoint"),
-      externalEngine = c.get[String]("externalEngine.endpoint")
-    )
-
   def netConfig(c: Configuration) = NetConfig(
     domain = c.get[NetDomain]("net.domain"),
     prodDomain = c.get[NetDomain]("net.prodDomain"),

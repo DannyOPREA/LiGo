@@ -8,7 +8,6 @@ import lila.bookmark.BookmarkApi
 import lila.core.data.SafeJsonStr
 import lila.core.perf.UserWithPerfs
 import lila.core.user.User
-import lila.core.perm.Granter
 import lila.forum.ForumPostApi
 import lila.game.Crosstable
 import lila.relation.RelationApi
@@ -24,8 +23,7 @@ case class UserInfo(
     ublog: Option[UblogPost.BlogPreview],
     teamIds: List[lila.team.TeamId],
     isStreamer: Boolean,
-    isCoach: Boolean,
-    insightVisible: Boolean
+    isCoach: Boolean
 ):
   export trophies.ranks
   export nbs.crosstable
@@ -105,8 +103,7 @@ object UserInfo:
       streamerApi: lila.streamer.StreamerApi,
       teamApi: lila.team.TeamApi,
       teamCache: lila.team.TeamCached,
-      coachApi: lila.coach.CoachApi,
-      insightShare: lila.insight.Share
+      coachApi: lila.coach.CoachApi
   )(using Executor):
     def fetch(user: User, nbs: NbGames, restricted: Boolean, withBlog: Boolean = true)(using
         ctx: Context
@@ -125,8 +122,7 @@ object UserInfo:
         (withBlog && full).so(ublogApi.userBlogPreviewFor(user, 3)),
         full.so(ctx.useMe(teamApi.joinedTeamIdsOfUserAsSeenBy(user).mon(lila.mon.user.segment("teamIds")))),
         streamerApi.isActualStreamer(user).mon(lila.mon.user.segment("streamer")),
-        coachApi.isListedCoach(user).mon(lila.mon.user.segment("coach")),
-        fuccess(Granter.opt(_.SeeInsight)) >>| (user.count.rated >= 50).so(insightShare.grant(user))
-      ).mapN(UserInfo(nbs, _, _, _, _, _, _, _, _, _))
+        coachApi.isListedCoach(user).mon(lila.mon.user.segment("coach"))
+      ).mapN(UserInfo(nbs, _, _, _, _, _, _, _, _))
 
     def preloadTeams(info: UserInfo) = teamCache.lightCache.preloadMany(info.teamIds)

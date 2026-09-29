@@ -58,13 +58,6 @@ GET   /@/:username/following           controllers.Relation.following(username: 
 GET   /rel/blocks                      controllers.Relation.blocks(page: Int ?= 1)
 POST  /rel/:action/:user               controllers.Relation.bcAction(action: String, user: UserStr)
 
-# Insight
-POST  /insights/refresh/:username      controllers.Insight.refresh(username: UserStr)
-POST  /insights/data/:username         controllers.Insight.json(username: UserStr)
-GET   /insights/:username              controllers.Insight.index(username: UserStr)
-GET   /insights/:username/:metric/:dimension controllers.Insight.path(username: UserStr, metric, dimension, filters = "")
-GET   /insights/:username/:metric/:dimension/*filters controllers.Insight.path(username: UserStr, metric, dimension, filters)
-
 # User subpages
 
 # User
@@ -210,18 +203,6 @@ GET   /streamer/youtube/oauth/redirect controllers.Streamer.oauthYoutubeRedirect
 POST  /streamer/youtube/oauth/choose/:channelId controllers.Streamer.oauthYoutubeChannel(channelId: String)
 POST  /streamer/$platform<youtube|twitch>/oauth/unlink controllers.Streamer.oauthUnlink(platform: String, user: Option[UserStr] ?= None)
 
-# Private Play
-
-GET   /bots                           controllers.JsBot.index
-GET   /bots/assets                    controllers.JsBot.assetKeys
-# GET   /bots/test                      controllers.JsBot.test
-GET   /bots/dev                       controllers.JsBot.devIndex
-GET   /bots/dev/history               controllers.JsBot.devBotHistory(id: Option[String])
-POST  /bots/dev/bot                   controllers.JsBot.devPostBot
-GET   /bots/dev/assets                controllers.JsBot.devAssets
-POST  /bots/dev/asset/$tpe<sound|image|book>/$key<\w{12}(\.\w{2,4})?> controllers.JsBot.devPostAsset(tpe: String, key: String)
-POST  /bots/dev/asset/mv/$key<\w{12}(\.\w{2,4})?>/:name  controllers.JsBot.devNameAsset(key: String, name: String)
-
 # Round
 GET   /$gameId<\w{8}>                            controllers.Round.watcher(gameId: GameId, color: Color = Color.white)
 GET   /$gameId<\w{8}>/$color<white|black>        controllers.Round.watcher(gameId: GameId, color: Color)
@@ -265,7 +246,6 @@ POST  /api/team/:id/request/:userId/:decision controllers.TeamApi.requestProcess
 POST  /api/team/:id/kick/:user                controllers.TeamApi.kickUser(id: TeamId, user: UserStr)
 
 # Analyse
-POST  /$gameId<\w{8}>/request-analysis        controllers.Analyse.requestAnalysis(gameId: GameId)
 
 GET   /game/export/$gameId<\w{8}>                             controllers.Game.exportOne(gameId: GameId)
 GET   /game/export/$gameId<\w{8}>.pgn                         controllers.Game.exportOne(gameId: GameId)
@@ -274,13 +254,6 @@ GET   /game/export/gif/thumbnail/$gameId<\w{8}>.gif           controllers.Export
 GET   /game/export/gif/$gameId<\w{8}>.gif                     controllers.Export.gif(gameId: GameId, color: Color = Color.white, theme: Option[String], piece: Option[String])
 GET   /game/export/gif/:color/$gameId<\w{8}>.gif              controllers.Export.gif(gameId: GameId, color: Color, theme: Option[String], piece: Option[String])
 GET   /export/fen.gif                                         controllers.Export.fenThumbnail(fen, color: Option[Color], lastMove: Option[Uci], variant: Option[chess.variant.Variant.LilaKey], theme: Option[String], piece: Option[String])
-
-# Fishnet
-POST  /fishnet/acquire                        controllers.Fishnet.acquire(slow: Boolean ?= false)
-POST  /fishnet/analysis/$workId<\w{8}>        controllers.Fishnet.analysis(workId, slow: Boolean ?= false, stop: Boolean ?= false)
-POST  /fishnet/abort/$workId<\w{8}>           controllers.Fishnet.abort(workId)
-GET   /fishnet/key/$key<\w{8}>                controllers.Fishnet.keyExists(key)
-GET   /fishnet/status                         controllers.Fishnet.status
 
 # Pref
 POST  /pref/:name                             controllers.Pref.set(name)
@@ -291,7 +264,6 @@ POST  /account/preferences                    controllers.Pref.formApply
 POST  /account/preferences/notification       controllers.Pref.notifyFormApply
 
 # Setup
-POST  /setup/ai                        controllers.Setup.ai
 POST  /setup/friend                    controllers.Setup.friend(user: Option[UserStr] ?= None)
 POST  /setup/hook/:sri/like/:gameId    controllers.Setup.like(sri: Sri, gameId: GameId)
 POST  /setup/hook/:sri                 controllers.Setup.hook(sri: Sri)
@@ -383,7 +355,6 @@ GET   /mod/:username/games             controllers.GameMod.index(username: UserS
 POST  /mod/:username/games             controllers.GameMod.post(username: UserStr)
 GET   /mod/table                       controllers.Mod.table
 GET   /mod/log                         controllers.Mod.log(mod: Option[UserStr] ?= None, id: Option[String] ?= None)
-POST  /mod/:username/refreshUserAssess controllers.Mod.refreshUserAssess(username: UserStr)
 POST  /mod/:username/email             controllers.Mod.setEmail(username: UserStr)
 POST  /mod/inquiry-to-zulip            controllers.Mod.inquiryToZulip
 POST  /mod/:username/create-name-close-vote controllers.Mod.createNameCloseVote(username: UserStr)
@@ -409,14 +380,6 @@ GET   /api/stream/mod                  controllers.Mod.eventStream
 GET   /api/stream/mod-marked-since     controllers.Mod.markedUsersStream
 GET   /mod/image/queue                 controllers.Mod.imageQueue(page: Int ?= 1)
 POST  /mod/image/accept/:id            controllers.Mod.imageAccept(id: ImageId, v: Boolean)
-
-# Irwin
-GET   /irwin                           controllers.Irwin.dashboard
-POST  /irwin/report                    controllers.Irwin.saveReport
-GET   /api/stream/irwin                controllers.Irwin.eventStream
-
-# Kaladin
-GET   /kaladin                         controllers.Irwin.kaladin
 
 # Forum
 GET   /forum                           controllers.ForumCateg.index
@@ -524,7 +487,6 @@ POST  /api/account/kid                 controllers.Account.apiKidPost
 GET   /api/account/preferences         controllers.Pref.apiGet
 POST  /api/account/preferences/:name   controllers.Pref.apiSet(name)
 GET   /api/challenge                   controllers.Challenge.apiList
-POST  /api/challenge/ai                controllers.Setup.apiAi
 POST  /api/challenge/open              controllers.Challenge.openCreate
 POST  /api/challenge/:user             controllers.Challenge.apiCreate(user: UserStr)
 GET   /api/challenge/$id<\w{8}>/show   controllers.Challenge.apiShow(id: ChallengeId)
@@ -545,28 +507,10 @@ GET   /api/games/user/:username        controllers.Game.apiExportByUser(username
 GET   /api/games/export/imports        controllers.Game.apiExportByUserImportedGames()
 GET   /api/games/export/bookmarks      controllers.Game.apiExportByUserBookmarks()
 
-# External engine
-GET   /api/external-engine             controllers.Analyse.externalEngineList
-POST  /api/external-engine             controllers.Analyse.externalEngineCreate
-GET   /api/external-engine/:id         controllers.Analyse.externalEngineShow(id)
-PUT   /api/external-engine/:id         controllers.Analyse.externalEngineUpdate(id)
-DELETE /api/external-engine/:id        controllers.Analyse.externalEngineDelete(id)
-
-# Bot API
-GET   /api/bot/game/stream/:id         controllers.PlayApi.botGameStream(id: GameId)
-POST  /api/bot/game/:id/move/:uci      controllers.PlayApi.botMove(id: GameId, uci, offeringDraw: Option[Boolean] ?= None)
-GET   /api/bot/online                  controllers.PlayApi.botOnlineApi
-POST  /api/bot/*cmd                    controllers.PlayApi.botCommand(cmd)
-GET   /api/bot/*cmd                    controllers.PlayApi.botCommandGet(cmd)
-GET   /player/bots                     controllers.PlayApi.botOnline
-
-# Board API
-GET   /api/board/game/stream/:id        controllers.PlayApi.boardGameStream(id: GameId)
-POST  /api/board/game/:id/move/:uci     controllers.PlayApi.boardMove(id: GameId, uci, offeringDraw: Option[Boolean] ?= None)
+# Board API (its game stream, moves and commands went with the bot module in unit 3.5; the
+# lobby seek stays for API clients)
 POST  /api/board/seek                   controllers.Setup.boardApiHook
 DELETE /api/board/seek                  controllers.Setup.boardApiHookCancel
-POST  /api/board/*cmd                   controllers.PlayApi.boardCommandPost(cmd)
-GET   /api/board/*cmd                   controllers.PlayApi.boardCommandGet(cmd)
 
 # Account
 GET   /account/passwd                  controllers.Account.passwd
@@ -599,15 +543,6 @@ GET   /account/personal-data           controllers.Account.data
 GET   /account/security                controllers.Account.security
 POST  /account/signout/:sessionId      controllers.Account.signout(sessionId)
 GET   /account/now-playing             controllers.Account.nowPlaying
-
-GET   /tutor                           controllers.Tutor.home()
-GET   /tutor/:user                     controllers.Tutor.user(user: UserStr)
-POST  /tutor/:user/compute             controllers.Tutor.compute(user: UserStr)
-GET   /tutor/:user/:range              controllers.Tutor.report(user: UserStr, range)
-POST  /tutor/:user/delete              controllers.Tutor.delete(user: UserStr, range)
-GET   /tutor/:user/:range/:perf        controllers.Tutor.perf(user: UserStr, range, perf: PerfKey)
-GET   /tutor/:user/:range/:perf/:angle controllers.Tutor.angle(user: UserStr, range, perf: PerfKey, angle)
-GET   /tutor/:user/:range/:perf/opening/:color/:opening controllers.Tutor.opening(user: UserStr, range, perf: PerfKey, color: Color, opening: String)
 
 # Recap
 GET   /recap                           controllers.Recap.home
@@ -643,7 +578,6 @@ GET   /app-store                       controllers.Main.redirectToAppStore
 GET   /swag                            controllers.Main.redirectToSwag
 GET   /$lang<\w\w\w?>/app              controllers.Main.appLang(lang: Language)
 GET   /lag                             controllers.Main.lag
-GET   /get-fishnet                     controllers.Main.getFishnet
 GET   /costs                           controllers.Main.costs
 GET   /InstantChess.com                controllers.Main.instantChess
 POST  /upload/image/user/:realm        controllers.Main.uploadImage(realm: MarkdownRealm)

@@ -135,10 +135,6 @@ trait GameProxy:
   def upgradeIfPresent(games: List[Game]): Fu[List[Game]]
   def flushIfPresent(gameId: GameId): Funit
 
-trait UciMemo:
-  def get(game: Game): Fu[Vector[String]]
-  def sign(game: Game): Fu[String]
-
 trait PgnDump:
   def apply(
       game: Game,

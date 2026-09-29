@@ -9,7 +9,6 @@ import lila.core.perm.{ Granter, Permission }
 lazy val logger = lila.log("mod")
 
 final class ModlogRepo(val coll: lila.db.dsl.Coll)
-final class AssessmentRepo(val coll: lila.db.dsl.Coll)
 final class HistoryRepo(val coll: lila.db.dsl.Coll)
 final class ModQueueStatsRepo(val coll: lila.db.dsl.Coll)
 
