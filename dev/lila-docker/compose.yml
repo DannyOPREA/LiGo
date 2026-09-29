@@ -104,6 +104,9 @@ services:
       - ../../lila:/lila
       # LiGo: libs/board is in lila's pnpm workspace as ../libs/board (unit 2.1).
       - ../../libs:/libs
+      # LiGo: so is services/scoring, as ../services/scoring (unit 4.4). Without it pnpm finds the
+      # lockfile's importer for it missing and refuses the frozen install.
+      - ../../services:/services
       - ../../.git:/ligo.git:ro
       - ./.pnpm-store:/.pnpm-store
     profiles:

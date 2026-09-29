@@ -29,6 +29,23 @@
 - sbt 2 in the cloud: `~/.sbt/repositories` overrides build resolvers, so a project needing an extra repo passes `-Dsbt.repository.config=<copy with the repo added>`; and the thin client keeps a running server's JVM options, so `sbt shutdown` first (2026-09-27, 1.1).
 
 ## Entries (newest first)
+### 2026-09-29 · fix · The ui container sees services/scoring
+- Did: `dev/ligo compile ui` on the owner's box (docker mode) failed with
+  `ERR_PNPM_PACKAGE_MANAGER_UNSAFE_IMPORTER_PATH` for `../services/scoring`. Cause: unit 4.4 put
+  services/scoring in lila's pnpm workspace, but the ui container only mounted lila/ and libs/, so
+  /services/scoring didn't exist there and the frozen install refused the lockfile's importer for
+  it. compose.yml now mounts `../../services:/services` in the ui container, and a new check in
+  `dev/tests/run.sh` fails if any `../` package of lila's workspace isn't mounted there.
+- Worked: reproduced in this container with docker (node:24.20 image, same mounts): pnpm 12.7.0
+  and 12.8.1 refuse the missing importer; with /services mounted they get past it (then stop at
+  the cloud-only codeload 403). The new check fails without the mount and passes with it.
+- Didn't work / dead ends: pnpm 12.3.4 (the pinned version) tolerated the missing directory here,
+  so the owner's exact wording didn't reproduce; the missing mount is the common cause.
+- Lessons: every `../` entry in lila/pnpm-workspace.yaml needs a matching mount in the ui
+  container; the new check enforces it.
+- Decisions: none.
+- Verified by Claude: `bash dev/tests/run.sh` 55/55. Needs owner verification: `git pull`, then
+  `dev/ligo compile ui` passes and /playground loads.
 ### 2026-09-29 · fix · `dev/ligo up` rebuilds stale browser code
 - Did: the owner's /playground failed with "error loading dynamically imported module
   …/compiled/playground.js". Cause: `up` built the browser code only when no build existed, so
