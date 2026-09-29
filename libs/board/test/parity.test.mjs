@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
 import { createEngine, play, readSgf, stateOf, tryMove } from "../src/engine.mjs";
+import { readTree } from "../src/sgf.mjs";
 import { all, dir, engineFor, playMoves, stonesOf } from "./fixtures.mjs";
 
 const file =
@@ -50,6 +51,17 @@ if (!existsSync(file)) {
       assert.equal(s.koPoint, end.koPoint ?? null, "koPoint");
       // For the cases the client plays, the history read from the SGF must give the same legal and
       // illegal moves as playing the game did (the superko history survives the round trip).
+      // The analysis board's reader (unit 7.2) ends in the same place.
+      const tree = readTree(sgf);
+      let last = tree;
+      while (last.children.length) last = last.children[0];
+      assert.deepEqual(
+        { black: last.stones.black.sort(), white: last.stones.white.sort() },
+        (({ black, white }) => ({ black: black.sort(), white: white.sort() }))(stonesOf(end.board)),
+        "analysis tree: stones",
+      );
+      assert.equal(last.toMove, end.toMove, "analysis tree: toMove");
+      assert.deepEqual(last.captures, end.captures, "analysis tree: captures");
       const c = fixtures.get(id);
       if (c.appliesTo.includes("client")) {
         // The same case played move by move on the client ends where the server's did too, whether

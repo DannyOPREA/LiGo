@@ -23,12 +23,17 @@ ignoredOptionalDependencies:
   - '@ox*/*-openharmony-*'
   - '@ox*/*-netbsd-*'
   - '@ox*/*-sunos-*'
+  # LiGo: @sabaki/sgf's charset detectors, for Node files only; the browser reads SGF text (ADR 0023)
+  - iconv-lite
+  - jschardet
 allowBuilds:
   esbuild: true
 overrides:
   fast-uri: ^3.1.7
   undici: ^8.10.2
 patchedDependencies:
+  # LiGo: tells bundlers @sabaki/sgf's Node-only modules aren't needed in the browser (unit 7.2)
+  '@sabaki/sgf@3.5.0': ../libs/board/patches/@sabaki__sgf@3.5.0.patch
   '@toast-ui/editor@3.2.2': ui/bits/patches/@toast-ui__editor.patch
 minimumReleaseAgeExclude:
   - '@lichess-org/*'
