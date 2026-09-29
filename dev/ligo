@@ -74,8 +74,21 @@ EOF
 
 site_url() { if [[ "$MODE" == docker ]]; then echo "http://localhost:8080"; else echo "http://localhost:9663"; fi; }
 
-# ui/build writes manifest.json last, so a half-finished build doesn't count as built.
-ui_built() { [[ -f "$LILA/public/compiled/manifest.json" ]]; }
+# ui/build writes manifest.json last, so a half-finished build doesn't count as built. A build
+# older than any browser source (say, a git pull that brought a new page) doesn't count either:
+# `up` would otherwise keep serving it, and the new page's script would 404.
+ui_manifest() { echo "$LILA/public/compiled/manifest.json"; }
+ui_newer_source() {  # prints the first browser source newer than the build, if any
+  find "$LILA/ui" "$ROOT/libs/board" "$LILA/package.json" "$LILA/pnpm-lock.yaml" \
+    \( -name node_modules -o -name dist -o -name coverage -o -name test-results -o -name playwright-report \) -prune \
+    -o -type f ! -name '*.tsbuildinfo' -newer "$(ui_manifest)" -print -quit 2>/dev/null
+}
+ui_built() { [[ -f "$(ui_manifest)" && -z "$(ui_newer_source)" ]]; }
+ui_state() {
+  if [[ ! -f "$(ui_manifest)" ]]; then echo "not built (dev/ligo compile ui)"
+  elif [[ -n "$(ui_newer_source)" ]]; then echo "out of date (dev/ligo compile ui)"
+  else echo "up to date"; fi
+}
 
 # --------------------------------------------------------------------------------------------
 # docker mode (wraps dev/lila-docker)
@@ -548,6 +561,7 @@ cmd_differential() {
 
 cmd_status() {
   say "mode: $MODE"
+  say "browser build: $(ui_state)"
   if [[ "$MODE" == docker ]]; then
     dc ps
   else

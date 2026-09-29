@@ -29,6 +29,24 @@
 - sbt 2 in the cloud: `~/.sbt/repositories` overrides build resolvers, so a project needing an extra repo passes `-Dsbt.repository.config=<copy with the repo added>`; and the thin client keeps a running server's JVM options, so `sbt shutdown` first (2026-09-27, 1.1).
 
 ## Entries (newest first)
+### 2026-09-29 · fix · `dev/ligo up` rebuilds stale browser code
+- Did: the owner's /playground failed with "error loading dynamically imported module
+  …/compiled/playground.js". Cause: `up` built the browser code only when no build existed, so
+  after `git pull` it kept his pre-playground build; its manifest has no `playground` entry, so the
+  page asked for the unhashed name, which doesn't exist. `up` now also rebuilds when any file in
+  `lila/ui`, `libs/board`, `lila/package.json` or `lila/pnpm-lock.yaml` is newer than
+  `public/compiled/manifest.json` (node_modules, dist and test output ignored), and `dev/ligo
+  status` shows "browser build: up to date / out of date / not built".
+- Worked: a native build here emits `playground.<hash>.js` and leaves the check "up to date";
+  touching a playground source flips it to "out of date"; rebuilding flips it back. 5 new checks in
+  `dev/tests/run.sh` (fake tree with a space in its path).
+- Didn't work / dead ends: none.
+- Lessons: a "built yet?" check that only tests for existence goes stale on the first pull.
+- Decisions: none (mtime check instead of a content hash: git sets the mtime of every file a pull
+  changes, and a spurious rebuild only costs a build).
+- Verified by Claude: `bash dev/tests/run.sh` 54/54, shellcheck included. Needs owner
+  verification: after the merge, `git pull` then `dev/ligo up` rebuilds the browser code and
+  /playground loads (docker mode, Fedora).
 ### 2026-09-28 · working agreement · No approval prompts (ADR 0015)
 - Did: owner asked Claude not to ask for approval for anything. The owner removed the `ask` list
   from `.claude/settings.json` himself (PR #16); Claude added ADR 0015, the decisions.md line, and
