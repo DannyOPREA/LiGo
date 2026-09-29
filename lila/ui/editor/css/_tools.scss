@@ -127,19 +127,4 @@
       }
     }
   }
-
-  .ceval-wrap {
-    @extend %box-neat;
-
-    z-index: $z-mz-menu-4;
-
-    &,
-    .ceval {
-      @extend %box-radius;
-    }
-
-    .pv_box {
-      @extend %box-radius-bottom;
-    }
-  }
 }

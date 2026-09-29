@@ -100,7 +100,6 @@ final class UserShow(helpers: Helpers, bits: UserBits):
       p(tro.whatNowSuggestions()),
       ul(
         li(a(href := routes.Puzzle.home)(tro.improveWithChessTacticsPuzzles())),
-        li(a(href := s"${routes.Lobby.home}#ai")(tro.playTheArtificialIntelligence())),
         li(a(href := s"${routes.Lobby.home}#hook")(tro.playOpponentsFromAroundTheWorld())),
         li(a(href := routes.User.list)(tro.followYourFriendsOnLichess())),
         // "learn from study and video" suggestion removed with the study module (unit 3.3).

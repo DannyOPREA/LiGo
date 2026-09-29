@@ -3,8 +3,7 @@
 $col1-panel-height: 30vh;
 $col2-panel-height: 240px;
 
-// show the request button even if analysis is disabled
-.comp-off .analyse__underboard:not(:has(.future-game-analysis)) .computer-analysis {
+.comp-off .analyse__underboard .computer-analysis {
   display: none !important;
 }
 
@@ -78,11 +77,6 @@ $col2-panel-height: 240px;
 
   .computer-analysis {
     position: relative;
-  }
-
-  .future-game-analysis {
-    text-align: center;
-    margin-top: 2em;
   }
 
   .fen-pgn {

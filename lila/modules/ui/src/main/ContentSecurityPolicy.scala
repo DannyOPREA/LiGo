@@ -20,8 +20,6 @@ case class ContentSecurityPolicy(
 
   def withLegacyUnsafeInlineScripts = copy(scriptSrc = "'unsafe-inline'" :: scriptSrc)
 
-  def withExternalEngine(url: String) = copy(connectSrc = url :: connectSrc)
-
   def withGoogleForm = copy(frameSrc = "https://docs.google.com" :: frameSrc)
 
   def withTurnstile = copy(
@@ -32,12 +30,6 @@ case class ContentSecurityPolicy(
   def withAnyWs = copy(connectSrc = "ws:" :: "wss:" :: connectSrc)
 
   def withWikiBooks = copy(connectSrc = "en.wikibooks.org" :: connectSrc)
-
-  // for extensions to use their cloud eval API
-  // https://www.chessdb.cn/cloudbook_api_en.html
-  def withChessDbCn = copy(connectSrc = "www.chessdb.cn" :: connectSrc)
-
-  def withExternalAnalysisApis = withWikiBooks.withChessDbCn
 
   def withLilaHttp = copy(connectSrc = "http.lichess.org" :: connectSrc)
 

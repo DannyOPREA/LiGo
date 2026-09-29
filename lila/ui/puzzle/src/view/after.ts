@@ -1,5 +1,5 @@
 import { licon } from 'lib/licon';
-import { type VNode, bind, icon, div, button, a, type MaybeVNode } from 'lib/view';
+import { type VNode, bind, icon, div, button, type MaybeVNode } from 'lib/view';
 
 import type PuzzleCtrl from '../ctrl';
 
@@ -28,25 +28,12 @@ const renderVote = (ctrl: PuzzleCtrl): MaybeVNode => {
 
 export default function (ctrl: PuzzleCtrl): VNode {
   const win = ctrl.lastFeedback === 'win';
-  const canPlayComputer = !ctrl.node.san?.includes('#');
   return div('.puzzle__feedback.after', [
     div('.complete', i18n.puzzle[win ? 'puzzleSuccess' : 'puzzleComplete']),
     button('.continue', { hook: bind('click', ctrl.nextPuzzle) }, [
       icon(licon.PlayTriangle)(),
       i18n.puzzle.continueTraining,
     ]),
-    div('.puzzle__more', [
-      canPlayComputer
-        ? a(`/analysis/${ctrl.node.fen.replace(/ /g, '_')}?color=${ctrl.pov}#practice`)(
-            '.practice.button.button-empty',
-            {
-              'data-icon': licon.Bullseye,
-              title: i18n.site.playAgainstComputer,
-              target: '_blank',
-            },
-          )
-        : null,
-      renderVote(ctrl),
-    ]),
+    div('.puzzle__more', [renderVote(ctrl)]),
   ]);
 }

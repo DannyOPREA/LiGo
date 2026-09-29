@@ -1,14 +1,13 @@
 package controllers
 
 import chess.format.Fen
-import play.api.libs.json.{ Json, JsArray }
+import play.api.libs.json.Json
 import play.api.mvc.*
 
 import lila.app.{ *, given }
 import lila.common.HTTPRequest
 import lila.core.misc.lpv.LpvEmbed
 import lila.game.PgnDump
-import lila.oauth.AccessToken
 import lila.tree.ExportOptions
 
 final class Analyse(
@@ -17,21 +16,7 @@ final class Analyse(
     roundC: => Round
 ) extends LilaController(env):
 
-  def requestAnalysis(id: GameId) = AuthOrScoped(_.Web.Mobile) { ctx ?=> me ?=>
-    Found(env.game.gameRepo.game(id)): game =>
-      env.fishnet
-        .analyser(
-          game,
-          lila.fishnet.Work.Sender(
-            userId = me,
-            ip = ctx.ip.some,
-            mod = isGranted(_.UserEvaluate) || isGranted(_.Relay),
-            system = false
-          )
-        )
-        .map:
-          _.error.fold(NoContent)(BadRequest(_))
-  }
+  // requestAnalysis (a server analysis by fishnet) went with the fishnet module (unit 3.5).
 
   private[controllers] def replay(pov: Pov, userTv: Option[lila.user.User])(using ctx: Context) =
     if ctx.req.client.isCrawler then replayForCrawler(pov)
@@ -49,7 +34,7 @@ final class Analyse(
           val opening = pgnFlags.opening.so(env.game.gameOpening.atPly(pov.game, _))
           (
             env.analyse.analyser.get(pov.game),
-            (!pov.game.metadata.analysed).so(env.fishnet.api.userAnalysisExists(pov.gameId)),
+            fuccess(false), // no server analysis can be in progress without fishnet (unit 3.5)
             roundC.getWatcherChat(pov.game),
             ctx.noBlind.so(env.game.crosstableApi.withMatchup(pov.game)),
             env.bookmark.api.exists(pov.game, ctx.me),
@@ -146,41 +131,3 @@ final class Analyse(
         crosstable
       )
   yield Ok(page)
-
-  def externalEngineList = ScopedBody(_.Engine.Read) { _ ?=> me ?=>
-    env.analyse.externalEngine.list(me).map { list =>
-      JsonOk(JsArray(list.map(lila.analyse.ExternalEngine.jsonWrites.writes)))
-    }
-  }
-
-  def externalEngineShow(id: String) = ScopedBody(_.Engine.Read) { _ ?=> me ?=>
-    Found(env.analyse.externalEngine.find(me, id)): engine =>
-      JsonOk(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
-  }
-
-  def externalEngineCreate = ScopedBody(_.Engine.Write) { ctx ?=> me ?=>
-    HTTPRequest.bearer.so: (bearer, _) =>
-      val tokenId = AccessToken.idFrom(bearer)
-      bindForm(lila.analyse.ExternalEngine.form)(
-        jsonFormError,
-        data =>
-          env.analyse.externalEngine.create(me, data, tokenId).map { engine =>
-            Created(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
-          }
-      )
-  }
-
-  def externalEngineUpdate(id: String) = ScopedBody(_.Engine.Write) { ctx ?=> me ?=>
-    Found(env.analyse.externalEngine.find(me, id)): engine =>
-      bindForm(lila.analyse.ExternalEngine.form)(
-        jsonFormError,
-        data =>
-          env.analyse.externalEngine.update(engine, data).map { engine =>
-            JsonOk(lila.analyse.ExternalEngine.jsonWrites.writes(engine))
-          }
-      )
-  }
-
-  def externalEngineDelete(id: String) = AuthOrScoped(_.Engine.Write) { _ ?=> me ?=>
-    env.analyse.externalEngine.delete(me, id).elseNotFound(jsonOkResult)
-  }

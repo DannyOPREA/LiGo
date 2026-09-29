@@ -70,10 +70,6 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
     JsonOk:
       StaticContent.manifest(env.net)
 
-  def getFishnet = Open:
-    pageHit
-    Ok.page(views.site.ui.getFishnet)
-
   def costs = Anon:
     pageHit
     Redirect:

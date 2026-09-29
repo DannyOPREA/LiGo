@@ -65,27 +65,26 @@ export class InlineView {
   commentNodes(node: TreeNode, classes: Classes = {}): LooseVNodes[] {
     if (!this.ctrl.showComments || !node.comments) return [];
     return node.comments
-      .map(comment =>
-        this.ctrl.retro?.hideComputerLine(node) && this.isLichessComment(comment)
-          ? hl('comment', i18n.site.learnFromThisMistake)
-          : (!this.isLichessComment(comment) || this.ctrl.settings.showStaticAnalysis) &&
-            hl(
-              'comment',
-              {
-                class: {
-                  inaccuracy: comment.text.startsWith('Inaccuracy.'),
-                  mistake:
-                    comment.text.startsWith('Mistake.') ||
-                    comment.text.startsWith('Checkmate is now unavoidable.'),
-                  blunder: comment.text.startsWith('Blunder.'),
-                  ...classes,
-                },
+      .map(
+        comment =>
+          (!this.isLichessComment(comment) || this.ctrl.settings.showStaticAnalysis) &&
+          hl(
+            'comment',
+            {
+              class: {
+                inaccuracy: comment.text.startsWith('Inaccuracy.'),
+                mistake:
+                  comment.text.startsWith('Mistake.') ||
+                  comment.text.startsWith('Checkmate is now unavoidable.'),
+                blunder: comment.text.startsWith('Blunder.'),
+                ...classes,
               },
-              [
-                Boolean(node.comments?.[1]) && [hl('span.by', authorText(comment.by)), ' '],
-                hl('span', { hook: innerHTML(comment.text, enrichText) }),
-              ],
-            ),
+            },
+            [
+              Boolean(node.comments?.[1]) && [hl('span.by', authorText(comment.by)), ' '],
+              hl('span', { hook: innerHTML(comment.text, enrichText) }),
+            ],
+          ),
       )
       .filter(Boolean);
   }
@@ -148,8 +147,7 @@ export class InlineView {
   ): LooseVNodes {
     const { ctrl } = this;
     const path = parentPath + node.id;
-    const currentPath =
-      (!ctrl.synthetic && playable(ctrl.data) && ctrl.initialPath) || ctrl.retro?.current()?.prev.path;
+    const currentPath = !ctrl.synthetic && playable(ctrl.data) && ctrl.initialPath;
     const withIndex =
       (!isMainline || this.inline) &&
       (node.ply % 2 === 1 ||
@@ -168,13 +166,10 @@ export class InlineView {
       'pending-deletion': path.startsWith(ctrl.pendingDeletionPath() || ' '),
       'pending-copy': ctrl.isPendingCopy(path, isMainline),
     };
-    const glyphs = [...(node.glyphs ?? [])];
-    const liveGlyph = ctrl.liveAnnotate?.get(path);
-    if (liveGlyph && ctrl.settings.showLiveAnnotations && !glyphs.some(g => g.id <= this.glyphs.length))
-      glyphs.push(liveGlyph);
+    const glyphs = node.glyphs ?? [];
     if (ctrl.showMoveGlyphs()) {
       glyphs
-        ?.map(g => this.glyphs[g.id - 1])
+        .map(g => this.glyphs[g.id - 1])
         .filter(Boolean)
         .forEach(cls => (classes[cls] = true));
     }

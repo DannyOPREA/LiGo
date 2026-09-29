@@ -23,7 +23,6 @@ final private[api] class RoundApi(
     bookmarkApi: lila.bookmark.BookmarkApi,
     gameRepo: lila.game.GameRepo,
     puzzleOpeningApi: lila.puzzle.PuzzleOpeningApi,
-    externalEngineApi: lila.analyse.ExternalEngineApi,
     userApi: lila.user.UserApi,
     prefApi: lila.pref.PrefApi,
     userLag: lila.socket.UserLagCache,
@@ -120,8 +119,7 @@ final private[api] class RoundApi(
           .compose(withForecast(pov, fco))
           .compose(withPuzzleOpening(puzzleOpening))
       )(json)
-    .flatMap(externalEngineApi.withExternalEngines)
-      .mon(lila.mon.round.api.watcher)
+    .mon(lila.mon.round.api.watcher)
 
   def userAnalysisJson(
       pov: Pov,
@@ -145,7 +143,6 @@ final private[api] class RoundApi(
               owner = owner,
               opening = gameOpening.of(pov.game, full = me.isDefined)
             )
-      .flatMap(externalEngineApi.withExternalEngines)
 
   private def withTree(
       pov: Pov,

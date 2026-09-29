@@ -41,12 +41,6 @@ export const bind = (ctrl: AnalyseCtrl) => {
       ctrl.redraw();
     })
     .bind('shift+i', () => ctrl.settings.set('inline', !ctrl.settings.inline));
-  kbd.bind('space', () => {
-    if (ctrl.practice || ctrl.retro?.isSolving()) return undefined;
-    else if (ctrl.cevalEnabled()) ctrl.playBestMove();
-    else if (ctrl.isCevalAllowed() && ctrl.ceval.analysable) ctrl.cevalEnabled(!ctrl.cevalEnabled());
-    return undefined;
-  });
 
   kbd
     .bind('h', () => {
@@ -60,13 +54,10 @@ export const bind = (ctrl: AnalyseCtrl) => {
       if (ctrl.keyboardHelp) pubsub.emit('analysis.closeAll');
       ctrl.redraw();
     })
-    .bind('l', () => {
-      if (ctrl.isCevalAllowed() && ctrl.ceval.analysable) ctrl.cevalEnabled(!ctrl.cevalEnabled());
-    })
     .bind('z', () => ctrl.settings.set('showStaticAnalysis', !ctrl.settings.showStaticAnalysis))
     .bind('a', () => ctrl.settings.set('showBestMoveArrows', !ctrl.settings.showBestMoveArrows))
-    .bind('v', () => ctrl.settings.set('showVariationArrows', !ctrl.settings.showVariationArrows))
-    .bind('x', () => ctrl.toggleThreatMode());
+    .bind('v', () => ctrl.settings.set('showVariationArrows', !ctrl.settings.showVariationArrows));
+  // (unit 3.5) the engine keys (space, l, x) are gone
   kbd
     .bind(['shift+left', 'shift+k'], () => {
       ctrl.navigate.previousBranch();

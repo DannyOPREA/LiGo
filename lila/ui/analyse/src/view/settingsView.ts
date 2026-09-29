@@ -24,11 +24,6 @@ const settings: Record<SettingKey, Setting> = {
     group: i18n.preferences.generalSettings,
     helpHtml: videoHtml('info-static-analysis'),
   },
-  showGauge: {
-    label: i18n.preferences.showGauge,
-    group: i18n.preferences.generalSettings,
-    helpHtml: imageHtml('info-evaluation-gauge'),
-  },
   inline: {
     label: i18n.preferences.inlineNotation,
     shortcutHtml: '<kbd>shift</kbd> +<kbd>i</kbd>',
@@ -39,11 +34,6 @@ const settings: Record<SettingKey, Setting> = {
     label: i18n.preferences.disclosureMode,
     group: i18n.preferences.moveListSettings,
     helpHtml: videoHtml('info-disclosure-mode'),
-  },
-  showLiveAnnotations: {
-    label: i18n.preferences.showLiveGlyphs,
-    group: i18n.preferences.moveListSettings,
-    helpHtml: videoHtml('info-live-annotations'),
   },
   showBestMoveArrows: {
     label: i18n.preferences.showBestMoveArrows,
@@ -58,13 +48,6 @@ const settings: Record<SettingKey, Setting> = {
     helpHtml: $html`
       ${videoHtml('info-variation-arrows')}
       <span>${i18n.site.keyCycleSelectedVariation} <kbd>shift</kbd></span>`,
-  },
-  showManeuverMoveArrows: {
-    label: i18n.preferences.showManeuverArrows,
-    group: i18n.preferences.boardSettings,
-    helpHtml: $html`
-      ${imageHtml('info-maneuver-arrows')}
-      <span>${i18n.preferences.maneuverArrowsHelp}</span>`,
   },
   showMoveAnnotationsOnBoard: {
     label: i18n.preferences.showMoveAnnotationsOnBoard,
@@ -265,11 +248,6 @@ function videoHtml(path: string) {
       <source src="${site.asset.url('video/' + path + '.webm')}" type="video/webm">
     </video>
     <br>`;
-}
-
-// lichess's help images were non-free and are gone (unit 3.1); analysis help returns in Phase 7.
-function imageHtml(_path: string) {
-  return '';
 }
 
 async function preload(html: string): Promise<Node[]> {

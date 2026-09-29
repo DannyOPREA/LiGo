@@ -292,17 +292,6 @@ final class SitePages(helpers: Helpers):
           )
         )
 
-  def getFishnet =
-    Page("fishnet API key request")
-      .csp(_.withGoogleForm):
-        main:
-          iframe(
-            src := "https://docs.google.com/forms/d/e/1FAIpQLSeGgDHgWGP0uobQknF92eCMXqebyNBTyzJoJqbeGjRezlbWOw/viewform?embedded=true",
-            style := "width:100%;height:1400px",
-            st.frameborder := 0,
-            frame.credentialless
-          )(spinner)
-
   def errorPage =
     Page("Internal server error"):
       main(cls := "page-small box box-pad")(

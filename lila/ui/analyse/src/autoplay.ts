@@ -15,7 +15,7 @@ export class Autoplay {
 
   private move(): boolean {
     const child = this.ctrl.node.children[0];
-    if (child && !this.ctrl.retro?.preventGoingToNextMove()) {
+    if (child) {
       const path = this.ctrl.path + child.id;
       if (this.ctrl.canJumpTo(path)) {
         this.ctrl.jump(path);

@@ -61,19 +61,19 @@ The `exports` object [(typescript)](https://www.typescriptlang.org/docs/handbook
 
     ...
 
-    "./ceval": {
-      "types": "./dist/ceval/index.d.ts"
+    "./tree": {
+      "types": "./dist/tree/index.d.ts"
       "import": {
-        "source": "./src/ceval/index.ts",
-        "default": "./dist/ceval/index.js"
+        "source": "./src/tree/index.ts",
+        "default": "./dist/tree/index.js"
       }
     }
   }
 ```
-An external package can import from the lib/ceval/index.ts barrel with:
+An external package can import from the lib/tree/index.ts barrel with:
 
 ```typescript
-import { type X, Y, Z } from 'lib/ceval';
+import { type X, Y, Z } from 'lib/tree';
 ```
 
 ## esbuild import resolution
@@ -138,11 +138,11 @@ When that module is requested by a browser, the lila server injects those inline
 
 The sync object describes filesystem copies performed by ui/build. Sync operations are listed as properties where each key is a source path/glob and its value is a destination folder. In watch mode, ui/build will copy assets to the destination folder whenever they change.
 
-One usage for sync is to copy npm package assets from node_modules to the /public/npm folder where they can be fetched and imported dynamically, often because they are too large to bundle. This example from [/ui/lib/package.json](./lib/package.json) copies assorted stockfish wasms to /public/npm:
+One usage for sync is to copy npm package assets from node_modules to the /public/npm folder where they can be fetched and imported dynamically, often because they are too large to bundle. This example from [/ui/lib/package.json](./lib/package.json) copies the chessground bundle to /public/npm:
 
 ```json
     "sync": {
-      "node_modules/*stockfish*/*.{js,wasm}": "/public/npm"
+      "/node_modules/@lichess-org/chessground/dist/chessground.min.js": "/public/npm"
     },
 ```
 

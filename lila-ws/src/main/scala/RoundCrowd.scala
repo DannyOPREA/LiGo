@@ -32,15 +32,6 @@ final class RoundCrowd(
       publish(roomId, newRound)
       Option.unless(newRound.isEmpty)(newRound)
 
-  def botOnline(roomId: RoomId, color: Color, online: Boolean): Unit =
-    rounds.compute(roomId): cur =>
-      cur
-        .getOrElse(RoundState())
-        .botOnline(color, online)
-        .fold(cur): round =>
-          publish(roomId, round)
-          Option.unless(round.isEmpty)(round)
-
   def getUsers(roomId: RoomId): Set[User.Id] =
     rounds.get(roomId).fold(Set.empty)(_.room.users.keySet)
 
@@ -102,8 +93,5 @@ object RoundCrowd:
         room = if player.isDefined then room else room.disconnect(user),
         players = player.fold(players)(c => players.update(c, nb => Math.max(0, nb - 1)))
       )
-    def botOnline(color: Color, online: Boolean): Option[RoundState] = Some:
-      if online then connect(None, Some(color))
-      else disconnect(None, Some(color))
 
     def isEmpty = room.isEmpty && players.forall(1 > _)

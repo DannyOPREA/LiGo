@@ -21,10 +21,6 @@ body {
   ---analyse-gauge-col: #{$analyse-block-gap};
   ---analyse-gauge-offset: calc(var(---analyse-gauge-col) - #{$analyse-gauge-gap});
 
-  &.gauge-on {
-    ---analyse-gauge-col: calc(#{$block-gap} + #{$analyse-gauge-gap} * 2);
-  }
-
   &__side {
     grid-area: side;
     justify-content: start;
@@ -64,12 +60,6 @@ body {
 
   .chat__members {
     grid-area: uchat;
-  }
-
-  .eval-gauge {
-    grid-area: gauge;
-    display: none;
-    margin: 0 $analyse-gauge-gap;
   }
 
   .keyboard-move {
@@ -130,10 +120,6 @@ body {
 
     &__underboard {
       margin-top: $analyse-block-gap;
-    }
-
-    .eval-gauge {
-      display: block;
     }
 
     .keyboard-move {

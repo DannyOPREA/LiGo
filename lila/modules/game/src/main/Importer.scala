@@ -40,7 +40,7 @@ case class ImportData(pgn: PgnStr, analyse: Option[String])
 val form = Form:
   mapping(
     "pgn" -> nonEmptyText.into[PgnStr].verifying("invalidPgn", p => parseImport(p, none).isRight),
-    "analyse" -> optional(nonEmptyText)
+    "analyse" -> optional(nonEmptyText) // ignored since fishnet went (unit 3.5); old clients still send it
   )(ImportData.apply)(unapply)
 
 val parseImport: (PgnStr, Option[UserId]) => Either[ErrorStr, ImportedGame] = (pgn, user) =>

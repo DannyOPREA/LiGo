@@ -2,7 +2,7 @@ import { h, thunk, type VNode } from 'snabbdom';
 
 import { getPlayer } from 'lib/game';
 import { licon } from 'lib/licon';
-import { bind, dataIcon, onInsert } from 'lib/view';
+import { dataIcon, onInsert } from 'lib/view';
 import { ratingDiff, profileUrl } from 'lib/view/userLink';
 
 import type AnalyseCtrl from '@/ctrl';
@@ -25,7 +25,7 @@ const renderPlayer = ({ data }: AnalyseCtrl, color: Color): VNode => {
       ' ',
       ratingDiff(player),
     ]);
-  return h('span', player.name || (player.ai && 'Stockfish level ' + player.ai) || 'Anonymous');
+  return h('span', player.name || 'Anonymous');
 };
 
 const advices: Advice[] = [
@@ -85,19 +85,7 @@ const doRender = (ctrl: AnalyseCtrl): VNode => {
         });
       }),
     },
-    [
-      playerTable(ctrl, 'white'),
-      h(
-        'a.button.text',
-        {
-          class: { active: !!ctrl.retro },
-          attrs: dataIcon(licon.PlayTriangle),
-          hook: bind('click', ctrl.toggleRetro, ctrl.redraw),
-        },
-        i18n.site.learnFromYourMistakes,
-      ),
-      playerTable(ctrl, 'black'),
-    ],
+    [playerTable(ctrl, 'white'), playerTable(ctrl, 'black')],
   );
 };
 
@@ -127,10 +115,9 @@ export function render(ctrl: AnalyseCtrl): VNode | undefined {
 
   // don't cache until the analysis is complete!
   const buster = ctrl.data.analysis.partial ? Math.random() : '';
-  const cacheKey = String(buster) + !!ctrl.retro;
 
   return h('div.analyse__round-training', [
-    h('div.analyse__acpl', thunk('div.advice-summary', doRender, [ctrl, cacheKey])),
+    h('div.analyse__acpl', thunk('div.advice-summary', doRender, [ctrl, String(buster)])),
     puzzleLink(ctrl),
   ]);
 }

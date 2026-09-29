@@ -6,7 +6,6 @@ import type LobbyController from '@/ctrl';
 import { colorButtons } from './components/colorButtons';
 import { fenInput } from './components/fenInput';
 import { gameModeButtons } from './components/gameModeButtons';
-import { levelButtons } from './components/levelButtons';
 import { ratingDifferenceSliders } from './components/ratingDifferenceSliders';
 import { ratingView } from './components/ratingView';
 import { variantPicker } from './components/variantPicker';
@@ -17,7 +16,6 @@ export default function setupModal(ctrl: LobbyController): VNode[] | null {
   const buttonText = {
     hook: i18n.site.createLobbyGame,
     friend: setupCtrl.friendUser ? i18n.site.challengeX(setupCtrl.friendUser) : i18n.site.challengeAFriend,
-    ai: i18n.site.playAgainstComputer,
   }[setupCtrl.gameType];
   const disabled = !setupCtrl.valid() || setupCtrl.loading;
   return [
@@ -71,12 +69,5 @@ const views = {
     timePickerAndSliders(ctrl.setupCtrl.timeControl, 0),
     gameModeButtons(ctrl),
     colorButtons(ctrl.setupCtrl),
-  ],
-  ai: ({ setupCtrl }: LobbyController): LooseVNodes => [
-    variantPicker(setupCtrl),
-    fenInput(setupCtrl),
-    timePickerAndSliders(setupCtrl.timeControl, setupCtrl.minimumTimeIfReal()),
-    levelButtons(setupCtrl),
-    colorButtons(setupCtrl),
   ],
 };

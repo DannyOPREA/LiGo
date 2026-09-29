@@ -6,7 +6,7 @@ import play.api.libs.json.{ Json, JsObject }
 import lila.app.UiEnv.{ *, given }
 import lila.round.RoundGame.secondsSinceCreation
 
-val ui = lila.analyse.ui.AnalyseUi(helpers)(analyseEndpoints)
+val ui = lila.analyse.ui.AnalyseUi(helpers)
 
 object replay:
 
@@ -74,9 +74,9 @@ object embed:
       title = trans.site.analysis.txt(),
       cssKeys = List("analyse.free.embed"),
       pageModule = ui.bits
-        .analyseModule("userAnalysis", Json.obj("data" -> data, "embed" -> true) ++ ui.cevalConfig)
+        .analyseModule("userAnalysis", Json.obj("data" -> data, "embed" -> true))
         .some,
-      csp = _.withExternalAnalysisApis.withWebAssembly,
+      csp = _.withWikiBooks,
       i18nModules = List(_.site, _.timeago, _.study, _.preferences)
     )(
       ui.bits.embedUserAnalysisBody,

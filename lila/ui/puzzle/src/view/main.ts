@@ -2,11 +2,8 @@ import { render as renderKeyboardMove } from 'keyboard-move';
 import { type VNode, h } from 'snabbdom';
 import { renderVoiceBar } from 'voice';
 
-import { view as cevalView } from 'lib/ceval';
-import { dispatchChessgroundResize } from 'lib/chessgroundResize';
 import { licon, type LiconValue } from 'lib/licon';
 import { addPointerListeners } from 'lib/pointer';
-import { Coords } from 'lib/prefs';
 import { storage } from 'lib/storage';
 import {
   toggleButton as boardMenuToggleButton,
@@ -73,74 +70,47 @@ function controls(ctrl: PuzzleCtrl): VNode {
   ]);
 }
 
-let cevalShown = false;
+let evalShown = false;
 
 export default function (ctrl: PuzzleCtrl): VNode {
-  const gaugeOn = ctrl.showEvalGauge();
-
-  if (cevalShown !== ctrl.showEvaluation()) {
-    if (!cevalShown) ctrl.autoScrollNow = true;
-    cevalShown = ctrl.showEvaluation();
+  if (evalShown !== ctrl.showEvaluation()) {
+    if (!evalShown) ctrl.autoScrollNow = true;
+    evalShown = ctrl.showEvaluation();
   }
 
-  return hl(
-    `main.puzzle.puzzle-${ctrl.data.replay ? 'replay' : 'play'}`,
-    {
-      class: { 'gauge-on': gaugeOn },
-      hook: {
-        postpatch(old, vnode) {
-          if (old.data!.gaugeOn !== gaugeOn) {
-            if (ctrl.pref.coords === Coords.Outside) {
-              $('body').toggleClass('coords-in', gaugeOn).toggleClass('coords-out', !gaugeOn);
-            }
-            dispatchChessgroundResize();
-          }
-          vnode.data!.gaugeOn = gaugeOn;
-        },
-      },
-    },
-    [
-      renderBlindfoldToggle(ctrl.blindfold),
-      hl('aside.puzzle__side', [replay(ctrl), puzzleBox(ctrl), userBox(ctrl), theme(ctrl), config(ctrl)]),
-      hl(
-        'div.puzzle__board.main-board' + (ctrl.blindfold() ? '.blindfold' : ''),
-        {
-          hook:
-            'ontouchstart' in window || !storage.boolean('scrollMoves').getOrDefault(true)
-              ? undefined
-              : bindNonPassive(
-                  'wheel',
-                  stepwiseScroll(
-                    e => {
-                      if (e.deltaY > 0) control.next(ctrl);
-                      else if (e.deltaY < 0) control.prev(ctrl);
-                      ctrl.redraw();
-                    },
-                    e => !['PIECE', 'SQUARE', 'CG-BOARD'].includes((e.target as HTMLElement).tagName),
-                  ),
+  return hl(`main.puzzle.puzzle-${ctrl.data.replay ? 'replay' : 'play'}`, {}, [
+    renderBlindfoldToggle(ctrl.blindfold),
+    hl('aside.puzzle__side', [replay(ctrl), puzzleBox(ctrl), userBox(ctrl), theme(ctrl), config(ctrl)]),
+    hl(
+      'div.puzzle__board.main-board' + (ctrl.blindfold() ? '.blindfold' : ''),
+      {
+        hook:
+          'ontouchstart' in window || !storage.boolean('scrollMoves').getOrDefault(true)
+            ? undefined
+            : bindNonPassive(
+                'wheel',
+                stepwiseScroll(
+                  e => {
+                    if (e.deltaY > 0) control.next(ctrl);
+                    else if (e.deltaY < 0) control.prev(ctrl);
+                    ctrl.redraw();
+                  },
+                  e => !['PIECE', 'SQUARE', 'CG-BOARD'].includes((e.target as HTMLElement).tagName),
                 ),
-        },
-        [chessground(ctrl), ctrl.promotion.view()],
-      ),
-      cevalView.renderGauge(ctrl),
-      hl('div.puzzle__tools', [
-        ctrl.voiceMove ? renderVoiceBar(ctrl.voiceMove.ctrl, ctrl.redraw, 'puz') : null,
-        // we need the wrapping div here
-        // so the siblings are only updated when ceval is added
-        hl(
-          'div.ceval-wrap',
-          { class: { none: !ctrl.showEvaluation() } },
-          ctrl.showEvaluation() ? [cevalView.renderCeval(ctrl), cevalView.renderPvs(ctrl)] : [],
-        ),
-        renderAnalyse(ctrl),
-        feedbackView(ctrl),
-      ]),
-      controls(ctrl),
-      ctrl.keyboardMove && renderKeyboardMove(ctrl.keyboardMove),
-      session(ctrl),
-      ctrl.keyboardHelp() && keyboardView(ctrl),
-    ],
-  );
+              ),
+      },
+      [chessground(ctrl), ctrl.promotion.view()],
+    ),
+    hl('div.puzzle__tools', [
+      ctrl.voiceMove ? renderVoiceBar(ctrl.voiceMove.ctrl, ctrl.redraw, 'puz') : null,
+      renderAnalyse(ctrl),
+      feedbackView(ctrl),
+    ]),
+    controls(ctrl),
+    ctrl.keyboardMove && renderKeyboardMove(ctrl.keyboardMove),
+    session(ctrl),
+    ctrl.keyboardHelp() && keyboardView(ctrl),
+  ]);
 }
 
 function session(ctrl: PuzzleCtrl): MaybeVNode {

@@ -7,7 +7,6 @@ import lila.core.i18n.Translate
 import lila.common.Json.given
 
 final class PuzzleComplete(
-    api: PuzzleApi,
     finisher: PuzzleFinisher,
     session: PuzzleSessionApi,
     selector: PuzzleSelector,

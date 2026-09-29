@@ -14,13 +14,15 @@ import lila.core.game.{ FinishGame, StartGame }
 import lila.core.challenge.PositiveEvent
 import lila.game.Rematches
 import lila.user.{ LightUserApi, Me, UserRepo }
-import lila.bot.OnlineApiUsers.*
+
+// Keep-alive ticks of the stream (they used to live in the bot module's OnlineApiUsers).
+private case object SetOnline
+private case object CheckOnline
 
 final class EventStream(
     challengeJsonView: lila.challenge.JsonView,
     challengeMaker: lila.challenge.ChallengeMaker,
     challengeApi: lila.challenge.ChallengeApi,
-    onlineApiUsers: lila.bot.OnlineApiUsers,
     userRepo: UserRepo,
     gameJsonView: lila.game.JsonView,
     rematches: Rematches,
@@ -82,8 +84,7 @@ final class EventStream(
       def receive =
 
         case SetOnline =>
-          onlineApiUsers.setOnline(me)
-
+          // It also marked bot and board API users online; that went with the bot module (unit 3.5).
           if lastSetSeenAt.isBefore(nowInstant.minusMinutes(10)) then
             userRepo.setSeenAt(me)
             lastSetSeenAt = nowInstant
