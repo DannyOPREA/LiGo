@@ -489,6 +489,32 @@ What stays out of Phase 6: 13×13 pools (no server games on 13×13 yet, ADR 0021
 arenas (removed in 3.2), bots to play while waiting (LiGo has none), correspondence notifications
 (Phase 7), and lobby chat (lila's lobby has none).
 
+**Phase 7 units** (broken down 2026-09-29 while Phases 3–6 were being built; the flows are §3.8
+items 3–5, the browser's SGF and board are [ADR 0014](decisions/0014-ogs-goban-for-client-rules-and-board.md),
+the stored game and its correspondence clock [ADR 0019](decisions/0019-go-core-types-schema-protocol.md),
+the scoring phase's 1-day correspondence timeout [ADR 0020](decisions/0020-scoring-phase-protocol-and-byoyomi-shape.md),
+and the kept `analyse`, `tree`, `notify` and `push` modules [ADR 0018](decisions/0018-phase-3-module-map.md).
+lila already has each piece (the analysis board and its move tree, `/paste` import, the days-per-move
+clock, `CorresAlarm` reminders, notifications and web push), so the lila units adapt them. As in
+Phases 4–6, the library halves are split from their lila halves so they can be built early: units
+7.1–7.3 need nothing from Phases 3–6 beyond what has merged, so they run now; 7.4–7.8 wait for
+Phase 3's game, round, analysis and UI units and Phase 4's scoring and SGF export. Eight units, above
+the table's 4–7, for that split):
+
+| Unit | What | Needs |
+|---|---|---|
+| 7.1 | Design ADR for Phase 7: the analysis board (adapt lila's `ui/analyse` and its move tree with `libs/board` in place of chessground, or a page on goban's own move tree; what a tree node holds for Go; board sizes, including 13×13 since nothing is stored; setup stones and whether ADR 0018's Go position editor is a mode of it; the engine hook stubbed); SGF import (where parsing happens: the browser with goban-engine, the server, or both; the server-side reader's build-vs-buy check; what an imported game is in Mongo, 3.12's model with an "import" source, and which sizes, rulesets, handicaps and broken files it accepts; variations and comments kept or dropped when stored); SGF export from the analysis board with variations and comments, beside 4.11's game export; correspondence (the days-per-move choices and ADR 0005's presets, timeouts and Titivate, which notifications "your turn", "game over" and `CorresAlarm`'s low-time reminder send in `notify` and web push, whether lila's forecasts (conditional moves) survive, how a player finds the games where it is their turn) | — |
+| 7.2 | The analysis tree in `libs/board`: an SGF game tree over goban-engine (its SGF reader, with setup stones, handicap, `PL`, passes, comments and variations), navigation, adding, deleting and promoting variations, and an SGF writer for the whole tree; tests on an SGF corpus (unit 1.8's 227 server games, the quirks in the `sgf` skill: lower-case properties, missing `SZ`, `tt` passes, escaped brackets, broken files rejected with a message) and a parse → write → parse round-trip. New code only: no page uses it yet | 7.1 |
+| 7.3 | The server's SGF reader in `libs/go-rules`, as 7.1's build-vs-buy check decides: an FF[4] game read into a `GoGame` through the rules (main line, setup and handicap stones, komi, ruleset, players, result), illegal or unsupported files rejected with a reason, round-trip tests with `Sgf.write` and the conformance fixtures | 7.1 |
+| 7.4 | The analysis board page: lila's `/analysis` on `libs/board` with 7.2's tree (move list with variations and comments, keyboard and button navigation, new position on 9×9, 13×13 or 19×19, setup stones, load SGF by paste or file, download SGF), desktop and phone layouts with screenshot tests; replaces 3.16's placeholder | 3.16, 3.18, 7.2 |
+| 7.5 | SGF import and game analysis: `/paste` and `/api/import` take SGF through 7.3's reader and store the game as 7.1 decided; any finished game, live or imported, opens in the analysis board from its game page (`/<gameId>/analysis`) with its SGF download from 4.11; PGN import's leftovers gone | 3.12, 3.17, 4.11, 7.3, 7.4 |
+| 7.6 | Correspondence on the server: Go games on lila's days-per-move clock (the choices in the setup and challenge forms and 6.5's presets, where 3.15 and 4.9 don't already offer them), timeouts, the scoring phase's 1-day timeout in correspondence games, `CorresAlarm` reminders, "your turn" and "game over" notifications in `notify` and web push, and forecasts as 7.1 decided | 3.13, 3.15, 4.8, 7.1 |
+| 7.7 | Correspondence UI: the round page's days clock, the scoring phase's countdown in days, the list of games where it is your turn (lila's "playing" list and the round's next-game button), the notification entries; desktop and phone screenshot tests | 3.18, 4.10, 7.6 |
+| 7.8 | Phase 7 demo: a Playwright test that imports a public-domain pro game from SGF, explores it, adds a variation and exports it (the file read back by goban-engine), and two players who finish a correspondence game (a move each, notifications seen, two passes and an accepted proposal); the demo checklist for you | 3.20, 4.12, 7.5, 7.7 |
+
+What stays out of Phase 7: an engine in the analysis board and KataGo post-game review (after the POC,
+§1.3), studies and shared analysis (removed in 3.3), game search (removed in 3.7), email notifications (in-site and web push only, §3.8), and correspondence tournaments.
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.
