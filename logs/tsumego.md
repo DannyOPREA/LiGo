@@ -5,6 +5,29 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · Unit 8.3 (in progress, stopped) · tools/puzzles pipeline
+- Did: built `tools/puzzles` (catalogue, wall check, exact solver with Benson and a ko cut-off,
+  puzzle tree, difficulty, KaTrain frame port, KataGo second opinion via services/scoring's new
+  `analyse`, schema + `check`, SGF out and classics import, feasibility gate, CLI), `dev/ligo
+  puzzles` / `test puzzles`, a verify gate, a `puzzles` CI workflow, docker mounts, notices, and an
+  ADR 0025 amendment. 32 tests pass; the gate passed (250 of 265 settled in 46 s, seed 1).
+- Worked: the frame port matches KaTrain's Python exactly on 6 boards; the solver gives textbook
+  answers on every shape the reviewer probed.
+- Didn't work / dead ends: `workspace:*` links from tools/puzzles to services/scoring and libs/board
+  pointed at the wrong directory under pnpm 12, so both are imported by path.
+- Lessons: check a generator by a histogram of its real output, not only hand cases: the reviewer
+  found every puzzle 1 ply deep because the "settled" test let the opponent pass instead of moving
+  twice (fixed; 16 of 60 now go 3 to 7 plies). Defender stones in two groups made KataGo disagree;
+  the wall check now requires one group.
+- Decisions: none new beyond ADR 0025's amendment (to be added to logs/decisions.md with the PR,
+  plus the ajv dependency).
+- Verified by Claude: typecheck, lint, tests (with real KataGo), `dev/tests/run.sh` 56/56,
+  verify.sh (all gates but go-rules, blocked by the cloud proxy). Reviewer: 2 blocking (settled
+  test, missing log/decisions lines), the first fixed.
+- Follow-ups (on resume): a multi-move known-answer test; re-check the ADR amendment's wording
+  (settled rule, bands, KataGo checks first moves only, wrong-move order); decisions lines; the PR;
+  then 8.4. WIP is on branch `claude/phase-8-units-eujcc2`, no PR.
+
 ### 2026-09-29 · Unit 8.2 · ADR 0025: puzzle format, generator, trainer, puzzle rating
 - Did: finished ADR 0025 from the stopped draft: goban's own `PuzzleConfig` (OGS's puzzle JSON)
   plus provenance as the format, goban's puzzle mode as the browser's checker, the generator's
