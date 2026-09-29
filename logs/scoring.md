@@ -16,8 +16,45 @@
   parse as valid JSON but aren't the object shape a handler assumes, and `EventEmitter`/ioredis
   don't catch a listener's throw — an uncaught one takes the whole process down (2026-09-28, unit
   4.5 review fixes).
+- Grade autoscore's raw `result`/`needs_sealing` (as `src/grade.ts` does), never goscorer's `owner`, against OGS's `correct_ownership`: under Japanese rules `owner` marks territory only, so a correct answer would fail by construction (2026-09-29, unit 4.6).
 
 ## Entries (newest first)
+### 2026-09-29 · unit 4.6 · autoscore benchmark and the b18 network pin
+- Did: `dev/ligo scoring bench [--net PATH] [--games DIR] [--gate N] [--runs N] [--limit N]
+  [--timeout MS]` (`services/scoring/src/bench.ts`, grading in `src/grade.ts`). For each of OGS's
+  31 autoscore games (Apache-2.0, already vendored; COPYING.md's row for them now also names the benchmark) it asks a real
+  KataGo for the two ownership maps, runs `autoscore`, and grades its raw `result`,
+  `needs_sealing` and `sealed_result` against the file, with the pass rule of
+  `test/autoscore.test.ts` (moved into `src/grade.ts`, used by both, including the reverse
+  "flagged points must be 's' or '*'" check). Secondary, never gated: whether the widened dead set
+  agrees with the file's stones. Runs the set `--runs N` times (default 3); the gate is total
+  correct / total game-runs >= `--gate` (97% of 93 allows 2 misses); non-zero exit only with
+  `--gate`. Report in `.ligo/scoring-bench/report.json`. A unit test grades OGS's stored maps with
+  the same grader and expects 31/31. `dev/katago.sh`: `env` also prints `KATAGO_NET`; `net_path`
+  refuses an unverified b18 (test network, stderr warning; `LIGO_KATAGO_ALLOW_UNVERIFIED=1`
+  overrides); install re-checks a present b18 against `NET_SHA256` once pinned; the pin only
+  applies to the pinned network name, a `LIGO_KATAGO_NET` override is always unverified.
+- Honest limits of the set: it is autoscore's own regression set. OGS tuned autoscore against it,
+  8 of the 31 are synthetic corner/dev tests, and the expected results were corrected by hand, not
+  agreed by the players, so the figure leans optimistic and the plan row's "games with agreed
+  results" is only partly met. A larger set of real finished games is a follow-up. Komi is 7.5
+  (files carry none; the unit 1.3 spike used it).
+- Worked: reusing the vendored set and OGS's own pass rule.
+- Didn't work: a first grader compared `countGiven`'s goscorer `owner` (and the seal list after
+  dead chains were removed) with `correct_ownership`. Under Japanese rules `owner` marks territory
+  only, not living stones, so even OGS's stored maps scored 29/31 (game_35115094,
+  game_seki_64848549) by construction; the review caught it. An earlier attempt compared the board
+  with dead stones blanked and failed 31/31. pnpm 12 forwards a literal `--` to the script, so
+  `parseArgs` skips a bare `--`.
+- Lessons: grade autoscore's raw `result`/`needs_sealing`, never goscorer's `owner`, against
+  `correct_ownership` (2026-09-29, unit 4.6).
+- Decisions: three lines in logs/decisions.md (2026-09-29): the set and grading, and the gate over
+  `--runs`. Unverified b18 is refused (safer than warning). No self-play set. No CI job: the bench
+  takes minutes on CPU, so it stays a `dev/ligo` command.
+- Pending on the owner: the b18 sha256 (katagotraining.org and web.archive.org are blocked from the
+  cloud) and the network's licence text (PLAN §9); the >= 97% gate on his GPU.
+- Cloud smoke figure: `dev/ligo scoring bench --runs 1` with the b6 test network on 4 Eigen CPU vCPUs: 28/31 (90.3%, 113 s); failing: game_33822914, game_beta_17150, game_seki_64848549; dead-set agreement 29/31 (secondary). Not deterministic (earlier, differently graded runs gave 27 and 28), and NOT the gate. `dev/ligo test scoring`: 122 tests, 0 fail (bench/grade tests included).
+
 ### 2026-09-28 · unit 4.5 review fixes · a null-message crash, docker mode's worker, a restart loop
 - Did (review of the entry below, all under the owner's 2026-09-28 delegation): fixed a real
   crash — `JSON.parse('null')`, `JSON.parse('[]')` and `JSON.parse('5')` all succeed (valid JSON),
