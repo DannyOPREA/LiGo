@@ -14,7 +14,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
   wait for Phase 3 units 3.12–3.20. Logs: logs/scoring.md, logs/clocks.md.
 
 - Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
-  docs/PLAN.md §5. 5.1 (design ADR) and 5.2 (rating maths in `lila/modules/rating`) need nothing
+  docs/PLAN.md §5. 5.1 (design, ADR 0021) and 5.2 (rating maths in `lila/modules/rating`) need nothing
   from Phases 3–4 and run now; 5.3–5.8 wait for Phase 3 units 3.11–3.20 (and 4.9). Log: logs/ratings.md.
 
 ## Now
