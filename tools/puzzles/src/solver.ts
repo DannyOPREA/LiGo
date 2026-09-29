@@ -177,6 +177,11 @@ export class Solver {
     return result;
   }
 
+  /** The value of the current position with best play from here (the budget clock keeps running). */
+  valueNow(depth = 1): Value {
+    return this.search(depth);
+  }
+
   /** The value after `at` is played by the side to move (the position itself is unchanged). */
   valueAfter(at: Point | null, depth = 1): Value | 'illegal' {
     const m = this.move(at);

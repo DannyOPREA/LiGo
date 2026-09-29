@@ -82,7 +82,10 @@ export function buildPuzzle(
     if (++nodes > limits.maxNodes) throw new Dropped(`tree over ${limits.maxNodes} nodes`);
   };
 
-  /** Whether the result can't change even if the side to move (the opponent) plays twice. */
+  /**
+   * Whether the result can't change even if the opponent (the side to move) plays twice in a row:
+   * for every reply, the player passes and the opponent moves again, and the player still wins.
+   */
   const settled = (): boolean => {
     if (s.terminal() === mine) return true;
     for (const r of s.candidates()) {
@@ -90,10 +93,10 @@ export function buildPuzzle(
       if (m === false) continue;
       if (m === 'unknown') return false;
       s.forcePass();
-      const v = s.valueAfter(null, 2);
+      const v = s.valueNow(2);
       s.back();
       s.back();
-      if (v !== mine && v !== 'illegal') return false;
+      if (v !== mine) return false;
     }
     return true;
   };
@@ -131,7 +134,7 @@ export function buildPuzzle(
         deepest = ply + 1;
         count();
         const branches = playerMoves(ply + 2);
-        if (branches.length === 0) throw new Dropped('no winning answer to a reply (unsound)');
+        if (branches.length === 0) throw new Dropped('the only answer to a reply is to pass');
         replies.push({ node: { x: r.x, y: r.y, branches }, depth: deepest });
         deepest = Math.max(before, deepest);
       } finally {

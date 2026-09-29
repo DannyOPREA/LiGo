@@ -125,6 +125,8 @@ export class SecondOpinion {
         boardYSize: size,
         maxVisits: this.setup.visits,
         includeOwnership: true,
+        // Ownership from Black's side whatever the config says (the sign below relies on it).
+        overrideSettings: { reportAnalysisWinratesAs: 'BLACK' },
         avoidMoves: [
           { player: 'B', moves: avoid, untilDepth: 100 },
           { player: 'W', moves: avoid, untilDepth: 100 },

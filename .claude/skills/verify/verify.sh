@@ -70,7 +70,7 @@ fi
 if has '^services/scoring/|^libs/conformance/fixtures/|^dev/katago\.sh$|^dev/ligo$'; then
   add "scoring: typecheck, lint, tests" "dev/ligo test scoring"
 fi
-if has '^tools/puzzles/|^services/scoring/|^libs/board/|^dev/katago\.sh$|^dev/ligo$'; then
+if has '^tools/puzzles/|^services/scoring/|^libs/board/|^lila/pnpm-(lock|workspace)\.yaml$|^dev/katago\.sh$|^dev/ligo$'; then
   add "puzzles: typecheck, lint, tests, check" "dev/ligo test puzzles"
 fi
 

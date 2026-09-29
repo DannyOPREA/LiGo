@@ -114,7 +114,7 @@ export function boundsOf(pos: Position): Bounds {
  * band's starting rating and a spread of ±150 within it.
  */
 export const BANDS = [800, 1200, 1600, 2000] as const;
-export const BAND_EDGES = [1.5, 2, 2.5];
+export const BAND_EDGES = [1.35, 1.7, 2.25];
 
 export function difficulty(b: Built): { score: number; rating: number } {
   const score = (b.depth - 1) / 2 + Math.log10(1 + b.solverNodes) / 2 + Math.min(b.wrongFirstMoves, 8) / 8;

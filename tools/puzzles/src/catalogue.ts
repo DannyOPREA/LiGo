@@ -29,7 +29,7 @@ export const SHAPES: Shape[] = [
   { name: 'straight three', rows: ['...'], anchors: ALL },
   { name: 'bent three', rows: ['..', '.-'], anchors: ALL },
   { name: 'straight four', rows: ['....'], anchors: ALL },
-  { name: 'bent four', rows: ['...', '-.'], anchors: ALL },
+  { name: 'bent four', rows: ['...', '.--'], anchors: ALL },
   { name: 'square four', rows: ['..', '..'], anchors: ALL },
   { name: 'pyramid four', rows: ['...', '-.-'], anchors: ALL },
   { name: 'straight five', rows: ['.....'], anchors: SIDES },

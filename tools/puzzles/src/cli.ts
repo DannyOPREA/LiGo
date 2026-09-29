@@ -40,6 +40,10 @@ export function checkFiles(files: string[]): string[] {
   const ids = new Map<string, string>();
   for (const file of files) {
     readPuzzles(file).forEach((p, i) => {
+      if (typeof p !== 'object' || p === null) {
+        problems.push(`${file} #${i + 1}: not a puzzle object`);
+        return;
+      }
       const where = `${file} #${i + 1} (${(p as { id?: string }).id ?? 'no id'})`;
       for (const e of check(p)) problems.push(`${where}: ${e}`);
       if (ids.has(p.id)) problems.push(`${where}: id also used in ${ids.get(p.id)}`);
