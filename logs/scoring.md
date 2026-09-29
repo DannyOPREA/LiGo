@@ -19,6 +19,18 @@
 - Grade autoscore's raw `result`/`needs_sealing` (as `src/grade.ts` does), never goscorer's `owner`, against OGS's `correct_ownership`: under Japanese rules `owner` marks territory only, so a correct answer would fail by construction (2026-09-29, unit 4.6).
 
 ## Entries (newest first)
+### 2026-09-29 · unit 4.6 follow-up · b18 network checksum pinned
+- Did: set `NET_SHA256` in `dev/katago.sh` to the sha256 the owner pasted from his own
+  `dev/ligo katago install opencl` download of `kata1-b18c384nbt-s9996604416-d4316597426.bin.gz`
+  (9d7a6afe…51f1d). `install`, `smoke`, `bench` and `scoring bench` now accept that file and
+  refuse any other; the comment and the owner's STATUS step no longer say "unpinned".
+- Worked: `bash dev/tests/run.sh`, shellcheck and verify pass; with a fake b18 file on disk
+  `dev/katago.sh env` still refuses it (checksum mismatch) and falls back to the test network.
+- Didn't / couldn't: the real file can't be downloaded here (media.katagotraining.org is not on
+  the cloud allowlist), so the pin itself is only checked on the owner's box. The network's
+  licence is still unread (katagotraining.org is blocked here); the owner's paste is pending.
+- Decisions: pin the owner's value as given (one line in logs/decisions.md).
+
 ### 2026-09-29 · unit 4.6 · autoscore benchmark and the b18 network pin
 - Did: `dev/ligo scoring bench [--net PATH] [--games DIR] [--gate N] [--runs N] [--limit N]
   [--timeout MS]` (`services/scoring/src/bench.ts`, grading in `src/grade.ts`). For each of OGS's

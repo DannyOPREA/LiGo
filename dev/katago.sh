@@ -45,17 +45,15 @@ TEST_NET_SHA256=f5d32604e3675c480c7c8f6aa579a1ea857135628a0afccc8fa56330fbacd38d
 # (media.katagotraining.org) is not on the cloud allowlist, so cloud sessions skip it, and
 # katagotraining.org/web.archive.org are also unreachable from this cloud session, so its
 # licence could not be read here (unit 4.6: pending the owner pasting it, logs/scoring.md).
-# TODO(owner, unit 4.6): after `dev/ligo katago install` downloads this network on your box, it
-# prints its sha256 — paste that value in below and re-run install once to have it verified. Until
-# NET_SHA256 is set, `net_path` (used by smoke/bench/env, so also by `dev/ligo scoring bench`)
-# refuses to use this network and falls back to the test network, so an unverified download is
-# never silently used for anything that matters (LIGO_KATAGO_ALLOW_UNVERIFIED=1 overrides this,
-# for trying it before the checksum is pinned).
+# NET_SHA256 was pasted by the owner from his own download on 2026-09-29 (logs/scoring.md). A
+# download that doesn't match it is refused, so `net_path` (used by smoke/bench/env, so also by
+# `dev/ligo scoring bench`) never silently uses an unverified network
+# (LIGO_KATAGO_ALLOW_UNVERIFIED=1 overrides this).
 PINNED_NET_NAME=kata1-b18c384nbt-s9996604416-d4316597426.bin.gz
 NET_NAME=${LIGO_KATAGO_NET:-$PINNED_NET_NAME}
 # NET_SHA256 belongs to PINNED_NET_NAME only: a network chosen with LIGO_KATAGO_NET is never
 # checked against it and always counts as unverified.
-NET_SHA256=
+NET_SHA256=9d7a6afed8ff5b74894727e156f04f0cd36060a24824892008fbb6e0cba51f1d
 NET_URL=https://media.katagotraining.org/uploaded/networks/models/kata1/$NET_NAME
 
 BIN_DIR="$HOME/.local/bin"
