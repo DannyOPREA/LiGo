@@ -2,6 +2,7 @@ package lila.rating
 
 import chess.{ ByColor, Color, Outcome }
 import chess.rating.glicko.{ Glicko, GlickoCalculator, Player, Tau }
+import scala.util.Try
 
 /* LiGo: Go ranks, handicap maths and the Go Glicko-2 settings (ADR 0013, ADR 0021).
  * LiGo's own code, MIT (COPYING.md §2), not derived from lila.
@@ -67,7 +68,9 @@ object GoRating:
 
   /* The rating at the lower edge of each rank, 25k to 9d. The browser turns
    * rank ranges into rating ranges with it, and the rating graph draws its
-   * kyu/dan axis from it (ADR 0021 §3). */
+   * kyu/dan axis from it (ADR 0021 §3). Edges are rounded up to whole
+   * points, and the first and last entries are open-ended: ratings below
+   * 25k's edge still show 25k, ratings above 9d's still show 9d. */
   val rankTable: List[(String, Int)] =
     Rank.all.map(r => r.name -> math.ceil(r.lowerRating).toInt)
 
@@ -79,6 +82,17 @@ object GoRating:
   )
   val defaultVolatility = 0.06d
   val maxVolatility = 0.15d
+
+  /* lila's floors and caps (ADR 0013 keeps them: rating ≥ 400, deviation
+   * 45–500) with OGS's volatility ceiling instead of lila's chess one.
+   * lila's `GlickoExt.cap` would cap volatility at 0.1, so Go uses this. */
+  def cap(g: Glicko): Glicko =
+    g.copy(
+      rating = g.rating.atLeast(lila.rating.Glicko.minRating.value),
+      deviation =
+        g.deviation.atLeast(lila.rating.Glicko.minDeviation).atMost(lila.rating.Glicko.maxDeviation),
+      volatility = g.volatility.atMost(maxVolatility)
+    )
 
   // a self-declared rank starts in the middle of that rank (ADR 0021 §2)
   val declaredDeviation = 250d
@@ -125,9 +139,10 @@ object GoRating:
   /* Rates one game: each player is updated against the opponent's effective
    * rating, one calculator call per player (ADR 0013; scalachess's own
    * `ColorAdvantage` is symmetric and fixed, so it can't do this). The
-   * players' `glicko` must already be their current values. */
-  def rateGame(players: ByColor[Player], outcome: Outcome, rankDiff: Double): Option[ByColor[Glicko]] =
-    def updated(color: Color): Option[Glicko] =
+   * players' `glicko` must already be their current values. Results are
+   * capped with `cap`; a failure is returned for the caller to log. */
+  def rateGame(players: ByColor[Player], outcome: Outcome, rankDiff: Double): Try[ByColor[Glicko]] =
+    def updated(color: Color): Try[Glicko] =
       val me = players(color)
       val opponent = players(!color)
       val shifted = opponent.copy(glicko =
@@ -137,8 +152,7 @@ object GoRating:
       val asWhite = Outcome(outcome.winner.map(w => if w == color then Color.White else Color.Black))
       calculator
         .computeGame(chess.rating.glicko.Game(ByColor(me, shifted), asWhite), skipDeviationIncrease = false)
-        .toOption
-        .map(_.white.glicko)
+        .map(r => cap(r.white.glicko))
     for
       black <- updated(Color.Black)
       white <- updated(Color.White)
@@ -147,7 +161,10 @@ object GoRating:
   /* Suggested handicap stones for two players' ratings (ADR 0021 §4): one
    * stone per rank on 19×19 and per 6 ranks on 9×9, halves rounded up, capped
    * at 9 and 4. 0 is an even game and 1 the no-komi game. Server games are
-   * 9×9 and 19×19 only (R-SCOPE-1), so any other size gets an even game. */
+   * 9×9 and 19×19 only (R-SCOPE-1), so any other size gets an even game.
+   * ADR 0021's other rule, an even game for an account that never declared
+   * a rank and never finished a rated game, needs the account and is
+   * applied by the caller (unit 5.7). */
   def suggestedStones(ratingA: Double, ratingB: Double, size: Int): Int =
     val gap = (rankOf(ratingA) - rankOf(ratingB)).abs
     size match

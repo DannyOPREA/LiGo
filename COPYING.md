@@ -63,6 +63,11 @@ copies.
 (`lila/public/logo/ligo*.svg`, `ligo*.png`, `public/favicon.ico`, `public/apple-touch-icon.png`),
 the small UI images in `lila/public/images/ligo/`, and their generator `lila/bin/gen/ligo-logo.mjs`.
 
+**LiGo's own Go rating maths** (MIT, like the rest of LiGo's own work, ADR 0013):
+`lila/modules/rating/src/main/GoRating.scala` and its test and test data
+(`lila/modules/rating/src/test/GoRatingTest.scala`, `src/test/resources/goRatingCases.{json,py}`),
+which port OGS's goratings (MIT, notice in `lila/modules/rating/NOTICE-goratings.md`; §3).
+
 ### 1.2 npm packages removed with Phase 3 features
 
 Unit 3.2 removed the `ui/tournament`, `ui/swiss` and `ui/simul` workspace packages and the npm

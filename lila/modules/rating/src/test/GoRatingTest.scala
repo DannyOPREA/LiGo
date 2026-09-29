@@ -173,3 +173,20 @@ class GoRatingTest extends munit.FunSuite:
     assertEquals(suggestedStones(ratingOf(5), ratingOf(38), 9), 4)
     // 13x13 is not offered for server games (R-SCOPE-1)
     assertEquals(suggestedStones(fiveKyu, oneDan, 13), 0)
+
+  test("provisional from deviation 110, as scalachess counts it"):
+    assertEquals(label(Glicko(1580, 110, 0.06)), "5k?")
+    assertEquals(label(Glicko(1580, 109.9, 0.06)), "5k")
+
+  test("a draw moves both ratings towards each other"):
+    val players = ByColor(
+      white = Player(Glicko(1900, 100, 0.06), 0, None),
+      black = Player(Glicko(1600, 100, 0.06), 0, None)
+    )
+    val after = rateGame(players, Outcome(None), 0).get
+    assert(after.white.rating < 1900)
+    assert(after.black.rating > 1600)
+
+  test("results are capped with OGS's volatility ceiling, not lila's chess one"):
+    assertEquals(cap(Glicko(300, 20, 0.14)), Glicko(400, 45, 0.14))
+    assertEquals(cap(Glicko(1500, 900, 0.3)), Glicko(1500, 500, 0.15))
