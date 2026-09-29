@@ -5,6 +5,24 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 9.1 · ADR 0026: PWA, sounds, themes, accessibility, budget, credits, handoff
+- Did: ADR 0026 for Phase 9.
+- Worked: lila's four kept sound sets (sfx, piano, nes, futuristic) each already have Move,
+  Capture, Confirmation, Error, GenericNotify, LowTime, CountDown0–10 and Victory/Defeat/Draw, so
+  every Go event maps onto an existing file. goban draws five boards and six stone styles from code
+  alone.
+- Didn't work / dead ends: no licence-checked stone-click sounds are reachable from the cloud
+  (freesound and opengameart time out; OGS's packs sit on its CDN with no licence); goban's wood,
+  granite and anime themes load unlicensed pictures from OGS's CDN.
+- Lessons: lila's manifest is built in Scala (`StaticContent.manifest`), not a static file; its
+  service worker caches nothing. Built sizes today (gzip -9): site JS 107 KiB, playground with site 112 KiB (own entry 3.6 KiB),
+  board chunk 142 KiB.
+- Decisions: all of ADR 0026, Claude's calls under the owner's 2026-09-28 delegation
+  (logs/decisions.md); dropping lila's blind mode is recorded there.
+- Verified by Claude: verify.sh; reviewer agent pass (1 blocking: axe-core is MPL-2.0, not on the licence list; 3 should-fix; all addressed). · Needs owner verification: whether dropping
+  blind mode and shipping no Go stone-click sound are acceptable.
+- Follow-ups: 9.2 to 9.5.
+
 ### 2026-09-29 · Phase 9 breakdown · PWA, polish and handoff split into units 9.1–9.10
 - Did: split Phase 9 into 10 units (docs/PLAN.md §5, "Phase 9 units"): a design ADR (9.1), sounds
   (9.2), board themes (9.3) and board accessibility (9.4) in `libs/board` and the playground, a
