@@ -12,6 +12,42 @@
 
 ## Entries (newest first)
 
+### 2026-09-29 · unit 7.2 · The analysis tree's SGF in libs/board
+- Did: `libs/board/src/sgf.mjs` (+ hand-written `sgf.d.mts`): `readTree` reads an SGF record into
+  lila-shaped nodes (id = the move, `..` a pass; stones, captures, ko, player to move, comments,
+  glyphs, other properties kept), replaying every move through `play`; `writeTree`, `playFrom`,
+  `decodeSgf`, `rootSettings`. The root table `libs/conformance/sgf/root.json` (42 cases: sizes,
+  rulesets, komi in stones, handicap, setup, player to move), shared with 7.3. `@sabaki/sgf` 3.5.0
+  added (MIT, with `doken`), 56 tests, and the parity test reads the 227 server SGF games with it.
+- Worked: `@sabaki/sgf` throws on a truncated file (goban's reader hangs), unescapes, expands old
+  long names (`AddBlack` → `AB`) and drops empty variations; goban's `jumpTo` makes a depth-first
+  replay with one engine cheap.
+- Didn't work / dead ends: `@sabaki/sgf` doesn't bundle for the browser as published: `parse.js`
+  requires `fs` and its optional charset detectors pull in Node's `buffer` and `string_decoder`.
+  Fixed with a one-field pnpm patch (`browser: { fs, iconv-lite, jschardet: false }`) and
+  `ignoredOptionalDependencies` for the detectors; `iconv-lite` still resolves through pnpm's
+  hoisting (another package uses 0.6.3), so the patch, not the ignore, is what keeps it out.
+  Deeply nested variations overflow its recursive parser (caught: RangeError → refusal).
+- Lessons: sibling order needs care in an explicit-stack DFS (push the level's children last to
+  first); run `libs/board` scripts from `lila/` (`pnpm --filter @ligo/board run …`), not from
+  `libs/board`, or pnpm treats it as a separate project and refuses esbuild's build script.
+- Decisions: the patch and `ignoredOptionalDependencies` (how ADR 0023's "charset packages not
+  installed" is done), a moveless node's notes join the move before it, the same move twice from one
+  position becomes one node, Claude under the owner's 2026-09-28 delegation (logs/decisions.md).
+- Verified by Claude: `node --test test/sgf.test.mjs` 56/56; lint, typecheck; `dev/ligo test rules`;
+  `dev/ligo compile ui`; verify.sh. · Needs owner verification: none beyond running
+  `dev/ligo test rules` on the Fedora box once (docker mode).
+- Review (reviewer agent) found and Claude fixed: stray pnpm files from running scripts in
+  `libs/board`; a move or `AE` in the first node silently dropped (now refused); quadratic time on
+  200 KB of moveless nodes or setup rectangles (12 s; now a 10,000-node cap, a Set, merges in place:
+  under 1 s); all-lowercase names silently dropped by @sabaki/sgf (now refused); lossy write-back
+  of merged notes and `HA[1]`; komi unbounded (now |komi| ≤ 1000); the length limit counted
+  characters (now bytes); `tt` accepted as a pass below 19×19. Left as is: `decodeSgf` can read a
+  `CA[` inside an early comment (a wrong charset only garbles text, the moves are ASCII).
+- Follow-ups: 7.3 replays `root.json` in Scala and refuses what this reader refuses (a move or `AE`
+  in the first node, capital-less names, over 10,000 nodes, over 200 KB in bytes); 7.4 wires
+  `readTree`/`writeTree` into `/analysis`.
+
 ### 2026-09-28 · unit 4.3 · Scoring phase, results and SGF game info in libs/go-rules
 - Did: `Scoring` (open on the service's proposal, whole-chain toggles, acceptances, count versions
   and pending recounts, ADR 0020 §3), `GameResult` (totals to `B+3.5` / jigo `0`, and `R`/`T`/`F`/

@@ -17,6 +17,9 @@ rules spec, to the server and to a real browser. How it works: [README.md](READM
   its engine changes (upstream-scout), keep `NOTICE.md` and COPYING.md in step (goscorer is
   bundled inside and its notice is dropped by goban's build), run `dev/ligo test rules`. A version
   bump is a dependency change.
+- **SGF is `src/sgf.mjs`** (ADR 0023): `@sabaki/sgf` reads and writes the text, every move is
+  replayed through `play`. Don't use goban-engine's SGF reader for new code (it hangs on broken
+  files); `readSgf` stays for unit 1.8's read-back test. `src/sgf.d.mts` types it by hand.
 - **Lila's pages only see `mountBoard`.** Nothing in lila imports goban; the board reports the
   player's move and the page (or server) decides by `play` or `cancel`. goban's plain theme only
   (its default loads a picture from OGS's CDN; picture themes need a licence check first).
