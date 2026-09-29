@@ -5,16 +5,8 @@ import type { ChatCtrl, ChatPlugin, ChatOpts } from 'lib/chat/interfaces';
 import type { Player, Status, Source, Clock } from 'lib/game';
 import type { Coords, MoveEvent } from 'lib/prefs';
 import type { EnhanceOpts } from 'lib/richText';
-import type {
-  PvDataServer,
-  ServerEval,
-  TreeNode,
-  TreeNodeBase,
-  TreeNodeLite,
-  TreePath,
-} from 'lib/tree/types';
+import type { TreeNode, TreeNodeBase, TreeNodeLite, TreePath } from 'lib/tree/types';
 
-import type { ExplorerOpts } from './explorer/interfaces';
 import type { ForecastData } from './forecast/interfaces';
 import type { AnalyseSocketSend } from './socket';
 
@@ -77,22 +69,6 @@ export interface ServerEvalData {
   division?: Division;
 }
 
-export interface EvalHit {
-  fen: FEN;
-  knodes: number;
-  depth: number;
-  pvs: PvDataServer[];
-  path: string;
-}
-
-export interface EvalHitMulti extends EvalScore {
-  fen: FEN;
-}
-
-export interface EvalHitMultiArray {
-  multi: EvalHitMulti[];
-}
-
 // similar, but not identical, to game/Game
 export interface Game {
   id: string;
@@ -150,7 +126,6 @@ export interface AnalyseOpts {
   data: AnalyseData;
   userId?: string;
   hunter: boolean;
-  explorer: ExplorerOpts;
   socketSend: AnalyseSocketSend;
   $side?: Cash;
   $underboard?: Cash;
@@ -169,18 +144,6 @@ export interface AnalyseOpts {
 
 export interface JustCaptured extends Piece {
   promoted?: boolean;
-}
-
-export interface EvalGetData {
-  fen: FEN;
-  path: string;
-  variant?: VariantKey;
-  mpv?: number;
-  up?: boolean;
-}
-
-export interface EvalPutData extends ServerEval {
-  variant?: VariantKey;
 }
 
 export type Conceal = false | 'conceal' | 'hide' | null;

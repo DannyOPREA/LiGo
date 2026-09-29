@@ -14,10 +14,6 @@ val setup = lila.setup.ui.SetupUi(helpers)
 // gathering (shared UI for the tournament/swiss/simul "no prizes" notice) was removed with the
 // tournament, swiss and simul modules (unit 3.2).
 
-val learn = lila.web.ui.LearnUi(helpers)
-
-val coordinate = lila.coordinate.ui.CoordinateUi(helpers)
-
 val atomUi = lila.ui.AtomUi(helpers.routeUrl)
 
 val irwin = lila.irwin.IrwinUi(helpers)(menu = views.mod.ui.menu)
@@ -53,6 +49,9 @@ object account:
   val twoFactor = lila.pref.ui.TwoFactorUi(helpers, ui)(netConfig.domain)
   val security = lila.security.ui.AccountSecurity(helpers)(ui.AccountPage)
 
+// learn, coordinate, opening, storm and racer (the chess training and opening pages) were removed
+// with their modules (unit 3.4).
+
 // practice, study, relay and fide (the study/broadcast/FIDE-player UI) were removed with the
 // study, relay, practice, studySearch, fide and title modules (unit 3.3).
 
@@ -68,18 +67,9 @@ object forum:
 
 val timeline = lila.timeline.ui.TimelineUi(helpers)
 
-object opening:
-  val bits = lila.opening.ui.OpeningBits(helpers)
-  val wiki = lila.opening.ui.WikiUi(helpers, bits)
-  val ui = lila.opening.ui.OpeningUi(helpers, bits, wiki)
-
 val video = lila.video.ui.VideoUi(helpers)
 
 val gameSearch = lila.gameSearch.ui.GameSearchUi(helpers)(views.game.widgets(_))
-
-val storm = lila.storm.ui.StormUi(helpers)
-
-val racer = lila.racer.ui.RacerUi(helpers)
 
 val challenge = lila.challenge.ui.ChallengeUi(helpers)
 

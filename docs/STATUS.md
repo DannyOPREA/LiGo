@@ -4,8 +4,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Current unit
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
-  docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (PR #24) and 3.2 (PR #28) merged;
-  3.3 (studies, broadcasts) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (PR #24), 3.2 (PR #28) and 3.3 (PR #33) merged;
+  3.4 (training, openings, explorer) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   no longer wait on Phase 2 (merged 2026-09-29).
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
@@ -119,7 +119,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
-| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1, 3.2 and 3.9 merged; 3.3 in review (you approved the deletions for 3.1–3.7) |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.3 and 3.9 merged; 3.4 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 under way, 6.4–6.10 wait for Phases 3–5 |

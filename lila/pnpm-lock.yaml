@@ -415,21 +415,6 @@ importers:
         specifier: ^15.8.1
         version: 15.8.1
 
-  ui/coordinateTrainer:
-    dependencies:
-      '@fnando/sparkline':
-        specifier: ^0.3.10
-        version: 0.3.10
-      '@types/fnando__sparkline':
-        specifier: ^0.3.7
-        version: 0.3.7
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-      voice:
-        specifier: workspace:*
-        version: link:../voice
-
   ui/dasher:
     dependencies:
       lib:
@@ -463,12 +448,6 @@ importers:
         version: link:../lib
 
   ui/keyboardMove:
-    dependencies:
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
-  ui/learn:
     dependencies:
       lib:
         specifier: workspace:*
@@ -558,27 +537,6 @@ importers:
         specifier: workspace:*
         version: link:../lib
 
-  ui/opening:
-    dependencies:
-      '@types/debounce-promise':
-        specifier: ^3.1.9
-        version: 3.1.9
-      chart.js:
-        specifier: 4.5.1
-        version: 4.5.1
-      chartjs-adapter-dayjs-4:
-        specifier: ^1.0.4
-        version: 1.0.4(chart.js@4.5.1)(dayjs@1.11.21)
-      dayjs:
-        specifier: ^1.11.19
-        version: 1.11.21
-      debounce-promise:
-        specifier: ^3.1.2
-        version: 3.1.2
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
   ui/playground:
     dependencies:
       '@ligo/board':
@@ -605,12 +563,6 @@ importers:
       voice:
         specifier: workspace:*
         version: link:../voice
-
-  ui/racer:
-    dependencies:
-      lib:
-        specifier: workspace:*
-        version: link:../lib
 
   ui/recap:
     dependencies:
@@ -658,12 +610,6 @@ importers:
       dialog-polyfill:
         specifier: 0.5.6
         version: 0.5.6
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
-  ui/storm:
-    dependencies:
       lib:
         specifier: workspace:*
         version: link:../lib
@@ -988,9 +934,6 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
-  '@fnando/sparkline@0.3.10':
-    resolution: {integrity: sha512-Rwz2swatdSU5F4sCOvYG8EOWdjtLgq5d8nmnqlZ3PXdWJI9Zq9BRUvJ/9ygjajJG8qOyNpMFX3GEVFjZIuB1Jg==}
-
   '@ioredis/commands@2.0.0':
     resolution: {integrity: sha512-vrx0AE/T0h7cRZwfo1M39Cr+ZhZrkf0V8mQN75wucKCxCLD9l/VX6no3gFvrLqD1IlG/1LtzWovqEw3t0Vr9zg==}
 
@@ -1212,9 +1155,6 @@ packages:
 
   '@types/emscripten@1.41.5':
     resolution: {integrity: sha512-cMQm7pxu6BxtHyqJ7mQZ2kXWV5SLmugybFdHCBbJ5eHzOo6VhBckEgAT3//rP5FwPHNPeEiq4SmQ5ucBwsOo4Q==}
-
-  '@types/fnando__sparkline@0.3.7':
-    resolution: {integrity: sha512-irYrS2clNGbnKBBIBAulPH6hDZ/HlBkNsDbYPfO8B2obcxtC9UzKFS5IBSzrUtfKbwf8U01xHj+5iEJ7TtY04Q==}
 
   '@types/hammerjs@2.0.46':
     resolution: {integrity: sha512-ynRvcq6wvqexJ9brDMS4BnBLzmr0e14d6ZJTEShTBWKymQiHwlAyGu0ZPEFI2Fh1U53F7tN9ufClWM5KvqkKOw==}
@@ -2682,8 +2622,6 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
-  '@fnando/sparkline@0.3.10': {}
-
   '@ioredis/commands@2.0.0': {}
 
   '@juggle/resize-observer@3.4.0': {}
@@ -2841,8 +2779,6 @@ snapshots:
   '@types/debounce-promise@3.1.9': {}
 
   '@types/emscripten@1.41.5': {}
-
-  '@types/fnando__sparkline@0.3.7': {}
 
   '@types/hammerjs@2.0.46': {}
 

@@ -13,7 +13,6 @@ export default function theme(ctrl: PuzzleCtrl): MaybeVNode {
   const showEditor = ctrl.mode === 'view' && !ctrl.autoNexting();
 
   if (replay) return showEditor ? hl('div.puzzle__side__theme', editor(ctrl)) : null;
-  if (ctrl.streak) return null;
 
   const backHref = ctrl.routerWithLang(`/training/${angle.opening ? 'openings' : 'themes'}`);
 
@@ -26,23 +25,18 @@ export default function theme(ctrl: PuzzleCtrl): MaybeVNode {
 
   return hl('div.puzzle__side__theme', [
     backToTheme(backHref, ['« ', angle.name], { class: { long: angle.name.length > 20 } }),
-    angle.opening
-      ? hl('a', { attrs: { href: `/opening/${angle.opening.key}` } }, [
-          'Learn more about ',
-          angle.opening.name,
-        ])
-      : hl('p', [
-          angle.desc,
-          angle.chapter &&
-            hl(
-              'a.puzzle__side__theme__chapter.text',
-              { attrs: { href: `${STUDY_URL}/${angle.chapter}`, target: '_blank' } },
-              [' ', i18n.puzzle.example],
-            ),
-        ]),
+    hl('p', [
+      angle.desc,
+      angle.chapter &&
+        hl(
+          'a.puzzle__side__theme__chapter.text',
+          { attrs: { href: `${STUDY_URL}/${angle.chapter}`, target: '_blank' } },
+          [' ', i18n.puzzle.example],
+        ),
+    ]),
     showEditor
       ? hl('div.puzzle__themes', editor(ctrl))
-      : !replay && !ctrl.streak && (angle.opening || angle.openingAbstract) && renderColorForm(ctrl),
+      : !replay && (angle.opening || angle.openingAbstract) && renderColorForm(ctrl),
   ]);
 }
 

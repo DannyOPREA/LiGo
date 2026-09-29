@@ -1,13 +1,13 @@
 import { repeater, blurIfPrimaryClick } from 'lib';
 import { renderEval, view as cevalView } from 'lib/ceval';
-import { displayColumns, isTouchDevice } from 'lib/device';
+import { displayColumns } from 'lib/device';
 import { licon, type LiconValue } from 'lib/licon';
 import { addPointerListeners } from 'lib/pointer';
 import { type VNode, type LooseVNode, onInsert, hl } from 'lib/view';
 
 import type AnalyseCtrl from '../ctrl';
 
-type Action = 'first' | 'prev' | 'next' | 'last' | 'opening-explorer' | 'menu' | 'engine-mode';
+type Action = 'first' | 'prev' | 'next' | 'last' | 'menu' | 'engine-mode';
 
 type EngineMode = 'ceval' | 'practice' | 'retro';
 
@@ -34,17 +34,6 @@ export function renderControls(ctrl: AnalyseCtrl) {
       ]),
       [
         displayColumns() === 1 && ctrl.isCevalAllowed() && renderMobileCevalTab(ctrl),
-        hl('button.fbt', {
-          attrs: {
-            title: i18n.site.openingExplorerAndTablebase,
-            'data-act': 'opening-explorer',
-            'data-icon': licon.Book,
-          },
-          class: {
-            hidden: !ctrl.explorer.allowed() || (!!ctrl.retro && !isMobileUi()),
-            active: ctrl.activeControlBarTool() === 'opening-explorer',
-          },
-        }),
         displayColumns() > 1 && !ctrl.retro && !ctrl.ongoing && renderPracticeTab(ctrl),
       ],
       hl('button.fbt', {
@@ -114,12 +103,10 @@ function clickControl(ctrl: AnalyseCtrl, e: PointerEvent) {
   else if (action === 'next') ctrl.navigate.next();
   else if (action === 'first') ctrl.navigate.first();
   else if (action === 'last') ctrl.navigate.last();
-  else if (action === 'opening-explorer') ctrl.toggleExplorer();
   else if (action === 'menu') ctrl.toggleActionMenu();
   else if (action === 'engine-mode' && !e.target.closest<HTMLElement>('.cmn-toggle')) {
     const mode = e.target.dataset.mode as EngineMode;
     if (ctrl.activeControlBarTool()) {
-      ctrl.explorer.enabled(false);
       ctrl.actionMenu(false);
       if (ctrl.showCeval() || mode !== 'ceval') return ctrl.redraw();
     }
@@ -133,5 +120,3 @@ function clickControl(ctrl: AnalyseCtrl, e: PointerEvent) {
 
 const jumpButton = (icon: LiconValue, effect: string, enabled: boolean): VNode =>
   hl('button.fbt.move', { attrs: { disabled: !enabled, 'data-act': effect, 'data-icon': icon } });
-
-const isMobileUi = (): boolean => displayColumns() === 1 && isTouchDevice();

@@ -30,18 +30,6 @@
 
     padding: 1em;
     flex: 0 1 50%;
-
-    .game-over {
-      letter-spacing: 0.5ch;
-      border-bottom: $border;
-      padding-bottom: 0.5em;
-      margin-bottom: 0.5em;
-      text-transform: uppercase;
-    }
-
-    .puzzle--streak & {
-      @extend %flex-column;
-    }
   }
 
   .puzzle__more {

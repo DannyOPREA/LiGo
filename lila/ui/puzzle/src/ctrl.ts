@@ -19,7 +19,7 @@ import { endgameShapes } from 'lib/game/endgame';
 import { type WithGround } from 'lib/game/ground';
 import { PromotionCtrl } from 'lib/game/promotion';
 import { pubsub } from 'lib/pubsub';
-import { type StoredProp, storedBooleanProp, storedBooleanPropWithEffect, storage } from 'lib/storage';
+import { type StoredProp, storedBooleanProp, storedBooleanPropWithEffect } from 'lib/storage';
 import { makeTree, treeOps, treePath, type TreeWrapper } from 'lib/tree';
 import { completeNode } from 'lib/tree/node';
 import { last } from 'lib/tree/ops';
@@ -42,7 +42,6 @@ import moveTest from './moveTest';
 import { pgnToTree, mergeSolution, nextCorrectMove } from './moveTree';
 import Report from './report';
 import PuzzleSession from './session';
-import PuzzleStreak from './streak';
 import * as xhr from './xhr';
 
 export default class PuzzleCtrl implements CevalHandler {
@@ -54,8 +53,6 @@ export default class PuzzleCtrl implements CevalHandler {
   rated: StoredProp<boolean>;
   ground: Prop<CgApi> = prop<CgApi | undefined>(undefined) as Prop<CgApi>;
   threatMode: Toggle = toggle(false);
-  streak?: PuzzleStreak;
-  streakFailStorage = storage.make('puzzle.streak.fail');
   session: PuzzleSession;
   menu: Toggle;
   flipped = toggle(false);
@@ -93,17 +90,9 @@ export default class PuzzleCtrl implements CevalHandler {
     readonly redraw: Redraw,
   ) {
     this.rated = storedBooleanPropWithEffect('puzzle.rated', true, this.redraw);
-    this.autoNext = storedBooleanProp(
-      `puzzle.autoNext${opts.data.streak ? '.streak' : ''}`,
-      !!opts.data.streak,
-    );
+    this.autoNext = storedBooleanProp('puzzle.autoNext', false);
     this.blindfolded = storedBooleanProp(`puzzle.${myUserId() || 'anon'}.blindfolded`, false);
-    this.streak = opts.data.streak ? new PuzzleStreak(opts.data) : undefined;
-    if (this.streak) {
-      opts.data = { ...opts.data, ...this.streak.data.current };
-      this.streakFailStorage.listen(_ => this.failStreak(this.streak!));
-    }
-    this.session = new PuzzleSession(opts.data.angle.key, myUserId(), !!opts.data.streak);
+    this.session = new PuzzleSession(opts.data.angle.key, myUserId());
     this.menu = toggle(false, redraw);
 
     this.initiate(opts.data);
@@ -425,17 +414,11 @@ export default class PuzzleCtrl implements CevalHandler {
       this.lastFeedback = 'fail';
       this.revertUserMove();
       if (this.mode === 'play') {
-        if (this.streak) {
-          this.failStreak(this.streak);
-          this.streakFailStorage.fire();
-        } else {
-          this.canViewSolution(true);
-          this.mode = 'try';
-          this.sendResult(false);
-        }
+        this.canViewSolution(true);
+        this.mode = 'try';
+        this.sendResult(false);
       }
     } else if (progress === 'win') {
-      if (this.streak) this.sound.good();
       this.lastFeedback = 'win';
       if (this.mode !== 'view') {
         const sent = this.mode === 'play' ? this.sendResult(true) : Promise.resolve();
@@ -455,13 +438,6 @@ export default class PuzzleCtrl implements CevalHandler {
     }
   };
 
-  failStreak = (streak: PuzzleStreak): void => {
-    this.mode = 'view';
-    streak.onComplete(false);
-    setTimeout(this.viewSolution, 500);
-    this.sound.end();
-  };
-
   sendResult = async (win: boolean): Promise<void> => {
     if (this.resultSent) return Promise.resolve();
     this.resultSent = true;
@@ -472,7 +448,6 @@ export default class PuzzleCtrl implements CevalHandler {
       win,
       this.rated() && !this.hintHasBeenShown(),
       this.data.replay,
-      this.streak,
       this.opts.settings.color,
     );
     const next = res.next;
@@ -485,7 +460,6 @@ export default class PuzzleCtrl implements CevalHandler {
     if (win) site.sound.say(i18n.puzzle.puzzleSuccess);
     if (next) {
       this.next.resolve(this.data.replay && res.replayComplete ? this.data.replay : next);
-      if (this.streak && win) this.streak.onComplete(true, res.next);
     }
     this.redraw();
     if (!next && !this.data.replay) {
@@ -497,10 +471,6 @@ export default class PuzzleCtrl implements CevalHandler {
   private readonly isPuzzleData = (d: PuzzleData | ReplayEnd): d is PuzzleData => 'puzzle' in d;
 
   nextPuzzle = (): void => {
-    if (this.streak && this.lastFeedback !== 'win') {
-      if (this.lastFeedback === 'fail') site.redirect(this.routerWithLang('/streak'));
-      return;
-    }
     if (this.mode !== 'view') return;
 
     this.ceval.reset();
@@ -515,7 +485,7 @@ export default class PuzzleCtrl implements CevalHandler {
       site.redirect(`/training/dashboard/${this.data.replay.days}`);
     }
 
-    if (!this.streak && !this.data.replay) {
+    if (!this.data.replay) {
       const path = this.routerWithLang(`/training/${this.data.angle.key}`);
       if (location.pathname !== path) history.replaceState(null, '', path);
     }
@@ -654,16 +624,6 @@ export default class PuzzleCtrl implements CevalHandler {
     this.autoScrollRequested = true;
     this.redraw();
     this.startCeval();
-  };
-
-  skip = () => {
-    if (!this.streak || !this.streak.data.skip || this.mode !== 'play') return;
-    this.streak.skip();
-    this.userJump(treePath.fromNodeList(this.mainline));
-    const moveIndex = treePath.size(this.path) - treePath.size(this.initialPath);
-    const solution = this.data.puzzle.solution[moveIndex];
-    this.playUci(solution);
-    this.playBestMove();
   };
 
   flip = () => {

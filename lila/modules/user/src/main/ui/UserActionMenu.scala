@@ -32,13 +32,6 @@ final class UserActionMenu(helpers: Helpers):
         relationActions ++
         List(
           Some(
-            MenuItem(
-              trans.site.openingExplorer.txt(),
-              Icon.Book,
-              s"${routes.UserAnalysis.index}#explorer/${u.username}"
-            )
-          ),
-          Some(
             MenuItem(trans.site.exportGames.txt(), Icon.Download, routes.User.download(u.username).url)
           ),
           (ctx.isAuth && ctx.kid.no && ctx.isnt(u)).option(
