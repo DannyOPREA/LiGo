@@ -2,8 +2,38 @@
 
 ## Lessons (curated, ≤ 30 lines — read this first)
 - The owner's core OGS pain is a confusing lobby: hard to read and filter, can't see which games suit you (2026-09-25, requirements).
+- lila hides open games you can't join on the server (`Biter.canJoin` in `showHookTo` and `SeekApi.forUser`), not in the browser (2026-09-29, 6.1).
+- lila's pool score uses the smaller miss bonus of the pair, the cap at the lower rating, and a 400-point miss ceiling for good sit counters (2026-09-29, 6.1–6.2).
+- On 9×9 one handicap stone covers six ranks, so the ranks a player can meet come in separate runs (2026-09-29, 6.2).
 
 ## Entries (newest first)
+
+### 2026-09-29 · unit 6.2 · Pairing with auto-handicap in lila/modules/pool
+- Did: `lila.pool.GoPairing` (new, AGPL as it adapts lila's `MatchMaking`): the stones and Black
+  for a pair (ADR 0021 §4 via `GoRating.suggestedStones`, only when both said Handicap OK and both
+  have a rank), ADR 0022 §3's handicap gap term, lila's pair score with that term and a per-second
+  miss bonus (5 points per 5 s wave, lila's ceiling), and the waiting range against a typical
+  opponent (§4). `MatchMaking`'s score and bonus helpers become `private[pool]` so the Go score
+  reuses them. 23 tests in `GoPairingTest`, one checking the even-pair score equals lila's own.
+  Nothing calls it yet (6.4 wires it in).
+- Worked: reusing lila's own bonus functions keeps the Go score identical to lila's apart from the
+  documented terms; the reviewer re-derived the key numbers in an independent Python model.
+- Didn't work / dead ends: hand-worked expected values were off by a point (ratings are whole
+  numbers) and a 5k's first-wave reach is 8 stones, not 9. lila's miss-bonus ceiling is 400 for a
+  player with a good sit counter, not 460 (ADR corrected before merge). A typical opponent with a
+  good sit counter left a player with a bad one no range at all; it now shares the member's sit
+  counter, as lila pairs like with like. Review found the 9×9 range has gaps (a stone covers six
+  ranks), so the tile shows only the unbroken run around your rank (ADR 0022 §4 amended), and that
+  the first header wrongly said MIT.
+- Lessons: sbt 2's disk cache sometimes misses an edit to a test file and runs the old class (the
+  failure points at a line that no longer holds that code); appending a line forced a recompile.
+  Check for "compiling N Scala sources" after an edit. verify.sh's `testQuick` skipped the pool
+  tests ("No tests to run"): quote a `testOnly` run instead.
+- Decisions: 9×9 waiting range shown as the run around your own rank plus "or with up to N stones";
+  typical opponent shares your sit counter (Claude, under the owner's 2026-09-28 delegation).
+- Verified by Claude: `pool/testOnly lila.pool.GoPairingTest` 23/23; verify.sh; reviewer agent (3
+  blocking findings fixed). · Needs owner verification: none until 6.4 wires it into real pools.
+- Follow-ups: 6.4 (pools), 6.6 (the tile showing the range).
 
 ### 2026-09-29 · unit 6.1 · ADR 0022: pools, auto-handicap, open challenges, player test, load test
 - Did: wrote ADR 0022 (the Phase 6 design): seven rated pools from ADR 0005 with readable ids and
