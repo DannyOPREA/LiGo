@@ -79,12 +79,11 @@ final class Controller(
             .map:
               if _ then notFound
               else
-                val userTv = UserTv.from(header.queryParameter("userTv"))
                 endpoint(
                   name = "round/watch",
                   behavior = emit =>
                     RoundClientActor
-                      .start(RoomActor.State(id.into(RoomId), isTroll), None, userTv, from):
+                      .start(RoomActor.State(id.into(RoomId), isTroll), None, from):
                         Deps(emit, req, services)
                   ,
                   req,
@@ -106,7 +105,6 @@ final class Controller(
                 RoundClientActor.start(
                   RoomActor.State(RoomId.ofPlayer(id), isTroll),
                   Some(player),
-                  None,
                   from
                 ) { Deps(emit, req, services) },
               req,

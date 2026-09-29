@@ -95,13 +95,6 @@ final class AccountUi(helpers: Helpers):
           a(activeCls("username"), href := routes.Account.username)(
             trans.site.changeUsername()
           ),
-          Granter
-            .opt(_.Coach)
-            .option(
-              a(activeCls("coach"), href := routes.Coach.edit)(
-                trans.coach.lichessCoach()
-              )
-            ),
           a(activeCls("password"), href := routes.Account.passwd)(
             trans.site.changePassword()
           ),

@@ -13,11 +13,8 @@ def apply(
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =
-  ctx.noBlind.option:
-    frag(
-      meta(pov, initialFen, userTv, bookmarked),
-      pov.game.userIds.filter(isStreaming).map(views.streamer.bits.contextual)
-    )
+  // the "live stream" box went with the streamer module (unit 3.7).
+  ctx.noBlind.option(meta(pov, initialFen, userTv, bookmarked))
 
 def meta(
     pov: Pov,
@@ -37,7 +34,7 @@ def meta(
                 div(
                   a(href := routes.Importer.importGame, title := trans.site.importGame.txt())("IMPORT"),
                   separator,
-                  variantLink(game.variant, game.perfType, initialFen = initialFen, shortName = true)
+                  variantLink(game.variant, game.perfType, shortName = true)
                 )
               else
                 frag(
@@ -45,7 +42,7 @@ def meta(
                   separator,
                   ratedName(game.rated),
                   separator,
-                  variantLink(game.variant, game.perfType, initialFen, shortName = true)
+                  variantLink(game.variant, game.perfType, shortName = true)
                 )
             ),
             game.pgnImport.flatMap(_.date).fold(pastMomentWithPreload(game.createdAt))(frag(_))

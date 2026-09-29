@@ -9,14 +9,6 @@ import type { Notification, Renderer, Renderers } from './interfaces';
 
 export default function makeRenderers(): Renderers {
   return {
-    streamStart: {
-      html: n =>
-        generic(n, `/streamer/${n.content.sid}?redirect=1`, licon.Mic, [
-          h('span', [h('strong', n.content.name), drawTime(n)]),
-          h('span', i18n.site.startedStreaming),
-        ]),
-      text: n => i18n.site.xStartedStreaming(n.content.streamerName),
-    },
     genericLink: {
       html: n =>
         generic(n, n.content.url, n.content.icon, [
@@ -123,18 +115,6 @@ export default function makeRenderers(): Renderers {
         return i18n.site.resVsX(result, userFullName(n.content.opponent));
       },
     },
-    planStart: {
-      html: n =>
-        generic(n, '/patron', licon.Wings, [
-          h('span', [h('strong', 'You just became a lichess Patron.'), drawTime(n)]),
-        ]),
-      text: _ => 'You just became a lichess Patron.',
-    },
-    planExpire: {
-      html: n =>
-        generic(n, '/patron', licon.Wings, [h('span', [h('strong', 'Patron account expired'), drawTime(n)])]),
-      text: _ => 'Patron account expired',
-    },
     ratingRefund: {
       html: n =>
         generic(n, '/faq#rating-refund', licon.InfoCircle, [
@@ -154,18 +134,6 @@ export default function makeRenderers(): Renderers {
     },
     irwinDone: jobDone('Irwin'),
     kaladinDone: jobDone('Kaladin'),
-    recap: {
-      html: n => {
-        site.asset.loadI18n('recap');
-        const title = i18n.recap?.recapReady?.(n.content.year) || `Your ${n.content.year} recap is ready!`;
-        const text = i18n.recap?.awaitQuestion || 'What have you been up to this year?';
-        return generic(n, '/recap', licon.Star, [h('span', h('strong', title)), h('span', text)]);
-      },
-      text: n => {
-        site.asset.loadI18n('recap');
-        return i18n.recap?.recapReady?.(n.content.year) || `Your ${n.content.year} recap is ready!`;
-      },
-    },
   };
 }
 

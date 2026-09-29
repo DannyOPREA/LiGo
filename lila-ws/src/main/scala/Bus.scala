@@ -34,9 +34,6 @@ object Bus:
     val all = "all"
     val roundPlayer = "roundPlayer"
     val lobby = "lobby"
-    val tv = "tv"
-    val tvChannels = "tv-channels"
-    inline def userTv(inline u: UserTv) = s"userTv/$u"
     inline def room(inline id: RoomId) = s"room/$id"
 
   def msg(event: ClientMsg, chan: ChanSelect) =

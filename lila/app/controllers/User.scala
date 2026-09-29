@@ -30,7 +30,6 @@ final class User(
 ) extends LilaController(env):
 
   import env.relation.api as relationApi
-  import env.gameSearch.userGameSearch
   import env.user.lightUserApi
 
   private given Conversion[UserWithPerfs, UserModel] = _.user
@@ -121,9 +120,7 @@ final class User(
         WithProxy: proxy ?=>
           limit.enumeration.userProfile(rateLimited):
             EnabledUser(username): u =>
-              val isSearch = filter == GameFilter.search.name
-              RequireAuthIf(isSearch):
-                negotiate(
+              negotiate(
                   html = for
                     nbs <- env.userNbGames(u, withCrosstable = true)
                     filters = lila.app.mashup.GameFilterMenu(u, nbs, filter, ctx.isAuth)
@@ -134,11 +131,8 @@ final class User(
                         for
                           info <- env.userInfo.fetch(u, nbs, restricted = isRestricted)
                           social <- env.socialInfo(u)
-                          searchForm = (filters.current == GameFilter.search).option(
-                            lila.app.mashup.GameFilterMenu.searchForm(userGameSearch, filters.current)
-                          )
                           res <- Ok.page:
-                            views.user.show.page.games(info, pag, filters, searchForm, social)
+                            views.user.show.page.games(info, pag, filters, social)
                         yield res
                       else Ok.snip(views.user.show.gamesContent(u, nbs, pag, filters, filter)).toFuccess
                   yield res.withCanonical(routes.User.games(u.username, filters.current.name)),
@@ -343,14 +337,6 @@ final class User(
               else views.mod.timeline.renderGeneral(tl)
             .map(lila.mod.ui.mzSection("timeline")(_))
 
-        val plan =
-          isGranted(_.Admin).so(
-            env.plan.api
-              .recentChargesOf(user)
-              .map(views.user.mod.plan(user))
-              .dmap(_ | emptyFrag)
-          ): Fu[Frag]
-
         val reportLog = isGranted(_.SeeReport).so:
           for
             reports <- env.report.api.by(user, Max(30))
@@ -406,7 +392,6 @@ final class User(
             .merge(modZoneSegment(actions, "actions", user))
             .merge(modZoneSegment(reportLog, "reportLog", user))
             .merge(modZoneSegment(timeline, "timeline", user))
-            .merge(modZoneSegment(plan, "plan", user))
             .merge(modZoneSegment(prefs, "prefs", user))
             .merge(modZoneSegment(appeal, "appeal", user))
             .merge(modZoneSegment(rageSit, "rageSit", user))

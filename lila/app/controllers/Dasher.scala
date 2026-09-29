@@ -13,15 +13,12 @@ final class Dasher(env: Env) extends LilaController(env):
 
   def get = Open:
     negotiateJson:
-      ctx.me
-        .so(env.streamer.api.isPotentialStreamer(_))
-        .map: isStreamer =>
-          Ok:
-            Json.obj(
-              "lang" -> Json.obj(
-                "current" -> ctx.lang.code,
-                "accepted" -> LangPicker.allFromRequestHeaders(ctx.req).map(_.code),
-                "list" -> LangList.allChoices
-              ),
-              "streamer" -> isStreamer
-            ) ++ DasherJson(ctx.pref, gallery)
+      Ok:
+        Json.obj(
+          "lang" -> Json.obj(
+            "current" -> ctx.lang.code,
+            "accepted" -> LangPicker.allFromRequestHeaders(ctx.req).map(_.code),
+            "list" -> LangList.allChoices
+          )
+          // "streamer" went with the streamer module (unit 3.7).
+        ) ++ DasherJson(ctx.pref, gallery)

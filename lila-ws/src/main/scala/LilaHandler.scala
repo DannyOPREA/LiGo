@@ -50,7 +50,6 @@ final class LilaHandler(
 
     case Impersonate(mod, user, true) => Impersonations.start(mod, user)
     case Impersonate(mod, _, false) => Impersonations.stop(mod)
-    case StreamersOnline(streamers) => Streamer.set(streamers)
     case Pong(pingAt) => Monitor.ping.record("site", pingAt)
     case AnnounceUpdate(cur) => AnnounceApi.set(cur)
 
@@ -102,14 +101,11 @@ final class LilaHandler(
       publish(_.room(fullId.gameId), ClientIn.RoundGone(fullId.playerId, gone))
     case RoundGoneIn(fullId, seconds) =>
       publish(_.room(fullId.gameId), ClientIn.RoundGoneIn(fullId.playerId, seconds))
-    case o: TvSelect => services.tv.select(o)
     case o @ RoomStop(roomId) =>
       History.round.stop(Game.Id(roomId.value))
       publish(_.room(roomId), ClientCtrl.Disconnect(o.toString))
     case GameStart(users) =>
-      users.foreach: u =>
-        friendList.startPlaying(u)
-        publish(_.userTv(u.into(UserTv)), ClientIn.Resync)
+      users.foreach(friendList.startPlaying)
     case GameFinish(gameId, winner, users) =>
       users.foreach(friendList.stopPlaying)
       Fens.finish(gameId, winner)

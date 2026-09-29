@@ -37,13 +37,6 @@ export function initModule(opts: LobbyOpts) {
           pubsub.emit('content-loaded');
         });
       },
-      featured(o: { html: string }) {
-        const $tv = $('.lobby__tv'),
-          $game = $tv.find('.mini-game');
-        if ($game.length) $game.replaceWith(o.html);
-        else $tv.append(o.html);
-        pubsub.emit('content-loaded');
-      },
       redirect(e: RedirectTo) {
         lobbyCtrl.setRedirecting();
         lobbyCtrl.leavePool();

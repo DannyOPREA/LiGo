@@ -9,22 +9,6 @@ object home:
 
   def apply(homepage: Homepage)(using ctx: Context) =
     import homepage.*
-    val donateLink =
-      a(cls := "lobby__support-link", href := routes.Plan.index())(
-        iconTag(patronIconChar),
-        span(cls := "lobby__support-link__text")(
-          strong(trans.patron.donate()),
-          span(trans.patron.becomePatron())
-        )
-      )
-    val swagLink =
-      a(cls := "lobby__support-link", href := "/swag")(
-        iconTag(Icon.Tshirt),
-        span(cls := "lobby__support-link__text")(
-          strong("Swag Store"),
-          span(trans.site.playChessInStyle())
-        )
-      )
     Page("")
       .copy(fullTitle = s"$siteName • ${trans.site.freeOnlineChess.txt()}".some)
       .i18n(_.variant)
@@ -57,8 +41,8 @@ object home:
         )(
           div(cls := "lobby__side")(
             ctx.blind.option(h2(trans.nvui.featuredEvents())),
-            ctx.kid.no.option(views.streamer.bits.liveStreams(streams)),
-            // relay spotlights removed with the relay module (unit 3.3).
+            // relay spotlights removed with the relay module (unit 3.3), live streams with the
+            // streamer module (unit 3.7).
             if ctx.isAuth then
               div(cls := "lobby__timeline")(
                 ctx.blind.option(h2(trans.site.timeline())),
@@ -67,10 +51,7 @@ object home:
             else
               div(cls := "about-side")(
                 ctx.blind.option(h2(trans.site.about())),
-                trans.site.xIsAFreeYLibreOpenSourceChessServer(
-                  "Lichess",
-                  a(cls := "blue", href := routes.Plan.features)(trans.site.really.txt())
-                ),
+                trans.site.xIsAFreeYLibreOpenSourceChessServer("Lichess", trans.site.really.txt()),
                 " ",
                 a(href := "/about")(trans.site.aboutX("Lichess"), "...")
               )
@@ -93,18 +74,9 @@ object home:
               // "Play against the computer" went with the engines (unit 3.5).
             )
           ),
-          div(cls := "lobby__support")(donateLink, swagLink),
-          div(cls := "lobby__tv")(
-            donateLink,
-            featured.map(g => views.game.mini(Pov.naturalOrientation(g), tv = true))
-          ),
-          div(cls := "lobby__puzzle")(
-            swagLink,
-            puzzle.map(p => views.puzzle.bits.dailyLink(p)())
-          ),
-          div(cls := "lobby__feed"):
-            views.feed.lobbyUpdates(lastUpdates)
-          ,
+          // The donate and swag links, the featured TV game and the news feed went with the plan, tv
+          // and feed modules (unit 3.7).
+          div(cls := "lobby__puzzle")(puzzle.map(p => views.puzzle.bits.dailyLink(p)())),
           div(cls := "lobby__about")(
             ctx.blind.option(h2(trans.site.about())),
             a(href := "/about")(trans.site.aboutX("Lichess")),

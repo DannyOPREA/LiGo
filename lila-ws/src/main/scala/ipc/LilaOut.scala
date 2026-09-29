@@ -2,7 +2,6 @@ package lila.ws
 package ipc
 
 import chess.Color
-import play.api.libs.json.*
 
 sealed trait LilaOut
 
@@ -31,7 +30,6 @@ object LilaOut:
   case class UnFollow(left: User.Id, right: User.Id) extends SiteOut
   case class Pong(pingAt: UptimeMillis) extends SiteOut with RoundOut
   case class LilaResponse(reqId: Int, body: String) extends SiteOut with RoundOut
-  case class StreamersOnline(streamers: Map[User.Id, JsValue]) extends SiteOut
 
   // lobby
 
@@ -84,7 +82,6 @@ object LilaOut:
   case class RoundGoneIn(fullId: Game.FullId, seconds: Int) extends RoundOut
   case class GameStart(users: List[User.Id]) extends RoundOut
   case class GameFinish(gameId: Game.Id, winner: Option[Color], users: List[User.Id]) extends RoundOut
-  case class TvSelect(gameId: Game.Id, speed: chess.Speed, json: JsonString) extends RoundOut
 
   case class ApiUserOnline(userId: User.Id, online: Boolean) extends AnyRoomOut
   case object LilaBoot extends AnyRoomOut
@@ -268,23 +265,12 @@ object LilaOut:
           )
         }
 
-      // tv
-
-      case "tv/select" =>
-        get(args, 3) { case Array(gameId, speedS, data) =>
-          chess.SpeedId.from(speedS.toIntOption).flatMap(chess.Speed.apply).map { speed =>
-            TvSelect(Game.Id(gameId), speed, JsonString(data))
-          }
-        }
-
       // misc
 
       case "api/online" =>
         get(args, 2) { case Array(userId, online) =>
           Some(ApiUserOnline(User.Id(userId), boolean(online)))
         }
-
-      case "streamers/online" => Json.parse(args).asOpt[Map[User.Id, JsValue]].map(StreamersOnline.apply)
 
       case "pong" => args.toLongOption.map(UptimeMillis.apply).map(Pong.apply)
 

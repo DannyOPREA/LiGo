@@ -1,7 +1,6 @@
 package views.user
 package show
 
-import play.api.data.Form
 
 import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.UserInfo
@@ -33,7 +32,7 @@ object page:
         )
       )
       .js(pageModule(info))
-      .js(esModules())
+      .js(esModules)
       .js(isGranted(_.AccountInfo).option(esmInit("mod.autolink")))
       .css("user.show")
       .css(isGranted(_.UserModView).option("mod.user"))
@@ -50,7 +49,6 @@ object page:
       info: UserInfo,
       games: scalalib.paginator.Paginator[Game],
       filters: lila.game.GameFilterMenu,
-      searchForm: Option[Form[?]],
       social: UserInfo.Social
   )(using Context) =
     val u = info.user
@@ -58,25 +56,23 @@ object page:
     val pageName = (games.currentPage > 1).so(s" - page ${games.currentPage}")
     Page(s"${u.username} $filterName$pageName")
       .js(pageModule(info))
-      .js(esModules(filters.current.name == "search"))
+      .js(esModules)
       .css("user.show")
-      .css((filters.current.name == "search").option("user.show.search"))
       .css(isGranted(_.UserModView).option("mod.user"))
       .flag(_.noRobots, !indexable(u)):
         main(cls := "page-menu", ui.dataUsername := u.username)(
           st.aside(cls := "page-menu__menu")(side(u, info.ranks, none)),
           div(cls := "page-menu__content box user-show")(
-            views.user.show.header(u, info, UserInfo.Angle.Games(searchForm), social),
+            views.user.show.header(u, info, UserInfo.Angle.Games, social),
             div(cls := "angle-content"):
               gamesContent(u, info.nbs, games, filters, filters.current.name)
           )
         )
 
-  private def esModules(withSearch: Boolean = false)(using Context): EsmList =
+  private def esModules(using Context): EsmList =
     infiniteScrollEsmInit
       ++ esmInit("user")
       ++ Esm("bits.dropdownOverflow")
-      ++ withSearch.so(Esm("bits.gameSearch"))
       ++ isGranted(_.UserModView).so(Esm("mod.user"))
 
   private def pageModule(info: UserInfo): Option[PageModule] =
@@ -97,8 +93,7 @@ object page:
       Context,
       Translate
   ): Frag =
-    if filter == GameFilter.search then frag(iconTag(Icon.Search), br, trans.search.advancedSearch())
-    else lila.web.ui.bits.splitNumber(userGameFilterTitleNoTag(u, nbs, filter))
+    lila.web.ui.bits.splitNumber(userGameFilterTitleNoTag(u, nbs, filter))
 
   def userGameFilterTitleNoTag(u: User, nbs: UserInfo.NbGames, filter: GameFilter)(using Translate): String =
     import ui.transLocalize
@@ -112,4 +107,3 @@ object page:
       case GameFilter.playing => transLocalize(trans.site.nbPlaying, nbs.playing)
       case GameFilter.bookmark => transLocalize(trans.site.nbBookmarks, nbs.bookmark)
       case GameFilter.imported => transLocalize(trans.site.nbImportedGames, nbs.imported)
-      case GameFilter.search => trans.search.advancedSearch.txt()

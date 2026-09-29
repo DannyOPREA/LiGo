@@ -3,51 +3,37 @@ package mashup
 
 import play.api.libs.json.*
 
-import lila.core.game.Game
 import lila.core.perf.UserWithPerfs
 import lila.playban.TempBan
-import lila.streamer.LiveStreams
 import lila.timeline.Entry
 import lila.user.{ LightUserApi, Me, User }
 import lila.mon.extensions.*
 import lila.round.UrgentGames
 
 final class Preload(
-    tv: lila.tv.Tv,
     gameRepo: lila.game.GameRepo,
     perfsRepo: lila.user.UserPerfsRepo,
     timelineApi: lila.timeline.EntryApi,
-    liveStreamApi: lila.streamer.LiveApi,
     dailyPuzzle: lila.puzzle.DailyPuzzle.Try,
     lobbyApi: lila.api.LobbyApi,
     playbanApi: lila.playban.PlaybanApi,
     lightUserApi: LightUserApi,
-    roundProxy: lila.round.GameProxyRepo,
-    getLastUpdates: lila.feed.Feed.GetLastUpdates
+    roundProxy: lila.round.GameProxyRepo
 )(using Executor):
 
   import Preload.*
 
-  def apply(
-      streamerSpots: Int
-  )(using ctx: Context): Fu[Homepage] = for
+  def apply()(using ctx: Context): Fu[Homepage] = for
     withPerfs <- ctx.user.traverse(perfsRepo.withPerfs)
     given Option[UserWithPerfs] = withPerfs
     // The blog carousel, the "unread message from Lichess" notice and the class list went with
-    // the ublog, msg and clas modules (unit 3.6).
-    (((((((data, povs), feat), entries), puzzle), streams), playban), blindGames) <-
+    // the ublog, msg and clas modules (unit 3.6); the featured TV game, live streams and news
+    // feed with the tv, streamer and feed modules (unit 3.7).
+    (((((data, povs), entries), puzzle), playban), blindGames) <-
       lobbyApi.get
         .mon(lila.mon.lobby.segment("lobbyApi"))
-        .zip(tv.getBestGame.mon(lila.mon.lobby.segment("tvBestGame")))
         .zip((ctx.userId.so(timelineApi.userEntries)).mon(lila.mon.lobby.segment("timeline")))
         .zip((ctx.noBot.so(dailyPuzzle())).mon(lila.mon.lobby.segment("puzzle")))
-        .zip(
-          ctx.kid.no.so(
-            liveStreamApi.all
-              .dmap(_.homepage(streamerSpots, ctx.acceptLanguages).withTitles(lightUserApi))
-              .mon(lila.mon.lobby.segment("streams"))
-          )
-        )
         .zip((ctx.userId.so(playbanApi.currentBan)).mon(lila.mon.lobby.segment("playban")))
         .zip(ctx.blind.so(ctx.me).so(roundProxy.urgentGames))
     (currentGame, _) <- ctx.me
@@ -60,13 +46,10 @@ final class Preload(
   yield Homepage(
     data,
     entries,
-    feat,
     puzzle,
-    streams,
     playban,
     currentGame,
     blindGames,
-    getLastUpdates(),
     withPerfs
   )
 
@@ -93,13 +76,10 @@ object Preload:
   case class Homepage(
       data: JsObject,
       userTimeline: Vector[Entry],
-      featured: Option[Game],
       puzzle: Option[lila.puzzle.DailyPuzzle.WithHtml],
-      streams: LiveStreams.WithTitles,
       playban: Option[TempBan],
       currentGame: Option[Preload.CurrentGame],
       blindGames: UrgentGames,
-      lastUpdates: List[lila.feed.Feed.Update],
       me: Option[UserWithPerfs]
   )
 

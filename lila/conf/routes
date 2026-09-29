@@ -5,7 +5,6 @@ GET   /                                controllers.Lobby.home
 GET   /lobby/seeks                     controllers.Lobby.seeks
 
 # 2-letter routes, then lang route
-GET   /tv                              controllers.Tv.index
 GET   /$lang<\w\w>                     controllers.Lobby.homeLang(lang: Language)
 
 # Highest hit count
@@ -16,9 +15,6 @@ GET   /timeline                        controllers.Timeline.home
 GET   /api/timeline                    controllers.Timeline.api
 POST  /timeline/unsub/:channel         controllers.Timeline.unsub(channel)
 
-# Search
-GET   /games/search                    controllers.Search.index(page: Int ?= 1)
-
 # Game export
 POST  /games/export/_ids               controllers.Game.exportByIds
 POST  /api/games/export/_ids           controllers.Game.exportByIds
@@ -26,23 +22,6 @@ GET   /games/export/:username          controllers.Game.exportByUser(username: U
 
 # Bookmark
 POST  /bookmark/$gameId<\w{8}>         controllers.Game.bookmark(gameId: GameId)
-
-# TV
-GET   /$lang<\w\w\w?>/tv               controllers.Tv.indexLang(lang: Language)
-GET   /tv/frame                        controllers.Tv.frameDefault
-GET   /tv/feed                         controllers.Tv.feedDefault
-GET   /tv/channels                     controllers.Main.movedPermanently(to = "/api/tv/channels")
-GET   /tv/:chanKey                     controllers.Tv.onChannel(chanKey)
-GET   /tv/:chanKey/frame               controllers.Tv.frame(chanKey)
-GET   /tv/:chanKey/feed                controllers.Tv.feed(chanKey)
-GET   /tv/$gameId<\w{8}>/:color/sides controllers.Tv.sides(gameId: GameId, color: Color)
-GET   /games                           controllers.Tv.games
-GET   /games/:chanKey                  controllers.Tv.gamesChannel(chanKey)
-GET   /games/:chanKey/replacement/$gameId<\w{8}> controllers.Tv.gameChannelReplacement(chanKey, gameId: GameId, exclude: List[GameId])
-GET   /api/tv/channels                 controllers.Tv.channels
-GET   /api/tv/feed                     controllers.Tv.feedDefault
-GET   /api/tv/:chanKey/feed            controllers.Tv.feed(chanKey)
-GET   /api/tv/:chanKey                 controllers.Tv.apiGamesChannel(chanKey)
 
 # Relation
 GET   /api/rel/following               controllers.Relation.apiFollowing
@@ -83,15 +62,6 @@ GET   /api/player                      controllers.User.apiList
 
 GET   /dasher                          controllers.Dasher.get
 
-# Feed
-GET   /feed                            controllers.Feed.index(page: Int ?= 1)
-GET   /feed/new                        controllers.Feed.createForm
-POST  /feed/new                        controllers.Feed.create
-GET   /feed/:id/edit                   controllers.Feed.edit(id)
-POST  /feed/:id/edit                   controllers.Feed.update(id)
-POST  /feed/:id/delete                 controllers.Feed.delete(id)
-GET   /feed.atom                       controllers.Feed.atom
-
 # Training - Puzzle
 GET   /training                        controllers.Puzzle.home
 GET   /training/daily                  controllers.Puzzle.daily
@@ -130,45 +100,6 @@ GET   /analysis/*something             controllers.UserAnalysis.parseArg(somethi
 GET   /analysis                        controllers.UserAnalysis.index
 GET   /embed/analysis                  controllers.UserAnalysis.embed
 
-# Patron
-GET   /patron                          controllers.Plan.index(page: Int ?= 1)
-GET   /patron/thanks                   controllers.Plan.thanks
-GET   /patron/list                     controllers.Plan.list
-POST  /patron/style                    controllers.Plan.style
-POST  /patron/switch                   controllers.Plan.switch
-POST  /patron/cancel                   controllers.Plan.cancel
-POST  /patron/webhook                  controllers.Plan.webhook
-POST  /patron/stripe/checkout          controllers.Plan.stripeCheckout
-POST  /patron/stripe/update-payment    controllers.Plan.updatePayment
-GET   /patron/stripe/update-payment    controllers.Plan.updatePaymentCallback
-POST  /patron/ipn                      controllers.Plan.payPalIpn
-POST  /patron/paypal/checkout          controllers.Plan.payPalCheckout
-POST  /patron/paypal/capture/:id       controllers.Plan.payPalCapture(id)
-POST  /api/patron/stripe/checkout      controllers.Plan.apiStripeCheckout
-GET   /api/patron/currencies           controllers.Plan.apiCurrencies
-GET   /features                        controllers.Plan.features
-
-# Streamer
-GET   /streamer                        controllers.Streamer.index(page: Int ?= 1)
-GET   /api/streamer/live               controllers.Streamer.live
-POST  /api/x/streamer/youtube-pubsub   controllers.Streamer.onYoutubeVideo
-GET   /api/x/streamer/youtube-pubsub   controllers.Streamer.youtubePubSubChallenge
-POST  /api/streamer/twitch-eventsub    controllers.Streamer.onTwitchEventSub
-GET   /streamer/live                   controllers.Main.movedPermanently(to = "/api/streamer/live")
-GET   /streamer/edit                   controllers.Streamer.edit
-POST  /streamer/new                    controllers.Streamer.create
-POST  /streamer/edit                   controllers.Streamer.editApply
-POST  /streamer/subscribe/:streamer    controllers.Streamer.subscribe(streamer: UserStr, set: Boolean ?= true)
-POST  /upload/image/streamer           controllers.Streamer.pictureApply
-GET   /streamer/:username              controllers.Streamer.show(username: UserStr, redirect: Boolean ?= false)
-POST  /streamer/:username/check        controllers.Streamer.checkOnline(username: UserStr)
-GET   /streamer/twitch/oauth/link      controllers.Streamer.oauthLinkTwitch
-GET   /streamer/twitch/oauth/redirect  controllers.Streamer.oauthTwitchRedirect
-GET   /streamer/youtube/oauth/link     controllers.Streamer.oauthLinkYoutube
-GET   /streamer/youtube/oauth/redirect controllers.Streamer.oauthYoutubeRedirect
-POST  /streamer/youtube/oauth/choose/:channelId controllers.Streamer.oauthYoutubeChannel(channelId: String)
-POST  /streamer/$platform<youtube|twitch>/oauth/unlink controllers.Streamer.oauthUnlink(platform: String, user: Option[UserStr] ?= None)
-
 # Round
 GET   /$gameId<\w{8}>                            controllers.Round.watcher(gameId: GameId, color: Color = Color.white)
 GET   /$gameId<\w{8}>/$color<white|black>        controllers.Round.watcher(gameId: GameId, color: Color)
@@ -180,7 +111,6 @@ POST  /$gameId<\w{8}>/note                       controllers.Round.writeNote(gam
 GET   /$gameId<\w{8}>/mini                       controllers.Round.mini(gameId: GameId, color: Color = Color.white)
 GET   /$gameId<\w{8}>/$color<white|black>/mini   controllers.Round.mini(gameId: GameId, color: Color)
 GET   /$fullId<\w{12}>/mini                      controllers.Round.miniFullId(fullId: GameFullId)
-GET   /$gameId<\w{8}>/edit                       controllers.Editor.game(gameId: GameId)
 GET   /$gameId<\w{8}>/$color<white|black>/analysis controllers.UserAnalysis.game(gameId: GameId, color: Color)
 GET   /$fullId<\w{12}>/forecasts                 controllers.UserAnalysis.forecastsGet(fullId: GameFullId)
 POST  /$fullId<\w{12}>/forecasts                 controllers.UserAnalysis.forecastsPost(fullId: GameFullId)
@@ -238,16 +168,6 @@ POST  /challenge/rematch-of/$id<\w{8}> controllers.Challenge.offerRematchForGame
 GET  /notify                           controllers.Notify.recent(page: Int ?= 1)
 POST /notify/clear                     controllers.Notify.clear
 
-# Video
-GET   /video                                 controllers.Video.index
-GET   /video/tags                            controllers.Video.tags
-GET   /video/author/:author                  controllers.Video.author(author)
-GET   /video/:id                             controllers.Video.show(id)
-GET   /$lang<\w\w\w?>/video                  controllers.Video.indexLang(lang: Language)
-GET   /$lang<\w\w\w?>/video/tags             controllers.Video.tagsLang(lang: Language)
-GET   /$lang<\w\w\w?>/video/author/:author   controllers.Video.authorLang(lang: Language, author: String)
-GET   /$lang<\w\w\w?>/video/:id              controllers.Video.showLang(lang: Language, id: String)
-
 # I18n
 POST  /translation/select              controllers.I18n.select
 
@@ -302,7 +222,6 @@ POST  /mod/:username/arenaban/:v       controllers.Mod.arenaBan(username: UserSt
 POST  /mod/:username/prizeban/:v       controllers.Mod.prizeban(username: UserStr, v: Boolean)
 POST  /mod/:username/reportban/:v      controllers.Mod.reportban(username: UserStr, v: Boolean)
 POST  /mod/:username/blank-password    controllers.Mod.blankPassword(username: UserStr)
-POST  /mod/:username/free-patron       controllers.Mod.freePatron(username: UserStr)
 POST  /mod/:username/impersonate       controllers.Mod.impersonate(username: String)
 GET   /mod/:username/games             controllers.GameMod.index(username: UserStr)
 POST  /mod/:username/games             controllers.GameMod.post(username: UserStr)
@@ -334,23 +253,9 @@ GET   /api/stream/mod-marked-since     controllers.Mod.markedUsersStream
 GET   /mod/image/queue                 controllers.Mod.imageQueue(page: Int ?= 1)
 POST  /mod/image/accept/:id            controllers.Mod.imageAccept(id: ImageId, v: Boolean)
 
-# Coach
-GET   /coach                           controllers.Coach.all(page: Int ?= 1)
-GET   /coach/edit                      controllers.Coach.edit
-POST  /coach/edit                      controllers.Coach.editApply
-POST  /upload/image/coach              controllers.Coach.pictureApply
-GET   /coach/:username                 controllers.Coach.show(username: UserStr)
-GET   /coach/:lang/:country/:order     controllers.Coach.search(lang: String, order, country: FlagCode, page: Int ?= 1)
-GET   /$lang<\w\w\w?>/coach            controllers.Coach.homeLang(lang: Language)
-
 # Paste
 GET   /paste                           controllers.Importer.importGame
 POST  /import                          controllers.Importer.sendGame
-
-# Edit
-GET   /editor.json                     controllers.Editor.data
-GET   /editor/*urlFen                  controllers.Editor.load(urlFen)
-GET   /editor                          controllers.Editor.index
 
 # Playground (LiGo, unit 2.2)
 GET   /playground                      controllers.Playground.home
@@ -464,10 +369,6 @@ GET   /account/personal-data           controllers.Account.data
 GET   /account/security                controllers.Account.security
 POST  /account/signout/:sessionId      controllers.Account.signout(sessionId)
 GET   /account/now-playing             controllers.Account.nowPlaying
-
-# Recap
-GET   /recap                           controllers.Recap.home
-GET   /recap/:username                 controllers.Recap.user(username: UserStr)
 
 # OAuth
 GET    /oauth                          controllers.OAuth.authorize

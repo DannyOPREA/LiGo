@@ -80,13 +80,11 @@ final class Api(env: Env, gameC: => Game) extends LilaController(env):
     else
       val withSignal = getBool("withSignal")
       env.user.lightUserApi.asyncMany(ids).dmap(_.flatten).flatMap { users =>
-        val streamingIds = env.streamer.liveApi.userIds
         def toJson(u: LightUser) =
           lila.common.Json.lightUser
             .write(u)
             .add("online", env.socket.isOnline.exec(u.id))
             .add("playing", env.round.playing(u.id))
-            .add("streaming", streamingIds(u.id))
             .add("signal", withSignal.so(env.socket.getLagRating(u.id)))
         def gameIds: Fu[List[Option[id.GameId]]] = users.sequentially: u =>
           env.round.playing(u.id).so(env.game.cached.lastPlayedPlayingId(u.id))

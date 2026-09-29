@@ -29,7 +29,7 @@ final class ActivityUi(helpers: Helpers):
               a.corresMoves.map(renderCorresMoves),
               a.corresEnds.map(renderCorresEnds),
               a.follows.map(renderFollows),
-              a.stream.option(renderStream(u.user)),
+              a.stream.option(renderStream),
               a.signup.option(renderSignup)
             )
           )
@@ -41,10 +41,9 @@ final class ActivityUi(helpers: Helpers):
     div(cls := "entry plan")(
       iconTag(Icon.Wings),
       div(
-        if p.months == 0 then a(href := routes.Plan.index())("Lifetime Patron!")
-        else
-          trans.activity.supportedNbMonths
-            .plural(p.months, p.months, a(href := routes.Plan.index())("Patron"))
+        // Donations went with the plan module (unit 3.7); stored entries render without a link.
+        if p.months == 0 then "Lifetime Patron!"
+        else trans.activity.supportedNbMonths.plural(p.months, p.months, "Patron")
       )
     )
 
@@ -177,13 +176,9 @@ final class ActivityUi(helpers: Helpers):
       )
     )
 
-  private def renderStream(u: User)(using ctx: Context) =
-    ctx.kid.no.option(
-      entryTag(
-        iconTag(Icon.Mic),
-        a(href := routes.Streamer.show(u.username, true))(trans.activity.hostedALiveStream())
-      )
-    )
+  // Streamer pages went with unit 3.7; stored entries render without a link.
+  private def renderStream(using ctx: Context) =
+    ctx.kid.no.option(entryTag(iconTag(Icon.Mic), trans.activity.hostedALiveStream()))
 
   private def renderSignup(using Context) =
     entryTag(

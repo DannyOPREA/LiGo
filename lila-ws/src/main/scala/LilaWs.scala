@@ -34,7 +34,6 @@ object LilaWs extends App:
   lazy val friendList = wire[FriendList]
   lazy val lag = wire[Lag]
   lazy val tor = wire[Tor]
-  lazy val tv = wire[Tv]
   lazy val gameCount = wire[GameCount]
   lazy val services = wire[Services]
   lazy val controller = wire[Controller]

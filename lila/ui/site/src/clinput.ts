@@ -83,11 +83,8 @@ function command(q: string) {
     return commands.split(' ').includes(exec);
   };
 
-  if (is('tv follow') && parts[1]) location.href = '/@/' + parts[1] + '/tv';
-  else if (is('tv')) location.href = '/tv';
-  else if (is('play challenge match') && parts[1]) location.href = '/?user=' + parts[1] + '#friend';
+  if (is('play challenge match') && parts[1]) location.href = '/?user=' + parts[1] + '#friend';
   else if (is('light dark transp system')) loadDasher().then(m => m.theme.set(exec));
-  else if (is('stream') && parts[1]) location.href = '/streamer/' + parts[1];
   else if (is('help')) help();
   else alert(`Unknown command: "${q}". Type /help for the list of commands`);
 }
@@ -112,10 +109,8 @@ function help() {
     show: true,
     htmlText:
       '<div><h3>Commands</h3>' +
-      commandHelp('/tv /follow', ' <user>', 'Watch someone play') +
       commandHelp('/play /challenge /match', ' <user>', 'Challenge someone to play') +
       commandHelp('/light /dark /transp /system', '', 'Change the background theme') +
-      commandHelp('/stream', '<user>', 'Watch someone stream') +
       '<h3>Global hotkeys</h3>' +
       commandHelp('s', '', 'Search for a user') +
       commandHelp('/', '', 'Type a command') +
