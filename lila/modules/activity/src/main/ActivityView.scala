@@ -1,10 +1,8 @@
 package lila.activity
 
 import lila.activity.activities.*
-import lila.core.forum.{ ForumPostMini, ForumTopicMini }
 import lila.core.game.LightPov
 import lila.core.rating.Score
-import lila.core.ublog.UblogPost
 
 case class ActivityView(
     interval: TimeInterval,
@@ -14,12 +12,9 @@ case class ActivityView(
     racer: Option[Racer] = None,
     streak: Option[Streak] = None,
     patron: Option[Patron] = None,
-    forumPosts: Option[Map[ForumTopicMini, List[ForumPostMini]]] = None,
-    ublogPosts: Option[List[UblogPost.LightPost]] = None,
     corresMoves: Option[(Int, List[LightPov])] = None,
     corresEnds: Option[Map[PerfKey, (Score, List[LightPov])]] = None,
     follows: Option[Follows] = None,
-    teams: Option[Teams] = None,
     stream: Boolean = false,
     signup: Boolean = false
 ):
@@ -30,10 +25,7 @@ case class ActivityView(
     racer,
     streak,
     patron,
-    forumPosts,
-    ublogPosts,
     corresMoves,
     corresEnds,
-    follows,
-    teams
+    follows
   ).forall(_.isEmpty)

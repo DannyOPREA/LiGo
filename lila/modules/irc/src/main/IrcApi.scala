@@ -93,11 +93,6 @@ final class IrcApi(
             dox = false
           )
 
-  def fullCommExport(user: LightUser)(using mod: LightUser.Me): Funit =
-    val topic = "/" + user.name
-    zulip(_.mod.trustSafety, topic):
-      s"${markdown.modLink(mod.name)} exported all comms of ${markdown.userLink(user.name)}"
-
   def usertableCheck(user: LightUser)(using mod: LightUser.Me): Funit =
     zulip(_.mod.cafeteria, "reports"):
       s"**${markdown.userLinkNoNotes(user.name)}** usertable check (requested by ${markdown.modLink(mod.name)})"
@@ -121,43 +116,11 @@ final class IrcApi(
     zulip(_.mod.adminMonitor(tpe), mod.name.value):
       s"${markdown.userLink(mod.name)} :$icon: ${markdown.linkifyPostsAndUsers(text)}"
 
-  def publicForumLog(icon: String, text: String)(using modId: MyId): Funit =
-    val mod = lightUser(modId)
-    zulip(_.mod.commsPublic, "forum-log"):
-      s"${markdown.userLink(mod.name)} :$icon: ${markdown.linkifyPostsAndUsers(text)}"
-
   def bbb(by: MyId, tpe: "arena" | "event", name: String, url: Call, diff: DiffStr): Funit =
     val link = markdown.lichessLink(url.url, name)
     val text =
       s"${markdown.userLink(lightUser(by.userId))} [$tpe] $link\n${markdown.spoiler("changes", markdown.diff(diff))}"
     zulip(_.bbb, "log")(text)
-
-  def ublogPost(
-      user: LightUser,
-      id: UblogPostId,
-      slug: String,
-      title: String,
-      intro: String,
-      topic: String,
-      automod: Option[String]
-  ): Funit =
-    zulip(_.blog, topic):
-      val link = markdown.lichessLink(s"/@/${user.name}/blog/$slug/$id", title)
-      s":note: $link $intro - by ${markdown.userLink(user)}${~automod.map(n => s"\n$n")}"
-
-  def ublogBlog(userId: UserId, mod: UserName, tier: Option[String], note: Option[String]): Funit =
-    val user = lightUser(userId)
-    zulip(_.blog, "Tier and plagiarism checks"):
-      s":note: ${markdown.userLink(user)} ${markdown.lichessLink(s"/@/${user.name}/blog", "blog")}" +
-        tier.fold(" note edit")(t => s" tier set to **${t.toUpperCase()}**") +
-        s" by **${markdown.modLink(mod)}**" +
-        note.so(n => s"\nnote: $n")
-
-  def payoutNotify(p: lila.core.msg.PayoutMessages): Funit =
-    zulip(_.adminPrizes, p.tourName):
-      val link = markdown.link(p.tourUrl, p.tourName)
-      val playerList = p.userIds.map(id => s"1. ${markdown.userLink(lightUser(id))}").mkString("\n")
-      s"$link\n\nPlayers notified:\n$playerList".pp
 
   def broadcasterDm(topicUserId: UserId, senderId: UserId, content: String): Funit =
     zulip(_.broadcastDms, s"/${lightUser(topicUserId).name}"):

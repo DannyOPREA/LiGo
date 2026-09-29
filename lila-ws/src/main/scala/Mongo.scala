@@ -35,8 +35,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
   def gameColl = collNamed("game5")
   def challengeColl = collNamed("challenge")
   def relationColl = collNamed("relation")
-  def teamColl = collNamed("team")
-  def teamMemberColl = collNamed("team_member")
   def reportColl = collNamed("report2")
   def oauthColl = collNamed("oauth2_access_token")
   def settingColl = collNamed("setting")
@@ -50,31 +48,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
   def coach[A](f: BSONCollection => Future[A]): Future[A] = coachColl.flatMap(f)
   def streamer[A](f: BSONCollection => Future[A]): Future[A] = streamerColl.flatMap(f)
   def user[A](f: BSONCollection => Future[A]): Future[A] = userColl.flatMap(f)
-
-  private def isTeamMember(teamId: Team.Id, user: User.Id): Future[Boolean] =
-    teamMemberColl.flatMap { exists(_, BSONDocument("_id" -> s"${user.value}@$teamId")) }
-
-  def teamView(id: Team.Id, me: Option[User.Id]): Future[Option[Team.HasChat]] =
-    teamColl
-      .flatMap:
-        _.find(
-          selector = BSONDocument("_id" -> id),
-          projection = Some(BSONDocument("chat" -> true, "leaders" -> true))
-        ).one[BSONDocument]
-      .zip:
-        me.fold(Future.successful(false)) { isTeamMember(id, _) }
-      .map:
-        case (None, _) => None
-        case (_, false) => Some(Team.HasChat(false))
-        case (Some(teamDoc), true) =>
-          Some:
-            Team.HasChat:
-              teamDoc
-                .int("chat")
-                .exists: chat =>
-                  chat == Team.Access.Members.id ||
-                    (chat == Team.Access.Leaders.id && me.fold(false): me =>
-                      teamDoc.getAsOpt[Set[User.Id]]("leaders").exists(_ contains me))
 
   // None = no such game
   def gameUserIds(id: Game.Id): Future[Option[List[User.Id]]] =
@@ -205,9 +178,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
         userColl.flatMap: coll =>
           exists(coll.secondary, BSONDocument("_id" -> id, "marks" -> "troll")).map(IsTroll.apply(_))
 
-  object idFilter:
-    val team: IdFilter = ids => teamColl.flatMap(filterIds(ids))
-
   object cache:
     def get[A: BSONReader](key: String): Future[Option[A]] = for
       coll <- cacheColl
@@ -228,16 +198,7 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
       )
       .map(0 < _)(using parasitic)
 
-  private def filterIds(ids: Iterable[String])(coll: BSONCollection): Future[Set[String]] =
-    coll.distinct[String, Set](
-      key = "_id",
-      selector = Some(BSONDocument("_id" -> BSONDocument("$in" -> ids))),
-      collation = None
-    )
-
 trait MongoHandlers:
-
-  type IdFilter = Iterable[String] => Future[Set[String]]
 
   given localDateHandler: BSONHandler[LocalDateTime] with
     def readTry(bson: BSONValue): Try[LocalDateTime] =

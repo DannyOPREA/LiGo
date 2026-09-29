@@ -35,9 +35,9 @@ final class AccessTokenApi(
     lila.common.Bus.pub(AccessToken.Create(token))
     token
 
-  def create(setup: OAuthTokenForm.Data, isStudent: Boolean)(using me: MyId, ua: UserAgent): Fu[AccessToken] =
+  def create(setup: OAuthTokenForm.Data)(using me: MyId, ua: UserAgent): Fu[AccessToken] =
     for
-      noBot <- fuccess(isStudent) >>| userApi.isManaged(me)
+      noBot <- userApi.isManaged(me)
       plain = Bearer.randomPersonal()
       token = AccessToken(
         id = AccessToken.idFrom(plain),

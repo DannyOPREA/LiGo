@@ -13,7 +13,6 @@ package routes:
   export lila.core.perf.PerfKey
   export lila.core.socket.Sri
   export lila.core.study.StudyOrder
-  export lila.core.ublog.{ BlogsBy, QualityFilter as BlogQualityFilter }
   export lila.core.misc.AppealTopic
   export lila.ui.MarkdownRealm
   export lila.ui.LilaRouter.given
@@ -31,22 +30,7 @@ package router.router:
   export lila.core.perf.PerfKey
   export lila.core.socket.Sri
   export lila.core.study.StudyOrder
-  export lila.core.ublog.{ BlogsBy, QualityFilter as BlogQualityFilter }
   export lila.ui.MarkdownRealm
-  export lila.ui.LilaRouter.given
-
-package router.team:
-
-  export lila.core.id.TeamId
-  export lila.core.userId.UserStr
-  export lila.ui.LilaRouter.given
-
-package router.clas:
-
-  export scalalib.model.Days
-  export lila.core.id.{ ClasId, ClasInviteId }
-  export lila.core.perf.PerfKey
-  export lila.core.userId.UserStr
   export lila.ui.LilaRouter.given
 
 package router.appeal:

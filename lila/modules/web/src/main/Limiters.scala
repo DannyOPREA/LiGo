@@ -33,9 +33,6 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
     maxConcurrency = 1
   )
 
-  val forumPost = RateLimit[IpAddress](credits = 4, duration = 5.minutes, key = "forum.post")
-  val forumTopic = RateLimit[IpAddress](credits = 2, duration = 5.minutes, key = "forum.topic")
-
   val apiMe = RateLimit[UserId](30, 5.minutes, "api.account.user")
   val apiMobileHome = RateLimit[UserId | IpAddress](30, 3.minutes, "api.mobile.home")
 
@@ -126,8 +123,6 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
     maxConcurrency = 2
   )
 
-  val ublog = RateLimit[UserId](credits = 5 * 3, duration = 24.hour, key = "ublog.create.user")
-
   val tourJoinOrResume =
     RateLimit[UserId](credits = 30, duration = 10.minutes, key = "tournament.user.joinOrResume")
 
@@ -156,9 +151,6 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
     def perSecond(using ctx: Context) = if ctx.isAuth then 30 else 10
     def apply[T]()(using ctx: Context): ConcurrencyLimit.Limiter[PgnStr] =
       ctx.userId.fold(anon(ctx.ip))(auth(_))
-
-  val teamKick =
-    RateLimit.composite[IpAddress](key = "team.kick.api.ip")(("fast", 10, 2.minutes), ("slow", 50, 1.day))
 
   object relay:
 

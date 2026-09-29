@@ -16,7 +16,6 @@ final class ModApi(
     reportApi: lila.report.ReportApi,
     noteApi: lila.user.NoteApi,
     prefApi: lila.core.pref.PrefApi,
-    notifier: ModNotifier,
     lightUserApi: LightUserApi,
     refunder: RatingRefund
 )(using Executor)
@@ -32,18 +31,10 @@ final class ModApi(
       _ <- userRepo.setAlt(prev.user.id, v)
       sus = prev.set(_.withMarks(_.set(_.alt, v)))
       _ <- logApi.alt(sus, v)
-      _ = if v then notifier.actionTaken(me.modId, sus, Room.Other)
     yield sus
 
-  def afterModClose(u: User)(using me: Me) =
-    notifier.actionTaken(me.modId, Suspect(u), Room.Other)
-
-  def afterWarning(sus: Suspect)(using me: Me) =
-    reportApi.inquiries
-      .ofModId(me)
-      .map: inquiry =>
-        val room = inquiry.fold(Room.Comm)(_.room)
-        notifier.actionTaken(me.modId, sus, room)
+  // afterModClose and afterWarning (and every other "action taken" private message to the
+  // reporters, and the kid mode message) went with the msg module (unit 3.6).
 
   def setEngine(prev: Suspect, v: Boolean)(using me: MyId): Funit =
     (prev.user.marks.engine != v).so:
@@ -53,9 +44,7 @@ final class ModApi(
         _ <- logApi.engine(sus, v)
       yield
         Bus.pub(lila.core.mod.MarkCheater(sus.user.id, v))
-        if v then
-          notifier.actionTaken(me.modId, sus, Room.Cheat)
-          refunder.schedule(sus)
+        if v then refunder.schedule(sus)
 
   def autoEngine(suspectId: SuspectId, note: String)(using MyId): Funit =
     for
@@ -68,7 +57,6 @@ final class ModApi(
           _ <- noteApi.lichessWrite(sus.user, note)
           _ <- reportApi.autoProcess(sus, Set(Room.Cheat, Room.Print))
           _ = lila.mon.cheat.autoMark.increment()
-          _ = notifier.actionTaken(ModId.lichess, sus, Room.Cheat)
         yield ()
     yield ()
 
@@ -81,7 +69,6 @@ final class ModApi(
         _ <- logApi.booster(sus, v)
       yield
         Bus.pub(lila.core.mod.MarkBooster(sus.user.id, v))
-        if v then notifier.actionTaken(me.modId, sus, Room.Boost)
         sus
 
   def setTroll(prev: Suspect, value: Boolean)(using me: MyId): Fu[Suspect] =
@@ -96,7 +83,6 @@ final class ModApi(
           yield
             logApi.troll(sus)
             Bus.pub(lila.core.mod.Shadowban(sus.user.id, value))
-        _ = if value then notifier.actionTaken(me.modId, sus, Room.Comm)
       yield sus
 
   def autoTroll(sus: Suspect, note: String): Funit =
@@ -105,7 +91,6 @@ final class ModApi(
       _ <- setTroll(sus, true)
       _ <- noteApi.lichessWrite(sus.user, note)
       _ <- reportApi.autoProcess(sus, Set(Room.Comm))
-      _ = notifier.actionTaken(ModId.lichess, sus, Room.Comm)
     yield ()
 
   def setIsolate(prev: Suspect, value: Boolean)(using me: MyId): Fu[Suspect] =
@@ -148,8 +133,7 @@ final class ModApi(
       userApi
         .setKid(user, v)
         .flatMapz: mode =>
-          mode.yes.so(notifier.notifyKidMode(mod, user)) >>
-            logApi.setKidMode(mod, user.id, mode)
+          logApi.setKidMode(mod, user.id, mode)
 
   def setTitle(username: UserStr, title: Option[PlayerTitle])(using Me): Funit =
     withUser(username): user =>

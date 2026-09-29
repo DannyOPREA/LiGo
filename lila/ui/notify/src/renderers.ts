@@ -33,14 +33,6 @@ export default function makeRenderers(): Renderers {
         ]),
       text: n => n.content.title || n.content.text,
     },
-    mention: {
-      html: n =>
-        generic(n, `/forum/redirect/post/${n.content.postId}`, licon.BubbleConvo, [
-          h('span', [h('strong', userFullName(n.content.mentionedBy)), drawTime(n)]),
-          h('span', i18n.site.mentionedYouInX(n.content.topic)),
-        ]),
-      text: n => i18n.site.xMentionedYouInY(userFullName(n.content.mentionedBy), n.content.topic),
-    },
     invitedStudy: {
       html: n =>
         generic(n, '/study/' + n.content.studyId, licon.StudyBoard, [
@@ -48,30 +40,6 @@ export default function makeRenderers(): Renderers {
           h('span', i18n.site.invitedYouToX(n.content.studyName)),
         ]),
       text: n => i18n.site.xInvitedYouToY(userFullName(n.content.invitedBy), n.content.studyName),
-    },
-    privateMessage: {
-      html: n =>
-        generic(n, '/inbox/' + n.content.user!.name, licon.BubbleSpeech, [
-          h('span', [h('strong', userFullName(n.content.user)), drawTime(n)]),
-          h('span', n.content.text),
-        ]),
-      text: n => userFullName(n.content.sender) + ': ' + n.content.text,
-    },
-    teamJoined: {
-      html: n =>
-        generic(n, '/team/' + n.content.id, licon.Group, [
-          h('span', [h('strong', n.content.name), drawTime(n)]),
-          h('span', i18n.site.youAreNowPartOfTeam),
-        ]),
-      text: n => i18n.site.youHaveJoinedTeamX(n.content.name),
-    },
-    teamUpdate: {
-      html: n =>
-        generic(n, '/team/updates/' + n.content.id, licon.Group, [
-          h('span', [h('strong', n.content.name)]),
-          h('span', n.content.text),
-        ]),
-      text: _ => 'New team update',
     },
     titledTourney: {
       html: n =>

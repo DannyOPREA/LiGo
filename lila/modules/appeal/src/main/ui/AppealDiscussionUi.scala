@@ -245,17 +245,14 @@ final class AppealDiscussionUi(helpers: Helpers, ui: AppealUi)(using NetDomain):
                         cls := "button button-red button-empty"
                       )
                   ),
-                  if appeal.topic == AppealTopic.blog
-                  then a(href := routes.Ublog.index(user.username), cls := "button button-empty")("View blog")
-                  else
-                    AppealTopicApi.unmark(status, appeal.topic) match
-                      case None =>
-                        button(cls := "button button-green button-empty", disabled)("Nothing to un-mark")
-                      case Some((text, call)) =>
-                        val actionUrl = addQueryParam(call.url, "referrer", appeal.modShowUrl)
-                        postForm(action := actionUrl):
-                          submitButton(cls := "button button-green button-empty yes-no-confirm")(text)
-                      ,
+                  AppealTopicApi.unmark(status, appeal.topic) match
+                    case None =>
+                      button(cls := "button button-green button-empty", disabled)("Nothing to un-mark")
+                    case Some((text, call)) =>
+                      val actionUrl = addQueryParam(call.url, "referrer", appeal.modShowUrl)
+                      postForm(action := actionUrl):
+                        submitButton(cls := "button button-green button-empty yes-no-confirm")(text)
+                  ,
                   appeal.isOpen.option:
                     postForm(action := routes.Appeal.toggleRead(appeal.user, appeal.topic, appeal.isUnread))(
                       submitButton(cls := "button button-dim button-empty"):

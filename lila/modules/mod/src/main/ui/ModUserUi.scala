@@ -327,13 +327,6 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
       strong(cls := "fat")(rageSit.counterView, " / ", playbans)
     )
 
-  def teacher(u: User)(nb: Int): Frag =
-    if nb == 0 then emptyFrag
-    else
-      mzSection("teacher")(
-        strong(cls := "inline")(a(href := routes.Clas.teacher(u.username))(nb, " Classes"))
-      )
-
   def reportLog(u: User, reports: List[Report])(using Translate): Frag =
     val title = strong(cls := "text", dataIcon := Icon.CautionTriangle)(
       pluralizeLocalize("report", reports.size),

@@ -4,7 +4,7 @@
   grid-area: main;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'app' 'table' 'side' 'blog' 'support' 'feed' 'tv' 'puzzle' 'timeline' 'about';
+  grid-template-areas: 'app' 'table' 'side' 'support' 'feed' 'tv' 'puzzle' 'timeline' 'about';
   gap: $block-gap;
 
   &__start {
@@ -15,11 +15,10 @@
     ---cols: 2; // ui/lobby/src/main.ts
 
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto fit-content(0) repeat(3, min-content) 20em;
+    grid-template-rows: auto fit-content(0) repeat(2, min-content) 20em;
     grid-template-areas:
       'app      app'
       'side     table'
-      'blog     blog'
       'tv       puzzle'
       'support  support'
       'feed     feed'
@@ -46,12 +45,11 @@
 
     grid-template-columns: 34% 1fr;
     grid-template-rows:
-      minmax(12em, auto) fit-content(0) min-content 1fr fit-content(15em) repeat(2, fit-content(0))
+      minmax(12em, auto) fit-content(0) 1fr fit-content(15em) repeat(2, fit-content(0))
       minmax(0, 1fr);
     grid-template-areas:
       'table  app'
       'side   app'
-      'tv     blog'
       'tv     support'
       'puzzle feed'
       'about  about';
@@ -63,10 +61,6 @@
 
     &__counters {
       display: flex;
-    }
-
-    &__blog {
-      margin-top: 1.65em;
     }
 
     &__support {
@@ -87,7 +81,6 @@
     grid-template-areas:
       'side   app     app     table'
       'tv     feed    feed    puzzle'
-      'tv     blog    blog    puzzle'
       'about  about   .       .';
 
     &__start {
@@ -104,10 +97,6 @@
       align-items: flex-start;
       position: absolute;
       bottom: 0;
-    }
-
-    &__blog {
-      margin-top: 0;
     }
 
     &__support {
@@ -139,10 +128,6 @@
 
   &__puzzle {
     grid-area: puzzle;
-  }
-
-  &__blog {
-    grid-area: blog;
   }
 
   &__support {

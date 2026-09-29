@@ -65,12 +65,6 @@ final class SiteMessage(helpers: Helpers):
         " has to play at least one rated game."
       )
 
-  def teamCreateLimit = apply("Cannot create a team"):
-    p("You have already created a team this week.")
-
-  def teamJoinLimit = apply("Cannot join the team"):
-    p("You have already joined too many teams.")
-
   def authFailed = apply("403 - Access denied!"):
     p("You tried to visit a page you're not authorized to access.")
 

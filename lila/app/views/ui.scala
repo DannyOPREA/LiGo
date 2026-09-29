@@ -54,15 +54,7 @@ object account:
 // practice, study, relay and fide (the study/broadcast/FIDE-player UI) were removed with the
 // study, relay, practice, studySearch, fide and title modules (unit 3.3).
 
-object forum:
-  import lila.forum.ui.*
-  val bits = ForumBits(helpers)
-  val post = PostUi(helpers, bits)
-  val categ = CategUi(helpers, bits)
-  val topic = TopicUi(helpers, bits, post)(
-    captcha.apply,
-    lila.msg.MsgPreset.forumDeletion.presets
-  )
+// forum (the forum pages) was removed with the forum module (unit 3.6).
 
 val timeline = lila.timeline.ui.TimelineUi(helpers)
 

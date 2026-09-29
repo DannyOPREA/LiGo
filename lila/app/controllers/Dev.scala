@@ -112,9 +112,8 @@ final class Dev(env: Env) extends LilaController(env):
       env.report.automod.imageModelSetting,
       env.report.automod.imagePromptSetting,
       env.report.api.commsModelSetting,
-      env.report.api.commsPromptSetting,
-      env.ublog.ublogAutomod.modelSetting,
-      env.ublog.ublogAutomod.promptSetting
+      env.report.api.commsPromptSetting
+      // ublog's automod settings went with the ublog module (unit 3.6).
     ),
     "Mobile" -> List(
       env.web.lichobileAnnounceApi.lichobileUpgrade

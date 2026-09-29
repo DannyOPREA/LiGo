@@ -17,19 +17,15 @@ object LilaIn:
   sealed trait Lobby extends LilaIn
 
   sealed trait Room extends LilaIn
-  sealed trait Team extends Room
   sealed trait Round extends Room
   sealed trait Challenge extends Room
 
   // Simul, Swiss and Tour room traits were removed with the simul, swiss and tournament modules
   // (unit 3.2); Study was removed with the study module (unit 3.3).
-  sealed trait AnyRoom extends Team with Round with Challenge
+  sealed trait AnyRoom extends Round with Challenge
 
   case class TellSri(sri: Sri, user: Option[User.Id], payload: JsValue) extends Site with Lobby:
     def write = s"tell/sri $sri ${optional(user.map(_.value))} ${Json.stringify(payload)}"
-
-  case class TellUser(userId: User.Id, payload: JsObject) extends Site:
-    def write = s"tell/user $userId ${Json.stringify(payload)}"
 
   case class NotifiedBatch(userIds: Iterable[User.Id]) extends Site:
     def write = s"notified/batch ${commas(userIds)}"

@@ -7,7 +7,6 @@ import scalalib.model.Days
 
 import lila.challenge.ChallengeBulkSetup.{ ScheduledBulk, ScheduledGame, maxBulks }
 import lila.common.{ Bus, LilaStream }
-import lila.core.data.Template
 import lila.core.round.TellMany
 import lila.core.round.StartClock
 import lila.db.dsl.{ *, given }
@@ -15,7 +14,6 @@ import lila.rating.PerfType
 
 final class ChallengeBulkApi(
     colls: ChallengeColls,
-    msgApi: ChallengeMsg,
     gameRepo: lila.game.GameRepo,
     userApi: lila.core.user.UserApi,
     onStart: lila.core.game.OnStart
@@ -116,11 +114,9 @@ final class ChallengeBulkApi(
             .insertDenormalized(game)
             .recover(e => logger.error(s"Bulk.insertGame ${game.id} ${e.getMessage}"))
           _ = onStart.exec(game.id)
-        yield game -> users
-      .mapAsyncUnordered(8): (game, users) =>
-        msgApi
-          .onApiPair(game.id, users.map(_.light))(bulk.by, bulk.message)
-          .recover(e => logger.error(s"Bulk.sendMsg ${game.id} ${e.getMessage}"))
+        yield game
+      // the bulk's "message" is still accepted and stored, but no private message is sent: the msg
+      // module is gone (unit 3.6).
       .runWith(LilaStream.sinkCount)
       .addEffect(lila.mon.api.challenge.bulk.createNb(bulk.by).increment(_))
       .logFailure(logger, e => s"Bulk.makePairings ${bulk.id} ${e.getMessage}") >> {

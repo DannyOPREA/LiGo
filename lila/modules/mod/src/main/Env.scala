@@ -6,7 +6,6 @@ import play.api.Configuration
 
 import lila.common.Bus
 import lila.core.config.*
-import lila.core.forum.BusForum
 import lila.core.report.SuspectId
 import lila.core.mod.{ BoardApiMark, LoginWithWeakPassword, LoginWithBlankedPassword }
 import lila.common.autoconfig.given
@@ -31,7 +30,6 @@ final class Env(
     noteApi: lila.user.NoteApi,
     cacheApi: lila.memo.CacheApi,
     ircApi: lila.core.irc.IrcApi,
-    msgApi: lila.core.msg.MsgApi,
     langPicker: lila.core.i18n.LangPicker
 )(using Executor, Scheduler, lila.core.i18n.Translator, org.apache.pekko.stream.Materializer):
 
@@ -95,22 +93,11 @@ final class Env(
     case lila.core.mod.ChatTimeout(mod, user, reason, text) =>
       logApi.chatTimeout(user, reason, text)(using mod.into(MyId))
 
-  Bus.sub[lila.core.team.TeamUpdate]: t =>
-    if t.byMod then logApi.teamEdit(t.team.userId, t.team.name)(using t.me)
-
-  Bus.sub[lila.core.team.KickFromTeam]: t =>
-    logApi.teamKick(t.userId, t.teamName)(using t.me)
-
   Bus.sub[LoginWithWeakPassword]: l =>
     logApi.loginWithWeakPassword(l.userId)
 
   Bus.sub[LoginWithBlankedPassword]: l =>
     logApi.loginWithBlankedPassword(l.userId)
-
-  Bus.sub[BusForum]:
-    case p: BusForum.RemovePost =>
-      if p.asAdmin
-      then logApi.deletePost(p.by, text = p.text.take(200))(using p.me)
 
   Bus.sub[BoardApiMark]: m =>
     api.autoEngine(SuspectId(m.userId), s"Board API: ${m.name}")(using UserId.lichessAsMe)

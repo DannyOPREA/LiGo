@@ -5,7 +5,6 @@ import com.softwaremill.tagging.*
 
 import lila.common.Bus
 import lila.core.config.*
-import lila.core.forum.BusForum
 import lila.core.misc.streamer.StreamStart
 import lila.core.round.CorresMoveEvent
 
@@ -13,10 +12,6 @@ import lila.core.round.CorresMoveEvent
 final class Env(
     db: lila.db.AsyncDb @@ lila.db.YoloDb,
     gameRepo: lila.core.game.GameRepo,
-    forumPostApi: lila.core.forum.ForumPostApi,
-    ublogApi: lila.core.ublog.UblogApi,
-    teamApi: lila.core.team.TeamApi,
-    getLightTeam: lila.core.team.LightTeam.GetterSync,
     lightUserApi: lila.core.user.LightUserApi,
     routeUrl: RouteUrl
 )(using ec: Executor, scheduler: Scheduler):
@@ -34,21 +29,12 @@ final class Env(
 
   Bus.sub[lila.puzzle.Puzzle.UserResult](write.puzzle(_))
 
-  Bus.sub[lila.core.ublog.UblogPost.Create]: create =>
-    write.ublogPost(create.post)
   Bus.sub[CorresMoveEvent]:
     case CorresMoveEvent(move, Some(userId), _, _, _) => write.corresMove(move.gameId, userId)
   Bus.sub[lila.core.plan.MonthInc]:
     case lila.core.plan.MonthInc(userId, months) => write.plan(userId, months)
   Bus.sub[lila.core.relation.Follow]:
     case lila.core.relation.Follow(from, to) => write.follow(from, to)
-  Bus.sub[lila.core.team.TeamCreate]:
-    case lila.core.team.TeamCreate(t) => write.team(t.id, t.userId)
-  Bus.sub[lila.core.team.JoinTeam]:
-    case lila.core.team.JoinTeam(id, userId) => write.team(id, userId)
 
   Bus.sub[StreamStart]:
     case StreamStart(userId, _) => write.streamStart(userId)
-
-  Bus.sub[BusForum]:
-    case BusForum.CreatePost(post) => write.forumPost(post)

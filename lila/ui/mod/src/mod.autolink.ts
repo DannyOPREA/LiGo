@@ -16,11 +16,8 @@ export const autolink = (text: string): string =>
   expandMentions(text.replace(pathMatchRe, `<a href="$1">${location.hostname}$1</a>`));
 
 const greedyAutoLinks = [
-  'inbox',
-  'forum',
   'study',
   'broadcast',
-  'team',
   'tournament',
   '@',
   'insights',

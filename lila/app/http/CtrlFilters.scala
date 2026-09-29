@@ -135,6 +135,6 @@ trait CtrlFilters(using Executor) extends ControllerHelpers with ResponseBuilder
 
   def NotManaged(result: => Fu[Result])(using ctx: Context): Fu[Result] =
     ctx.me
-      .so(env.clas.api.student.isManaged(_))
+      .so(me => env.user.repo.isManaged(me.userId))
       .flatMap:
         if _ then notFound else result

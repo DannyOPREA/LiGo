@@ -3,7 +3,6 @@ package lila.mod
 import reactivemongo.api.*
 import reactivemongo.api.bson.*
 
-import lila.core.id.ForumCategId
 import lila.core.irc.IrcApi
 import lila.core.perf.UserWithPerfs
 import lila.core.perm.Permission
@@ -13,13 +12,12 @@ import lila.user.UserRepo
 import lila.core.chat.TimeoutReason
 import lila.core.user.KidMode
 import lila.core.LightUser
-import lila.core.id.ForumTopicSlug
 import lila.memo.PicfitImage
 import lila.core.study.Study
 
 final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, presetsApi: ModPresetsApi)(using
     Executor
-) extends lila.core.mod.LogApi:
+):
   import repo.coll
 
   private given BSONDocumentHandler[Modlog] = Macros.handler
@@ -47,157 +45,8 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
   def streamerTier(streamerId: UserId, v: Int)(using MyId) = add:
     Modlog(streamerId.some, Modlog.streamerTier, v.toString.some)
 
-  def blogEdit(sus: Suspect, details: String)(using MyId) = add:
-    Modlog.make(sus, Modlog.blogTier, details.some)
-
-  def blogPostEdit(sus: Suspect, postId: UblogPostId, postName: String, details: String)(using MyId) = add:
-    Modlog.make(
-      sus,
-      Modlog.blogPostEdit,
-      details.some,
-      Modlog.Context(postName.some, routes.Ublog.redirect(postId).url.some, postId.value.some).some
-    )
-
-  def setCarouselSize(size: Int)(using MyId) = add:
-    Modlog(none, Modlog.setCarouselSize, size.toString.some)
-
-  def practiceConfig(using MyId) = add:
-    Modlog(none, Modlog.practiceConfig)
-
-  def alt(sus: Suspect, v: Boolean)(using MyId) = add:
-    Modlog.make(sus, if v then Modlog.alt else Modlog.unalt)
-
-  def engine(sus: Suspect, v: Boolean)(using MyId) = add:
-    Modlog.make(sus, if v then Modlog.engine else Modlog.unengine)
-
-  def booster(sus: Suspect, v: Boolean)(using MyId) = add:
-    Modlog.make(sus, if v then Modlog.booster else Modlog.unbooster)
-
-  def troll(sus: Suspect)(using MyId) = add:
-    Modlog.make(sus, if sus.user.marks.troll then Modlog.troll else Modlog.untroll)
-
-  def isolate(sus: Suspect)(using MyId) = add:
-    Modlog.make(sus, if sus.user.marks.isolate then Modlog.isolate else Modlog.unisolate)
-
-  def deleteComms(sus: Suspect)(using MyId) = add:
-    Modlog.make(sus, Modlog.deleteComms)
-
-  def fullCommExport(sus: Suspect)(using MyId) = add:
-    Modlog.make(sus, Modlog.fullCommsExport)
-
-  def setKidMode(mod: ModId, kid: UserId, v: KidMode) = add:
-    Modlog(mod, kid.some, if v.yes then Modlog.setKidMode else Modlog.unsetKidMode)
-
-  def blankPassword(user: UserId)(using Me) = add:
-    Modlog(user.some, Modlog.blankPassword)
-
-  def loginWithBlankedPassword(user: UserId) = add:
-    Modlog(UserId.lichess.into(ModId), user.some, Modlog.blankedPassword)
-
-  def loginWithWeakPassword(user: UserId) = add:
-    Modlog(UserId.lichess.into(ModId), user.some, Modlog.weakPassword)
-
-  def giftPatronMonth(mod: ModId, user: UserId) = add:
-    Modlog(mod, user.some, Modlog.giftPatronMonth)
-
-  def disableTwoFactor(mod: ModId, user: UserId) = add:
-    Modlog(mod, user.some, Modlog.disableTwoFactor)
-
-  def closeAccount(user: UserId)(using me: Me) = add:
-    Modlog(me, user.some, Modlog.closeAccount)
-
-  def teacherCloseAccount(user: UserId)(using me: Me) = add:
-    Modlog(me, user.some, Modlog.teacherCloseAccount)
-
-  def selfCloseAccount(user: UserId, forever: Boolean, openReports: List[Report]) = add:
-    Modlog(
-      UserId.lichess.into(ModId),
-      user.some,
-      Modlog.selfCloseAccount,
-      details = {
-        forever.so("forever ") + openReports.map(r => s"${r.room.name} report").mkString(", ")
-      }.nonEmptyOption
-    )
-
-  def closedByMod(user: User): Fu[Boolean] =
-    fuccess(user.marks.alt) >>| coll.exists(bdoc("user" -> user.id, "action" -> Modlog.closeAccount))
-
-  def closedByTeacher(user: User): Fu[Boolean] =
-    coll.exists(bdoc("user" -> user.id, "action" -> Modlog.teacherCloseAccount))
-
-  def reopenAccount(user: UserId)(using Me) = add:
-    Modlog(user.some, Modlog.reopenAccount)
-
-  def setTitle(user: UserId, title: String)(using Me) = add:
-    Modlog(user.some, Modlog.setTitle, title.some)
-
-  def removeTitle(user: UserId)(using Me) = add:
-    Modlog(user.some, Modlog.removeTitle)
-
-  def setEmail(user: UserId, from: Option[EmailAddress], to: EmailAddress)(using Me) =
-    from
-      .forall(_ != to)
-      .so:
-        add(Modlog(user.some, Modlog.setEmail, s"${from | "none"} -> $to".some))
-
   def setPassword(using me: Me) = add:
     Modlog(me.some, Modlog.setPassword)
-
-  def deletePost(user: Option[UserId], text: String)(using MyId) = add:
-    Modlog(
-      user,
-      Modlog.deletePost,
-      details = Some(text.take(400))
-    )
-
-  def toggleCloseTopic(categ: ForumCategId, slug: ForumTopicSlug, closed: Boolean)(using MyId) = add:
-    Modlog(
-      none,
-      if closed then Modlog.closeTopic else Modlog.openTopic,
-      details = s"$categ/$slug".some
-    )
-
-  def toggleStickyTopic(categ: ForumCategId, slug: ForumTopicSlug, sticky: Boolean)(using MyId) = add:
-    Modlog(
-      none,
-      if sticky then Modlog.stickyTopic else Modlog.unstickyTopic,
-      details = s"$categ/$slug".some
-    )
-
-  // Not to be confused with the eponymous lichess account.
-  def postOrEditAsAnonMod(
-      categ: ForumCategId,
-      topic: ForumTopicSlug,
-      postId: ForumPostId,
-      text: String,
-      edit: Boolean
-  )(using MyId) = add:
-    Modlog(
-      none,
-      if edit then Modlog.editAsAnonMod else Modlog.postAsAnonMod,
-      details = s"$categ/$topic id: $postId ${text.take(400)}".some
-    )
-
-  def deleteTeam(id: TeamId, explain: String)(using MyId) = add:
-    Modlog(
-      none,
-      Modlog.deleteTeam,
-      details = s"$id: ${explain.take(200)}".some
-    ).indexAs("team")
-
-  def toggleTeam(id: TeamId, closing: Boolean, explain: String)(using MyId) = add:
-    Modlog(
-      none,
-      if closing then Modlog.disableTeam else Modlog.enableTeam,
-      details = s"$id: ${explain.take(200)}".some
-    ).indexAs("team")
-
-  def teamLog(teamId: TeamId): Fu[List[Modlog]] =
-    repo.coll
-      .find(bdoc("index" -> "team", "details".regexStart(s"$teamId: ")))
-      .sort(sort.desc("date"))
-      .cursor[Modlog]()
-      .list(30)
 
   def terminateTournament(name: String)(using Me) = add:
     Modlog(none, Modlog.terminateTournament, details = name.some)
@@ -270,12 +119,6 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
 
   def prizeban(sus: Suspect, v: Boolean)(using MyId) = add:
     Modlog.make(sus, if v then Modlog.prizeban else Modlog.unprizeban)
-
-  def teamKick(user: UserId, teamName: String)(using MyId) = add:
-    Modlog(user.some, Modlog.teamKick, details = Some(teamName.take(140)))
-
-  def teamEdit(teamOwner: UserId, teamName: String)(using MyId) = add:
-    Modlog(teamOwner.some, Modlog.teamEdit, details = Some(teamName.take(140)))
 
   def moderateImage(image: PicfitImage, op: "pass" | "purge")(using myId: MyId) = add:
     Modlog(

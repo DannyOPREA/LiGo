@@ -11,13 +11,13 @@ final class TopNav(helpers: Helpers):
   private def linkTitle(url: String, name: Frag)(using ctx: Context) =
     if ctx.blind then h3(name) else a(href := url)(name)
 
-  def apply(seesClassMenu: Boolean, hasDgt: Boolean)(using ctx: Context) =
+  def apply(hasDgt: Boolean)(using ctx: Context) =
     // practice and study menu links went with unit 3.3, chess basics and coordinates with 3.4.
     // The "Learn" heading used to open /learn; it now opens the first link the viewer may see, and
-    // the section is left out when there is none (kid accounts don't see coaches).
+    // the section is left out when there is none (kid accounts don't see coaches). Classes went
+    // with unit 3.6.
     val learnLinks = List(
-      ctx.kid.no.option(langHref(routes.Coach.all(1)) -> trans.site.coaches()),
-      seesClassMenu.option(routes.Clas.index.url -> trans.clas.lichessClasses())
+      ctx.kid.no.option(langHref(routes.Coach.all(1)) -> trans.site.coaches())
     ).flatten
     st.nav(id := "topnav", cls := "hover")(
       st.section(
@@ -73,9 +73,7 @@ final class TopNav(helpers: Helpers):
         div(role := "group")(
           a(href := routes.User.list)(trans.site.players()),
           ctx.me.map(me => a(href := routes.Relation.following(me.username))(trans.site.friends())),
-          a(href := routes.Team.home())(trans.team.teams()),
-          ctx.kid.no.option(a(href := routes.ForumCateg.index)(trans.site.forum())),
-          ctx.kid.no.option(a(href := langHref(routes.Ublog.communityAll()))(trans.site.blog())),
+          // Teams, the forum and blogs went with unit 3.6.
           (ctx.kid.no && ctx.me.exists(_.isPatron))
             .option(a(cls := "community-patron", href := routes.Plan.index())(trans.patron.donate()))
         )

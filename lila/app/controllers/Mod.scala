@@ -13,7 +13,6 @@ import lila.core.net.IpAddress
 import lila.core.perm.Permission
 import lila.core.security.FingerHash
 import lila.core.userId.ModId
-import lila.core.msg.SystemMsg
 import lila.mod.{ Modlog, ModUserSearch }
 import lila.report.{ Mod as AsMod, Suspect }
 import lila.mon.extensions.*
@@ -90,10 +89,9 @@ final class Mod(
     env.mod.presets.getPmPresets.named(subject).so { preset =>
       withSuspect(username): suspect =>
         for
-          _ <- env.msg.api.systemPost(SystemMsg.mustRead(suspect.user.id, preset.text))
+          // The warning's private message went with the msg module (unit 3.6); it is only logged.
           _ <- env.mod.logApi.modMessage(suspect.user.id, preset.name)
           _ <- preset.isNameClose.so(env.irc.api.nameClosePreset(suspect.user.username))
-          _ <- env.mod.api.afterWarning(suspect)
         yield suspect.some
     }
   }(reportC.onModAction)
@@ -105,8 +103,6 @@ final class Mod(
   def deletePmsAndChats(username: UserStr) = OAuthMod(_.Shadowban) { _ ?=> _ ?=>
     withSuspect(username): sus =>
       for
-        _ <- env.forum.delete.allByUser(sus.user)
-        _ <- env.msg.api.deleteAllBy(sus.user)
         _ <- env.api.accountTermination.deleteAllGameChats(sus.user)
         _ <- env.mod.logApi.deleteComms(sus)
         _ <- env.memo.picfitApi.deleteByUser(sus.user.id)
@@ -262,11 +258,6 @@ final class Mod(
                   .optionsByOrderedIds(povs.map(_.gameId.into(ChatId)))
                   .mon(lila.mon.mod.comm.segment("playerChats"))
               ,
-              priv.so:
-                env.msg.api
-                  .recentByForMod(user, 30)
-                  .mon(lila.mon.mod.comm.segment("pms"))
-              ,
               env.shutup.api
                 .getPublicLines(user.id)
                 .mon(lila.mon.mod.comm.segment("publicChats")),
@@ -276,7 +267,7 @@ final class Mod(
               env.security.userLogins(user, 100).flatMap {
                 userC.loginsTableData(user, _, 100)
               }
-            ).flatMapN { (timeline, chats, convos, publicLines, inquiry, logins) =>
+            ).flatMapN { (timeline, chats, publicLines, inquiry, logins) =>
               if priv && !inquiry.so(_.isRecentCommOf(Suspect(user))) then
                 env.irc.api.commlog(user = user.light, inquiry.map(_.oldestAtom.by.userId))
                 if isGranted(_.MonitoredCommMod) then
@@ -295,7 +286,6 @@ final class Mod(
                       .collect:
                         case (p, Some(c)) if c.nonEmpty => p -> c
                       .take(15),
-                    convos,
                     publicLines,
                     logins,
                     appeals,
@@ -306,18 +296,6 @@ final class Mod(
 
   def communicationPublic(username: UserStr) = communications(username, priv = false)
   def communicationPrivate(username: UserStr) = communications(username, priv = true)
-
-  def fullCommsExport(username: UserStr) =
-    SecureBody(_.FullCommsExport) { ctx ?=> me ?=>
-      Found(env.user.repo.byId(username)): user =>
-        val source = env.msg.api
-          .modFullCommsExport(user.id)
-          .map: (tid, msgs) =>
-            s"=== 0 === thread: ${tid}\n${msgs.map(m => s"${m.date} ${m.user}: ${m.text}\n--- 0 ---\n").toList.mkString("\n")}"
-        env.mod.logApi.fullCommExport(Suspect(user))
-        env.irc.api.fullCommExport(user.light)
-        Ok.chunked(source).asAttachmentStream(s"full-comms-export-of-${user.id}.txt")
-    }
 
   protected[controllers] def redirect(username: UserStr, mod: Boolean = true)(using RequestHeader) =
     env.web.referrerRedirect.fromReq match
@@ -426,7 +404,6 @@ final class Mod(
       for
         _ <- env.plan.api.freeMonths(dest, 1)
         _ <- env.mod.logApi.giftPatronMonth(me.modId, dest.id)
-        _ = env.mailer.automaticEmail.onPatronFree(dest)
       yield Redirect(routes.User.show(username)).flashSuccess("Free patron month granted")
   }
 

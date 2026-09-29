@@ -11,14 +11,11 @@ import lila.streamer.Streamer
 
 final class PersonalDataExport(
     securityEnv: lila.security.Env,
-    msgEnv: lila.msg.Env,
-    forumEnv: lila.forum.Env,
     gameEnv: lila.game.Env,
     noteApi: lila.round.NoteApi,
     chatEnv: lila.chat.Env,
     relationEnv: lila.relation.Env,
     userRepo: lila.user.UserRepo,
-    ublogApi: lila.ublog.UblogApi,
     streamerApi: lila.streamer.StreamerApi,
     coachApi: lila.coach.CoachApi,
     appealApi: lila.appeal.AppealApi,
@@ -97,23 +94,7 @@ final class PersonalDataExport(
                 s"$k: $v"
         .map(Source.apply)
 
-    val forumPosts =
-      Source(List(textTitle("Forum posts"))).concat(
-        forumEnv.postRepo
-          .allByUserCursor(user)
-          .documentSource()
-          .throttle(heavyPerSecond, 1.second)
-          .map(p => s"${textDate(p.createdAt)}\n${p.text}$bigSep")
-      )
-
-    val privateMessages =
-      Source(List(textTitle("Direct messages"))).concat(
-        msgEnv.api
-          .allMessagesOf(user.id)
-          .throttle(heavyPerSecond, 1.second)
-          .map: (text, date) =>
-            s"${textDate(date)}\n$text$bigSep"
-      )
+    // forum posts and direct messages went with the forum and msg modules (unit 3.6).
 
     def gameChatsLookup(lookup: Bdoc) =
       gameEnv.gameRepo.coll
@@ -167,66 +148,7 @@ final class PersonalDataExport(
           .throttle(heavyPerSecond, 1.second)
       )
 
-    val ublogPosts =
-      Source(List(textTitle("Blog posts"))).concat(
-        ublogApi
-          .postCursor(user)
-          .documentSource()
-          .map: post =>
-            List(
-              "date" -> textDate(post.created.at),
-              "title" -> post.title,
-              "intro" -> post.intro,
-              "body" -> post.markdown,
-              "image" -> post.image.so(i =>
-                lila.ublog.UblogPost.thumbnail(picfitUrl, i.id, _.Size.Large).value
-              ),
-              "topics" -> post.topics.mkString(", ")
-            ).map: (k, v) =>
-              s"$k: $v"
-            .mkString("\n") + bigSep
-          .throttle(heavyPerSecond, 1.second)
-      )
-
-    val appeals = Source.futureSource:
-      appealApi
-        .findAll(user)
-        .map: appeals =>
-          Source:
-            appeals.flatMap: appeal =>
-              List(textTitle("Appeal")) ++ appeal.msgs.map: msg =>
-                val author = if appeal.user.is(msg.by) then "you" else "Lichess"
-                s"${textDate(msg.at)} by $author\n${msg.text}$bigSep"
-
-    val reports = Source.futureSource:
-      reportEnv.api
-        .personalExport(user)
-        .map: atoms =>
-          Source:
-            List(textTitle("Reports you created")) :::
-              atoms.map: a =>
-                s"${textDate(a.at)}\n${a.text}$bigSep"
-
-    val dubiousChats = Source.futureSource:
-      shutupEnv.api
-        .getPublicLines(user.id)
-        .map: lines =>
-          Source:
-            List(textTitle("Dubious public chats")) :::
-              lines.map: l =>
-                s"${textDate(l.date)}\n${l.text}$bigSep"
-
-    val timeouts = Source.futureSource:
-      modLogApi
-        .timeoutPersonalExport(user.id)
-        .map: modlogs =>
-          Source:
-            List(textTitle("Messages you were timeouted for")) :::
-              modlogs.map: m =>
-                // do not export the reason of the timeout as not personal data
-                val timeoutMsg = m.details.so(_.split(":").drop(1).mkString(":").trim())
-                s"${textDate(m.date)}\n${timeoutMsg}$bigSep"
-
+    // blog posts went with the ublog module (unit 3.6).
     // title request export removed with the title module (unit 3.3).
 
     val outro = Source(List(textTitle("End of data export.")))
@@ -237,9 +159,6 @@ final class PersonalDataExport(
       followedUsers,
       streamer,
       coach,
-      ublogPosts,
-      forumPosts,
-      privateMessages,
       spectatorGameChats,
       gameNotes,
       reports,

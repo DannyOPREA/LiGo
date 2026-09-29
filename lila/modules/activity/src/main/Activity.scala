@@ -7,8 +7,6 @@ import activities.*
 case class Activity(
     id: Activity.Id,
     games: Option[Games] = None,
-    forumPosts: Option[ForumPosts] = None,
-    ublogPosts: Option[UblogPosts] = None,
     puzzles: Option[Puzzles] = None,
     storm: Option[Storm] = None,
     racer: Option[Racer] = None,
@@ -17,7 +15,6 @@ case class Activity(
     corres: Option[Corres] = None,
     patron: Option[Patron] = None,
     follows: Option[Follows] = None,
-    teams: Option[Teams] = None,
     stream: Boolean = false
 ):
 
@@ -28,8 +25,6 @@ case class Activity(
   def isEmpty =
     !stream && List(
       games,
-      forumPosts,
-      ublogPosts,
       puzzles,
       storm,
       racer,
@@ -37,8 +32,7 @@ case class Activity(
       learn,
       corres,
       patron,
-      follows,
-      teams
+      follows
     )
       .forall(_.isEmpty)
 

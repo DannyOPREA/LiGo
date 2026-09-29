@@ -43,16 +43,6 @@ final class Env(
 
   wire[MailerCli]
 
-  Bus.sub[lila.core.plan.PlanStart]: plan =>
-    automaticEmail.onPatronNew(plan.userId)
-
-  Bus.sub[lila.core.plan.PlanGift]:
-    case lila.core.plan.PlanGift(from, to, lifetime) =>
-      automaticEmail.onPatronGift(from, to, lifetime)
-
-  Bus.sub[lila.core.plan.PlanExpire]: plan =>
-    automaticEmail.onPatronStop(plan.userId)
-
   Bus.sub[lila.core.misc.mailer.CorrespondenceOpponents]: game =>
     automaticEmail.dailyCorrespondenceNotice(game.userId, game.opponents)
 

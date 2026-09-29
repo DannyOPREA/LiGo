@@ -26,15 +26,9 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
           Ok.snip:
             views.relation.mini(user.id, blocked = blocked, followable = followable, relation)
       else
-        for messageable <- ctx.me.soUse(env.socialInfo.messageable(user.id))
-        yield JsonOk:
-          views.relation.actions(
-            user,
-            relation,
-            blocked = blocked,
-            followable = followable,
-            messageable = messageable
-          )
+        fuccess:
+          JsonOk:
+            views.relation.actions(user, relation, blocked = blocked, followable = followable)
   yield res
 
   private def RatelimitWith(
@@ -50,11 +44,8 @@ final class Relation(env: Env, apiC: => Api) extends LilaController(env):
         reachedMax <- api.reachedMaxFollowing(me)
         res <-
           if reachedMax then
-            val msg = lila.msg.MsgPreset.maxFollow(me.username, env.relation.maxFollow)
-            for
-              _ <- env.msg.api.postPreset(me, msg)
-              res <- rateLimited(msg.name)
-            yield res
+            // The explanatory private message went with the msg module (unit 3.6).
+            rateLimited("Follow limit reached!")
           else
             for
               _ <- api.follow(me, user.id).recoverDefault

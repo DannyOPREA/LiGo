@@ -117,7 +117,6 @@ object protocol:
     case class Lag(userId: UserId, lag: Centis) extends In
     case class Lags(lags: Map[UserId, Centis]) extends In
     case class TellSri(sri: Sri, userId: Option[UserId], typ: String, msg: JsObject) extends In
-    case class TellUser(userId: UserId, typ: String, msg: JsObject) extends In
     case class ReqResponse(reqId: Int, response: String) extends In
     case class Ping(id: String) extends In
 
@@ -147,11 +146,4 @@ trait SocketRequester:
 object remote:
   case class TellSriOut(sri: String, payload: JsValue)
   case class TellSrisOut(sris: Iterable[String], payload: JsValue)
-  enum TellUserIn:
-    case Read(user: UserId, msg: JsObject)
-    case Send(user: UserId, msg: JsObject)
-  object TellUserIn:
-    def make(userId: UserId, msg: JsObject, typ: String): Option[TellUserIn] = typ match
-      case "msgRead" => Some(Read(userId, msg))
-      case "msgSend" => Some(Send(userId, msg))
-      case _ => None
+  // TellUserIn (inbox messages sent and read through lila-ws) went with the msg module (unit 3.6).

@@ -126,9 +126,7 @@ object bits:
     val imageUploadButton = (!realm.toastUi && canUploadImages).option:
       button(cls := "button-empty", tpe := "button", title := "Upload image")(span(cls := "upload-image"))
     val previewStyle = realm match
-      case MarkdownRealm.blog => "ublog-post__markup"
       case MarkdownRealm.cms => "cms-preview"
-      case _ => ""
     div(
       cls := s"markdown-editor $editorClass",
       attr("data-markdown-realm") := realm.key,

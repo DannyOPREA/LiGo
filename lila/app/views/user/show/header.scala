@@ -27,8 +27,7 @@ object header:
             u.light,
             relation = social.relation,
             followable = social.followable,
-            blocked = social.blocked,
-            messageable = social.messageable
+            blocked = social.blocked
           )
       ,
       ctx.useMe(lila.mod.canImpersonate(u.id))
@@ -76,23 +75,8 @@ object header:
       ),
       div(cls := "user-show__social")(
         div(cls := "number-menu")(
-          // broadcast/study counts removed with the relay and study modules (unit 3.3).
-          (ctx.kid.no && info.nbForumPosts > 0).option(
-            a(
-              cls := "nm-item",
-              href := routes.ForumPost.search("user:" + u.username, 1).url
-            )(
-              splitNumber(trans.site.nbForumPosts.pluralSame(info.nbForumPosts))
-            )
-          ),
-          (ctx.kid.no && (info.ublog.exists(_.nbPosts > 0) || ctx.is(u))).option(
-            a(
-              cls := "nm-item",
-              href := routes.Ublog.index(u.username)
-            )(
-              splitNumber(trans.ublog.blogPosts.pluralSame(info.ublog.so(_.nbPosts)))
-            )
-          ),
+          // broadcast/study counts removed with the relay and study modules (unit 3.3), forum and
+          // blog post counts with the forum and ublog modules (unit 3.6).
           (ctx.isAuth && ctx.isnt(u))
             .option(a(cls := "nm-item note-zone-toggle")(splitNumber(s"${social.notes.size} Notes")))
         ),
@@ -181,27 +165,14 @@ object header:
                               a(href := link.url, targetBlank, noFollow, relMe)(link.site.name)
                           )
                     )
-                  ),
-                  (ctx.is(u) || u.kid.no).option(
-                    div(cls := "teams col2")(
-                      info.teamIds.nonEmpty.option(strong(trans.team.teams())),
-                      info.teamIds
-                        .sorted(using stringOrdering)
-                        .map: t =>
-                          teamLink(t, withIcon = false)
-                    )
                   )
+                  // the list of the player's teams went with the team module (unit 3.6).
                 )
               )
               // The "Chess Insights" link went with the insight module (unit 3.5).
             )
           )
       ,
-      (ctx.kid.no && info.ublog.so(_.latests).nonEmpty).option(
-        div(cls := "user-show__blog ublog-post-cards")(
-          info.ublog.so(_.latests).map(views.ublog.ui.card(_))
-        )
-      ),
       (!UserId.isOfficial(u.id)).option:
         div(cls := "angles number-menu number-menu--tabs menu-box-pop")(
           a(

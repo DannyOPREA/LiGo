@@ -47,8 +47,7 @@ final class RelationUi(helpers: Helpers):
       user: lila.core.LightUser,
       relation: Option[Relation],
       followable: Boolean,
-      blocked: Boolean,
-      messageable: Boolean
+      blocked: Boolean
   )(using ctx: Context) =
     val blocks = relation.contains(Relation.Block)
     List(
@@ -93,14 +92,6 @@ final class RelationUi(helpers: Helpers):
                 Some("relation-button")
               )
             ,
-            (messageable && !blocked && !blocks && !user.isBot).option(
-              MenuItem(
-                trans.site.composeMessage.txt(),
-                Icon.BubbleSpeech,
-                routes.Msg.convo(user.name).url,
-                Some("relation")
-              )
-            ),
             (!blocked && !blocks && !user.isPatron).option:
               val url = if me.isPatron then routes.Plan.list else routes.Plan.index()
               MenuItem(

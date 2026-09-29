@@ -114,6 +114,5 @@ trait UserTrustApi:
 
 def canUploadImages(toRel: String)(using me: Me) = !me.marks.troll && me.kid.no && {
   me.isVerified ||
-  toRel.startsWith("ublog") ||
   (me.createdSinceDays(7) && !me.marks.alt)
 }

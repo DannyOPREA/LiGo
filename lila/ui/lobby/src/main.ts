@@ -2,7 +2,6 @@ import { init, classModule, attributesModule, eventListenersModule, propsModule 
 
 import makeCtrl from './ctrl';
 import type { LobbyOpts } from './interfaces';
-import { makeCarousel } from './view/carousel';
 import appView from './view/main';
 import tableView from './view/table';
 
@@ -21,6 +20,5 @@ export default function main(opts: LobbyOpts) {
     tableVNode = patch(tableVNode, tableView(ctrl));
   }
 
-  makeCarousel({ selector: '.lobby__blog', itemWidth: 192, pauseFor: 10 });
   return ctrl;
 }

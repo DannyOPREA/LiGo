@@ -10,9 +10,6 @@ import lila.mon.extensions.*
 final class ActivityReadApi(
     coll: AsyncCollFailingSilently,
     gameRepo: lila.core.game.GameRepo,
-    forumPostApi: lila.core.forum.ForumPostApi,
-    ublogApi: lila.core.ublog.UblogApi,
-    teamApi: lila.core.team.TeamApi,
     lightUserApi: lila.core.user.LightUserApi
 )(using Executor):
 
@@ -35,33 +32,10 @@ final class ActivityReadApi(
   private def preloadAll(views: Seq[ActivityView]) =
     lightUserApi.preloadMany(views.flatMap(_.follows.so(_.allUserIds)))
 
-  // practice and study activity entries removed with the practice and study modules (unit 3.3).
+  // practice and study activity entries removed with the practice and study modules (unit 3.3);
+  // forum posts, blog posts and teams with the forum, ublog and team modules (unit 3.6).
   private def one(a: Activity): Fu[ActivityView] =
     for
-      allForumPosts <- a.forumPosts.traverse: p =>
-        forumPostApi
-          .miniViews(p.value)
-          .mon(lila.mon.user.segment("activity.posts"))
-      hiddenForumTeamIds <- teamApi.filterHideForum(
-        (~allForumPosts).flatMap(_.topic.possibleTeamId).distinct
-      )
-      forumPosts = allForumPosts.map(
-        _.filterNot(_.topic.possibleTeamId.exists(hiddenForumTeamIds.contains))
-      )
-      ublogPosts <- a.ublogPosts
-        .traverse: p =>
-          ublogApi
-            .liveLightsByIds(p.value)
-            .mon(lila.mon.user.segment("activity.ublogs"))
-        .dmap(_.filter(_.nonEmpty))
-      forumPostView = forumPosts
-        .map: p =>
-          p.groupBy(_.topic)
-            .view
-            .mapValues: posts =>
-              posts.view.map(_.post).sortBy(_.createdAt).toList
-            .toMap
-        .filter(_.nonEmpty)
       corresMoves <- a.corres.so: corres =>
         getLightPovs(a.id.userId, corres.movesIn).dmap:
           _.map(corres.moves -> _)
@@ -79,13 +53,10 @@ final class ActivityReadApi(
       storm = a.storm,
       racer = a.racer,
       streak = a.streak,
-      forumPosts = forumPostView,
-      ublogPosts = ublogPosts,
       patron = a.patron,
       corresMoves = corresMoves,
       corresEnds = corresEnds,
       follows = a.follows,
-      teams = a.teams,
       stream = a.stream
     )
 
