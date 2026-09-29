@@ -540,6 +540,33 @@ What stays out of Phase 8: puzzle streak, storm and racer (removed in 3.4), puzz
 LiGo's own games (after the POC), user-submitted puzzles, puzzles in the analysis board, the credits
 page itself (Phase 9, from 8.4's sources list), and problems from modern books (§8).
 
+**Phase 9 units** (broken down 2026-09-29 while Phases 3–8 were being built; the PWA row is §3.1's
+"lila's existing manifest and service worker", the credits page and the handoff are §8, and the
+kept `serviceWorker`, `site`, `dasher` and `pref` pieces are [ADR 0018](decisions/0018-phase-3-module-map.md).
+lila already has most of it (a web app manifest, a service worker for web push, sound sets and a
+sound preference, site and board themes, a non-visual mode for blind players), so the lila units
+adapt them. As in Phases 4–8, the board-library halves are split from their lila halves so they can
+be built early on the playground page (2.2): units 9.1–9.5 need nothing unmerged, so they run now;
+9.6–9.10 wait for Phase 3's rebrand, round UI and demo and for Phases 4–8's pages. Ten units, above
+the table's 4–6, for that split):
+
+| Unit | What | Needs |
+|---|---|---|
+| 9.1 | Design ADR for Phase 9 ([ADR 0026](decisions/0026-phase-9-pwa-polish-handoff.md)): the PWA (lila's manifest with LiGo's name, description, colours and icons and without lichess's app-store entries; what the service worker adds to lila's web push, e.g. an offline page, not offline play; the install prompt; touch settings); sounds (which Go events sound: stone, capture, pass, illegal move, byo-yomi countdown, game start and end, the scoring phase; where the files come from, reuse first with each licence checked; whether lila's kept sets and sound preference stay); themes (lila's site themes; which board and stone themes, after a licence check of goban's pictures; where the choice is stored); accessibility basics (the target and how it is checked, keyboard play on the board, moves read out as coordinates, lila's chess-only non-visual mode `nvui` adapted or dropped, contrast, reduced motion); the performance budget (which numbers, their limits, where CI checks them); the credits page; the handoff package's contents and where it lives | — |
+| 9.2 | Sounds: the Go sound set 9.1 chose, in `lila/public/sound` with each file's source and licence in COPYING.md; `libs/board` reports sound events (stone, capture with the number taken, pass, illegal move) and the playground plays them through lila's sound module, honouring the sound preference; tests | 9.1 |
+| 9.3 | Board themes in `libs/board`: the board and stone themes 9.1 chose (goban's own once their pictures' licence is recorded, or LiGo-made ones), a theme option on `mountBoard`, a theme picker on the playground, screenshot tests for each theme at desktop and phone sizes; COPYING.md for any picture | 9.1 |
+| 9.4 | Board accessibility in `libs/board`: keyboard play (a cursor moved over the intersections with the arrow keys, Enter to place, a key to pass, touch-confirm honoured), the last move and captures announced as coordinates in a live region, a visible focus ring, stone and board contrast; the playground passes an automated accessibility check at desktop and phone sizes and a keyboard-only game test | 9.1 |
+| 9.5 | Performance budget: a check in `dev/ci` for 9.1's budgets over what exists now (the board's gzipped JS, the playground page's JS and CSS, the board's mount time with Chromium's CPU throttled to a phone's), run in the `ui` CI job and by `dev/ligo`; each later page adds its own line when it lands | 9.1 |
+| 9.6 | The PWA: LiGo's manifest, the service worker's additions, the install prompt and the touch settings as 9.1 decided; checked in Chromium at phone size (installable per the DevTools protocol, the offline page shown with the network cut, push still subscribing) | 3.8, 9.1 |
+| 9.7 | Themes, sounds and accessibility on lila's pages: lila's sound and board preferences (in `pref` and the dasher menu) offer 9.2's sounds and 9.3's themes, and the round, analysis and puzzle pages use them, with byo-yomi's countdown sounds; `nvui` as 9.1 decided; the leftover chess sound sets and board themes removed (COPYING.md updated); the accessibility check and screenshot tests on those pages at desktop and phone sizes | 3.18, 7.4, 8.7, 9.2, 9.3, 9.4 |
+| 9.8 | The credits page: `/credits`, a lila page like `/source`, crediting lichess, lishogi, PlayStrategy, OGS's goban, KataGo, goscorer and every asset and puzzle source (COPYING.md, 9.2, 9.3 and 8.4's sources list), linked from the footer and `/source`; a screenshot test | 3.8, 8.4, 9.2, 9.3 |
+| 9.9 | The handoff package in `docs/handoff/`, as 9.1 decided: a write-up (what LiGo is, what it reuses, what it built, what is left), how to run it from a fresh clone, a digest of the logs' Lessons, the lobby research (6.3's kit and the player test's findings), the parts most portable to OGS (§8), and a demo video recorded by Playwright (a full game with scoring, a puzzle, an SGF import) | 3.20, 4.12, 5.8, 6.10, 7.8, 8.8 |
+| 9.10 | Phase 9 demo: 9.5's budget and 9.4's accessibility check over every page, the PWA installed on a phone, and the checklist for your Go-club demo (what to show, in which order, what to do if something breaks) | 9.5, 9.6, 9.7, 9.8, 9.9 |
+
+What stays out of Phase 9: offline play, app-store apps, languages other than English (i18n stays
+ready, §1.3), a public demo (the legal steps in §8 come first and are yours), and contacting OGS
+(yours, §8).
+
 **Total: roughly 60–100 units.** At 2–3 reviewed units a week, the POC is realistically **7–13 months**
 away. Phase 3 is the long pole. These are rough estimates, re-made at the end of each phase in
 `STATUS.md`.

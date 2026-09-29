@@ -5,6 +5,23 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-29 · Phase 9 breakdown · PWA, polish and handoff split into units 9.1–9.10
+- Did: split Phase 9 into 10 units (docs/PLAN.md §5, "Phase 9 units"): a design ADR (9.1), sounds
+  (9.2), board themes (9.3) and board accessibility (9.4) in `libs/board` and the playground, a
+  performance budget check (9.5), then the lila halves: the PWA (9.6), themes, sounds and
+  accessibility on lila's pages (9.7), the credits page (9.8), the handoff package (9.9) and the
+  demo (9.10).
+- Worked: lila already has a manifest (`StaticContent.manifest`), a service worker (web push only),
+  sound sets with a preference, site themes and a non-visual mode, so the lila units adapt them; the
+  board halves can be built now on the playground page.
+- Didn't work / dead ends: none.
+- Lessons: lila's manifest still names lichess and lists lichess's store apps, and its service
+  worker does push only (no offline page); its non-visual mode (`ui/lib/src/nvui`) is chess-only.
+- Decisions: the split itself, Claude's call under the owner's 2026-09-28 delegation
+  (logs/decisions.md).
+- Verified by Claude: verify.sh. · Needs owner verification: whether the split reads right.
+- Follow-ups: 9.1 next, then 9.2 to 9.5.
+
 ### 2026-09-29 · unit 7.1 · ADR 0023: analysis board, SGF import and export, correspondence
 - Did: ADR 0023 for Phase 7 and a build-vs-buy memo for the server's SGF reader
   (docs/build-vs-buy/server-sgf-reader.md); the `sgf` skill names that reader as its one exception.
