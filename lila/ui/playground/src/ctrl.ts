@@ -1,6 +1,6 @@
 // Local Go playground (unit 2.2): play both colours on one board. No server game, no clock,
 // nothing stored - every setting resets to LiGo's defaults on reload.
-import type { Board, BoardConfig, Move } from '@ligo/board/board';
+import type { Board, BoardConfig, Move, Played } from '@ligo/board/board';
 import { handicapStones, standardKomi } from '@ligo/board/rules';
 
 import { isTouchDevice } from 'lib/device';
@@ -16,6 +16,13 @@ const ConfirmMoves = { NEVER: 0, TOUCH: 1, ALWAYS: 2 } as const;
 /** Whether taps only preview, for a `Pref.ConfirmMoves` value on this kind of device. */
 export const resolveConfirm = (confirmMoves: number, touch: boolean): boolean =>
   confirmMoves === ConfirmMoves.ALWAYS || (confirmMoves === ConfirmMoves.TOUCH && touch);
+
+/**
+ * The sound for a move that counted, from lila's sound sets (ADR 0026 §2): a stone is lila's "Move",
+ * one that takes stones "Capture", a pass "Confirmation".
+ */
+export const soundOf = (played: Played): string =>
+  played.move === 'pass' ? 'confirmation' : played.captured > 0 ? 'capture' : 'move';
 
 const defaultSettings = (): GameSettings => ({
   size: 9,
@@ -40,6 +47,8 @@ export default class PlaygroundCtrl {
    * and `confirmMove` plays it (a mouse double click too; goban ignores double taps on touch).
    */
   readonly confirm: boolean;
+  /** Plays one of lila's sounds by name; the sound preference, volume and "silent" apply. */
+  sound: (name: string) => void = name => void site.sound.play(name);
 
   constructor(
     readonly config: PlaygroundConfig,
@@ -72,6 +81,8 @@ export default class PlaygroundCtrl {
       movable: 'both',
       confirm: this.confirm,
       onMove: this.onMove,
+      onPlayed: played => this.sound(soundOf(played)),
+      onRefused: () => this.sound('error'),
       onChange: this.redraw,
     };
   };

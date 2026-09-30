@@ -6,6 +6,8 @@ import { mountBoard, type Board, type BoardConfig } from '../../src/board.ts';
 interface Harness {
   board?: Board;
   events: string[];
+  /** What `onPlayed` reported: "<colour> <move> <captured>". */
+  played: string[];
   /** How many times the board said something the page may show changed. */
   changes: number;
   mount(config: BoardConfig & { autoPlay?: boolean }): void;
@@ -13,10 +15,12 @@ interface Harness {
 
 const harness: Harness = {
   events: [],
+  played: [],
   changes: 0,
   mount(config) {
     harness.board?.destroy();
     harness.events = [];
+    harness.played = [];
     harness.changes = 0;
     const el = document.getElementById('board')!;
     harness.board = mountBoard(el, {
@@ -26,6 +30,7 @@ const harness: Harness = {
         if (config.autoPlay) harness.board!.play(move);
       },
       onRefused: reason => harness.events.push(`refused ${reason}`),
+      onPlayed: ({ move, color, captured }) => harness.played.push(`${color} ${move} ${captured}`),
       onChange: () => harness.changes++,
     });
   },

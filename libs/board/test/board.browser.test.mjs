@@ -44,6 +44,7 @@ async function open({ width = 570, context = {} } = {}) {
 
 const mount = (page, config) => page.evaluate((c) => window.harness.mount(c), config);
 const events = (page) => page.evaluate(() => window.harness.events);
+const played = (page) => page.evaluate(() => window.harness.played);
 const state = (page) => page.evaluate(() => window.harness.board.state());
 const call = (page, method, ...args) => page.evaluate(([m, a]) => window.harness.board[m](...a), [method, args]);
 
@@ -91,6 +92,26 @@ describe("board in Chromium", () => {
     const s = await state(t.page);
     assert.equal(s.board[0], ".X.......");
     assert.deepEqual(s.captures, { black: 1, white: 0 });
+  });
+
+  test("onPlayed reports each move that counted, with its colour and the stones it took", async () => {
+    await mount(t.page, { ...game9, movable: "both", autoPlay: true, moves: ["ba", "aa"] });
+    assert.deepEqual(await played(t.page), [], "the starting moves are not reported");
+    await click(t.page, "ab"); // takes White's lone stone at aa
+    await call(t.page, "pass");
+    await click(t.page, "ee");
+    assert.deepEqual(await played(t.page), ["black ab 1", "white pass 0", "black ee 0"]);
+  });
+
+  test("onPlayed: nothing for a preview, a cancelled move or a move play can't place", async () => {
+    await mount(t.page, { ...game9, movable: "both", moves: ["ee"] });
+    await click(t.page, "cc");
+    await call(t.page, "cancel");
+    await call(t.page, "play", "ee"); // occupied: goban logs it
+    t.problems.errors.length = 0;
+    assert.deepEqual(await played(t.page), []);
+    await call(t.page, "play", "dd");
+    assert.deepEqual(await played(t.page), ["white dd 0"]);
   });
 
   test("a move the rules forbid is refused with its reason and not reported", async () => {
