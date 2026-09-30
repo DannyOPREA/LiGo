@@ -9,7 +9,7 @@
 - npm `goban` is a pre-built bundle (no tree-shaking): ~104 KB gzipped vs chessground's 12 KB; its npm releases lag `main` by months (2026-09-27, 1.2).
 - goban sets the width of the element it draws in and draws inside a shadow root: mount it in a child of the element the page sizes, and find its svg with Playwright locators, not `querySelector` (2026-09-28, 2.1).
 - goban turns stone placement off after `sendMove` returns: report the move from `sendMove` in a microtask so a page can play it back at once. goban's `onError` skips suicide; wrap `errorHandler` for every refusal (2026-09-28, 2.1).
-- goban's default theme (no `getSelectedThemes` callback) is Kaya/Slate/Shell and loads a board picture from OGS's CDN: LiGo overrides `getSelectedThemes` with the plain theme (2026-09-28, 2.1).
+- goban's default theme (no `getSelectedThemes` callback) is Kaya/Slate/Shell and loads a board picture from OGS's CDN: LiGo overrides `getSelectedThemes`. goban calls it inside its constructor, before a subclass's fields exist, so the chosen theme has to reach it another way (a static set just before `super`). Shell stones are canvas drawings placed as `data:` images: test for non-`data:` images, not for none (2026-09-28, 2.1; 2026-09-30, 9.3).
 - libs/board is in lila's pnpm workspace: run its scripts from `lila/` with `--filter @ligo/board`; `pnpm run` inside libs/board starts a lockfile of its own (2026-09-28, 2.1).
 - Don't list lila's lint tools again in libs/board: its oxlint resolved without lila's optional `oxlint-tsgolint` peer, a second lockfile entry that a full install never unpacks, so `pnpm licenses` read its licence as Unknown. The board uses lila's own oxfmt/oxlint; install with `--filter @ligo/board --filter lila` (2026-09-28, 2.1).
 - goban's `pass()` leaves stone placement on, and its `updateTitleAndStonePlacement` turns it off whenever a preview is shown: an adapter must keep "a move is waiting" state of its own (2026-09-28, 2.1 review).
@@ -20,6 +20,44 @@
 - Chromium builds rasterise web-font text differently (~2,300 px per page between 141 and 153); board SVG matched. Hide page text in screenshots (`stylePath`) and check it with locators (2026-09-28, 2.4 CI).
 
 ## Entries (newest first)
+
+### 2026-09-30 · unit 9.4 review · Reviewer findings fixed
+- Did: a held Enter, Space or P now acts once (key repeat let Confirm moves be skipped and passed twice); P out of turn says "Not your move"; the board says "Waiting for the move to count" while the page hasn't answered; Escape takes back a preview; Tab names the point under the cursor; the board's keys stop at the board so lila's mousetrap hotkeys don't also fire (round, analysis, puzzle pages); the name reads "9 by 9, Go board" instead of saying "Go board" twice; "Up" capitalised. The playground's axe exemption now matches only white on #3692e7. Tests: the vacuous click test now checks what happens (a click doesn't focus the board; Shift+Tab does), plus cursor position with and without coordinates, repeated words, key repeat, Escape and moving the preview, P out of turn, waiting, page hotkeys, and every keyboard test checks for page errors. 41 board browser tests.
+- Worked: a mutation check (key repeat guard off) fails the new test.
+- Didn't work / dead ends: after a click, Tab goes past the board (the click set the Tab starting point inside it); Shift+Tab reaches it.
+- Lessons: key handlers that act must ignore `e.repeat`; a click never focuses goban's board.
+- Decisions: Escape takes back a preview (Claude, under the owner's 2026-09-28 delegation; ADR 0026 §4 amendment).
+- Verified by Claude: board browser tests 41/41; `dev/ligo test pages` 35/35; lint, typecheck. · Needs owner verification: as in the entry below.
+- Follow-ups: none new.
+
+### 2026-09-30 · unit 9.4 · Keyboard and screen-reader play on the board
+- Did: `libs/board` gets keyboard play (Tab focuses the board; arrows, Home/End, Page Up/Down move a two-tone cursor; Enter or Space plays there through goban's own tap handling, so Confirm moves previews first and a second Enter plays; P passes; D reads the point and its four neighbours) and a polite live region that reads out each move played ("Black D4", "White passes", "Black A8, 1 stone captured"), refusals ("Illegal: ko", "Illegal: suicide", "Illegal: D4 is occupied"), "Not your move" and the point under the cursor. The board is a focusable `role="application"` with a name and a hidden help text. Point names are the printed ones (`src/access.ts`, letters without I). axe-core (`@axe-core/playwright` 4.13.0, MPL-2.0) runs in the board's browser tests and a new playground page test (desktop and phone); MPL-2.0 joined the allowed licences (`dev/ci/meta_checks.py`, PLAN §2.2, COPYING.md) as ADR 0026 §4 decided.
+- Worked: goban's protected `tapAt` gives the keyboard exactly a click's behaviour (previews, the preview moving, captures); the cursor shows only on keyboard focus (`:focus-visible`, or any board key), so no screenshot baseline changed. goban draws no stone animation, so reduced motion needs nothing.
+- Didn't work / dead ends: a second `pnpm add -w` in the same session wrote the root importer's entry without its `(playwright-core@…)` peer suffix, so the frozen install linked a folder that didn't exist; fixed by hand in the lockfile and checked with `pnpm install --frozen-lockfile`. axe flags lila's own `.button` (white on #3692e7, 3.3:1) on the playground: lila's site-wide colour, left to 9.7; the page test lets off only that rule on lila's buttons.
+- Lessons: goban has no keyboard support; drive its `tapAt` rather than re-creating previews.
+- Decisions: keys P and D, the cursor's two-tone ring, English words until lila's i18n reaches the board (9.7), lila's button contrast left to 9.7 (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md, ADR 0026 §4 amendment).
+- Verified by Claude: board browser tests 33/33 (9 new, axe included); `dev/ligo test pages` 35/35 (3 new); lint, typecheck, js-licences. · Needs owner verification: a keyboard-only game and a screen-reader pass (Orca on Fedora) on /playground.
+- Follow-ups: 9.7 fixes lila's button contrast and moves the words into lila's i18n; 3.18/7.4/8.7 pages get the same keyboard board for free.
+
+### 2026-09-30 · unit 9.3 · Board themes
+- Did: `mountBoard` takes `theme: { board, stones }` and `set({ theme })` changes it live; the
+  offered names are goban's picture-free themes (5 boards, 5 stone pairs, `src/themes.ts`, loadable
+  without goban); any other name becomes Plain (`gobanThemes`). The playground has a "Board look"
+  box (Board, Stones) that applies at once and is remembered in the browser until 9.7 moves it to
+  lila's preferences. Three board tests (all 25 pairs draw differently with no request and no
+  non-`data:` image; picture or unknown names fall back; `set` changes and restores the look), two
+  controller tests, 18 new board screenshots (each theme, desktop and phone) and a reload test; the
+  8 page screenshots re-recorded for the new box.
+- Worked: goban's `setTheme(themes, false)` redraws a mounted board in place, stones kept.
+- Didn't work / dead ends: storing the theme in a subclass field: goban asks for it inside its
+  constructor, before the field exists (every board test failed until a static carried it).
+- Lessons: promoted (goban reads themes in its constructor; Shell stones are `data:` images).
+- Decisions: none new (ADR 0026 §3). Slate & Shell is one choice, as goban pairs them.
+- Verified by Claude: `pnpm --filter @ligo/board run test:browser` 23/23, `node ui/test playground`
+  19/19, `dev/ligo test pages` 32/32, verify.sh (go-rules gate can't fetch strategygames in the
+  cloud; CI runs it). · Needs owner verification: whether the themes look right to you on the
+  playground (desktop and phone).
+- Follow-ups: lila's board preference and the dasher menu offer these themes in 9.7.
 
 ### 2026-09-29 · unit 9.2 · Sounds on the board and the playground
 - Did: `mountBoard` reports each move that counted as `onPlayed({ move, color, captured })`, from

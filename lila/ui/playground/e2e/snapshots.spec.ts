@@ -2,6 +2,7 @@
 // __screenshots__/ (unit 2.4). After a deliberate visual change, re-record them with
 // `pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts --update-snapshots` (from lila/)
 // and look at every changed picture before committing it.
+import { BOARD_THEMES, STONE_THEMES } from '@ligo/board/themes';
 import { expect, test, type Page } from '@playwright/test';
 
 import { ConfirmMoves, captures, newGame, openPlayground, play, status } from './page';
@@ -62,6 +63,32 @@ for (const [device, options] of Object.entries(viewports)) {
       await expect(status(page)).toHaveText('Black to play.');
       await snap(page, `${device}-9x9-preview`);
       expect(problems).toEqual({ requests: [], errors: [] });
+    });
+
+    // Every theme ADR 0026 §3 offers: each board with Plain stones, each stone pair on the Plain board.
+    const looks = [
+      ...BOARD_THEMES.map(board => ({ board, stones: 'Plain' })),
+      ...STONE_THEMES.filter(stones => stones !== 'Plain').map(stones => ({ board: 'Plain', stones })),
+    ];
+    for (const look of looks)
+      test(`board look: ${look.board} board, ${look.stones} stones`, async ({ page }) => {
+        const { problems } = await openPlayground(page, ConfirmMoves.NEVER);
+        for (const move of ['ee', 'dd', 'fe']) await play(page, move, 9, touch);
+        await page.getByLabel('Board', { exact: true }).selectOption(look.board);
+        await page.getByLabel('Stones', { exact: true }).selectOption(look.stones);
+        await park(page);
+        const name = `${device}-theme-${look.board}-${look.stones}`.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        await expect(page.locator('.playground__board')).toHaveScreenshot(`${name}.png`);
+        expect(problems).toEqual({ requests: [], errors: [] });
+      });
+
+    test('the board look is remembered after a reload', async ({ page }) => {
+      await openPlayground(page);
+      await page.getByLabel('Board', { exact: true }).selectOption('HNG');
+      await page.getByLabel('Stones', { exact: true }).selectOption('Glass');
+      await page.reload();
+      await expect(page.getByLabel('Board', { exact: true })).toHaveValue('HNG');
+      await expect(page.getByLabel('Stones', { exact: true })).toHaveValue('Glass');
     });
   });
 }

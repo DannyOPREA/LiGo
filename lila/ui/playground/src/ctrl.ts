@@ -1,9 +1,12 @@
 // Local Go playground (unit 2.2): play both colours on one board. No server game, no clock,
-// nothing stored - every setting resets to LiGo's defaults on reload.
+// game settings reset to LiGo's defaults on reload; only the board look is kept in local storage
+// (ADR 0026 §3).
 import type { Board, BoardConfig, Move, Played } from '@ligo/board/board';
 import { handicapStones, standardKomi } from '@ligo/board/rules';
+import { BOARD_THEMES, DEFAULT_THEME, STONE_THEMES, type Theme } from '@ligo/board/themes';
 
 import { isTouchDevice } from 'lib/device';
+import { storedStringProp } from 'lib/storage';
 
 /** goban's engine is ~100 KB gzipped (libs/board/README.md): load it only once the page needs it. */
 const loadMountBoard = () => import('@ligo/board/board').then(m => m.mountBoard);
@@ -23,6 +26,10 @@ export const resolveConfirm = (confirmMoves: number, touch: boolean): boolean =>
  */
 export const soundOf = (played: Played): string =>
   played.move === 'pass' ? 'confirmation' : played.captured > 0 ? 'capture' : 'move';
+
+/** A stored name that is still offered, else the default (names can change between releases). */
+const pick = <T extends string>(stored: string, offered: readonly T[], fallback: T): T =>
+  (offered as readonly string[]).includes(stored) ? (stored as T) : fallback;
 
 const defaultSettings = (): GameSettings => ({
   size: 9,
@@ -47,6 +54,16 @@ export default class PlaygroundCtrl {
    * and `confirmMove` plays it (a mouse double click too; goban ignores double taps on touch).
    */
   readonly confirm: boolean;
+  /**
+   * The board's look (ADR 0026 §3), kept in this browser until lila's board preferences carry
+   * Go themes (unit 9.7). Applies at once, to the board on screen too.
+   */
+  private readonly storedBoardTheme = storedStringProp('playground.board-theme', DEFAULT_THEME.board);
+  private readonly storedStoneTheme = storedStringProp('playground.stone-theme', DEFAULT_THEME.stones);
+  theme: Theme = {
+    board: pick(this.storedBoardTheme(), BOARD_THEMES, DEFAULT_THEME.board),
+    stones: pick(this.storedStoneTheme(), STONE_THEMES, DEFAULT_THEME.stones),
+  };
   /** Plays one of lila's sounds by name; the sound preference, volume and "silent" apply. */
   sound: (name: string) => void = name => void site.sound.play(name);
 
@@ -80,6 +97,7 @@ export default class PlaygroundCtrl {
       moves: this.moves,
       movable: 'both',
       confirm: this.confirm,
+      theme: this.theme,
       onMove: this.onMove,
       onPlayed: played => this.sound(soundOf(played)),
       onRefused: () => this.sound('error'),
@@ -109,6 +127,13 @@ export default class PlaygroundCtrl {
     this.board?.play(move);
     this.moves.push(move);
     this.redraw();
+  };
+
+  setTheme = (theme: Partial<Theme>): void => {
+    this.theme = { ...this.theme, ...theme };
+    this.storedBoardTheme(this.theme.board);
+    this.storedStoneTheme(this.theme.stones);
+    this.board?.set({ theme: this.theme });
   };
 
   pass = (): void => this.board?.pass();

@@ -1,7 +1,14 @@
 // Test page script for board.browser.test.mjs: mounts boards and records what they report.
 // Licence: MIT (LiGo's own code, ADR 0006).
 
-import { mountBoard, type Board, type BoardConfig } from '../../src/board.ts';
+import {
+  BOARD_THEMES,
+  STONE_THEMES,
+  gobanThemes,
+  mountBoard,
+  type Board,
+  type BoardConfig,
+} from '../../src/board.ts';
 
 interface Harness {
   board?: Board;
@@ -11,12 +18,16 @@ interface Harness {
   /** How many times the board said something the page may show changed. */
   changes: number;
   mount(config: BoardConfig & { autoPlay?: boolean }): void;
+  themes: { boards: readonly string[]; stones: readonly string[] };
+  gobanThemes: typeof gobanThemes;
 }
 
 const harness: Harness = {
   events: [],
   played: [],
   changes: 0,
+  themes: { boards: BOARD_THEMES, stones: STONE_THEMES },
+  gobanThemes,
   mount(config) {
     harness.board?.destroy();
     harness.events = [];

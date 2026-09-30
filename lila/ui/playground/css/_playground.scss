@@ -79,6 +79,10 @@
     }
   }
 
+  &__theme {
+    margin-top: $block-gap;
+  }
+
   &__field {
     display: flex;
     flex-direction: column;
