@@ -158,11 +158,9 @@ test.describe('installable app on a phone', () => {
     await expect(page.getByRole('heading', { name: 'Page /lobby' })).toBeVisible();
   });
 
-  // TEMPORARY (removed before merge): 20 runs, to measure the push flake on CI's Chromium.
-  for (let run = 1; run <= 20; run++)
-    test(`push notifications still show, run ${run}`, async ({ page }) => {
-      await expectPush(page, site);
-    });
+  test('push notifications still show', async ({ page }) => {
+    await expectPush(page, site);
+  });
 
   test('a missing offline page never stops push, and is cached by the next page that loads', async ({
     page,
