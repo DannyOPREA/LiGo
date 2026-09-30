@@ -38,6 +38,9 @@
   and rematching an old chess game still made a chess game. Optional, fixed: rematch challenges
   dropped their chess FEN. Left: a bulk game that fails to start is logged and skipped (its setup was
   checked when the bulk was scheduled).
+- Also: one of 3.13's `GoPlayTest` clock cases failed once while sbt compiled alongside it (it
+  allowed only a few tenths of a second of real time); its clock now uses a frozen `Timestamper`
+  and the times are asserted exactly.
 - Worked: the creation paths were few and each needed only its `newGame` call swapped; keeping the
   unused chess `variant` fields until 3.17 kept the diff small.
 - Didn't work / dead ends: a Play form can't nest a mapping without prefixing its keys, so the three

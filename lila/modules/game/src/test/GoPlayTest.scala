@@ -11,10 +11,14 @@ import lila.game.GameExt.*
 // Unit 3.13 (ADR 0019 §5–7): a Go move applied to lila's game: ply, clock, move event and takebacks.
 class GoPlayTest extends munit.FunSuite:
 
+  // A clock whose time stands still, so the tests don't depend on how fast the machine runs them.
+  private object frozenTime extends chess.Timestamper:
+    val now = chess.Timestamp(0)
+
   private def newGo(handicap: Int = 0): Game =
     newGoGame(
       GoSetup(BoardSize.Nine, Ruleset.Japanese, if handicap > 0 then 0.5 else 6.5, handicap),
-      Clock(Clock.LimitSeconds(60), Clock.IncrementSeconds(2)).some,
+      Clock(Clock.LimitSeconds(60), Clock.IncrementSeconds(2)).copy(timestamper = frozenTime).some,
       ByColor(c => Player(GamePlayerId(if c.white then "wwww" else "bbbb"), c, aiLevel = none)),
       rated = Rated.No,
       source = Source.Lobby
@@ -92,9 +96,7 @@ class GoPlayTest extends munit.FunSuite:
     assertEquals(back.clock.map(_.color), Some(Color.Black))
     // as in lichess chess: the side that played the undone move keeps the time on its clock, and the other
     // side's time is reset from its clock history
-    // (its clock runs again, so allow the few centis this test takes)
-    val kept = back.clock.map(_.remainingTime(Color.Black).value).getOrElse(0)
-    assert(kept > 6100 && kept <= 6200, s"Black keeps its increment: $kept")
+    assertEquals(back.clock.map(_.remainingTime(Color.Black)), Some(Centis(6200)))
     assertEquals(
       back.clock.map(_.remainingTime(Color.White)),
       g3.clockHistory.flatMap(_.white.lastOption)
@@ -125,11 +127,8 @@ class GoPlayTest extends munit.FunSuite:
     assertEquals(g2.clock.map(_.remainingTime(Color.Black)), Some(Centis(6000)))
     assertEquals(g2.clock.map(_.remainingTime(Color.White)), Some(Centis(6000)))
     val g3 = play(g2, Action.Place(p("gg"))).game
-    // Black moved at once on a running clock: its 2 s increment outweighs the time it used
-    assert(
-      g3.clock.exists(_.remainingTime(Color.Black) > Centis(6000)),
-      g3.clock.map(_.remainingTime(Color.Black))
-    )
+    // Black moved at once on a running clock and earned its 2 s increment
+    assertEquals(g3.clock.map(_.remainingTime(Color.Black)), Some(Centis(6200)))
     assertEquals(g3.clock.map(c => (c.color, c.isRunning)), Some((Color.White, true)))
 
   test("play ends on the second consecutive pass, not on a pass, stone, pass"):
@@ -142,10 +141,7 @@ class GoPlayTest extends munit.FunSuite:
     // the move that ends play earns no increment, as in chess
     val g2 = playAll(newGo(), Action.Place(p("ee")), Action.Place(p("cc")), Action.Pass)
     val last = play(g2, Action.Pass).game
-    assert(
-      last.clock.exists(_.remainingTime(Color.White) <= Centis(6000)),
-      last.clock.map(_.remainingTime(Color.White))
-    )
+    assertEquals(last.clock.map(_.remainingTime(Color.White)), Some(Centis(6000)))
 
   test("play ends at the 1,000th ply in an even game and in a handicap game"):
     for g <- List(newGo(), newGo(handicap = 3)) do
