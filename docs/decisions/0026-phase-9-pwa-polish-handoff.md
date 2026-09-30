@@ -200,8 +200,10 @@ cannot drift; a test fails when COPYING.md names a third party the list lacks.
 sounds, fonts and pictures; puzzles; behind the scenes). `lila/bin/gen/credits.mjs` turns it into
 `lila/public/credits.html`, the page body lila serves inside its usual page at `/credits` (read from
 disk like the offline page); `--check`, run by `dev/tests/run.sh` in CI's tooling job, fails when
-that file is stale, when a COPYING.md §3 row names a third party no entry covers (each entry lists
-the names it covers), or when a puzzle file in `tools/puzzles/data/SOURCES.md` has no entry. The
+that file is stale, when a COPYING.md §3 row names a third party no entry covers (a row is covered
+when its first cell starts with a name an entry lists), when the section or a row can't be read, or
+when a puzzle file in `tools/puzzles/data/SOURCES.md` has no entry. The site's fonts are credited
+under the SIL OFL 1.1, their current licence (lila's COPYING.md still says Apache-2.0). The
 page is linked from the site menu beside Source code, the home page's About links and the `/source`
 page. Its words are English until LiGo's strings reach i18n. The page drops the zebra rows and
 underlines its links, since lila's link blue is under 4.5:1 on the zebra colour (the site-wide fix

@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.8 review · Reviewer findings fixed
+- Did: an independent review found the COPYING check could pass without checking: a reworded §3 heading made it read nothing, a symlinked path skipped the whole check, and "contains" matching let a dependency row through on its parent's name; odd rows and non-`.json` puzzle files were skipped. Fixed: the check fails on a missing section, an unreadable row or no rows; a row is covered only when its first cell starts with an entry's name; the script finds itself by real path; puzzle files are read from every row; entries need every field. `lila/bin/gen/credits.test.mjs` (8 tests) covers each case, and `dev/tests/run.sh` runs it plus the check through a symlinked folder. Also: Noto Sans and Roboto credited under the SIL OFL 1.1 (lila's COPYING.md's Apache-2.0 is out of date; the shipped Roboto names the OFL-era roboto-classic project), the full-size and g170 KataGo networks listed apart (different licences), and meta.yml sets up Node before the tooling checks.
+- Worked: node:test for the check's own parsing, next to the script.
+- Didn't work / dead ends: none.
+- Lessons: a drift check needs negative tests for its own parsing (a missing section, odd rows), not only for a mismatch; credits copied from upstream's COPYING inherit its stale licence claims.
+- Decisions: none new.
+- Verified by Claude: dev/tests/run.sh 63 passed; credits.test.mjs 8 passed; 43 playground browser tests; oxfmt, oxlint, scalafmt. · Needs owner verification: the external links (none reachable from the cloud session).
+- Follow-ups: tell lichess (or tidy lila/COPYING.md in 9.7) that its font licences are out of date.
+
 ### 2026-09-30 · unit 9.8 · The credits page
 - Did: `docs/credits.json` lists who and what LiGo is built from (lichess, lishogi, strategygames, OGS goban and goratings, goscorer, KataGo and its networks, @sabaki/sgf, the sound sets, fonts, icons and flags, the puzzles and KaTrain's frame, the scoring and tool libraries, axe-core), each with author, use, licence and link. `lila/bin/gen/credits.mjs` writes it as `lila/public/credits.html`, which lila serves at `/credits`; the site menu, the home page's About links and `/source` link to it. `--check` (in `dev/tests/run.sh`) fails on a stale page, a COPYING.md §3 third party no entry covers, or a puzzle file without an entry. `ui/playground/e2e/credits.spec.ts` screenshots the page at desktop and phone sizes, runs axe, and checks every entry's link.
 - Worked: one generated HTML body lets the Scala page and the browser test show the same thing without a lila server.

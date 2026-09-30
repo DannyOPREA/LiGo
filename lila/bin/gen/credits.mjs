@@ -5,7 +5,7 @@
 //                                          COPYING.md §3 matches no entry, or if a puzzle file in
 //                                          tools/puzzles/data/SOURCES.md has no entry
 // Plain Node, no packages. LiGo's own tooling (MIT, ADR 0006).
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -42,26 +42,61 @@ ${list.sections.map(section).join('\n')}
 `;
 }
 
+const tableRows = text =>
+  text
+    .split('\n')
+    .filter(l => l.trim().startsWith('|'))
+    .slice(2) // the header row and its |---| line
+    .map(l =>
+      l
+        .trim()
+        .replace(/^\|/, '')
+        .replace(/\|$/, '')
+        .split('|')
+        .map(c => c.trim()),
+    );
+
 /** Problems with the list against COPYING.md §3 and the puzzle sources; empty when all is well. */
 export function problems(list, copying, sources) {
-  const entries = list.sections.flatMap(s => s.entries);
-  const names = entries.flatMap(e => e.copying);
-  const table = copying.slice(copying.indexOf('## 3. Third-party code and assets'));
   const found = [];
-  for (const line of table.split('\n')) {
-    if (!line.startsWith('| ') || line.startsWith('| Component') || line.startsWith('|---')) continue;
-    const component = line.split(' | ')[0].slice(2);
+  const entries = list.sections.flatMap(s => s.entries);
+  for (const e of entries)
+    for (const f of ['name', 'by', 'url', 'what', 'licence'])
+      if (typeof e[f] !== 'string' || !e[f])
+        found.push(`an entry has no ${f}: ${JSON.stringify(e).slice(0, 80)}`);
+  // An entry covers a row when the row's first cell starts with one of its names: COPYING.md rows
+  // name their parent later in the cell ("doken, @sabaki/sgf's only dependency"), so "contains"
+  // would let a new dependency through on its parent's name.
+  const names = entries.flatMap(e => e.copying ?? []);
+  const heading = copying.indexOf('\n## 3. ');
+  if (heading === -1) return [...found, 'COPYING.md has no "## 3." third-party section'];
+  const next = copying.indexOf('\n## ', heading + 1);
+  const rows = tableRows(copying.slice(heading, next === -1 ? undefined : next));
+  if (!rows.length) found.push('COPYING.md §3 has no third-party rows');
+  for (const cells of rows) {
+    if (cells.length < 4) {
+      found.push(
+        `COPYING.md §3 has a row that isn't a 4-column table row: "${cells.join('|').slice(0, 80)}"`,
+      );
+      continue;
+    }
+    const component = cells[0];
     if (component.startsWith('No third-party') || component.startsWith('_')) continue;
-    if (!names.some(n => component.includes(n)))
+    if (!names.some(n => component.startsWith(n)))
       found.push(`COPYING.md §3 names a third party no credits entry covers: "${component.slice(0, 80)}"`);
   }
-  for (const [, file] of sources.matchAll(/^\| `([^`]+\.json)` \|/gm))
+  const files = tableRows(sources);
+  if (!files.length) found.push('tools/puzzles/data/SOURCES.md has no puzzle files');
+  for (const [cell] of files) {
+    const file = cell.replaceAll('`', '');
     if (!entries.some(e => e.puzzleFile === file))
       found.push(`tools/puzzles/data/SOURCES.md lists ${file}, which no credits entry covers`);
+  }
   return found;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+// realpath: run through a symlinked folder, argv[1] is the link's path and import.meta.url the real one.
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const list = JSON.parse(read('docs/credits.json'));
   const html = render(list);
   if (process.argv.includes('--check')) {

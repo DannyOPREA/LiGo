@@ -10,7 +10,9 @@
           "url": "https://github.com/lichess-org/lila",
           "what": "The whole site: server, pages, accounts, lobby, clocks, ratings, sockets. LiGo is a fork of it.",
           "licence": "AGPL-3.0-or-later",
-          "copying": ["Assets imported with lila"]
+          "copying": [
+            "Assets imported with lila"
+          ]
         },
         {
           "name": "lishogi",
@@ -22,11 +24,15 @@
         },
         {
           "name": "PlayStrategy strategygames",
-          "by": "Mind Sports Games",
+          "by": "Mind Sports Games (forked from lichess's scalachess)",
           "url": "https://github.com/Mind-Sports-Games/strategygames",
           "what": "The server's Go rules and byo-yomi clock.",
           "licence": "MIT",
-          "copying": ["strategygames"]
+          "copying": [
+            "PlayStrategy strategygames",
+            "Rules test positions adapted from strategygames",
+            "joda-time"
+          ]
         },
         {
           "name": "OGS goban and goban-engine",
@@ -34,7 +40,11 @@
           "url": "https://github.com/online-go/goban",
           "what": "The board you play on, its themes drawn in code, the puzzle board, and the browser's Go rules.",
           "licence": "Apache-2.0",
-          "copying": ["goban-engine", "goban `8.3.226`", "OGS goban's tests"]
+          "copying": [
+            "OGS goban-engine",
+            "OGS goban `",
+            "Rules test positions adapted from OGS goban"
+          ]
         },
         {
           "name": "goscorer",
@@ -42,7 +52,9 @@
           "url": "https://github.com/lightvector/goscorer",
           "what": "Counts territory and area at the end of a game (inside goban).",
           "licence": "MIT",
-          "copying": ["goscorer"]
+          "copying": [
+            "goscorer"
+          ]
         },
         {
           "name": "KataGo",
@@ -50,14 +62,22 @@
           "url": "https://github.com/lightvector/KataGo",
           "what": "Proposes the dead stones when a game ends and checks every puzzle. Its test positions check LiGo's rules.",
           "licence": "MIT",
-          "copying": ["KataGo's tests"]
+          "copying": []
         },
         {
-          "name": "KataGo's neural networks",
+          "name": "KataGo's full-size network",
           "by": "David J Wu (lightvector)",
           "url": "https://katagotraining.org/network_license/",
-          "what": "The trained networks KataGo plays with: the full-size network for scoring (downloaded, not shipped with LiGo) and the small g170 test network that checked the puzzles.",
+          "what": "The trained network KataGo scores games with (downloaded to the server, not shipped with LiGo).",
           "licence": "KataGo Neural Network License (MIT-style)",
+          "copying": []
+        },
+        {
+          "name": "KataGo's g170 test network",
+          "by": "David J Wu (lightvector)",
+          "url": "https://github.com/lightvector/KataGo",
+          "what": "The small network that checked the puzzles, shipped in KataGo's own repository.",
+          "licence": "MIT (KataGo's repository)",
           "copying": []
         },
         {
@@ -66,7 +86,9 @@
           "url": "https://github.com/online-go/goratings",
           "what": "How ratings become kyu and dan ranks, and the handicap maths.",
           "licence": "MIT",
-          "copying": ["goratings"]
+          "copying": [
+            "OGS goratings"
+          ]
         },
         {
           "name": "@sabaki/sgf",
@@ -74,7 +96,10 @@
           "url": "https://github.com/SabakiHQ/sgf",
           "what": "Reads and writes SGF game records in the browser.",
           "licence": "MIT",
-          "copying": ["@sabaki/sgf"]
+          "copying": [
+            "@sabaki/sgf",
+            "doken"
+          ]
         }
       ]
     },
@@ -94,15 +119,15 @@
           "by": "Google",
           "url": "https://fonts.google.com/specimen/Noto+Sans",
           "what": "The site's text font.",
-          "licence": "Apache-2.0",
+          "licence": "SIL OFL 1.1",
           "copying": []
         },
         {
           "name": "Roboto",
-          "by": "Christian Robertson",
-          "url": "https://fonts.google.com/specimen/Roboto",
+          "by": "The Roboto Project Authors (designed by Christian Robertson)",
+          "url": "https://github.com/googlefonts/roboto-classic",
           "what": "The site's secondary font.",
-          "licence": "Apache-2.0",
+          "licence": "SIL OFL 1.1",
           "copying": []
         },
         {
@@ -149,7 +174,9 @@
           "url": "https://github.com/sanderland/katrain",
           "what": "Frames a puzzle so KataGo can check it.",
           "licence": "MIT",
-          "copying": ["KaTrain"]
+          "copying": [
+            "KaTrain's tsumego frame"
+          ]
         }
       ]
     },
@@ -162,7 +189,9 @@
           "url": "https://github.com/online-go/goban",
           "what": "31 finished games that check LiGo's dead-stone scoring.",
           "licence": "Apache-2.0",
-          "copying": ["autoscore test games"]
+          "copying": [
+            "OGS's own autoscore test games"
+          ]
         },
         {
           "name": "Small libraries",
@@ -170,7 +199,11 @@
           "url": "https://github.com/DannyOPREA/LiGo/blob/main/COPYING.md",
           "what": "eventemitter3, doken, joda-time, scala-parser-combinators, ioredis and its dependencies, ajv and its dependencies. Each is listed with its notice in COPYING.md.",
           "licence": "MIT, Apache-2.0 and BSD-3-Clause",
-          "copying": ["eventemitter3", "doken", "joda-time", "ioredis", "ajv"]
+          "copying": [
+            "eventemitter3",
+            "ioredis",
+            "ajv"
+          ]
         },
         {
           "name": "axe-core",
@@ -178,7 +211,9 @@
           "url": "https://github.com/dequelabs/axe-core",
           "what": "Checks LiGo's pages for accessibility problems in its tests (never sent to players).",
           "licence": "MPL-2.0",
-          "copying": ["axe-core"]
+          "copying": [
+            "@axe-core/playwright"
+          ]
         }
       ]
     }

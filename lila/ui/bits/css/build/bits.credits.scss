@@ -42,7 +42,8 @@
     text-decoration: underline;
   }
 
-  // Phones: each entry is a block of three lines rather than a squeezed three-column row.
+  // Phones: each entry is a block of three lines rather than a squeezed three-column row (read as a
+  // list: the hidden column headers only name what each line already says).
   @include mq-is-col1 {
     thead {
       display: none;

@@ -140,14 +140,10 @@ else
 fi
 
 # The /credits page (unit 9.8): generated from docs/credits.json, which must cover COPYING.md §3.
-check "credits: the page matches docs/credits.json and covers COPYING.md and the puzzle sources" node "$ROOT/lila/bin/gen/credits.mjs" --check
-check "credits: a COPYING.md §3 row no entry names is caught" node --input-type=module -e "
-import { problems } from '$ROOT/lila/bin/gen/credits.mjs';
-const list = { sections: [{ entries: [{ copying: ['goban'], puzzleFile: 'a.json' }] }] };
-const copying = '## 3. Third-party code and assets\n| Component | x |\n|---|---|\n| goban 1 | x |\n| Mystery lib 2 | x |\n';
-const sources = '| \\\`a.json\\\` | 1 |\n| \\\`b.json\\\` | 2 |\n';
-const p = problems(list, copying, sources);
-if (!(p.length === 2 && p[0].includes('Mystery lib') && p[1].includes('b.json'))) { console.error(p); process.exit(1); }"
+check "credits: the page matches docs/credits.json and covers COPYING.md and the puzzle sources" output_is "credits: the page matches docs/credits.json, which covers COPYING.md and the puzzle sources" node "$ROOT/lila/bin/gen/credits.mjs" --check
+check "credits: the check's own tests (missing section, odd rows, dependency rows, puzzle files)" node --test "$ROOT/lila/bin/gen/credits.test.mjs"
+ln -s "$ROOT" "$ci_repo/credits-link"
+check "credits: run through a symlinked folder, the check still runs" output_is "credits: the page matches docs/credits.json, which covers COPYING.md and the puzzle sources" node "$ci_repo/credits-link/lila/bin/gen/credits.mjs" --check
 
 echo "$PASS passed, $FAIL failed"
 (( FAIL == 0 ))
