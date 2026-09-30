@@ -66,7 +66,18 @@ class GoStorageTest extends munit.FunSuite:
     val g = played
     assertEquals(g.playedPlies, Ply(7))
     assertEquals(g.go.get.actions.size, 8)
-    assertEquals(g.turnColor, GoBridge.color(g.go.get.toMove))
+    // lila still reads ply parity (startColor, playerMoves, clock history): it must agree with go-rules
+    assertEquals(g.ply.turn, g.turnColor)
+    assertEquals(g.turnColor, Color.White)
+
+  test("a 1-stone handicap: no stone, Black first at ply 1, and parity holds after moves"):
+    val g = newGo(setup(handicap = 1))
+    assertEquals((g.startedAtPly, g.turnColor), (Ply(1), Color.Black))
+    assertEquals(g.go.get.stones, Map.empty)
+    val moved = act(g, Action.Place(p("ee")), Action.Pass)
+    assertEquals((moved.ply.turn, moved.turnColor), (Color.Black, Color.Black))
+    val back = roundTrip(moved)
+    assertEquals((back.ply, back.startedAtPly, back.turnColor), (moved.ply, Ply(1), Color.Black))
 
   test("a Go game is stored with its Go block and none of the chess keys"):
     val doc = gameHandler.write(played)
@@ -95,6 +106,7 @@ class GoStorageTest extends munit.FunSuite:
         (back.ply, back.startedAtPly, back.turnColor),
         (original.ply, original.startedAtPly, original.turnColor)
       )
+      assertEquals(back.ply.turn, back.turnColor)
       assertEquals(back.clock.map(_.config), original.clock.map(_.config))
       assertEquals(back.clock.map(_.color), original.clock.map(_.color))
       assertEquals(back.perfKey, GoBridge.perfKey)
@@ -141,6 +153,31 @@ class GoStorageTest extends munit.FunSuite:
     assertEquals(unsets, Nil)
     val stored = gameHandler.write(before) ++ BSONDocument(sets)
     assertEquals(gameHandler.read(stored).go.get.actions, after.go.get.actions)
+    // a takeback shortens the actions
+    val undone = after.withGo(after.go.get.undo.fold(r => fail(r.key), identity))
+    val (undoSets, _) = GameDiff(after, undone)
+    assertEquals(undoSets.map(_._1).toSet, Set("ac", "t"))
+    val back = gameHandler.read(gameHandler.write(after) ++ BSONDocument(undoSets))
+    assertEquals((back.go.get.actions, back.ply), (before.go.get.actions, before.ply))
+
+  test("the starting ply comes from the setup, not a stored st that disagrees"):
+    val doc = gameHandler.write(played)
+    val back = gameHandler.read(doc -- "st")
+    assertEquals((back.startedAtPly, back.ply, back.turnColor), (Ply(1), played.ply, played.turnColor))
+
+  test("the game JSON's Go block has the setup, custom position, moves and prisoners"):
+    val position = Position(Map(p("cc") -> GoColor.Black, p("gg") -> GoColor.White), GoColor.White)
+    val custom = act(newGo(setup(position = Some(position))), Action.Place(p("ee")))
+    val js = JsonView.go(custom.go.get)
+    assertEquals((js \ "size").as[Int], 9)
+    assertEquals((js \ "rules").as[String], "japanese")
+    assertEquals((js \ "moves").as[String], "ee")
+    assertEquals((js \ "position" \ "black").as[List[String]], List("cc"))
+    assertEquals((js \ "position" \ "toMove").as[String], "white")
+    val playedJs = JsonView.go(played.go.get)
+    assertEquals((playedJs \ "moves").as[String], "ab aa ba ee pass pass resume cc")
+    assertEquals((playedJs \ "prisoners" \ "b").as[Int], 1)
+    assert((playedJs \ "position").toOption.isEmpty)
 
   // ADR 0019 §3: game lists load many games, so a 300-move 19x19 replay must stay cheap.
   test("replaying a 300-move 19x19 game is fast"):

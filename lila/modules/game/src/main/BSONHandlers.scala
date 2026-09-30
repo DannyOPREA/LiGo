@@ -104,7 +104,7 @@ object BSONHandlers:
       val playerIds = r.str(F.playerIds)
       val light = lightGameReader.reads(r)
 
-      val startedAtPly = Ply(r.intD(F.startedAtTurn))
+      val storedStartedAtPly = Ply(r.intD(F.startedAtTurn))
       val storedPly = r.get[Ply](F.turns)
 
       // A Go document (ADR 0019 §4) has the Go block instead of the chess keys; its game is replayed.
@@ -112,6 +112,17 @@ object BSONHandlers:
         .isGo(r)
         .option:
           GoStorage.read(r, light.id).fold(e => sys.error(s"Go game ${light.id}: $e"), identity)
+
+      // A Go game's starting ply follows from its setup; `st` is only cross-checked.
+      val startedAtPly = go
+        .flatMap(g => ligo.gorules.GoGame.start(g.setup).toOption)
+        .fold(storedStartedAtPly): start =>
+          val fromSetup = GoBridge.startedAtPly(start)
+          if fromSetup != storedStartedAtPly then
+            lila
+              .log("game")
+              .warn(s"Go game ${light.id}: stored starting ply $storedStartedAtPly, setup gives $fromSetup")
+          fromSetup
 
       val ply = go match
         case None => storedPly.atMost(maxPlies) // unlimited can cause StackOverflowError

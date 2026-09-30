@@ -122,7 +122,11 @@ object GoStorage:
   def read(r: BSON.Reader, id: GameId): Either[String, GoGame] =
     for
       setup <- readSetup(r)
-      acts = actions.read(r.bytesD(F.actions).value, setup.size)
+      bytes = r.bytesD(F.actions).value
+      _ =
+        if bytes.length > 2 * maxActions then
+          logger.error(s"Go game $id: ${bytes.length / 2} actions stored; loaded the first $maxActions")
+      acts = actions.read(bytes, setup.size)
       replayed <- GoGame.replay(setup, acts) match
         case Right(g) => Right(g)
         case Left(e @ ReplayError.Refused(_, _, _, before)) =>
