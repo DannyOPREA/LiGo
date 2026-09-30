@@ -241,7 +241,7 @@
   <string name="signupUsernameHint">Be sure to choose a username appropriate for all ages. You cannot change it later, and accounts with inappropriate usernames will be closed!</string>
   <string name="signupEmailPromise">We will only send you emails about your account and never share your email.</string>
   <string name="signupGoRank">Your Go rank</string>
-  <string name="signupGoRankHelp">Your rating starts there. You can change it until your first rated game starts.</string>
+  <string name="signupGoRankHelp">Your Go rating starts there.</string>
   <string name="signupGoRankNew">I'm new to Go</string>
   <string name="signupGoRankUnknown">I don't know</string>
   <string name="password">Password</string>

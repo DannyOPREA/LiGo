@@ -163,7 +163,11 @@ final class Signup(
   // "I don't know" leaves lila's default (1500, deviation 500)
   private def setDeclaredGoRank(id: UserId, data: SignupData): Funit =
     data.declaredGoRank.so: rank =>
-      perfsRepo.setPerf(id, PerfKey.go, lila.rating.Perf.default.copy(glicko = GoRating.startingGlicko(rank)))
+      perfsRepo
+        .setPerf(id, PerfKey.go, lila.rating.Perf.default.copy(glicko = GoRating.startingGlicko(rank)))
+        .recover: e =>
+          // the account exists by now: keep lila's default rating rather than fail the signup
+          logger.warn(s"Could not set the declared Go rank ${rank.name} of $id", e)
 
   private def confirmOrAllSet(
       email: EmailAddress,

@@ -25,8 +25,14 @@
   `dev/cloud-setup.sh` in an older cloud container before building lila.
 - Decisions: split 5.4 (signup now, account page after 3.16); i18n keys rather than English literals
   (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md).
-- Verified by Claude: `sbt "security/testOnly lila.security.SignupGoRankTest"` 4/4; `web/compile`;
-  verify.sh. · Needs owner verification: the signup page on the real stack (the full site can't run
+- Review (reviewer agent): no blocking findings. Addressed: a failed perf write after the account
+  exists is logged and keeps lila's default rating instead of failing the signup; the help text no
+  longer promises a shown rank; `i18n.d.ts` regenerated; a test that the declared Glicko survives
+  the perf BSON round trip. Not done: a form-binding test (the form needs its Env's dependencies)
+  and routing through `UserApi.setPerf` (same write, one more hop).
+- Verified by Claude: `sbt "rating/testOnly lila.rating.GoRatingTest; security/testOnly
+  lila.security.SignupGoRankTest"` 15/15 and 4/4; `web/compile`; scalafmt; verify.sh (all gates
+  pass). · Needs owner verification: the signup page on the real stack (the full site can't run
   in cloud sessions): the question shows, and signing up as 5k shows a 5k? rating.
 - Follow-ups: part 2 after 3.16: change the rank on the account page until the first rated game
   starts; desktop and phone screenshots.
