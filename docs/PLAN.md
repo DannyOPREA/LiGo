@@ -132,7 +132,7 @@ Rules:
 - **Adding, removing or swapping a dependency is a major decision**, so you're consulted. Claude Code
   enforces this with a permission prompt on dependency manifests.
 - **Only licences compatible with AGPL-3.0 are acceptable** (MIT, BSD, Apache-2.0, LGPL, GPL-3.0,
-  AGPL-3.0). Non-commercial and unclear licences are rejected.
+  AGPL-3.0, and MPL-2.0 since ADR 0026 §4). Non-commercial and unclear licences are rejected.
 - **The reviewer agent checks every PR for reinvented wheels.**
 
 ---

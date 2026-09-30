@@ -52,6 +52,12 @@ board.destroy();
   are in `src/themes.ts` (`@ligo/board/themes`), which a page can import without loading goban.
   goban's wood, granite and anime themes load pictures from OGS's CDN with no stated licence, and
   any name not in the lists becomes Plain, so the board never fetches anything.
+- **Keyboard and screen readers** (unit 9.4, ADR 0026 §4, `src/access.ts`). The board is a
+  focusable `role="application"`: arrows, Home/End and Page Up/Down move a cursor (shown only on
+  keyboard focus), Enter or Space plays there as a tap would (with `confirm`, again to play), P
+  passes, D reads the point and its neighbours. A polite live region reads out each move `play`
+  plays ("Black D4, 1 stone captured", "White passes"), refusals ("Illegal: ko") and the point
+  under the cursor, with the names printed on the board (letters without I). English for now.
 - **Same rules as the engine.** The board takes its settings from `src/rules.mjs`, the ones
   `createEngine` uses (superko, no suicide, komi, the server's handicap stones), and nothing in
   `src/` imports goban-engine next to goban, so a page bundles goban's engine once. The bundle
@@ -126,7 +132,8 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
 - `test/board.browser.test.mjs`: the board in Chromium (Playwright), bundled by esbuild from
   `test/browser/harness.ts`: clicks and phone taps reported and played back, captures, refusals
   (suicide, ko), previews, cancel, one colour or both, confirm, pass, handicap, sizing and
-  resizing, destroy, and no images or network requests. Chromium comes from `$LIGO_CHROMIUM`, the
+  resizing, destroy, themes, keyboard play and what the live region says, axe-core's WCAG 2.2 AA
+  check, and no images or network requests. Chromium comes from `$LIGO_CHROMIUM`, the
   cloud sessions' `/opt/pw-browsers/chromium`, or `pnpm exec playwright install chromium`.
 
 - `test/conformance.test.mjs`: every `libs/conformance` fixture that applies to the client, under

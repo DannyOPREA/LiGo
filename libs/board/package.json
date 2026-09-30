@@ -15,7 +15,7 @@
     "test:node-all": "node --test test/engine.test.mjs test/conformance.test.mjs test/sgf.test.mjs test/parity.test.mjs",
     "test:browser": "node --test test/board.browser.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "oxfmt -c ../../lila/.oxfmtrc.json --check src/board.ts src/themes.ts src/rules.d.mts src/sgf.d.mts test/browser && oxlint -c ../../lila/.oxlintrc.jsonc src/board.ts src/themes.ts test/browser"
+    "lint": "oxfmt -c ../../lila/.oxfmtrc.json --check src/board.ts src/themes.ts src/access.ts src/rules.d.mts src/sgf.d.mts test/browser && oxlint -c ../../lila/.oxlintrc.jsonc src/board.ts src/themes.ts src/access.ts test/browser"
   },
   "dependencies": {
     "@sabaki/sgf": "3.5.0",
@@ -38,6 +38,7 @@
     }
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "^1.63.0",
     "esbuild": "0.28.2",
     "typescript": "7.0.2"

@@ -21,6 +21,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.4 · Keyboard and screen-reader play on the board
+- Did: `libs/board` gets keyboard play (Tab focuses the board; arrows, Home/End, Page Up/Down move a two-tone cursor; Enter or Space plays there through goban's own tap handling, so Confirm moves previews first and a second Enter plays; P passes; D reads the point and its four neighbours) and a polite live region that reads out each move played ("Black D4", "White passes", "Black A8, 1 stone captured"), refusals ("Illegal: ko", "Illegal: suicide", "Illegal: D4 is occupied"), "Not your move" and the point under the cursor. The board is a focusable `role="application"` with a name and a hidden help text. Point names are the printed ones (`src/access.ts`, letters without I). axe-core (`@axe-core/playwright` 4.13.0, MPL-2.0) runs in the board's browser tests and a new playground page test (desktop and phone); MPL-2.0 joined the allowed licences (`dev/ci/meta_checks.py`, PLAN §2.2, COPYING.md) as ADR 0026 §4 decided.
+- Worked: goban's protected `tapAt` gives the keyboard exactly a click's behaviour (previews, the preview moving, captures); the cursor shows only on keyboard focus (`:focus-visible`, or any board key), so no screenshot baseline changed. goban draws no stone animation, so reduced motion needs nothing.
+- Didn't work / dead ends: a second `pnpm add -w` in the same session wrote the root importer's entry without its `(playwright-core@…)` peer suffix, so the frozen install linked a folder that didn't exist; fixed by hand in the lockfile and checked with `pnpm install --frozen-lockfile`. axe flags lila's own `.button` (white on #3692e7, 3.3:1) on the playground: lila's site-wide colour, left to 9.7; the page test lets off only that rule on lila's buttons.
+- Lessons: goban has no keyboard support; drive its `tapAt` rather than re-creating previews.
+- Decisions: keys P and D, the cursor's two-tone ring, English words until lila's i18n reaches the board (9.7), lila's button contrast left to 9.7 (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md, ADR 0026 §4 amendment).
+- Verified by Claude: board browser tests 33/33 (9 new, axe included); `dev/ligo test pages` 35/35 (3 new); lint, typecheck, js-licences. · Needs owner verification: a keyboard-only game and a screen-reader pass (Orca on Fedora) on /playground.
+- Follow-ups: 9.7 fixes lila's button contrast and moves the words into lila's i18n; 3.18/7.4/8.7 pages get the same keyboard board for free.
+
 ### 2026-09-30 · unit 9.3 · Board themes
 - Did: `mountBoard` takes `theme: { board, stones }` and `set({ theme })` changes it live; the
   offered names are goban's picture-free themes (5 boards, 5 stone pairs, `src/themes.ts`, loadable
