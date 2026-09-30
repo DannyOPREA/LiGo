@@ -93,7 +93,7 @@ final class LilaHandler(
       val versioned = ClientIn.RoundVersioned(version, flags, tpe, data)
       History.round.add(gameId, versioned)
       publish(_.room(gameId), versioned)
-      if tpe == "move" || tpe == "drop" then Fens.move(gameId, data, flags.moveBy)
+      if tpe == "move" then Fens.move(gameId, data, flags.moveBy)
     case TellRoom(roomId, payload) => publish(_.room(roomId), ClientIn.Payload(payload))
     case RoundResyncPlayer(fullId) =>
       publish(_.room(fullId.gameId), ClientIn.RoundResyncPlayer(fullId.playerId))

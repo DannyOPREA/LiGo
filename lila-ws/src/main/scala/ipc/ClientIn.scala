@@ -11,8 +11,6 @@ sealed trait ClientIn extends ClientMsg:
 
 object ClientIn:
 
-  import chess.json.Json.given
-
   case object Pong extends ClientIn:
     val write = "0"
 
@@ -39,18 +37,20 @@ object ClientIn:
   case class Announce(json: JsonString) extends ClientIn:
     lazy val write = cliMsg("announce", json)
 
-  case class Fen(gameId: Game.Id, position: Position) extends ClientIn:
+  // a live mini-board update; the message keeps upstream's "fen" name, its payload is Go (ADR 0019 §6)
+  case class Fen(gameId: Game.Id, board: MiniBoard) extends ClientIn:
     def write =
       cliMsg(
         "fen",
         Json
           .obj(
             "id" -> gameId.value,
-            "lm" -> position.lastUci,
-            "fen" -> position.fenWithColor
+            "lm" -> board.lastMove.value,
+            "board" -> board.board,
+            "turn" -> board.turnColor.name
           )
-          .add("wc" -> position.clock.map(_.white))
-          .add("bc" -> position.clock.map(_.black))
+          .add("wc" -> board.clock.map(_.white))
+          .add("bc" -> board.clock.map(_.black))
       )
 
   case class Finish(gameId: Game.Id, winner: Option[Color]) extends ClientIn:
