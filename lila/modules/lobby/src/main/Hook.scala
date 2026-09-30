@@ -13,7 +13,7 @@ import lila.core.perf.UserWithPerfs
 import lila.core.rating.RatingRange
 import lila.core.socket.Sri
 import lila.rating.PerfType
-import lila.core.pool.IsClockCompatible
+import lila.core.pool.IsPoolCompatible
 import lila.core.id.SessionId
 
 // realtime Go, volatile
@@ -88,15 +88,18 @@ case class Hook(
     .add("go" -> GoSetups.json(go).some)
     .add("ra" -> rated.yes.option(1))
 
-  // pools play 19×19 Japanese games with standard komi (ADR 0022 §1)
+  /* A pool game would have been rated, random colour, even, Japanese rules and the spec's komi
+   * (ADR 0022 §6); the pool's board size and clock are checked against each pool below. */
   def seemsCompatibleWithPools =
-    rated.yes && realVariant.standard && go == GoSetups.default && color == TriColor.Random
+    rated.yes && realVariant.standard && color == TriColor.Random &&
+      go.handicap == 0 && go.position.isEmpty && go.ruleset == ligo.gorules.Ruleset.Japanese &&
+      GoSetups.hasStandardKomi(go)
 
-  def compatibleWithPools(using isClockCompatible: IsClockCompatible) =
-    seemsCompatibleWithPools && isClockCompatible.exec(clock)
+  def compatibleWithPools(using isPoolCompatible: IsPoolCompatible) =
+    seemsCompatibleWithPools && isPoolCompatible.exec(clock, go)
 
-  def compatibleWithPool(poolClock: chess.Clock.Config) =
-    clock == poolClock && seemsCompatibleWithPools
+  def compatibleWithPool(poolClock: chess.Clock.Config, poolGo: GoSetup) =
+    clock == poolClock && go == poolGo && seemsCompatibleWithPools
 
   private lazy val speed = Speed(clock)
 

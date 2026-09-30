@@ -19,4 +19,10 @@ From unit 6.2 (GoPairing in lila/modules/pool, 2026-09-29):
   `pool/testOnly` for a real count (see [[rating-maths-review-patterns]]).
 - **Circular expected values**: tests that recompute the implementation's formula; ask for hard numbers.
 
+From unit 6.4 part one (2026-09-30):
+
+- Even `pool/test` printed Total 0 (sbt 2 cache); only `pool/testOnly lila.pool.GoPoolTest ...` ran them.
+- "X reaches the score" tests that assert equal output for both inputs can't fail if X is ignored.
+- Pool hook-stealing needs rated hooks, which 3.15 forbids until 5.7: that path is dead code, so ask for it to be said.
+
 **How to apply:** 6.4 (MatchMaking wiring), 6.6 (tile range display), any later pairing change.
