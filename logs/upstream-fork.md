@@ -10,9 +10,35 @@
 - Import with `git archive` and diff `git ls-files` against upstream afterwards: upstream tracks some files its own .gitignore ignores (2026-09-26, unit 0.2).
 - Removing a module: grep its `lila.core.<module>` Bus messages (publishers compile fine with no subscriber) and `ui/*/src` for its URLs (kept in-repo clients like dgt aren't caught by the compiler) (2026-09-29, unit 3.5).
 - Script edits: cut code blocks by indentation or with adjacent markers, never "from marker A to far marker B"; list the removed `def`s in the diff afterwards. sbt 2 caches by content, so `touch` won't re-show a file's warnings (2026-09-29, unit 3.6).
+- A sibling sbt build used via `ProjectRef` passes on its libraries but not its resolvers or `excludeDependencies`: repeat them in lila and check lila's own classpath (2026-09-30, unit 3.10).
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-30 · 3.10 · Wire libs/go-rules into lila's sbt build
+- Did: `lila/build.sbt` loads `libs/go-rules` as a source dependency
+  (`ProjectRef(file("../libs/go-rules"), "go-rules")`) and lila's `core` depends on it. lila's
+  build settings gained PlayStrategy's Maven repo and go-rules' three engine exclusions
+  (`lila/project/Dependencies.scala`). A smoke test in `core` (`GoRulesSmokeTest`) plays a capture
+  and a refused suicide through `ligo.gorules` and checks that Fairy-Stockfish, aalina and samurai
+  classes are not loadable. CI: the lila job resolves, then runs `libs/go-rules/check-pin.sh` before
+  compiling and testing; any `libs/go-rules/` change now triggers the lila build (`dev/ci/changed.sh`,
+  its self-test updated). Docker mode: the lila container mounts `libs/` (compose.yml, with a new
+  `dev/tests/run.sh` check). COPYING.md, go-rules' README/CLAUDE.md and ADR 0019 §8 updated.
+- Worked: sbt 2 loads the sibling build with its own `project/` (same scalafmt plugin) and
+  compiles it before `core`; all of lila compiled with no source changes. The runtime classpath
+  gains only strategygames and joda-time (diffed against main's `export Runtime/fullClasspath`).
+- Didn't work / dead ends: go-rules' `excludeDependencies` don't reach projects that depend on it,
+  so the first build put Fairy-Stockfish (native), aalina, samurai, javacpp, guice and berkeleydb on
+  lila's classpath; the exclusions are repeated in lila's build settings. The cloud container's
+  `~/.sbt/repositories` was written by an older setup script without PlayStrategy's repo, so
+  `dev/cloud-setup.sh` had to be rerun.
+- Lessons: an sbt source dependency (`ProjectRef` to another build) passes on its library
+  dependencies but not its resolvers or `excludeDependencies`; check the dependent's classpath with
+  `export Runtime/fullClasspath`, not the library's own.
+- Decisions: see logs/decisions.md (3.10 row).
+- Verified by Claude: see the PR.
+- Follow-ups: 3.11 is the first unit whose code uses go-rules from lila (`GoBridge` in `core`).
 
 ### 2026-09-29 · 3.6 · Remove forums, blogs, teams, inbox and classes
 - Did: deleted lila modules `forum`, `forumSearch`, `ublog`, `team`, `teamSearch`, `msg` and `clas`,

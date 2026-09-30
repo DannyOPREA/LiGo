@@ -67,7 +67,7 @@ check "changed.sh: moving a file out of lila-ws triggers the ws build" output_is
 ci_commit newlib tools/newthing/index.ts logs/general.md
 check "changed.sh: a file outside every area runs everything" output_is $'lila=true\nws=true\nui=true\nrules=true\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit rules libs/go-rules/src/Rules.scala logs/rules-engine.md
-check "changed.sh: libs/go-rules triggers only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
+check "changed.sh: libs/go-rules triggers the rules and lila builds (lila compiles it)" output_is $'lila=true\nws=false\nui=false\nrules=true\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit toolingonly dev/x.sh .claude/y.json logs/tooling.md
 check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit board libs/board/src/engine.mjs logs/rules-engine.md
@@ -129,6 +129,8 @@ if command -v docker >/dev/null && docker compose version >/dev/null 2>&1; then
   # visible in the ui container, or its frozen install fails on the lockfile's importer for it.
   check "compose.yml's ui container mounts every ../ package of lila's pnpm workspace" bash -c "cd '$ROOT/dev/lila-docker' && cfg=\$(docker compose -f compose.yml --profile utils config ui) && for d in \$(sed -nE \"s#^ *- '\\.\\./([^/']+)/.*#\\1#p\" '$ROOT/lila/pnpm-workspace.yaml' | sort -u); do grep -q \"source: $ROOT/\$d\$\" <<<\"\$cfg\" || exit 1; done"
   check "compose.yml mounts LiGo's lila and lila-ws" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.yml config | grep -q 'source: $ROOT/lila-ws' && docker compose -f compose.yml config | grep -q 'source: $ROOT/lila$'"
+  # lila's sbt build loads ../libs/go-rules (unit 3.10), so the lila container needs libs/ beside it.
+  check "compose.yml's lila container mounts libs/ (lila's build compiles libs/go-rules)" bash -c "cd '$ROOT/dev/lila-docker' && docker compose -f compose.yml config lila | grep -q 'source: $ROOT/libs$'"
 else
   echo "  skip  compose checks (docker compose not installed)"
 fi

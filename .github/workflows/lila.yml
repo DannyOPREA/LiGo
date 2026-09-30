@@ -51,8 +51,16 @@ jobs:
           cache-dependency-path: |
             lila/build.sbt
             lila/project/**
+            libs/go-rules/build.sbt
+            libs/go-rules/project/**
       - name: Setup sbt
         uses: sbt/setup-sbt@c7d2d6258b4bd0d3ec5129e6b3453199d3c79729 # v1.5.8
+      # lila compiles libs/go-rules (unit 3.10), so it resolves strategygames itself: check the jar
+      # after it is downloaded and before any test runs it, as the rules job does.
+      - name: Resolve dependencies
+        run: ./lila.sh update
+      - name: strategygames jar matches the pinned SHA-256
+        run: ../libs/go-rules/check-pin.sh
       - run: TZ=UTC git log -1 --date=iso-strict-local --pretty='format:app.version.commit = "%H"%napp.version.date = "%ad"' | tee conf/version.conf
       - name: Check formatting, compile and test
         run: ./lila.sh -Depoll=true "scalafmtCheckAll;test"

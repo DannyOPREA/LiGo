@@ -97,8 +97,13 @@ lazy val modules = Seq(
 lazy val moduleRefs = modules map projectToRef
 lazy val moduleCPDeps = moduleRefs map { sbt.ClasspathDependency(_, None) }
 
+// LiGo: the server's Go rules (ADR 0012), a separate sbt build in libs/go-rules that lila uses as
+// a source dependency: sbt loads it next to lila's and compiles it first, so a change there is
+// picked up without publishing anything (unit 3.10). Its own tests stay in `dev/ligo test rules`.
+lazy val goRules = ProjectRef(file("../libs/go-rules"), "go-rules")
+
 lazy val core = module("core",
-  Seq(),
+  Seq(goRules),
   Seq(catsMtl, scalatags, galimatias) ++ scalalib.bundle ++ reactivemongo.bundle ++ tests.bundle
 )
 

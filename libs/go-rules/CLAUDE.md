@@ -19,7 +19,10 @@ what it adds: [README.md](README.md). The rules it implements: `docs/rules/spec.
 - Bumping strategygames: change the version in `build.sbt` and the SHA-256 in `check-pin.sh` and
   `docs/UPSTREAM.md` together, read its Go changes since the pinned commit (upstream-scout), run
   `dev/ligo test rules`. A version bump is a dependency change: ask the owner first.
-- Own sbt build (sbt 2, Scala and scalalib as lila). Phase 3 wires it into lila's build.
+- Own sbt build (sbt 2, Scala and scalalib as lila). lila's build loads it as a source dependency
+  (`ProjectRef` in `lila/build.sbt`, unit 3.10): lila's `core` compiles against it, so a change
+  here recompiles lila too, and `lila/project/Dependencies.scala` repeats this build's resolver and
+  `excludeDependencies` (sbt doesn't pass them on). Change both lists together.
 
 ## Test
 `dev/ligo test rules`: resolves, checks the strategygames jar's SHA-256 (`check-pin.sh`), then

@@ -1,7 +1,8 @@
 # libs/go-rules: the server's Go rules
 
 lila decides, on the server, whether a move is legal and what it captures. For chess it uses
-scalachess; for Go it will use this library (Phase 3 wires it in). It wraps PlayStrategy's
+scalachess; for Go it will use this library. lila's build compiles it from here (unit 3.10;
+`lila/build.sbt`), and lila's `core` module depends on it. It wraps PlayStrategy's
 [strategygames](https://github.com/Mind-Sports-Games/strategygames) Go package (ADR 0012) and adds
 what LiGo's rules spec (`docs/rules/spec.md`) asks for on top.
 

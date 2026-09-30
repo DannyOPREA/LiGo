@@ -10,6 +10,18 @@ object Dependencies:
   val jitpack = "jitpack".at("https://jitpack.io")
   val lilaMaven = "lila-maven".at("https://raw.githubusercontent.com/lichess-org/lila-maven/master")
   val sonashots = "sonashots".at("https://oss.sonatype.org/content/repositories/snapshots")
+  // LiGo: PlayStrategy's repo, the only place strategygames is published (ADR 0012). lila reaches
+  // strategygames through libs/go-rules (unit 3.10), and sbt resolves a sibling build's libraries
+  // with the depending project's resolvers, so lila needs the repo too.
+  val psLilaMaven = "ps-lila-maven".at("https://raw.githubusercontent.com/Mind-Sports-Games/lila-maven/master")
+  // LiGo: the other PlayStrategy games' engines that strategygames drags in, left out as in
+  // libs/go-rules/build.sbt (ADR 0012). A sibling build's exclusions don't reach the projects that
+  // depend on it, so every lila project repeats them; keep the two lists the same.
+  val goRulesExclusions = Seq(
+    ExclusionRule("org.playstrategy", "fairystockfish"),
+    ExclusionRule("com.joansala.aalina"),
+    ExclusionRule("com.joansala")
+  )
 
   val cats = "org.typelevel" %% "cats-core" % "2.13.0"
   val alleycats = "org.typelevel" %% "alleycats-core" % "2.13.0"

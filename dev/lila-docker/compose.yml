@@ -47,6 +47,8 @@ services:
       - ENABLE_RATE_LIMITING=${ENABLE_RATE_LIMITING:-true}
     volumes:
       - ../../lila:/lila
+      # LiGo: lila's build loads libs/go-rules as ../libs/go-rules (unit 3.10).
+      - ../../libs:/libs
       - ./conf/lila.conf:/lila/conf/application.conf
     depends_on:
       - mongodb
