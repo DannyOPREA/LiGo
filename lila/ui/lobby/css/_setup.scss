@@ -1,5 +1,4 @@
 @import '../../lib/css/setup/colorChoice';
-@import '../../lib/css/component/mselect';
 
 $c-setup: $c-secondary;
 $c-slider: $c-setup;
@@ -9,75 +8,6 @@ $c-slider: $c-setup;
   max-width: 96vw;
   padding: 0;
   overflow: visible;
-
-  .mselect {
-    .fullscreen-mask {
-      display: block;
-    }
-
-    .desc {
-      font-size: 0.9rem;
-      color: $c-font-dim;
-    }
-
-    .mselect__label {
-      padding-inline-end: 1rem;
-      gap: 0.8rem;
-      font-size: 1.2rem;
-
-      .text {
-        @extend %flex-center-nowrap;
-
-        gap: 0.8rem;
-        overflow: hidden;
-        width: 100%;
-
-        .name {
-          line-height: 1.2;
-          white-space: nowrap;
-        }
-
-        .desc {
-          @extend %ellipsis;
-        }
-      }
-    }
-
-    .mselect__list {
-      opacity: 1;
-      visibility: visible;
-    }
-
-    .mselect__item {
-      opacity: 1;
-      display: table-row;
-      cursor: pointer;
-      visibility: visible;
-
-      td {
-        padding: 0.5em 0.8em;
-        text-align: start;
-      }
-
-      .icon {
-        padding-inline-end: 0;
-      }
-
-      .name {
-        font-weight: bold;
-      }
-
-      .desc {
-        padding-inline-end: 1.5em;
-        white-space: normal;
-      }
-
-      &:hover * {
-        background: $c-primary;
-        color: $c-over;
-      }
-    }
-  }
 
   h2 {
     margin: 1.5rem 0;
@@ -123,18 +53,20 @@ $c-slider: $c-setup;
     }
   }
 
-  .fen__form {
-    @extend %flex-center-nowrap;
-  }
+  .go-options {
+    @extend %flex-wrap;
 
-  .fen__board {
-    display: block;
-    width: 50%;
-    margin-inline: auto;
-  }
+    gap: 1rem 1.5rem;
+    align-items: flex-end;
 
-  #fen-input {
-    flex: 1 1 100%;
+    .config-group {
+      flex: 1 1 10rem;
+    }
+
+    select,
+    input[type='number'] {
+      width: 100%;
+    }
   }
 
   .failure {
@@ -314,14 +246,6 @@ $c-slider: $c-setup;
 
     .setup-content {
       padding: 1.25rem 0.75rem;
-    }
-
-    .fen__board {
-      width: 40%;
-    }
-
-    &:has(.increment-choice) .fen__board {
-      width: 30%;
     }
   }
 }

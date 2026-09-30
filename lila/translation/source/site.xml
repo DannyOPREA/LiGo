@@ -244,6 +244,11 @@
   <string name="signupGoRankHelp">Your Go rating starts there.</string>
   <string name="signupGoRankNew">I'm new to Go</string>
   <string name="signupGoRankUnknown">I don't know</string>
+  <string name="goBoardSize">Board size</string>
+  <string name="goRules">Rules</string>
+  <string name="goRulesJapanese">Japanese</string>
+  <string name="goRulesChinese">Chinese</string>
+  <string name="goKomi">Komi</string>
   <string name="password">Password</string>
   <string name="showPassword">Show password</string>
   <string name="changePassword">Change password</string>

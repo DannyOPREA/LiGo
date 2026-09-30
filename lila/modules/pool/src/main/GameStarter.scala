@@ -46,36 +46,35 @@ final private class GameStarter(
         p1White <- userApi.firstGetsWhite(p1.userId, p2.userId)
         (whitePerf, blackPerf) = if p1White then perf1 -> perf2 else perf2 -> perf1
         (whiteMember, blackMember) = if p1White then p1 -> p2 else p2 -> p1
-        game = makeGame(
+        game <- makeGame(
           id,
           pool,
           whiteMember.userId -> whitePerf,
           blackMember.userId -> blackPerf
-        ).start
+        )
         _ <- gameRepo.insertDenormalized(game)
       yield
         onStart(game.id)
         Pairing(ByColor(whiteMember.sri -> game.fullIds.white, blackMember.sri -> game.fullIds.black))
 
+  /** A Go game on the pool's board size with Japanese rules and standard komi (ADR 0022 §1), casual until
+    * unit 5.7 rates pool games; even until unit 4.9 lets a game start with handicap stones.
+    */
   private def makeGame(
       id: GameId,
       pool: PoolConfig,
       whiteUser: (UserId, Perf),
       blackUser: (UserId, Perf)
-  ) =
-    val chessGame = chess.Game(
-      position = chess.variant.Standard.initialPosition,
-      clock = pool.clock.toClock.some
-    )
-    Game(
-      id = id,
-      chess = chessGame,
-      ply = chessGame.ply,
-      startedAtPly = chessGame.startedAtPly,
-      clock = chessGame.clock,
-      players = ByColor(whiteUser, blackUser).mapWithColor((u, p) => newPlayer(u, p)),
-      rated = chess.Rated.Yes,
-      status = chess.Status.Created,
-      daysPerTurn = none,
-      metadata = lila.core.game.newMetadata(Source.Pool)
-    )
+  ): Fu[Game] =
+    lila.core.game
+      .newGoGame(
+        pool.go,
+        pool.clock.toClock.some,
+        players = ByColor(whiteUser, blackUser).mapWithColor((u, p) => newPlayer(u, p)),
+        rated = chess.Rated.No,
+        source = Source.Pool
+      )
+      .fold(
+        e => fufail(s"Pool ${pool.id} can't start a Go game: ${e.message}"),
+        g => fuccess(g.withId(id).start)
+      )

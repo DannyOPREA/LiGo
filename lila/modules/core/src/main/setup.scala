@@ -5,8 +5,28 @@ import _root_.chess.variant.Variant
 import _root_.chess.{ Rated, Clock, format }
 import scalalib.model.Days
 
-import lila.core.game.GameRule
+import lila.core.game.{ GameRule, GoSetups }
 import lila.core.userId.UserId
+
+/** The Go options of a game creation form or API call (unit 3.15): all optional, defaulting to
+  * [[GoSetups.default]]'s 19×19, Japanese rules and the ruleset's standard komi.
+  */
+final case class GoOptions(size: Option[Int], ruleset: Option[String], komi: Option[Double]):
+  lazy val setup: Either[String, ligo.gorules.Setup] =
+    GoSetups.make(
+      size | GoSetups.default.size.lines,
+      ruleset | GoSetups.rulesetKey(GoSetups.default.ruleset),
+      komi
+    )
+  def valid = setup.isRight
+
+  /** The setup, once the form has checked it: the default if it is invalid. */
+  def orDefault: ligo.gorules.Setup = setup.getOrElse(GoSetups.default)
+
+object GoOptions:
+  val default = GoOptions(none, none, none)
+  def of(s: ligo.gorules.Setup) =
+    GoOptions(s.size.lines.some, GoSetups.rulesetKey(s.ruleset).some, s.komi.some)
 
 trait OpenConfig:
   val name: Option[String]
@@ -18,6 +38,7 @@ trait OpenConfig:
   val userIds: Option[PairOf[UserId]]
   val rules: Set[game.GameRule]
   val expiresAt: Option[Instant]
+  def goSetup: ligo.gorules.Setup
 
 trait SetupForm:
   import play.api.data.Mapping
@@ -27,3 +48,6 @@ trait SetupForm:
   def clock: Named[Option[Clock.Config]]
   def optionalDays: Named[Option[Days]]
   def rules: Named[Option[Set[GameRule]]]
+  def goSize: Named[Option[Int]]
+  def goRuleset: Named[Option[String]]
+  def goKomi: Named[Option[Double]]

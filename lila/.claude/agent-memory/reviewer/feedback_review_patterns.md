@@ -29,5 +29,13 @@ Patterns seen in LiGo unit reviews; check these every time.
 - Removal units leave orphans outside the deleted package: `ui/bits/src/bits.<feature>*.ts` and
   `ui/bits/css/build/bits.<feature>.scss` entries whose only `Esm(...)`/`.css(...)` caller was
   deleted. Grep deleted Scala (`git show HEAD:<file>`) for Esm/css names and check each still has a caller.
+- Before running verify.sh, `ps -eo pid,args | grep verify.sh`: the main session often runs it at
+  the same time. Two runs share one sbt server and the same `.claude/state/verify/*.log` files, so
+  both get spurious failures (e.g. "error while loading X.tasty"). Wait for the other run to end
+  (background until-loop on its pid), then run yours. (2026-09-30, unit 3.19 review.)
+- verify.sh's ui gates don't type-check: `dev/ligo test ui` is node tests only, oxlint runs without
+  `--type-aware`, and `ui/build`'s tsc only covers `*/tsconfig*.json` (not `*/tests/`). Run
+  `node lila/ui/.build/node_modules/typescript/bin/tsc -p lila/ui/<pkg>/tsconfig.json --noEmit` and
+  `oxlint --type-aware <files>` yourself; check new `tests/` dirs have the `tests/tsconfig.json` others have.
 - Licensing text: check claims like "all X are Noto/free" against generator inputs
   (e.g. `lila/bin/flair/custom.txt` lists non-Noto flairs).

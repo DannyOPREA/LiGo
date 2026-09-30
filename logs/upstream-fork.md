@@ -16,6 +16,78 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.19 (part 1) · Go options in the lobby's create-game and challenge forms
+- Did: the lobby's create-game ("hook") and challenge ("friend") forms offer board size (19×19,
+  13×13, 9×9 buttons; a list in screen-reader mode), rules (Japanese, Chinese) and komi (multiples
+  of 0.5 up to the board's points, as go-rules' `Komi.isValid`; reset to the ruleset's standard komi
+  when the rules change), sent as 3.15's `size`, `ruleset` and `komi` with `variant=1` until 3.17.
+  The chess variant picker and FEN input are gone, the casual/rated choice is hidden until 5.7 and
+  the rating shown is the `go` one. Saved form settings from before open as the default Go game.
+  Hook and seek lists (and the chart's hover card) show each game's size, rules and komi in a "Game
+  setup" column. Reusable challenge links (`ChallengeUi.genericUrl`) carry `size`, `ruleset` and
+  `komi` instead of `variant` and `fen`, and the lobby reads them. The pool shortcut also requires
+  19×19 Japanese standard komi, as the server's `Hook.seemsCompatibleWithPools` does. Five new
+  `site.xml` keys. `lobby/tests/goSetup.test.ts`: 20 tests over a real `SetupController` and the
+  rendered views in jsdom. Checked in Chromium (scratch harness with lila's built CSS) at desktop
+  and phone sizes: layout, and the form values after choosing 9×9, Chinese and a komi.
+- Review: no blocking code findings. Fixed from the optional ones: Go options in challenge links,
+  the pool check, `props.selected` on both lists, the number-only width rule, a tests tsconfig.
+  Left: the literal "Go" rating label (as `PerfType.Go`), the direct `el.value` reset in the komi
+  field's change handler (snabbdom won't reset a value it thinks unchanged), unused
+  `gameModeButtons` until 5.7, the dead "— Variant —" row, komi shown without locale formatting.
+- Worked: testing the form through a real `SetupController` with a stub lobby, and the views by
+  patching snabbdom into jsdom.
+- Didn't work / dead ends: the ui test runner can't resolve a package's `@/` imports unless the
+  package exports itself (a package.json change), so files the tests load use relative imports.
+  The shared test i18n stub gives functions, which snabbdom renders as nothing: the test file uses
+  plain strings. An ignored komi stayed in the field because snabbdom only resets a value it
+  thinks changed.
+- Lessons: verify.sh's ui gates don't type-check; run `tsc -p <package> --noEmit` too. Two
+  verify.sh runs at once share sbt and its logs and fail spuriously.
+- Decisions: logs/decisions.md (3.19 row), ADR 0019 §8 amendment (3.19 split).
+- Verified by Claude: see the PR.
+- Follow-ups: part 2 after 3.17 (chessground and chess UI packages); 3.16's thread switches the mini
+  boards; 3.17 removes `/setup/validate-fen` and analyse's `/?fen=…#friend` link; 5.7 brings the
+  rated choice back; 6.7 and 6.8 redo the lists and forms.
+
+### 2026-09-30 · 3.15 · Game creation: every new game is a Go game, casual only
+- Did: every creation path now calls `newGoGame` with go-rules' `Setup`: lobby hooks and seeks
+  (`Biter`), challenges (`ChallengeJoiner`), Go rematches (`Rematcher`, back on; a chess game is no
+  longer rematched), bulk pairings (`ChallengeBulk`) and pools (`GameStarter`, 19×19 Japanese).
+  `newGoGame` itself makes every game casual until 5.7, whatever an older rated game, seek,
+  challenge or bulk asks for; "New opponent" (`HookConfig.updateFrom`) no longer copies a chess
+  variant or the rated flag. `lila.core.game.GoSetups` holds the
+  default (19×19, Japanese, 6.5), `make` from form values (komi defaults to the ruleset's standard),
+  the JSON block (`size`, `rules`, `komi`) and a BSON handler with the game's own keys (`sz`, `ru`,
+  `km`, `hc`). `lila.core.setup.GoOptions` carries the three optional form fields. The friend, lobby,
+  board-API seek, challenge-API, open-challenge and bulk forms take `size`, `ruleset` and `komi`;
+  refuse rated games, chess variants and FENs; and rate in the `go` perf. Hooks, seeks, challenges
+  and bulks carry the setup (seeks, challenges and bulks as an optional `go` sub-document, older
+  records reading as the default); lobby, seek, challenge and bulk JSON gain a `go` block. The setup
+  module's unused `fenGame` and chess variant lists went. Tests: `GoSetupsTest` (6), `GoSetupFormTest`
+  (8, the setup module's first), `GoHookTest` (3), `JoinerTest` rewritten for Go (3), and a
+  casual-clamp case in `GoSetupsTest` (7 in all).
+- Review: the independent reviewer found 3 blocking issues, all fixed: "New opponent", rematches and
+  records saved before this unit could still make rated games (the rule lived only in the forms),
+  and rematching an old chess game still made a chess game. Optional, fixed: rematch challenges
+  dropped their chess FEN. Left: a bulk game that fails to start is logged and skipped (its setup was
+  checked when the bulk was scheduled).
+- Also: one of 3.13's `GoPlayTest` clock cases failed once while sbt compiled alongside it (it
+  allowed only a few tenths of a second of real time); its clock now uses a frozen `Timestamper`
+  and the times are asserted exactly.
+- Worked: the creation paths were few and each needed only its `newGame` call swapped; keeping the
+  unused chess `variant` fields until 3.17 kept the diff small.
+- Didn't work / dead ends: a Play form can't nest a mapping without prefixing its keys, so the three
+  Go fields sit flat in each form and the komi check against the board size is a form-level check.
+- Lessons: a rule that the forms enforce must also hold where games are made from stored records or
+  old games ("New opponent", rematches, accepted challenges): put it in the one constructor they all
+  call. `IdGenerator.withUniqueId` takes a `NewGame`, so a creation that can fail (`Either`) has to
+  be turned into a future before it, not inside it.
+- Decisions: see logs/decisions.md (3.15 row) and the ADR 0019 §8 amendment.
+- Verified by Claude: see the PR.
+- Follow-ups: 3.19 puts the Go options in the create-game and challenge forms and drops the `variant`
+  field; 4.9 adds handicap; 5.7 turns rated games on; 6.4 gives pools their sizes. lila-ws
+  passes the lobby's new `go` block through unchanged (3.14 merged first).
 ### 2026-09-30 · 3.14 · lila-ws: Go round payloads and live mini boards
 - Did: lila-ws speaks Go on the round (ADR 0019 §6) and no longer uses scalachess's chess rules or
   formats (no `Uci`, `Fen`, `chess.json`). The browser's `move` message carries `"u": "dd"` (an SGF

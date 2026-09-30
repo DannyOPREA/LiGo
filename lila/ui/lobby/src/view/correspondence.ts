@@ -1,10 +1,9 @@
-import { perfName } from 'lib/game/perf';
-import perfIcons from 'lib/game/perfIcons';
-import { bind, confirm, tr, td, span, div, button, table, thead, tbody, th, icon } from 'lib/view';
+import { bind, confirm, tr, td, span, div, button, table, thead, tbody, th } from 'lib/view';
 import { profileUrl } from 'lib/view/userLink';
 
-import type LobbyController from '@/ctrl';
-import type { Seek } from '@/interfaces';
+import type LobbyController from '../ctrl';
+import { goSetupName } from '../goSetup';
+import type { Seek } from '../interfaces';
 
 function renderSeek(ctrl: LobbyController, seek: Seek) {
   const isJoinAction = seek.action === 'joinSeek';
@@ -13,7 +12,9 @@ function renderSeek(ctrl: LobbyController, seek: Seek) {
     {
       key: seek.id,
       role: 'button',
-      title: isJoinAction ? `${i18n.site.joinTheGame} - ${perfName(seek.perf.key)}` : i18n.site.cancel,
+      title: isJoinAction
+        ? i18n.site.joinTheGame + (seek.go ? ` - ${goSetupName(seek.go)}` : '')
+        : i18n.site.cancel,
       'data-id': seek.id,
     },
     [
@@ -22,7 +23,8 @@ function renderSeek(ctrl: LobbyController, seek: Seek) {
       ),
       td(seek.rating && ctrl.opts.showRatings ? seek.rating + (seek.provisional ? '?' : '') : ''),
       td(seek.days ? i18n.site.nbDays(seek.days) : '∞'),
-      td([icon(perfIcons[seek.perf.key])('.varicon'), seek.mode === 1 ? i18n.site.rated : i18n.site.casual]),
+      td(seek.go ? goSetupName(seek.go) : ''),
+      td(seek.mode === 1 ? i18n.site.rated : i18n.site.casual),
     ],
   );
 }
@@ -36,7 +38,7 @@ function createSeek(ctrl: LobbyController) {
       {
         hook: bind(
           'click',
-          () => ctrl.setupCtrl.openModal('hook', { variant: 'standard', timeMode: 'correspondence' }),
+          () => ctrl.setupCtrl.openModal('hook', { timeMode: 'correspondence' }),
           ctrl.redraw,
         ),
       },
@@ -48,7 +50,13 @@ function createSeek(ctrl: LobbyController) {
 export default function (ctrl: LobbyController) {
   return [
     table('.hooks__list', [
-      thead(tr((['player', 'rating', 'time', 'mode'] as const).map(k => th(i18n.site[k])))),
+      thead(
+        tr([
+          ...(['player', 'rating', 'time'] as const).map(k => th(i18n.site[k])),
+          th(i18n.site.gameSetup),
+          th(i18n.site.mode),
+        ]),
+      ),
       tbody(
         {
           hook: bind('click', async e => {

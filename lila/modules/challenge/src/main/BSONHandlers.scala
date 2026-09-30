@@ -69,4 +69,5 @@ private object BSONHandlers:
         case _ => emptyBdoc
 
   given BSONDocumentHandler[Challenge.Open] = Macros.handler
+  import lila.core.game.GoSetups.given
   given BSONDocumentHandler[Challenge] = Macros.handler

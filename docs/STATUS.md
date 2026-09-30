@@ -5,8 +5,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Current unit
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
   docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (PR #24), 3.2 (PR #28), 3.3 (PR #33), 3.4 (PR #38),
-  3.5 (PR #46), 3.6 (PR #56), 3.7 (PR #65), 3.8 (PR #67), 3.10 (PR #66), 3.11 (PR #68) and 3.12 (PR #72)
-  and 3.13 (PR #73, the `round` module) merged; 3.14 (lila-ws: Go round payloads and mini boards) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  3.5 (PR #46), 3.6 (PR #56), 3.7 (PR #65), 3.8 (PR #67), 3.10 (PR #66), 3.11 (PR #68), 3.12 (PR #72),
+  3.13 (PR #73), 3.14 (PR #75) and 3.15 (PR #77) merged; 3.19 part 1 (Go options in the create-game forms) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   no longer wait on Phase 2 (merged 2026-09-29).
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
@@ -21,8 +21,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 - Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
   docs/PLAN.md §5. 6.1 (ADR 0022, PR #41) and 6.2 (auto-handicap pairing in `lila/modules/pool`,
-  PR #43) merged; 6.3 (the player-test kit, run by you after 6.10) in review. 6.4–6.10 wait for
-  Phase 3 units 3.15–3.20, 4.7, 4.9 and 5.3–5.7.
+  PR #43) and 6.3 (the player-test kit, run by you after 6.10, PR #45) merged. 6.4's first part
+  (pools play Go: board size, Go perf, 5 s waves, the Go pairing score, even games) in review; its
+  second part waits for 4.7, 4.9, 5.3 and 5.7. 6.5–6.10 wait for 3.19, 3.20, 4.9, 5.5 and 5.7.
   Log: logs/lobby.md.
 
 - Phase 7 (under the owner's "work until I tell you to stop" delegation): units 7.1–7.8 in
@@ -143,10 +144,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
-| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.13 merged; 3.14 in review (you approved the deletions for 3.1–3.7) |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.15 merged; 3.19 part 1 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
-| 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.2 merged (ADR 0022), 6.3 in review, 6.4–6.10 wait for Phases 3–5 |
+| 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 merged (ADR 0022), 6.4 part one in review, the rest wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
 | 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.4 merged, 8.5 in review, 8.6–8.8 wait for Phase 3 |
 | 9. PWA, polish & handoff | split into units 9.1–9.10 (PLAN §5); 9.1–9.6 merged, 9.8 in review; 9.7, 9.9, 9.10 wait for Phases 3–8 |
