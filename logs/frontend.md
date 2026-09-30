@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · UI build · Type-checking waits for the translation typings
+- Did: `./ui/build` runs the translation step and tsc side by side (`ui/.build/src/build.ts`). The translation step rewrites the committed `@types/lichess/i18n.d.ts` in place whenever an XML source looks newer, and a fresh CI checkout gives files arbitrary times, so tsc could read it half-written and fail with "Cannot find name 'I18n'" (CI on PR #81). `i18n.ts` now exports a promise settled once its first typings pass has run (or at once when the build skips translations), and `tsc.ts` waits for it. The translation step's JavaScript output still runs alongside tsc.
+- Worked: a local production build with a touched `translation/source/site.xml`: tsc started after the typings (1 s in) and passed, the translations finished at 6.6 s.
+- Didn't work / dead ends: none.
+- Lessons: a generated file that is also committed can be rewritten on any fresh checkout; whatever reads it must wait for the writer.
+- Decisions: none new (a fix in lila's build script, marked "LiGo:").
+- Verified by Claude: the production UI build (`./ui/build --no-install -p`), oxfmt, oxlint, the build tool's own type check. · Needs owner verification: none.
+- Follow-ups: offer the fix upstream to lichess (its build has the same race).
+
 ### 2026-09-30 · unit 9.6 follow-up · The push test's lost notifications
 - Did: the push tests (unit 9.6) failed now and then on CI (PRs #70, #71, #79): permission granted, worker activated, push delivered, yet `getNotifications()` stayed empty. A 20-run measurement on PR #81 lost 2 of 21 back to back, after which every run was ~30% faster: Chrome for Testing 153 first tries the desktop's notification service over D-Bus (CI's runner has none) and falls back to its own message centre. The page tests now start Chromium with `--disable-features=NativeNotifications,SystemNotifications`, so it uses the message centre from the start; the same 20-run measurement then passed 21 of 21.
 - Worked: measuring on CI before and after (a temporary 20-run loop, removed before merge), and failure messages that print what the browser reported.

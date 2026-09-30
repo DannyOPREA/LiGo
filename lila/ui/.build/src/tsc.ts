@@ -6,12 +6,14 @@ import { createInterface } from 'node:readline';
 import pc from 'picocolors';
 
 import { env, errorMark, warnMark } from './env.ts';
+import { i18nTypings } from './i18n.ts';
 
 let tscPs: ChildProcess | undefined;
 
 export async function tsc(): Promise<void> {
   if (!env.begin('tsc')) return;
   await fs.promises.mkdir(env.buildTempDir, { recursive: true });
+  await i18nTypings; // LiGo: the translation typings must exist first (i18n.ts)
 
   const buildPaths = (await fg.glob('*/tsconfig*.json', { cwd: env.uiDir, absolute: true }))
     .sort((a, b) => a.localeCompare(b)) // repeatable build order
