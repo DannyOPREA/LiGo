@@ -54,7 +54,8 @@ if ((ALL)) || [[ -n "$ui" ]] || has '^lila/(package\.json|pnpm-lock\.yaml|ui/.*/
   fi
   add "ui tests (vitest)" "dev/ligo test ui"
 fi
-if has '^lila/(modules|app|conf|project|build\.sbt)'; then
+# lila's build compiles libs/go-rules (unit 3.10), so its main code and build count too.
+if has '^lila/(modules|app|conf|project|build\.sbt)|^libs/go-rules/(src/main/|build\.sbt$|project/)'; then
   add "lila compile" "dev/ligo compile lila"
   add "lila scalafmt" "cd lila && ./lila.sh --server --batch scalafmtCheckAll"
   add "lila tests" "dev/ligo test lila"

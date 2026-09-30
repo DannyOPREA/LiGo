@@ -157,6 +157,8 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
 3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
+(Amended in unit 3.10: `core` takes the dependency in 3.10 already, with a smoke test; 3.11 is the
+first unit whose code uses it. logs/decisions.md, 3.10 row.)
 
 ## Consequences
 - No new code to own for colours, clocks, time units or Glicko-2; lila-ws keeps its types.

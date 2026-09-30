@@ -20,8 +20,9 @@ head=${2:-HEAD}
 # libs/board also counts for ui: the playground's screenshots (unit 2.4) run in the ui job.
 # tools/puzzles imports services/scoring's KataGo client and libs/board's SGF reader (unit 8.3).
 # tools/puzzles/data counts for rules too: libs/board's browser tests play every puzzle (unit 8.5).
+# libs/go-rules counts for lila too: lila's sbt build compiles it (unit 3.10).
 areas=(
-  'lila|^(lila/(app|conf|modules|project|translation)/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
+  'lila|^(lila/(app|conf|modules|project|translation)/|libs/go-rules/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ws|^(lila-ws/|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ui|^(lila/|libs/board/|\.github/workflows/ui\.yml$|dev/ci/(changed\.sh|budget\.(mjs|json))$)'
   'rules|^(libs/go-rules/|libs/board/|libs/conformance/fixtures/|tools/puzzles/data/|lila/pnpm-(lock|workspace)\.yaml$|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'

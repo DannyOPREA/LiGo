@@ -143,13 +143,13 @@ docker_sbt() {  # docker_sbt <service> <sbt args...>
   else run dc run --rm --no-deps --entrypoint sbt "$svc" "$@"; fi
 }
 
-# libs/go-rules is its own sbt build; in docker mode it runs in the lila container with libs/
-# mounted next to it, so its tests find ../conformance/fixtures. Its downloads (sbt, Scala,
-# strategygames) go to .ligo/rules-cache, so they survive the throwaway container and
-# libs/go-rules/check-pin.sh can check the jar from the host.
+# libs/go-rules is its own sbt build; in docker mode it runs in the lila container, which mounts
+# libs/ next to lila (compose.yml, unit 3.10), so its tests find ../conformance/fixtures. Its
+# downloads (sbt, Scala, strategygames) go to .ligo/rules-cache, so they survive the throwaway
+# container and libs/go-rules/check-pin.sh can check the jar from the host.
 docker_rules_sbt() {
   mkdir -p "$STATE/rules-cache"
-  run dc run --rm --no-deps -v "$ROOT/libs:/libs" -v "$STATE/rules-cache:/rules-cache" \
+  run dc run --rm --no-deps -v "$STATE/rules-cache:/rules-cache" \
     -e COURSIER_CACHE=/rules-cache/coursier \
     -e SBT_OPTS="-Dsbt.boot.directory=/rules-cache/sbt/boot -Dsbt.global.base=/rules-cache/sbt/global -Dsbt.ivy.home=/rules-cache/ivy2" \
     -w /libs/go-rules --entrypoint sbt lila "$@"
