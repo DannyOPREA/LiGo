@@ -17,11 +17,21 @@ type Dict = Map<string, string | Plural>;
 const formatStringRe = /%(?:[\d]\$)?s/;
 
 let dicts = new Map<string, Dict>();
+
+// LiGo: tsc starts alongside this task and reads @types/lichess/i18n.d.ts, which compileTypings
+// rewrites in place whenever an XML source looks newer (a fresh checkout gives files arbitrary
+// times). A tsc reading it mid-write saw no I18n and failed (CI, PR #81), so tsc waits for this:
+// settled once the first typings pass has run, or at once when i18n isn't part of this build.
+let typingsSettled: () => void;
+export const i18nTypings: Promise<void> = new Promise<void>(ok => (typingsSettled = ok));
 let locales: string[];
 let cats: string[];
 
 export function i18n(): Promise<void | string> {
-  if (!env.begin('i18n')) return Promise.resolve();
+  if (!env.begin('i18n')) {
+    typingsSettled();
+    return Promise.resolve();
+  }
 
   return makeTask({
     includes: [
@@ -32,14 +42,18 @@ export function i18n(): Promise<void | string> {
     debounce: 500,
     execute: async () => {
       env.log(`Building`, 'i18n');
-      [locales, cats] = (
-        await Promise.all([
-          fg.glob('*.xml', { cwd: join(env.i18nDestDir, 'site') }),
-          fg.glob('*.xml', { cwd: env.i18nSrcDir }),
-        ])
-      ).map(list => list.map(x => x.split('.')[0]));
-      await Promise.allSettled(cats.map(async cat => fs.promises.mkdir(join(env.i18nDestDir, cat))));
-      await compileTypings();
+      try {
+        [locales, cats] = (
+          await Promise.all([
+            fg.glob('*.xml', { cwd: join(env.i18nDestDir, 'site') }),
+            fg.glob('*.xml', { cwd: env.i18nSrcDir }),
+          ])
+        ).map(list => list.map(x => x.split('.')[0]));
+        await Promise.allSettled(cats.map(async cat => fs.promises.mkdir(join(env.i18nDestDir, cat))));
+        await compileTypings();
+      } finally {
+        typingsSettled();
+      }
       await compileJavascripts();
       await i18nManifest();
     },

@@ -3805,8 +3805,14 @@ interface I18n {
     goBoardSize: string;
     /** Go deeper */
     goDeeper: string;
+    /** Even */
+    goEven: string;
+    /** Handicap */
+    goHandicap: string;
     /** Komi */
     goKomi: string;
+    /** No open challenges match. Try other filters, or create a game. */
+    goNoOpenChallenges: string;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
     /** Rules */
@@ -3989,6 +3995,8 @@ interface I18n {
     list: string;
     /** List players you have blocked */
     listBlockedPlayers: string;
+    /** Live */
+    live: string;
     /** Loading engine... */
     loadingEngine: string;
     /** Load position */
@@ -4243,6 +4251,8 @@ interface I18n {
     onSlowGames: string;
     /** Opacity */
     opacity: string;
+    /** Open challenges */
+    openChallenges: string;
     /** Opening */
     opening: string;
     /** Opening/endgame explorer */

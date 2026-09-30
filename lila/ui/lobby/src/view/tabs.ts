@@ -24,8 +24,7 @@ export default function (ctrl: LobbyController) {
     isBot = ctrl.me?.isBot;
   return [
     isBot ? undefined : tab(ctrl, 'pools', active, [i18n.site.quickPairing]),
-    isBot ? undefined : tab(ctrl, 'real_time', active, [i18n.site.lobby]),
-    isBot ? undefined : tab(ctrl, 'seeks', active, [i18n.site.correspondence]),
+    isBot ? undefined : tab(ctrl, 'open', active, [i18n.site.openChallenges]),
     active === 'now_playing' || nbPlaying || isBot
       ? tab(ctrl, 'now_playing', active, [
           ...i18n.site.nbGamesInPlay.asArray(nbPlaying, nbPlaying >= 100 ? '99+' : nbPlaying.toString()),
