@@ -14,6 +14,7 @@ import lila.common.String.html.nl2br
 import lila.common.autoconfig.*
 import lila.core.i18n.I18nKey.emails as trans
 import lila.core.i18n.Translate
+import lila.core.config.RouteUrl
 
 final class Mailer(
     config: Mailer.Config,
@@ -127,16 +128,17 @@ object Mailer:
       htmlBody: Option[Frag] = none
   )
 
+  // LiGo (unit 3.8): the footer's links are built from the site's own base URL, not lichess.org.
   object txt:
 
-    private def serviceNote(using Translate): String = s"""
-${trans.common_note("https://lichess.org").render}
+    private def serviceNote(routeUrl: RouteUrl)(using Translate): String = s"""
+${trans.common_note(routeUrl(routes.Lobby.home).value).render}
 
-${trans.common_contact("https://lichess.org/contact").render}"""
+${trans.common_contact(routeUrl(routes.Main.contact).value).render}"""
 
-    def addServiceNote(body: String)(using Translate) = s"""$body
+    def addServiceNote(routeUrl: RouteUrl)(body: String)(using Translate) = s"""$body
 
-$serviceNote"""
+${serviceNote(routeUrl)}"""
 
   object html:
 
@@ -151,34 +153,33 @@ $serviceNote"""
       div(itemprop := "potentialAction", itemscope, itemtype := "http://schema.org/ViewAction")
     def metaName(cont: String) = meta(itemprop := "name", content := cont)
     val publisher = div(itemprop := "publisher", itemscope, itemtype := "http://schema.org/Organization")
-    val noteContact = a(itemprop := "url", href := "https://lichess.org/contact")(
-      span(itemprop := "name")("lichess.org/contact")
-    )
+    private def noteContact(routeUrl: RouteUrl) =
+      val url = routeUrl(routes.Main.contact)
+      a(itemprop := "url", href := url.value)(span(itemprop := "name")(url.value))
 
-    private val noteLink = a(
-      itemprop := "url",
-      href := "https://lichess.org/"
-    )(span(itemprop := "name")("lichess.org"))
+    private def noteLink(routeUrl: RouteUrl) =
+      val url = routeUrl(routes.Lobby.home)
+      a(itemprop := "url", href := url.value)(span(itemprop := "name")(url.value))
 
-    def serviceNote(using Translate) =
+    def serviceNote(routeUrl: RouteUrl)(using Translate) =
       publisher(
         small(
-          trans.common_note(Mailer.html.noteLink),
+          trans.common_note(noteLink(routeUrl)),
           " ",
-          trans.common_contact(noteContact),
+          trans.common_contact(noteContact(routeUrl)),
           " ",
           lila.core.i18n.I18nKey.site.readAboutOur(
-            a(href := "https://lichess.org/privacy")(
+            a(href := routeUrl(routes.Cms.menuPage(lila.core.id.CmsPageKey("privacy"))).value)(
               lila.core.i18n.I18nKey.site.privacyPolicy()
             )
           )
         )
       )
 
-    def standardEmail(body: String)(using Translate): Frag =
+    def standardEmail(routeUrl: RouteUrl, body: String)(using Translate): Frag =
       emailMessage(
         pDesc(nl2br(body)),
-        serviceNote
+        serviceNote(routeUrl)
       )
 
     def url(u: Url, clickOrPaste: Boolean = true)(using Translate) =

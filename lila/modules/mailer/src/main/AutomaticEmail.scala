@@ -20,7 +20,7 @@ final class AutomaticEmail(
 
   val regards = """Regards,
 
-The Lichess team"""
+The LiGo team"""
 
   def welcomeEmail(user: User, email: EmailAddress)(using Lang): Funit =
     mailer.canSend.so:
@@ -31,10 +31,8 @@ The Lichess team"""
         Mailer.Message(
           to = email,
           subject = trans.welcome_subject.txt(user.username),
-          text = Mailer.txt.addServiceNote(trans.welcome_text.txt(profileUrl, editUrl)),
-          htmlBody = standardEmail(
-            trans.welcome_text.txt(profileUrl, editUrl)
-          ).some
+          text = Mailer.txt.addServiceNote(routeUrl)(trans.welcome_text.txt(profileUrl, editUrl)),
+          htmlBody = standardEmail(routeUrl, trans.welcome_text.txt(profileUrl, editUrl)).some
         )
 
   def emailAlreadyInUse(email: EmailAddress): Funit =
@@ -45,9 +43,9 @@ The Lichess team"""
   If you already have an account linked to this email, you can try to log in with it, or reset your password if you forgot it."""
         Mailer.Message(
           to = email,
-          subject = "Could not verify your new Lichess account",
+          subject = "Could not verify your new LiGo account",
           text = text,
-          htmlBody = standardEmail(text).some
+          htmlBody = standardEmail(routeUrl, text).some
         )
 
   def alreadyConfirmed(email: EmailAddress): Funit =
@@ -55,12 +53,12 @@ The Lichess team"""
     mailer.canSend.so:
       mailer.sendOrSkip:
         val text =
-          """Your new Lichess account has already been verified, so you can log in and start playing right away."""
+          """Your new LiGo account has already been verified, so you can log in and start playing right away."""
         Mailer.Message(
           to = email,
           subject = "Your account is verified and ready to use",
           text = text,
-          htmlBody = standardEmail(text).some
+          htmlBody = standardEmail(routeUrl, text).some
         )
 
   def onTitleSet(username: UserStr, title: chess.PlayerTitle): Funit = {
@@ -69,7 +67,7 @@ The Lichess team"""
       emailOption <- userApi.email(user.id)
       body = s"""Hello,
 
-Thank you for confirming your $title title on Lichess.
+Thank you for confirming your $title title on LiGo.
 It is now visible on your profile page: ${routeUrl(routes.User.show(user.username))}.
 
 $regards
@@ -79,9 +77,9 @@ $regards
         mailer.sendOrSkip:
           Mailer.Message(
             to = email,
-            subject = s"$title title confirmed on lichess.org",
-            text = Mailer.txt.addServiceNote(body),
-            htmlBody = standardEmail(body).some
+            subject = s"$title title confirmed on LiGo",
+            text = Mailer.txt.addServiceNote(routeUrl)(body),
+            htmlBody = standardEmail(routeUrl, body).some
           )
       }
     yield ()
@@ -92,7 +90,7 @@ $regards
   def onAppealReply(user: User): Funit =
     val url = routeUrl(routes.Appeal.home)
     sendEmail(user)(
-      subject = _ => "Appeal response on lichess.org",
+      subject = _ => "Appeal response on LiGo",
       body = _ => s"""Hello,
 
 Your appeal has received a response from the moderation team, to see it click here: $url
@@ -105,7 +103,7 @@ $regards
     val body =
       s"""Hello,
 
-Following your request, the Lichess account "${user.username}" will be deleted in 7 days from now.
+Following your request, the LiGo account "${user.username}" will be deleted in 7 days from now.
 
 $regards
 """
@@ -114,9 +112,9 @@ $regards
       mailer.sendOrSkip:
         Mailer.Message(
           to = email,
-          subject = "lichess.org account deletion",
-          text = Mailer.txt.addServiceNote(body),
-          htmlBody = standardEmail(body).some
+          subject = "LiGo account deletion",
+          text = Mailer.txt.addServiceNote(routeUrl)(body),
+          htmlBody = standardEmail(routeUrl, body).some
         )
     }
 
@@ -134,7 +132,7 @@ $regards
           .so: email =>
             given Lang = userLang(userWithEmail.user)
             val hello =
-              "Hello and thank you for playing correspondence chess on Lichess!"
+              "Hello and thank you for playing correspondence games on LiGo!"
             val disableSettingNotice =
               "You are receiving this email because you have correspondence email notification turned on. You can turn it off in your settings:"
             val disableLink =
@@ -144,7 +142,7 @@ $regards
               Mailer.Message(
                 to = email,
                 subject = "Daily correspondence notice",
-                text = Mailer.txt.addServiceNote {
+                text = Mailer.txt.addServiceNote(routeUrl) {
                   s"""$hello
 
 ${opponents.map { opponent => s"${showGame(opponent)} $gameUrl" }.mkString("\n\n")}
@@ -160,7 +158,7 @@ $disableSettingNotice $disableLink"""
                     ),
                   disableSettingNotice,
                   Mailer.html.url(disableLink),
-                  serviceNote
+                  serviceNote(routeUrl)
                 ).some
               )
     }
@@ -181,8 +179,8 @@ $disableSettingNotice $disableLink"""
             Mailer.Message(
               to = email,
               subject = subject(lang),
-              text = Mailer.txt.addServiceNote(body),
-              htmlBody = standardEmail(body).some
+              text = Mailer.txt.addServiceNote(routeUrl)(body),
+              htmlBody = standardEmail(routeUrl, body).some
             )
 
   private def userLang(user: User): Lang = user.realLang | lila.core.i18n.defaultLang

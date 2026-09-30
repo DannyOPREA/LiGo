@@ -62,7 +62,7 @@ export function boot() {
 
     serviceWorker();
 
-    console.info('Lichess is open source! See https://lichess.org/source');
+    console.info('LiGo is open source! See https://github.com/DannyOPREA/LiGo');
 
     // if not already connected by a ui module, setup default connection
     eventuallySetupDefaultConnection();

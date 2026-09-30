@@ -74,7 +74,7 @@ final class ModTimelineUi(helpers: Helpers)(
       case AccountCreation(_) => renderAccountCreation(t.user)
 
   private def renderMod(userId: ModId)(using Translate) =
-    if userId.is(UserId.lichess) then span(iconFlair(Flair("smileys.robot")), "Lichess")
+    if userId.is(UserId.lichess) then span(iconFlair(Flair("smileys.robot")), "LiGo")
     else userIdLink(userId.some, withTitle = false, modIcon = true)
   private def renderUser(userId: UserId)(using Translate) =
     userIdLink(userId.some, withTitle = false)

@@ -14,6 +14,44 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.8 · Rebrand text: strings, footer, FAQ, contact, emails
+- Did: "Lichess"/"lichess.org" → "LiGo" in the English source strings that kept pages still use
+  (92 strings; strings only removed features use keep their text), and the same keys dropped from
+  `translation/dest/*/en-US.xml` so US-English visitors fall back to them (68 entries). The FAQ opens
+  with four new LiGo questions (what it is, the name, what it's built from, which rules; 15 new faq
+  keys) and loses the chess-only ones (correspondence engines, time-control formula, variants,
+  ACPL, insufficient material, en passant, threefold, titles, LM, trophies, bots). Home: "About
+  LiGo" opens `/faq#what`; the app and ads links and lichess's Mastodon/Discord/Bluesky/YouTube/
+  Twitch links went, GitHub points at LiGo's repo; site description and title say Go. Contact: bugs
+  and security go to LiGo's GitHub; the broadcast, "buying Lichess" and /ads answers went. Emails:
+  the service-note footer links the site's own URL (`Mailer.txt.addServiceNote(routeUrl)`,
+  `standardEmail(routeUrl, …)`, `serviceNote(routeUrl)`), "The LiGo team", welcome text about stones.
+  Developers page: CSP `frame-src 'self'` (was lichess.org only, which blocked its own embeds), the
+  broadcast embed went, analysis embed uses the site's URL; pages menu loses the lichess database and
+  ads links. Manifest name, short name and description say LiGo/Go. About 30 hard-coded texts in
+  auth, appeal, account, report, CMS, OAuth, chat, mod and UI (notification title, patron tooltip,
+  browser nag, dasher's crowdin link removed) say LiGo. brand.spec.ts gains 10 tests.
+- Worked: reverting the mechanical rename for keys no kept code uses, by comparing each changed key
+  with a grep of `modules`, `app` and `ui` (excluding the generated `key.scala` and `i18n.d.ts`).
+- Didn't work / dead ends: the first page run still showed "Is Lichess lagging?": Playwright's
+  browser asks for en-US, and lila serves `translation/dest/*/en-US.xml` over the English source. A
+  Python rewrite without `newline=''` turned CRLF files into whole-file diffs.
+- Lessons: English has two sources in lila, `translation/source` (en-GB) and `dest/*/en-US.xml`;
+  change both or drop the en-US key. After a translation edit, recompile lila before `dev/ligo up`
+  (the i18n `.ser` files are generated at compile). Stale `/var/run/docker.pid` from a restored
+  container stops dockerd; delete it and start dockerd detached.
+- Decisions: see logs/decisions.md (3.8 row). Editing `translation/dest/*/en-US.xml` breaks the
+  "never hand-edit dest" rule on purpose: LiGo doesn't sync crowdin, and only deletions were made.
+- Verified by Claude: see the PR.
+- Follow-ups: other languages and removed features' strings still say Lichess (i18n tidy-up); /app
+  and /mobile describe lichess's app; `/about`, `/privacy`, `/terms-of-service` are CMS pages empty on
+  a fresh database; the contact page's chess bug answers (en passant, castling, insufficient material)
+  go with 3.17; the default CSP still allows YouTube/Twitch/Vimeo frames; dead OAuth scopes (Team,
+  Msg, Engine, Bot.Play, Board.Play, Racer.Write) stay for an API unit, since removing a scope changes
+  stored tokens and the public API; tournament i18n keys, sounds and CSS stay for the tidy-up; the
+  Arabic `lichessCombinationLiveLightLibrePronounced` test and `LichessDay`, the `lichess` system
+  user id and mobile-UA detection are code, not text.
+
 ### 2026-09-30 · 3.7 · Remove the extras and search
 - Did: deleted lila modules `streamer`, `coach`, `video`, `feed`, `plan`, `recap`, `tv`, `search`
   and `gameSearch`, their controllers (plus `Editor`), views, routes and config blocks, the

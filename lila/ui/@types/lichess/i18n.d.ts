@@ -51,11 +51,11 @@ interface I18n {
     rankedInSwissTournament: I18nFormat;
     /** Ranked #%1$s (top %2$s%%) with %3$s games in %4$s */
     rankedInTournament: I18nPlural;
-    /** Signed up to lichess.org */
+    /** Signed up to LiGo */
     signedUp: string;
     /** Solved %s training puzzles */
     solvedNbPuzzles: I18nPlural;
-    /** Supported lichess.org for %1$s months as a %2$s */
+    /** Supported LiGo for %1$s months as a %2$s */
     supportedNbMonths: I18nPlural;
   };
   app: {
@@ -499,7 +499,7 @@ interface I18n {
     declineTooSlow: string;
     /** I'm not willing to play this variant right now. */
     declineVariant: string;
-    /** Or invite a Lichess user: */
+    /** Or invite a LiGo user: */
     inviteLichessUser: string;
     /** Please register to send challenges to this user. */
     registerToSendChallenges: string;
@@ -599,7 +599,7 @@ interface I18n {
     lichessClasses: string;
     /** Lichess profile %1$s created for %2$s. */
     lichessProfileXCreatedForY: I18nFormat;
-    /** Lichess username */
+    /** LiGo username */
     lichessUsername: string;
     /** Make sure you copy or write down the password now. You will never be able to see it again! */
     makeSureToCopy: string;
@@ -799,7 +799,7 @@ interface I18n {
     accountLost: string;
     /** I need account support */
     accountSupport: string;
-    /** Authorisation to use Lichess */
+    /** Authorisation to use LiGo */
     authorizationToUse: string;
     /** Appeal for a ban or IP restriction */
     banAppeal: string;
@@ -829,7 +829,7 @@ interface I18n {
     collaboration: string;
     /** Contact */
     contact: string;
-    /** Contact Lichess */
+    /** Contact LiGo */
     contactLichess: string;
     /** Credit is appreciated but not required. */
     creditAppreciated: string;
@@ -851,7 +851,7 @@ interface I18n {
     engineAppeal: string;
     /** Error page */
     errorPage: string;
-    /** Please explain your request clearly and thoroughly. State your Lichess username, and any information that could help us help you. */
+    /** Please explain your request clearly and thoroughly. State your LiGo username, and any information that could help us help you. */
     explainYourRequest: string;
     /** False positives do happen sometimes, and we're sorry about that. */
     falsePositives: string;
@@ -891,9 +891,9 @@ interface I18n {
     monetiseNoAdsTrackingOrTraffic: string;
     /** Please do not email us about marketing, tracking, or advertising. */
     monetiseNoMarketingEmail: string;
-    /** We are not interested in any way of monetising Lichess. */
+    /** We are not interested in any way of monetising LiGo. */
     monetiseNotInterested: string;
-    /** Monetising Lichess */
+    /** Monetising LiGo */
     monetizing: string;
     /** I didn't receive my confirmation email */
     noConfirmationEmail: string;
@@ -921,7 +921,7 @@ interface I18n {
     reportErrorPage: string;
     /** As a Lichess mobile app issue on GitHub */
     reportMobileIssue: string;
-    /** As a Lichess website issue on GitHub */
+    /** As a LiGo website issue on GitHub */
     reportWebsiteIssue: string;
     /** You may send an appeal to %s. */
     sendAppealTo: I18nFormat;
@@ -933,7 +933,7 @@ interface I18n {
     tryCastling: string;
     /** Try this little interactive game to learn more about "en passant". */
     tryEnPassant: string;
-    /** You can show it in your videos, and you can print screenshots of Lichess in your books. */
+    /** You can show it in your videos, and you can print screenshots of LiGo in your books. */
     videosAndBooks: string;
     /** Visit this page to solve the issue */
     visitThisPage: string;
@@ -953,7 +953,7 @@ interface I18n {
     wantReportBug: string;
     /** I want my title displayed on Lichess */
     wantTitle: string;
-    /** You are welcome to use Lichess for your activity, even commercial. */
+    /** You are welcome to use LiGo for your activity, even commercial. */
     welcomeToUse: string;
     /** What can we help you with? */
     whatCanWeHelpYouWith: string;
@@ -1007,7 +1007,7 @@ interface I18n {
     announceAllMoves: string;
     /** Announce Move Format */
     announceMoveFormat: string;
-    /** As a last resort: Set up the board identically to Lichess, then %s */
+    /** As a last resort: Set up the board identically to LiGo, then %s */
     asALastResort: I18nFormat;
     /** The board will auto connect to any game that is already on course or any new game that starts. Ability to choose which game to play is coming soon. */
     boardWillAutoConnect: string;
@@ -1045,17 +1045,17 @@ interface I18n {
     ifLiveChessRunningOnThisComputer: I18nFormat;
     /** If a move is not detected */
     ifMoveNotDetected: string;
-    /** The play page needs to remain open on your browser. It does not need to be visible, you can minimize it or set it side to side with the Lichess game page, but don't close it or the board will stop working. */
+    /** The play page needs to remain open on your browser. It does not need to be visible, you can minimize it or set it side to side with the LiGo game page, but don't close it or the board will stop working. */
     keepPlayPageOpen: string;
     /** Keywords are in JSON format. They are used to translate moves and results into your language. Default is English, but feel free to change it. */
     keywordFormatDescription: string;
     /** Keywords */
     keywords: string;
-    /** Lichess & DGT */
+    /** LiGo & DGT */
     lichessAndDgt: string;
-    /** Lichess connectivity */
+    /** LiGo connectivity */
     lichessConnectivity: string;
-    /** SAN is the standard on Lichess, for example "Nf6". UCI is common for engines, for example "g8f6". */
+    /** SAN is the standard on LiGo, for example "Nf6". UCI is common for engines, for example "g8f6". */
     moveFormatDescription: string;
     /** No suitable OAuth token has been created. */
     noSuitableOauthToken: string;
@@ -1071,7 +1071,7 @@ interface I18n {
     speechSynthesisVoice: string;
     /** Text to speech */
     textToSpeech: string;
-    /** This page allows you to connect your DGT board to Lichess and use it for playing games. */
+    /** This page allows you to connect your DGT board to LiGo and use it for playing games. */
     thisPageAllowsConnectingDgtBoard: string;
     /** Time controls for casual games: Classical, Correspondence and Rapid only. */
     timeControlsForCasualGames: string;
@@ -1105,25 +1105,25 @@ interface I18n {
     emailChange_intro: string;
     /** Confirm new email address, %s */
     emailChange_subject: I18nFormat;
-    /** Click the link to enable your Lichess account: */
+    /** Click the link to enable your LiGo account: */
     emailConfirm_click: string;
-    /** Thanks for registering with Lichess! */
+    /** Thanks for registering with LiGo! */
     emailConfirm_intro: string;
-    /** If you did not register with Lichess, you can safely ignore this message. The unconfirmed account and all traces of your email address will be deleted from our system after 48 hours. */
+    /** If you did not register with LiGo, you can safely ignore this message. The unconfirmed account and all traces of your email address will be deleted from our system after 48 hours. */
     emailConfirm_justIgnore: string;
-    /** Confirm your lichess.org account, %s */
+    /** Confirm your LiGo account, %s */
     emailConfirm_subject: I18nFormat;
-    /** Log in to lichess.org, %s */
+    /** Log in to LiGo, %s */
     logInToLichess: I18nFormat;
     /** If you made this request, click the link below. If not, you can ignore this email. */
     passwordReset_clickOrIgnore: string;
     /** We received a request to reset the password for your account. */
     passwordReset_intro: string;
-    /** Reset your lichess.org password, %s */
+    /** Reset your LiGo password, %s */
     passwordReset_subject: I18nFormat;
-    /** Welcome to lichess.org, %s */
+    /** Welcome to LiGo, %s */
     welcome_subject: I18nFormat;
-    /** You have successfully created your account on https://lichess.org. */
+    /** You have successfully created your account on LiGo. */
     welcome_text: I18nFormat;
   };
   faq: {
@@ -1147,6 +1147,14 @@ interface I18n {
     beInTopTen: string;
     /** breakdown of our costs */
     breakdownOfOurCosts: string;
+    /** %s from OGS (online-go.com): the board in your browser */
+    builtFromGoban: I18nFormat;
+    /** %1$s and %2$s: counting the score at the end of a game */
+    builtFromKataGoAndGoscorer: I18nFormat;
+    /** %s (lila and lila-ws): the site, accounts, lobby and games */
+    builtFromLichess: I18nFormat;
+    /** %s from PlayStrategy: the Go rules on the server */
+    builtFromStrategygames: I18nFormat;
     /** Can I get the Lichess Master (LM) title? */
     canIbecomeLM: string;
     /** Can I change my username? */
@@ -1165,15 +1173,15 @@ interface I18n {
     durationFormula: string;
     /** 8 chess variants */
     eightVariants: string;
-    /** 1. Go to lichess.org */
+    /** 1. Go to LiGo */
     enableAutoplayForSoundsChromeSiteInformation: string;
-    /** 1. Go to lichess.org */
+    /** 1. Go to LiGo */
     enableAutoplayForSoundsFirefox: string;
     /** 1. Click the three dots in the top right corner */
     enableAutoplayForSoundsMicrosoftEdge: string;
     /** Enable autoplay for sounds? */
     enableAutoplayForSoundsQ: string;
-    /** 1. Go to lichess.org */
+    /** 1. Go to LiGo */
     enableAutoplayForSoundsSafari: string;
     /** Enable or disable notification popups? */
     enableDisableNotificationPopUps: string;
@@ -1233,13 +1241,13 @@ interface I18n {
     isCorrespondenceDifferent: string;
     /** What keyboard shortcuts are there? */
     keyboardShortcuts: string;
-    /** Some Lichess pages have keyboard shortcuts you can use. Try pressing the '?' key on a study, analysis, puzzle, or game page to list available keyboard shortcuts. */
+    /** Some LiGo pages have keyboard shortcuts you can use. Try pressing the '?' key on an analysis, puzzle, or game page to list available keyboard shortcuts. */
     keyboardShortcutsExplanation: string;
     /** If your opponent frequently aborts/leaves games, they get "play banned", which means they're temporarily banned from playing games. This is not publicly indicated on their profile. If this behaviour continues, the length of the playban increases - and prolonged behaviour of this nature may lead to account closure. */
     leavingGameWithoutResigningExplanation: string;
     /** lee-chess */
     leechess: string;
-    /** Lichess can optionally send popup notifications, for example when it is your turn or you received a private message. */
+    /** LiGo can optionally send popup notifications, for example when it is your turn or you received a private message. */
     lichessCanOptionnalySendPopUps: string;
     /** Lichess is a combination of live/light/libre and chess. It is pronounced %1$s. */
     lichessCombinationLiveLightLibrePronounced: I18nFormat;
@@ -1247,7 +1255,7 @@ interface I18n {
     lichessFollowFIDErules: I18nFormat;
     /** Lichess is powered by donations from patrons and the efforts of a team of volunteers. */
     lichessPoweredByDonationsAndVolunteers: string;
-    /** Lichess ratings */
+    /** LiGo ratings */
     lichessRatings: string;
     /** Lichess recognises all FIDE titles gained from OTB (over the board) play, as well as %1$s. Here is a list of FIDE titles: */
     lichessRecognizeAllOTBtitles: I18nFormat;
@@ -1255,8 +1263,16 @@ interface I18n {
     lichessSupportChessAnd: I18nFormat;
     /** Lichess training */
     lichessTraining: string;
-    /** Lichess userstyles */
+    /** userstyles */
     lichessUserstyles: string;
+    /** The "Li" comes from lichess, whose code LiGo is built from; lichess itself stands for live, light and libre chess. Go is the game. */
+    ligoNameExplanation: string;
+    /** LiGo reuses free software wherever it can: */
+    ligoReusesFreeSoftware: string;
+    /** Each game uses Japanese rules (territory scoring) or Chinese rules (area scoring), on a 9×9 or 19×19 board. Suicide is not allowed, and under both rulesets a move may not recreate an earlier whole-board position (situational superko). */
+    ligoRulesExplanation: string;
+    /** LiGo's rules spec */
+    ligoRulesSpec: string;
     /** This honorific title is unofficial and only exists on Lichess. */
     lMtitleComesToYouDoNotRequestIt: string;
     /** stand-alone mental health condition */
@@ -1271,6 +1287,8 @@ interface I18n {
     notRepeatedMoves: string;
     /** No. */
     noUpperCaseDot: string;
+    /** Other sites grew from lichess the same way, such as %1$s, %2$s and %3$s. */
+    otherSitesGrewFromLichess: I18nFormat;
     /** other ways to help */
     otherWaysToHelp: string;
     /** That trophy is unique in the history of Lichess; nobody other than %1$s will ever have it. */
@@ -1295,6 +1313,8 @@ interface I18n {
     ratingSystemUsedByLichess: string;
     /** Threefold repetition is about repeated %1$s, not moves. Repetition does not have to occur consecutively. */
     repeatedPositionsThatMatters: I18nFormat;
+    /** The details are in %s. */
+    rulesDetailsInX: I18nFormat;
     /** The 2nd requirement is so that players who no longer use their accounts stop populating leaderboards. */
     secondRequirementToStopOldPlayersTrustingLeaderboards: string;
     /** If you have an OTB title, you can apply to have this displayed on your account by completing the %1$s, including a clear image of an identifying document/card and a selfie of you holding the document/card. */
@@ -1327,12 +1347,18 @@ interface I18n {
     viewSiteInformationPopUp: string;
     /** Watch International Master Eric Rosen checkmate %s. */
     watchIMRosenCheckmate: I18nFormat;
-    /** Unfortunately, we cannot give back rating points for games lost due to lag or disconnection, regardless of whether the problem was at your end or our end. The latter is very rare though. Also note that when Lichess restarts and you lose on time because of that, we abort the game to prevent an unfair loss. */
+    /** Unfortunately, we cannot give back rating points for games lost due to lag or disconnection, regardless of whether the problem was at your end or our end. The latter is very rare though. Also note that when LiGo restarts and you lose on time because of that, we abort the game to prevent an unfair loss. */
     weCannotDoThatEvenIfItIsServerSideButThatsRare: string;
     /** We repeated a position three times. Why was the game not drawn? */
     weRepeatedthreeTimesPosButNoDraw: string;
     /** What is the average centipawn loss (ACPL)? */
     whatIsACPL: string;
+    /** What is LiGo? */
+    whatIsLiGo: string;
+    /** LiGo is a site for playing Go (also called baduk or weiqi) online. It is a non-commercial proof of concept: a fork of %1$s, the free chess server, rebuilt for Go. It is free, has no ads, and its %2$s is open. */
+    whatIsLiGoAnswer: I18nFormat;
+    /** What is LiGo built from? */
+    whatIsLiGoBuiltFrom: string;
     /** Why is there a question mark (?) next to a rating? */
     whatIsProvisionalRating: string;
     /** What can my username be? */
@@ -1341,14 +1367,18 @@ interface I18n {
     whatVariantsCanIplay: string;
     /** When am I eligible for the automatic rating refund from cheaters? */
     whenAmIEligibleRatinRefund: string;
-    /** What rating system does Lichess use? */
+    /** What rating system does LiGo use? */
     whichRatingSystemUsedByLichess: string;
+    /** Which rules does LiGo use? */
+    whichRulesDoesLiGoUse: string;
     /** Why are ratings higher compared to other sites and organisations such as FIDE, USCF and the ICC? */
     whyAreRatingHigher: string;
     /** It is best not to think of ratings as absolute numbers, or compare them against other organisations. Different organisations have different levels of players, different rating systems (Elo, Glicko, Glicko-2, or a modified version of the aforementioned). These factors can drastically affect the absolute numbers (ratings). */
     whyAreRatingHigherExplanation: string;
     /** Why is Lichess called Lichess? */
     whyIsLichessCalledLichess: string;
+    /** Why is it called LiGo? */
+    whyIsLiGoCalledLiGo: string;
     /** Similarly, the source code for Lichess, %1$s, stands for li[chess in sca]la, seeing as the bulk of Lichess is written in %2$s, an intuitive programming language. */
     whyIsLilaCalledLila: I18nFormat;
     /** Live, because games are played and watched in real-time 24/7; light and libre for the fact that Lichess is open-source and unencumbered by proprietary junk that plagues other websites. */
@@ -1475,19 +1505,19 @@ interface I18n {
   lag: {
     /** And now, the long answer! Game lag is composed of two unrelated values (lower is better): */
     andNowTheLongAnswerLagComposedOfTwoValues: string;
-    /** Is Lichess lagging? */
+    /** Is LiGo lagging? */
     isLichessLagging: string;
     /** Lag compensation */
     lagCompensation: string;
-    /** Lichess compensates for network lag. This includes sustained lag and occasional lag spikes. Compensation limits and rules are based on time control and already-compensated lag, ensuring the game stays fair for both players. As a result, having a higher network lag than your opponent is not a handicap! */
+    /** LiGo compensates for network lag. This includes sustained lag and occasional lag spikes. Compensation limits and rules are based on time control and already-compensated lag, ensuring the game stays fair for both players. As a result, having a higher network lag than your opponent is not a handicap! */
     lagCompensationExplanation: string;
-    /** Lichess server latency */
+    /** LiGo server latency */
     lichessServerLatency: string;
     /** Measurements in progress... */
     measurementInProgressThreeDot: string;
-    /** Network between Lichess and you */
+    /** Network between LiGo and you */
     networkBetweenLichessAndYou: string;
-    /** The time it takes to send a move from your computer to Lichess's server, and get a response back. The ping depends on your distance to Lichess (France) as well as the quality of your Internet connection. Lichess developers cannot fix your Wi-Fi or make light go faster. */
+    /** The time it takes to send a move from your computer to LiGo's server, and get a response back. The ping depends on your distance to the LiGo server as well as the quality of your Internet connection. LiGo developers cannot fix your Wi-Fi or make light go faster. */
     networkBetweenLichessAndYouExplanation: string;
     /** No. And your network is bad. */
     noAndYourNetworkIsBad: string;
@@ -2081,13 +2111,13 @@ interface I18n {
     whatTheTokenCanDo: string;
   };
   onboarding: {
-    /** Configure Lichess to your liking. */
+    /** Configure LiGo to your liking. */
     configureLichess: string;
     /** Will a child use this account? You might want to enable %s. */
     enabledKidModeSuggestion: I18nFormat;
     /** Explore the site and have fun :) */
     exploreTheSiteAndHaveFun: string;
-    /** Follow your friends on Lichess. */
+    /** Follow your friends on LiGo. */
     followYourFriendsOnLichess: string;
     /** Improve with chess tactics puzzles. */
     improveWithChessTacticsPuzzles: string;
@@ -2107,7 +2137,7 @@ interface I18n {
     thisIsYourProfilePage: string;
     /** Welcome! */
     welcome: string;
-    /** Welcome to Lichess! */
+    /** Welcome to LiGo! */
     welcomeToLichess: string;
     /** What now? Here are a few suggestions: */
     whatNowSuggestions: string;
@@ -2167,7 +2197,7 @@ interface I18n {
     ifNotRenewedThenAccountWillRevert: string;
     /** Lichess is registered with %s. */
     lichessIsRegisteredWith: I18nFormat;
-    /** Lichess Patron */
+    /** LiGo Patron */
     lichessPatron: string;
     /** Lifetime */
     lifetime: string;
@@ -2255,9 +2285,9 @@ interface I18n {
     whereMoneyGoes: string;
     /** Credit Card */
     withCreditCard: string;
-    /** %s became a Lichess Patron */
+    /** %s became a LiGo Patron */
     xBecamePatron: I18nFormat;
-    /** %1$s is a Lichess Patron for %2$s months */
+    /** %1$s is a LiGo Patron for %2$s months */
     xIsPatronForNbMonths: I18nPlural;
     /** %1$s or %2$s */
     xOrY: I18nFormat;
@@ -2377,7 +2407,7 @@ interface I18n {
     explainCanThenBeTemporarilyDisabled: string;
     /** Hold the <ctrl> key while promoting to temporarily disable auto-promotion */
     explainPromoteToQueenAutomatically: string;
-    /** Hides all ratings from Lichess, to help you focus on the game. */
+    /** Hides all ratings from LiGo, to help you focus on the game. */
     explainShowPlayerRatings: string;
     /** If you have frequent disconnects, try changing the routing. */
     frequentDisconnectsAdvice: string;
@@ -2421,7 +2451,7 @@ interface I18n {
     network: string;
     /** Notifications */
     notifications: string;
-    /** Notification within Lichess */
+    /** Notification within LiGo */
     notifyBell: string;
     /** Broadcasts */
     notifyBroadcasts: string;
@@ -2435,7 +2465,7 @@ interface I18n {
     notifyForumMentions: string;
     /** Correspondence game updates */
     notifyGameEvent: string;
-    /** Device notification when you're not on Lichess */
+    /** Device notification when you're not on LiGo */
     notifyPush: string;
     /** Streamer goes live */
     notifyStreamStart: string;
@@ -2561,7 +2591,7 @@ interface I18n {
     fromGameLink: I18nFormat;
     /** From my games */
     fromMyGames: string;
-    /** You have no puzzles in the database, but Lichess still loves you very much. */
+    /** You have no puzzles in the database, but LiGo still loves you very much. */
     fromMyGamesNone: string;
     /** Goals */
     goals: string;
@@ -3153,7 +3183,7 @@ interface I18n {
     closeYourAccount: string;
     /** I understand that deleted accounts aren't recoverable */
     deleteAccountConfirmText: string;
-    /** Once you delete your account, it's removed from Lichess and our administrators won't be able to bring it back for you. */
+    /** Once you delete your account, it's removed from LiGo and our administrators won't be able to bring it back for you. */
     deleteAccountWarning: string;
     /** Delete your account */
     deleteYourAccount: string;
@@ -3323,7 +3353,7 @@ interface I18n {
     blackWins: string;
     /** Black wins */
     blackWinsGame: string;
-    /** You have used the same password on another site, and that site has been compromised. To ensure the safety of your Lichess account, we need you to set a new password. Thank you for your understanding. */
+    /** You have used the same password on another site, and that site has been compromised. To ensure the safety of your LiGo account, we need you to set a new password. Thank you for your understanding. */
     blankedPassword: string;
     /** Blitz */
     blitz: string;
@@ -3415,7 +3445,7 @@ interface I18n {
     checkAllEmailFolders: string;
     /** Checkmate */
     checkmate: string;
-    /** If you do not receive a confirmation email, check your Spam or Junk folder. Be sure to indicate messages from lichess.org as safe and "not spam", so you can stay informed of important communications. */
+    /** If you do not receive a confirmation email, check your Spam or Junk folder. Be sure to indicate messages from LiGo as safe and "not spam", so you can stay informed of important communications. */
     checkSpamOrJunkFolder: string;
     /** Check your Email */
     checkYourEmail: string;
@@ -3743,7 +3773,7 @@ interface I18n {
     forgotPassword: string;
     /** Forum */
     forum: string;
-    /** Free Online Chess */
+    /** Free Online Go */
     freeOnlineChess: string;
     /** Friends */
     friends: string;
@@ -3835,7 +3865,7 @@ interface I18n {
     incrementInSeconds: string;
     /** Infinite analysis */
     infiniteAnalysis: string;
-    /** In kid mode, the Lichess logo gets a %s icon, so you know your kids are safe. */
+    /** In kid mode, the LiGo logo gets a %s icon, so you know your kids are safe. */
     inKidModeTheLichessLogoGetsIconX: I18nFormat;
     /** Inline notation */
     inlineNotation: string;
@@ -3971,7 +4001,7 @@ interface I18n {
     lossOr50MovesByPriorMistake: string;
     /** Loss prevented by 50-move rule */
     lossSavedBy50MoveRule: string;
-    /** You lost rating points to someone who violated the Lichess TOS */
+    /** You lost rating points to someone who violated the LiGo TOS */
     lostAgainstTOSViolator: string;
     /** For safekeeping and sharing, consider making a study. */
     makeAStudy: string;
@@ -4107,11 +4137,11 @@ interface I18n {
     needNbMoreGames: I18nPlural;
     /** You need to play %1$s more %2$s rated games */
     needNbMorePerfGames: I18nPlural;
-    /** Network lag between you and Lichess */
+    /** Network lag between you and LiGo */
     networkLagBetweenYouAndLichess: string;
     /** Never */
     never: string;
-    /** Never type your Lichess password on another site! */
+    /** Never type your LiGo password on another site! */
     neverTypeYourPassword: string;
     /** New opponent */
     newOpponent: string;
@@ -4553,7 +4583,7 @@ interface I18n {
     simulVariantsHint: string;
     /** Since */
     since: string;
-    /** Free online chess server. Play chess in a clean interface. No registration, no ads, no plugin required. Play chess with the computer, friends or random opponents. */
+    /** Free online Go server. Play Go in a clean interface. No registration, no ads, no plugin required. Play Go with friends or random opponents. */
     siteDescription: string;
     /** Size */
     size: string;
@@ -4637,7 +4667,7 @@ interface I18n {
     theme: string;
     /** No results for "%s" */
     thereAreNoResultsForX: I18nFormat;
-    /** The Lichess Terms of Service were violated on this account */
+    /** The LiGo Terms of Service were violated on this account */
     thisAccountViolatedTos: string;
     /** This game is rated */
     thisGameIsRated: string;
@@ -4667,7 +4697,7 @@ interface I18n {
     timeControl: string;
     /** Timeline */
     timeline: string;
-    /** Time to process a move on Lichess's server */
+    /** Time to process a move on LiGo's server */
     timeToProcessAMoveOnLichessServer: string;
     /** Title verification */
     titleVerification: string;
@@ -4917,7 +4947,7 @@ interface I18n {
     winRate: string;
     /** Wins */
     wins: string;
-    /** and wish you great games on lichess.org. */
+    /** and wish you great games on LiGo. */
     wishYouGreatGames: string;
     /** Withdraw */
     withdraw: string;
@@ -4939,7 +4969,7 @@ interface I18n {
     xHostsY: I18nFormat;
     /** %1$s invited you to "%2$s". */
     xInvitedYouToY: I18nFormat;
-    /** %1$s is a free (%2$s), libre, no-ads, open source chess server. */
+    /** %1$s is a free (%2$s), libre, no-ads, open source Go server. */
     xIsAFreeYLibreOpenSourceChessServer: I18nFormat;
     /** %1$s joined team %2$s */
     xJoinedTeamY: I18nFormat;
@@ -4967,7 +4997,7 @@ interface I18n {
     yesterday: string;
     /** You are better than %1$s of %2$s players. */
     youAreBetterThanPercentOfPerfTypePlayers: I18nFormat;
-    /** You are leaving Lichess */
+    /** You are leaving LiGo */
     youAreLeavingLichess: string;
     /** You are not in the team %s */
     youAreNotInTeam: I18nFormat;
@@ -5209,7 +5239,7 @@ interface I18n {
     rules: string;
     /** The Lichess streamer page targets your audience with the language provided by your streaming platform. Set the correct default language for your chess streams in the app or service you use to broadcast. */
     streamerLanguageSettings: string;
-    /** Your streamer name on Lichess */
+    /** Your streamer name on LiGo */
     streamerName: string;
     /** streaming Fairplay FAQ */
     streamingFairplayFAQ: string;
@@ -6059,7 +6089,7 @@ interface I18n {
     blogPostsByFriends: string;
     /** Our simple tips to write great blog posts */
     blogTips: string;
-    /** By Lichess */
+    /** By LiGo */
     byLichess: string;
     /** By month */
     byMonth: string;

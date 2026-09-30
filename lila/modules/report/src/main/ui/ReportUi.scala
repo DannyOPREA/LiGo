@@ -81,7 +81,7 @@ final class ReportUi(helpers: Helpers)(menu: Context ?=> Frag):
       dataIcon := Icon.InfoCircle,
       cls := "text"
     ):
-      "Read more about Lichess reports"
+      "Read more about LiGo reports"
   )
 
   private def descriptionHelp(current: String)(using ctx: Context) = frag:
@@ -140,7 +140,7 @@ final class ReportUi(helpers: Helpers)(menu: Context ?=> Frag):
           ),
           br,
           br,
-          p(a(href := routes.Lobby.home)("Return to Lichess homepage"))
+          p(a(href := routes.Lobby.home)("Return to LiGo homepage"))
         )
 
   object list:

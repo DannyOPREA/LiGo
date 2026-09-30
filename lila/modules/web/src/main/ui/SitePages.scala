@@ -21,7 +21,8 @@ final class SitePages(helpers: Helpers):
     val external = frag(" ", iconTag(Icon.ExternalArrow))
     def activeCls(c: String) = cls := active.activeO(c)
     lila.ui.bits.pageMenuSubnav(
-      a(activeCls("about"), href := "/about")(trans.site.aboutX(siteName)),
+      // LiGo (unit 3.8): "About" opens the FAQ's "What is LiGo?" (the /about CMS page is lichess's).
+      a(activeCls("about"), href := s"${routes.Main.faq}#what")(trans.site.aboutX(siteName)),
       a(activeCls("faq"), href := routes.Main.faq)(trans.faq.faqAbbreviation()),
       a(activeCls("contact"), href := routes.Main.contact)(trans.contact.contact()),
       a(activeCls("tos"), href := routes.Cms.tos)(trans.site.termsOfService()),
@@ -34,11 +35,11 @@ final class SitePages(helpers: Helpers):
       a(activeCls("thanks"), href := "/thanks")(trans.site.thankYou()),
       sep,
       a(activeCls("webmasters"), href := routes.Main.webmasters)(trans.site.webmasters()),
-      a(activeCls("database"), href := "https://database.lichess.org")(trans.site.database(), external),
+      // lichess's game database link went in unit 3.8: LiGo has no database of its own yet.
       a(activeCls("api"), href := "/api")("API", external),
       sep,
-      a(activeCls("lag"), href := routes.Main.lag)(trans.lag.isLichessLagging()),
-      a(activeCls("ads"), href := "/ads")(trans.site.blockAds())
+      a(activeCls("lag"), href := routes.Main.lag)(trans.lag.isLichessLagging())
+      // lichess's "Block ads" page link went in unit 3.8.
     )
 
   def webmasters(pieceNames: List[String])(using Context) =
@@ -57,12 +58,12 @@ final class SitePages(helpers: Helpers):
       active = "webmasters",
       contentCls = "page force-ltr"
     ).css("bits.page")
-      .csp(_.copy(frameSrc = "https://lichess.org" :: Nil)):
+      .csp(_.copy(frameSrc = "'self'" :: Nil)):
         frag(
           st.section(cls := "box box-pad developers")(
             h1(cls := "box__top")("HTTP API"),
             p(
-              "Lichess exposes a RESTish HTTP/JSON API that you are welcome to use. Read the ",
+              s"$siteName exposes a RESTish HTTP/JSON API that you are welcome to use. Read the ",
               a(href := "/api")("HTTP API documentation"),
               "."
             )
@@ -113,31 +114,12 @@ final class SitePages(helpers: Helpers):
               )
             )
           },
-          br,
-          st.section(cls := "box box-pad developers", id := "broadcast") {
-            val args = """style="width: 100%; aspect-ratio: 4/3;" frameborder="0""""
-            frag(
-              a(href := "#embed-broadcast")(
-                h1(cls := "box__top", id := "embed-broadcast")("Embed a broadcast in your site")
-              ),
-              div(cls := "body")(
-                div(cls := "center"):
-                  raw:
-                    s"""<iframe src="https://lichess.org/embed/broadcast/fide-world-rapidblitz-team-championships-2024--rapid-matches-1-10/G1YjiG7j" $args></iframe>"""
-                ,
-                p(
-                  "On a broadcast page, select the embed iframe code, then optionally add query parameters to customize the appearance."
-                ),
-                parameters(),
-                p("The text is automatically translated to your visitor's language.")
-              )
-            )
-          },
+          // "Embed a broadcast" section removed with the relay module (units 3.3 and 3.8).
           br,
           st.section(cls := "box box-pad developers", id := "analysis") {
             val args = """style="width: 100%; aspect-ratio: 4/3;" frameborder="0""""
             val iframe =
-              s"""<iframe src="https://lichess.org/embed/analysis" $args></iframe>"""
+              s"""<iframe src="$netBaseUrl/embed/analysis" $args></iframe>"""
             frag(
               a(href := "#embed-analysis")(
                 h1(cls := "box__top", id := "embed-analysis")("Embed an analysis board")
@@ -146,7 +128,7 @@ final class SitePages(helpers: Helpers):
                 div(cls := "center")(raw(iframe)),
                 p(
                   "Embeds the ",
-                  a(href := routes.UserAnalysis.index)("fully-featured Lichess analysis board"),
+                  a(href := routes.UserAnalysis.index)(s"fully-featured $siteName analysis board"),
                   " with stockfish evaluation, opening explorer and tablebase."
                 ),
                 copyMeInput(iframe),
@@ -157,7 +139,7 @@ final class SitePages(helpers: Helpers):
                 div(
                   "Example using a custom initial position:",
                   copyMeInput:
-                    s"""<iframe src="https://lichess.org/embed/analysis?fen=r1bqkb1r/pp2pppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R_b_KQkq_-_1_6&color=black" $args></iframe>"""
+                    s"""<iframe src="$netBaseUrl/embed/analysis?fen=r1bqkb1r/pp2pppp/2np1n2/6B1/3NP3/2N5/PPP2PPP/R2QKB1R_b_KQkq_-_1_6&color=black" $args></iframe>"""
                 ),
                 p("The text is automatically translated to your visitor's language.")
               )
@@ -229,7 +211,7 @@ final class SitePages(helpers: Helpers):
 
   def lag(using Context) =
     import trans.lag as trl
-    SitePage(title = "Is Lichess lagging?", active = "lag")
+    SitePage(title = s"Is $siteName lagging?", active = "lag")
       .css("bits.lag")
       .js(esmInit("chart.lag")):
         div(cls := "box box-pad lag")(

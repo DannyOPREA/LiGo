@@ -7,7 +7,7 @@ lazy val ui = lila.puzzle.ui.PuzzleUi(helpers, bits)
 
 def embed(daily: DailyPuzzle.WithHtml)(using config: EmbedContext) =
   views.base.embed.minimal(
-    title = "lichess.org chess puzzle",
+    title = "LiGo puzzle",
     cssKeys = List("bits.embed"),
     modules = Esm("site.puzzleEmbed")
   )(

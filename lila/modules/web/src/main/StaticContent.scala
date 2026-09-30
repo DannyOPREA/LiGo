@@ -25,13 +25,13 @@ Allow: /game/export/gif/thumbnail/
 
   def manifest(net: NetConfig) =
     Json.obj(
-      "name" -> net.domain,
-      "short_name" -> "Lichess",
+      "name" -> net.siteName,
+      "short_name" -> net.siteName,
       "start_url" -> "/",
       "display" -> "standalone",
       "background_color" -> "#161512",
       "theme_color" -> "#161512",
-      "description" -> "The (really) free, no-ads, open source chess server.",
+      "description" -> "The (really) free, no-ads, open source Go server.",
       "icons" -> List(32, 64, 128, 192, 256, 512).map: size =>
         Json.obj(
           "src" -> s"//${net.assetDomain}/assets/logo/ligo-favicon-$size.png",

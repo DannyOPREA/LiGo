@@ -62,7 +62,7 @@ object userId:
     val historicalRegex = "[a-zA-Z0-9_-]{2,30}".r
     val anonymous: UserName = "Anonymous"
     val lichess: UserName = "lichess"
-    val anonMod: String = "A Lichess Moderator"
+    val anonMod: String = "A LiGo Moderator"
     // Matches a lichess username with an '@' prefix if it is used as a single
     // word (i.e. preceded and followed by space or appropriate punctuation):
     // Yes: everyone says @ornicar is a pretty cool guy

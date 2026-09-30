@@ -28,7 +28,7 @@ final class PasswordReset(
         Mailer.Message(
           to = email,
           subject = trans.passwordReset_subject.txt(user.username),
-          text = Mailer.txt.addServiceNote(s"""
+          text = Mailer.txt.addServiceNote(routeUrl)(s"""
 ${trans.passwordReset_intro.txt()}
 
 ${trans.passwordReset_clickOrIgnore.txt()}
@@ -40,7 +40,7 @@ ${trans.common_linkNotWorking.txt()}"""),
             pDesc(trans.passwordReset_intro()),
             p(trans.passwordReset_clickOrIgnore()),
             potentialAction(metaName("Reset password"), Mailer.html.url(url)),
-            serviceNote
+            serviceNote(routeUrl)
           ).some
         )
     }
