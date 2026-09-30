@@ -49,8 +49,46 @@
 - Decisions: see logs/decisions.md (3.15 row) and the ADR 0019 §8 amendment.
 - Verified by Claude: see the PR.
 - Follow-ups: 3.19 puts the Go options in the create-game and challenge forms and drops the `variant`
-  field; 4.9 adds handicap; 5.7 turns rated games on; 6.4 gives pools their sizes; 3.14 sends the
-  `go` block to lila-ws's lobby.
+  field; 4.9 adds handicap; 5.7 turns rated games on; 6.4 gives pools their sizes. lila-ws
+  passes the lobby's new `go` block through unchanged (3.14 merged first).
+### 2026-09-30 · 3.14 · lila-ws: Go round payloads and live mini boards
+- Did: lila-ws speaks Go on the round (ADR 0019 §6) and no longer uses scalachess's chess rules or
+  formats (no `Uci`, `Fen`, `chess.json`). The browser's `move` message carries `"u": "dd"` (an SGF
+  point, `[a-s]{2}`) or `"u": "pass"`, read into a new `GoMove` type (shape only; lila checks the
+  rules) and relayed as `r/move <fullId> <move> …`, as lila's `RoundSocket` reads since 3.13. Chess
+  moves, the old `from`/`to` form and `drop` are no longer read (they become "unexpected", as any
+  unknown message). `Fens` reads lila's Go move event with play-json instead of upstream's regexes
+  and sends watchers `{"t":"fen","d":{"id","lm","board","turn","wc","bc"}}`: `lm` is the point or
+  `pass`, `board` lila's compact string, `turn` `black`/`white`, clocks in whole seconds. New
+  `GoRoundTest` (10 tests) with move events shaped as lila's `Event.GoMove`.
+- Lobby payloads: nothing to change in lila-ws. It relays the lobby's JSON (`tell/lobby`, hooks,
+  seeks, pools) without reading it; the chess variants in those payloads are written by lila's
+  `lobby`/`setup`/`pool` modules, which unit 3.15 owns. No follow-up needed here.
+- Worked: local `dev/ligo compile ws` and `dev/ligo test ws` (lila-ws needs only scalachess, which the
+  proxy serves); scalafmt fixed two files before the check passed.
+- Didn't work / dead ends: `sbt --batch scalafmtAll check` fails to parse under sbt 2; run the
+  commands one per call.
+- Lessons: lila-ws's lobby is a pass-through; Go fields there are lila's job. Between this unit and
+  3.15 no game in a dev stack can take a move over the socket (chess moves are dropped here, Go games
+  are created from 3.15), and 3.18 gives the round page a Go board.
+- Decisions: Claude, under the owner's 2026-09-28 delegation (logs/decisions.md, 3.14 row): Go-only
+  moves now, as PLAN §5 says ("its own chess-rules use removed"); the mini-board message keeps its
+  upstream name `fen` so the browser's existing socket plumbing still routes it (3.19 draws it);
+  `turn` is a colour name; the move event is parsed as JSON (robust to key order; only watched games
+  pay for it). The wire format matches GoPlayTest's move event unchanged.
+- Order: this unit ships before 3.15, against PLAN §5's dependency column and ADR 0019 §8 (3.15
+  first), because the coordinator started it when 3.13 merged and 3.15 was still being built. The
+  cost is the dev-stack gap above: chess moves are dropped as "unexpected" (logged, no ack). ADR 0019
+  §8 amended.
+- Follow-ups: the browser's mini-board handler (`lila/ui/lib/src/pubsub.ts` `socket.in.fen`,
+  `ui/site/src/boot.ts` → `updateMiniGame`, which reads `data.fen`) still expects the chess payload
+  and will throw on Go updates once Go games exist; unit 3.19 (Go mini boards) must switch it to
+  `board`/`turn`. lila's `Event.GoMove` writes any non-stone action as `{"pass":true}`, so Phase 4's
+  resume (4.8) needs its own key. The move-event JSON in `GoRoundTest` is copied from lila's
+  `Event.GoMove`, not produced by it.
+- Verified by Claude: /verify, `sbt testFull` in lila-ws 13/13 (`dev/ligo test ws` runs sbt 2's
+  cached testQuick, which can report 0 tests), `sbt check` (scalafix + scalafmt). ·
+  Needs owner verification: none on its own; a live game over the socket once 3.15 and 3.18 land.
 
 ### 2026-09-30 · 3.13 · Round module: Go moves, passes, clock, takebacks, no draws
 - Did: the round plays Go games (ADR 0019 §5–7). lila-ws's `r/move` token is read as a chess UCI

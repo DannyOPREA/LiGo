@@ -163,6 +163,10 @@ optional `go` sub-document with the game's own keys (`sz`, `ru`, `km`, `hc`); a 
 is read as 19×19, Japanese, 6.5 komi. Forms and the API take `size`, `ruleset` and `komi` (standard
 komi when omitted), create casual games only until 5.7, refuse chess variants and FENs, and rate in
 the `go` perf; pools create 19×19 Japanese casual games until 6.4. logs/decisions.md, 3.15 row.)
+(Amended in unit 3.14: 3.14 merges before 3.15, so for a while chess moves are no longer relayed and
+no Go games are created yet; lila-ws's lobby needed no change. The mini-board message keeps the
+name `fen`, its payload `{id, lm, board, turn, wc, bc}` with `turn` a colour name. logs/decisions.md,
+3.14 row.)
 (Amended in unit 3.13: the bus `MoveEvent` carries plain strings (board, move) for chess and Go alike
 until 3.17; the API move stream stays chess-only until 3.16. logs/decisions.md, 3.13 row.)
 (Amended in unit 3.12: `ip` is `{b, w, m}`, the stones as strings of SGF points and the player to
