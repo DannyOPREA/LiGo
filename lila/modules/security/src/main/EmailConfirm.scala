@@ -275,5 +275,5 @@ $url
 
 ${trans.common_linkNotWorking.txt()}
 
-${trans.emailConfirm_justIgnore.txt("https://lichess.org")}
+${trans.emailConfirm_justIgnore.txt()}
 """

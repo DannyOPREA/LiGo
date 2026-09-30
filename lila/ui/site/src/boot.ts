@@ -62,7 +62,7 @@ export function boot() {
 
     serviceWorker();
 
-    console.info('LiGo is open source! See https://github.com/DannyOPREA/LiGo');
+    console.info('LiGo is open source! See /source');
 
     // if not already connected by a ui module, setup default connection
     eventuallySetupDefaultConnection();
