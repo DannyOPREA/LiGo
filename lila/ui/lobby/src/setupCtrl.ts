@@ -1,8 +1,4 @@
-import { INITIAL_FEN } from 'chessops/fen';
-
-import { type Prop, propWithEffect, toggle } from 'lib';
-import { debounce } from 'lib/async';
-import { variants } from 'lib/game/perf';
+import { type Prop, propWithEffect } from 'lib';
 import type { ColorChoice, ColorProp } from 'lib/setup/color';
 import { timeModes, timeControlFromStoredValues, type TimeControl } from 'lib/setup/timeControl';
 import { storedJsonProp } from 'lib/storage';
@@ -10,30 +6,43 @@ import { alert } from 'lib/view';
 import * as xhr from 'lib/xhr';
 
 import type LobbyController from './ctrl';
+import {
+  defaultGoRuleset,
+  defaultGoSize,
+  type GoRuleset,
+  type GoSize,
+  isGoRuleset,
+  isGoSize,
+  standardKomi,
+  validKomi,
+} from './goSetup';
 import type { ForceSetupOptions, GameMode, GameType, PoolMember, SetupStore } from './interfaces';
 
-const getPerf = (variant: VariantKey, tc: TimeControl): Perf =>
-  variant !== 'standard' && variant !== 'fromPosition' ? variant : tc.speed();
+const definedOf = (o?: ForceSetupOptions) => ({
+  ...(o?.goSize !== undefined && { goSize: o.goSize }),
+  ...(o?.goRuleset !== undefined && { goRuleset: o.goRuleset }),
+  ...(o?.goKomi !== undefined && { goKomi: o.goKomi }),
+});
+
+// Every Go game is in the one `go` rating (ADR 0021 §1), whatever its board size or speed.
+export const goPerf = 'go';
 
 export default class SetupController {
   root: LobbyController;
   store: Record<GameType, Prop<SetupStore>>;
   gameType: GameType | null = null;
-  lastValidFen = '';
-  fenError = false;
   friendUser = '';
   loading = false;
   color: ColorProp;
   forced?: ForceSetupOptions;
 
   // Store props
-  variant: Prop<VariantKey>;
-  fen: Prop<string>;
+  goSize: Prop<GoSize>;
+  goRuleset: Prop<GoRuleset>;
+  goKomi: Prop<number>;
   gameMode: Prop<GameMode>;
   ratingMin: Prop<number>;
   ratingMax: Prop<number>;
-
-  variantMenuOpen = toggle(false);
 
   timeControl: TimeControl;
 
@@ -53,13 +62,14 @@ export default class SetupController {
 
   makeSetupStore = (gameType: GameType) =>
     storedJsonProp<SetupStore>(this.storeKey(gameType), () => ({
-      variant: 'standard',
-      fen: '',
+      goSize: defaultGoSize,
+      goRuleset: defaultGoRuleset,
+      goKomi: standardKomi(defaultGoRuleset),
       timeMode: gameType === 'hook' ? 'realTime' : 'unlimited',
       time: 5,
       increment: 3,
       days: 2,
-      gameMode: !this.root.me ? 'casual' : 'rated',
+      gameMode: 'casual',
       color: 'random',
       ratingMin: -500,
       ratingMax: 500,
@@ -68,8 +78,18 @@ export default class SetupController {
   private readonly loadPropsFromStore = (forceOptions?: ForceSetupOptions) => {
     const storeProps = this.store[this.gameType!]();
     // Load props from the store, but override any store values with values found in forceOptions
-    this.variant = propWithEffect(forceOptions?.variant || storeProps.variant, this.onDropdownChange);
-    this.fen = this.propWithApply(forceOptions?.fen || storeProps.fen);
+    // A store saved before unit 3.19 has no Go options, and a link (a reusable challenge) may set
+    // them; a bad value gets the default.
+    const wanted = { ...storeProps, ...definedOf(forceOptions) };
+    const size = isGoSize(wanted.goSize) ? wanted.goSize : defaultGoSize;
+    const ruleset = isGoRuleset(wanted.goRuleset) ? wanted.goRuleset : defaultGoRuleset;
+    const komi =
+      typeof wanted.goKomi === 'number' && validKomi(wanted.goKomi, size)
+        ? wanted.goKomi
+        : standardKomi(ruleset);
+    this.goSize = this.propWithApply(size);
+    this.goRuleset = this.propWithApply(ruleset);
+    this.goKomi = this.propWithApply(komi);
     const canChangeTimeMode = !!this.root.me || this.gameType !== 'hook';
     this.timeControl = timeControlFromStoredValues(
       propWithEffect(forceOptions?.timeMode || storeProps.timeMode, this.onDropdownChange),
@@ -95,9 +115,6 @@ export default class SetupController {
   private readonly enforcePropRules = () => {
     // reassign with this.propWithApply in this function to avoid calling this.onPropChange
 
-    // replace underscores with spaces in FEN
-    if (this.variant() === 'fromPosition') this.fen = this.propWithApply(this.fen().replace(/_/g, ' '));
-
     if (this.gameMode() === 'rated' && this.ratedModeDisabled()) {
       this.gameMode = this.propWithApply('casual');
     }
@@ -112,12 +129,10 @@ export default class SetupController {
   private readonly savePropsToStore = (override: Partial<SetupStore> = {}) => {
     if (!this.gameType) return;
 
-    // Don't persist position passed through URL
-    const prevSetup = this.forced?.fen ? this.store[this.gameType]() : undefined;
-
     this.store[this.gameType]({
-      variant: prevSetup?.variant ?? this.variant(),
-      fen: prevSetup?.fen ?? this.fen(),
+      goSize: this.goSize(),
+      goRuleset: this.goRuleset(),
+      goKomi: this.goKomi(),
       timeMode: this.timeControl.mode(),
       time: this.timeControl.time(),
       increment: this.timeControl.increment(),
@@ -137,8 +152,12 @@ export default class SetupController {
       ratingMax: this.store[this.gameType]().ratingMax,
     });
 
-  myRating = () => this.root.data.ratingMap && Math.abs(this.root.data.ratingMap[this.selectedPerf()]);
-  isProvisional = () => (this.root.data.ratingMap ? this.root.data.ratingMap[this.selectedPerf()] < 0 : true);
+  private readonly goRating = (): number | undefined => this.root.data.ratingMap?.[goPerf];
+  myRating = () => {
+    const rating = this.goRating();
+    return rating === undefined ? undefined : Math.abs(rating);
+  };
+  isProvisional = () => (this.goRating() ?? -1) < 0;
 
   private readonly onPropChange = () => {
     if (this.isProvisional()) this.savePropsToStoreExceptRating();
@@ -173,46 +192,33 @@ export default class SetupController {
     this.root.leavePool();
     this.gameType = gameType;
     this.loading = false;
-    this.fenError = false;
-    this.lastValidFen = '';
     this.friendUser = friendUser || '';
-    this.variantMenuOpen(false);
     this.forced = forceOptions;
     this.loadPropsFromStore(forceOptions);
   };
 
   closeModal?: () => void; // managed by view/setup/modal.ts
 
-  toggleVariantMenu = () => {
-    this.variantMenuOpen.toggle();
-    this.root.redraw();
+  // A new ruleset brings its own standard komi, as on the playground.
+  setGoRuleset = (ruleset: GoRuleset) => {
+    this.goKomi = this.propWithApply(standardKomi(ruleset));
+    this.goRuleset(ruleset);
   };
 
-  validateFen = debounce(() => {
-    const fen = this.fen();
-    if (!fen) return;
-    xhr.text(xhr.url('/setup/validate-fen', { fen })).then(
-      () => {
-        this.fenError = false;
-        this.lastValidFen = fen;
-        this.root.redraw();
-      },
-      () => {
-        this.fenError = true;
-        this.root.redraw();
-      },
-    );
-  }, 300);
+  // A new size keeps the komi when it still fits the board, and otherwise resets it.
+  setGoSize = (size: GoSize) => {
+    if (!validKomi(this.goKomi(), size)) this.goKomi = this.propWithApply(standardKomi(this.goRuleset()));
+    this.goSize(size);
+  };
 
-  ratedModeDisabled = () =>
-    // anonymous games cannot be rated
-    !this.root.me ||
-    this.timeControl.mode() === 'unlimited' ||
-    (this.variant() === 'fromPosition' && this.fen() !== INITIAL_FEN) ||
-    // variants with very low time cannot be rated
-    (this.variant() !== 'standard' && this.timeControl.notForRatedVariant());
+  // Ignores what isn't a komi (a blank or half-typed field) rather than reading it as 0.
+  setGoKomi = (value: string) => {
+    const komi = value.trim() === '' ? NaN : Number(value);
+    if (validKomi(komi, this.goSize())) this.goKomi(komi);
+  };
 
-  selectedPerf = (): Perf => getPerf(this.variant(), this.timeControl);
+  // Go games are casual until ratings arrive (unit 5.7); the server refuses a rated one (unit 3.15).
+  ratedModeDisabled = () => true;
 
   ratingRange = (): string => {
     const rating = this.myRating();
@@ -223,7 +229,10 @@ export default class SetupController {
     const valid =
       color === 'random' &&
       this.gameType === 'hook' &&
-      this.variant() === 'standard' &&
+      // pools play 19×19 Japanese games with standard komi (ADR 0022 §1), as the server checks
+      this.goSize() === defaultGoSize &&
+      this.goRuleset() === defaultGoRuleset &&
+      this.goKomi() === standardKomi(defaultGoRuleset) &&
       this.gameMode() === 'rated' &&
       this.timeControl.isRealTime();
     const id = this.timeControl.clockStr();
@@ -237,8 +246,10 @@ export default class SetupController {
 
   propsToFormData = (color: ColorChoice) =>
     xhr.form({
-      variant: variants.findIndex(v => v === this.variant()) + 1,
-      fen: this.variant() === 'fromPosition' ? this.fen() : undefined,
+      variant: 1, // standard: the only value the server takes until unit 3.17 drops the field
+      size: this.goSize().toString(),
+      ruleset: this.goRuleset(),
+      komi: this.goKomi().toString(),
       timeMode: timeModes.findIndex(tm => tm === this.timeControl.mode()),
       time: this.timeControl.time().toString(),
       increment: this.timeControl.increment().toString(),
@@ -248,17 +259,14 @@ export default class SetupController {
       color,
     });
 
-  validFen = () => this.variant() !== 'fromPosition' || (!this.fenError && !!this.fen());
-
-  valid = () => this.validFen() && this.timeControl.valid(0) && this.validConstraints();
+  valid = () =>
+    validKomi(this.goKomi(), this.goSize()) && this.timeControl.valid(0) && this.validConstraints();
 
   private readonly invalid = <A>(forced: A | undefined, current: A) =>
     forced !== undefined && forced !== current;
 
   private readonly validConstraints = () => {
     if (this.forced) {
-      if (this.invalid(this.forced.variant, this.variant())) return false;
-      if (this.invalid(this.forced.mode, this.gameMode())) return false;
       if (this.invalid(this.forced.timeMode, this.timeControl.mode())) return false;
       if (this.invalid(this.forced.color, this.color())) return false;
       if (
@@ -270,7 +278,6 @@ export default class SetupController {
         if (this.invalid(this.forced.time, this.timeControl.time())) return false;
         if (this.invalid(this.forced.increment, this.timeControl.increment())) return false;
       }
-      if (this.invalid(this.forced.fen?.replace(/_/g, ' '), this.fen())) return false;
     }
     return true;
   };

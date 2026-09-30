@@ -1,11 +1,11 @@
 import { h, type VNode } from 'snabbdom';
 
-import perfIcons from 'lib/game/perfIcons';
 import { licon } from 'lib/licon';
 import { bind, onInsert } from 'lib/view';
 import { profileUrl } from 'lib/view/userLink';
 
 import type LobbyController from '@/ctrl';
+import { goSetupName } from '@/goSetup';
 import type { Hook } from '@/interfaces';
 
 const percents = (v: number) => v + '%';
@@ -44,7 +44,8 @@ function renderPlot(ctrl: LobbyController, hook: Hook) {
     ].join('.');
   return h('span#' + klass, {
     key: hook.id,
-    attrs: { 'data-icon': perfIcons[hook.perf], style: `bottom:${percents(bottom)};left:${percents(left)}` },
+    // the Go perf's own icon (lila's `PerfType.Go`)
+    attrs: { 'data-icon': licon.DiscBig, style: `bottom:${percents(bottom)};left:${percents(left)}` },
     hook: {
       ...onInsert(el => {
         $(el).powerTip({
@@ -80,8 +81,8 @@ function renderHook(ctrl: LobbyController, hook: Hook): string {
   }
   html += '<div class="inner-clickable">';
   html += `<div>${hook.clock}</div>`;
-  html +=
-    '<icon data-icon="' + perfIcons[hook.perf] + '"> ' + i18n.site[hook.ra ? 'rated' : 'casual'] + '</icon>';
+  if (hook.go) html += `<div>${goSetupName(hook.go)}</div>`;
+  html += `<div>${i18n.site[hook.ra ? 'rated' : 'casual']}</div>`;
   html += '</div></div>';
   return html;
 }

@@ -20,4 +20,4 @@ final class Env(
 
   val api = wire[PoolApi]
 
-  export PoolList.{ all, isClockCompatible }
+  export PoolList.{ all, isPoolCompatible }

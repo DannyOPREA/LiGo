@@ -6,6 +6,7 @@ import { wsPingInterval } from 'lib/socket';
 import { storage, type LichessStorage } from 'lib/storage';
 
 import Filter from './filter';
+import { isGoRuleset, isGoSize } from './goSetup';
 import * as hookRepo from './hookRepo';
 import type {
   LobbyOpts,
@@ -82,14 +83,13 @@ export default class LobbyController {
       const forceOptions: ForceSetupOptions = {};
       const urlParams = new URLSearchParams(location.search);
       const friendUser = urlParams.get('user') ?? undefined;
-      const variant = urlParams.get('variant');
-
-      if (variant) forceOptions.variant = variant as VariantKey;
-
-      if (locationHash !== 'hook' && urlParams.get('fen')) {
-        forceOptions.fen = urlParams.get('fen')!;
-        forceOptions.variant = 'fromPosition';
-      }
+      // A chess `variant` or `fen` in the URL is ignored: every new game is a Go game (unit 3.15).
+      const size = Number(urlParams.get('size'));
+      if (isGoSize(size)) forceOptions.goSize = size;
+      const ruleset = urlParams.get('ruleset');
+      if (isGoRuleset(ruleset)) forceOptions.goRuleset = ruleset;
+      const komi = urlParams.get('komi');
+      if (komi) forceOptions.goKomi = Number(komi);
 
       let timeMode = urlParams.get('time');
       const days = urlParams.get('days');

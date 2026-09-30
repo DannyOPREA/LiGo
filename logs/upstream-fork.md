@@ -53,6 +53,39 @@
 - Verified by Claude: see the PR.
 - Follow-ups: 3.17 removes the chess paths these Go branches sit beside; 3.19 draws Go mini boards
   (and the crawler view); 4.11 SGF export; 7.4 and 8.7 replace the placeholders.
+### 2026-09-30 · 3.19 (part 1) · Go options in the lobby's create-game and challenge forms
+- Did: the lobby's create-game ("hook") and challenge ("friend") forms offer board size (19×19,
+  13×13, 9×9 buttons; a list in screen-reader mode), rules (Japanese, Chinese) and komi (multiples
+  of 0.5 up to the board's points, as go-rules' `Komi.isValid`; reset to the ruleset's standard komi
+  when the rules change), sent as 3.15's `size`, `ruleset` and `komi` with `variant=1` until 3.17.
+  The chess variant picker and FEN input are gone, the casual/rated choice is hidden until 5.7 and
+  the rating shown is the `go` one. Saved form settings from before open as the default Go game.
+  Hook and seek lists (and the chart's hover card) show each game's size, rules and komi in a "Game
+  setup" column. Reusable challenge links (`ChallengeUi.genericUrl`) carry `size`, `ruleset` and
+  `komi` instead of `variant` and `fen`, and the lobby reads them. The pool shortcut also requires
+  19×19 Japanese standard komi, as the server's `Hook.seemsCompatibleWithPools` does. Five new
+  `site.xml` keys. `lobby/tests/goSetup.test.ts`: 20 tests over a real `SetupController` and the
+  rendered views in jsdom. Checked in Chromium (scratch harness with lila's built CSS) at desktop
+  and phone sizes: layout, and the form values after choosing 9×9, Chinese and a komi.
+- Review: no blocking code findings. Fixed from the optional ones: Go options in challenge links,
+  the pool check, `props.selected` on both lists, the number-only width rule, a tests tsconfig.
+  Left: the literal "Go" rating label (as `PerfType.Go`), the direct `el.value` reset in the komi
+  field's change handler (snabbdom won't reset a value it thinks unchanged), unused
+  `gameModeButtons` until 5.7, the dead "— Variant —" row, komi shown without locale formatting.
+- Worked: testing the form through a real `SetupController` with a stub lobby, and the views by
+  patching snabbdom into jsdom.
+- Didn't work / dead ends: the ui test runner can't resolve a package's `@/` imports unless the
+  package exports itself (a package.json change), so files the tests load use relative imports.
+  The shared test i18n stub gives functions, which snabbdom renders as nothing: the test file uses
+  plain strings. An ignored komi stayed in the field because snabbdom only resets a value it
+  thinks changed.
+- Lessons: verify.sh's ui gates don't type-check; run `tsc -p <package> --noEmit` too. Two
+  verify.sh runs at once share sbt and its logs and fail spuriously.
+- Decisions: logs/decisions.md (3.19 row), ADR 0019 §8 amendment (3.19 split).
+- Verified by Claude: see the PR.
+- Follow-ups: part 2 after 3.17 (chessground and chess UI packages); 3.16's thread switches the mini
+  boards; 3.17 removes `/setup/validate-fen` and analyse's `/?fen=…#friend` link; 5.7 brings the
+  rated choice back; 6.7 and 6.8 redo the lists and forms.
 
 ### 2026-09-30 · 3.15 · Game creation: every new game is a Go game, casual only
 - Did: every creation path now calls `newGoGame` with go-rules' `Setup`: lobby hooks and seeks

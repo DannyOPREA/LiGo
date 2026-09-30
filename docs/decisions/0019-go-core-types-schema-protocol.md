@@ -160,6 +160,12 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 (Amended in unit 3.16: the API move stream now streams Go games too, `{board, turn, lm, wc, bc}` per
 position; the bus `MoveGameEvent` carries strings (the FEN or compact board, the last move).
 logs/decisions.md, 3.16 row.)
+(Amended in unit 3.19, part 1: 3.19 is split. Part 1 puts board size (buttons), rules (a list)
+and komi (a number, reset to the ruleset's standard komi when the rules change) in the lobby's
+create-game and challenge forms, drops the chess variant picker and FEN input, hides the
+casual/rated choice until 5.7, shows the `go` rating, and shows each lobby game's and seek's size,
+rules and komi in the lists. The mini-board switch goes with 3.16's thread; chessground and the
+chess UI packages go in part 2, after 3.17. logs/decisions.md, 3.19 row.)
 (Amended in unit 3.15: hooks, seeks, challenges and bulk pairings carry go-rules' `Setup` (size,
 ruleset, komi; handicap 0 until 4.9), stored in `seek`, `challenge` and `challenge_bulk` as an
 optional `go` sub-document with the game's own keys (`sz`, `ru`, `km`, `hc`); a record without one

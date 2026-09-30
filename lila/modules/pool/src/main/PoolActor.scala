@@ -66,14 +66,14 @@ final private class PoolActor(
     case RunWave =>
       nextWave.cancel()
       // #TODO #FIXME race condition.
-      hookThieve.candidates(config.clock).pipeTo(self)
+      hookThieve.candidates(config).pipeTo(self)
 
     case HookThieve.PoolHooks(hooks) =>
       monitor.withRange(monId).record(members.count(_.hasRange))
 
       val candidates = members ++ hooks.map(_.member)
 
-      val pairings = MatchMaking(candidates)
+      val pairings = MatchMaking(candidates, config.size.lines)
 
       val pairedMembers = pairings.flatMap(_.members)
 

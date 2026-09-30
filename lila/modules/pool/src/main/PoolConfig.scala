@@ -1,16 +1,24 @@
 package lila.pool
 
+import ligo.gorules.{ BoardSize, Setup as GoSetup }
 import play.api.i18n.Lang
 
+import lila.core.game.GoSetups
 import lila.core.i18n.Translator
 import lila.core.pool.PoolConfigId
 import lila.rating.PerfType
 
+/* LiGo: a pool plays one board size with Japanese rules and the spec's komi (ADR 0022 §1), rated in the
+ * one Go perf (ADR 0021 §1). */
 case class PoolConfig(
     clock: chess.Clock.Config,
-    wave: PoolConfig.Wave
+    wave: PoolConfig.Wave,
+    size: BoardSize = BoardSize.Nineteen
 ):
-  val perfKey = PerfKey(chess.Speed(clock).key.value) | PerfKey.classical
+  val perfKey: PerfKey = PerfKey.go
+  val go: GoSetup = GoSetups.default.copy(size = size)
+  // lila's id, the clock alone: fine while every pool is 19×19; ADR 0022's ids (with the size) come in
+  // the rest of unit 6.4
   val id = PoolConfig.clockToId(clock)
 
 object PoolConfig:
@@ -30,5 +38,6 @@ object PoolConfig:
       "id" -> p.id,
       "lim" -> p.clock.limitInMinutes,
       "inc" -> p.clock.incrementSeconds,
+      "size" -> p.size.lines,
       "perf" -> PerfType(p.perfKey).trans
     )

@@ -17,9 +17,9 @@ import lila.rating.GoRating
  * range, rage-sit and provisional bonuses, the cap, range conflicts and
  * blocks) is lila's own, from `MatchMaking.wmMatching`.
  *
- * Nothing calls this yet: unit 6.4 gives pool members their chip choices,
- * makes `MatchMaking` use `pairScore` and starts games with `stones` and
- * `black`. */
+ * `MatchMaking` pairs every pool with `pairScore` (unit 6.4); members are
+ * Even only until unit 4.9 lets a game start with `stones`, and `black`
+ * picks colours from then on. */
 object GoPairing:
 
   import MatchMaking.wmMatching.{
