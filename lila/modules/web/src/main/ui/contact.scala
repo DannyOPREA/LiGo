@@ -2,7 +2,6 @@ package lila.web
 package ui
 
 import lila.core.i18n.{ I18nKey as trans, Translate }
-import lila.core.id.ForumCategId
 import lila.ui.*
 
 import ScalatagsTemplate.{ *, given }
@@ -35,9 +34,6 @@ object contact:
   private def howToReportBugs(using Translate): Frag =
     frag(
       ul(
-        li(
-          a(href := routes.ForumCateg.show(ForumCategId("lichess-feedback")))(reportBugInForum())
-        ),
         li(
           a(href := "https://github.com/lichess-org/lila/issues")(reportWebsiteIssue())
         ),

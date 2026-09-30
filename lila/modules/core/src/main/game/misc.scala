@@ -12,7 +12,7 @@ import reactivemongo.pekkostream.PekkoStreamCursor
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.bson.{ BSONDocumentHandler, BSONHandler }
 
-import lila.core.id.{ GameFullId, GameId, GamePlayerId, TeamId }
+import lila.core.id.{ GameFullId, GameId, GamePlayerId }
 import lila.core.perf.{ PerfKey, UserWithPerfs }
 import lila.core.user.User
 import lila.core.userId.{ UserId, UserIdOf }
@@ -140,16 +140,14 @@ trait PgnDump:
       game: Game,
       initialFen: Option[Fen.Full],
       opening: Option[Opening.AtPly],
-      flags: PgnDump.WithFlags,
-      teams: Option[ByColor[TeamId]] = None
+      flags: PgnDump.WithFlags
   ): Fu[Pgn]
   def tags(
       game: Game,
       initialFen: Option[Fen.Full],
       importedTags: Option[Tags],
       opening: Option[Opening],
-      withRating: Boolean,
-      teams: Option[ByColor[TeamId]] = None
+      withRating: Boolean
   ): Fu[Tags]
 
 trait Namer:

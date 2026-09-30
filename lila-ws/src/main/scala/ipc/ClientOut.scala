@@ -26,11 +26,7 @@ object ClientOut:
 
   case class FollowingOnline(subscribe: Boolean) extends ClientOutSite
 
-  case class MsgType(dest: User.Id) extends ClientOutSite
-
   case class SiteForward(payload: JsObject) extends ClientOutSite
-
-  case class UserForward(payload: JsObject) extends ClientOutSite
 
   case class Unexpected(msg: JsValue) extends ClientOutSite
 
@@ -85,8 +81,6 @@ object ClientOut:
               case "moveLat" => Some(MoveLat)
               case "notified" => Some(Notified)
               case "following_onlines" => Some(FollowingOnline(o.boolean("d").getOrElse(true)))
-              case "msgType" => o.get[User.Id]("d").map(MsgType.apply)
-              case "msgSend" | "msgRead" => Some(UserForward(o))
               // lobby
               case "idle" => o.boolean("d").map { Idle(_, o) }
               case "join" => Some(LobbyJoin(o))

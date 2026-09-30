@@ -96,6 +96,11 @@ Unit 3.5 removed the chess engines and bots: the `ui/botDev`, `ui/botPlay`, `ui/
 `prettier` 3.5.3 (MIT), `typescript` 5.9.3 (Apache-2.0) and `undici-types` 6.21.0 (MIT); the
 workspace keeps its own pinned TypeScript and Node types. No package was added.
 
+Unit 3.6 removed the forums, blogs, teams, inbox and classes: the `ui/msg` and `ui/team` workspace
+packages and the forum, blog and class bundles in `ui/bits`, and with them the only users of
+`@textcomplete/core` 0.1.13, `@textcomplete/textarea` 0.1.13, `@textcomplete/utils` 0.1.13,
+`textarea-caret` 3.1.0 and `undate` 0.3.0 (all MIT). No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file

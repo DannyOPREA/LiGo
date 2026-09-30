@@ -138,18 +138,18 @@ final class CoachUi(helpers: Helpers)(
             a(cls := "button button-empty", href := routes.User.show(c.user.username))(
               trc.viewXProfile(c.user.username)
             ),
-            if ctx.me.exists(_.is(c.coach)) then
-              frag(
-                if c.coach.listed.value then p("This page is now public.")
-                else "This page is not public yet. ",
-                a(href := routes.Coach.edit, cls := "text", dataIcon := Icon.Pencil)("Edit my coach profile")
+            // The "send a private message" button went with the inbox (unit 3.6).
+            ctx.me
+              .exists(_.is(c.coach))
+              .option(
+                frag(
+                  if c.coach.listed.value then p("This page is now public.")
+                  else "This page is not public yet. ",
+                  a(href := routes.Coach.edit, cls := "text", dataIcon := Icon.Pencil)(
+                    "Edit my coach profile"
+                  )
+                )
               )
-            else
-              a(
-                cls := "text button button-empty",
-                dataIcon := Icon.BubbleSpeech,
-                href := s"${routes.Msg.convo(c.user.username)}"
-              )(trc.sendPM())
           ),
           div(cls := "coach-show__main coach-main box")(
             div(cls := "coach-widget")(widget(c, link = false)),

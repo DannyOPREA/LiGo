@@ -274,16 +274,6 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
             )
           )
 
-    private def teamRequests(nb: Int)(using Translate) =
-      Option.when(nb > 0):
-        a(
-          cls := "link data-count link-center",
-          href := routes.Team.requests,
-          dataCount := nb,
-          dataIcon := Icon.Group,
-          title := trans.team.teams.txt()
-        )
-
     def apply(
         zenable: Boolean,
         isAppealUser: Boolean,
@@ -315,7 +305,6 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           warnNoAutoplay,
           (!isAppealUser).option(clinput),
           privileges,
-          teamRequests(ctx.teamNbRequests),
           if isAppealUser then
             postForm(action := routes.Auth.logout):
               submitButton(cls := "button button-red link")(trans.site.logOut())

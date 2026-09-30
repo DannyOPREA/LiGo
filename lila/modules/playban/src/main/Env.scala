@@ -5,7 +5,6 @@ import lila.core.config.CollName
 
 @Module
 final class Env(
-    messenger: lila.core.msg.MsgApi,
     chatApi: lila.core.chat.ChatApi,
     gameApi: lila.core.game.GameApi,
     noteApi: lila.core.user.NoteApi,

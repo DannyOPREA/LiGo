@@ -231,7 +231,7 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
         .option {
           postForm(action := routes.Mod.warn(u.username, ""), cls := "pm-preset")(
             st.select(
-              st.option(value := "")("Send PM"),
+              st.option(value := "")("Log warning (not sent to the user)"),
               pmPresets.value.map: preset =>
                 st.option(st.value := preset.name, title := preset.text)(preset.name)
             )
@@ -326,13 +326,6 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
       strong(cls := "text inline")("Ragesits / playbans"),
       strong(cls := "fat")(rageSit.counterView, " / ", playbans)
     )
-
-  def teacher(u: User)(nb: Int): Frag =
-    if nb == 0 then emptyFrag
-    else
-      mzSection("teacher")(
-        strong(cls := "inline")(a(href := routes.Clas.teacher(u.username))(nb, " Classes"))
-      )
 
   def reportLog(u: User, reports: List[Report])(using Translate): Frag =
     val title = strong(cls := "text", dataIcon := Icon.CautionTriangle)(

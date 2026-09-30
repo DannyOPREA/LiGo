@@ -13,8 +13,6 @@ final class Env(
     net: lila.core.config.NetConfig,
     securityEnv: lila.security.Env,
     mailerEnv: lila.mailer.Env,
-    forumEnv: lila.forum.Env,
-    teamEnv: lila.team.Env,
     puzzleEnv: lila.puzzle.Env,
     gameSearch: lila.gameSearch.GameSearchApi,
     coachEnv: lila.coach.Env,
@@ -32,7 +30,6 @@ final class Env(
     lobbyEnv: lila.lobby.Env,
     challengeEnv: lila.challenge.Env,
     socketEnv: lila.socket.Env,
-    msgEnv: lila.msg.Env,
     pushEnv: lila.push.Env,
     reportEnv: lila.report.Env,
     modEnv: lila.mod.Env,
@@ -43,7 +40,6 @@ final class Env(
     fideIdOf: lila.core.user.PublicFideIdOf,
     modLogApi: lila.mod.ModlogApi,
     activityWriteApi: lila.activity.ActivityWriteApi,
-    ublogApi: lila.ublog.UblogApi,
     picfitUrl: lila.memo.PicfitUrl,
     cacheApi: lila.memo.CacheApi,
     webConfig: lila.web.WebConfig,
@@ -52,7 +48,6 @@ final class Env(
     tv: lila.tv.Tv,
     activityRead: lila.activity.ActivityReadApi,
     activityJson: lila.activity.JsonView,
-    clasApi: lila.clas.ClasApi,
     recapEnv: lila.recap.Env
 )(using scheduler: Scheduler)(using
     Mode,
@@ -92,8 +87,6 @@ final class Env(
   lazy val cli = wire[Cli]
 
   lazy val mobile = wire[MobileApi]
-
-  lazy val clas = wire[ClasApi]
 
   lazy val gameStreamByOauthOrigin = wire[GameStreamByOauthOrigin]
 

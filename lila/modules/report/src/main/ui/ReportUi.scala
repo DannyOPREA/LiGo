@@ -21,47 +21,8 @@ final class ReportUi(helpers: Helpers)(menu: Context ?=> Frag):
   import ReportUi.*
 
   def filterReason(from: Option[String])(reason: Reason): Boolean = from match
-    case Some("forum" | "inbox" | "ublog") => reason.isComm
+    case Some("forum" | "inbox" | "ublog") => reason.isComm // old links from removed pages
     case _ => true
-
-  def inbox(form: Form[?], user: User, msgs: List[lila.core.msg.IdText])(using ctx: Context) =
-    Page(trans.site.reportAUser.txt())
-      .css("mod.report.form")
-      .js(esmInitBit("embedReasonToggle")):
-        main(cls := "page-small box box-pad report")(
-          h1(cls := "box__top")(trans.site.reportAUser()),
-          postForm(
-            cls := "form3",
-            action := routes.Report.inboxCreate(user.username)
-          )(
-            div(cls := "form-group")(aboutReports),
-            form3.globalError(form),
-            form3.group(form("username"), trans.site.user()): f =>
-              frag(userLink(user), form3.hidden(f, user.id.value.some)),
-            reasonFormGroup(form, "inbox".some),
-            form3.group(form("msgs"), "Messages to report", klass = "report-inbox-msgs"): f =>
-              ul:
-                msgs.map: msg =>
-                  li(
-                    form3
-                      .nativeCheckbox(
-                        msg.id,
-                        s"${f.name}[]",
-                        checked = false,
-                        value = msg.id
-                      ),
-                    label(`for` := msg.id)(msg.text)
-                  )
-            ,
-            form3.group(form("text"), trans.site.description()):
-              form3.textarea(_)(rows := 8, required)
-            ,
-            form3.actions(
-              a(href := routes.Lobby.home)(trans.site.cancel()),
-              form3.submit(trans.site.send())
-            )
-          )
-        )
 
   def form(form: Form[?], reqUser: Option[User] = None, from: Option[String])(using ctx: Context) =
     Page(trans.site.reportAUser.txt())

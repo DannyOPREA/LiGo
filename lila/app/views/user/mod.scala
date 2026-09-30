@@ -12,14 +12,6 @@ object mod:
 
   import views.mod.user.*
 
-  def student(managed: lila.clas.Student.ManagedInfo)(using Context): Frag =
-    mzSection("student")(
-      "Created by ",
-      userLink(managed.createdBy),
-      " for class ",
-      a(href := routes.Clas.show(managed.clas.id))(managed.clas.name)
-    )
-
   def oauthTokens(tokens: List[lila.oauth.AccessToken]): Frag =
     if tokens.isEmpty then emptyFrag
     else
@@ -203,8 +195,8 @@ object mod:
       .get(u.id)
       .map(_.value)
       .map:
-        case EmailAddress.clasIdRegex(id) =>
-          a(href := routes.Clas.show(lila.core.id.ClasId(id)))(s"Class #$id")
+        // classes are gone (unit 3.6): a class student's placeholder email shows as plain text.
+        case EmailAddress.clasIdRegex(id) => frag(s"Class #$id")
         case email => frag(email)
 
   def identification(logins: UserLogins, othersPartiallyLoaded: Boolean)(using

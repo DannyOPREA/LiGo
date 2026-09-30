@@ -86,11 +86,6 @@
     flex: 1 1 auto;
   }
 
-  &--teacher {
-    order: 3;
-    flex: 1 1 auto;
-  }
-
   &--sitdccounter {
     order: 4;
     flex: 1 1 auto;
@@ -113,8 +108,7 @@
     overflow-y: auto;
   }
 
-  &--plan,
-  &--student {
+  &--plan {
     order: 7;
     flex: 1 1 auto;
   }

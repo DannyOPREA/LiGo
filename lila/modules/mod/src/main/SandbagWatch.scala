@@ -4,11 +4,9 @@ import com.github.blemale.scaffeine.Cache
 import chess.rating.IntRatingDiff
 import chess.IntRating
 
-import lila.core.msg.{ MsgApi, MsgPreset }
 import lila.report.ReportApi
 
 final private class SandbagWatch(
-    messenger: MsgApi,
     reportApi: ReportApi,
     modLogApi: ModlogApi
 )(using Executor):
@@ -44,12 +42,12 @@ final private class SandbagWatch(
         boostSeriousness = boostCount + nbWarnings
         _ <-
           if sandbagCount == 3
-          then sendMessage(userId, msgPreset.sandbagAuto)
+          then autoWarn(userId, warning.sandbagAuto)
           else if sandbagCount == 4 then
             game.loserUserId.so:
               reportApi.autoSandbagReport(record.sandbagOpponents, _, sandbagSeriousness)
           else if boostCount == 3
-          then sendMessage(userId, msgPreset.boostAuto)
+          then autoWarn(userId, warning.boostAuto)
           else if boostCount == 4
           then withWinnerAndLoser(game)((u1, u2) => reportApi.autoBoostReport(u1, u2, boostSeriousness))
           else funit
@@ -58,10 +56,9 @@ final private class SandbagWatch(
   private def isCorrespondenceTimeout(game: Game): Boolean =
     game.isCorrespondence && game.status == chess.Status.Timeout
 
-  private def sendMessage(userId: UserId, preset: MsgPreset): Funit =
-    messageOnceEvery(userId).so:
-      lila.common.Bus.pub(lila.core.mod.AutoWarning(userId, preset.name))
-      messenger.postPreset(userId, preset).void
+  private def autoWarn(userId: UserId, name: String): Funit =
+    fuccess:
+      if messageOnceEvery(userId) then lila.common.Bus.pub(lila.core.mod.AutoWarning(userId, name))
 
   private def withWinnerAndLoser(game: Game)(f: (UserId, UserId) => Funit): Funit =
     (game.winnerUserId, game.loserUserId).tupled.so(f.tupled)
@@ -136,27 +133,8 @@ private object SandbagWatch:
 
   val emptyRecord = Record(Nil)
 
-  object msgPreset:
-
-    lazy val sandbagAuto = MsgPreset(
-      name = "Warning: possible sandbagging",
-      text = """Our system noticed that you lost a couple of rated games very quickly. We understand this can happen for many reasons, from a poor connection, to an opponent's clever opening trap, or simply making a mistake and resigning early.
-
-  We're writing because this pattern can also be a sign of "sandbagging," losing games on purpose to lower one's rating. To ensure a fair and enjoyable experience for everyone, our policy requires that players try their best to win every rated game.
-
-  If these quick losses were unintentional, please don't worry. This is just a friendly reminder about our Fair Play policy.
-
-  Thank you for helping keep Lichess fun and fair.""",
-      mustRead = true
-    )
-    lazy val boostAuto = MsgPreset(
-      name = "Warning: possible boosting",
-      """Our system noticed that you won a couple of rated games very quickly. We understand this can happen for many reasons, perhaps your opponent has a poor connection, fell for a clever opening trap, or simply made a mistake and resigned early.
-
-  We're writing because this pattern can also be a sign of "boosting," where one player benefits from an opponent who is losing on purpose. To ensure a fair and enjoyable experience for everyone, our policy requires that both players try their best to win every rated game.
-
-  If your quick wins were the result of fair play, please don't worry. This is just a friendly reminder about our Fair Play policy.
-
-  Thank you for helping keep Lichess fun and fair.""",
-      mustRead = true
-    )
+  // The warnings used to be sent as private messages; since the msg module went (unit 3.6) they
+  // are only logged as automatic warnings, under these names.
+  object warning:
+    val sandbagAuto = "Warning: possible sandbagging"
+    val boostAuto = "Warning: possible boosting"

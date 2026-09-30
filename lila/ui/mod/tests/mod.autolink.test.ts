@@ -34,27 +34,27 @@ describe('autolinks', () => {
   });
 
   test('after colon', () => {
-    assert.strictEqual(autolink(`see:https://${hostname}/inbox`), `see:${linked('/inbox')}`);
+    assert.strictEqual(autolink(`see:https://${hostname}/study`), `see:${linked('/study')}`);
   });
 
   test('dont match after equals', () => {
-    assert.strictEqual(autolink(`url=https://${hostname}/inbox`), `url=https://${hostname}/inbox`);
+    assert.strictEqual(autolink(`url=https://${hostname}/study`), `url=https://${hostname}/study`);
   });
 
   test('dont match in quotes', () => {
-    assert.strictEqual(autolink(`"https://${hostname}/inbox"`), `"https://${hostname}/inbox"`);
+    assert.strictEqual(autolink(`"https://${hostname}/study"`), `"https://${hostname}/study"`);
   });
 
   test('dont match when preceded by a word char', () => {
-    assert.strictEqual(autolink(`foohttps://${hostname}/inbox`), `foohttps://${hostname}/inbox`);
+    assert.strictEqual(autolink(`foohttps://${hostname}/study`), `foohttps://${hostname}/study`);
   });
 
   test('bare path inside of string', () => {
-    assert.strictEqual(autolink(`boo /inbox`), `boo ${linked('/inbox')}`);
+    assert.strictEqual(autolink(`boo /study`), `boo ${linked('/study')}`);
   });
 
   test('hostname without scheme in parens', () => {
-    assert.strictEqual(autolink(`foo bar (${hostname}/inbox)`), `foo bar (${linked('/inbox')})`);
+    assert.strictEqual(autolink(`foo bar (${hostname}/study)`), `foo bar (${linked('/study')})`);
   });
 
   test('game id path, 8 chars', () => {
@@ -66,11 +66,11 @@ describe('autolinks', () => {
   });
 
   test('preceded by comma', () => {
-    assert.strictEqual(autolink(`,https://${hostname}/inbox`), `,${linked('/inbox')}`);
+    assert.strictEqual(autolink(`,https://${hostname}/study`), `,${linked('/study')}`);
   });
 
   test('preceded by semicolon', () => {
-    assert.strictEqual(autolink(`;https://${hostname}/inbox`), `;${linked('/inbox')}`);
+    assert.strictEqual(autolink(`;https://${hostname}/study`), `;${linked('/study')}`);
   });
 
   test('multi games already linked', () => {
@@ -93,18 +93,21 @@ ${linked('/12345678')}
   test('grab bag', () => {
     assert.strictEqual(autolink(`foo /12345678#anchor bar`), `foo ${linked('/12345678#anchor')} bar`);
     assert.strictEqual(
-      autolink(`http://${hostname}/inbox/nope /${hostname}/inbox/nope`),
-      `http://${hostname}/inbox/nope /${hostname}/inbox/nope`,
+      autolink(`http://${hostname}/study/nope /${hostname}/study/nope`),
+      `http://${hostname}/study/nope /${hostname}/study/nope`,
     );
-    assert.strictEqual(autolink('(//inbox/ nope)'), '(//inbox/ nope)');
+    assert.strictEqual(autolink('(//study/ nope)'), '(//study/ nope)');
   });
 
   test('path params', () => {
-    assert.strictEqual(autolink(`${hostname}/inbox?param=value`), linked('/inbox?param=value'));
-    assert.strictEqual(autolink(`https://${hostname}/forum/blah#anchor`), linked('/forum/blah#anchor'));
+    assert.strictEqual(autolink(`${hostname}/study?param=value`), linked('/study?param=value'));
     assert.strictEqual(
-      autolink(`(/inbox/extra/path?x=true&y=false)`),
-      `(${linked('/inbox/extra/path?x=true&y=false')})`,
+      autolink(`https://${hostname}/tournament/blah#anchor`),
+      linked('/tournament/blah#anchor'),
+    );
+    assert.strictEqual(
+      autolink(`(/study/extra/path?x=true&y=false)`),
+      `(${linked('/study/extra/path?x=true&y=false')})`,
     );
   });
 });

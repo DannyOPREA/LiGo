@@ -18,5 +18,4 @@ final class Router(controller: Controller):
       case Array("watch", id, _, _) => controller.roundWatch(Game.Id(id), req)
       case Array("play", id, _) => controller.roundPlay(Game.FullId(id), req)
       case Array("challenge", id, "socket", _) => controller.challenge(Challenge.Id(id), req)
-      case Array("team", id) => controller.team(Team.Id(id), req)
       case _ => Future.successful(Left(HttpResponseStatus.NOT_FOUND))

@@ -26,8 +26,7 @@ final class PgnDump(
       game: Game,
       initialFen: Option[Fen.Full],
       opening: Option[Opening.AtPly],
-      flags: WithFlags,
-      teams: Option[ByColor[TeamId]] = None
+      flags: WithFlags
   ): Fu[Pgn] =
     val imported = game.pgnImport.flatMap: pgni =>
       Parser.tags(pgni.pgn).toOption
@@ -39,8 +38,7 @@ final class PgnDump(
           initialFen,
           imported,
           opening.map(_.opening),
-          withRating = flags.rating,
-          teams = teams
+          withRating = flags.rating
         )
       else fuccess(Tags(Nil))
 
@@ -86,8 +84,7 @@ final class PgnDump(
       initialFen: Option[Fen.Full],
       importedTags: Option[Tags],
       opening: Option[Opening],
-      withRating: Boolean,
-      teams: Option[ByColor[TeamId]] = None
+      withRating: Boolean
   ): Fu[Tags] = for
     users <- gameLightUsers(game)
     fideIds <- users.traverse(_.so(fideIdOf))
@@ -121,8 +118,6 @@ final class PgnDump(
       users.black.flatMap(_.title).map(Tag(_.BlackTitle, _)),
       fideIds.white.map(Tag(_.WhiteFideId, _)),
       fideIds.black.map(Tag(_.BlackFideId, _)),
-      teams.map(t => Tag("WhiteTeam", t.white)),
-      teams.map(t => Tag("BlackTeam", t.black)),
       game.whitePlayer.berserk.option(Tag("WhiteBerserk", game.whitePlayer.berserk)),
       game.blackPlayer.berserk.option(Tag("BlackBerserk", game.blackPlayer.berserk)),
       Tag(_.Variant, game.variant.name.capitalize).some,

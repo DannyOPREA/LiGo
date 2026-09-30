@@ -9,15 +9,6 @@ object bits:
     div(cls := "lobby__app__content lpools")
   )
 
-  def showUnreadLichessMessage(using Context) =
-    nopeInfo(
-      cls := "unread-lichess-message",
-      p(trans.site.showUnreadLichessMessage()),
-      p:
-        a(cls := "button button-fat", href := routes.Msg.convo(UserId.lichess)):
-          trans.site.readTheMessage()
-    )
-
   def playbanInfo(ban: lila.playban.TempBan)(using Context) =
     nopeInfo(
       h1(trans.site.sorry()),

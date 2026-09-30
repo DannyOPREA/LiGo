@@ -10,11 +10,9 @@ final class KeepAlive(lila: Lila, scheduler: Scheduler)(using Executor):
 
   // "study" AliveRooms was removed with the study module (unit 3.3).
   val challenge = new AliveRooms
-  val team = new AliveRooms
 
   scheduler.scheduleWithFixedDelay(15.seconds, 15.seconds) { () =>
     lila.emit.challenge(challenge.getAndClear)
-    lila.emit.team(team.getAndClear)
   }
 
 object KeepAlive:

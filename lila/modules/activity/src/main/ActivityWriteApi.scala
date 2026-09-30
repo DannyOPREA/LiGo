@@ -34,16 +34,6 @@ final class ActivityWriteApi(
       setGames ++ setCorres
     ).parallel.void
 
-  def forumPost(post: lila.core.forum.ForumPostMini): Funit =
-    post.userId
-      .filterNot(_.is(UserId.lichess))
-      .so: userId =>
-        update(userId): a =>
-          bdoc(ActivityFields.forumPosts -> (~a.forumPosts + post.id))
-
-  def ublogPost(post: lila.core.ublog.UblogPost): Funit = update(post.created.by): a =>
-    bdoc(ActivityFields.ublogPosts -> (~a.ublogPosts + post.id))
-
   def puzzle(res: lila.puzzle.Puzzle.UserResult): Funit = update(res.userId): a =>
     bdoc(ActivityFields.puzzles -> {
       ~a.puzzles + Score.make(
@@ -77,10 +67,6 @@ final class ActivityWriteApi(
                 regexId(userId) ++ bdoc("f.i.ids" -> from.id),
                 pull("f.i.ids" -> from.id)
               )
-
-  def team(id: TeamId, userId: UserId) =
-    update(userId): a =>
-      bdoc(ActivityFields.teams -> { ~a.teams + id })
 
   def streamStart(userId: UserId) =
     update(userId): _ =>

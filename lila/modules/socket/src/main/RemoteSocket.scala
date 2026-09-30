@@ -48,8 +48,6 @@ final class RemoteSocket(
         userLag.put(userId, centis)
       // this shouldn't be necessary... ensure that users are known to be online
       onlineUserIds.getAndUpdate((x: UserIds) => x ++ lags.keys)
-    case In.TellUser(userId, typ, msg) =>
-      TellUserIn.make(userId, msg, typ).foreach(Bus.pub[TellUserIn](_))
     case In.ReqResponse(reqId, response) => requester.onResponse(reqId, response)
     case In.Ping(id) => send.exec(Out.pong(id))
     case In.WsBoot =>
@@ -234,13 +232,6 @@ object RemoteSocket:
               case _ => None
           }.toMap).some
         case RawMsg("tell/sri", raw) => raw.get(3)(lila.core.socket.protocol.In.tellSriMapper)
-        case RawMsg("tell/user", raw) =>
-          raw.get(2) { case Array(user, payload) =>
-            for
-              obj <- Json.parse(payload).asOpt[JsObject]
-              typ <- obj.str("t")
-            yield TellUser(UserId(user), typ, obj)
-          }
         case RawMsg("req/response", raw) =>
           raw.get(2) { case Array(reqId, response) =>
             reqId.toIntOption.map { ReqResponse(_, response) }

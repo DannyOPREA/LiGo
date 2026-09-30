@@ -141,10 +141,6 @@ export default function () {
       if (!instance) load(data);
       else (await instance).update(data);
     });
-    pubsub.on('notify-app.set-read', async user => {
-      if (!instance) load();
-      else (await instance).setMsgRead(user);
-    });
   }
 
   {

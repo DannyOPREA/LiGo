@@ -15,14 +15,12 @@ lazy val ui = lila.coach.ui.CoachUi(helpers)(
 
 lazy val editUi = lila.coach.ui.CoachEditUi(helpers, ui)
 
-def show(
-    c: lila.coach.Coach.WithUser,
-    posts: Seq[lila.ublog.UblogPost.PreviewPost]
-)(using ctx: Context) = ui.show(
+def show(c: lila.coach.Coach.WithUser)(using ctx: Context) = ui.show(
   c,
-  // study removed in unit 3.3: coaches no longer feature studies on their profile.
+  // study removed in unit 3.3 and ublog in unit 3.6: coaches no longer feature studies or blog
+  // posts on their profile.
   studies = Nil,
-  posts = posts.map(views.ublog.ui.card(_))
+  posts = Nil
 )
 
 def edit(c: lila.coach.Coach.WithUser, form: Form[?])(using ctx: Context) =

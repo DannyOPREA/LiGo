@@ -7,7 +7,6 @@ export lila.core.misc.AppealTopic
 case class UserStatus(
     user: User,
     playban: Boolean,
-    ublogHidden: Boolean,
     modActions: List[String]
 ):
   export user.{ id, enabled, marks }

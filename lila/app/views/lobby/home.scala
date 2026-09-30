@@ -36,7 +36,6 @@ object home:
               "data" -> data,
               "showRatings" -> ctx.pref.showRatings
             )
-            .add("hasUnreadLichessMessage", hasUnreadLichessMessage)
             .add("playban", playban.map(lila.playban.TempBan.lobbyJson))
         )
       )
@@ -53,18 +52,13 @@ object home:
         main(
           cls := List(
             "lobby" -> true,
-            "lobby-nope" -> (playban.isDefined || currentGame.isDefined || homepage.hasUnreadLichessMessage)
+            "lobby-nope" -> (playban.isDefined || currentGame.isDefined)
           )
         )(
           div(cls := "lobby__side")(
             ctx.blind.option(h2(trans.nvui.featuredEvents())),
             ctx.kid.no.option(views.streamer.bits.liveStreams(streams)),
             // relay spotlights removed with the relay module (unit 3.3).
-            classes.nonEmpty.option:
-              div(cls := "lobby__classes"):
-                classes.map: clas =>
-                  a(href := routes.Clas.show(clas.id), dataIcon := Icon.Group)(clas.name)
-            ,
             if ctx.isAuth then
               div(cls := "lobby__timeline")(
                 ctx.blind.option(h2(trans.site.timeline())),
@@ -83,8 +77,6 @@ object home:
           ),
           currentGame
             .map(bits.currentGameInfo)
-            .orElse:
-              hasUnreadLichessMessage.option(bits.showUnreadLichessMessage)
             .orElse:
               playban.map(bits.playbanInfo)
             .getOrElse:
@@ -110,7 +102,6 @@ object home:
             swagLink,
             puzzle.map(p => views.puzzle.bits.dailyLink(p)())
           ),
-          views.ublog.ui.homeCarousel(ublogPosts),
           div(cls := "lobby__feed"):
             views.feed.lobbyUpdates(lastUpdates)
           ,

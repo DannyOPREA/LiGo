@@ -26,8 +26,8 @@ object AppealTopicApi:
       u.marks.prizeban.option(prize),
       u.marks.reportban.option(report),
       u.playban.option(play),
-      u.chatTimeout.option(chat),
-      u.ublogHidden.option(blog)
+      u.chatTimeout.option(chat)
+      // no hidden-blog topic any more: the ublog module is gone (unit 3.6).
     ).flatten
 
   def select(u: UserStatus, appeals: UserAppeals): Option[AppealTopic] =

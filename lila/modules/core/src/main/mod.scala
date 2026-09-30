@@ -2,19 +2,10 @@ package lila.core
 package mod
 
 import lila.core.chat.TimeoutReason
-import lila.core.id.{ ForumCategId, ForumPostId, ForumTopicSlug, GameFullId }
+import lila.core.id.GameFullId
 import lila.core.userId.*
 
-trait LogApi:
-  def toggleStickyTopic(categ: ForumCategId, slug: ForumTopicSlug, sticky: Boolean)(using MyId): Funit
-  def toggleCloseTopic(categ: ForumCategId, slug: ForumTopicSlug, closed: Boolean)(using MyId): Funit
-  def postOrEditAsAnonMod(
-      categ: ForumCategId,
-      topic: ForumTopicSlug,
-      postId: ForumPostId,
-      text: String,
-      edit: Boolean
-  )(using MyId): Funit
+// LogApi (the forum's moderation log calls) went with the forum module (unit 3.6).
 
 trait ModApi:
   def autoEngine(suspectId: report.SuspectId, note: String)(using MyId): Funit

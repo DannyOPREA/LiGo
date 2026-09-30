@@ -44,5 +44,16 @@ Checks that found real problems in Phase 3 removal units (3.2 tournaments, 3.3 s
 - When told not to run builds, the author's verify logs are in `.claude/state/verify/*.log`
   (read-only) — cite them, and flag `testQuick` partial runs.
 
+- 3.6 (2026-09-29) finds: deleted TS can carry side effects on KEPT DOM — lobby `carousel.ts` was
+  what set `.lobby__support` visible (CSS default `visibility: hidden`), so deleting the blog
+  carousel hid the donate/swag box. Grep deleted TS for `querySelector`/`style.` on kept elements.
+  Routes removed with a module can serve a kept client in another package (`/diagnostic` was
+  ForumTopic's; `bits.diagnosticDialog` still posts to it). Diff the routes' `-` lines against
+  `ui/*/src` literals. "Stored notifications render as before" was false: the ui/notify renderers
+  were deleted (missing renderer = silently hidden). Also dead pref rows (notify table, "who can
+  message you"), mod "Send PM" dropdown that now only logs, package.json deps whose sole user was a
+  deleted file (ui/mod tagify). A def-name `comm -23` per modified file (old vs new) is a fast check
+  for script-edit collateral deletions.
+
 **Why:** compile + UI build pass with all of these; only grep-driven review finds them.
 **How to apply:** every Phase 3 removal unit (3.4–3.7 next). See also [[lila-edit-review-patterns]].

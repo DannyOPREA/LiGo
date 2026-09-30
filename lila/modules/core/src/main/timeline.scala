@@ -47,7 +47,6 @@ enum Propagation extends NotBuseable:
   case Users(users: List[UserId])
   case Followers(user: UserId)
   case Friends(user: UserId)
-  case WithTeam(teamId: TeamId)
   case ExceptUser(user: UserId)
   case ModsOnly(value: Boolean)
 
@@ -58,7 +57,6 @@ case class Propagate(data: Atom, propagations: List[Propagation] = Nil):
   def toUser(id: UserId) = add(Users(List(id)))
   def toFollowersOf(id: UserId) = add(Followers(id))
   def toFriendsOf(id: UserId) = add(Friends(id))
-  def withTeam(teamId: Option[TeamId]) = teamId.fold(this)(id => add(WithTeam(id)))
   def exceptUser(id: UserId) = add(ExceptUser(id))
   def modsOnly(value: Boolean) = add(ModsOnly(value))
   private def add(p: Propagation) = copy(propagations = p :: propagations)

@@ -140,9 +140,6 @@ object ClientIn:
   case class VoiceChat(userIds: Iterable[User.Id]) extends ClientIn:
     def write = cliMsg("voiceChat", userIds)
 
-  case class MsgType(orig: User.Id) extends ClientIn:
-    def write = cliMsg("msgType", orig)
-
   object following:
 
     case class Onlines(users: List[FriendList.UserView]) extends ClientIn:

@@ -4,7 +4,6 @@ import play.api.libs.json.*
 import play.api.mvc.*
 
 import lila.app.*
-import lila.core.msg.SystemMsg
 
 final class Github(env: Env) extends LilaController(env):
 
@@ -13,10 +12,8 @@ final class Github(env: Env) extends LilaController(env):
       case Some(scans) =>
         env.oAuth.tokenApi
           .secretScanning(scans)
-          .flatMap:
-            _.sequentially: (token, url) =>
-              val text = lila.msg.MsgPreset.apiTokenRevoked(url)
-              env.msg.api.systemPost(SystemMsg.mustRead(token.userId, text))
+          // The "token revoked" private message went with the msg module (unit 3.6).
+          .void
         NoContent
       case None => badRequest("JSON does not match expected format")
 

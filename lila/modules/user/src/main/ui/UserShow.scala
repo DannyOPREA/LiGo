@@ -18,7 +18,6 @@ final class UserShow(helpers: Helpers, bits: UserBits):
       relation: Frag,
       crosstable: UserId => Option[Frag],
       flag: Option[Flag],
-      realName: Option[Frag],
       best8Perfs: List[PerfKey],
       userMarks: => Frag
   )(using ctx: Context) =
@@ -39,7 +38,6 @@ final class UserShow(helpers: Helpers, bits: UserBits):
           ,
           ping.map(bits.signalBars)
         ),
-        realName.map(div(cls := "upt__info__realname")(_)),
         if u.lame && ctx.isnt(u) && !Granter.opt(_.AccountInfo)
         then div(cls := "upt__info__warning")(trans.site.thisAccountViolatedTos())
         else
@@ -58,12 +56,6 @@ final class UserShow(helpers: Helpers, bits: UserBits):
               ),
               (!blocked).option(
                 frag(
-                  a(
-                    dataIcon := Icon.BubbleSpeech,
-                    cls := "btn-rack__btn",
-                    title := trans.site.chat.txt(),
-                    href := routes.Msg.convo(u.username)
-                  ),
                   a(
                     dataIcon := Icon.Swords,
                     cls := "btn-rack__btn",

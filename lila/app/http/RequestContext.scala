@@ -56,16 +56,13 @@ trait RequestContext(using Executor):
         env.user.lightUserApi.preloadUser(me)
         val enabledId = me.enabled.yes.option(me.userId)
         (
-          enabledId.so(env.team.api.nbRequests),
           enabledId.so(env.challenge.api.countInFor.get),
           enabledId.so(env.notifyM.api.unreadCount),
           env.mod.inquiryApi.forMod
-        ).mapN: (teamNbRequests, nbChallenges, nbNotifications, inquiry) =>
+        ).mapN: (nbChallenges, nbNotifications, inquiry) =>
           PageData(
-            teamNbRequests,
             nbChallenges,
             nbNotifications,
-            seesClassMenu = env.clas.seesClassMenu,
             inquiry = inquiry,
             nonce = nonce
           )

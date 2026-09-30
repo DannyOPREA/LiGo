@@ -112,8 +112,7 @@ object UserTrust extends YesNo[UserTrust]
 trait UserTrustApi:
   def get(id: UserId): Fu[UserTrust]
 
-def canUploadImages(toRel: String)(using me: Me) = !me.marks.troll && me.kid.no && {
+def canUploadImages(using me: Me) = !me.marks.troll && me.kid.no && {
   me.isVerified ||
-  toRel.startsWith("ublog") ||
   (me.createdSinceDays(7) && !me.marks.alt)
 }

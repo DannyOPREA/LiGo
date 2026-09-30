@@ -3,7 +3,6 @@ package lila.mod
 import reactivemongo.api.*
 import reactivemongo.api.bson.*
 
-import lila.core.id.ForumCategId
 import lila.core.irc.IrcApi
 import lila.core.perf.UserWithPerfs
 import lila.core.perm.Permission
@@ -13,13 +12,12 @@ import lila.user.UserRepo
 import lila.core.chat.TimeoutReason
 import lila.core.user.KidMode
 import lila.core.LightUser
-import lila.core.id.ForumTopicSlug
 import lila.memo.PicfitImage
 import lila.core.study.Study
 
 final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, presetsApi: ModPresetsApi)(using
     Executor
-) extends lila.core.mod.LogApi:
+):
   import repo.coll
 
   private given BSONDocumentHandler[Modlog] = Macros.handler
@@ -47,17 +45,6 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
   def streamerTier(streamerId: UserId, v: Int)(using MyId) = add:
     Modlog(streamerId.some, Modlog.streamerTier, v.toString.some)
 
-  def blogEdit(sus: Suspect, details: String)(using MyId) = add:
-    Modlog.make(sus, Modlog.blogTier, details.some)
-
-  def blogPostEdit(sus: Suspect, postId: UblogPostId, postName: String, details: String)(using MyId) = add:
-    Modlog.make(
-      sus,
-      Modlog.blogPostEdit,
-      details.some,
-      Modlog.Context(postName.some, routes.Ublog.redirect(postId).url.some, postId.value.some).some
-    )
-
   def setCarouselSize(size: Int)(using MyId) = add:
     Modlog(none, Modlog.setCarouselSize, size.toString.some)
 
@@ -81,9 +68,6 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
 
   def deleteComms(sus: Suspect)(using MyId) = add:
     Modlog.make(sus, Modlog.deleteComms)
-
-  def fullCommExport(sus: Suspect)(using MyId) = add:
-    Modlog.make(sus, Modlog.fullCommsExport)
 
   def setKidMode(mod: ModId, kid: UserId, v: KidMode) = add:
     Modlog(mod, kid.some, if v.yes then Modlog.setKidMode else Modlog.unsetKidMode)
@@ -142,62 +126,6 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
 
   def setPassword(using me: Me) = add:
     Modlog(me.some, Modlog.setPassword)
-
-  def deletePost(user: Option[UserId], text: String)(using MyId) = add:
-    Modlog(
-      user,
-      Modlog.deletePost,
-      details = Some(text.take(400))
-    )
-
-  def toggleCloseTopic(categ: ForumCategId, slug: ForumTopicSlug, closed: Boolean)(using MyId) = add:
-    Modlog(
-      none,
-      if closed then Modlog.closeTopic else Modlog.openTopic,
-      details = s"$categ/$slug".some
-    )
-
-  def toggleStickyTopic(categ: ForumCategId, slug: ForumTopicSlug, sticky: Boolean)(using MyId) = add:
-    Modlog(
-      none,
-      if sticky then Modlog.stickyTopic else Modlog.unstickyTopic,
-      details = s"$categ/$slug".some
-    )
-
-  // Not to be confused with the eponymous lichess account.
-  def postOrEditAsAnonMod(
-      categ: ForumCategId,
-      topic: ForumTopicSlug,
-      postId: ForumPostId,
-      text: String,
-      edit: Boolean
-  )(using MyId) = add:
-    Modlog(
-      none,
-      if edit then Modlog.editAsAnonMod else Modlog.postAsAnonMod,
-      details = s"$categ/$topic id: $postId ${text.take(400)}".some
-    )
-
-  def deleteTeam(id: TeamId, explain: String)(using MyId) = add:
-    Modlog(
-      none,
-      Modlog.deleteTeam,
-      details = s"$id: ${explain.take(200)}".some
-    ).indexAs("team")
-
-  def toggleTeam(id: TeamId, closing: Boolean, explain: String)(using MyId) = add:
-    Modlog(
-      none,
-      if closing then Modlog.disableTeam else Modlog.enableTeam,
-      details = s"$id: ${explain.take(200)}".some
-    ).indexAs("team")
-
-  def teamLog(teamId: TeamId): Fu[List[Modlog]] =
-    repo.coll
-      .find(bdoc("index" -> "team", "details".regexStart(s"$teamId: ")))
-      .sort(sort.desc("date"))
-      .cursor[Modlog]()
-      .list(30)
 
   def terminateTournament(name: String)(using Me) = add:
     Modlog(none, Modlog.terminateTournament, details = name.some)
@@ -271,12 +199,6 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
   def prizeban(sus: Suspect, v: Boolean)(using MyId) = add:
     Modlog.make(sus, if v then Modlog.prizeban else Modlog.unprizeban)
 
-  def teamKick(user: UserId, teamName: String)(using MyId) = add:
-    Modlog(user.some, Modlog.teamKick, details = Some(teamName.take(140)))
-
-  def teamEdit(teamOwner: UserId, teamName: String)(using MyId) = add:
-    Modlog(teamOwner.some, Modlog.teamEdit, details = Some(teamName.take(140)))
-
   def moderateImage(image: PicfitImage, op: "pass" | "purge")(using myId: MyId) = add:
     Modlog(
       myId.modId,
@@ -347,8 +269,8 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
         "user" -> userId,
         "action" -> Modlog.modMessage,
         or(
-          bdoc("details" -> SandbagWatch.msgPreset.sandbagAuto.name),
-          bdoc("details" -> SandbagWatch.msgPreset.boostAuto.name)
+          bdoc("details" -> SandbagWatch.warning.sandbagAuto),
+          bdoc("details" -> SandbagWatch.warning.boostAuto)
         ),
         "date".gte(nowInstant.minusMonths(6))
       )
@@ -449,8 +371,6 @@ final class ModlogApi(repo: ModlogRepo, userRepo: UserRepo, ircApi: IrcApi, pres
             else if presetPerms(Permission.CheatHunter) then permissions(MonitoredCheatMod)
             else false
           case _ => false
-        for
-          _ <- monitorable.so(ircApi.monitorMod(icon = icon, text = text, dom))
-          _ <- m.isForum.so(ircApi.publicForumLog(icon = icon, text = text))
+        for _ <- monitorable.so(ircApi.monitorMod(icon = icon, text = text, dom))
         yield ()
     }

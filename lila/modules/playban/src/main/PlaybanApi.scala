@@ -6,7 +6,6 @@ import scalalib.model.Days
 
 import lila.common.{ Bus, Uptime }
 import lila.core.game.Source
-import lila.core.msg.MsgApi
 import lila.core.playban.RageSit as RageSitCounter
 import lila.db.dsl.{ *, given }
 import scalalib.cache.OnceEvery
@@ -19,8 +18,7 @@ final class PlaybanApi(
     userApi: lila.core.user.UserApi,
     noteApi: lila.core.user.NoteApi,
     cacheApi: lila.memo.CacheApi,
-    userTrustApi: lila.core.security.UserTrustApi,
-    messenger: MsgApi
+    userTrustApi: lila.core.security.UserTrustApi
 )(using ec: Executor, mode: play.api.Mode):
 
   private given BSONHandler[Outcome] = tryHandler(
@@ -296,9 +294,9 @@ final class PlaybanApi(
       case RageSit.Update.Inc(delta) =>
         rageSitCache.put(record.userId, fuccess(record.rageSit))
         (delta < 0 && record.rageSit.isVeryBad).so:
-          for _ <- messenger.postPreset(record.userId, PlaybanFeedback.sittingAutoPreset)
-          yield
-            Bus.pub(lila.core.mod.AutoWarning(record.userId, PlaybanFeedback.sittingAutoPreset.name))
+          // the warning is only logged: its private message went with the msg module (unit 3.6).
+          fuccess:
+            Bus.pub(lila.core.mod.AutoWarning(record.userId, PlaybanFeedback.sittingAutoWarning))
             if record.rageSit.isLethal && record.banMinutes.exists(_ > 12 * 60) then
               userApi
                 .byId(record.userId)

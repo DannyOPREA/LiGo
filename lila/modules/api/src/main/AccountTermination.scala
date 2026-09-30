@@ -16,28 +16,22 @@ import lila.db.dsl.{ *, given }
 | profile data              | hidden                           | deleted               |
 | sessions and oauth tokens | closed                           | deleted               |
 | patron subscription       | canceled                         | canceled              |
-| blog posts                | unlisted                         | deleted               |
 | public studies            | unlisted                         | anonymized            |
 | private studies           | hidden                           | deleted               |
 | activity                  | hidden                           | deleted               |
 | coach/streamer profiles   | hidden                           | deleted               |
 | tournaments joined        | unlisted                         | anonymized            |
 | tournaments created       | hidden                           | anonymized            |
-| forum posts               | intact                           | deleted               |
-| teams/classes joined      | quit                             | quit                  |
-| team/classes created      | intact *                         | intact *              |
-| classes created           | intact *                         | intact *              |
 | puzzle history            | hidden                           | deleted               |
 | follows and blocks        | deleted                          | deleted               |
 
- * classes and teams have a life of their own. Close them manually if you want to, before deleting your account.
+ Blog posts, forum posts, teams and classes went with their modules (unit 3.6).
  */
 final class AccountTermination(
     userRepo: lila.user.UserRepo,
     playbanApi: lila.playban.PlaybanApi,
     relationApi: lila.relation.RelationApi,
     rankingApi: lila.user.RankingApi,
-    teamApi: lila.team.TeamApi,
     challengeApi: lila.challenge.ChallengeApi,
     planApi: lila.plan.PlanApi,
     seekApi: lila.lobby.SeekApi,
@@ -48,7 +42,6 @@ final class AccountTermination(
     modApi: lila.mod.ModApi,
     modLogApi: lila.mod.ModlogApi,
     appealApi: lila.appeal.AppealApi,
-    ublogApi: lila.ublog.UblogApi,
     activityWrite: lila.activity.ActivityWriteApi,
     email: lila.mailer.AutomaticEmail,
     tokenApi: lila.oauth.AccessTokenApi,
@@ -70,8 +63,6 @@ final class AccountTermination(
     _ <- roundApi.resignAllGamesOf(u.id)
     followedIds <- relationApi.accountTermination(u)
     _ <- rankingApi.remove(u.id)
-    _ <- teamApi.quitAllOnAccountClosure(u.id)
-    _ <- tos.so(teamApi.deleteNewlyCreatedBy(u.id))
     _ <- challengeApi.removeByUserId(u.id)
     _ <- planApi.cancelIfAny(u).recoverDefault
     _ <- seekApi.removeByUser(u)
@@ -86,9 +77,7 @@ final class AccountTermination(
       else if teacherClose then modLogApi.teacherCloseAccount(u.id)
       else modLogApi.closeAccount(u.id)
     _ <- appealApi.onAccountClose(u)
-    _ <- ublogApi.onAccountClose(u)
     _ <- (u.marks.troll || u.marks.alt).so(activityWrite.unfollowAll(u, followedIds))
-    _ = selfClose.not.so(modApi.afterModClose(u))
   yield Bus.pub(lila.core.security.CloseAccount(u.id))
 
   def scheduleDelete(u: User)(using Me): Funit = for
@@ -128,8 +117,6 @@ final class AccountTermination(
     _ <- analysisRepo.remove(singlePlayerGameIds)
     _ <- deleteAllGameChats(u)
     _ <- streamerApi.repo.delete(u)
-    _ <- teamApi.onUserDelete(u.id)
-    _ <- ublogApi.onAccountDelete(u)
     _ <- tokenApi.revokeAllByUser(u.id)
     _ <- u.marks.clean.so:
       securityStore.deleteAllSessionsOf(u.id)

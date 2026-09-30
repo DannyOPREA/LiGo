@@ -476,15 +476,8 @@ final class PlanApi(
   private def setDbUserPlanOnCharge(from: User, levelUp: Boolean): Funit =
     val user = from.mapPlan(p => if levelUp then p.incMonths else p.enable)
     notifier.onCharge(user)
-    for _ <- setDbUserPlan(user)
-    yield maybeNotifyColorUnlock(from, user)
-
-  private def maybeNotifyColorUnlock(before: User, after: User): Unit =
-    (before, after).pairMap(_.patronTier.map(_.color.id)) match
-      case (Some(tierBefore), Some(tierAfter)) if tierAfter > tierBefore =>
-        Bus.pub:
-          lila.core.msg.SystemMsg.standard(after.id, s"New wing unlocked! ${routeUrl(routes.Plan.index())}")
-      case _ =>
+    // The "new wing unlocked" private message went with the msg module (unit 3.6).
+    setDbUserPlan(user)
 
   import PlanApi.SyncResult.{ ReloadUser, Synced }
 
