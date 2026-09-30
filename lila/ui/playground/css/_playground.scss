@@ -35,6 +35,13 @@
     @include mq-at-least-col2 {
       margin: 0;
     }
+
+    // Phones (unit 9.6, ADR 0026 §1): the board takes the screen's full width, past the page padding.
+    @include mq-is-col1 {
+      width: auto;
+      max-width: none;
+      margin-inline: calc(-1 * #{$block-gap});
+    }
   }
 
   &__loading {

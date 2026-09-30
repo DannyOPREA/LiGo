@@ -119,6 +119,14 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
 
   def devAsset(@annotation.nowarn v: String, path: String, file: String) = assetsC.at(path, file)
 
+  // LiGo: the page the service worker shows offline (unit 9.6, ADR 0026 §1), on the site's own
+  // domain so the worker can cache it even when assets come from another domain.
+  // Read from lila/public like the asset manifest, since Play's asset controller serves nothing in prod.
+  private lazy val offlineHtml =
+    java.nio.file.Files.readString(env.getFile.exec("public/offline.html").toPath)
+  def offline = Anon:
+    Ok(offlineHtml).as(HTML).withHeaders(CACHE_CONTROL -> "no-cache")
+
   def uploadImage(realm: MarkdownRealm) = AuthBody(lila.web.HashedMultiPart(parse)) { ctx ?=> me ?=>
     lila.core.security.canUploadImages
       .so:

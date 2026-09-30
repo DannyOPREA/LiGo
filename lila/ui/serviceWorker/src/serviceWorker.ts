@@ -6,10 +6,51 @@ function assetUrl(path: string): string {
   return `${assetBase}assets/${path}`;
 }
 
-sw.addEventListener('install', () => sw.skipWaiting());
+// LiGo: the offline page (unit 9.6, ADR 0026 §1). The worker caches /offline when it installs and shows
+// it when a page navigation fails. Nothing else is cached and there is no offline play.
+const offlineCache = 'ligo-offline-v1';
+const offlineUrl = '/offline';
+
+// Never fails: push must keep working even when the page can't be fetched (say, assets deployed
+// before the server), and a miss is retried after the next page that loads.
+const cacheOffline = (): Promise<void> =>
+  caches
+    .open(offlineCache)
+    .then(cache => cache.add(offlineUrl))
+    .catch(() => undefined);
+
+const ensureOffline = async (): Promise<void> => {
+  if (!(await caches.match(offlineUrl, { cacheName: offlineCache }))) await cacheOffline();
+};
+
+sw.addEventListener('install', (e: ExtendableEvent) =>
+  e.waitUntil(cacheOffline().then(() => sw.skipWaiting())),
+);
 
 sw.addEventListener('activate', (e: ExtendableEvent) => {
-  e.waitUntil(sw.clients.claim());
+  e.waitUntil(
+    (async () => {
+      for (const key of await caches.keys())
+        if (key.startsWith('ligo-offline-') && key !== offlineCache) await caches.delete(key);
+      // The browser starts the page's request while the worker starts, so the worker adds no delay.
+      await sw.registration.navigationPreload?.enable();
+      await sw.clients.claim();
+    })(),
+  );
+});
+
+async function navigate(e: FetchEvent): Promise<Response> {
+  try {
+    const res = (await e.preloadResponse) ?? (await fetch(e.request));
+    e.waitUntil(ensureOffline());
+    return res;
+  } catch {
+    return (await caches.match(offlineUrl, { cacheName: offlineCache })) ?? Response.error();
+  }
+}
+
+sw.addEventListener('fetch', (e: FetchEvent) => {
+  if (e.request.mode === 'navigate') e.respondWith(navigate(e));
 });
 
 sw.addEventListener('push', (event: PushEvent) => {
