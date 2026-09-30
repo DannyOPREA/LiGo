@@ -38,6 +38,13 @@ export default defineConfig({
   },
   use: {
     browserName: 'chromium',
-    launchOptions: { executablePath },
+    launchOptions: {
+      executablePath,
+      // Notifications go to Chromium's own message centre, not the desktop's notification service over
+      // D-Bus. CI's runner has no such service; while Chromium 153 waits on it, a shown notification
+      // isn't "displayed" yet, so getNotifications() hides it and the push tests failed (PRs #70, #71,
+      // #79). The feature was renamed from NativeNotifications to SystemNotifications; both are listed.
+      args: ['--disable-features=NativeNotifications,SystemNotifications'],
+    },
   },
 });
