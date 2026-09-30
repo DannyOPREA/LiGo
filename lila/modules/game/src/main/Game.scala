@@ -172,6 +172,67 @@ object GameExt:
       Progress(g, updated, events)
     end applyMove
 
+    /** The Fischer clock after a Go move (ADR 0019 §5), as scalachess' `Game.applyClock` steps it after a
+      * chess move: the frame lag, a step (which switches the running side), and the clock started once each
+      * side has played.
+      */
+    def stepGoClock(
+        metrics: chess.MoveMetrics,
+        gameActive: Boolean
+    ): Option[Clock.WithCompensatedLag[Clock]] =
+      g.clock.map: prev =>
+        val c1 = metrics.frameLag.fold(prev)(prev.withFrameLag)
+        val c2 = c1.step(metrics, gameActive)
+        if g.playedPlies == Ply(1) then c2.map(_.start) else c2
+
+    /** A Phase 3 Go game is over once play stops (ADR 0019 §7): the second consecutive pass, or the ply cap.
+      */
+    def goPlayEnds: Boolean =
+      g.go.exists(_.phase == ligo.gorules.Phase.Scoring) ||
+        g.playedPlies.value >= lila.core.game.GoBridge.maxPlies
+
+    /** Apply a Go action already accepted by the rules (`next`), with the clock stepped for it (ADR 0019 §5):
+      * the Go game, ply, clock and its history, move times and blurs, and the move event.
+      */
+    def applyGoMove(
+        next: ligo.gorules.GoGame,
+        clock: Option[Clock],
+        blur: Boolean = false
+    ): Progress =
+      val before = g.go
+      val mover = g.turnColor
+      def copyPlayer(player: Player) =
+        if blur && mover == player.color then
+          player.copy(blurs = player.blurs.addAtMoveIndex(g.playerMoves(player.color)))
+        else player
+      // computed eagerly: it depends on the current time
+      val newClockHistory = for
+        clk <- clock
+        ch <- g.clockHistory
+      yield ch.recordNewClock(mover, clk)
+      val updated = g
+        .withGo(next)
+        .copy(
+          clock = clock,
+          players = g.players.map(copyPlayer),
+          binaryMoveTimes = (!g.sourceIs(_.Import) && g.clock.isEmpty).option {
+            BinaryFormat.moveTime.write {
+              g.binaryMoveTimes.so { t =>
+                BinaryFormat.moveTime.read(t, g.playedPlies)
+              } :+ Centis.ofLong(nowCentis - g.movedAt.toCentis).nonNeg
+            }
+          },
+          loadClockHistory = _ => newClockHistory,
+          movedAt = nowInstant
+        )
+      val clockEvent = updated.clock
+        .map(Event.Clock.apply)
+        .orElse(updated.playableCorrespondenceClock.map(Event.CorrespondenceClock.apply))
+      val state = Event.State(updated.ply, None, None, whiteOffersDraw = false, blackOffersDraw = false)
+      val action = next.actions.lastOption.getOrElse(ligo.gorules.Action.Pass)
+      val captured = before.so(lila.core.game.GoBridge.captured(_, next))
+      Progress(g, updated, List(Event.GoMove(action, mover, captured, next, state, clockEvent)))
+
     def finish(status: Status, winner: Option[Color]): Game =
       g.copy(
         status = status,

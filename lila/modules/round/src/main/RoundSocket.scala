@@ -102,6 +102,8 @@ final class RoundSocket(
   private val roundHandler: SocketHandler =
     case Protocol.In.PlayerMove(fullId, uci, blur, lag) if !stopping =>
       rounds.tell(fullId.gameId, HumanPlay(fullId.playerId, uci, blur, lag, none))
+    case Protocol.In.PlayerGoMove(fullId, action, blur, lag) if !stopping =>
+      rounds.tell(fullId.gameId, HumanGoPlay(fullId.playerId, action, blur, lag, none))
     case Protocol.In.PlayerDo(fullId, tpe) if !stopping =>
       def forward(f: GamePlayerId => Any) = rounds.tell(fullId.gameId, f(fullId.playerId))
       tpe match
@@ -314,6 +316,12 @@ object RoundSocket:
       case class PlayerOnlines(onlines: Iterable[(GameId, Option[RoomCrowd])]) extends P.In
       case class PlayerDo(fullId: GameFullId, tpe: String) extends P.In
       case class PlayerMove(fullId: GameFullId, uci: Uci, blur: Boolean, lag: MoveMetrics) extends P.In
+      case class PlayerGoMove(
+          fullId: GameFullId,
+          action: ligo.gorules.Action,
+          blur: Boolean,
+          lag: MoveMetrics
+      ) extends P.In
       case class PlayerChatSay(gameId: GameId, userIdOrColor: Either[UserId, Color], msg: String) extends P.In
       case class WatcherChatSay(gameId: GameId, userId: UserId, msg: String) extends P.In
       case class Bye(fullId: GameFullId) extends P.In
@@ -346,14 +354,16 @@ object RoundSocket:
             yield PlayerDo(GameFullId(fullId), tpe)
           }
         case P.RawMsg("r/move", raw) =>
-          raw.get(6) { case Array(fullId, uciS, blurS, lagS, mtS, fraS) =>
-            Uci(uciS).map: uci =>
-              PlayerMove(
-                GameFullId(fullId),
-                uci,
-                P.In.boolean(blurS),
-                MoveMetrics(centis(lagS), centis(mtS), centis(fraS))
-              )
+          raw.get(6) { case Array(fullId, moveS, blurS, lagS, mtS, fraS) =>
+            val blur = P.In.boolean(blurS)
+            val metrics = MoveMetrics(centis(lagS), centis(mtS), centis(fraS))
+            // a chess UCI (4-5 characters) until unit 3.17, or a Go SGF point (2) or `pass` (ADR 0019 §6)
+            Uci(moveS)
+              .map(PlayerMove(GameFullId(fullId), _, blur, metrics))
+              .orElse:
+                lila.core.game.GoBridge
+                  .actionOf(moveS)
+                  .map(PlayerGoMove(GameFullId(fullId), _, blur, metrics))
           }
         case P.RawMsg("chat/say", raw) =>
           raw.get(3) { case Array(roomId, author, msg) =>

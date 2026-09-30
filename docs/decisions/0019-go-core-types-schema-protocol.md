@@ -157,6 +157,8 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
 3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
+(Amended in unit 3.13: the bus `MoveEvent` carries plain strings (board, move) for chess and Go alike
+until 3.17; the API move stream stays chess-only until 3.16. logs/decisions.md, 3.13 row.)
 (Amended in unit 3.12: `ip` is `{b, w, m}`, the stones as strings of SGF points and the player to
 move; a document whose actions stop being legal loads up to the last legal one, and the replayed ply
 wins over a stored `t` that disagrees. logs/decisions.md, 3.12 row.)

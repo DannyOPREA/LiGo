@@ -26,5 +26,14 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
 - Tests like `turnColor == GoBridge.color(go.toMove)` are tautological when turnColor is defined that
   way; the real invariant is ply parity (`ply.turn == toMove`) and stored `st` vs setup's first mover.
 
+- 3.13 (round plays Go): turning a chess predicate off for Go (`forceDrawable = !isGo && …`) also
+  kills its *other* readers: JsonView/RoundMobile use `forceDrawable` to gate `isGone` (claim victory).
+  Grep every consumer of a predicate before gating it. Chess-only paths that "work" for Go only via
+  the dummy start position (`position.opponentHasInsufficientMaterial` in Finisher.outOfTime /
+  ResignForce) deserve a guard or comment. scalachess `applyClock` starts on `ply - startedAtPly == 1`
+  (javap-verified 17.17.1) and passes `gameActive = status.isEmpty`. End-of-game logic living inside
+  the actor (MovePlayer) had no test; ask for a pure predicate. Chess-only consumers of empty `sans`
+  for Go: PushApi.move (corres push), FarmBoostDetection, takeback message numbering.
+
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

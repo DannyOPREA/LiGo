@@ -97,7 +97,21 @@ final private class Takebacker(
 
   private def offerTakebackMessage(pov: Pov): String =
     val k = if pov.game.turnOf(pov.color) then 2 else 1
-    val lastSans = pov.game.sans.takeRight(k).toList
+    pov.game.go.fold(chessTakebackMessage(pov, k))(goTakebackMessage(pov, k, _))
+
+  // Go moves are numbered 1, 2, 3… in play order: "Black proposes takeback (4. ee 5. cc)".
+  private def goTakebackMessage(pov: Pov, k: Int, go: ligo.gorules.GoGame): String =
+    val first = pov.game.playedPlies.value - k + 1
+    val moves = go.actions
+      .takeRight(k)
+      .zipWithIndex
+      .map: (a, i) =>
+        s"${first + i}. ${lila.core.game.GoBridge.token(a)}"
+    val base = pov.color.fold(trans.site.whiteProposesTakeback, trans.site.blackProposesTakeback).txt()
+    s"$base (${moves.mkString(" ")})"
+
+  private def chessTakebackMessage(pov: Pov, k: Int): String =
+    val lastSans = pov.game.sans.takeRight(k).toList.map(_.value)
     val startPly = pov.game.ply - k + 1
     def movePrefix(ply: Ply, secondMove: Boolean): String =
       if secondMove && ply.turn.white then ""
@@ -127,13 +141,20 @@ final private class Takebacker(
         else fufail(ClientError("[takebacker] disallowed by preferences " + game.id))
 
   private def rewind(pov: Pov, plies: Int)(using GameProxy): Fu[Events] =
-    for
-      fen <- gameRepo.initialFen(pov.game)
-      progress <- (1 to plies).foldLeft(fuccess(Progress(pov.game))): (prev, _) =>
-        prev.flatMap: prog =>
-          Rewind(prog.game, fen).toFuture.dmap(rewinded => prog.withGame(rewinded.game))
-      events <- saveAndNotify(progress, pov)
-    yield events
+    if pov.game.isGo then
+      // go-rules' undo, one action at a time (ADR 0019 §6)
+      (1 to plies)
+        .foldLeft[Either[String, Progress]](Right(Progress(pov.game))): (prev, _) =>
+          prev.flatMap(prog => Rewind.go(prog.game).map(rewinded => prog.withGame(rewinded.game)))
+        .fold(e => fufail(ClientError(s"[takebacker] $e")), saveAndNotify(_, pov))
+    else
+      for
+        fen <- gameRepo.initialFen(pov.game)
+        progress <- (1 to plies).foldLeft(fuccess(Progress(pov.game))): (prev, _) =>
+          prev.flatMap: prog =>
+            Rewind(prog.game, fen).toFuture.dmap(rewinded => prog.withGame(rewinded.game))
+        events <- saveAndNotify(progress, pov)
+      yield events
 
   private def saveAndNotify(p1: Progress, pov: Pov)(using proxy: GameProxy): Fu[Events] =
     val p2 = p1 + Event.Reload

@@ -22,7 +22,11 @@ object RoundGame:
       g.playable && g.canTakebackOrAddTime && !g.hasRule(_.noGiveTime) && {
         g.clock.exists(_.moretimeable(color)) || g.correspondenceClock.exists(_.moretimeable(color))
       }
-    def forceDrawable = g.playable && g.nonAi && !g.abortable && !g.isSwiss && !g.hasRule(_.noClaimWin)
+
+    /** The opponent's absence can be claimed on: a win (a Go game, or chess) or a draw (chess only). */
+    def goneClaimable = g.playable && g.nonAi && !g.abortable && !g.isSwiss && !g.hasRule(_.noClaimWin)
+    // Go has no draws (ADR 0019 §6)
+    def forceDrawable = !g.isGo && goneClaimable
 
     def isSwitchable = g.isCorrespondence || g.isSimul
 
@@ -35,6 +39,7 @@ object RoundGame:
 
   // We are always the player in the pov. However for a scalachess Position, the "player" and "opponent"
   // are based on whose turn it is.
-  def cannotLose(p: Pov) =
+  def cannotLose(p: Pov) = !p.game.isGo && (
     (p.isMyTurn && p.game.position.opponentHasInsufficientMaterial) ||
       (!p.isMyTurn && p.game.position.playerHasInsufficientMaterial)
+  )

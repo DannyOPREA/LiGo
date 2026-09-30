@@ -59,3 +59,26 @@ class GoBridgeTest extends munit.FunSuite:
     List(Color.White, Color.Black).foreach: c =>
       assertEquals(GoBridge.color(GoBridge.goColor(c)), c)
     assertEquals(GoBridge.color(GoColor.Black), Color.Black)
+
+  test("a move token is an SGF point or pass, and nothing else"):
+    assertEquals(GoBridge.actionOf("pd"), Some(Action.Place(Point(15, 3))))
+    assertEquals(GoBridge.actionOf("pass"), Some(Action.Pass))
+    assertEquals(GoBridge.actionOf("e2e4"), None)
+    assertEquals(GoBridge.actionOf("zz"), None)
+    assertEquals(GoBridge.actionOf(""), None)
+    for a <- List(Action.Place(Point(0, 18)), Action.Pass) do
+      assertEquals(GoBridge.actionOf(GoBridge.token(a)), Some(a))
+
+  test("the compact board: rows from the top, b and w, runs of empty points as numbers"):
+    val g = start(setup(0))
+      .play(Point(0, 0))
+      .toOption
+      .get
+      .play(Point(8, 0))
+      .toOption
+      .get
+      .play(Point(4, 4))
+      .toOption
+      .get
+    assertEquals(GoBridge.board(g), "b7w/9/9/9/4b4/9/9/9/9")
+    assertEquals(GoBridge.board(start(setup(0))), List.fill(9)("9").mkString("/"))

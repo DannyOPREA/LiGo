@@ -98,7 +98,7 @@ final class RoundMobile(
         val pov = Pov(game, color)
         jsonView
           .player(pov.player, users(color))
-          .add("isGone" -> (game.forceDrawable && use.socketStatus.exists(_.isGone(pov.color))))
+          .add("isGone" -> (game.goneClaimable && use.socketStatus.exists(_.isGone(pov.color))))
           .add(
             "onGame" -> (myPlayer.map(_.color).has(color) ||
               pov.player.isAi ||

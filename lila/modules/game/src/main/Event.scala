@@ -128,6 +128,38 @@ object Event:
       crazyData = crazyData
     )
 
+  /** A Go move (ADR 0019 §6): a stone (`p`, an SGF point) or a pass, with what the browser needs to follow
+    * the game without the rules: the points it captured, both players' prisoners, the ko point, the phase and
+    * the board for live mini boards. No `dests`: the browser's goban engine knows the legal points and the
+    * server re-checks.
+    */
+  case class GoMove(
+      action: ligo.gorules.Action,
+      by: Color,
+      captured: List[ligo.gorules.Point],
+      go: ligo.gorules.GoGame,
+      state: State,
+      clock: Option[ClockEvent]
+  ) extends Event:
+    def typ = "move"
+    def data =
+      val move = action match
+        case ligo.gorules.Action.Place(at) => Json.obj("p" -> at.sgf)
+        case _ => Json.obj("pass" -> true)
+      move ++ Json
+        .obj(
+          "ply" -> state.turns,
+          "cap" -> captured.map(_.sgf),
+          "prisoners" -> Json.obj("b" -> go.captures.black, "w" -> go.captures.white),
+          "phase" -> (if go.phase == ligo.gorules.Phase.Play then "play" else "scoring"),
+          "board" -> lila.core.game.GoBridge.board(go)
+        )
+        .add("ko" -> go.koPoint.map(_.sgf))
+        .add("clock" -> clock.map(_.data))
+        .add("status" -> state.status)
+        .add("winner" -> state.winner)
+    override def moveBy = Some(by)
+
   case class Drop(
       role: chess.Role,
       pos: Square,

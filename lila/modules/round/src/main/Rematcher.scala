@@ -39,8 +39,10 @@ final private class Rematcher(
   def apply(pov: Pov, confirm: Boolean): Fu[Events] =
     if confirm then yes(pov) else no(pov)
 
+  // A Go rematch would be created as a chess game until unit 3.15 creates Go games.
   private def couldRematch(g: Game): Boolean =
-    g.finishedOrAborted &&
+    !g.isGo &&
+      g.finishedOrAborted &&
       g.nonMandatory &&
       !g.hasRule(_.noRematch) &&
       !g.boosted &&
