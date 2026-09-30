@@ -5,7 +5,7 @@ import play.api.libs.json.{ JsObject, Json }
 
 import lila.challenge.Challenge.Status
 import lila.core.LightUser
-import lila.core.game.GameRule
+import lila.core.game.{ GameRule, GoSetups }
 import lila.core.user.WithPerf
 import lila.core.relation.Relation
 import lila.ui.*
@@ -308,12 +308,16 @@ final class ChallengeUi(helpers: Helpers):
 
   private def genericUrl(c: Challenge): Option[Url] =
     c.challengerUser.map: user =>
-      import c.{ initialFen, rated, timeControl, variant, colorChoice }
+      import c.{ rated, timeControl, colorChoice }
+      val go = c.goSetup
       val params: Map[String, String] = List(
+        // the Go options the lobby's challenge form reads back (unit 3.19)
         List(
           "user" -> user.id.value,
-          "variant" -> variant.key.value,
-          "gameMode" -> rated.name
+          "gameMode" -> rated.name,
+          "size" -> go.size.lines.toString,
+          "ruleset" -> GoSetups.rulesetKey(go.ruleset),
+          "komi" -> go.komi.toString
         ),
         timeControl.match
           case Challenge.TimeControl.Clock(config) =>
@@ -323,7 +327,6 @@ final class ChallengeUi(helpers: Helpers):
             )
           case Challenge.TimeControl.Correspondence(days) => List("days" -> days.value.toString)
           case Challenge.TimeControl.Unlimited => List("time" -> "unlimited"),
-        initialFen.map(f => "fen" -> f.value),
         colorChoice.match
           case Challenge.ColorChoice.Random => Nil
           case choice => List("color" -> choice.trans.value)

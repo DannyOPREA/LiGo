@@ -1,31 +1,22 @@
 import { h } from 'snabbdom';
 
-import { perfName } from 'lib/game/perf';
-import perfIcons from 'lib/game/perfIcons';
-import { dataIcon, icon, type MaybeVNode } from 'lib/view';
+import type { MaybeVNode } from 'lib/view';
 
 import type LobbyController from '@/ctrl';
 
+// Go has one rating (ADR 0021 §1); kyu/dan comes with unit 5.5.
 export const ratingView = ({ opts, data, setupCtrl }: LobbyController): MaybeVNode => {
   if (site.blindMode || !data.ratingMap) return null;
-
-  const perf = setupCtrl.selectedPerf();
-
-  if (!perf) return undefined;
+  const rating = setupCtrl.myRating();
+  if (rating === undefined) return undefined;
 
   return h(
     'div.ratings',
     !opts.showRatings
-      ? [icon(perfIcons[perf])(), perfName(perf)]
+      ? ['Go']
       : [
-          ...i18n.site.yourRatingIsX.asArray(
-            h(
-              'strong',
-              { attrs: dataIcon(perfIcons[perf]) },
-              setupCtrl.myRating() + (setupCtrl.isProvisional() ? '?' : ''),
-            ),
-          ),
-          perfName(perf),
+          ...i18n.site.yourRatingIsX.asArray(h('strong', rating + (setupCtrl.isProvisional() ? '?' : ''))),
+          'Go',
         ],
   );
 };

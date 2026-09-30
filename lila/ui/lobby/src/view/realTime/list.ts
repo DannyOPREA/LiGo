@@ -1,12 +1,12 @@
-import { perfName } from 'lib/game/perf';
-import perfIcons from 'lib/game/perfIcons';
+// Relative imports (not `@/`) so that tests/goSetup.test.ts can load this file.
 import { licon } from 'lib/licon';
 import { bind, dataIcon, tr, span, td, button, th, thead, tbody, icon, table } from 'lib/view';
 import { profileUrl } from 'lib/view/userLink';
 
-import type LobbyController from '@/ctrl';
-import * as hookRepo from '@/hookRepo';
-import type { Hook } from '@/interfaces';
+import type LobbyController from '../../ctrl';
+import { goSetupName } from '../../goSetup';
+import * as hookRepo from '../../hookRepo';
+import type { Hook } from '../../interfaces';
 
 function renderHook(ctrl: LobbyController, hook: Hook) {
   return tr(
@@ -18,7 +18,7 @@ function renderHook(ctrl: LobbyController, hook: Hook) {
       title: hook.disabled
         ? ''
         : hook.action === 'join'
-          ? i18n.site.joinTheGame + ' | ' + perfName(hook.perf)
+          ? i18n.site.joinTheGame + (hook.go ? ' | ' + goSetupName(hook.go) : '')
           : i18n.site.cancel,
       'data-id': hook.id,
     },
@@ -30,7 +30,8 @@ function renderHook(ctrl: LobbyController, hook: Hook) {
       ),
       !ctrl.me ? null : td(!ctrl.opts.showRatings ? '' : [hook.rating + (hook.prov ? '?' : '')]),
       td(hook.clock),
-      td(span({ ...dataIcon(perfIcons[hook.perf]) }, i18n.site[hook.ra ? 'rated' : 'casual'])),
+      td(hook.go ? goSetupName(hook.go) : ''),
+      td(i18n.site[hook.ra ? 'rated' : 'casual']),
     ],
   );
 }
@@ -66,7 +67,7 @@ export const render = (ctrl: LobbyController, allHooks: Hook[]) => {
   const renderedHooks = [
     ...standards.map(render),
     variants.length
-      ? tr('.variants', { key: 'variants' }, td({ attrs: { colspan: 5 } }, '— ' + i18n.site.variant + ' —'))
+      ? tr('.variants', { key: 'variants' }, td({ attrs: { colspan: 6 } }, '— ' + i18n.site.variant + ' —'))
       : null,
     ...variants.map(render),
   ];
@@ -98,6 +99,7 @@ export const render = (ctrl: LobbyController, allHooks: Hook[]) => {
               },
           [icon(licon.DownTriangle)('.is'), i18n.site.time],
         ),
+        th(i18n.site.gameSetup),
         th(i18n.site.mode),
       ]),
     ),

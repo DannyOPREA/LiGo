@@ -1,16 +1,12 @@
 import { blindModeColorPicker, colorButtons as renderButtons } from 'lib/setup/view/color';
 import { hl } from 'lib/view';
 
-import { variantsWhereWhiteIsBetter } from '@/options';
 import type SetupController from '@/setupCtrl';
 
-export const colorButtons = ({ gameMode, gameType, variant, color }: SetupController) => {
-  const randomColorOnly =
-    gameType === 'hook' || (gameMode() === 'rated' && variantsWhereWhiteIsBetter.includes(variant()));
-
-  return randomColorOnly
+// Lobby games always get a random colour; a challenge lets the challenger pick.
+export const colorButtons = ({ gameType, color }: SetupController) =>
+  gameType === 'hook'
     ? undefined
     : site.blindMode
       ? hl('div', blindModeColorPicker(color))
       : renderButtons(color);
-};
