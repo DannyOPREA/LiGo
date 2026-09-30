@@ -61,8 +61,7 @@ export default function table(ctrl: LobbyController) {
                 ),
               ),
               hl(
-                'a',
-                { attrs: { href: '/games' } },
+                'span',
                 i18n.site.nbGamesInPlay.asArray(
                   rounds,
                   hl(

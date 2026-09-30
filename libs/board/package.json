@@ -9,13 +9,13 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "node --test test/engine.test.mjs test/conformance.test.mjs test/sgf.test.mjs test/board.browser.test.mjs",
-    "test:all": "node --test test/engine.test.mjs test/conformance.test.mjs test/sgf.test.mjs test/parity.test.mjs test/board.browser.test.mjs",
+    "test": "node --test test/engine.test.mjs test/conformance.test.mjs test/sgf.test.mjs test/board.browser.test.mjs test/puzzle.browser.test.mjs",
+    "test:all": "node --test test/engine.test.mjs test/conformance.test.mjs test/sgf.test.mjs test/parity.test.mjs test/board.browser.test.mjs test/puzzle.browser.test.mjs",
     "test:node": "node --test test/engine.test.mjs test/conformance.test.mjs test/sgf.test.mjs",
     "test:node-all": "node --test test/engine.test.mjs test/conformance.test.mjs test/sgf.test.mjs test/parity.test.mjs",
-    "test:browser": "node --test test/board.browser.test.mjs",
+    "test:browser": "node --test test/board.browser.test.mjs test/puzzle.browser.test.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "oxfmt -c ../../lila/.oxfmtrc.json --check src/board.ts src/rules.d.mts src/sgf.d.mts test/browser && oxlint -c ../../lila/.oxlintrc.jsonc src/board.ts test/browser"
+    "lint": "oxfmt -c ../../lila/.oxfmtrc.json --check src/board.ts src/puzzle.ts src/themes.ts src/access.ts src/rules.d.mts src/sgf.d.mts test/browser && oxlint -c ../../lila/.oxlintrc.jsonc src/board.ts src/puzzle.ts src/themes.ts src/access.ts test/browser"
   },
   "dependencies": {
     "@sabaki/sgf": "3.5.0",
@@ -26,13 +26,24 @@
     ".": "./src/engine.mjs",
     "./rules": "./src/rules.mjs",
     "./sgf": "./src/sgf.mjs",
+    "./themes": {
+      "types": "./src/themes.ts",
+      "source": "./src/themes.ts",
+      "default": "./src/themes.ts"
+    },
     "./board": {
       "types": "./src/board.ts",
       "source": "./src/board.ts",
       "default": "./src/board.ts"
+    },
+    "./puzzle": {
+      "types": "./src/puzzle.ts",
+      "source": "./src/puzzle.ts",
+      "default": "./src/puzzle.ts"
     }
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@playwright/test": "^1.63.0",
     "esbuild": "0.28.2",
     "typescript": "7.0.2"

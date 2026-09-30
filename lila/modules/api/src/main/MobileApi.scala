@@ -4,7 +4,6 @@ import play.api.libs.json.{ Json, JsObject }
 import play.api.i18n.Lang
 import scalalib.data.Preload
 
-import lila.common.Json.given
 import lila.core.i18n.Translate
 import lila.core.user.KidMode
 import lila.oauth.TokenScopes
@@ -15,13 +14,10 @@ final class MobileApi(
     lobbyApi: LobbyApi,
     lightUserApi: lila.user.LightUserApi,
     gameProxy: lila.round.GameProxyRepo,
-    tv: lila.tv.Tv,
-    liveStreamApi: lila.streamer.LiveApi,
     activityRead: lila.activity.ActivityReadApi,
     activityJsonView: lila.activity.JsonView,
     challengeApi: lila.challenge.ChallengeApi,
     challengeJson: lila.challenge.JsonView,
-    picfitUrl: lila.memo.PicfitUrl,
     isOnline: lila.core.socket.IsOnline,
     playing: lila.round.PlayingUsers,
     relationStream: lila.relation.RelationStream
@@ -58,25 +54,8 @@ final class MobileApi(
   // tournamentsOf/tournaments (the mobile app's featured-tournaments feed) were removed with the
   // tournament module (unit 3.2).
 
-  // "broadcast" (relay) field removed with the relay module (unit 3.3).
-  def watch: Fu[JsObject] =
-    for
-      champs <- tv.getChampions
-      tvChannels = champs.channels.mapKeys(_.key)
-      streamers <- featuredStreamers
-    yield Json.obj(
-      "tv" -> Json.toJson(tvChannels),
-      "streamers" -> streamers
-    )
-
-  def featuredStreamers = for
-    s <- liveStreamApi.all
-    users <- lightUserApi.asyncManyFallback(s.streams.map(_.streamer.userId))
-  yield s.streams
-    .zip(users)
-    .map: (stream, user) =>
-      Json.toJsObject(user) ++
-        lila.streamer.Stream.toLichessJson(picfitUrl, stream)
+  // watch (TV channels and featured streamers) was removed with the tv and streamer modules
+  // (unit 3.7).
 
   def profile(user: User)(using me: Option[Me])(using Lang): Fu[JsObject] =
     for
@@ -98,4 +77,3 @@ final class MobileApi(
       .obj()
       .add("online", isOnline.exec(user.id))
       .add("playing", playing)
-      .add("streaming", liveStreamApi.userIds(user.id))

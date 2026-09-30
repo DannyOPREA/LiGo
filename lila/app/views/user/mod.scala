@@ -28,43 +28,6 @@ object mod:
             )
       )
 
-  def plan(u: User)(charges: List[lila.plan.Charge])(using Context): Option[Frag] =
-    charges.nonEmpty.option(
-      mzSection("plan")(
-        strong(cls := "text inline", dataIcon := patronIconChar)(
-          "Patron payments",
-          Granter.opt(_.PayPal).option {
-            charges.find(_.giftTo.isEmpty).flatMap(_.payPal).flatMap(_.subId).map { subId =>
-              frag(
-                " - ",
-                a(
-                  href := s"https://www.paypal.com/fr/cgi-bin/webscr?cmd=_profile-recurring-payments&encrypted_profile_id=$subId"
-                )("[PayPal sub]")
-              )
-            }
-          }
-        ),
-        ul(
-          charges.map { c =>
-            li(
-              c.giftTo match
-                case Some(giftedId) if u.is(giftedId) => frag("Gift from", userIdLink(c.userId), " ")
-                case Some(giftedId) => frag("Gift to", userIdLink(giftedId.some), " ")
-                case _ => emptyFrag
-              ,
-              c.money.display,
-              " with ",
-              c.serviceName,
-              " on ",
-              showInstant(c.date),
-              " UTC"
-            )
-          }
-        ),
-        br
-      )
-    )
-
   def otherUsers(
       u: User,
       data: UserLogins.TableData[UserWithModlog],

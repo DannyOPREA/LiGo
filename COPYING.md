@@ -101,6 +101,12 @@ packages and the forum, blog and class bundles in `ui/bits`, and with them the o
 `@textcomplete/core` 0.1.13, `@textcomplete/textarea` 0.1.13, `@textcomplete/utils` 0.1.13,
 `textarea-caret` 3.1.0 and `undate` 0.3.0 (all MIT). No package was added.
 
+Unit 3.7 removed the extras and search: the `ui/recap` and `ui/editor` workspace packages and the
+streamer, coach, video, news-feed, Patron, TV and game-search bundles in `ui/bits`, and with them the
+only user of `swiper` 12.2.0 (MIT). On the server side, lila's sbt build dropped its dependency on
+lichess's game-search client (`com.github.lichess-org.lila-search` `client` 3.6.0) with the `search`
+module. No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file
@@ -109,6 +115,10 @@ says otherwise. That covers:
 - `libs/` (e.g. the rules adapter, the board adapter, conformance fixtures)
 - `services/`, `tools/`, `dev/` (except `dev/lila-docker/`, above)
 - `.claude/`, `.github/`, `docs/`, `logs/`, and top-level project files other than `LICENSE`
+
+**The puzzle set** (`tools/puzzles/data/`, unit 8.4) is LiGo's own generated content and MIT too.
+Its sources list is `tools/puzzles/data/SOURCES.md`, and each puzzle's `provenance` names the
+generator, seed and KataGo network that checked it.
 
 **Exception, screenshots:** screenshots of lila or LiGo (e.g. `docs/research/baseline/`) depict
 AGPL-3.0 software and may show lichess's logo, which isn't free and appears only to refer to lichess.
@@ -126,7 +136,7 @@ without that header.
 
 Vendored or adapted third-party code keeps its original licence and notice. Every dependency and
 vendored component must have an AGPL-3.0-compatible licence (MIT, BSD, Apache-2.0, LGPL, GPL-3.0,
-AGPL-3.0). Non-commercial and unclear licences are rejected.
+AGPL-3.0, MPL-2.0). Non-commercial and unclear licences are rejected.
 
 | Component | Where | Licence | Notes |
 |---|---|---|---|
@@ -136,7 +146,7 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | PlayStrategy strategygames `10.2.1-s3-ps14` (Go rules; a dependency, not copied), with its other games' engines excluded (ADR 0012) | `libs/go-rules/build.sbt` | MIT | Notice in `libs/go-rules/NOTICE.md`; jar SHA-256 pinned in `docs/UPSTREAM.md` |
 | joda-time `2.10.10` and scala-parser-combinators `2.4.0`, brought in by strategygames (dependencies, not copied) | `libs/go-rules/build.sbt` (transitive) | Apache-2.0 | joda-time's NOTICE is below and in `libs/go-rules/NOTICE.md`; scala-parser-combinators ships none |
 | OGS goban-engine `8.3.226` (the client's Go rules; a dependency, not copied, ADR 0014) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
-| OGS goban `8.3.226` (the board: its SVG renderer and its own copy of the engine; a dependency, not copied, ADR 0014, unit 2.1). Only its plain board and stones are used; its image themes are not (their pictures are unchecked) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
+| OGS goban `8.3.226` (the board: its SVG renderer and its own copy of the engine; a dependency, not copied, ADR 0014, unit 2.1; its puzzle mode is the puzzle board, unit 8.5). Only its themes drawn in code are used (plain, Book, Night Play, HNG boards; Plain, Slate & Shell, Glass, Worn Glass, Night stones; unit 9.3, ADR 0026 §3); its picture themes are not (their pictures, on OGS's CDN, have no stated licence) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
 | goscorer (lightvector), bundled inside goban-engine and goban | `libs/board` (inside goban-engine and goban) | MIT | goban's build drops its notice, so `libs/board/NOTICE.md` carries it |
 | eventemitter3 `5.0.4`, goban-engine's and goban's only dependency | `libs/board` (transitive) | MIT | Notice in `libs/board/NOTICE.md` |
 | @sabaki/sgf `3.5.0` (the analysis board's SGF reader and writer; a dependency, not copied, ADR 0023, unit 7.2), with a one-field patch (`browser`) in `libs/board/patches/`; its optional Node-only charset detectors (iconv-lite, jschardet) are not installed (`ignoredOptionalDependencies` in `lila/pnpm-workspace.yaml`) | `libs/board/package.json` | MIT | Copyright Yichuan Shen; notice in `libs/board/NOTICE.md` |
@@ -147,6 +157,10 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | OGS's own autoscore test games (31 finished games with KataGo's stored analysis), vendored unchanged as `services/scoring`'s regression set (unit 4.4) and the autoscore benchmark set of `dev/ligo scoring bench` (unit 4.6; its `bench` script adds no dependency) | `services/scoring/test/autoscore_test_files/` | Apache-2.0 | `services/scoring/LICENSE-Apache-2.0.txt`; notice in `services/scoring/test/autoscore_test_files/NOTICE.md`; goban ships no NOTICE file |
 | ioredis `6.0.0` (the scoring service's Redis client, unit 4.5, logs/decisions.md), and its own runtime dependencies (`@ioredis/commands`, `debug`, `ms`, `supports-color`, `redis-errors`, `standard-as-callback`: MIT; `denque`, `cluster-key-slot`: Apache-2.0) | `services/scoring/package.json` (transitive deps not listed there) | MIT / Apache-2.0 | Notices in `services/scoring/NOTICE.md`; `services/scoring/LICENSE-Apache-2.0.txt` |
 | OGS goratings @ `6cab309`: the rank curve and handicap maths ported to Scala (ADR 0013, unit 5.2), and test values it computed | `lila/modules/rating/src/main/GoRating.scala`, `lila/modules/rating/src/test/resources/goRatingCases.json` | MIT | Copyright (c) 2020 online-go.com; notice in `lila/modules/rating/NOTICE-goratings.md`. The port is LiGo's own code (MIT, §2), not derived from lila |
+| OGS goban-engine `8.3.226` a third time, as the puzzle pipeline's rules engine (ADR 0025, unit 8.3) | `tools/puzzles/package.json` | Apache-2.0 | Copyright Online-Go.com; `tools/puzzles/LICENSE-Apache-2.0.txt`, notices in `tools/puzzles/NOTICE.md`; ships no NOTICE file |
+| ajv `8.20.0` (the puzzle JSON Schema validator, unit 8.3, logs/decisions.md) and its dependencies fast-deep-equal, json-schema-traverse, require-from-string (MIT) and fast-uri (BSD-3-Clause) | `tools/puzzles/package.json` (transitive deps not listed there) | MIT / BSD-3-Clause | Notices in `tools/puzzles/NOTICE.md` |
+| KaTrain's tsumego frame (`katrain/core/tsumego_frame.py`, itself ported from lizgoban by kaorahi), ported to TypeScript for KataGo's second opinion on puzzles (ADR 0025 §2, unit 8.3), with test vectors computed by the original | `tools/puzzles/src/frame.ts`, `tools/puzzles/test/fixtures/frame.json` | MIT | Copyright 2020 Sander Land and/or other authors; `tools/puzzles/LICENSE-katrain.txt` |
+| @axe-core/playwright `4.13.0` and axe-core `4.13.0` (automatic accessibility checks in the board's and the playground's browser tests, ADR 0026 §4, unit 9.4). Dev dependencies only: never bundled into a page or shipped to players | `libs/board/package.json`, `lila/package.json` (axe-core is transitive) | MPL-2.0 | Copyright Deque Systems, Inc.; unmodified, used from npm, so MPL-2.0's file-level terms ask nothing more of LiGo. axe-core bundles MIT and ISC code (its `LICENSE-3RD-PARTY.txt`) |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they

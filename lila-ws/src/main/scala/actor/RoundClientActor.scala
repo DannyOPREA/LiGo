@@ -13,23 +13,20 @@ object RoundClientActor:
   case class State(
       room: RoomActor.State,
       player: Option[Game.RoundPlayer],
-      userTv: Option[UserTv],
       site: ClientActor.State = ClientActor.State()
   ):
     def busChans: List[Bus.Chan] =
       Bus.channel.room(room.room) ::
-        player.fold(List.empty)(_ => List(Bus.channel.roundPlayer)) :::
-        userTv.map(Bus.channel.userTv).toList
+        player.fold(List.empty)(_ => List(Bus.channel.roundPlayer))
 
   def start(
       roomState: RoomActor.State,
       player: Option[Game.RoundPlayer],
-      userTv: Option[UserTv],
       from: Either[Option[SocketVersion], JsonString]
   )(deps: Deps): Behavior[ClientMsg] =
     Behaviors.setup: ctx =>
       import deps.*
-      val state = State(roomState, player, userTv)
+      val state = State(roomState, player)
       onStart(deps, ctx)
       req.user.foreach { users.connect(_, ctx.self) }
       state.busChans.foreach { Bus.subscribe(_, ctx.self) }

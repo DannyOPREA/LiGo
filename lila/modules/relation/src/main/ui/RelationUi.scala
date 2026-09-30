@@ -61,7 +61,7 @@ final class RelationUi(helpers: Helpers):
       ),
       ctx.me
         .filter(user.isnt(_))
-        .so: me =>
+        .so: _ =>
           List(
             relation.isEmpty.so:
               List(
@@ -92,15 +92,7 @@ final class RelationUi(helpers: Helpers):
                 Some("relation-button")
               )
             ,
-            (!blocked && !blocks && !user.isPatron).option:
-              val url = if me.isPatron then routes.Plan.list else routes.Plan.index()
-              MenuItem(
-                trans.patron.giftPatronWingsShort.txt(),
-                Icon.Wings,
-                s"$url?dest=gift&giftUsername=${user.name}",
-                Some("relation")
-              )
-            ,
+            // "Gift Patron wings" went with the plan module (unit 3.7).
             relation
               .has(Relation.Follow)
               .option:
@@ -156,9 +148,9 @@ final class RelationUi(helpers: Helpers):
                   td(userLink(r.user)),
                   ctx.pref.showRatings.option(td(showBestPerf(r.user.perfs))),
                   td:
+                    // the link to these games used game search, removed in unit 3.7.
                     r.nbGames.filter(_ > 0).map { nbGames =>
-                      a(href := s"${routes.User.games(u.username, "search")}?players.b=${r.user.username}"):
-                        trans.site.nbGames.plural(nbGames, nbGames.localize)
+                      trans.site.nbGames.plural(nbGames, nbGames.localize)
                     }
                 )
             else tr(td(trans.site.none()))

@@ -12,8 +12,7 @@ final class Env(
     userRepo: lila.core.user.UserRepo,
     userApi: lila.core.user.UserApi,
     getLightUserSync: lila.core.LightUser.GetterSync,
-    cacheApi: lila.memo.CacheApi,
-    subsRepo: lila.core.relation.SubscriptionRepo
+    cacheApi: lila.memo.CacheApi
 )(using Executor, org.apache.pekko.stream.Materializer):
 
   lazy val jsonHandlers = wire[JSONHandlers]
@@ -34,13 +33,6 @@ final class Env(
   Bus.sub[lila.core.game.CorresAlarmEvent]:
     case lila.core.game.CorresAlarmEvent(userId, pov, opponent) =>
       api.notifyOne(userId, NotificationContent.CorresAlarm(pov.game.id, opponent))
-
-  Bus.sub[lila.core.misc.streamer.StreamStart]:
-    case lila.core.misc.streamer.StreamStart(userId, streamerName) =>
-      subsRepo
-        .subscribersOnlineSince(userId, 7)
-        .map: subs =>
-          api.notifyMany(subs, NotificationContent.StreamStart(userId, streamerName))
 
   wire[NotifyCli]
 

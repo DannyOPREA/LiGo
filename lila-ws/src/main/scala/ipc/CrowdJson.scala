@@ -9,7 +9,7 @@ final class CrowdJson(inquirers: Inquirers, lightUserApi: LightUserApi)(using ec
   // study members; studies were removed in unit 3.3, so no room keeps them now.
   def room(crowd: RoomCrowd.Output): Future[ClientIn.Crowd] =
     val withFewUsers = if crowd.users.sizeIs > 20 then crowd.copy(users = Nil) else crowd
-    roomSpectatorsOf(withFewUsers, crowd.users).map: json =>
+    roomSpectatorsOf(withFewUsers).map: json =>
       ClientIn.Crowd.make(json, withFewUsers.members, withFewUsers.users)
 
   def round(crowd: RoundCrowd.Output): Future[ClientIn.Crowd] =
@@ -25,16 +25,14 @@ final class CrowdJson(inquirers: Inquirers, lightUserApi: LightUserApi)(using ec
         Nil
       )
 
-  private def roomSpectatorsOf(crowd: RoomCrowd.Output, allUsers: Iterable[User.Id]): Future[JsObject] =
+  private def roomSpectatorsOf(crowd: RoomCrowd.Output): Future[JsObject] =
     if crowd.users.isEmpty then Future.successful(Json.obj("nb" -> crowd.members))
     else
       Future.traverse(crowd.users.filterNot(inquirers.contains))(lightUserApi.get).map { names =>
-        val base = Json.obj(
+        Json.obj(
           "nb" -> crowd.members,
           "users" -> names.filterNot(isBotName)
         )
-        val streamers = Streamer.intersect(allUsers)
-        if streamers.isEmpty then base else base ++ Json.obj("streams" -> Json.toJson(streamers))
       }
 
   private def roundSpectatorsOf(crowd: RoundCrowd.Output): Future[JsObject] =
@@ -42,9 +40,7 @@ final class CrowdJson(inquirers: Inquirers, lightUserApi: LightUserApi)(using ec
     else if crowd.size > 10 then Future.successful(Json.obj("nb" -> crowd.size))
     else
       Future.traverse(crowd.users.filterNot(inquirers.contains))(lightUserApi.get).map { names =>
-        val base = Json.obj("users" -> names.filterNot(isBotName))
-        val streamers = Streamer.intersect(crowd.users)
-        if streamers.isEmpty then base else base ++ Json.obj("streams" -> Json.toJson(streamers))
+        Json.obj("users" -> names.filterNot(isBotName))
       }
 
   private def isBotName(name: User.TitleName) = name.value.startsWith("BOT ")

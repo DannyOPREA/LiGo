@@ -70,6 +70,9 @@ fi
 if has '^services/scoring/|^libs/conformance/fixtures/|^dev/katago\.sh$|^dev/ligo$'; then
   add "scoring: typecheck, lint, tests" "dev/ligo test scoring"
 fi
+if has '^tools/puzzles/|^services/scoring/|^libs/board/|^lila/pnpm-(lock|workspace)\.yaml$|^dev/katago\.sh$|^dev/ligo$'; then
+  add "puzzles: typecheck, lint, tests, check" "dev/ligo test puzzles"
+fi
 
 if ((LIST)); then
   if ((${#gates[@]})); then printf '%s\n' "${gates[@]%%|*}"; else echo "(no gates for these changes)"; fi

@@ -2,13 +2,10 @@
 @import 'app/app';
 @import 'app/playing';
 @import 'table';
-@import 'stream';
 @import 'spotlight';
 @import 'timeline';
 @import 'box';
-@import 'support';
 @import 'about';
-@import 'feed';
 @import 'layout';
 
 body {
@@ -78,14 +75,6 @@ body {
   @extend %page-text-shadow !optional;
 
   margin-top: $block-gap;
-}
-
-.lobby__tv .mini-game {
-  overflow: visible;
-
-  &__player {
-    padding-top: 0;
-  }
 }
 
 .lobby__puzzle .text {

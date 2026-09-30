@@ -11,8 +11,7 @@ final class Services(
     val keepAlive: KeepAlive,
     val lobby: Lobby,
     val friends: FriendList,
-    val lag: Lag,
-    val tv: Tv
+    val lag: Lag
 ):
 
   def lila = lilaRedis.emit

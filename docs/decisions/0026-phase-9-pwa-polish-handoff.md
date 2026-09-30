@@ -136,6 +136,16 @@ adds **no new sound files** in Phase 9. Go events map onto the existing names:
   chess boards). Recorded in logs/decisions.md.
 - Coordinates are the ones printed on a board (letters A–T without I, numbers from the bottom),
   the same as the board's labels, never SGF's two-letter form.
+- **Unit 9.4 amendment (2026-09-30):** the keys as built are the arrows, Home/End (row ends), Page
+  Up/Page Down (top and bottom rows), Enter or Space (play; again to confirm), **P** (pass) and
+  **D** (the point and its four neighbours), and **Escape** takes back a waiting preview; a held
+  key acts once; the board says "Not your move" (or that it waits for the page) and names the
+  point when Tab reaches it. Its keys stop at the board so lila's page hotkeys (mousetrap, on the
+  round, analysis and puzzle pages) don't also fire. The words are
+  English until the board joins lila's i18n in 9.7. goban draws no stone animation, so reduced
+  motion needs nothing. axe finds lila's own `.button` (white on #3692e7, 3.3:1) below 4.5:1 on
+  every page: 9.7 fixes that colour site-wide, and until then the playground's test lets off only
+  that rule on lila's buttons.
 
 ### 5. The performance budget (units 9.5 and 9.10)
 Numbers measured on the built output and in Chromium, gzip -9, checked by a script in `dev/ci`
@@ -149,6 +159,17 @@ headroom, under a ceiling a phone on a slow connection tolerates:
 | All JS a page loads before the board (site + the page's entry and its chunks; the playground today, its own entry being 3.6 KiB) | 112 KiB | 130 KiB |
 | A page's CSS | measured in 9.5 | measured + 15% |
 | Board mount to first drawn stone, 19×19, Chromium with the CPU slowed 4× | measured in 9.5 | measured + 15%, and never above 1 s |
+
+**Unit 9.5 amendment (2026-09-30):** the "Today" column above came from a debug (unminified)
+build. CI measures the production build (`ui/build -p`), which is smaller, so the limits are set
+from it, still at about +15%: board chunk 100.3 → **115 KiB**, site JS 77.5 → **90 KiB**, site CSS
+(theme + site) 13.4 → **16 KiB**, playground JS before the board 81.4 → **95 KiB**, playground CSS
+0.5 → **2 KiB** (a floor, as 15% of half a kibibyte is noise). The board chunk counts the chunks
+it imports that no page loads before it. The board mount, timed inside the page from the click on
+"New game" to the new board painted (19×19, 9 stones, CPU 4× slower, median of five), measured
+63–76 ms; its limit is **250 ms**, not +15%, because timings on CI's shared runners vary far
+more than sizes, and it stays well under the 1 s ceiling. The 4× slowdown is relative to the
+machine running the test, so the number is a regression guard, not a fixed phone speed. The limits live in `dev/ci/budget.json`.
 
 A budget raised later needs a line in logs/frontend.md saying why. New pages (round, analysis,
 puzzle, lobby) add their own line when they land; 9.10 runs the whole set over every page.

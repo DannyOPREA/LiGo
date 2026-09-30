@@ -49,15 +49,17 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
 - `services/scoring/` the scoring service core: KataGo's analysis engine, goban-engine's autoscore
   and goscorer (ADR 0016, ADR 0020, unit 4.4), in lila's pnpm workspace; replays the scoring
   fixtures too. No Redis worker yet (unit 4.5). See services/scoring/CLAUDE.md.
-- Planned, not created yet (each gets its own CLAUDE.md when its unit starts): `tools/puzzles`.
+- `tools/puzzles/` the tsumego generator and pipeline: catalogue positions solved exactly over
+  goban-engine, checked by KataGo, written as goban's puzzle JSON (ADR 0025, unit 8.3), in lila's
+  pnpm workspace. See tools/puzzles/CLAUDE.md.
 - `lila/` and `lila-ws/` are plain folders of this repo, not git repos of their own.
 
 ## Commands
-`dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|rules|all] | test [lila|ws|ui|pages|rules|board|scoring|all]`
-`dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench] | scoring bench`. Docker mode on the owner's
+`dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|rules|all] | test [lila|ws|ui|pages|budget|rules|board|scoring|puzzles|all]`
+`dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench] | scoring bench | puzzles [build|check|gate|sgf|import]`. Docker mode on the owner's
 machine, native mode in cloud sessions (ADR 0010). Fresh cloud container: `dev/cloud-setup.sh` then `dev/ligo deps`.
 Tooling self-tests: `dev/tests/run.sh`, `bats .claude/hooks/tests`. CI: `.github/workflows/` (lila, ui,
-meta, rules, scoring); its checks live in `dev/ci/`.
+meta, rules, scoring, puzzles); its checks live in `dev/ci/`.
 Never `sbt clean` in the cloud, never non-frozen `pnpm install`, never `lila/bin/deploy`.
 
 ## Environment gotchas

@@ -8,6 +8,8 @@ packages:
   - '../libs/board'
   # LiGo: the scoring service core, KataGo + goban-engine autoscore + goscorer (ADR 0016, unit 4.4)
   - '../services/scoring'
+  # LiGo: the tsumego generator and pipeline (ADR 0025, unit 8.3)
+  - '../tools/puzzles'
 ignoredOptionalDependencies:
   - '@ox*/*-arm-*'
   - '@ox*/*-ia32-*'

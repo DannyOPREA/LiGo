@@ -33,6 +33,25 @@ Found reviewing unit 2.1 (goban SVG board wrapper `mountBoard`, 2026-09-28):
 - Workspace moves: grep dev/ligo for leftover `cd libs/board && pnpm install --frozen-lockfile`
   (fails with no lockfile once the package joins lila's workspace). The main session may be
   editing the working tree while you review: diff HEAD vs working tree twice.
+- Themes (9.3): goban calls getSelectedThemes in its ctor and again on resize redraws, so an
+  override must return a field updated by set(); SVGRenderer.setTheme copies getBackgroundCSS keys
+  onto the parent and never clears them (check switch-back screenshots). CDN URLs only in woods,
+  Granite, Anime and the "anime" shadow. "Unit = last commit" can be false: diff origin/main...HEAD.
+  Check lazy-chunk claims via the compiled .js.map `sources`.
 
 **How to apply:** any libs/board, Phase 2 board, or scoring-service review touching goban-engine.
 See [[conformance-fixture-review-patterns]], [[review-patterns-general]].
+
+Found reviewing unit 8.5 (goban puzzle mode `mountPuzzle`, 2026-09-30):
+
+- **Deferred actions leak events**: a retry deferred until goban's reply timer fires still lets that
+  reply's `puzzle-wrong-answer` reach `onResult` after the page called retry. Probe with a 300 ms
+  reply delay and print the event list; tests that only check the final state miss it.
+- **"Refused as occupied" claims**: in puzzle mode a click on a stone emits nothing (no error);
+  puzzle mode also skips superko. Check refusal docs by probing, not by reading.
+- **Plan wording vs API shape**: PLAN/ADR said "`mountBoard` gains a puzzle option"; the unit shipped
+  a separate `mountPuzzle` without recording it. Grep PLAN row + ADR Consequences for the named API.
+- goban's `destroy()` calls `removeAllListeners()` on itself and the engine, so a reply timer firing
+  after destroy is silent (probed, no page errors).
+- Touch-confirm UX differs between goban play mode (second tap removes the preview) and LiGo's puzzle
+  glue (second tap plays): flag inconsistencies across boards.

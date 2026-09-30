@@ -22,6 +22,7 @@ const board = mountBoard(el, {
   onMove: move => send(move),            // the player picked a legal move: 'dd' or 'pass'
   onRefused: reason => {},               // 'occupied' | 'suicide' | 'superko'
   onPlayed: ({ move, color, captured }) => {}, // each move that counted, from `play` (sounds, ADR 0026)
+  theme: { board: 'Book', stones: 'Slate & Shell' }, // optional, default Plain / Plain
   onChange: () => redraw(),
 });
 board.play('qf');   // a move that counts: the player's, once accepted, or the opponent's
@@ -45,8 +46,21 @@ board.destroy();
   phones need the page's button.
 - **Sized by its box.** The board is as wide as `el` (the page's CSS sets that) and follows it
   when it changes size. goban draws in a child of `el`, inside a shadow root.
-- **Plain board and stones.** goban's default look loads a wood picture from OGS's CDN, and its
-  picture themes have unchecked licences, so LiGo uses goban's drawn "Plain" theme only.
+- **Themes drawn from code only** (ADR 0026 §3). `theme: { board, stones }` picks one of goban's
+  picture-free boards (Plain, Book, Night Play, HNG, HNG Night) and stone pairs (Plain, Slate &
+  Shell, Glass, Worn Glass, Night); `board.set({ theme })` changes it on a mounted board. The lists
+  are in `src/themes.ts` (`@ligo/board/themes`), which a page can import without loading goban.
+  goban's wood, granite and anime themes load pictures from OGS's CDN with no stated licence, and
+  any name not in the lists becomes Plain, so the board never fetches anything.
+- **Keyboard and screen readers** (unit 9.4, ADR 0026 §4, `src/access.ts`). The board is a
+  focusable `role="application"`: arrows, Home/End and Page Up/Down move a cursor (shown only on
+  keyboard focus), Enter or Space plays there as a tap would (with `confirm`, again to play, and
+  Escape takes the preview back), P passes, D reads the point and its neighbours. A held key acts
+  once. A click doesn't focus the board (goban handles the pointer); Shift+Tab after a click does.
+  The keys the board uses stop at the board, so a page's own hotkeys (lila's mousetrap) don't
+  also fire. A polite live region reads out each move `play`
+  plays ("Black D4, 1 stone captured", "White passes"), refusals ("Illegal: ko") and the point
+  under the cursor, with the names printed on the board (letters without I). English for now.
 - **Same rules as the engine.** The board takes its settings from `src/rules.mjs`, the ones
   `createEngine` uses (superko, no suicide, komi, the server's handicap stones), and nothing in
   `src/` imports goban-engine next to goban, so a page bundles goban's engine once. The bundle
@@ -56,6 +70,46 @@ board.destroy();
   method that sends moves (`sendMove`), and a stand-in socket hands `play` to goban's own code for
   arriving moves. goban only lets the player to move place stones (`player_id`); the adapter keeps
   that id in step with `movable` and the turn.
+
+## The puzzle board (`src/puzzle.ts`, unit 8.5, ADR 0025)
+
+goban's own puzzle mode (the one OGS's puzzle pages use), behind the same kind of API. It takes a
+puzzle in goban's puzzle JSON, as `tools/puzzles` writes it (ADR 0025 §1).
+
+```ts
+import { mountPuzzle } from '@ligo/board/puzzle';
+
+const board = mountPuzzle(el, {
+  puzzle,                    // { width, height, bounds, initial_state, initial_player, move_tree, ... }
+  confirm: false,            // true: a tap shows a see-through stone, a second tap (or confirm()) plays it
+  theme: DEFAULT_THEME,      // as mountBoard's (unit 9.3)
+  replyDelay: 300,           // ms before goban plays the opponent's reply (0 also means 300)
+  onMove: (move, by) => {},  // 'player' | 'opponent', each stone played
+  onResult: result => {},    // 'right' | 'wrong', once per attempt
+  onRefused: reason => {},   // in practice 'suicide': a click on a stone does nothing, no superko check
+  onChange: () => redraw(),
+});
+board.retry();  board.line();  board.result();  board.pending();  board.confirm();
+board.set({ confirm, theme });  board.state();  board.destroy();
+```
+
+- **goban plays the puzzle.** It shows only the puzzle's `bounds` (labels on the board's own edges
+  only), follows the player down the tree, answers with one of the tree's replies at random, and
+  says right or wrong. A move off the tree is wrong (`puzzle_player_move_mode: 'free'`).
+- **One result per attempt.** goban says "wrong" again at each later move of a failed line, so the
+  board reports the first result and then takes no more moves until `retry()`. A `retry` while
+  goban's reply is on its way waits for that reply (goban's timer can't be cancelled), and nothing
+  from the abandoned attempt (the reply, its result) reaches the page.
+- **Touch-confirm is LiGo's.** In puzzle mode goban places the stone on the first tap whatever its
+  submit settings. With `confirm` on, LiGo keeps goban's placement off, shows its own see-through
+  stone (a goban mark), and hands the tap to goban on the second tap of the same point or on
+  `confirm()`. This differs from `mountBoard`, where goban's own play mode takes the preview back
+  on a second tap and the page's button plays it: a puzzle has no confirm button of its own until
+  the trainer page (8.7), so a second tap plays.
+- **A separate mount, not a `mountBoard` option.** PLAN row 8.5 and ADR 0025 said `mountBoard`
+  gains a puzzle option; puzzle mode shares almost nothing with play mode (no referee, no `play` or
+  `cancel`, a result instead of moves), so it is its own `mountPuzzle` beside it (logs/decisions.md).
+- Nothing in lila uses it yet: the trainer page is unit 8.7.
 
 ## The rules engine (`src/engine.mjs`, unit 1.8)
 
@@ -121,8 +175,14 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
 - `test/board.browser.test.mjs`: the board in Chromium (Playwright), bundled by esbuild from
   `test/browser/harness.ts`: clicks and phone taps reported and played back, captures, refusals
   (suicide, ko), previews, cancel, one colour or both, confirm, pass, handicap, sizing and
-  resizing, destroy, and no images or network requests. Chromium comes from `$LIGO_CHROMIUM`, the
+  resizing, destroy, themes, keyboard play and what the live region says, axe-core's WCAG 2.2 AA
+  check, and no images or network requests. Chromium comes from `$LIGO_CHROMIUM`, the
   cloud sessions' `/opt/pw-browsers/chromium`, or `pnpm exec playwright install chromium`.
+- `test/puzzle.browser.test.mjs`: the puzzle board in Chromium. Every puzzle in
+  `tools/puzzles/data/` is played twice by real clicks: a right line to the end, answering
+  whichever reply goban picks from the tree, and a wrong first move, which must end wrong. Then
+  one result per attempt, retry (also while a reply is pending), touch-confirm, a click on a
+  stone, the bounds and sizing, and no network requests.
 
 - `test/conformance.test.mjs`: every `libs/conformance` fixture that applies to the client, under
   each ruleset it names (both when none): 95 cases, 189 runs, 10 of them known gaps (5 cases).
@@ -143,7 +203,7 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
 
 `dev/ligo test board` runs the engine, fixture and browser tests without the server; docker mode
 skips the browser tests (the ui container has no Chromium). The `lint` and `typecheck` scripts
-check `src/board.ts` with lila's oxfmt, oxlint and TypeScript settings.
+check `src/board.ts` and `src/puzzle.ts` with lila's oxfmt, oxlint and TypeScript settings.
 
 ## Packages
 

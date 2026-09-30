@@ -4,7 +4,6 @@ package ui
 import play.api.libs.json.*
 
 import lila.common.Json.given
-import lila.core.perm.Granter
 import lila.ui.Context
 
 object DasherJson:
@@ -43,6 +42,5 @@ object DasherJson:
           "current" -> pref.currentPieceSet3d.name,
           "list" -> PieceSet3d.all
         )
-      ),
-      "coach" -> Granter.opt(_.Coach)(using ctx.me)
+      )
     )

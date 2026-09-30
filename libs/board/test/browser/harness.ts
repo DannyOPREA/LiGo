@@ -1,7 +1,15 @@
 // Test page script for board.browser.test.mjs: mounts boards and records what they report.
 // Licence: MIT (LiGo's own code, ADR 0006).
 
-import { mountBoard, type Board, type BoardConfig } from '../../src/board.ts';
+import {
+  BOARD_THEMES,
+  STONE_THEMES,
+  gobanThemes,
+  mountBoard,
+  type Board,
+  type BoardConfig,
+} from '../../src/board.ts';
+import { mountPuzzle, type PuzzleBoard, type PuzzleConfig } from '../../src/puzzle.ts';
 
 interface Harness {
   board?: Board;
@@ -11,13 +19,21 @@ interface Harness {
   /** How many times the board said something the page may show changed. */
   changes: number;
   mount(config: BoardConfig & { autoPlay?: boolean }): void;
+  themes: { boards: readonly string[]; stones: readonly string[] };
+  gobanThemes: typeof gobanThemes;
+  puzzle?: PuzzleBoard;
+  mountPuzzle(config: Omit<PuzzleConfig, 'onMove' | 'onResult' | 'onRefused' | 'onChange'>): void;
 }
 
 const harness: Harness = {
   events: [],
   played: [],
   changes: 0,
+  themes: { boards: BOARD_THEMES, stones: STONE_THEMES },
+  gobanThemes,
   mount(config) {
+    harness.puzzle?.destroy();
+    harness.puzzle = undefined;
     harness.board?.destroy();
     harness.events = [];
     harness.played = [];
@@ -31,6 +47,21 @@ const harness: Harness = {
       },
       onRefused: reason => harness.events.push(`refused ${reason}`),
       onPlayed: ({ move, color, captured }) => harness.played.push(`${color} ${move} ${captured}`),
+      onChange: () => harness.changes++,
+    });
+  },
+  mountPuzzle(config) {
+    harness.board?.destroy();
+    harness.board = undefined;
+    harness.puzzle?.destroy();
+    harness.events = [];
+    harness.changes = 0;
+    const el = document.getElementById('board')!;
+    harness.puzzle = mountPuzzle(el, {
+      ...config,
+      onMove: (move, by) => harness.events.push(`${by} ${move}`),
+      onResult: result => harness.events.push(result),
+      onRefused: reason => harness.events.push(`refused ${reason}`),
       onChange: () => harness.changes++,
     });
   },

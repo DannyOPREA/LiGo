@@ -20,9 +20,7 @@ final class KeyPages(val env: Env)(using Executor)
 
   def homeHtml(using ctx: Context): Fu[lila.ui.RenderedPage] =
     env
-      .preloader(
-        streamerSpots = env.streamer.homepageMaxSetting.get()
-      )
+      .preloader()
       .mon(lila.mon.lobby.segment("preloader.total"))
       .flatMap: h =>
         renderPage:
