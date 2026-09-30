@@ -1,0 +1,54 @@
+{
+  "id": "/",
+  "name": "LiGo",
+  "short_name": "LiGo",
+  "description": "A free, open-source Go server in the style of lichess",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#161512",
+  "theme_color": "#161512",
+  "icons": [
+    {
+      "src": "//localhost:8080/assets/logo/ligo-favicon-32.png",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "//localhost:8080/assets/logo/ligo-favicon-64.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "//localhost:8080/assets/logo/ligo-favicon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "//localhost:8080/assets/logo/ligo-favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "//localhost:8080/assets/logo/ligo-favicon-256.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "//localhost:8080/assets/logo/ligo-favicon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "//localhost:8080/assets/logo/ligo-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

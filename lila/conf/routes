@@ -459,6 +459,7 @@ GET   /assets/_$v<\w{6}>/*file         controllers.Main.devAsset(v, path="public
 GET   /assets/*file                    controllers.ExternalAssets.at(path="public", file)
 
 GET   /manifest.json                   controllers.Main.manifest
+GET   /offline                         controllers.Main.offline
 GET   /robots.txt                      controllers.Main.robots
 
 GET   /mobile                          controllers.Main.mobile
