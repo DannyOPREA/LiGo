@@ -6,8 +6,9 @@ import chess.rating.glicko.{ Glicko, Player }
 import chess.variant.Variant
 
 import lila.core.perf.{ UserPerfs, UserWithPerfs }
-import lila.rating.PerfExt.addOrReset
-import lila.rating.{ PerfType, RatingRegulator }
+import lila.rating.GlickoExt.cap
+import lila.rating.PerfExt.addOrResetCapped
+import lila.rating.{ GoRating, PerfType, RatingRegulator }
 import lila.user.{ RankingApi, UserApi }
 import lila.rating.PerfExt.toGlickoPlayer
 
@@ -38,13 +39,16 @@ final class PerfsUpdater(
       else game.perfKey.some
     if !users.exists(_.user.lame)
     prevPerfs = users.map(_.perfs)
-    prevPlayers = prevPerfs.map(_(perfKey).toGlickoPlayer)
-    computedPlayers <- computeGlicko(game, prevPlayers, outcome)
+    prevPlayers = prevPerfs.map: perfs =>
+      if game.isGo then GoRatedGame.player(perfs(perfKey)) else perfs(perfKey).toGlickoPlayer
+    computedGlickos <- game.go.fold(computeGlicko(game, prevPlayers, outcome).map(_.map(_.glicko))): go =>
+      computeGoGlicko(game.id, go.setup, prevPerfs.map(_(perfKey)), outcome)
   yield
+    // no factor for the `go` perf (ADR 0021 §1): only the halving against a bot applies
     val newGlickos = RatingRegulator(
       perfKey,
       prevPlayers.map(_.glicko),
-      computedPlayers.map(_.glicko),
+      computedGlickos,
       users.map(_.isBot)
     )
     val newPerfs = prevPerfs.zip(newGlickos, (perfs, gl) => addToPerfs(game, perfs, perfKey, gl))
@@ -65,6 +69,19 @@ final class PerfsUpdater(
         scala.util.Success(logger.warn(s"Error computing Glicko2 for game $gameId", err))
       .toOption
 
+  // LiGo: Go's calculator, handicap and caps (ADR 0013, ADR 0021 §4, unit 5.3)
+  private def computeGoGlicko(
+      gameId: GameId,
+      setup: ligo.gorules.Setup,
+      prevPerfs: ByColor[Perf],
+      outcome: chess.Outcome
+  ): Option[ByColor[Glicko]] =
+    GoRatedGame
+      .glickos(setup, prevPerfs, outcome)
+      .left
+      .map(why => logger.warn(s"Rated Go game $gameId not rated: $why"))
+      .toOption
+
   private def saveRatings(gameId: GameId, prevUsers: ByColor[UserWithPerfs])(
       ratingDiffs: ByColor[IntRatingDiff],
       newUsers: ByColor[UserWithPerfs],
@@ -77,11 +94,13 @@ final class PerfsUpdater(
       .inject(ratingDiffs.some)
 
   private def addToPerfs(game: Game, perfs: UserPerfs, perfKey: PerfKey, player: Glicko) =
+    val cap: Glicko => Glicko = if game.isGo then GoRating.cap else _.cap
     val newPerfs = perfs
       .focusKey(perfKey)
       .modify:
-        _.addOrReset(lila.mon.round.error.glicko, s"game ${game.id}")(player, game.movedAt)
-    if game.ratingVariant.standard
+        _.addOrResetCapped(lila.mon.round.error.glicko, s"game ${game.id}", cap)(player, game.movedAt)
+    // a Go game's variant is chess's standard until unit 3.17, but it leaves the chess perfs alone
+    if game.ratingVariant.standard && !game.isGo
     then updateStandard(newPerfs)
     else newPerfs
 
