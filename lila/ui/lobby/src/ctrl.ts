@@ -5,7 +5,6 @@ import { colors } from 'lib/setup/color';
 import { wsPingInterval } from 'lib/socket';
 import { storage, type LichessStorage } from 'lib/storage';
 
-import Filter from './filter';
 import { isGoRuleset, isGoSize } from './goSetup';
 import * as hookRepo from './hookRepo';
 import type {
@@ -13,7 +12,6 @@ import type {
   LobbyData,
   Tab,
   Mode,
-  Sort,
   Hook,
   Pool,
   PoolMember,
@@ -21,10 +19,11 @@ import type {
   ForceSetupOptions,
   LobbyMe,
 } from './interfaces';
+import { noChips, viewerOf, type Chips, type Viewer } from './openChallenges';
 import * as seekRepo from './seekRepo';
 import SetupController from './setupCtrl';
 import LobbySocket from './socket';
-import { make as makeStores, type Stores } from './store';
+import { make as makeStores, readChips, writeChips, type Stores } from './store';
 import variantConfirm from './variant';
 import * as xhr from './xhr';
 
@@ -36,13 +35,12 @@ export default class LobbyController {
   stores: Stores;
   tab: Tab;
   mode: Mode;
-  sort: Sort;
   stepHooks: Hook[] = [];
   stepping = false;
   redirecting = false;
   poolMember?: PoolMember;
   pools: Pool[];
-  filter: Filter;
+  chips: Chips = noChips();
   setupCtrl: SetupController;
 
   private readonly poolInStorage: LichessStorage;
@@ -61,7 +59,7 @@ export default class LobbyController {
     this.me = opts.data.me;
     this.pools = opts.pools;
     this.playban = opts.playban;
-    this.filter = new Filter(storage.make('lobby.filter'), this);
+    this.chips = readChips();
     this.setupCtrl = new SetupController(this);
     hookRepo.initAll(this);
     seekRepo.initAll(this);
@@ -76,7 +74,6 @@ export default class LobbyController {
       this.tab = this.stores.tab.get();
     }
     this.mode = this.stores.mode.get();
-    this.sort = this.me ? this.stores.sort.get() : 'time';
 
     const locationHash = location.hash.replace('#', '');
     if (['friend', 'hook'].includes(locationHash)) {
@@ -104,14 +101,14 @@ export default class LobbyController {
       if (timeMode === 'correspondence') {
         forceOptions.timeMode = 'correspondence';
         if (days) forceOptions.days = parseInt(days);
-        if (locationHash === 'hook') this.tab = 'seeks';
+        if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'correspondence'];
       } else if (timeMode === 'realTime') {
         forceOptions.timeMode = 'realTime';
         if (minutesPerSide) forceOptions.time = parseFloat(minutesPerSide);
         if (increment) forceOptions.increment = parseInt(increment);
-        if (locationHash === 'hook') this.tab = 'real_time';
+        if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'live'];
       } else if (timeMode === 'unlimited') {
-        if (locationHash === 'hook') this.tab = 'seeks';
+        if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'correspondence'];
         forceOptions.timeMode = 'unlimited';
         forceOptions.mode = 'casual';
       }
@@ -152,17 +149,17 @@ export default class LobbyController {
     } else {
       setInterval(() => {
         if (this.poolMember) this.poolIn();
-        else if (this.tab === 'real_time' && !this.data.hooks.length) this.socket.realTimeIn();
+        else if (this.showsLive() && !this.data.hooks.length) this.socket.realTimeIn();
       }, 10 * 1000);
       this.joinPoolFromLocationHash();
     }
 
     pubsub.on('socket.open', () => {
-      if (this.tab === 'real_time') {
+      if (this.showsLive()) {
         this.data.hooks = [];
         this.socket.realTimeIn();
       } else if (this.tab === 'pools' && this.poolMember) this.poolIn();
-      else if (this.tab === 'seeks') this.fetchSeeks();
+      else if (this.showsCorrespondence()) this.fetchSeeks();
     });
 
     window.addEventListener('beforeunload', () => this.leavePool());
@@ -190,7 +187,7 @@ export default class LobbyController {
 
   private doFlushHooks() {
     this.stepHooks = this.data.hooks.slice(0);
-    if (this.tab === 'real_time') this.redraw();
+    if (this.showsLive()) this.redraw();
   }
 
   flushHooks = (now: boolean) => {
@@ -198,7 +195,7 @@ export default class LobbyController {
     if (now) this.doFlushHooks();
     else {
       this.stepping = true;
-      if (this.tab === 'real_time') this.redraw();
+      if (this.showsLive()) this.redraw();
       setTimeout(() => {
         this.stepping = false;
         this.doFlushHooks();
@@ -209,33 +206,45 @@ export default class LobbyController {
 
   private readonly flushHooksSchedule = () => setTimeout(this.flushHooks, 8000);
 
-  setTab = (tab: Tab) => {
-    if (tab !== this.tab) {
-      if (tab === 'seeks') this.fetchSeeks();
-      else if (tab === 'real_time') this.socket.realTimeIn();
-      else if (this.tab === 'real_time') {
-        this.socket.realTimeOut();
-        this.data.hooks = [];
-      }
-      this.tab = this.stores.tab.set(tab);
-      this.redraw();
+  // Open challenges shows hooks (live) or seeks (correspondence); only what is on screen is fetched.
+  showsLive = () => this.tab === 'open' && this.mode === 'live';
+  showsCorrespondence = () => this.tab === 'open' && this.mode === 'correspondence';
+
+  private changeView(tab: Tab, mode: Mode) {
+    const wasLive = this.showsLive(),
+      wasCorrespondence = this.showsCorrespondence();
+    this.tab = this.stores.tab.set(tab);
+    this.mode = this.stores.mode.set(mode);
+    if (this.showsLive() && !wasLive) this.socket.realTimeIn();
+    else if (!this.showsLive() && wasLive) {
+      this.socket.realTimeOut();
+      this.data.hooks = [];
     }
-    this.filter.open = false;
+    if (this.showsCorrespondence() && !wasCorrespondence) this.fetchSeeks();
+    this.redraw();
+  }
+
+  setTab = (tab: Tab) => {
+    if (tab !== this.tab) this.changeView(tab, this.mode);
   };
 
   setMode = (mode: Mode) => {
-    this.mode = this.stores.mode.set(mode);
-    this.filter.open = false;
+    if (mode !== this.mode) this.changeView(this.tab, mode);
   };
 
-  setSort = (sort: Sort) => {
-    this.sort = this.stores.sort.set(sort);
+  // Open challenges on the given kind of game.
+  showOpen = (mode: Mode) => {
+    if (this.tab !== 'open' || mode !== this.mode) this.changeView('open', mode);
   };
 
-  onSetFilter = () => {
-    this.flushHooks(true);
-    if (this.tab !== 'real_time') this.redraw();
+  setChips = (chips: Chips) => {
+    this.chips = chips;
+    writeChips(chips);
+    this.redraw();
   };
+
+  // What the open-challenges table needs to know about you.
+  viewer = (): Viewer => viewerOf(this.me, this.data.ratingMap);
 
   clickHook = async (id: string) => {
     const hook = hookRepo.find(this, id);
@@ -260,7 +269,7 @@ export default class LobbyController {
   clickPool = (id: string) => {
     if (!this.me) {
       xhr.anonPoolSeek(this.pools.find(p => p.id === id)!);
-      this.setTab('real_time');
+      this.showOpen('live');
     } else if (this.poolMember?.id === id) this.leavePool();
     else this.enterPool({ id });
     this.redraw();
@@ -330,15 +339,10 @@ export default class LobbyController {
   };
 
   awake = () => {
-    switch (this.tab) {
-      case 'real_time':
-        this.data.hooks = [];
-        this.socket.realTimeIn();
-        break;
-      case 'seeks':
-        this.fetchSeeks();
-        break;
-    }
+    if (this.showsLive()) {
+      this.data.hooks = [];
+      this.socket.realTimeIn();
+    } else if (this.showsCorrespondence()) this.fetchSeeks();
   };
 
   // after click on round "new opponent" button

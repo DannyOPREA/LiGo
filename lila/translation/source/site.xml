@@ -249,6 +249,11 @@
   <string name="goRulesJapanese">Japanese</string>
   <string name="goRulesChinese">Chinese</string>
   <string name="goKomi">Komi</string>
+  <string name="openChallenges">Open challenges</string>
+  <string name="live">Live</string>
+  <string name="goEven">Even</string>
+  <string name="goHandicap">Handicap</string>
+  <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>
   <string name="password">Password</string>
   <string name="showPassword">Show password</string>
   <string name="changePassword">Change password</string>
