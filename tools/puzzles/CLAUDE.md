@@ -25,9 +25,11 @@ both ways. How it works: [README.md](README.md).
   committed file. Change the schema and `Puzzle` together.
 - **KataGo disagreeing drops the puzzle**, and the reason is logged. The cloud uses the pinned
   test network (weak); the exact search is what the set is trusted on.
-- **Same seed, same puzzles.** Randomness comes only from `random(seed)` in `src/generate.ts`, and
+- **Same seed, same candidates.** Randomness comes only from `random(seed)` in `src/generate.ts`, and
   the seed is in each puzzle's provenance. Don't use `Math.random` or the clock in anything that
-  shapes a puzzle.
+  shapes a puzzle. KataGo's verdict and the solver's time limit still vary a little, so a rerun
+  keeps nearly the same set (4 of 240 changed for seed 1, unit 8.4): commit a batch, never
+  regenerate it in place.
 - `src/frame.ts` is a port of KaTrain's MIT `tsumego_frame.py` (`LICENSE-katrain.txt`); keep its
   structure and names so the two can be compared, and `test/frame.test.ts`'s vectors (computed by
   the Python original) passing. lizgoban's own source is GPL-3.0: never read it for this file.

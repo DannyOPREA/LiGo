@@ -9,29 +9,39 @@
 - Did: ran `puzzles build --seed 1 --count 240` with KataGo (g170 test network, 400 visits) into
   `tools/puzzles/data/generated-001.json`; wrote the sources list `tools/puzzles/data/SOURCES.md`
   and COPYING.md §2's line for the set; reviewed a sample by eye.
+- Worked: the pipeline ran unchanged; KataGo disagreed on 8 of 248 finished puzzles.
 - The set: 240 puzzles, 113 to live and 127 to kill, 150 in the centre, 62 on an edge, 28 in a
   corner, 17 shapes (crossed five 51, rabbity six 44, bulky five 34, straight four 24, pyramid
   four 23, the rest fewer). Bands: 62 at 800, 69 at 1200, 48 at 1600, 61 at 2000. The longest
   line is 1 move in 175 puzzles (the move and a refutation), 3 in 19, 5 in 31, 7 in 15. 208 have
   one right first move, 15 two, 17 three.
-- Run: 2,365 positions tried in about 12 minutes; 1,505 rejected as a defender in pieces, 460
+- Run: 2,365 positions tried in about 12 minutes; 1,505 rejected as a defender in pieces, 31 with
+  no liberties, 17 duplicates, 460
   settled whoever moves, 57 ko or over budget, 39 ko lines dropped from trees, 6 too easy
   (4 or more right first moves), 2 trees over 300 nodes, 8 where KataGo disagreed. Slowest
   position 13 s.
-- Hand review (10 puzzles, including the three deepest): the vital points of the crossed five,
+- Hand review (10 puzzles, including three with 7-move lines): the vital points of the crossed five,
   bulky five and L five, the corner square four and the rabbity six are the textbook answers; the
   7-ply lines are the defender filling its own eye space and the attacker answering, right but
-  long. All 240 pass `puzzles check`, and every right line and a wrong first move of each replay
-  in goban's puzzle mode in Chromium (unit 8.5's test, run here against this file).
+  long. All 240 pass `puzzles check`. Unit 8.5's Chromium test (in its PR, not this one) replayed
+  a right line and a wrong first move of every puzzle in goban's puzzle mode against this file.
 - Didn't work / caveats: 52 puzzles sit at exactly 2150 and 10 at 650, where the difficulty score
   runs past the band's ends; lila's puzzle ratings move with play, so this is left. The set leans
   to centre shapes, because the centre layouts pass the wall check most often.
+- Review (independent): no blocking findings. An independent life-and-death solver (no
+  goban-engine) agreed with every right and wrong leaf of all 240; 11 more hand-checked. Noted, not
+  changed: a rerun of seed 1 changed 4 of 240 puzzles (KataGo's verdict and the solver's time
+  limit aren't repeatable), now said in SOURCES.md; rVMPv and MrhV0 are one crossed five rotated
+  with colours swapped (the duplicate check compares colours as given); some one-move shapes sit at
+  2150 because depth counts the defender's filler replies (fCm7R, AqRMx), for 8.6's rating work.
 - Lessons: most candidates die at the one-group check (64 %), so a bigger set needs more
-  variations that keep the ring whole, not a longer run.
+  variations that keep the ring whole, not a longer run. "Same seed, same puzzles" holds only
+  while KataGo and a time budget don't decide what is kept; commit the file, don't regenerate it.
 - Decisions: set size, one file per batch, bands unchanged, classics tail later
   (logs/decisions.md; Claude, under the owner's 2026-09-28 delegation).
 - Verified by Claude: `puzzles check` (240 pass), the Chromium replay of every puzzle, `dev/ligo
-  test puzzles`, verify.sh. · Needs owner verification: none.
+  test puzzles`, verify.sh. · Needs owner verification: none; optionally re-check the set with
+  the b18 network on your box.
 - Follow-ups: 8.5 (the puzzle board), the *Gokyō Shumyō* tail when a scan is reachable.
 
 ### 2026-09-30 · Unit 8.3 · tools/puzzles: generator, solver, checker and pipeline
