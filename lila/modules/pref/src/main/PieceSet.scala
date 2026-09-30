@@ -25,21 +25,15 @@ sealed trait PieceSetObject:
 
 object PieceSet extends PieceSetObject:
 
+  // LiGo: goban's stone themes drawn from code alone, black and white as goban pairs them (ADR 0026 §3;
+  // the same list as STONE_THEMES in libs/board/src/themes.ts). A stored chess name falls back to the
+  // default.
   val all = List(
-    PieceSet("cburnett", Featured.Yes),
-    PieceSet("merida", Featured.Yes),
-    PieceSet("pirouetti"),
-    PieceSet("chessnut"),
-    PieceSet("fantasy"),
-    PieceSet("spatial"),
-    PieceSet("celtic"),
-    PieceSet("pixel"),
-    PieceSet("firi"),
-    PieceSet("rhosgfx", Featured.Yes),
-    PieceSet("mpchess", Featured.Yes),
-    PieceSet("kiwen-suwi"),
-    PieceSet("shapes"),
-    PieceSet("letter")
+    PieceSet("Plain", Featured.Yes),
+    PieceSet("Slate & Shell", Featured.Yes),
+    PieceSet("Glass", Featured.Yes),
+    PieceSet("Worn Glass", Featured.Yes),
+    PieceSet("Night", Featured.Yes)
   )
 
 object PieceSet3d extends PieceSetObject:

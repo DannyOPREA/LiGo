@@ -2,6 +2,8 @@ import type { Board, BoardConfig } from '@ligo/board/board';
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
+import { pubsub } from 'lib/pubsub';
+
 import RoundController from '../src/ctrl';
 import type { GoMoveEvent, RoundData, RoundOpts } from '../src/interfaces';
 
@@ -247,5 +249,21 @@ describe('RoundController on a Go game', () => {
     assert.equal(ctrl.data.game.player, 'black');
     assert.equal(ctrl.stepAt(1).san, 'E5');
     assert.equal(boards[0].movable, 'white', 'goban knows it is now Black to move');
+  });
+
+  test("draws the board in the page's board and stone preferences, and follows the account menu", () => {
+    document.body.dataset.board = 'Book';
+    document.body.dataset.pieceSet = 'Slate & Shell';
+    const { ctrl, boards } = round(data('ee'));
+    assert.deepEqual(boards[0].config.theme, { board: 'Book', stones: 'Slate & Shell' });
+    // The account menu changes the page's preferences, then says so.
+    document.body.dataset.board = 'brown'; // a chess board saved before LiGo: not offered
+    document.body.dataset.pieceSet = 'Night';
+    pubsub.emit('board.change', false);
+    assert.deepEqual(ctrl.theme, { board: 'Plain', stones: 'Night' });
+    assert.notEqual(boards.at(-1), boards[0], 'a fresh board');
+    assert.deepEqual(boards.at(-1)!.config.theme, { board: 'Plain', stones: 'Night' });
+    delete document.body.dataset.board;
+    delete document.body.dataset.pieceSet;
   });
 });

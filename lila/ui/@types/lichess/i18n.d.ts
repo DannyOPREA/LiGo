@@ -3807,14 +3807,22 @@ interface I18n {
     goDeeper: string;
     /** Even */
     goEven: string;
+    /** First move */
+    goFirstMove: string;
     /** Handicap */
     goHandicap: string;
     /** Komi */
     goKomi: string;
+    /** Last move */
+    goLastMove: string;
+    /** Next move */
+    goNextMove: string;
     /** No open challenges match. Try other filters, or create a game. */
     goNoOpenChallenges: string;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
+    /** Previous move */
+    goPreviousMove: string;
     /** Rules */
     goRules: string;
     /** Chinese */

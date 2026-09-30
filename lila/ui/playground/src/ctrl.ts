@@ -3,7 +3,7 @@
 // (ADR 0026 §3).
 import type { Board, BoardConfig, Move, Played } from '@ligo/board/board';
 import { handicapStones, standardKomi } from '@ligo/board/rules';
-import { BOARD_THEMES, DEFAULT_THEME, STONE_THEMES, type Theme } from '@ligo/board/themes';
+import { DEFAULT_THEME, themeOf, type Theme } from '@ligo/board/themes';
 
 import { isTouchDevice } from 'lib/device';
 import { storedStringProp } from 'lib/storage';
@@ -26,10 +26,6 @@ export const resolveConfirm = (confirmMoves: number, touch: boolean): boolean =>
  */
 export const soundOf = (played: Played): string =>
   played.move === 'pass' ? 'confirmation' : played.captured > 0 ? 'capture' : 'move';
-
-/** A stored name that is still offered, else the default (names can change between releases). */
-const pick = <T extends string>(stored: string, offered: readonly T[], fallback: T): T =>
-  (offered as readonly string[]).includes(stored) ? (stored as T) : fallback;
 
 const defaultSettings = (): GameSettings => ({
   size: 9,
@@ -55,15 +51,13 @@ export default class PlaygroundCtrl {
    */
   readonly confirm: boolean;
   /**
-   * The board's look (ADR 0026 §3), kept in this browser until lila's board preferences carry
-   * Go themes (unit 9.7). Applies at once, to the board on screen too.
+   * The board's look (ADR 0026 §3), kept in this browser: the playground is a place to try the themes,
+   * signed in or not, while the game page follows lila's board preferences (unit 9.7). Applies at once,
+   * to the board on screen too.
    */
   private readonly storedBoardTheme = storedStringProp('playground.board-theme', DEFAULT_THEME.board);
   private readonly storedStoneTheme = storedStringProp('playground.stone-theme', DEFAULT_THEME.stones);
-  theme: Theme = {
-    board: pick(this.storedBoardTheme(), BOARD_THEMES, DEFAULT_THEME.board),
-    stones: pick(this.storedStoneTheme(), STONE_THEMES, DEFAULT_THEME.stones),
-  };
+  theme: Theme = themeOf(this.storedBoardTheme(), this.storedStoneTheme());
   /** Plays one of lila's sounds by name; the sound preference, volume and "silent" apply. */
   sound: (name: string) => void = name => void site.sound.play(name);
 

@@ -119,19 +119,18 @@ test.describe('keyboard and themes (units 9.3, 9.4)', () => {
     expect(problems).toEqual({ requests: [], errors: [] });
   });
 
-  test('the board and stone themes chosen on the playground apply here too', async ({ page }) => {
-    await openRound(page, { moves: ['ee', 'cc'] });
+  test("the board and stone preferences apply, and an unknown one falls back to goban's plain look", async ({
+    page,
+  }) => {
+    await openRound(page, { moves: ['ee', 'cc'], board: 'brown', stones: 'cburnett' });
+    expect(await page.evaluate(() => (window as any).round.theme)).toEqual({ board: 'Plain', stones: 'Plain' });
     const plain = await boardSvg(page).screenshot();
-    await page.evaluate(() => {
-      localStorage.setItem('playground.board-theme', 'Night Play');
-      localStorage.setItem('playground.stone-theme', 'Glass');
-    });
-    await page.reload();
-    await boardSvg(page).waitFor();
-    expect(await page.evaluate(() => (window as any).round.theme)).toEqual({
+    const night = await page.context().newPage();
+    await openRound(night, { moves: ['ee', 'cc'], board: 'Night Play', stones: 'Glass' });
+    expect(await night.evaluate(() => (window as any).round.theme)).toEqual({
       board: 'Night Play',
       stones: 'Glass',
     });
-    expect((await boardSvg(page).screenshot()).equals(plain)).toBe(false);
+    expect((await boardSvg(night).screenshot()).equals(plain)).toBe(false);
   });
 });

@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.7 part one (paused, not yet a PR) · Go themes in lila's preferences
+- Did: lila's board (`theme`) and piece (`pieceSet`) preferences now hold goban's board and stone theme names (ADR 0026 §3); the account menu's Board and Piece set panes list them by name with a colour swatch, keep only the size slider, and drop the 2D/3D switch; the page no longer loads chess piece images or preloads a board picture (`PieceSetImages` removed). The game page draws its board in those preferences (read from `<body>`) and redraws when the menu changes them; `themeOf` in `libs/board/src/themes.ts` picks a still-offered name or the default (the playground uses it too and keeps its own stored choice). axe on the game page (desktop and phone, during and after a game) found the move buttons unnamed: they now have names (4 new `site` strings). New: a controller test, a preference-theme browser test, the accessibility test and 8 game-page screenshots.
+- Worked: the playground's axe helper, shared as `ui/playground/e2e/axe.ts`, now prints a contrast failure's colours.
+- Didn't work / dead ends: Rematch's colour changes as it glows, so an exact colour exemption failed 10 of 135 repeated runs; the game-page check leaves `.rematch` out until lila's colours are fixed.
+- Lessons: an animated element can't be judged by exact colours; fix the colour or leave the element out, never allow-list a pair.
+- Decisions: none new (ADR 0026 §3 and §4 as written).
+- Verified by Claude: ui unit tests 263/263; round browser tests 135/135 over 15 repeats; playground a11y 3/3; oxlint, stylelint. Not yet: Scala compile (CI), /verify, review. · Needs owner verification: none yet.
+- Follow-ups: finish part one (review, PR, merge) on "Continue"; part two: the game page's words in i18n, lila's colours site-wide (then drop the `.rematch` exclusion and the #3692e7 let-off), the chess sound files and board/piece pictures and 3D, the blind mode.
+
 ### 2026-09-30 · unit 3.18 merge · Main merged in; 3.13 and 3.14 landed first
 - Did: merged main into PR #74 (it had a conflict in logs/decisions.md and the reviewer's memory index, which kept CI from running). Units 3.13 (#73) and 3.14 (#75) merged meanwhile, so the "land before 3.13 and 3.14" decision recorded in the review entry above no longer applies and was taken out of logs/decisions.md. Checked the page against what they shipped: lila-ws reads `d.u` as an SGF point or `pass` and `d.b` as blur (`ClientOut.scala`), the move event carries `p` or `pass: true`, `ply`, `cap`, `prisoners`, `phase`, `board`, `ko`, `clock`, `status`, `winner` (`game/Event.scala` GoMove), the round JSON's `game.go` block is as the page reads it (`game/JsonView.scala`), and two passes end the game as `UnknownFinish` with no winner (`MovePlayer.scala`).
 - Worked: nothing to change in the page.

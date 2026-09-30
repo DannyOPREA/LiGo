@@ -254,6 +254,10 @@
   <string name="goEven">Even</string>
   <string name="goHandicap">Handicap</string>
   <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>
+  <string name="goFirstMove">First move</string>
+  <string name="goPreviousMove">Previous move</string>
+  <string name="goNextMove">Next move</string>
+  <string name="goLastMove">Last move</string>
   <string name="password">Password</string>
   <string name="showPassword">Show password</string>
   <string name="changePassword">Change password</string>

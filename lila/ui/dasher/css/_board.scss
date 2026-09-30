@@ -1,61 +1,46 @@
-@use 'sass:map';
-@import '../../lib/css/theme/board/boards';
-
-#dasher_app .board {
+// LiGo: goban's board and stone themes (ADR 0026 §3), listed by name with a small colour swatch.
+// The board swatches use goban 8.3.226's background colour for each theme; the stone swatches only
+// hint at goban's drawing (flat, shaded, glass, dark).
+#dasher_app .board,
+#dasher_app .piece {
   .list {
-    @extend %flex-wrap;
-
+    display: flex;
+    flex-flow: column;
     margin: 5px 0;
   }
 
   .list button {
-    @extend %flex-center-center;
-
-    flex: 0 0 33%;
-    height: 40px;
-  }
-
-  .list span {
-    display: block;
-    width: 64px;
-    height: 32px;
-
-    body:not(.simple-board) & {
-      filter: hue-rotate(calc(var(---board-hue) * 3.6deg));
-    }
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    padding: 0.5rem 1rem;
+    text-align: start;
   }
 
   .list button:hover {
-    filter: brightness(1.05);
-  }
-
-  .list button:hover span {
-    transform: scale(1.05);
+    background: $c-dasher-light;
   }
 
   .list button.active {
     background-color: $c-good;
+    color: $c-over;
   }
 
-  .reset {
-    padding: 0.5rem 1rem;
-
-    &:hover {
-      color: $c-primary;
-    }
-  }
-
-  .selector {
+  .swatch {
+    flex: 0 0 auto;
     display: flex;
-    justify-content: stretch;
+    align-items: center;
+    justify-content: center;
+    width: 2.6em;
+    height: 1.6em;
+    border: 1px solid $c-border;
+    border-radius: 3px;
   }
+}
 
-  .zoom,
-  .board-brightness,
-  .board-contrast,
-  .board-opacity,
-  .board-hue {
-    display: grid;
+#dasher_app .board {
+  .zoom {
+    display: none;
     grid-template-columns: 45% 55%;
     align-items: center;
     padding: 0.5rem 1rem;
@@ -63,10 +48,6 @@
     label {
       white-space: nowrap;
     }
-  }
-
-  .zoom {
-    display: none;
 
     @include mq-board-resizable {
       display: grid;
@@ -80,34 +61,75 @@
     width: 100%;
   }
 
-  &.d2 {
-    @each $name, $theme in $board-themes-2d {
-      .#{$name} {
-        $file-ext: map.get($theme, file-ext);
-        $name-override: map.get($theme, name-override);
-        $file-name: $name;
-
-        @if $name-override {
-          $file-name: $name-override;
-        }
-
-        // svg boards live in a subdirectory and ship no thumbnail, so they scale the
-        // board itself. Keyed on the extension, as in _board-2d.scss.
-        @if $file-ext == 'svg' {
-          background-image: url(../images/board/svg/#{$file-name}.svg);
-          background-size: 256px;
-        } @else {
-          background-image: url(../images/board/#{$file-name}.thumbnail.#{$file-ext});
-        }
-      }
-    }
+  [data-board-theme='Plain'] {
+    background: #dcb35c;
   }
 
-  &.d3 {
-    @each $name in map.keys($board-themes-3d) {
-      .#{$name} {
-        background-image: url(../images/staunton/board/#{$name}.thumbnail.webp);
-      }
-    }
+  [data-board-theme='Book'] {
+    background: #fff;
+  }
+
+  [data-board-theme='Night Play'] {
+    background: #444;
+  }
+
+  [data-board-theme='HNG'] {
+    background: #00e7fc;
+  }
+
+  [data-board-theme='HNG Night'] {
+    background: #090c1f;
+  }
+}
+
+#dasher_app .piece {
+  .swatch {
+    gap: 2px;
+    background: #dcb35c;
+  }
+
+  .swatch i {
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 50%;
+  }
+
+  .black {
+    background: #000;
+  }
+
+  .white {
+    background: #fff;
+    box-shadow: inset 0 0 0 1px #000;
+  }
+
+  [data-stone-theme='Slate & Shell'] .black {
+    background: radial-gradient(circle at 35% 35%, #555, #111);
+  }
+
+  [data-stone-theme='Slate & Shell'] .white {
+    background: radial-gradient(circle at 35% 35%, #fff, #ddd);
+  }
+
+  [data-stone-theme='Glass'] .black,
+  [data-stone-theme='Worn Glass'] .black {
+    background: radial-gradient(circle at 35% 35%, #777, #000 70%);
+  }
+
+  [data-stone-theme='Glass'] .white,
+  [data-stone-theme='Worn Glass'] .white {
+    background: radial-gradient(circle at 35% 35%, #fff, #ccc 70%);
+  }
+
+  [data-stone-theme='Night'] {
+    background: #444;
+  }
+
+  [data-stone-theme='Night'] .black {
+    background: #111;
+  }
+
+  [data-stone-theme='Night'] .white {
+    background: #888;
   }
 }
