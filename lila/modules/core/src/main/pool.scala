@@ -3,6 +3,7 @@ package pool
 
 import _root_.chess.{ Clock, ByColor }
 import _root_.chess.IntRating
+import ligo.gorules.Setup as GoSetup
 import alleycats.Zero
 
 import scalalib.bus.NotBuseable
@@ -20,8 +21,9 @@ object Blocking extends TotalWrapper[Blocking, Set[UserId]]:
 opaque type PoolConfigId = String
 object PoolConfigId extends OpaqueString[PoolConfigId]
 
-opaque type IsClockCompatible = Clock.Config => Boolean
-object IsClockCompatible extends FunctionWrapper[IsClockCompatible, Clock.Config => Boolean]
+/* Whether a hook with this clock and Go setup would be a game of some pool (ADR 0022 §6). */
+opaque type IsPoolCompatible = (Clock.Config, GoSetup) => Boolean
+object IsPoolCompatible extends FunctionWrapper[IsPoolCompatible, (Clock.Config, GoSetup) => Boolean]
 
 enum PoolFrom:
   case Socket, Api, Hook
@@ -45,7 +47,7 @@ case class Pairings(pairings: List[Pairing])
 object HookThieve:
 
   enum HookBus:
-    case GetCandidates(clock: Clock.Config, promise: Promise[PoolHooks])
+    case GetCandidates(clock: Clock.Config, go: GoSetup, promise: Promise[PoolHooks])
     case StolenHookIds(ids: Vector[String])
 
   case class PoolHook(hookId: String, member: PoolMember) extends NotBuseable
@@ -57,4 +59,4 @@ trait PoolApi:
   def poolPerfKeys: Map[PoolConfigId, PerfKey]
   def join(poolId: PoolConfigId, member: PoolMember): Unit
   def leave(poolId: PoolConfigId, user: UserId): Unit
-  def poolOf(clock: Clock.Config): Option[PoolConfigId]
+  def poolOf(clock: Clock.Config, go: GoSetup): Option[PoolConfigId]
