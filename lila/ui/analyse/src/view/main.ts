@@ -1,5 +1,3 @@
-import { render as renderKeyboardMove } from 'keyboard-move';
-
 import { renderChat } from 'lib/chat/renderChat';
 import { displayColumns } from 'lib/device';
 import { playable } from 'lib/game';
@@ -45,7 +43,6 @@ function analyseView(ctrl: AnalyseCtrl): VNode {
     crazyView(ctrl, ctrl.bottomColor(), 'bottom'),
     renderControls(ctrl),
     renderUnderboard(ctx),
-    ctrl.data.pref.keyboardMove && renderKeyboardMove(ctrl.keyboardMove),
     trainingView(ctrl),
     hl(
       'aside.analyse__side',

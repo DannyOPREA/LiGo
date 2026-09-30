@@ -30,7 +30,6 @@ final class AnalyseUi(helpers: Helpers):
       .css((pov.game.variant == Crazyhouse).option("analyse.zh"))
       .css(withForecast.option("analyse.forecast"))
       .css(ctx.blind.option("round.nvui"))
-      .css(ctx.pref.hasKeyboardMove.option("keyboardMove"))
       .csp(_.withWikiBooks)
       .js(analyseNvuiTag)
       .js:

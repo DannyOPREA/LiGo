@@ -1,0 +1,59 @@
+// The Go board and what goes with it on the round page (unit 3.18).
+
+// libs/board draws goban's board in this square (the uniboard's main board) and sizes it from the
+// square's width; centred, since goban's board is a whole number of points wide.
+.round__go-board {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.round__go-board-failed,
+.round__not-go {
+  padding: 2em 1em;
+  text-align: center;
+  color: $c-font-dim;
+}
+
+// Each player's colour and the stones they have taken, where chess shows the material difference.
+.go-prisoners {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  line-height: normal;
+  color: $c-font-dim;
+
+  &__stone {
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 50%;
+    border: 1px solid $c-font-dim;
+
+    &.black {
+      background: #111;
+    }
+
+    &.white {
+      background: #f4f4f4;
+    }
+  }
+
+  &__color {
+    color: $c-font;
+    font-weight: bold;
+  }
+}
+
+// Pass, and Confirm/Cancel when Confirm moves previews a stone: big enough to tap (44px).
+.go-moves {
+  display: flex;
+  gap: 0.5em;
+  margin: 0.5em 0;
+
+  .button {
+    flex: 1 1 auto;
+    min-height: 44px;
+  }
+}

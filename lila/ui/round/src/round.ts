@@ -19,9 +19,17 @@ import { main as view } from './view/main';
 
 const patch = init([classModule, attributesModule]);
 
-export async function initModule(opts: RoundOpts): Promise<RoundController> {
-  await site.asset.loadPieces;
-  return opts.data.local ? app(opts) : boot(opts, app);
+export async function initModule(opts: RoundOpts): Promise<RoundController | undefined> {
+  // Only Go games have a board here (unit 3.18). A chess game left in a developer's database from
+  // before unit 3.15 gets a notice instead; unit 3.17 stops loading them at all.
+  if (!opts.data.game.go) {
+    const el = opts.element ?? document.querySelector('.round__app');
+    if (el)
+      el.innerHTML =
+        '<p class="round__not-go">This is a chess game from before LiGo played Go. It can no longer be shown.</p>';
+    return undefined;
+  }
+  return boot(opts, app);
 }
 
 async function app(opts: RoundOpts): Promise<RoundController> {

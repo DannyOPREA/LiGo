@@ -65,39 +65,10 @@ export class BoardMenu {
       redraw: this.redraw,
     });
 
-  voiceInput = (toggle: Toggle, enabled = true): VNode =>
-    cmnToggleWrapProp({
-      id: 'voice',
-      name: i18n.preferences.inputMovesWithVoice,
-      prop: toggle,
-      title: this.anonymous ? 'Must be logged in' : '',
-      disabled: this.anonymous || !enabled,
-      redraw: this.redraw,
-    });
-
-  keyboardInput = (toggle: Toggle, enabled = true): VNode =>
-    cmnToggleWrapProp({
-      id: 'keyboard',
-      name: i18n.preferences.inputMovesWithTheKeyboard,
-      prop: toggle,
-      title: this.anonymous ? 'Must be logged in' : '',
-      disabled: this.anonymous || !enabled,
-      redraw: this.redraw,
-    });
-
   blindfold = (toggle: Toggle, enabled = true): VNode =>
     cmnToggleWrapProp({
       id: 'blindfold',
       name: i18n.preferences.blindfold,
-      prop: toggle,
-      disabled: !enabled,
-      redraw: this.redraw,
-    });
-
-  confirmMove = (toggle: Toggle, enabled = true): VNode =>
-    cmnToggleWrapProp({
-      id: 'confirmmove',
-      name: i18n.preferences.moveConfirmation,
       prop: toggle,
       disabled: !enabled,
       redraw: this.redraw,

@@ -278,9 +278,6 @@ importers:
       debounce-promise:
         specifier: ^3.1.2
         version: 3.1.2
-      keyboard-move:
-        specifier: workspace:*
-        version: link:../keyboardMove
       lib:
         specifier: workspace:*
         version: link:../lib
@@ -405,14 +402,6 @@ importers:
         specifier: workspace:*
         version: link:../lib
 
-  ui/dgt: {}
-
-  ui/keyboardMove:
-    dependencies:
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
   ui/lib:
     dependencies:
       '@badrap/result':
@@ -490,30 +479,21 @@ importers:
       chart.js:
         specifier: 4.5.1
         version: 4.5.1
-      keyboard-move:
-        specifier: workspace:*
-        version: link:../keyboardMove
       lib:
         specifier: workspace:*
         version: link:../lib
-      voice:
-        specifier: workspace:*
-        version: link:../voice
 
   ui/round:
     dependencies:
-      keyboard-move:
+      '@ligo/board':
         specifier: workspace:*
-        version: link:../keyboardMove
+        version: link:../../../libs/board
       lib:
         specifier: workspace:*
         version: link:../lib
       shepherd.js:
         specifier: 11.2.0
         version: 11.2.0
-      voice:
-        specifier: workspace:*
-        version: link:../voice
 
   ui/serviceWorker: {}
 
@@ -546,15 +526,6 @@ importers:
       bits:
         specifier: workspace:*
         version: link:../bits
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
-  ui/voice:
-    dependencies:
-      '@lichess-org/vosk-browser':
-        specifier: 0.0.3
-        version: 0.0.3
       lib:
         specifier: workspace:*
         version: link:../lib
@@ -875,9 +846,6 @@ packages:
 
   '@lichess-org/pgn-viewer@2.6.4':
     resolution: {integrity: sha512-fP/Kppo8tshABNI4WH1YnNQQsWZb7Lm5Qug8/Mpg1qCQIHeXM8AluctrTpjZHPg7sIFIc6J6pf+aAkYunUWrJQ==}
-
-  '@lichess-org/vosk-browser@0.0.3':
-    resolution: {integrity: sha512-kgxU346dZC/YbtVhqQTJbjZupUjuvwR3R270mGF5LJLmKAUCLRAQFhkRAqv4eUK1dmzu47ywN/SwrL5QrV7tCg==}
 
   '@mongodb-js/saslprep@1.4.11':
     resolution: {integrity: sha512-o9rAHc0IpIjuPSxRutWpE1F62x7n+4mVS4rCNHkzhIUMQcc18bb6xEq5wd2NdN0WjepIyXIppRshYI2kQDOZVA==}
@@ -2187,10 +2155,6 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
-    hasBin: true
-
   w3c-keyname@2.2.8:
     resolution: {integrity: sha512-dpojBhNsCNN7T82Tm7k26A6G9ML3NkhDsnw9n/eoxSRlVBB4CEtIQ/KTCLI2Fwf3ataSXRhYFkQi3SlnFwPvPQ==}
 
@@ -2510,10 +2474,6 @@ snapshots:
       '@lichess-org/chessground': 10.2.0
       chessops: 0.15.1
       snabbdom: 3.5.1
-
-  '@lichess-org/vosk-browser@0.0.3':
-    dependencies:
-      uuid: 11.1.0
 
   '@mongodb-js/saslprep@1.4.11':
     dependencies:
@@ -3721,8 +3681,6 @@ snapshots:
   unicorn-magic@0.4.0: {}
 
   util-deprecate@1.0.2: {}
-
-  uuid@11.1.0: {}
 
   w3c-keyname@2.2.8: {}
 

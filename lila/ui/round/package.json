@@ -3,10 +3,9 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "keyboard-move": "workspace:*",
+    "@ligo/board": "workspace:*",
     "lib": "workspace:*",
-    "shepherd.js": "11.2.0",
-    "voice": "workspace:*"
+    "shepherd.js": "11.2.0"
   },
   "build": {
     "bundle": "src/**/round.*ts"

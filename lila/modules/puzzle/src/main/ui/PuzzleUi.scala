@@ -23,8 +23,6 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits):
   )(using ctx: Context) =
     Page(trans.site.puzzles.txt())
       .css("puzzle")
-      .css(ctx.pref.hasKeyboardMove.option("keyboardMove"))
-      .css(ctx.pref.hasVoice.option("voice"))
       .css(ctx.blind.option("round.nvui"))
       .i18n(_.puzzle, _.puzzleTheme)
       .i18nOpt(ctx.speechSynthesis, _.nvui)

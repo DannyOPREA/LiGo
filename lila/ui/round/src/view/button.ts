@@ -23,17 +23,13 @@ export interface ButtonState {
   overrideHint?: string;
 }
 
-function analysisBoardOrientation(data: RoundData) {
-  return data.game.variant.key === 'racingKings' ? 'white' : data.player.color;
-}
-
 function poolUrl(clock: ClockData, blocking?: PlayerUser) {
   return '/#pool/' + clock.initial / 60 + '+' + clock.increment + (blocking ? '/' + blocking.id : '');
 }
 
 function analysisButton(ctrl: RoundController): VNode | false {
   const d = ctrl.data,
-    url = gameRoute(d, analysisBoardOrientation(d)) + '#' + ctrl.ply;
+    url = gameRoute(d, d.player.color) + '#' + ctrl.ply;
   return (
     replayable(d) &&
     hl(
@@ -42,12 +38,8 @@ function analysisButton(ctrl: RoundController): VNode | false {
         attrs: { href: url },
         hook: bind(
           'click',
-          e => {
+          () => {
             // force page load in case the URL is the same
-            if (d.local) {
-              d.local.analyse();
-              return e.preventDefault();
-            }
             if (location.pathname === url.split('#')[0]) location.reload();
           },
           undefined,
@@ -73,7 +65,7 @@ function rematchButtons(ctrl: RoundController): LooseVNodes {
           attrs: { 'data-icon': licon.X, title: i18n.site.decline },
           hook: bind('click', () => ctrl.socket.send('rematch-no')),
         },
-        ctrl.nvui ? i18n.site.decline : '',
+        '',
       ),
     hl(
       'button.fbt.rematch.white',
@@ -123,12 +115,12 @@ export function standard(
   return hl(
     'button.fbt.' + socketMsg,
     {
-      attrs: { disabled: !enabled(), ...(!ctrl.nvui ? { title: hintFn() } : {}) },
+      attrs: { disabled: !enabled(), title: hintFn() },
       hook: bind('click', () => {
         if (enabled()) onclick ? onclick() : ctrl.socket.sendLoading(socketMsg);
       }),
     },
-    ctrl.nvui ? [hintFn()] : [hl('span', { attrs: dataIcon(icon) })],
+    [hl('span', { attrs: dataIcon(icon) })],
   );
 }
 
@@ -137,16 +129,15 @@ export function opponentGone(ctrl: RoundController): LooseVNode {
   if (ctrl.data.game.rules?.includes('noClaimWin')) return null;
   return gone === true
     ? hl('div.suggestion', [
-        hl('p', { hook: onSuggestionHook }, i18n.site.opponentLeftChoices),
+        hl(
+          'p',
+          { hook: onSuggestionHook },
+          'Your opponent left the game. You can claim victory, or wait for them.',
+        ),
         hl(
           'button.button.button-green',
           { hook: bind('click', () => ctrl.socket.sendLoading('resign-force')) },
           i18n.site.forceResignation,
-        ),
-        hl(
-          'button.button',
-          { hook: bind('click', () => ctrl.socket.sendLoading('draw-force')) },
-          i18n.site.forceDraw,
         ),
       ])
     : gone !== false &&
@@ -171,36 +162,36 @@ export const resignConfirm = (ctrl: RoundController): VNode =>
     fbtCancel(ctrl.resign),
   ]);
 
-export const drawConfirm = (ctrl: RoundController): VNode =>
-  hl('div.act-confirm', [
-    hl('button.fbt.yes.draw-yes', {
-      attrs: { title: i18n.site.offerDraw, 'data-icon': licon.OneHalf },
-      hook: bind('click', () => ctrl.offerDraw(true)),
-    }),
-    fbtCancel(ctrl.offerDraw),
-  ]);
-
-export const claimThreefold = (ctrl: RoundController, condition: (d: RoundData) => ButtonState): VNode =>
-  hl(
-    'button.button.draw-yes',
-    {
-      hook: bind('click', () =>
-        condition(ctrl.data).enabled ? ctrl.socket.sendLoading('draw-claim') : undefined,
+/**
+ * Go's own moves beside the board: Pass, and, when Confirm moves previews a stone, the buttons that
+ * play it or take it back (unit 2.3). The board plays and reports them like a tap.
+ */
+export function goMoves(ctrl: RoundController): LooseVNode {
+  if (!ctrl.isPlaying()) return null;
+  const pending = ctrl.movePending();
+  return hl('div.go-moves', [
+    pending &&
+      hl(
+        'button.button.go-moves__confirm',
+        { hook: bind('click', ctrl.confirmMove, ctrl.redraw) },
+        i18n.site.confirmMove,
       ),
-      attrs: {
-        title: condition(ctrl.data)?.overrideHint || i18n.site.claimADraw,
-        disabled: !condition(ctrl.data).enabled,
-      },
-      class: { disabled: !condition(ctrl.data).enabled },
-    },
-    hl('span', '½'),
-  );
-
-export function threefoldSuggestion(ctrl: RoundController): LooseVNode {
-  return (
-    ctrl.data.game.threefold &&
-    hl('div.suggestion', [hl('p', { hook: onSuggestionHook }, i18n.site.threefoldRepetition)])
-  );
+    pending &&
+      hl(
+        'button.button.button-empty.go-moves__cancel',
+        { hook: bind('click', ctrl.cancelMove, ctrl.redraw) },
+        i18n.site.cancel,
+      ),
+    !pending &&
+      hl(
+        'button.button.button-metal.go-moves__pass',
+        {
+          attrs: { disabled: !ctrl.canMove(), title: 'Pass: play no stone this turn' },
+          hook: bind('click', ctrl.pass, ctrl.redraw),
+        },
+        'Pass',
+      ),
+  ]);
 }
 
 export function backToTournament(ctrl: RoundController): LooseVNode {
@@ -266,7 +257,7 @@ export function followUp(ctrl: RoundController): VNode {
       !d.simul &&
       !d.swiss &&
       !d.game.boosted,
-    newable = (finished(d) || aborted(d)) && ['lobby', 'pool', 'local'].includes(d.game.source),
+    newable = (finished(d) || aborted(d)) && ['lobby', 'pool'].includes(d.game.source),
     rematchZone = rematchable || d.game.rematch ? rematchButtons(ctrl) : [];
   return hl('div.follow-up', [
     rematchZone,
@@ -278,8 +269,7 @@ export function followUp(ctrl: RoundController): VNode {
         'button.fbt.new-opponent',
         {
           hook: bind('click', () => {
-            if (d.game.source === 'local') d.local?.newOpponent();
-            else if (d.game.source === 'pool') location.href = poolUrl(d.clock!, d.opponent.user);
+            if (d.game.source === 'pool') location.href = poolUrl(d.clock!, d.opponent.user);
             else location.href = '/?hook_like=' + d.game.id;
           }),
         },

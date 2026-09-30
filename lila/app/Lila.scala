@@ -139,7 +139,6 @@ final class LilaComponents(
   lazy val timeline: Timeline = wire[Timeline]
   lazy val user: User = wire[User]
   lazy val userAnalysis: UserAnalysis = wire[UserAnalysis]
-  lazy val dgt: DgtCtrl = wire[DgtCtrl]
   lazy val bulkPairing: BulkPairing = wire[BulkPairing]
   lazy val cms: Cms = wire[Cms]
 

@@ -78,6 +78,11 @@ jobs:
         run: |
           pnpm exec tsc -p ui/playground/e2e/tsconfig.json
           pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts
+      # A Go game played through the round page against a stand-in game server (unit 3.18).
+      - name: Round page game
+        run: |
+          pnpm exec tsc -p ui/round/e2e/tsconfig.json
+          pnpm exec playwright test -c ui/round/e2e/playwright.config.ts
       # Where CI's pictures differ from the baselines, as a coarse grid, readable from the log.
       - name: Map the screenshot differences
         if: failure()
@@ -92,6 +97,8 @@ jobs:
           path: |
             lila/ui/playground/e2e/playwright-report/
             lila/ui/playground/e2e/test-results/
+            lila/ui/round/e2e/playwright-report/
+            lila/ui/round/e2e/test-results/
           retention-days: 7
 
   codeql:

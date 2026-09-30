@@ -8,7 +8,6 @@ import { makeSanAndPlay } from 'chessops/san';
 import { isNormal, type Move } from 'chessops/types';
 import { opposite, parseUci, makeSquare, roleToChar, makeUci, parseSquare } from 'chessops/util';
 import { normalizeMove } from 'chessops/variant';
-import { type ArrowKey, type KeyboardMove, ctrl as makeKeyboardMove } from 'keyboard-move';
 
 import {
   defined,
@@ -113,7 +112,6 @@ export default class AnalyseCtrl {
   requestInitialPly?: number; // start ply from the URL location hash
   cgConfig: any; // latest chessground config (useful for revert)
   nvui?: NvuiPlugin;
-  keyboardMove?: KeyboardMove;
 
   constructor(
     readonly opts: AnalyseOpts,
@@ -293,7 +291,6 @@ export default class AnalyseCtrl {
       if (this.node.shapes) cg.setShapes(this.node.shapes.slice());
       cg.playPremove();
     });
-    this.pluginUpdate(this.node.fen);
     this.onChange();
   }
 
@@ -324,16 +321,6 @@ export default class AnalyseCtrl {
 
   setChessground = (cg: CgApi) => {
     this.chessground = cg;
-
-    if (this.data.pref.keyboardMove) {
-      this.keyboardMove ??= makeKeyboardMove({
-        ...this,
-        data: { ...this.data, player: { color: 'both' } },
-        flipNow: this.flip,
-      });
-      this.keyboardMove.update({ fen: this.node.fen, canMove: true, cg });
-      requestAnimationFrame(() => this.redraw());
-    }
 
     this.setAutoShapes();
     if (this.node.shapes) this.chessground.setShapes(this.node.shapes.slice());
@@ -453,8 +440,6 @@ export default class AnalyseCtrl {
       crazyValid(this.chessground, this.node.drops(), { color, role }, key)
     );
   };
-
-  getCrazyhousePockets = () => this.node.crazy?.pockets; // keyboardMove
 
   sendNewPiece = (role: Role, key: Key): void => {
     const color = this.chessground.state.movable.color;
@@ -668,25 +653,6 @@ export default class AnalyseCtrl {
   pluginMove = (orig: Key, dest: Key, prom: Role | undefined): void => {
     const capture = this.chessground.state.pieces.get(dest);
     this.sendMove(orig, dest, capture, prom);
-  };
-
-  handleArrowKey = (arrowKey: ArrowKey): void => {
-    if (arrowKey === 'ArrowUp') {
-      if (this.fork.select('prev')) this.setAutoShapes();
-      else this.navigate.first();
-    } else if (arrowKey === 'ArrowDown') {
-      if (this.fork.select('next')) this.setAutoShapes();
-      else this.navigate.last();
-    } else if (arrowKey === 'ArrowLeft') this.navigate.prev();
-    else if (arrowKey === 'ArrowRight') this.navigate.next();
-    this.redraw();
-  };
-
-  private readonly pluginUpdate = (fen: FEN) => {
-    // If controller and chessground board states differ, ignore this update. Once the chessground
-    // state is updated to match, pluginUpdate will be called again.
-    if (!fen.startsWith(this.chessground?.getFen())) return;
-    this.keyboardMove?.update({ fen, canMove: true });
   };
 
   showBestMoveArrows = () => this.settings.showBestMoveArrows;

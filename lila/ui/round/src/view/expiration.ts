@@ -18,7 +18,7 @@ export default function (ctrl: RoundController): MaybeVNode {
     site.sound.play('lowTime');
     rang = true;
   }
-  const side = myTurn !== ctrl.flip ? 'bottom' : 'top';
+  const side = myTurn ? 'bottom' : 'top';
   return h(
     'div.expiration.expiration-' + side,
     { class: { emerg, 'bar-glider': myTurn } },
