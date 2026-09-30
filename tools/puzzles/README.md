@@ -48,6 +48,13 @@ dev/ligo puzzles import problem.sgf meta.json # a hand-transcribed problem, as J
 dev/ligo test puzzles
 ```
 
+`dev/ligo puzzles load` (either mode, stack's Mongo running) puts every puzzle in `data/` into
+lila's puzzle collection (`mongo/load.js`, run by mongosh in the Mongo container; ADR 0025 §5).
+It upserts by id: the board, tree, goal and source come from the file each time, while the rating,
+plays, votes and themes are set only when a puzzle is new, so loading again never resets play.
+`dev/ligo up` runs it when the database has no puzzles. lila's puzzle module rebuilds the
+`puzzle2_path` rating bands itself when the puzzles change (unit 8.6).
+
 `build` needs KataGo (`dev/ligo katago install`); it uses the network `dev/ligo katago env` picks,
 and records its name and sha256 in each puzzle. `LIGO_PUZZLES_VISITS` sets KataGo's visits (400).
 

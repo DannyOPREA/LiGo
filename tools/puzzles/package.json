@@ -11,7 +11,7 @@
   "scripts": {
     "test": "node --test test/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "oxfmt -c ../../lila/.oxfmtrc.json --check src test && oxlint -c ../../lila/.oxlintrc.jsonc src test",
+    "lint": "oxfmt -c ../../lila/.oxfmtrc.json --check src test mongo && oxlint -c ../../lila/.oxlintrc.jsonc src test mongo",
     "build": "node src/cli.ts build",
     "check": "node src/cli.ts check"
   },

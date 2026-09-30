@@ -68,7 +68,9 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   puzzles <cmd>       The tsumego pipeline (unit 8.3, ADR 0025): build --out FILE [--seed N]
                       [--count N] (needs KataGo), check [FILE...] (default: tools/puzzles/data),
                       gate [--seed N] [--need N] (the solver's feasibility gate), sgf FILE [ID],
-                      import SGF META (a hand-transcribed problem). Native mode only.
+                      import SGF META (a hand-transcribed problem). Native mode only, except
+                      load: puts tools/puzzles/data's puzzles in lila's database (unit 8.6;
+                      up runs it when the database has no puzzles)
   differential [args] Random games checked against KataGo (unit 1.9): libs/go-rules vs KataGo on
                       legality, captures and area score; args: --games N (1000) --seed S
                       --workers W; report in .ligo/differential/. Native mode only; CI runs it
@@ -133,6 +135,7 @@ docker_up() {
     run dc exec -T mongodb mongosh --quiet lichess /lila/bin/mongodb/create-trophy-kinds.js
     mkdir -p "$STATE" && touch "$STATE/docker-db-initialised"
   fi
+  puzzles_seed
   say "lila compiles on first start (several minutes). Follow it with: dev/ligo logs lila"
   say "then open $(site_url)"
 }
@@ -211,7 +214,33 @@ native_puzzles() {
   (cd "$LILA" && run sh -c "$(puzzles_install) && pnpm --filter @ligo/puzzles run typecheck && pnpm --filter @ligo/puzzles run lint && pnpm --filter @ligo/puzzles run test")
   (cd "$ROOT" && run node tools/puzzles/src/cli.ts check)
 }
+# `puzzles load` (unit 8.6, ADR 0025 §5): tools/puzzles/mongo/load.js upserts the committed
+# puzzles into lila's puzzle collection, run by mongosh in the mongodb container (both modes, no
+# host Node needed). The puzzles go in through stdin: 300 KB is over Linux's 128 KB limit for one
+# argument, so `--eval` can't carry them. lila's puzzle path job builds puzzle2_path from them.
+mongo_exec() {
+  if [[ "$MODE" == docker ]]; then dc exec -T mongodb "$@"; else (cd "$LD" && docker compose -f compose.native.yml exec -T mongodb "$@"); fi
+}
+puzzles_script() {
+  local f sep=''
+  printf 'const puzzles = [].concat(\n'
+  for f in "$ROOT"/tools/puzzles/data/*.json; do printf '%s' "$sep"; cat "$f"; sep=','; done
+  printf ');\n'
+  cat "$ROOT/tools/puzzles/mongo/doc.js" "$ROOT/tools/puzzles/mongo/load.js"
+}
+puzzles_load() {
+  say "loading tools/puzzles/data into lila's puzzle collection"
+  # shellcheck disable=SC2016 # expanded by the container's sh
+  puzzles_script | mongo_exec sh -c 'cat > /tmp/ligo-puzzles.js && mongosh --quiet lichess /tmp/ligo-puzzles.js; s=$?; rm -f /tmp/ligo-puzzles.js; exit $s'
+}
+puzzles_seed() {  # on an empty database only; a failure here never stops `up`
+  local n
+  n=$(mongo_exec mongosh --quiet lichess --eval 'db.puzzle2_puzzle.estimatedDocumentCount()' 2>/dev/null) || return 0
+  [[ "$n" == 0 ]] && { puzzles_load || say "puzzles: load failed; run dev/ligo puzzles load"; }
+  return 0
+}
 cmd_puzzles() {
+  if [[ "${1:-}" == load ]]; then puzzles_load; return; fi
   [[ "$MODE" == native ]] || die "puzzles runs on the host: LIGO_MODE=native dev/ligo puzzles ... (needs host Node and pnpm)"
   [[ $# -gt 0 ]] || die "puzzles build|check|gate|sgf|import [args] (dev/ligo help)"
   puzzles_katago_env
@@ -402,6 +431,7 @@ native_db_up() {
     mkdir -p "$STATE" && touch "$STATE/native-db-initialised"
     say "created lila's indexes"
   fi
+  puzzles_seed
 }
 
 start_bg() {  # start_bg <name> <dir> <command...>: survives this shell; stdin kept open for Play
