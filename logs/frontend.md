@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.8 CI · Credits screenshots and a lost push
+- Did: CI's `ui` job failed three page tests. The credits pictures differed in every line of text (~3% of the pixels): CI's Chromium 153 draws glyphs differently from the cloud's 141. The pictures now hide the credits page's glyphs, as the playground's already do (screenshot.css), and keep the layout; headings and links are still checked with locators. The "missing offline page" push test lost its push once: the page is controlled as soon as the worker claims it, inside its activate step, and a push sent before the worker is `activated` can be dropped. The test now waits for `activated`.
+- Worked: the playground's existing glyph-hiding style, extended by a test-only class.
+- Didn't work / dead ends: the lost push didn't reproduce locally (30 runs).
+- Lessons: a text-heavy page can't be compared pixel for pixel across Chromium builds; hide the glyphs and check the text with locators. "Controlled" is not "activated" for a service worker.
+- Decisions: none new.
+- Verified by Claude: 43 playground browser tests; the push tests 30 times; oxlint, oxfmt, stylelint. · Needs owner verification: none new.
+- Follow-ups: none.
+
 ### 2026-09-30 · unit 9.8 review · Reviewer findings fixed
 - Did: an independent review found the COPYING check could pass without checking: a reworded §3 heading made it read nothing, a symlinked path skipped the whole check, and "contains" matching let a dependency row through on its parent's name; odd rows and non-`.json` puzzle files were skipped. Fixed: the check fails on a missing section, an unreadable row or no rows; a row is covered only when its first cell starts with an entry's name; the script finds itself by real path; puzzle files are read from every row; entries need every field. `lila/bin/gen/credits.test.mjs` (8 tests) covers each case, and `dev/tests/run.sh` runs it plus the check through a symlinked folder. Also: Noto Sans and Roboto credited under the SIL OFL 1.1 (lila's COPYING.md's Apache-2.0 is out of date; the shipped Roboto names the OFL-era roboto-classic project), the full-size and g170 KataGo networks listed apart (different licences), and meta.yml sets up Node before the tooling checks.
 - Worked: node:test for the check's own parsing, next to the script.

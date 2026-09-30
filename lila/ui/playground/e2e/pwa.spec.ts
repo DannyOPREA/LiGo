@@ -107,7 +107,11 @@ test.use({ channel: 'chromium' });
 async function openHome(page: Page, site: Site): Promise<void> {
   await page.goto(`${site.origin}/`);
   // Controlled once the worker has installed (with the offline page cached) and claimed the page.
-  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  // The claim comes inside the activate step, before the worker is 'activated', and Chromium can drop
+  // a push delivered to a worker still activating (CI lost one on PR #71), so wait for that too.
+  await page.waitForFunction(
+    () => !!navigator.serviceWorker.controller && navigator.serviceWorker.controller.state === 'activated',
+  );
 }
 
 test.describe('installable app on a phone', () => {

@@ -1,7 +1,8 @@
 // The credits page (unit 9.8, ADR 0026 §6) at desktop and phone sizes: a screenshot, no serious or
 // critical WCAG 2.2 AA problem, and every entry of docs/credits.json on it. The page body is the
 // generated lila/public/credits.html inside a trimmed copy of lila's SitePage markup (the menu
-// left out), with the CSS lila sends for it, served without a lila server like the playground.
+// left out), with the CSS lila sends for it, served without a lila server like the playground. The
+// test-only `credits-shot` class lets screenshot.css hide the glyphs in the pictures.
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { readFileSync } from 'node:fs';
@@ -21,7 +22,7 @@ function html(): string {
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>Credits • LiGo</title>
 ${css('lib.theme.all')}${css('site')}${css('bits.credits')}</head>
 <body data-theme="dark"><div id="main-wrap"><main class="page-menu"><div class="page-menu__content page">
-<section class="box"><h1 class="box__top">Credits</h1>${readFileSync(join(publicDir, 'credits.html'), 'utf8')}</section>
+<section class="box credits-shot"><h1 class="box__top">Credits</h1>${readFileSync(join(publicDir, 'credits.html'), 'utf8')}</section>
 </div></main></div></body></html>`;
 }
 
