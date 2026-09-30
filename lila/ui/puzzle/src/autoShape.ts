@@ -4,10 +4,11 @@ import { parseUci, makeSquare } from 'chessops/util';
 
 import { fenColor } from 'lib/game';
 import { annotationShapes } from 'lib/game/glyphs';
-import type { Glyph, TreeNode } from 'lib/tree/types';
+import type { Glyph } from 'lib/tree/types';
 
 // import { makeGooglyShapes } from '../../bits/src/bits.googlyHorsey';
 import type PuzzleCtrl from './ctrl';
+import type { ChessNode } from './chessNode';
 
 function makeAutoShapesFromUci(
   color: Color,
@@ -47,7 +48,7 @@ export default function (ctrl: PuzzleCtrl): DrawShape[] {
   ];
 }
 
-function feedbackAnnotation(n: TreeNode): TreeNode | undefined {
+function feedbackAnnotation(n: ChessNode): ChessNode | undefined {
   let glyph: Glyph | undefined;
   switch (n.puzzle) {
     case 'good':

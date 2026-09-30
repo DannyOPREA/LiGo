@@ -1,17 +1,35 @@
-import { type Position, parseUci, makeSquare } from 'chessops';
+// The chess puzzle page's move-tree nodes, with their positions worked out by chessops. They were
+// lila's `lib/tree/node.ts` until the Go analysis board (unit 7.4) made lila's tree game-neutral;
+// this page is the last one that plays chess and goes with it (unit 8.7).
+
+import type { Result } from '@badrap/result';
+import { type Outcome, type Position, parseUci, makeSquare } from 'chessops';
 import { chessgroundDests, lichessRules, scalachessCharPair } from 'chessops/compat';
 import { parseFen } from 'chessops/fen';
 import { setupPosition } from 'chessops/variant';
 
-import { memoize } from '@/common';
+import { memoize } from 'lib';
+import type { TreeNodeBase, TreeNodeLite } from 'lib/tree/types';
 
-import type { PositionResult, TreeNode, TreeNodeBase } from './types';
+export type PositionResult = Result<Position>;
+
+/** A tree node with its chess position and what can be played from it. */
+export interface ChessNode extends TreeNodeLite {
+  children: ChessNode[];
+  pos: () => PositionResult;
+  dests: () => Dests;
+  drops: () => Key[] | undefined;
+  check: () => boolean;
+  outcome: () => Outcome | undefined;
+}
+
+type ChessNodeInput = TreeNodeBase & Partial<Pick<ChessNode, 'pos' | 'outcome'>>;
 
 // mutates and returns the node
 export const completeNode =
   (variant: VariantKey) =>
-  (from: TreeNodeBase): TreeNode => {
-    const node = from as TreeNode;
+  (from: ChessNodeInput): ChessNode => {
+    const node = from as ChessNode;
     node.id ||= node.uci ? scalachessCharPair(parseUci(node.uci)!) : '';
     node.children ||= [];
     node.pos ||= memoize(() =>

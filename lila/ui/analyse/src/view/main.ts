@@ -1,100 +1,125 @@
-import { renderChat } from 'lib/chat/renderChat';
-import { displayColumns } from 'lib/device';
-import { playable } from 'lib/game';
-import * as router from 'lib/game/router';
 import { licon } from 'lib/licon';
-import { type VNode, onInsert, hl } from 'lib/view';
-import { watchers } from 'lib/view/watchers';
+import { storage } from 'lib/storage';
+import { type VNode, bind, bindNonPassive, hl, onInsert } from 'lib/view';
+import stepwiseScroll from 'lib/view/stepwiseScroll';
 
-import crazyView from '@/crazy/crazyView';
 import type AnalyseCtrl from '@/ctrl';
-import forecastView from '@/forecast/forecastView';
-import { view as keyboardView } from '@/keyboard';
-import { wikiToggleBox } from '@/wiki';
+import { settingsText } from '@/go';
 
-import { viewContext, renderBoard, renderMain, renderUnderboard } from './components';
+import { view as actionMenu } from './actionMenu';
 import { renderControls } from './controls';
-import { render as trainingView } from './roundTraining';
-import { renderTools } from './tools';
+import { renderSetup } from './setup';
+import { renderSgf } from './sgf';
 
-let resizeCache: {
-  columns: number;
-  chat: HTMLElement | null;
-  board: HTMLElement | null;
-  meta: HTMLElement | null;
-};
-
-export default function () {
-  return function (ctrl: AnalyseCtrl): VNode {
-    resizeCache ??= resizeHandler(ctrl);
-    if (ctrl.nvui) return ctrl.nvui.render();
-    else return analyseView(ctrl);
-  };
+export default function view(ctrl: AnalyseCtrl): VNode {
+  return hl('main.analyse.analyse--go', { class: { 'analyse--setup': !!ctrl.setup } }, [
+    renderBoard(ctrl),
+    ctrl.setup ? renderSetup(ctrl, ctrl.setup) : renderTools(ctrl),
+    !ctrl.setup && renderControls(ctrl),
+    hl('div.analyse__underboard', [!ctrl.setup && renderSgf(ctrl)]),
+    hl('aside.analyse__side', renderSide(ctrl)),
+  ]);
 }
 
-function analyseView(ctrl: AnalyseCtrl): VNode {
-  const ctx = viewContext(ctrl);
-  return renderMain(
-    ctx,
-    ctrl.keyboardHelp && keyboardView(ctrl),
-    renderBoard(ctx),
-    crazyView(ctrl, ctrl.topColor(), 'top'),
-    renderTools(ctx),
-    crazyView(ctrl, ctrl.bottomColor(), 'bottom'),
-    renderControls(ctrl),
-    renderUnderboard(ctx),
-    trainingView(ctrl),
-    hl(
-      'aside.analyse__side',
-      {
-        hook: onInsert(elm => {
-          if (ctrl.opts.$side?.length) {
-            $(elm).replaceWith(ctrl.opts.$side);
-            wikiToggleBox();
-          }
-        }),
-      },
-      [
-        ctrl.forecast && forecastView(ctrl, ctrl.forecast),
-        !ctrl.synthetic &&
-          playable(ctrl.data) &&
-          hl(
-            'div.back-to-game',
-            hl(
-              'a.button.button-empty.text',
-              {
-                attrs: {
-                  href: router.game(ctrl.data, ctrl.data.player.color),
-                  'data-icon': licon.Back,
-                },
-              },
-              i18n.site.backToGame,
-            ),
+function renderBoard(ctrl: AnalyseCtrl): VNode {
+  const scroll =
+    ctrl.setup || 'ontouchstart' in window || !storage.boolean('scrollMoves').getOrDefault(true)
+      ? undefined
+      : bindNonPassive(
+          'wheel',
+          stepwiseScroll(
+            e => {
+              if (e.deltaY > 0) ctrl.navigate.next();
+              else if (e.deltaY < 0) ctrl.navigate.prev();
+              ctrl.redraw();
+            },
+            () => false,
           ),
-      ],
+        );
+  return hl('div.analyse__board.main-board', { hook: scroll }, [
+    ctrl.board.loadFailed
+      ? hl('div.analyse__go-board-failed', 'The board could not be loaded. Reload the page to try again.')
+      : hl('div.analyse__go-board', {
+          // A fresh element for setup mode and back, so snabbdom mounts the right one.
+          key: ctrl.setup ? 'editor' : 'board',
+          hook: {
+            insert: vnode => ctrl.board.attach(vnode.elm as HTMLElement),
+            destroy: vnode => ctrl.board.detach(vnode.elm as HTMLElement),
+          },
+        }),
+  ]);
+}
+
+/** Who plays next and the prisoners so far, at the position shown. */
+function renderStatus(ctrl: AnalyseCtrl): VNode {
+  const n = ctrl.node;
+  const stone = (color: 'black' | 'white') =>
+    hl(`span.go-prisoners__stone.${color}`, { attrs: { 'aria-hidden': 'true' } });
+  return hl('div.analyse__go-status', [
+    hl('div.analyse__go-turn', [stone(n.toMove), n.toMove === 'black' ? 'Black to play' : 'White to play']),
+    hl('div.go-prisoners', [
+      'Prisoners:',
+      stone('black'),
+      hl('span', { attrs: { title: 'Stones Black has taken' } }, String(n.captures.black)),
+      stone('white'),
+      hl('span', { attrs: { title: 'Stones White has taken' } }, String(n.captures.white)),
+    ]),
+  ]);
+}
+
+function renderTools(ctrl: AnalyseCtrl): VNode {
+  return hl('div.analyse__tools', [
+    renderStatus(ctrl),
+    hl('div.analyse__moves.areplay', { hook: ctrl.treeView.hook() }, [hl('div', ctrl.treeView.render())]),
+    renderEngine(ctrl),
+    hl('div.analyse__go-actions', [
+      hl(
+        'button.button.button-empty.text',
+        {
+          attrs: { 'data-icon': licon.Forward, title: 'Pass: play no stone this turn' },
+          hook: bind('click', ctrl.pass),
+        },
+        'Pass',
+      ),
+      ctrl.notice && hl('p.analyse__go-notice', { attrs: { role: 'status' } }, ctrl.notice),
+    ]),
+    ctrl.actionMenu() && actionMenu(ctrl),
+  ]);
+}
+
+/**
+ * Where an engine review will show (PLAN §1.3: a later KataGo review). lila's chess engine went in
+ * unit 3.5; this is the one place the view calls, so the review has somewhere to plug in (ADR 0023 §1).
+ */
+const renderEngine = (_ctrl: AnalyseCtrl): VNode | undefined => undefined;
+
+/** The game the tree is played under, and what its file says about the game. */
+function renderSide(ctrl: AnalyseCtrl): VNode[] {
+  const s = ctrl.root.settings;
+  const info = ctrl.root.sgf;
+  const one = (key: string) => info[key]?.[0]?.trim();
+  const player = (name?: string, rank?: string) => (name ? (rank ? `${name} (${rank})` : name) : undefined);
+  const black = player(one('PB'), one('BR'));
+  const white = player(one('PW'), one('WR'));
+  return [
+    hl('div.analyse__go-settings', [
+      hl('strong', settingsText(s)),
+      s.rulesetUnknown &&
+        hl('p', "The file's rules are not ones LiGo plays: Japanese rules are used instead."),
+      (black || white) &&
+        hl('p.analyse__go-players', [
+          hl('span', `Black: ${black ?? '?'}`),
+          hl('span', `White: ${white ?? '?'}`),
+        ]),
+      one('RE') && hl('p', `Result: ${one('RE')}`),
+    ]),
+    hl(
+      'button.button.button-empty.text',
+      {
+        attrs: { 'data-icon': licon.Pencil },
+        hook: onInsert(el => el.addEventListener('click', ctrl.startSetup)),
+      },
+      'New position',
     ),
-    ctrl.chatCtrl && renderChat(ctrl.chatCtrl, { insert: v => fixChatHeight(v.elm) }),
-    hl('div.chat__members.none', { hook: onInsert(watchers) }),
-  );
-}
-
-function resizeHandler(ctrl: AnalyseCtrl) {
-  window.addEventListener('resize', () => {
-    if (resizeCache.columns !== displayColumns()) ctrl.redraw();
-    resizeCache.columns = displayColumns();
-
-    if (resizeCache.columns < 3) return;
-
-    resizeCache.chat ??= document.querySelector<HTMLElement>('.mchat');
-    fixChatHeight(resizeCache.chat);
-  });
-  return { columns: displayColumns(), chat: null, board: null, meta: null };
-}
-
-function fixChatHeight(el: Node | null | undefined) {
-  if (!(el instanceof HTMLElement)) return;
-  resizeCache.board ??= document.querySelector<HTMLElement>('.analyse__board .cg-wrap');
-  resizeCache.meta ??= document.querySelector<HTMLElement>('.game__meta');
-  if (!resizeCache.board || !resizeCache.meta) return;
-  el.style.height = `${resizeCache.board.offsetHeight - resizeCache.meta.offsetHeight - 16}px`;
+  ];
 }

@@ -6,15 +6,15 @@ import { isNormal, type Move, type NormalMove } from 'chessops/types';
 import { makeUci, parseUci } from 'chessops/util';
 
 import { plyOpponentColor } from 'lib/game';
-import { completeNode } from 'lib/tree/node';
 import { type TreeWrapper, path as pathOps } from 'lib/tree/tree';
-import type { TreeNode, TreePath } from 'lib/tree/types';
+import type { TreePath } from 'lib/tree/types';
 
 import type PuzzleCtrl from './ctrl';
+import { type ChessNode, completeNode } from './chessNode';
 
-export function pgnToTree(pgn: San[]): TreeNode {
+export function pgnToTree(pgn: San[]): ChessNode {
   const pos = Chess.default();
-  const root: TreeNode = completeNode('standard')({
+  const root: ChessNode = completeNode('standard')({
     ply: 0,
     fen: INITIAL_FEN,
   });
@@ -29,7 +29,7 @@ export function pgnToTree(pgn: San[]): TreeNode {
   return root;
 }
 
-export function mergeSolution(root: TreeWrapper, initialPath: TreePath, solution: Uci[], pov: Color): void {
+export function mergeSolution(root: TreeWrapper<ChessNode>, initialPath: TreePath, solution: Uci[], pov: Color): void {
   const initialNode = root.nodeAtPath(initialPath);
   const pos = Chess.fromSetup(parseFen(initialNode.fen).unwrap()).unwrap();
   const fromPly = initialNode.ply;
@@ -43,7 +43,7 @@ export function mergeSolution(root: TreeWrapper, initialPath: TreePath, solution
   root.addNodes(nodes, initialPath);
 }
 
-const makeNode = (pos: Position, move: Move, ply: number, san: San): TreeNode =>
+const makeNode = (pos: Position, move: Move, ply: number, san: San): ChessNode =>
   completeNode('standard')({
     ply,
     san,

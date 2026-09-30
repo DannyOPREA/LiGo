@@ -17,9 +17,8 @@ import { PromotionCtrl } from 'lib/game/promotion';
 import { pubsub } from 'lib/pubsub';
 import { type StoredProp, storedBooleanProp, storedBooleanPropWithEffect } from 'lib/storage';
 import { makeTree, treeOps, treePath, type TreeWrapper } from 'lib/tree';
-import { completeNode } from 'lib/tree/node';
 import { last } from 'lib/tree/ops';
-import type { TreeNode, TreePath } from 'lib/tree/types';
+import type { TreePath } from 'lib/tree/types';
 import { alert } from 'lib/view';
 import { toggleZenMode } from 'lib/view/zen';
 
@@ -38,11 +37,12 @@ import moveTest from './moveTest';
 import { pgnToTree, mergeSolution, nextCorrectMove } from './moveTree';
 import PuzzleSession from './session';
 import * as xhr from './xhr';
+import { type ChessNode, completeNode } from './chessNode';
 
 export default class PuzzleCtrl {
   data: PuzzleData;
   next: Deferred<PuzzleData | ReplayEnd> = defer<PuzzleData>();
-  tree: TreeWrapper;
+  tree: TreeWrapper<ChessNode>;
   autoNext: StoredProp<boolean>;
   rated: StoredProp<boolean>;
   ground: Prop<CgApi> = prop<CgApi | undefined>(undefined) as Prop<CgApi>;
@@ -54,11 +54,11 @@ export default class PuzzleCtrl {
   keyboardHelp: Prop<boolean>;
   cgConfig?: CgConfig;
   path: TreePath;
-  node: TreeNode;
-  nodeList: TreeNode[];
-  mainline: TreeNode[];
+  node: ChessNode;
+  nodeList: ChessNode[];
+  mainline: ChessNode[];
   initialPath: TreePath;
-  initialNode: TreeNode;
+  initialNode: ChessNode;
   pov: Color;
   mode: 'play' | 'view' | 'try';
   round?: PuzzleRound;
@@ -293,7 +293,7 @@ export default class PuzzleCtrl {
     );
   };
 
-  addNode = (node: TreeNode, path: TreePath): void => {
+  addNode = (node: ChessNode, path: TreePath): void => {
     const newPath = this.tree.addNode(node, path)!;
     this.jump(newPath);
     this.withGround(g => g.playPremove());

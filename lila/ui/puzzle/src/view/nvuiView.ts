@@ -9,7 +9,6 @@ import * as nv from 'lib/nvui/chess';
 import { commands, boardCommands, addBreaks } from 'lib/nvui/command';
 import { scanDirectionsHandler } from 'lib/nvui/directionScan';
 import { renderAdvancedSettings } from 'lib/nvui/renderAdvancedSettings';
-import type { TreeNode } from 'lib/tree/types';
 import { type VNode, bind, onInsert, hl, type LooseVNodes, type LooseVNode } from 'lib/view';
 
 import { next as controlNext, prev } from '@/control';
@@ -19,6 +18,7 @@ import type { PuzzleNvuiContext } from '@/puzzle.nvui';
 import { makeConfig } from '@/view/chessground';
 import { puzzleBox, renderDifficultyForm, userBox } from '@/view/side';
 import theme from '@/view/theme';
+import type { ChessNode } from '../chessNode';
 
 const throttled = (sound: string) => throttle(100, () => site.sound.play(sound));
 const selectSound = throttled('select');
@@ -282,10 +282,10 @@ function viewOrAdvanceSolution(ctrl: PuzzleCtrl, notify: (txt: string) => void):
   } else ctrl.viewSolution();
 }
 
-const isInSolution = (node?: TreeNode): boolean =>
+const isInSolution = (node?: ChessNode): boolean =>
   !!node && (node.puzzle === 'good' || node.puzzle === 'win');
 
-const nextNode = (node?: TreeNode): TreeNode | undefined =>
+const nextNode = (node?: ChessNode): ChessNode | undefined =>
   node?.children?.length ? node.children[0] : undefined;
 
 function renderStatus(ctrl: PuzzleCtrl): string {

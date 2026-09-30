@@ -1,0 +1,9 @@
+/* Applied only while a screenshot is taken, as the playground's (ui/playground/e2e/screenshot.css):
+   Chromium builds rasterise text a little differently, so the pictures hide the page's glyphs and
+   compare everything else (layout, boxes, buttons, the board and its stones). The text is checked
+   with locators in the tests. goban's coordinates are SVG fills, so they stay. */
+main.analyse,
+main.analyse * {
+  color: transparent !important;
+  text-shadow: none !important;
+}
