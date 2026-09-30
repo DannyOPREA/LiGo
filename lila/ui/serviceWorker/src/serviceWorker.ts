@@ -11,15 +11,20 @@ function assetUrl(path: string): string {
 const offlineCache = 'ligo-offline-v1';
 const offlineUrl = '/offline';
 
+// Never fails: push must keep working even when the page can't be fetched (say, assets deployed
+// before the server), and a miss is retried after the next page that loads.
+const cacheOffline = (): Promise<void> =>
+  caches
+    .open(offlineCache)
+    .then(cache => cache.add(offlineUrl))
+    .catch(() => undefined);
+
+const ensureOffline = async (): Promise<void> => {
+  if (!(await caches.match(offlineUrl, { cacheName: offlineCache }))) await cacheOffline();
+};
+
 sw.addEventListener('install', (e: ExtendableEvent) =>
-  e.waitUntil(
-    caches
-      .open(offlineCache)
-      .then(cache => cache.add(offlineUrl))
-      // Push must keep working even if the page couldn't be fetched; the next update retries.
-      .catch(() => undefined)
-      .then(() => sw.skipWaiting()),
-  ),
+  e.waitUntil(cacheOffline().then(() => sw.skipWaiting())),
 );
 
 sw.addEventListener('activate', (e: ExtendableEvent) => {
@@ -36,7 +41,9 @@ sw.addEventListener('activate', (e: ExtendableEvent) => {
 
 async function navigate(e: FetchEvent): Promise<Response> {
   try {
-    return (await e.preloadResponse) ?? (await fetch(e.request));
+    const res = (await e.preloadResponse) ?? (await fetch(e.request));
+    e.waitUntil(ensureOffline());
+    return res;
   } catch {
     return (await caches.match(offlineUrl, { cacheName: offlineCache })) ?? Response.error();
   }

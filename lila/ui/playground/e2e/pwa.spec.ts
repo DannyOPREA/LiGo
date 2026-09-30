@@ -36,6 +36,8 @@ await navigator.serviceWorker.register(${JSON.stringify(worker)}, { scope: '/', 
 
 /** A stand-in for lila on localhost that can be switched off and on again at the same address. */
 class Site {
+  /** Answer /offline with a 404, as when assets are deployed before the server that serves it. */
+  offlineMissing = false;
   private server?: Server;
   private sockets = new Set<Socket>();
   port = 0;
@@ -56,7 +58,10 @@ class Site {
             `localhost:${this.port}`,
           ),
         );
-      if (path === '/offline') return send('text/html', readFileSync(join(publicDir, 'offline.html')));
+      if (path === '/offline')
+        return this.offlineMissing
+          ? res.writeHead(404).end()
+          : send('text/html', readFileSync(join(publicDir, 'offline.html')));
       if (path.startsWith('/assets/')) {
         try {
           const file = join(publicDir, decodeURIComponent(path.slice('/assets/'.length)));
@@ -93,6 +98,11 @@ class Site {
     await new Promise(ok => this.server?.close(ok));
   }
 }
+
+// Playwright's default headless browser (chromium-headless-shell, which CI gets) shows no
+// notifications; the full Chromium in its new headless mode does. (LIGO_CHROMIUM or the cloud's
+// Chromium, when set, still wins through launchOptions.)
+test.use({ channel: 'chromium' });
 
 async function openHome(page: Page, site: Site): Promise<void> {
   await page.goto(`${site.origin}/`);
@@ -144,36 +154,55 @@ test.describe('installable app on a phone', () => {
     await expect(page.getByRole('heading', { name: 'Page /lobby' })).toBeVisible();
   });
 
-  test('push notifications still show', async ({ page, context }) => {
-    await context.grantPermissions(['notifications'], { origin: site.origin });
-    const cdp = await context.newCDPSession(page);
-    const registration = new Promise<string>(ok =>
-      cdp.on('ServiceWorker.workerRegistrationUpdated', e => {
-        const r = e.registrations.find(r => r.scopeURL === `${site.origin}/` && !r.isDeleted);
-        if (r) ok(r.registrationId);
-      }),
-    );
-    await cdp.send('ServiceWorker.enable');
-    await openHome(page, site);
-    await cdp.send('ServiceWorker.deliverPushMessage', {
-      origin: site.origin,
-      registrationId: await registration,
-      data: JSON.stringify({
-        title: 'Your turn',
-        body: 'against Danny',
-        tag: 'move',
-        payload: { userData: {} },
-      }),
-    });
-    await expect
-      .poll(() =>
-        page.evaluate(async () =>
-          (await (await navigator.serviceWorker.ready).getNotifications()).map(n => `${n.title}: ${n.body}`),
-        ),
-      )
-      .toEqual(['Your turn: against Danny']);
+  test('push notifications still show', async ({ page }) => {
+    await expectPush(page, site);
+  });
+
+  test('a missing offline page never stops push, and is cached by the next page that loads', async ({
+    page,
+  }) => {
+    site.offlineMissing = true;
+    await expectPush(page, site);
+    expect(await page.evaluate(async () => !!(await caches.match('/offline')))).toBe(false);
+    site.offlineMissing = false;
+    await page.goto(`${site.origin}/lobby`);
+    await expect.poll(() => page.evaluate(async () => !!(await caches.match('/offline')))).toBe(true);
+    await site.stop();
+    await page.goto(`${site.origin}/lobby`);
+    await expect(page.getByRole('heading', { name: 'You are offline' })).toBeVisible();
   });
 });
+
+async function expectPush(page: Page, site: Site): Promise<void> {
+  const context = page.context();
+  await context.grantPermissions(['notifications'], { origin: site.origin });
+  const cdp = await context.newCDPSession(page);
+  const registration = new Promise<string>(ok =>
+    cdp.on('ServiceWorker.workerRegistrationUpdated', e => {
+      const r = e.registrations.find(r => r.scopeURL === `${site.origin}/` && !r.isDeleted);
+      if (r) ok(r.registrationId);
+    }),
+  );
+  await cdp.send('ServiceWorker.enable');
+  await openHome(page, site);
+  await cdp.send('ServiceWorker.deliverPushMessage', {
+    origin: site.origin,
+    registrationId: await registration,
+    data: JSON.stringify({
+      title: 'Your turn',
+      body: 'against Danny',
+      tag: 'move',
+      payload: { userData: {} },
+    }),
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(async () =>
+        (await (await navigator.serviceWorker.ready).getNotifications()).map(n => `${n.title}: ${n.body}`),
+      ),
+    )
+    .toEqual(['Your turn: against Danny']);
+}
 
 test.describe('the board on a phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });

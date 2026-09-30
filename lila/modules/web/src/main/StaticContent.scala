@@ -25,7 +25,8 @@ Allow: /game/export/gif/thumbnail/
 
   // LiGo: the installable app's manifest (unit 9.6, ADR 0026 §1). No related_applications: LiGo has
   // no store app. ui/playground/e2e/manifest.json is this manifest for asset domain "localhost:8080";
-  // StaticContentTest keeps the two equal and the browser test installs from that copy.
+  // StaticContentTest keeps the two equal and the browser test installs from that copy. The name is
+  // "LiGo" whatever `net.site.name` says (ADR 0026 §1), so that copy doesn't depend on the config.
   def manifest(net: NetConfig): JsObject = manifest(net.assetDomain.value)
 
   def manifest(assetDomain: String): JsObject =

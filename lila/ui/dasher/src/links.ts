@@ -43,7 +43,7 @@ export class LinksCtrl extends PaneCtrl {
           'button.text',
           {
             attrs: { 'data-icon': licon.Download, type: 'button' },
-            hook: bind('click', () => install().then(() => this.root.redraw())),
+            hook: bind('click', () => install().finally(() => this.root.redraw())),
           },
           'Install LiGo',
         ),

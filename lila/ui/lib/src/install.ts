@@ -1,7 +1,7 @@
 // LiGo's "Install LiGo" entry (unit 9.6, ADR 0026 §1): no pop-up. The site keeps the browser's
 // install offer (`beforeinstallprompt`) for later; the account menu shows the entry only when there
 // is an offer, or on iOS Safari, which has no such event and installs from its Share menu. Once
-// installed or dismissed, the entry stays hidden (local storage).
+// dismissed, the entry stays hidden (local storage); once installed, until the browser offers again.
 // No side effects on import: the site calls `watchInstall` once, the menu calls `installOffer`.
 
 import { isIos } from './device';
@@ -20,8 +20,15 @@ export interface InstallState {
   prompt: boolean;
 }
 
+// A live offer wins over a stored 'installed': the browser offers again only once the app is gone.
 export const offerFor = (s: InstallState): InstallOffer =>
-  s.standalone || s.stored ? undefined : s.prompt ? 'prompt' : s.ios ? 'ios' : undefined;
+  s.standalone
+    ? undefined
+    : s.prompt && s.stored !== 'dismissed'
+      ? 'prompt'
+      : s.ios && !s.stored
+        ? 'ios'
+        : undefined;
 
 /** Chromium's install event; not in TypeScript's DOM types. */
 interface InstallPromptEvent extends Event {
@@ -73,7 +80,7 @@ export const installOffer = (): InstallOffer =>
 export async function install(): Promise<void> {
   const e = pending;
   if (!e) return;
-  pending = undefined;
+  pending = undefined; // the browser allows one prompt() per offer
   await e.prompt();
   const { outcome } = await e.userChoice;
   store(outcome === 'accepted' ? 'installed' : 'dismissed');

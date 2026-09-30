@@ -74,9 +74,12 @@ assets come from another domain); the worker caches only that. The worker now re
 service workers exist, not only where push does (push is unchanged). The maskable icon is
 `public/logo/ligo-maskable-512.png`, the favicon on the dark theme's colour inside the safe zone.
 The install entry's words are English until LiGo's strings reach i18n. The board's full phone
-width is the playground's for now; lila's other board pages follow in 9.7. The browser test uses a
-real Chromium profile, since Chromium never installs from the incognito contexts Playwright
-usually makes.
+width is the playground's for now; lila's other board pages follow in 9.7. The installability test
+uses a real Chromium profile, since Chromium never installs from the incognito contexts Playwright
+usually makes. "Push still subscribing" is checked as "a push message still shows its
+notification" (delivered over the DevTools protocol, also with `/offline` missing), because
+headless Chromium has no push service to subscribe to; subscribing is checked on a real browser
+(the owner's list). A missed `/offline` is re-cached after the next page that loads.
 
 ### 2. Sounds (units 9.2 and 9.7): lila's free sets, used as they are
 Top rung of the reuse ladder: the four kept sets already hold every sound a Go game needs, so LiGo

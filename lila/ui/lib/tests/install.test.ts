@@ -19,8 +19,12 @@ describe('the Install LiGo entry (unit 9.6)', () => {
     assert.equal(offerFor({ ...base, standalone: true, prompt: true }), undefined);
     assert.equal(offerFor({ ...base, standalone: true, ios: true }), undefined);
   });
-  test('stays hidden once installed or dismissed', () => {
-    assert.equal(offerFor({ ...base, stored: 'installed', prompt: true }), undefined);
+  test('stays hidden once dismissed', () => {
+    assert.equal(offerFor({ ...base, stored: 'dismissed', prompt: true }), undefined);
     assert.equal(offerFor({ ...base, stored: 'dismissed', ios: true }), undefined);
+  });
+  test('stays hidden once installed, until the browser offers again after an uninstall', () => {
+    assert.equal(offerFor({ ...base, stored: 'installed', ios: true }), undefined);
+    assert.equal(offerFor({ ...base, stored: 'installed', prompt: true }), 'prompt');
   });
 });

@@ -10,7 +10,8 @@
 <title>Offline • LiGo</title>
 <style>
   html { background: #161512; color: #bababa; font: 16px/1.5 system-ui, sans-serif; }
-  body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; box-sizing: border-box; text-align: center; }
+  body { margin: 0; }
+  main { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; box-sizing: border-box; text-align: center; }
   svg { width: 96px; height: 96px; }
   h1 { margin: 0; font-size: 1.5rem; font-weight: normal; color: #e0e0e0; }
   p { margin: 0; }
@@ -19,10 +20,12 @@
 </style>
 </head>
 <body>
+<main>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" aria-hidden="true"><circle cx="31" cy="19" r="15.5" fill="#f4f1ea" stroke="#1d1d1d" stroke-width="2.5"/><circle cx="19" cy="31" r="17.5" fill="#1d1d1d" stroke="#f4f1ea" stroke-width="1.5"/></svg>
 <h1>You are offline</h1>
 <p>LiGo needs the internet to play. Check your connection, then try again.</p>
 <!-- An empty href is this page's own address, so "Try again" reloads what you asked for, no script needed. -->
 <a href="">Try again</a>
+</main>
 </body>
 </html>

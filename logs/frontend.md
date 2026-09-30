@@ -5,13 +5,22 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.6 review · Reviewer findings fixed
+- Did: an independent review found the push test passing only in full Chromium (CI's default headless shell shows no notifications), the ADR's "push still subscribing" not matching the check, a failed `/offline` cache never retried, the install offer missable (watched in an idle callback) and lost for good after an uninstall. Fixed: the PWA tests run on Chromium's `chromium` channel; the ADR amendment says what push check is made; the worker re-caches a missing `/offline` after any page that loads, with a test (404 at install, push still shows, then cached and shown offline); `watchInstall` runs at boot; a live offer wins over a stored "installed"; the menu redraws even if the dialog fails; the offline page gets a `<main>`.
+- Worked: `channel: 'chromium'` resolves to the full Chromium build that `playwright install chromium` fetches alongside the headless shell.
+- Didn't work / dead ends: `test.use({ channel })` inside a describe block is refused (it forces a new worker); it is file-level.
+- Lessons: run browser-feature tests (notifications, installability) on the browser CI launches, not the cloud's full Chromium; a service worker's install-time cache only refreshes when the worker's bytes change.
+- Decisions: none new.
+- Verified by Claude: 41 playground browser tests; 6 install tests; oxfmt, oxlint. · Needs owner verification: how the "Install LiGo" menu entry looks, and push subscribing on a real browser.
+- Follow-ups: none.
+
 ### 2026-09-30 · unit 9.6 · The installable app
 - Did: lila's manifest is LiGo's (name, description, `id`, dark-theme colours, a new maskable icon, no store apps); the service worker caches a self-contained offline page (`public/offline.html`, served at `/offline`) and shows it when a page can't load, with navigation preload so pages are no slower; it registers wherever service workers exist; `lib/install.ts` keeps the browser's install offer and the account menu shows "Install LiGo" (or iOS's Share instructions) until installed or dismissed; the board sets `touch-action: manipulation` and takes a phone's full width on the playground. `ui/playground/e2e/pwa.spec.ts` checks, at phone size in Chromium: no installability errors, the offline page when the server is down and the page back after "Try again", a push message still showing its notification, and the board's width.
 - Worked: a tiny local server in the test (with lila's `Service-Worker-Allowed` header) and `ServiceWorker.deliverPushMessage` over the DevTools protocol test the real built worker without lila running.
 - Didn't work / dead ends: `Page.getInstallabilityErrors` reports `in-incognito` for Playwright's normal contexts; the test uses a persistent profile. Play's asset controller serves nothing in prod mode, so `/offline` reads the file itself. lila's Scala can't compile in cloud sessions since 3.10 (strategygames download blocked), so `StaticContentTest` and `Main.offline` are checked by CI only.
 - Lessons: to test a service worker, serve a real origin (localhost); Playwright's request routing doesn't reach the worker.
 - Decisions: the offline page as one static file at `/offline`; the worker registers without push support; English install text (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md, ADR 0026 §1 amendment).
-- Verified by Claude: the 40 playground browser tests (4 new; 13 phone screenshots re-recorded for the full-width board and looked at); `lib` install tests; the budget (site JS 76.9 KiB, playground JS 80.8, CSS 0.6); oxfmt, oxlint, stylelint, scalafmt; dev/tests/run.sh. · Needs owner verification: on your phone, open the site, install it from the account menu (Android) or Share → Add to Home Screen (iPhone), then turn on flight mode and open a page.
+- Verified by Claude: the 40 playground browser tests (4 new; 17 phone screenshots re-recorded for the full-width board and looked at); `lib` install tests; the budget (site JS 76.9 KiB, playground JS 80.8, CSS 0.6); oxfmt, oxlint, stylelint, scalafmt; dev/tests/run.sh. · Needs owner verification: on your phone, open the site, install it from the account menu (Android) or Share → Add to Home Screen (iPhone), then turn on flight mode and open a page.
 - Follow-ups: 9.7 gives lila's other board pages the full-width phone board; 9.10 installs it on a phone.
 
 ### 2026-09-30 · unit 9.5 review · Reviewer findings fixed
