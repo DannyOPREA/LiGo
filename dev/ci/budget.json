@@ -2,6 +2,6 @@
   "boardChunkKiB": 115,
   "siteJsKiB": 90,
   "siteCssKiB": 16,
-  "boardMountMs": 300,
+  "boardMountMs": 250,
   "pages": { "playground": { "jsKiB": 95, "cssKiB": 2 } }
 }

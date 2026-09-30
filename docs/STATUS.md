@@ -35,9 +35,10 @@ _Updated at the end of every session (`/status`). Newest information wins._
   next; 8.6–8.8 wait for Phase 3 units 3.11, 3.16, 3.18 and 3.20. Log: logs/tsumego.md.
 
 - Phase 9 (under the owner's "work until I tell you to stop" delegation): units 9.1–9.10 in
-  docs/PLAN.md §5. 9.1 (design ADR), 9.2 (sounds), 9.3 (board themes) and 9.4 (board accessibility)
-  in `libs/board` and the playground, and 9.5 (the performance budget check) run now; 9.6–9.10 wait
-  for Phase 3 units 3.8, 3.18 and 3.20 and for Phases 4–8's pages. Logs: logs/frontend.md,
+  docs/PLAN.md §5. 9.1 (ADR 0026, PR #57), 9.2 (sounds, PR #58), 9.3 (board themes, PR #60) and
+  9.4 (keyboard and screen-reader play, PR #61) merged; 9.5 (the performance budget check, PR #63)
+  in review. 9.6–9.10 are parked: they wait for Phase 3 units 3.8, 3.18 and 3.20 and for Phases
+  4–8's pages. Logs: logs/frontend.md,
   logs/board-ui.md.
 
 ## Now
@@ -145,4 +146,4 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.2 merged (ADR 0022), 6.3 in review, 6.4–6.10 wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
 | 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.5 under way, 8.6–8.8 wait for Phase 3 |
-| 9. PWA, polish & handoff | split into units 9.1–9.10 (PLAN §5); 9.1–9.5 under way, 9.6–9.10 wait for Phases 3–8 |
+| 9. PWA, polish & handoff | split into units 9.1–9.10 (PLAN §5); 9.1–9.4 merged, 9.5 in review, 9.6–9.10 wait for Phases 3–8 |

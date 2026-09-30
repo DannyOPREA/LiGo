@@ -164,10 +164,12 @@ headroom, under a ceiling a phone on a slow connection tolerates:
 build. CI measures the production build (`ui/build -p`), which is smaller, so the limits are set
 from it, still at about +15%: board chunk 100.3 → **115 KiB**, site JS 77.5 → **90 KiB**, site CSS
 (theme + site) 13.4 → **16 KiB**, playground JS before the board 81.4 → **95 KiB**, playground CSS
-0.5 → **2 KiB** (a floor, as 15% of half a kibibyte is noise). The board mount measured a median
-of 130 ms (19×19, 9 stones, CPU 4× slower, five mounts); its limit is **300 ms**, not +15%,
-because timings on CI's shared runners vary far more than sizes, and it stays well under the 1 s
-ceiling. The limits live in `dev/ci/budget.json`.
+0.5 → **2 KiB** (a floor, as 15% of half a kibibyte is noise). The board chunk counts the chunks
+it imports that no page loads before it. The board mount, timed inside the page from the click on
+"New game" to the new board painted (19×19, 9 stones, CPU 4× slower, median of five), measured
+63–76 ms; its limit is **250 ms**, not +15%, because timings on CI's shared runners vary far
+more than sizes, and it stays well under the 1 s ceiling. The 4× slowdown is relative to the
+machine running the test, so the number is a regression guard, not a fixed phone speed. The limits live in `dev/ci/budget.json`.
 
 A budget raised later needs a line in logs/frontend.md saying why. New pages (round, analysis,
 puzzle, lobby) add their own line when they land; 9.10 runs the whole set over every page.

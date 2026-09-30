@@ -44,7 +44,9 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   logs [lila|ws|db|scoring]  Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
   test [what]         Run the unit tests of lila, ws, ui, pages, budget, rules, board, scoring, puzzles or all
-                      (default: all); pages = the playground's screenshots and scripted game in
+                      (default: all, which leaves out budget); budget = the size budget and the
+                      board's mount time, after rebuilding the ui minified (it stays minified);
+                      pages = the playground's screenshots and scripted game in
                       Chromium, from the built ui (compile ui first; docker mode skips them);
                       rules = both Go rules engines: libs/go-rules (server) and libs/board
                       (goban-engine) replaying the libs/conformance fixtures, then the parity

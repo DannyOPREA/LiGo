@@ -39,6 +39,13 @@ function jsFiles(name) {
 
 const sum = files => [...new Set(files)].reduce((n, f) => n + gz(join(compiled, f)), 0);
 
+/** The chunks a file refers to (static imports and `import()`), as file names in public/compiled. */
+function refs(f) {
+  const file = join(compiled, f);
+  if (!existsSync(file)) throw new Error(`${f} is referenced but missing from ${compiled}`);
+  return [...readFileSync(file, 'utf8').matchAll(/lib\.[A-Z0-9]+\.js/g)].map(([ref]) => ref).filter(r => r !== f);
+}
+
 /**
  * The board chunk: the lazily loaded chunk holding goban. No page imports it statically, so it is
  * found among the chunks the current build's entries reach (dev builds leave old chunks behind) by
@@ -46,12 +53,16 @@ const sum = files => [...new Set(files)].reduce((n, f) => n + gz(join(compiled, 
  */
 function boardChunk() {
   const seen = new Set();
-  const todo = Object.keys(manifest.js).flatMap(jsFiles);
+  // Entry bundles only (they carry a hash); the manifest also lists shared chunks, inline scripts
+  // and itself.
+  const todo = Object.keys(manifest.js)
+    .filter(name => manifest.js[name]?.hash)
+    .flatMap(jsFiles);
   while (todo.length) {
     const f = todo.pop();
-    if (seen.has(f) || !existsSync(join(compiled, f))) continue;
+    if (seen.has(f)) continue;
     seen.add(f);
-    for (const [ref] of readFileSync(join(compiled, f), 'utf8').matchAll(/lib\.[A-Z0-9]+\.js/g)) todo.push(ref);
+    todo.push(...refs(f));
   }
   const marker = 'Goban.theme_black_stones not set';
   const hits = [...seen].filter(f => readFileSync(join(compiled, f), 'utf8').includes(marker));
@@ -68,13 +79,19 @@ function cssFile(name) {
 const measured = [];
 let failed = false;
 const check = (label, bytes, limitKiB) => {
+  // A missing or mistyped limit must not pass as "ok" (anything > undefined is false).
+  if (typeof limitKiB !== 'number' || !(limitKiB > 0)) throw new Error(`no limit for "${label}" in budget.json`);
   const over = kib(bytes) > limitKiB;
   failed ||= over;
   measured.push({ label, size: kib(bytes).toFixed(1), limit: limitKiB, result: over ? 'OVER' : 'ok' });
 };
 
 try {
-  check('board chunk (goban + libs/board)', gz(join(compiled, boardChunk())), budget.boardChunkKiB);
+  // The board chunk and any chunk it imports that no page loads before it: bytes the board costs.
+  const board = boardChunk();
+  const before = new Set(['site', ...Object.keys(budget.pages)].flatMap(jsFiles));
+  const boardOnly = refs(board).filter(f => !before.has(f));
+  check('board chunk (goban + libs/board)', sum([board, ...boardOnly]), budget.boardChunkKiB);
   check('site JS (shared by every page)', sum(jsFiles('site')), budget.siteJsKiB);
   check('site CSS (theme + site)', gz(cssFile('lib.theme.all')) + gz(cssFile('site')), budget.siteCssKiB);
   for (const [page, limits] of Object.entries(budget.pages)) {

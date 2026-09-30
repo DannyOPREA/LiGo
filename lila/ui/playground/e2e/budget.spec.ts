@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { boardSvg, openPlayground } from './page';
+import { openPlayground } from './page';
 
 const budget = JSON.parse(
   readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../../../dev/ci/budget.json'), 'utf8'),
@@ -24,19 +24,33 @@ test('a 19×19 board with 9 stones mounts within the budget on a 4× slower CPU'
 
   const times: number[] = [];
   for (let i = 0; i < 5; i++) {
-    // Each "New game" throws the board away and mounts a fresh one (goban's code is loaded already).
-    const start = await page.evaluate(() => performance.now());
+    // Timed inside the page, from the click on "New game" (which throws the board away and mounts a
+    // fresh one; goban's code is loaded already) until a new board's SVG is in place and two frames
+    // have been painted. Playwright's own round trips are not counted.
+    await page.evaluate(() => {
+      const w = window as unknown as { mountTime?: Promise<number> };
+      w.mountTime = new Promise<number>(done => {
+        const old = document.querySelector('.playground__board [role=application]');
+        document.addEventListener(
+          'click',
+          () => {
+            const start = performance.now();
+            const poll = () => {
+              const board = document.querySelector('.playground__board [role=application]');
+              // goban draws the whole board at once, in a shadow root.
+              if (board && board !== old && board.shadowRoot?.querySelector('svg'))
+                requestAnimationFrame(() => requestAnimationFrame(() => done(performance.now() - start)));
+              else requestAnimationFrame(poll);
+            };
+            poll();
+          },
+          { capture: true, once: true },
+        );
+      });
+    });
     await page.getByRole('button', { name: 'New game' }).click();
+    times.push(await page.evaluate(() => (window as unknown as { mountTime: Promise<number> }).mountTime));
     await expect(page.locator('.playground__status > div').first()).toHaveText('White to play.');
-    await boardSvg(page).waitFor();
-    // Two animation frames: the board has been painted, not just put in the page.
-    const end = await page.evaluate(
-      () =>
-        new Promise<number>(r =>
-          requestAnimationFrame(() => requestAnimationFrame(() => r(performance.now()))),
-        ),
-    );
-    times.push(end - start);
   }
   times.sort((a, b) => a - b);
   const median = times[2];
