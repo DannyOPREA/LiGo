@@ -31,13 +31,18 @@ test('a 19×19 board with 9 stones mounts within the budget on a 4× slower CPU'
     await boardSvg(page).waitFor();
     // Two animation frames: the board has been painted, not just put in the page.
     const end = await page.evaluate(
-      () => new Promise<number>(r => requestAnimationFrame(() => requestAnimationFrame(() => r(performance.now())))),
+      () =>
+        new Promise<number>(r =>
+          requestAnimationFrame(() => requestAnimationFrame(() => r(performance.now()))),
+        ),
     );
     times.push(end - start);
   }
   times.sort((a, b) => a - b);
   const median = times[2];
-  console.log(`board mount, 19×19 with 9 stones, CPU 4× slower: median ${median.toFixed(0)} ms (${times.map(t => t.toFixed(0)).join(', ')})`);
+  console.log(
+    `board mount, 19×19 with 9 stones, CPU 4× slower: median ${median.toFixed(0)} ms (${times.map(t => t.toFixed(0)).join(', ')})`,
+  );
   expect(median).toBeLessThanOrEqual(budget.boardMountMs);
   expect(problems).toEqual({ requests: [], errors: [] });
 });
