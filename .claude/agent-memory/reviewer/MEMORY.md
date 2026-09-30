@@ -22,4 +22,5 @@
 - [Rebrand text review patterns](rebrand-text-review-patterns.md) — en-US dest fallback, CRLF churn, verify.lichess.org mailto, sbt 2 cached Total 0 (3.8)
 - [Board a11y review patterns](board-a11y-review-patterns.md) — e.repeat, click never focuses goban, mousetrap clash, broad axe regex, scratch probes (9.4)
 - [sbt build wiring review patterns](sbt-build-wiring-review-patterns.md) — resolver order vs Central, ProjectRef exclusions, dup mounts, verify/CI drift (3.10)
-- [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, gated-predicate side readers (isGone), empty sans (3.11–3.13)
+- [Credits page review patterns](credits-page-review-patterns.md) — indexOf -1 vacuity, substring row match, symlink main guard, OFL fonts (9.8)
+- [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, PLAN-row scope gaps, gated-predicate side readers (isGone), empty sans (3.11–3.13)

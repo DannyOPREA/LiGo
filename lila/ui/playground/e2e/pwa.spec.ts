@@ -107,7 +107,11 @@ test.use({ channel: 'chromium' });
 async function openHome(page: Page, site: Site): Promise<void> {
   await page.goto(`${site.origin}/`);
   // Controlled once the worker has installed (with the offline page cached) and claimed the page.
-  await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+  // The claim comes inside the activate step, before the worker is 'activated', and Chromium can drop
+  // a push delivered to a worker still activating (CI lost one on PR #71), so wait for that too.
+  await page.waitForFunction(
+    () => !!navigator.serviceWorker.controller && navigator.serviceWorker.controller.state === 'activated',
+  );
 }
 
 test.describe('installable app on a phone', () => {
@@ -177,17 +181,27 @@ async function expectPush(page: Page, site: Site): Promise<void> {
   const context = page.context();
   await context.grantPermissions(['notifications'], { origin: site.origin });
   const cdp = await context.newCDPSession(page);
+  // What the browser reports about the worker, printed if the notification never shows (CI lost a
+  // push on PR #71 that no local run reproduced).
+  const seen: string[] = [];
+  cdp.on('ServiceWorker.workerVersionUpdated', e =>
+    e.versions.forEach(v => seen.push(`version ${v.versionId}: ${v.status}/${v.runningStatus}`)),
+  );
+  cdp.on('ServiceWorker.workerErrorReported', e => seen.push(`error: ${e.errorMessage.errorMessage}`));
+  // The id of this site's registration once its worker is activated: a push sent any earlier can be
+  // dropped.
   const registration = new Promise<string>(ok =>
-    cdp.on('ServiceWorker.workerRegistrationUpdated', e => {
-      const r = e.registrations.find(r => r.scopeURL === `${site.origin}/` && !r.isDeleted);
-      if (r) ok(r.registrationId);
+    cdp.on('ServiceWorker.workerVersionUpdated', e => {
+      const v = e.versions.find(v => v.scriptURL.startsWith(`${site.origin}/`) && v.status === 'activated');
+      if (v) ok(v.registrationId);
     }),
   );
   await cdp.send('ServiceWorker.enable');
   await openHome(page, site);
+  const registrationId = await registration;
   await cdp.send('ServiceWorker.deliverPushMessage', {
     origin: site.origin,
-    registrationId: await registration,
+    registrationId,
     data: JSON.stringify({
       title: 'Your turn',
       body: 'against Danny',
@@ -195,13 +209,18 @@ async function expectPush(page: Page, site: Site): Promise<void> {
       payload: { userData: {} },
     }),
   });
-  await expect
-    .poll(() =>
-      page.evaluate(async () =>
-        (await (await navigator.serviceWorker.ready).getNotifications()).map(n => `${n.title}: ${n.body}`),
-      ),
-    )
-    .toEqual(['Your turn: against Danny']);
+  const notifications = () =>
+    page.evaluate(async () =>
+      (await (await navigator.serviceWorker.ready).getNotifications()).map(n => `${n.title}: ${n.body}`),
+    );
+  try {
+    await expect.poll(notifications).toEqual(['Your turn: against Danny']);
+  } catch (err) {
+    const permission = await page.evaluate(() => Notification.permission);
+    throw new Error(
+      `no notification (permission ${permission}, registration ${registrationId}; ${seen.join('; ')})\n${err}`,
+    );
+  }
 }
 
 test.describe('the board on a phone', () => {

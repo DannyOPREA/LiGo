@@ -127,6 +127,14 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
   def offline = Anon:
     Ok(offlineHtml).as(HTML).withHeaders(CACHE_CONTROL -> "no-cache")
 
+  // LiGo: the credits page (unit 9.8, ADR 0026 §6), its body generated into lila/public like the offline page.
+  // Read once, so in dev a regenerated page shows after a lila restart.
+  private lazy val creditsHtml =
+    java.nio.file.Files.readString(env.getFile.exec("public/credits.html").toPath)
+  def credits = Open:
+    pageHit
+    Ok.page(views.site.ui.credits(creditsHtml))
+
   def uploadImage(realm: MarkdownRealm) = AuthBody(lila.web.HashedMultiPart(parse)) { ctx ?=> me ?=>
     lila.core.security.canUploadImages
       .so:

@@ -5,6 +5,33 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.8 CI · Credits screenshots and a lost push
+- Did: CI's `ui` job failed three page tests. The credits pictures differed in every line of text (~3% of the pixels): CI's Chromium 153 draws glyphs differently from the cloud's 141. The pictures now hide the credits page's glyphs, as the playground's already do (screenshot.css), and keep the layout; headings and links are still checked with locators. The "missing offline page" push test lost its push once: the page is controlled as soon as the worker claims it, inside its activate step, and a push sent before the worker is `activated` can be dropped. The test now waits for `activated`.
+- Worked: the playground's existing glyph-hiding style, extended by a test-only class.
+- Didn't work / dead ends: the lost push didn't reproduce locally (30 runs).
+- Lessons: a text-heavy page can't be compared pixel for pixel across Chromium builds; hide the glyphs and check the text with locators. "Controlled" is not "activated" for a service worker.
+- Decisions: none new.
+- Verified by Claude: 43 playground browser tests; the push tests 30 times; oxlint, oxfmt, stylelint. · Needs owner verification: none new.
+- Follow-ups: none.
+
+### 2026-09-30 · unit 9.8 review · Reviewer findings fixed
+- Did: an independent review found the COPYING check could pass without checking: a reworded §3 heading made it read nothing, a symlinked path skipped the whole check, and "contains" matching let a dependency row through on its parent's name; odd rows and non-`.json` puzzle files were skipped. Fixed: the check fails on a missing section, an unreadable row or no rows; a row is covered only when its first cell starts with an entry's name; the script finds itself by real path; puzzle files are read from every row; entries need every field. `lila/bin/gen/credits.test.mjs` (8 tests) covers each case, and `dev/tests/run.sh` runs it plus the check through a symlinked folder. Also: Noto Sans and Roboto credited under the SIL OFL 1.1 (lila's COPYING.md's Apache-2.0 is out of date; the shipped Roboto names the OFL-era roboto-classic project), the full-size and g170 KataGo networks listed apart (different licences), and meta.yml sets up Node before the tooling checks.
+- Worked: node:test for the check's own parsing, next to the script.
+- Didn't work / dead ends: none.
+- Lessons: a drift check needs negative tests for its own parsing (a missing section, odd rows), not only for a mismatch; credits copied from upstream's COPYING inherit its stale licence claims.
+- Decisions: none new.
+- Verified by Claude: dev/tests/run.sh 63 passed; credits.test.mjs 8 passed; 43 playground browser tests; oxfmt, oxlint, scalafmt. · Needs owner verification: the external links (none reachable from the cloud session).
+- Follow-ups: tell lichess (or tidy lila/COPYING.md in 9.7) that its font licences are out of date.
+
+### 2026-09-30 · unit 9.8 · The credits page
+- Did: `docs/credits.json` lists who and what LiGo is built from (lichess, lishogi, strategygames, OGS goban and goratings, goscorer, KataGo and its networks, @sabaki/sgf, the sound sets, fonts, icons and flags, the puzzles and KaTrain's frame, the scoring and tool libraries, axe-core), each with author, use, licence and link. `lila/bin/gen/credits.mjs` writes it as `lila/public/credits.html`, which lila serves at `/credits`; the site menu, the home page's About links and `/source` link to it. `--check` (in `dev/tests/run.sh`) fails on a stale page, a COPYING.md §3 third party no entry covers, or a puzzle file without an entry. `ui/playground/e2e/credits.spec.ts` screenshots the page at desktop and phone sizes, runs axe, and checks every entry's link.
+- Worked: one generated HTML body lets the Scala page and the browser test show the same thing without a lila server.
+- Didn't work / dead ends: axe found lila's link blue (3.96:1) and dim text (4.27:1) too faint on the table's zebra rows, and a colour-only link in the intro; the page drops the zebra rows and underlines its links.
+- Lessons: a list checked against COPYING.md by names each entry claims is simple and catches a new dependency the credits forgot.
+- Decisions: the list as JSON in docs/ with a generated page body; English words; no zebra rows (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md, ADR 0026 §6 amendment).
+- Verified by Claude: the two credits browser tests (screenshots looked at), `credits.mjs --check` and its negative test in dev/tests/run.sh (62 passed), oxfmt, oxlint, stylelint, scalafmt. · Needs owner verification: open localhost:8080/credits after `dev/ligo up`, and the Credits links in the menu, on the home page and on /source.
+- Follow-ups: 9.7 fixes the link contrast site-wide; the credits list grows with each unit that adds a third party (the check enforces it).
+
 ### 2026-09-30 · unit 9.6 review · Reviewer findings fixed
 - Did: an independent review found the push test passing only in full Chromium (CI's default headless shell shows no notifications), the ADR's "push still subscribing" not matching the check, a failed `/offline` cache never retried, the install offer missable (watched in an idle callback) and lost for good after an uninstall. Fixed: the PWA tests run on Chromium's `chromium` channel; the ADR amendment says what push check is made; the worker re-caches a missing `/offline` after any page that loads, with a test (404 at install, push still shows, then cached and shown offline); `watchInstall` runs at boot; a live offer wins over a stored "installed"; the menu redraws even if the dialog fails; the offline page gets a `<main>`.
 - Worked: `channel: 'chromium'` resolves to the full Chromium build that `playwright install chromium` fetches alongside the headless shell.
