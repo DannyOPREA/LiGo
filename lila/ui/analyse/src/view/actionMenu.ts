@@ -70,19 +70,6 @@ export function view(ctrl: AnalyseCtrl): VNode {
         },
         i18n.site.flipBoard,
       ),
-      !ctrl.ongoing &&
-        hl(
-          'a',
-          {
-            attrs: {
-              'data-icon': licon.Pencil,
-              href: ctrl.boardEditorUrl(),
-              title: 'Hotkey: b',
-              ...linkAttrs,
-            },
-          },
-          i18n.site.boardEditor,
-        ),
       canContinue &&
         hl(
           'a',

@@ -20,8 +20,7 @@ final private class Finisher(
     playban: PlaybanApi,
     notifier: RoundNotifier,
     crosstableApi: lila.game.CrosstableApi,
-    getSocketStatus: Game => Fu[SocketStatus],
-    recentTvGames: RecentTvGames
+    getSocketStatus: Game => Fu[SocketStatus]
 )(using Executor, Translator):
 
   private given play.api.i18n.Lang = defaultLang
@@ -166,7 +165,6 @@ final private class Finisher(
   private def incNbGames(game: Game, opponent: Option[UserWithPerfs])(user: UserWithPerfs): Funit =
     (game.finished && (user.noBot || game.nonAi)).so:
       val totalTime = (game.hasClock && user.playTime.isDefined).so(game.durationSeconds)
-      val tvTime = totalTime.ifTrue(recentTvGames.get(game.id))
       val result =
         if game.winnerUserId.has(user.id) then 1
         else if game.loserUserId.has(user.id) then -1
@@ -177,7 +175,7 @@ final private class Finisher(
           game.rated,
           result = result,
           totalTime = totalTime,
-          tvTime = tvTime,
+          tvTime = none, // TV went with unit 3.7
           botVsHuman = user.isBot && opponent.exists(_.noBot)
         )
         .void

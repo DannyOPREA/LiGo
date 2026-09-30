@@ -52,8 +52,6 @@ export interface DasherData {
   background: BackgroundData;
   board: AssetData & { is3d: boolean };
   piece: AssetData;
-  coach: boolean;
-  streamer: boolean;
 }
 
 export type Mode = 'links' | 'langs' | 'sound' | 'theme' | 'board' | 'piece';

@@ -1,9 +1,6 @@
 package lila.app
 package mashup
 
-import play.api.data.FormBinding
-import play.api.i18n.Lang
-import play.api.mvc.Request
 import scalalib.paginator.Paginator
 
 import lila.core.game.Game
@@ -13,7 +10,7 @@ import lila.game.{ GameFilter, GameFilterMenu, Query }
 
 object GameFilterMenu:
 
-  def apply(user: User, nbs: UserInfo.NbGames, currentName: String, isAuth: Boolean): GameFilterMenu =
+  def apply(user: User, nbs: UserInfo.NbGames, currentName: String): GameFilterMenu =
 
     val filters: NonEmptyList[GameFilter] = NonEmptyList(
       GameFilter.all,
@@ -25,8 +22,7 @@ object GameFilterMenu:
         (user.count.draw > 0).option(GameFilter.draw),
         (nbs.playing > 0).option(GameFilter.playing),
         (nbs.bookmark > 0).option(GameFilter.bookmark),
-        (nbs.imported > 0).option(GameFilter.imported),
-        (isAuth && user.count.game > 0).option(GameFilter.search)
+        (nbs.imported > 0).option(GameFilter.imported)
       ).flatten
     )
 
@@ -46,11 +42,9 @@ object GameFilterMenu:
       case GameFilter.win => user.count.win.some
       case GameFilter.loss => user.count.loss.some
       case GameFilter.draw => user.count.draw.some
-      case GameFilter.search => user.count.game.some
       case GameFilter.playing => nbs.map(_.playing)
 
   final class PaginatorBuilder(
-      userGameSearch: lila.gameSearch.UserGameSearch,
       pagBuilder: lila.game.PaginatorBuilder,
       gameRepo: lila.game.GameRepo,
       gameProxyRepo: lila.round.GameProxyRepo,
@@ -62,7 +56,7 @@ object GameFilterMenu:
         nbs: Option[UserInfo.NbGames],
         filter: GameFilter,
         page: Int
-    )(using Request[?], FormBinding, Lang)(using meOpt: Option[Me]): Fu[Paginator[Game]] =
+    )(using meOpt: Option[Me]): Fu[Paginator[Game]] =
       val nb = cachedNbOf(user, nbs, filter)
       def std(query: Bdoc) = pagBuilder.recentlyCreated(query, nb)(page)
       filter match
@@ -91,11 +85,3 @@ object GameFilterMenu:
               _.mapFutureResults(gameProxyRepo.upgradeIfPresent)
             .addEffect: p =>
               p.currentPageResults.filter(_.finishedOrAborted).foreach(gameRepo.unsetPlayingUids)
-        case GameFilter.search => userGameSearch(user, page)
-
-  def searchForm(
-      userGameSearch: lila.gameSearch.UserGameSearch,
-      filter: GameFilter
-  )(using Request[?], FormBinding, Lang): play.api.data.Form[?] =
-    if filter == GameFilter.search then userGameSearch.requestForm
-    else userGameSearch.defaultForm

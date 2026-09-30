@@ -17,8 +17,6 @@ import lila.game.JsonView.given
 import lila.game.PgnDump.{ WithFlags, applyDelay }
 import lila.game.{ Divider, Query }
 import lila.round.GameProxyRepo
-import lila.gameSearch.GameSearchApi
-import smithy4s.time.Timestamp
 
 final class GameApiV2(
     pgnDump: PgnDump,
@@ -32,7 +30,6 @@ final class GameApiV2(
     divider: Divider,
     gameOpening: lila.game.GameOpening,
     bookmarkApi: lila.bookmark.BookmarkApi,
-    gameSearch: GameSearchApi,
     crosstableApi: lila.game.CrosstableApi
 )(using Executor, org.apache.pekko.actor.ActorSystem):
 
@@ -86,30 +83,24 @@ final class GameApiV2(
           .map(_.id)
           .fold(Query.nowPlaying(config.user.id)):
             Query.nowPlayingVs(config.user.id, _)
-    val requiresElasticSearch =
-      config.perfKey.nonEmpty || config.analysed.nonEmpty || config.color.nonEmpty || config.rated.nonEmpty
+    // Game search (Elasticsearch) went with unit 3.7: the rated and analysed filters now run in
+    // Mongo, and the perf and colour filters on the games read (neither is a stored field).
     val gameSource: Source[Game, ?] =
-      if requiresElasticSearch then
-        import lila.search.Size
-        gameSearch
-          .idStream(
-            config.toGameQuery,
-            Size(config.max.fold(500_000)(_.value)),
-            config.perSecond.into(MaxPerPage)
-          )
-          .mapAsync(1)(gameRepo.gamesFromSecondary)
-          .mapConcat(identity)
-      else
-        gameRepo
-          .sortedCursor(
-            playerSelect ++
-              Query.createdBetween(config.since, config.until) ++
-              (!config.ongoing).so(Query.finished),
-            config.sort.bson,
-            batchSize = config.perSecond.value
-          )
-          .documentSource()
-          .take(config.max.fold(Int.MaxValue)(_.value))
+      gameRepo
+        .sortedCursor(
+          playerSelect ++
+            Query.createdBetween(config.since, config.until) ++
+            (!config.ongoing).so(Query.finished) ++
+            config.rated.so(r => if r then Query.rated else Query.casual) ++
+            config.analysed.so(Query.analysed),
+          config.sort.bson,
+          batchSize = config.perSecond.value
+        )
+        .documentSource()
+        .filter: g =>
+          (config.perfKey.isEmpty || config.perfKey(g.perfKey)) &&
+            config.color.forall(c => g.player(c).userId.contains(config.user.id))
+        .take(config.max.fold(Int.MaxValue)(_.value))
 
     gameSource
       .via(upgradeOngoingGame)
@@ -325,32 +316,7 @@ object GameApiV2:
       ongoing: Boolean = false,
       finished: Boolean = true
   )(using val by: Option[Me])
-      extends Config:
-    import lila.search.spec.DateRange
-    import lila.gameSearch.*
-
-    private def ts(i: Instant): Timestamp = Timestamp.fromEpochMilli(i.toEpochMilli)
-
-    def toSorting =
-      sort match
-        case GameSort.DateAsc => SearchSort(Fields.date, "asc")
-        case GameSort.DateDesc => SearchSort(Fields.date, "desc")
-
-    def toGameQuery =
-      SearchData(
-        players = SearchPlayer(
-          a = user.id.into(UserStr).some,
-          b = vs.map(_.id.into(UserStr)),
-          white = color.exists(_.white).option(user.id.into(UserStr)),
-          black = color.exists(_.black).option(user.id.into(UserStr))
-        ),
-        analysed = analysed,
-        sort = toSorting.some
-      ).query.copy(
-        date = DateRange(since.map(ts), until.map(ts)),
-        perf = perfKey.view.map(_.id.value).toList,
-        rated = rated
-      )
+      extends Config
 
   case class ByIdsConfig(
       ids: Seq[GameId],

@@ -30,7 +30,6 @@ final class User(
 ) extends LilaController(env):
 
   import env.relation.api as relationApi
-  import env.gameSearch.userGameSearch
   import env.user.lightUserApi
 
   private given Conversion[UserWithPerfs, UserModel] = _.user
@@ -121,29 +120,24 @@ final class User(
         WithProxy: proxy ?=>
           limit.enumeration.userProfile(rateLimited):
             EnabledUser(username): u =>
-              val isSearch = filter == GameFilter.search.name
-              RequireAuthIf(isSearch):
-                negotiate(
-                  html = for
-                    nbs <- env.userNbGames(u, withCrosstable = true)
-                    filters = lila.app.mashup.GameFilterMenu(u, nbs, filter, ctx.isAuth)
-                    pag <- env.gamePaginator(user = u, nbs = nbs.some, filter = filters.current, page = page)
-                    _ <- lightUserApi.preloadMany(pag.currentPageResults.flatMap(_.userIds))
-                    res <-
-                      if HTTPRequest.isSynchronousHttp(ctx.req) then
-                        for
-                          info <- env.userInfo.fetch(u, nbs, restricted = isRestricted)
-                          social <- env.socialInfo(u)
-                          searchForm = (filters.current == GameFilter.search).option(
-                            lila.app.mashup.GameFilterMenu.searchForm(userGameSearch, filters.current)
-                          )
-                          res <- Ok.page:
-                            views.user.show.page.games(info, pag, filters, searchForm, social)
-                        yield res
-                      else Ok.snip(views.user.show.gamesContent(u, nbs, pag, filters, filter)).toFuccess
-                  yield res.withCanonical(routes.User.games(u.username, filters.current.name)),
-                  json = gamesForLichobile(u, filter, page)
-                )
+              negotiate(
+                html = for
+                  nbs <- env.userNbGames(u, withCrosstable = true)
+                  filters = lila.app.mashup.GameFilterMenu(u, nbs, filter)
+                  pag <- env.gamePaginator(user = u, nbs = nbs.some, filter = filters.current, page = page)
+                  _ <- lightUserApi.preloadMany(pag.currentPageResults.flatMap(_.userIds))
+                  res <-
+                    if HTTPRequest.isSynchronousHttp(ctx.req) then
+                      for
+                        info <- env.userInfo.fetch(u, nbs, restricted = isRestricted)
+                        social <- env.socialInfo(u)
+                        res <- Ok.page:
+                          views.user.show.page.games(info, pag, filters, social)
+                      yield res
+                    else Ok.snip(views.user.show.gamesContent(u, nbs, pag, filters, filter)).toFuccess
+                yield res.withCanonical(routes.User.games(u.username, filters.current.name)),
+                json = gamesForLichobile(u, filter, page)
+              )
 
   private def EnabledUser(username: UserStr)(f: UserModel => Fu[Result])(using ctx: Context): Fu[Result] =
     if username.id.isGhost
@@ -329,7 +323,7 @@ final class User(
       .zip(env.user.api.withPerfsAndEmails(username).orFail(s"No such user $username"))
       .flatMap { case (inquiry, WithPerfsAndEmails(user, emails)) =>
         import views.mod.user as ui
-        import lila.ui.ScalatagsExtensions.{ emptyFrag, given }
+        import lila.ui.ScalatagsExtensions.given
         given lila.mod.IpRender.RenderIp = env.mod.ipRender.apply
 
         val nbOthers = getInt("nbOthers") | 100
@@ -342,14 +336,6 @@ final class User(
               then views.mod.timeline.renderPlay(tl)
               else views.mod.timeline.renderGeneral(tl)
             .map(lila.mod.ui.mzSection("timeline")(_))
-
-        val plan =
-          isGranted(_.Admin).so(
-            env.plan.api
-              .recentChargesOf(user)
-              .map(views.user.mod.plan(user))
-              .dmap(_ | emptyFrag)
-          ): Fu[Frag]
 
         val reportLog = isGranted(_.SeeReport).so:
           for
@@ -406,7 +392,6 @@ final class User(
             .merge(modZoneSegment(actions, "actions", user))
             .merge(modZoneSegment(reportLog, "reportLog", user))
             .merge(modZoneSegment(timeline, "timeline", user))
-            .merge(modZoneSegment(plan, "plan", user))
             .merge(modZoneSegment(prefs, "prefs", user))
             .merge(modZoneSegment(appeal, "appeal", user))
             .merge(modZoneSegment(rageSit, "rageSit", user))

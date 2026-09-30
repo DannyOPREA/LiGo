@@ -44,7 +44,8 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
                 a(
                   cls := "button button-empty text",
                   dataIcon := perfType.icon,
-                  href := s"${routes.User.games(user.username, "search")}?perf=${perfType.id}"
+                  // was a game search filtered by this perf, removed in unit 3.7.
+                  href := routes.User.games(user.username, "all").url
                 )(tps.viewTheGames())
               )
             ),

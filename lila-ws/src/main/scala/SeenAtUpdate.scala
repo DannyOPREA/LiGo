@@ -11,7 +11,6 @@ import lila.ws.Auth.AccessTokenId
 
 final class SeenAtUpdate(mongo: Mongo)(using
     context: Executor,
-    scheduler: Scheduler,
     cacheApi: util.CacheApi
 ) extends MongoHandlers:
 
@@ -25,11 +24,11 @@ final class SeenAtUpdate(mongo: Mongo)(using
       val now = LocalDateTime.now
       for
         userColl <- mongo.userColl
-        userDoc <- findAndModify(
+        _ <- findAndModify(
           coll = userColl,
           selector = BSONDocument("_id" -> user, "mustConfirmEmail" -> BSONDocument("$exists" -> false)),
           modifier = BSONDocument("$set" -> BSONDocument("seenAt" -> now)),
-          fields = BSONDocument("roles" -> true, "_id" -> false)
+          fields = BSONDocument("_id" -> true)
         )
       do
         oauthToken.foreach: tokenId =>
@@ -38,47 +37,6 @@ final class SeenAtUpdate(mongo: Mongo)(using
               BSONDocument("_id" -> tokenId),
               BSONDocument("$set" -> BSONDocument("used" -> now))
             )
-        val isCoach = userDoc.exists(_.getAsOpt[List[String]]("roles").exists(_ contains "ROLE_COACH"))
-        if isCoach then
-          mongo.coach(
-            _.update(ordered = false, writeConcern = WriteConcern.Unacknowledged).one(
-              BSONDocument("_id" -> user),
-              BSONDocument("$set" -> BSONDocument("user.seenAt" -> now))
-            )
-          )
-        if userDoc.isDefined && streamers.contains(user) then
-          mongo.streamer(
-            _.update(ordered = false, writeConcern = WriteConcern.Unacknowledged).one(
-              BSONDocument("_id" -> user),
-              BSONDocument("$set" -> BSONDocument("seenAt" -> now))
-            )
-          )
-
-  object streamers:
-
-    def contains(user: User.Id) = ids contains user
-
-    private var ids = Set.empty[User.Id]
-
-    private def fetch: Future[Set[User.Id]] =
-      mongo.streamer(
-        _.distinct[User.Id, Set](
-          key = "_id",
-          selector = Some(
-            BSONDocument(
-              "listed" -> true,
-              "approval.granted" -> true
-            )
-          ),
-          collation = None
-        )
-      )
-
-    scheduler.scheduleWithFixedDelay(30.seconds, 60.seconds) { () =>
-      fetch.foreach { res =>
-        ids = res
-      }
-    }
 
   private def findAndModify(
       coll: BSONCollection,

@@ -60,7 +60,7 @@ final class ChallengeUi(helpers: Helpers):
           dataIcon := (if c.initialFen.isDefined then Icon.Feather else c.perfType.icon)
         )(
           div(
-            variantLink(c.variant, c.perfType, c.initialFen),
+            variantLink(c.variant, c.perfType),
             br,
             span(cls := "clock"):
               c.daysPerTurn

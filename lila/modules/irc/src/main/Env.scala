@@ -5,7 +5,6 @@ import play.api.libs.ws.StandaloneWSClient
 import play.api.{ Configuration, Mode }
 
 import lila.common.{ Bus, Lilakka }
-import lila.core.plan.ChargeEvent
 import lila.core.misc.puzzle.DailyChange
 
 @Module
@@ -31,6 +30,4 @@ final class Env(
       api.stop()
       funit // don't wait for zulip aknowledgment to restart lila.
 
-  // type can be inferred but clearer to leave it
-  Bus.sub[ChargeEvent](api.charge(_))
   Bus.sub[DailyChange](e => api.dailyPuzzle(e.id))

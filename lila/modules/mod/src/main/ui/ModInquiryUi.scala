@@ -134,18 +134,10 @@ final class ModInquiryUi(helpers: Helpers)(
 
   private def links(in: Inquiry)(using Me) = div(cls := "links")(
     Granter(_.MarkBooster).option:
-      val searchUrl = routes.User.games(in.user.username, "search")
+      // "Quick rated losses/wins" used game search, removed in unit 3.7.
       div(cls := "dropper view-games")(
         a(href := routes.GameMod.index(in.user.username))("View", br, "Games"),
         div(cls := "view-games-dropdown")(
-          a(
-            cls := "fbt",
-            href := s"$searchUrl?turnsMax=5&mode=1&players.loser=${in.user.id}&sort.field=d&sort.order=desc"
-          )("Quick rated losses"),
-          a(
-            cls := "fbt",
-            href := s"$searchUrl?turnsMax=5&mode=1&players.winner=${in.user.id}&sort.field=d&sort.order=desc"
-          )("Quick rated wins"),
           boostOpponents(in.report, in.allReports, in.user.user).map { opponents =>
             a(
               cls := "fbt",

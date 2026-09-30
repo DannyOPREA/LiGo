@@ -56,16 +56,16 @@ object header:
         u.patronAndColor.match
           case Some(p) =>
             h1(cls := s"user-link ${if isOnline.exec(u.id) then "online" else "offline"}")(
-              a(href := routes.Plan.index())(patronIcon(p)),
+              patronIcon(p),
               userDom(u)
             )
           case None => h1(userDom(u)),
         div(cls := "trophies")(
           views.user.bits.perfTrophies(u, info.ranks),
           otherTrophies(info),
+          // existing patrons keep their wings; the Patron page went with the plan module (unit 3.7).
           u.plan.active.option(
-            a(
-              href := routes.Plan.index(),
+            span(
               cls := "trophy award patron icon3d",
               ariaTitle(trans.patron.patronSince.txt(showDate(u.plan.sinceDate)))
             )(patronIconChar)
@@ -88,90 +88,88 @@ object header:
       ctx.isnt(u).option(noteUi.zone(u, social.notes)),
       isGranted(_.UserModView).option(div(cls := "mod-zone mod-zone-full none")),
       standardFlash,
-      angle match
-        case UserInfo.Angle.Games(Some(searchForm)) => views.gameSearch.user(u, searchForm)
-        case _ =>
-          val profile = u.profileOrDefault
-          val muted = u.marks.troll && ctx.isnt(u)
-          val showProfile =
-            ctx.kid.no && u.kid.no && !muted && (showLinks || !profile.hasLinks) || isGranted(_.AccountInfo)
-          div(id := "us_profile")(
-            if info.ratingChart.isDefined && (!u.lame || ctx.is(u) || isGranted(_.AccountInfo)) then
-              views.user.perfStat.ratingHistoryContainer
-            else (ctx.is(u) && u.count.game < 10).option(ui.newPlayer(u)),
-            div(cls := "profile-side")(
-              div(cls := "user-infos")(
-                (u.lame && ctx.isnt(u)).option:
-                  div(cls := "warning tos_warning")(
-                    span(dataIcon := Icon.CautionCircle, cls := "is4"),
-                    trans.site.thisAccountViolatedTos()
-                  )
-                ,
-                showProfile
-                  .so(profile.nonEmptyRealName)
-                  .map(strong(cls := List("name" -> true, "muted" -> muted))(_)),
-                // FIDE player link removed with the fide module (unit 3.3).
-                (showLinks && showProfile || isGranted(_.AccountInfo))
-                  .so(profile.nonEmptyBio)
-                  .map: bio =>
-                    p(cls := List("bio" -> true, "muted" -> muted))(richText(bio, nl2br = true)),
-                div(cls := "stats")(
-                  profile.officialRating.map: r =>
-                    div(r.name.toUpperCase, " rating: ", strong(r.rating)),
-                  div(cls := "location")(
-                    profile.nonEmptyLocation
-                      .ifTrue(showProfile)
-                      .map: l =>
-                        span(cls := List("muted" -> muted))(l),
-                    profile.flagInfo.map: c =>
-                      frag(
-                        img(cls := "flag", src := assetUrl(s"flags/${c.code}.webp")),
-                        c.name
-                      )
-                  ),
-                  p(cls := "thin")(trans.site.memberSince(), " ", showDate(u.createdAt)),
-                  u.seenAt.map: seen =>
-                    p(cls := "thin")(trans.site.lastSeenActive(momentFromNow(seen))),
-                  ctx
-                    .is(u)
-                    .option(
-                      a(href := routes.Account.profile, title := trans.site.editProfile.txt())(
-                        trans.site.profileCompletion(s"${profile.completionPercent}%")
-                      )
-                    ),
-                  u.playTime.map: playTime =>
-                    frag(
-                      p(
-                        title := translator.duration(playTime.totalDuration, None, true)
-                      )(
-                        trans.site.tpTimeSpentPlaying(
-                          translator.duration(playTime.totalDuration)
-                        )
-                      ),
-                      playTime.nonEmptyTvDuration.map: tvDuration =>
-                        p(
-                          title := translator.duration(tvDuration, None, true)
-                        )(trans.site.tpTimeSpentOnTV(translator.duration(tvDuration)))
-                    ),
-                  (!muted && u.kid.no).option(
-                    div(cls := "social_links col2")(
-                      showLinks
-                        .option(profile.actualLinks)
-                        .filter(_.nonEmpty)
-                        .map: links =>
-                          frag(
-                            strong(trans.site.socialMediaLinks()),
-                            links.map: link =>
-                              a(href := link.url, targetBlank, noFollow, relMe)(link.site.name)
-                          )
-                    )
-                  )
-                  // the list of the player's teams went with the team module (unit 3.6).
+      locally:
+        val profile = u.profileOrDefault
+        val muted = u.marks.troll && ctx.isnt(u)
+        val showProfile =
+          ctx.kid.no && u.kid.no && !muted && (showLinks || !profile.hasLinks) || isGranted(_.AccountInfo)
+        div(id := "us_profile")(
+          if info.ratingChart.isDefined && (!u.lame || ctx.is(u) || isGranted(_.AccountInfo)) then
+            views.user.perfStat.ratingHistoryContainer
+          else (ctx.is(u) && u.count.game < 10).option(ui.newPlayer(u)),
+          div(cls := "profile-side")(
+            div(cls := "user-infos")(
+              (u.lame && ctx.isnt(u)).option:
+                div(cls := "warning tos_warning")(
+                  span(dataIcon := Icon.CautionCircle, cls := "is4"),
+                  trans.site.thisAccountViolatedTos()
                 )
+              ,
+              showProfile
+                .so(profile.nonEmptyRealName)
+                .map(strong(cls := List("name" -> true, "muted" -> muted))(_)),
+              // FIDE player link removed with the fide module (unit 3.3).
+              (showLinks && showProfile || isGranted(_.AccountInfo))
+                .so(profile.nonEmptyBio)
+                .map: bio =>
+                  p(cls := List("bio" -> true, "muted" -> muted))(richText(bio, nl2br = true)),
+              div(cls := "stats")(
+                profile.officialRating.map: r =>
+                  div(r.name.toUpperCase, " rating: ", strong(r.rating)),
+                div(cls := "location")(
+                  profile.nonEmptyLocation
+                    .ifTrue(showProfile)
+                    .map: l =>
+                      span(cls := List("muted" -> muted))(l),
+                  profile.flagInfo.map: c =>
+                    frag(
+                      img(cls := "flag", src := assetUrl(s"flags/${c.code}.webp")),
+                      c.name
+                    )
+                ),
+                p(cls := "thin")(trans.site.memberSince(), " ", showDate(u.createdAt)),
+                u.seenAt.map: seen =>
+                  p(cls := "thin")(trans.site.lastSeenActive(momentFromNow(seen))),
+                ctx
+                  .is(u)
+                  .option(
+                    a(href := routes.Account.profile, title := trans.site.editProfile.txt())(
+                      trans.site.profileCompletion(s"${profile.completionPercent}%")
+                    )
+                  ),
+                u.playTime.map: playTime =>
+                  frag(
+                    p(
+                      title := translator.duration(playTime.totalDuration, None, true)
+                    )(
+                      trans.site.tpTimeSpentPlaying(
+                        translator.duration(playTime.totalDuration)
+                      )
+                    ),
+                    playTime.nonEmptyTvDuration.map: tvDuration =>
+                      p(
+                        title := translator.duration(tvDuration, None, true)
+                      )(trans.site.tpTimeSpentOnTV(translator.duration(tvDuration)))
+                  ),
+                (!muted && u.kid.no).option(
+                  div(cls := "social_links col2")(
+                    showLinks
+                      .option(profile.actualLinks)
+                      .filter(_.nonEmpty)
+                      .map: links =>
+                        frag(
+                          strong(trans.site.socialMediaLinks()),
+                          links.map: link =>
+                            a(href := link.url, targetBlank, noFollow, relMe)(link.site.name)
+                        )
+                  )
+                )
+                // the list of the player's teams went with the team module (unit 3.6).
               )
-              // The "Chess Insights" link went with the insight module (unit 3.5).
             )
+            // The "Chess Insights" link went with the insight module (unit 3.5).
           )
+        )
       ,
       (!UserId.isOfficial(u.id)).option:
         div(cls := "angles number-menu number-menu--tabs menu-box-pop")(

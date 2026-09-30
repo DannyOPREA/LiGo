@@ -23,8 +23,6 @@ final class UserApi(
     userRepo: lila.user.UserRepo,
     userCache: lila.user.Cached,
     prefApi: lila.pref.PrefApi,
-    streamerApi: lila.streamer.StreamerApi,
-    liveStreamApi: lila.streamer.LiveApi,
     gameProxyRepo: lila.round.GameProxyRepo,
     trophyApi: lila.user.TrophyApi,
     challengeGranter: lila.challenge.ChallengeGranter,
@@ -41,8 +39,7 @@ final class UserApi(
     val (light, userJson) = u match
       case u: UserWithPerfs => (u.user.light, jsonView.full(u.user, u.perfs.some, withProfile = false))
       case u: LightUser => (u, Json.toJsObject(u))
-    addStreaming(userJson, light.id) ++
-      Json.obj("url" -> makeUrl(s"@/${light.name}")) // for app BC
+    userJson ++ Json.obj("url" -> makeUrl(s"@/${light.name}")) // for app BC
   }.add("joinedTeamAt", joinedAt)
 
   def extended(username: UserStr, opts: Opts)(using Option[Me], Lang): Fu[Option[JsObject]] =
@@ -69,7 +66,6 @@ final class UserApi(
             gameCache.nbPlaying(u.id),
             gameCache.nbImportedBy(u.id),
             (withTrophies && !u.lame).optionFu(getTrophiesAndAwards(u.user)),
-            streamerApi.listed(u.user),
             withCanChallenge.so(challengeGranter.mayChallenge(u.user).dmap(some)),
             forWiki.optionFu(userRepo.email(u.id)),
             withPlayban.so(playbanApi.currentBan(u)),
@@ -84,7 +80,6 @@ final class UserApi(
                 nbPlaying,
                 nbImported,
                 trophiesAndAwards,
-                streamer,
                 canChallenge,
                 email,
                 playban,
@@ -111,27 +106,10 @@ final class UserApi(
                   .add("kid", u.kid)
                   .add("email", email)
                   .add("groups", forWiki.option(wikiGroups(u.user)))
-                  .add("streaming", liveStreamApi.isStreaming(u.id))
                   .add("trophies", trophiesAndAwards.map(trophiesJson))
                   .add("canChallenge", canChallenge)
                   .add("playban", playban)
-                  .add("fideId", fideId)
-                  .add(
-                    "streamer",
-                    streamer.map: s =>
-                      Json
-                        .obj()
-                        .add(
-                          "twitch",
-                          s.twitch.map: t =>
-                            Json.obj("channel" -> t.fullUrl)
-                        )
-                        .add(
-                          "youTube",
-                          s.youtube.map: y =>
-                            Json.obj("channel" -> y.fullUrl)
-                        )
-                  ) ++
+                  .add("fideId", fideId) ++
                   (opts.withRelation && as.isDefined).so:
                     Json.obj(
                       "followable" -> followable,
@@ -186,9 +164,6 @@ final class UserApi(
     "top" -> top,
     "name" -> s"${perf.trans} $name"
   )
-
-  private def addStreaming(js: JsObject, id: UserId) =
-    js.add("streaming", liveStreamApi.isStreaming(id))
 
   private def makeUrl(path: String): String = s"${net.baseUrl}/$path"
 

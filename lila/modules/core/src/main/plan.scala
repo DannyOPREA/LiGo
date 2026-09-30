@@ -1,13 +1,8 @@
 package lila.core
 package plan
 
-import lila.core.userId.{ UserId, UserName }
-
-case class ChargeEvent(username: UserName, cents: Int, percent: Int, date: Instant)
-case class MonthInc(userId: UserId, months: Int)
-case class PlanStart(userId: UserId)
-case class PlanGift(from: UserId, to: UserId, lifetime: Boolean)
-case class PlanExpire(userId: UserId)
+// The plan's bus events went with the plan module (unit 3.7); patron months and colours stay
+// because existing patrons keep their wings.
 
 opaque type PatronMonths = Int // 0 if no plan is ongoing, 999 if lifetime
 object PatronMonths extends OpaqueInt[PatronMonths]:

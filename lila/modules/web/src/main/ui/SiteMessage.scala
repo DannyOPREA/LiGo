@@ -42,12 +42,6 @@ final class SiteMessage(helpers: Helpers):
 
   def blacklistedSnippet(using Context) = lila.ui.Snippet(frag(blacklistedMessage))
 
-  def streamingMod = apply("Disabled while streaming"):
-    p(
-      "This moderation feature is disabled while streaming, ",
-      "to avoid leaking sensible information."
-    )
-
   def challengeDenied(msg: String)(using Context) =
     apply(
       title = trans.challenge.challengeToPlay.txt(),
