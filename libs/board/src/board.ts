@@ -9,8 +9,11 @@
 import { SVGRenderer, type GobanConfig, type GobanSelectedThemes, type MoveCommand } from 'goban';
 
 import { gameConfig, refusalOf, stateOf, toXY, type BoardState, type Game } from './rules.mjs';
+import { BOARD_THEMES, DEFAULT_THEME, STONE_THEMES, type Theme } from './themes';
 
 export type { BoardState, Game };
+export { BOARD_THEMES, DEFAULT_THEME, STONE_THEMES };
+export type { BoardTheme, StoneTheme, Theme } from './themes';
 
 export type Color = 'black' | 'white';
 /** An SGF point such as `"dd"` (column, then row, from the top left), or `"pass"`. */
@@ -35,6 +38,8 @@ export interface BoardConfig extends Game {
    * tap on the preview takes it back. goban ignores double taps on touch screens. Default off.
    */
   confirm?: boolean;
+  /** Board and stones (`DEFAULT_THEME` if left out; an unknown name falls back to Plain). */
+  theme?: Theme;
   /** Letters and numbers round the board. Default on. */
   coordinates?: boolean;
   /** The player picked a move the rules allow. Answer with `play(move)` or `cancel()`. */
@@ -61,24 +66,23 @@ export interface Board {
   pending(): boolean;
   /** Plays the previewed stone (reported through `onMove`). */
   confirm(): void;
-  /** Changes who may move, or whether taps only preview. */
-  set(options: Pick<BoardConfig, 'movable' | 'confirm'>): void;
+  /** Changes who may move, whether taps only preview, or the board's look. */
+  set(options: Pick<BoardConfig, 'movable' | 'confirm' | 'theme'>): void;
   /** The position after the last move played (a preview doesn't count). */
   state(): BoardState;
   destroy(): void;
 }
 
 /**
- * goban's plain board and stones: drawn in colour, no images. goban's default (Kaya, Slate, Shell)
- * loads its wood picture from OGS's CDN, and its image themes wait for a licence check (logs/board-ui.md).
+ * goban's names for a theme. Anything not in the lists above becomes Plain, so a stored or mistyped
+ * name can never make goban load a picture (its own default, Kaya, loads one from OGS's CDN).
  */
-const PLAIN: GobanSelectedThemes = {
-  board: 'Plain',
-  black: 'Plain',
-  white: 'Plain',
-  'removal-graphic': 'x',
-  'removal-scale': 1,
-};
+export function gobanThemes(theme: Theme = DEFAULT_THEME): GobanSelectedThemes {
+  const board = (BOARD_THEMES as readonly string[]).includes(theme.board) ? theme.board : 'Plain';
+  const stones = (STONE_THEMES as readonly string[]).includes(theme.stones) ? theme.stones : 'Plain';
+  const [black, white] = stones === 'Slate & Shell' ? ['Slate', 'Shell'] : [stones, stones];
+  return { board, black, white, 'removal-graphic': 'x', 'removal-scale': 1 };
+}
 
 const GAME_ID = 1;
 const IDS = { black: 1, white: 2 } as const;
@@ -113,6 +117,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
     },
     move => destroyed || config.onMove?.(move),
     reason => config.onRefused?.(reason),
+    gobanThemes(config.theme),
   );
   goban.setMovable(config.movable ?? 'none');
   goban.on('update', () => config.onChange?.());
@@ -155,6 +160,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
         goban.double_click_submit = options.confirm;
       }
       if (options.movable !== undefined) goban.setMovable(options.movable);
+      if (options.theme) goban.useThemes(gobanThemes(options.theme));
     },
     state: () => goban.officialState(),
     destroy: () => {
@@ -176,7 +182,9 @@ class LigoGoban extends SVGRenderer {
     config: GobanConfig,
     private readonly report: (move: Move) => void,
     refused: (reason: Refusal) => void,
+    private selected: GobanSelectedThemes,
   ) {
+    LigoGoban.constructing = selected;
     super(config);
     // goban shows its own message for a refused move and tells `onError` about some of them only
     // (not suicide); every refusal goes through this handler.
@@ -202,8 +210,16 @@ class LigoGoban extends SVGRenderer {
     return true;
   }
 
+  /** goban asks for the themes inside its constructor, before `selected` is set. */
+  private static constructing: GobanSelectedThemes;
+
   protected override getSelectedThemes(): GobanSelectedThemes {
-    return PLAIN;
+    return this.selected ?? LigoGoban.constructing;
+  }
+
+  useThemes(themes: GobanSelectedThemes): void {
+    this.selected = themes;
+    this.setTheme(themes, false);
   }
 
   setMovable(movable: Color | 'both' | 'none'): void {

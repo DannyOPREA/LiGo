@@ -157,4 +157,22 @@ describe('PlaygroundCtrl', () => {
     config.onRefused!('superko');
     assert.deepEqual(heard, ['move', 'error']);
   });
+
+  test('board look (ADR 0026 §3): Plain by default, applied to the board config, remembered', () => {
+    localStorage.clear();
+    const ctrl = new PlaygroundCtrl({}, noop);
+    assert.deepEqual(ctrl.theme, { board: 'Plain', stones: 'Plain' });
+    ctrl.setTheme({ board: 'Book' });
+    ctrl.setTheme({ stones: 'Slate & Shell' });
+    assert.deepEqual(ctrl.boardConfig().theme, { board: 'Book', stones: 'Slate & Shell' });
+    assert.deepEqual(new PlaygroundCtrl({}, noop).theme, { board: 'Book', stones: 'Slate & Shell' });
+    localStorage.clear();
+  });
+
+  test('a stored theme that is no longer offered falls back to Plain', () => {
+    localStorage.setItem('playground.board-theme', 'Kaya');
+    localStorage.setItem('playground.stone-theme', 'Anime');
+    assert.deepEqual(new PlaygroundCtrl({}, noop).theme, { board: 'Plain', stones: 'Plain' });
+    localStorage.clear();
+  });
 });

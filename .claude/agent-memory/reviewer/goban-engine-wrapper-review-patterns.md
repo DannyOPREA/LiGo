@@ -33,6 +33,11 @@ Found reviewing unit 2.1 (goban SVG board wrapper `mountBoard`, 2026-09-28):
 - Workspace moves: grep dev/ligo for leftover `cd libs/board && pnpm install --frozen-lockfile`
   (fails with no lockfile once the package joins lila's workspace). The main session may be
   editing the working tree while you review: diff HEAD vs working tree twice.
+- Themes (9.3): goban calls getSelectedThemes in its ctor and again on resize redraws, so an
+  override must return a field updated by set(); SVGRenderer.setTheme copies getBackgroundCSS keys
+  onto the parent and never clears them (check switch-back screenshots). CDN URLs only in woods,
+  Granite, Anime and the "anime" shadow. "Unit = last commit" can be false: diff origin/main...HEAD.
+  Check lazy-chunk claims via the compiled .js.map `sources`.
 
 **How to apply:** any libs/board, Phase 2 board, or scoring-service review touching goban-engine.
 See [[conformance-fixture-review-patterns]], [[review-patterns-general]].
