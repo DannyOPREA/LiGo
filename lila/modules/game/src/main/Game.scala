@@ -63,7 +63,7 @@ object GameExt:
 
     def playerIdPov(playerId: GamePlayerId): Option[Pov] = g.playerById(playerId).map(p => Pov(g, p.color))
 
-    def withClock(c: Clock) = Progress(g, g.copy(chess = g.chess.copy(clock = Some(c))))
+    def withClock(c: Clock) = Progress(g, g.copy(clock = Some(c)))
 
     def startClock: Option[Progress] =
       g.clock.map: c =>
@@ -89,7 +89,7 @@ object GameExt:
           Progress(
             g,
             g.copy(
-              chess = g.chess.copy(clock = Some(newClock)),
+              clock = Some(newClock),
               loadClockHistory = _ =>
                 g.clockHistory.map: history =>
                   if history(color).isEmpty then history
@@ -129,20 +129,21 @@ object GameExt:
         ch <- g.clockHistory
       yield ch.recordNewClock(g.turnColor, clk)
 
-      val updated = g.copy(
-        players = g.players.map(copyPlayer),
-        chess = game,
-        binaryMoveTimes = (!g.sourceIs(_.Import) && g.chess.clock.isEmpty).option {
-          BinaryFormat.moveTime.write {
-            g.binaryMoveTimes.so { t =>
-              BinaryFormat.moveTime.read(t, g.playedPlies)
-            } :+ Centis.ofLong(nowCentis - g.movedAt.toCentis).nonNeg
-          }
-        },
-        loadClockHistory = _ => newClockHistory,
-        status = game.position.status | g.status,
-        movedAt = nowInstant
-      )
+      val updated = g
+        .withChess(game)
+        .copy(
+          players = g.players.map(copyPlayer),
+          binaryMoveTimes = (!g.sourceIs(_.Import) && g.clock.isEmpty).option {
+            BinaryFormat.moveTime.write {
+              g.binaryMoveTimes.so { t =>
+                BinaryFormat.moveTime.read(t, g.playedPlies)
+              } :+ Centis.ofLong(nowCentis - g.movedAt.toCentis).nonNeg
+            }
+          },
+          loadClockHistory = _ => newClockHistory,
+          status = game.position.status | g.status,
+          movedAt = nowInstant
+        )
 
       val state = Event.State(
         turns = game.ply,
@@ -152,7 +153,7 @@ object GameExt:
         blackOffersDraw = g.blackPlayer.isOfferingDraw
       )
 
-      val clockEvent = updated.chess.clock
+      val clockEvent = updated.clock
         .map(Event.Clock.apply)
         .orElse:
           updated.playableCorrespondenceClock.map(Event.CorrespondenceClock.apply)
@@ -176,7 +177,7 @@ object GameExt:
         status = status,
         players = winner.fold(g.players): c =>
           g.players.update(c, _.copy(isWinner = true.some)),
-        chess = g.chess.copy(clock = g.clock.map(_.stop)),
+        clock = g.clock.map(_.stop),
         loadClockHistory = clk =>
           g.clockHistory.map: history =>
             // If not already finished, we're ending due to an event
