@@ -44,7 +44,8 @@ final class PgnDump(
 
     tagsFuture.map: ts =>
       val ply = ts.fen.flatMap(Fen.readWithMoveNumber).fold(Ply.initial)(_.ply)
-      val tree = flags.moves.so:
+      // A Go game has no PGN moves: its record is SGF (Phase 4, unit 4.11); until then only the headers.
+      val tree = (flags.moves && !game.isGo).so:
         makeTree(
           applyDelay(game.sans, flags.keepDelayIf(game.playable)),
           flags.clocks.so(~game.bothClockStates),

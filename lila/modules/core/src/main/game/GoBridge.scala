@@ -2,7 +2,7 @@ package lila.core
 package game
 
 import _root_.chess.{ Color, Ply }
-import ligo.gorules.{ Color as GoColor, GoGame }
+import ligo.gorules.{ Action, Color as GoColor, GoGame }
 
 import lila.core.perf.PerfKey
 
@@ -27,3 +27,13 @@ object GoBridge:
 
   /** Every Go game is rated in the one `go` perf (ADR 0021 §1). */
   val perfKey: PerfKey = PerfKey.go
+
+  /** Plies a Go game has played: placements and passes. Resuming from the scoring phase is not a ply (ADR
+    * 0019 §3), so this is not the number of actions.
+    */
+  def plies(g: GoGame): Int = g.actions.count(_ != Action.Resume)
+
+  /** The most plies a Go game may play (ADR 0019 §7): far beyond any real 19x19 game; reaching it ends play
+    * as two passes do. lila's chess cap (`Game.maxPlies`, 600) forces a draw, which Go doesn't have.
+    */
+  val maxPlies: Int = 1000

@@ -57,7 +57,19 @@ object GameDiff:
         byteArrayHandler.writeOpt(BinaryFormat.clockHistory.writeSide(x, y, z))
       }
 
-    if a.variant.standard then dTry(huffmanPgn, _.sans, writeBytes.compose(PgnStorage.Huffman.encode))
+    // A Go game stores its actions instead of the chess keys (ADR 0019 §4).
+    if b.isGo then
+      dOpt(
+        GoStorage.F.actions,
+        _.go.map(_.actions),
+        (o: Option[Vector[ligo.gorules.Action]]) =>
+          for
+            actions <- o
+            go <- b.go
+            bytes <- byteArrayHandler.writeOpt(ByteArray(GoStorage.actions.write(actions, go.size)))
+          yield bytes
+      )
+    else if a.variant.standard then dTry(huffmanPgn, _.sans, writeBytes.compose(PgnStorage.Huffman.encode))
     else
       val f = PgnStorage.OldBin
       dTry(oldPgn, _.sans, writeBytes.compose(f.encode))
