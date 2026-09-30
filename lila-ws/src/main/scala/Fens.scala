@@ -2,15 +2,18 @@ package lila.ws
 
 import cats.syntax.option.*
 import chess.Color
-import chess.format.{ Fen, Uci }
 import org.apache.pekko.actor.typed.ActorRef
+import play.api.libs.json.*
+
+import scala.util.Try
 
 import lila.ws.ipc.*
 
-/* Manages subscriptions to Fen updates */
+/* Manages subscriptions to live mini-board updates (TV, game lists). The name is upstream's; in LiGo
+ * the updates are Go boards (ADR 0019 §6). */
 object Fens:
 
-  case class Watched(position: Option[Position], clients: Set[ActorRef[ClientMsg]])
+  case class Watched(position: Option[MiniBoard], clients: Set[ActorRef[ClientMsg]])
 
   private val games = scalalib.ConcurrentMap[Game.Id, Watched](1024)
   export games.size
@@ -42,23 +45,34 @@ object Fens:
   // move coming from the server
   def move(gameId: Game.Id, json: JsonString, moveBy: Option[Color]): Unit =
     games.computeIfPresent(gameId): watched =>
-      val turnColor = moveBy.fold(Color.white)(c => !c)
-      json.value
-        .match
-          case MoveClockRegex(uciS, fenS, wcS, bcS) =>
-            for
-              uci <- Uci(uciS)
-              wc <- wcS.toIntOption
-              bc <- bcS.toIntOption
-            yield Position(uci, Fen.Board(fenS), Some(Clock(wc, bc)), turnColor)
-          case MoveRegex(uciS, fenS) => Uci(uciS).map { Position(_, Fen.Board(fenS), None, turnColor) }
-          case _ => None
-        .fold(watched): position =>
-          val msg = ClientIn.Fen(gameId, position)
+      readMove(json, moveBy)
+        .fold(watched): board =>
+          val msg = ClientIn.Fen(gameId, board)
           watched.clients.foreach { _ ! msg }
-          watched.copy(position = Some(position))
+          watched.copy(position = Some(board))
         .some
 
-  // ...,"uci":"h2g2","san":"Rg2","fen":"r2qb1k1/p2nbrpn/6Np/3pPp1P/1ppP1P2/2P1B3/PP2B1R1/R2Q1NK1",...,"clock":{"white":121.88,"black":120.94}
-  private val MoveRegex = """uci":"([^"]+)".+fen":"([^"]+)""".r.unanchored
-  private val MoveClockRegex = """uci":"([^"]+)".+fen":"([^"]+).+white":(\d+).+black":(\d+)""".r.unanchored
+  /* Reads lila's Go move event (ADR 0019 §6), e.g.
+   * {"p":"ee","ply":2,"cap":[],"prisoners":{"b":0,"w":0},"phase":"play","board":"9/9/9/9/4b4/9/9/9/9",
+   *  "clock":{"white":61.5,"black":60}}
+   * or {"pass":true,...}. Only games someone watches are read. */
+  private[ws] def readMove(json: JsonString, moveBy: Option[Color]): Option[MiniBoard] =
+    Try(Json.parse(json.value)).toOption
+      .collect { case o: JsObject => o }
+      .flatMap: o =>
+        for
+          lastMove <- o
+            .str("p")
+            .flatMap(GoMove.read)
+            .orElse(o.boolean("pass").filter(identity).map(_ => GoMove.pass))
+          board <- o.str("board").filter(BoardShape.matches)
+          clock = o
+            .obj("clock")
+            .flatMap: c =>
+              for
+                white <- (c \ "white").asOpt[Double]
+                black <- (c \ "black").asOpt[Double]
+              yield Clock(white.toInt, black.toInt)
+        yield MiniBoard(lastMove, board, clock, moveBy.fold(Color.black)(c => !c))
+
+  private val BoardShape = "[0-9bw/]+".r

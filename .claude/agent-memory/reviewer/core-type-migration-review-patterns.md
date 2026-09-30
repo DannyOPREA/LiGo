@@ -35,5 +35,10 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   the actor (MovePlayer) had no test; ask for a pure predicate. Chess-only consumers of empty `sans`
   for Go: PushApi.move (corres push), FarmBoostDetection, takeback message numbering.
 
+- 3.14 (lila-ws Go wire): check PLAN row's Needs column and ADR 0019 §8 order (3.15 before 3.14);
+  running a unit ahead of its listed dependency is "changing order" (PLAN §7) and needs a decisions
+  line. `dev/ligo test ws`/verify report Total 0 when sbt 2 caches: rerun with `sbt --batch testFull`
+  in lila-ws. Wire payload renames: grep lila/ui consumers (`socket.in.fen` in boot.ts/pubsub.ts).
+
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

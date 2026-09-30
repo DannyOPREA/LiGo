@@ -1,7 +1,6 @@
 package lila.ws
 package ipc
 
-import chess.format.Uci
 import chess.{ Centis, Color }
 import play.api.libs.json.*
 
@@ -42,7 +41,7 @@ object ClientOut:
   // round
 
   case class RoundPlayerForward(payload: JsValue) extends ClientOutRound
-  case class RoundMove(uci: Uci, blur: Boolean, lag: ClientMoveMetrics, ackId: Option[Int])
+  case class RoundMove(move: GoMove, blur: Boolean, lag: ClientMoveMetrics, ackId: Option[Int])
       extends ClientOutRound
   case class RoundHold(mean: Int, sd: Int) extends ClientOutRound
   case class RoundBerserk(ackId: Option[Int]) extends ClientOutRound
@@ -90,19 +89,11 @@ object ClientOut:
               case "move" =>
                 for
                   d <- o.obj("d")
-                  move <- d.str("u").flatMap(Uci.Move.apply).orElse(parseOldMove(d))
+                  // a Go point ("dd") or "pass" (ADR 0019 §6); chess moves and drops are no longer read
+                  move <- d.str("u").flatMap(GoMove.read)
                   blur = d.int("b") contains 1
                   ackId = d.int("a")
                 yield RoundMove(move, blur, parseMetrics(d), ackId)
-              case "drop" =>
-                for
-                  d <- o.obj("d")
-                  role <- d.str("role")
-                  square <- d.str("pos")
-                  drop <- Uci.Drop.fromStrings(role, square)
-                  blur = d.int("b") contains 1
-                  ackId = d.int("a")
-                yield RoundMove(drop, blur, parseMetrics(d), ackId)
               case "hold" =>
                 for
                   d <- o.obj("d")
@@ -134,13 +125,6 @@ object ClientOut:
         case js => Unexpected(js)
 
   private val emptyPing: Try[ClientOut] = Success(Ping(None))
-
-  private def parseOldMove(d: JsObject) = for
-    orig <- d.str("from")
-    dest <- d.str("to")
-    prom = d.str("promotion")
-    move <- Uci.Move.fromStrings(orig, dest, prom)
-  yield move
 
   private def parseMetrics(d: JsObject) =
     ClientMoveMetrics(

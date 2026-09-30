@@ -1,6 +1,5 @@
 package lila.ws
 
-import chess.format.{ Fen, Uci }
 import chess.{ ByColor, Color }
 import scalalib.SecureRandom
 
@@ -98,5 +97,18 @@ case class RoundEventFlags(
 )
 
 case class Clock(white: Int, black: Int)
-case class Position(lastUci: Uci, fen: Fen.Board, clock: Option[Clock], turnColor: Color):
-  def fenWithColor = fen.andColor(turnColor)
+
+/** A Go move as the round relays it (ADR 0019 §6): an SGF point (`[a-s]{2}`, boards up to 19×19) or `pass`.
+  * lila-ws checks its shape only; lila checks it against the Go rules.
+  */
+opaque type GoMove = String
+object GoMove extends OpaqueString[GoMove]:
+  val pass: GoMove = "pass"
+  private val Shape = "[a-s]{2}|pass".r
+  def read(s: String): Option[GoMove] = Option.when(Shape.matches(s))(s)
+
+/** What a live mini board shows after a move: the move, the stones (lila's compact `board` string, rows top
+  * to bottom separated by `/`, `b` and `w` for stones, a number for a run of empty points), the clocks in
+  * seconds and the player to move.
+  */
+case class MiniBoard(lastMove: GoMove, board: String, clock: Option[Clock], turnColor: Color)
