@@ -22,6 +22,7 @@ const board = mountBoard(el, {
   onMove: move => send(move),            // the player picked a legal move: 'dd' or 'pass'
   onRefused: reason => {},               // 'occupied' | 'suicide' | 'superko'
   onPlayed: ({ move, color, captured }) => {}, // each move that counted, from `play` (sounds, ADR 0026)
+  theme: { board: 'Book', stones: 'Slate & Shell' }, // optional, default Plain / Plain
   onChange: () => redraw(),
 });
 board.play('qf');   // a move that counts: the player's, once accepted, or the opponent's
@@ -45,8 +46,12 @@ board.destroy();
   phones need the page's button.
 - **Sized by its box.** The board is as wide as `el` (the page's CSS sets that) and follows it
   when it changes size. goban draws in a child of `el`, inside a shadow root.
-- **Plain board and stones.** goban's default look loads a wood picture from OGS's CDN, and its
-  picture themes have unchecked licences, so LiGo uses goban's drawn "Plain" theme only.
+- **Themes drawn from code only** (ADR 0026 §3). `theme: { board, stones }` picks one of goban's
+  picture-free boards (Plain, Book, Night Play, HNG, HNG Night) and stone pairs (Plain, Slate &
+  Shell, Glass, Worn Glass, Night); `board.set({ theme })` changes it on a mounted board. The lists
+  are in `src/themes.ts` (`@ligo/board/themes`), which a page can import without loading goban.
+  goban's wood, granite and anime themes load pictures from OGS's CDN with no stated licence, and
+  any name not in the lists becomes Plain, so the board never fetches anything.
 - **Same rules as the engine.** The board takes its settings from `src/rules.mjs`, the ones
   `createEngine` uses (superko, no suicide, komi, the server's handicap stones), and nothing in
   `src/` imports goban-engine next to goban, so a page bundles goban's engine once. The bundle

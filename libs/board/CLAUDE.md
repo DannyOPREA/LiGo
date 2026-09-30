@@ -21,8 +21,9 @@ rules spec, to the server and to a real browser. How it works: [README.md](READM
   replayed through `play`. Don't use goban-engine's SGF reader for new code (it hangs on broken
   files); `readSgf` stays for unit 1.8's read-back test. `src/sgf.d.mts` types it by hand.
 - **Lila's pages only see `mountBoard`.** Nothing in lila imports goban; the board reports the
-  player's move and the page (or server) decides by `play` or `cancel`. goban's plain theme only
-  (its default loads a picture from OGS's CDN; picture themes need a licence check first).
+  player's move and the page (or server) decides by `play` or `cancel`. Only goban's themes
+  drawn from code (`src/themes.ts`, ADR 0026 §3); its picture themes load unlicensed pictures from
+  OGS's CDN, and any other name falls back to Plain (`gobanThemes`).
 - `src/board.ts` is TypeScript in lila's style (lila's tsconfig, oxfmt, oxlint: `pnpm run lint`,
   `pnpm run typecheck`); the rest is plain JavaScript modules with JSDoc, no build step, run by
   Node 24 (`.node-version`). `src/rules.d.mts` types `src/rules.mjs` by hand: change both together.

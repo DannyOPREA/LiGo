@@ -1,7 +1,14 @@
 // Test page script for board.browser.test.mjs: mounts boards and records what they report.
 // Licence: MIT (LiGo's own code, ADR 0006).
 
-import { BOARD_THEMES, STONE_THEMES, gobanThemes, mountBoard, type Board, type BoardConfig } from '../../src/board.ts';
+import {
+  BOARD_THEMES,
+  STONE_THEMES,
+  gobanThemes,
+  mountBoard,
+  type Board,
+  type BoardConfig,
+} from '../../src/board.ts';
 
 interface Harness {
   board?: Board;

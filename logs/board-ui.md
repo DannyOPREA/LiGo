@@ -9,7 +9,7 @@
 - npm `goban` is a pre-built bundle (no tree-shaking): ~104 KB gzipped vs chessground's 12 KB; its npm releases lag `main` by months (2026-09-27, 1.2).
 - goban sets the width of the element it draws in and draws inside a shadow root: mount it in a child of the element the page sizes, and find its svg with Playwright locators, not `querySelector` (2026-09-28, 2.1).
 - goban turns stone placement off after `sendMove` returns: report the move from `sendMove` in a microtask so a page can play it back at once. goban's `onError` skips suicide; wrap `errorHandler` for every refusal (2026-09-28, 2.1).
-- goban's default theme (no `getSelectedThemes` callback) is Kaya/Slate/Shell and loads a board picture from OGS's CDN: LiGo overrides `getSelectedThemes` with the plain theme (2026-09-28, 2.1).
+- goban's default theme (no `getSelectedThemes` callback) is Kaya/Slate/Shell and loads a board picture from OGS's CDN: LiGo overrides `getSelectedThemes`. goban calls it inside its constructor, before a subclass's fields exist, so the chosen theme has to reach it another way (a static set just before `super`). Shell stones are canvas drawings placed as `data:` images: test for non-`data:` images, not for none (2026-09-28, 2.1; 2026-09-30, 9.3).
 - libs/board is in lila's pnpm workspace: run its scripts from `lila/` with `--filter @ligo/board`; `pnpm run` inside libs/board starts a lockfile of its own (2026-09-28, 2.1).
 - Don't list lila's lint tools again in libs/board: its oxlint resolved without lila's optional `oxlint-tsgolint` peer, a second lockfile entry that a full install never unpacks, so `pnpm licenses` read its licence as Unknown. The board uses lila's own oxfmt/oxlint; install with `--filter @ligo/board --filter lila` (2026-09-28, 2.1).
 - goban's `pass()` leaves stone placement on, and its `updateTitleAndStonePlacement` turns it off whenever a preview is shown: an adapter must keep "a move is waiting" state of its own (2026-09-28, 2.1 review).
@@ -20,6 +20,26 @@
 - Chromium builds rasterise web-font text differently (~2,300 px per page between 141 and 153); board SVG matched. Hide page text in screenshots (`stylePath`) and check it with locators (2026-09-28, 2.4 CI).
 
 ## Entries (newest first)
+
+### 2026-09-30 · unit 9.3 · Board themes
+- Did: `mountBoard` takes `theme: { board, stones }` and `set({ theme })` changes it live; the
+  offered names are goban's picture-free themes (5 boards, 5 stone pairs, `src/themes.ts`, loadable
+  without goban); any other name becomes Plain (`gobanThemes`). The playground has a "Board look"
+  box (Board, Stones) that applies at once and is remembered in the browser until 9.7 moves it to
+  lila's preferences. Three board tests (all 25 pairs draw differently with no request and no
+  non-`data:` image; picture or unknown names fall back; `set` changes and restores the look), two
+  controller tests, 18 new board screenshots (each theme, desktop and phone) and a reload test; the
+  8 page screenshots re-recorded for the new box.
+- Worked: goban's `setTheme(themes, false)` redraws a mounted board in place, stones kept.
+- Didn't work / dead ends: storing the theme in a subclass field: goban asks for it inside its
+  constructor, before the field exists (every board test failed until a static carried it).
+- Lessons: promoted (goban reads themes in its constructor; Shell stones are `data:` images).
+- Decisions: none new (ADR 0026 §3). Slate & Shell is one choice, as goban pairs them.
+- Verified by Claude: `pnpm --filter @ligo/board run test:browser` 23/23, `node ui/test playground`
+  19/19, `dev/ligo test pages` 32/32, verify.sh (go-rules gate can't fetch strategygames in the
+  cloud; CI runs it). · Needs owner verification: whether the themes look right to you on the
+  playground (desktop and phone).
+- Follow-ups: lila's board preference and the dasher menu offer these themes in 9.7.
 
 ### 2026-09-29 · unit 9.2 · Sounds on the board and the playground
 - Did: `mountBoard` reports each move that counted as `onPlayed({ move, color, captured })`, from

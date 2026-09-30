@@ -1,4 +1,5 @@
 import type { BoardState } from '@ligo/board/board';
+import { BOARD_THEMES, STONE_THEMES } from '@ligo/board/themes';
 
 import {
   bind,
@@ -51,6 +52,7 @@ export default function view(ctrl: PlaygroundCtrl): VNode {
         status(ctrl, state),
         controls(ctrl),
         settingsForm(ctrl),
+        themeForm(ctrl),
       ]),
     ]),
   ]);
@@ -108,6 +110,28 @@ function settingsForm(ctrl: PlaygroundCtrl): VNode {
     field('Handicap', 'playground-handicap', handicapSelect(ctrl, s)),
     field('Komi', 'playground-komi', komiInput(ctrl, s)),
     button('.button', { attrs: { type: 'submit' } }, 'New game'),
+  ]);
+}
+
+/** The board's look: applies at once, remembered in this browser. */
+function themeForm(ctrl: PlaygroundCtrl): VNode {
+  const choose = <T extends string>(names: readonly T[], current: T, set: (name: T) => void) =>
+    select(
+      { hook: bind('change', e => set((e.target as HTMLSelectElement).value as T), ctrl.redraw) },
+      names.map(name => option({ attrs: { value: name, selected: name === current } }, name)),
+    );
+  return div('.playground__theme', [
+    h2('Board look'),
+    field(
+      'Board',
+      'playground-board-theme',
+      choose(BOARD_THEMES, ctrl.theme.board, board => ctrl.setTheme({ board })),
+    ),
+    field(
+      'Stones',
+      'playground-stone-theme',
+      choose(STONE_THEMES, ctrl.theme.stones, stones => ctrl.setTheme({ stones })),
+    ),
   ]);
 }
 
