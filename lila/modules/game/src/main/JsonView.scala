@@ -110,7 +110,22 @@ object JsonView:
     * prisoners (`b` counts the White stones Black took), phase and ko point.
     */
   def go(g: ligo.gorules.GoGame): JsObject =
-    import ligo.gorules.{ Action, Phase, Ruleset }
+    import ligo.gorules.Phase
+    goSetup(g) ++ Json
+      .obj(
+        "moves" -> goMoves(g).mkString(" "),
+        "prisoners" -> Json.obj("b" -> g.captures.black, "w" -> g.captures.white),
+        "phase" -> (g.phase match
+          case Phase.Play => "play"
+          case Phase.Scoring => "scoring")
+      )
+      .add("ko" -> g.koPoint.map(_.sgf))
+
+  /** A Go game's setup alone: size, rules, komi, handicap and custom starting position. The API's game
+    * exports carry it in place of chess's variant and initial FEN (unit 3.16).
+    */
+  def goSetup(g: ligo.gorules.GoGame): JsObject =
+    import ligo.gorules.Ruleset
     val s = g.setup
     Json
       .obj(
@@ -118,17 +133,7 @@ object JsonView:
         "rules" -> (s.ruleset match
           case Ruleset.Japanese => "japanese"
           case Ruleset.Chinese => "chinese"),
-        "komi" -> s.komi,
-        "moves" -> g.actions
-          .map:
-            case Action.Place(at) => at.sgf
-            case Action.Pass => "pass"
-            case Action.Resume => "resume"
-          .mkString(" "),
-        "prisoners" -> Json.obj("b" -> g.captures.black, "w" -> g.captures.white),
-        "phase" -> (g.phase match
-          case Phase.Play => "play"
-          case Phase.Scoring => "scoring")
+        "komi" -> s.komi
       )
       .add("handicap" -> Option.when(s.handicap > 0)(s.handicap))
       .add("position" -> s.position.map: p =>
@@ -138,7 +143,22 @@ object JsonView:
           "white" -> points(ligo.gorules.Color.White),
           "toMove" -> GoBridge.color(p.toMove).name
         ))
-      .add("ko" -> g.koPoint.map(_.sgf))
+
+  /** A Go game's positions as compact boards (`GoBridge.board`): the start, then one after each action.
+    * None if the setup can't be started or an action is refused, which a stored game never has.
+    */
+  def goBoards(g: ligo.gorules.GoGame): Option[Vector[String]] =
+    ligo.gorules.GoGame
+      .start(g.setup)
+      .toOption
+      .flatMap: start =>
+        g.actions
+          .foldLeft(Option(Vector(start))): (acc, action) =>
+            acc.flatMap(games => games.last(action).toOption.map(games :+ _))
+      .map(_.map(GoBridge.board))
+
+  /** A Go game's moves as wire tokens (ADR 0019 §6): SGF points, `pass` and `resume`. */
+  def goMoves(g: ligo.gorules.GoGame): Vector[String] = g.actions.map(GoBridge.token)
 
   def expiration(game: Game) =
     game.expirable.option:

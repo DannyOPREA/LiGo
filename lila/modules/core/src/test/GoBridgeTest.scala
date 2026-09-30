@@ -82,3 +82,12 @@ class GoBridgeTest extends munit.FunSuite:
       .get
     assertEquals(GoBridge.board(g), "b7w/9/9/9/4b4/9/9/9/9")
     assertEquals(GoBridge.board(start(setup(0))), List.fill(9)("9").mkString("/"))
+
+  test("labels: columns skip I, rows count from the bottom"):
+    assertEquals(GoBridge.label(Point(0, 0), 19), "A19")
+    assertEquals(GoBridge.label(Point(3, 15), 19), "D4")
+    assertEquals(GoBridge.label(Point(7, 8), 9), "H1")
+    assertEquals(GoBridge.label(Point(8, 8), 9), "J1")
+    assertEquals(GoBridge.label(Point(18, 18), 19), "T1")
+    assertEquals(GoBridge.label(Action.Place(Point(2, 2)), 9), "C7")
+    assertEquals(GoBridge.label(Action.Pass, 9), "pass")

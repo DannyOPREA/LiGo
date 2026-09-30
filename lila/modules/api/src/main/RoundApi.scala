@@ -150,7 +150,9 @@ final private[api] class RoundApi(
       initialFen: Option[Fen.Full],
       withFlags: ExportOptions
   )(obj: JsObject) =
-    obj + ("treeParts" ->
+    // A Go game's analysis tree comes with the analysis board (Phase 7); until then it has none.
+    if pov.game.isGo then obj
+    else obj + ("treeParts" ->
       Tree.makePartitionTreeJson(
         pov.game,
         analysis,
@@ -159,8 +161,11 @@ final private[api] class RoundApi(
         logChessError = lila.log.system.warn
       ))
 
+  // A Go game's move list is built by the browser from `game.go.moves` (unit 3.18); chess steps would
+  // describe the unused chess game it carries until unit 3.17.
   private def withSteps(pov: Pov, initialFen: Option[Fen.Full])(obj: JsObject) =
-    obj + ("steps" -> lila.round.StepBuilder(
+    if pov.game.isGo then obj + ("steps" -> JsArray())
+    else obj + ("steps" -> lila.round.StepBuilder(
       id = pov.gameId,
       sans = pov.game.sans,
       variant = pov.game.variant,

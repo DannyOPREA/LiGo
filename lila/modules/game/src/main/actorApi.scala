@@ -1,11 +1,13 @@
 package lila.game
 package actorApi
 
-import chess.format.{ Uci, Fen }
-
 import lila.core.game.Game
 
-case class MoveGameEvent(game: Game, fen: Fen.Full, move: Uci)
+/** A move, for the API's move stream. `position` is the FEN after a chess move or the compact board
+  * (`GoBridge.board`) after a Go one; `lastMove` is chess's last-move squares or the Go move's token (an SGF
+  * point or `pass`), as the stream sends them (unit 3.16).
+  */
+case class MoveGameEvent(game: Game, position: String, lastMove: String)
 object MoveGameEvent:
   def makeChan(gameId: GameId) = s"moveEvent:$gameId"
 

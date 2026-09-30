@@ -12,6 +12,7 @@ import lila.analyse.{ AccuracyPercent, Analysis, JsonView as analysisJson }
 import lila.common.HTTPRequest
 import lila.common.Json.given
 import lila.core.LightUser
+import lila.core.game.GoBridge
 import lila.db.dsl.{ *, given }
 import lila.game.JsonView.given
 import lila.game.PgnDump.{ WithFlags, applyDelay }
@@ -41,7 +42,7 @@ final class GameApiV2(
       case None =>
         for
           (game, initialFen, analysis) <- enrich(config.flags)(game)
-          opening = gameOpening.atPly(game, true)
+          opening = openingOf(game, true)
           formatted <- config.format match
             case Format.JSON =>
               toJson(game, initialFen, analysis, opening, config).map(Json.stringify)
@@ -111,7 +112,7 @@ final class GameApiV2(
     config = MobileRecentConfig(user)
     enriched <- games.sequentially(enrich(config.flags))
     jsons <- enriched.sequentially: (game, fen, analysis) =>
-      toJson(game, fen, analysis, gameOpening.atPly(game, false), config)
+      toJson(game, fen, analysis, openingOf(game, false), config)
   yield JsArray(jsons)
 
   def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
@@ -175,8 +176,12 @@ final class GameApiV2(
       .throttle(config.perSecond.value, 1.second)
       .mapAsync(4)(enrich(config.flags))
       .mapAsync(4): (game, fen, analysis) =>
-        val opening = config.flags.opening.so(gameOpening.atPly(game, _))
+        val opening = config.flags.opening.so(openingOf(game, _))
         formatterFor(config)(game, fen, analysis, opening)
+
+  // A Go game has no chess opening (unit 3.16).
+  private def openingOf(game: Game, full: Boolean): Option[Opening.AtPly] =
+    if game.isGo then none else gameOpening.atPly(game, full)
 
   private def enrich(flags: WithFlags)(game: Game) =
     gameRepo
@@ -216,7 +221,8 @@ final class GameApiV2(
     bookmarked <- config.flags.bookmark.so(bookmarkApi.exists(g, config.by.map(_.userId)))
     // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
     // exists any more to name it, so "arenaTour" is never populated for new games.
-    division = flags.division.option(divider(g, initialFen))
+    // A Go game has no chess phases to divide (unit 3.16).
+    division = (flags.division && !g.isGo).option(divider(g, initialFen))
     accuracy = analysisOption
       .ifTrue(flags.accuracy)
       .flatMap(AccuracyPercent.gameAccuracy(g.startedAtPly.turn, _))
@@ -226,7 +232,6 @@ final class GameApiV2(
     .obj(
       "id" -> g.id,
       "rated" -> g.rated,
-      "variant" -> g.variant.key,
       "speed" -> g.speed.key,
       "perf" -> g.perfKey,
       "createdAt" -> g.createdAt,
@@ -240,12 +245,17 @@ final class GameApiV2(
             "analysis" -> analysisOption.flatMap:
               analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy, ~phases))
     )
+    // A Go game carries its setup (size, rules, komi, handicap, position) instead of a chess variant and
+    // initial FEN, and its moves as SGF points and `pass` (unit 3.16).
+    .add("variant" -> (!g.isGo).option(g.variant.key))
+    .add("go" -> g.go.map(lila.game.JsonView.goSetup))
     .add("fullId" -> config.by.flatMap(Pov(g, _)).map(_.fullId))
     .add("initialFen" -> initialFen)
     .add("winner" -> g.winnerColor.map(_.name))
     .add("opening" -> opening)
     .add("moves" -> flags.moves.option {
-      applyDelay(g.sans, flags.keepDelayIf(g.playable)).mkString(" ")
+      val moves = g.go.fold(g.sans.map(_.value))(lila.game.JsonView.goMoves)
+      applyDelay(moves, flags.keepDelayIf(g.playable)).mkString(" ")
     })
     .add("clocks" -> flags.clocks.so(g.bothClockStates).map { clocks =>
       applyDelay(clocks, flags.keepDelayIf(g.playable))
@@ -261,8 +271,10 @@ final class GameApiV2(
         "increment" -> clock.incrementSeconds,
         "totalTime" -> clock.estimateTotalSeconds
       ))
-    .add("lastFen" -> flags.lastFen.option(Fen.write(g.chess.position)))
-    .add("lastMove" -> flags.lastFen.option(g.lastMoveKeys))
+    .add("lastFen" -> (flags.lastFen && !g.isGo).option(Fen.write(g.chess.position)))
+    .add("lastMove" -> flags.lastFen.option(g.go.fold(g.lastMoveKeys)(_.actions.lastOption.map(GoBridge.token))))
+    // a Go game's position, as live mini boards receive it (ADR 0019 §6)
+    .add("lastBoard" -> g.go.ifTrue(flags.lastFen).map(GoBridge.board))
     .add("division" -> division)
     .add("bookmarked" -> bookmarked)
     .add("import" -> g.pgnImport.map: i =>

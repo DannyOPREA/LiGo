@@ -47,6 +47,18 @@ object GoBridge:
     case Action.Pass => "pass"
     case Action.Resume => "resume"
 
+  /** A point as players read it, e.g. `D4`: the column letter (A to T, skipping I, as on printed boards and
+    * in GTP) and the row counted from the bottom. `lines` is the board's size.
+    */
+  def label(at: Point, lines: Int): String =
+    val column = ('A' + at.col + (if at.col >= 8 then 1 else 0)).toChar
+    s"$column${lines - at.row}"
+
+  /** An action as players read it: `D4`, `pass` or `resume`. */
+  def label(a: Action, lines: Int): String = a match
+    case Action.Place(at) => label(at, lines)
+    case other => token(other)
+
   /** The position as a compact string for live mini boards (ADR 0019 §6): rows from the top, separated by
     * `/`, `b` and `w` for stones and a number for a run of empty points, e.g. `9/9/2b6/…`.
     */

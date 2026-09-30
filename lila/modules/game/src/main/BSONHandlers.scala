@@ -323,7 +323,8 @@ object BSONHandlers:
         blackPlayer = makePlayer(F.blackPlayer, Color.Black, blackUid),
         status = r.get[Status](F.status),
         win = winC,
-        variant = Variant.idOrDefault(r.getO[Variant.Id](F.variant))
+        variant = Variant.idOrDefault(r.getO[Variant.Id](F.variant)),
+        isGo = GoStorage.isGo(r)
       )
 
   private def clockHistory(

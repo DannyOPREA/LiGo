@@ -34,9 +34,14 @@ final private class FarmBoostDetection(
             .map:
               _.exists: prev =>
                 g.winnerUserId === prev.winnerUserId &&
-                  g.sans.take(SAME_PLIES) === prev.sans.take(SAME_PLIES)
+                  opening(g) === opening(prev)
             .addEffect:
               if _ then lila.mon.round.farming.bot.increment()
+
+  // The first moves: SAN for chess, SGF points and `pass` for Go (unit 3.16).
+  private def opening(g: Game): Vector[String] =
+    g.go.fold(g.sans.take(SAME_PLIES).map(_.value)):
+      _.actions.take(SAME_PLIES).map(lila.core.game.GoBridge.token)
 
   def newAccountBoosting(g: Game, users: ByColor[UserWithPerfs]): Fu[Boolean] =
     newAccountBoostingWin(g, users) >>| newAccountBoostingDraw(g, users)
@@ -58,11 +63,11 @@ final private class FarmBoostDetection(
         val perf = users(favor).perfs(g.perfKey)
         val minSeconds = linearInterpolation(perf.nb)(0 -> 90, 5 -> 60)
         def minPliesForPerfNb =
-          if g.variant.standard
+          if g.isGo || g.variant.standard
           then linearInterpolation(perf.nb)(0 -> 40, 5 -> 20)
           else reasonableMinimumNumberOfMoves(g.variant)
         def minPliesForLoserRating =
-          g.variant.standard
+          (g.isGo || g.variant.standard)
             .so(g.loser.flatMap(_.rating))
             .map: rating =>
               linearInterpolation(rating.value)(1500 -> 10, 2500 -> 40)

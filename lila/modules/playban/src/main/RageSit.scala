@@ -26,6 +26,8 @@ object RageSit:
     {
       import chess.variant.*
       (game.chess.position.materialImbalance, game.variant) match
+        // a Go game has no material to weigh (its chess game is unused until unit 3.17)
+        case _ if game.isGo => 0
         case (_, Crazyhouse | Horde | Antichess) => 0
         case (a, _) if a >= 4 => 1
         case (a, _) if a <= -4 => -1
