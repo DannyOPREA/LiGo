@@ -2,7 +2,9 @@ package lila.core
 package game
 
 import _root_.chess.format.Fen
-import _root_.chess.{ ByColor, Game as ChessGame, Rated, Status }
+import _root_.chess.variant.Standard
+import _root_.chess.{ ByColor, Clock, Game as ChessGame, Rated, Status }
+import ligo.gorules.{ GoGame, Setup as GoSetup, SetupError }
 import scalalib.ThreadLocalRandom
 import scalalib.model.Days
 
@@ -36,6 +38,34 @@ def newGame(
     daysPerTurn: Option[Days] = None,
     rules: Set[GameRule] = Set.empty
 ): NewGame = NewGame(newSloppy(chess, players, rated, source, pgnImport, daysPerTurn, rules))
+
+/** A new Go game (ADR 0019 §3): the rules state from `setup`, the ply it starts at, and the Fischer clock set
+  * to the side that moves first. Until unit 3.17 it also carries an unused standard-start chess game.
+  */
+def newGoGame(
+    setup: GoSetup,
+    clock: Option[Clock],
+    players: ByColor[Player],
+    rated: Rated,
+    source: Source,
+    daysPerTurn: Option[Days] = None,
+    rules: Set[GameRule] = Set.empty
+): Either[SetupError, NewGame] =
+  GoGame
+    .start(setup)
+    .map: go =>
+      val startedAtPly = GoBridge.startedAtPly(go)
+      // chess.Clock starts with White's side; a Black-first game starts Black's (ADR 0019 §5).
+      val firstClock = clock.map(_.copy(color = GoBridge.color(go.toMove)))
+      val chess =
+        ChessGame(
+          Standard.initialPosition,
+          clock = firstClock,
+          ply = startedAtPly,
+          startedAtPly = startedAtPly
+        )
+      val sloppy = newSloppy(chess, players, rated, source, pgnImport = None, daysPerTurn, rules)
+      NewGame(sloppy.copy(go = go.some))
 
 private def newSloppy(
     chess: ChessGame,

@@ -20,5 +20,11 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
 - Units deviating from their ADR/PLAN row (3.11 deferred the Go setup to 3.12) record it in
   decisions.md; also ask for an ADR amendment line, as 3.10 did.
 
+- 3.12 (Go BSON block): the PLAN row's "game lists and exports" was quietly deferred in the log's
+  Follow-ups only. Grep `Fen.write\|Fen.writeBoard\|lastMoveKeys` in the module (UserGameApi,
+  JsonView.ownerPreview, PgnDump) and compare with the PLAN row; a deferral needs a decisions.md line.
+- Tests like `turnColor == GoBridge.color(go.toMove)` are tautological when turnColor is defined that
+  way; the real invariant is ply parity (`ply.turn == toMove`) and stored `st` vs setup's first mover.
+
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

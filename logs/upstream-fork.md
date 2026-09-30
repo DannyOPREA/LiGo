@@ -16,6 +16,44 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.12 · Game module: Go games stored and loaded
+- Did: lila's `Game` gained `go: Option[GoGame]` beside `chess` (ADR 0019 §3); for a Go game
+  `turnColor` comes from `GoGame.toMove`, `perfKey` is `go`, and `withGo` takes a new Go game with
+  its ply (placements and passes; a resume is not a ply). `newGoGame` (core) builds a Go game with an
+  unused standard-start chess game, its starting ply from `GoBridge` and the Fischer clock set to the
+  side that moves first. `GoBridge.plies` and `GoBridge.maxPlies` (1,000, ADR 0019 §7). libs/go-rules
+  gained a public `GoGame.replay(setup, actions): Either[ReplayError, GoGame]` that never throws;
+  a refused action returns the game before it. New `lila.game.GoStorage`: the Go block of ADR 0019 §4
+  (`sz`, `ru`, `km` as komi × 2, `hc` omitted at 0, `ip` as `{b, w, m}` SGF point strings, `ac` as
+  2-byte big-endian actions). The BSON reader branches on `sz`: it replays `ac`, takes the ply from
+  the replay (logging a mismatch with the stored `t`), and closes play again at the ply cap; the
+  writer writes the Go block and none of the chess keys; `GameDiff` writes `ac`. The game JSON
+  (`JsonView.base`) has no `fen` for a Go game and a `go` block (setup, moves as SGF points and
+  `pass`/`resume`, prisoners, phase, ko). `insertDenormalized` writes no FEN for Go games. Tests:
+  `GoStorageTest` (8: new-game ply and clock side, ply vs actions, stored keys, round trips with a
+  capture, passes, a resume, a handicap and a custom position, a corrupt document, `GameDiff`, the
+  replay benchmark), 2 new `GoGameTest` cases.
+- Worked: the replay is cheap: a 300-move 19×19 game replays in a median 9.4 ms (20 runs, cloud
+  CPU), so a page of 20 Go games spends about 0.2 s replaying; no denormalised prisoner field yet.
+- Didn't work / dead ends: none.
+- Lessons: a BSON reader that branches on a key can keep the old path untouched by turning its
+  decoding into a `def` that only the old branch calls.
+- Decisions: see logs/decisions.md (3.12 row).
+- Verified by Claude: see the PR.
+- Review (reviewer agent): 1 blocking finding, fixed: the PLAN row's game lists and exports. The
+  user's game list (`UserGameApi`) and the now-playing list (`ownerPreview`) sent a chess FEN and last
+  move for Go games; they now send the `go` block instead, and a Go game's PGN has headers only.
+  Fixed from its optional list: the reader takes a Go game's starting ply from its setup (a stored
+  `st` that disagrees is logged), a `turnColor` check that couldn't fail now checks ply parity (which
+  lila still reads), a 1-stone handicap test, the `go` JSON carries a custom starting position,
+  loading more than 2,001 stored actions is logged, and `GameDiff` is tested on a takeback. Its
+  lesson: verify's lila gate runs `testQuick`, which can skip new tests; run them with `testOnly`.
+- Follow-ups: 3.13 plays Go moves through `withGo` and enforces the ply cap; HTML mini boards still
+  draw a chess board for Go games until 3.19; the API's bulk export (`GameApiV2`,
+  `GamesByUsersStream`) gets Go moves in 3.16 and SGF in Phase 4 (4.11). Bulk paths replay every
+  game (about 8 ms per 300-move 19×19 game, so ~9 s of CPU per 1,000): 3.16 decides between a lazy
+  replay and a denormalised field.
+
 ### 2026-09-30 · 3.11 · Core types: lila's Game holds ply and clock, GoBridge, the go perf
 - Did: lila's `Game` (`modules/core/.../game/Game.scala`) gained `ply`, `startedAtPly` and `clock`
   fields instead of exporting them from `chess.Game`; `turnColor` is now ply parity (`ply.turn`).

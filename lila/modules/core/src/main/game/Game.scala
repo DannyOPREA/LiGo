@@ -19,6 +19,7 @@ import _root_.chess.{
   Outcome,
   IntRating
 }
+import ligo.gorules.GoGame
 import scalalib.model.Days
 
 import lila.core.id.{ GameFullId, GameId, GamePlayerId }
@@ -31,6 +32,10 @@ case class Game(
     id: GameId,
     players: ByColor[Player],
     chess: ChessGame,
+    // A Go game's rules state (ADR 0019 §3): the position, turn, captures, ko point and phase, from
+    // libs/go-rules. Until unit 3.17 a Go game also carries an unused standard-start `chess` game, so
+    // chess readers keep compiling; 3.17 removes `chess` and makes `go` required.
+    go: Option[GoGame] = None,
     // The ply count, the ply the game started at and the Fischer clock belong to the game, not to
     // its chess position (ADR 0019 §3): lila's Game keeps them, and a Go game (unit 3.12) will too.
     // Until unit 3.17 removes chess, `chess` still carries copies that chess rules read, kept in
@@ -56,10 +61,18 @@ case class Game(
 
   lazy val clockHistory = clock.flatMap(loadClockHistory)
 
-  /** The player to move: White on even plies, Black on odd ones, the parity rule lila uses everywhere
-    * (`startedAtPly` makes it hold for games that don't start with White, ADR 0019 §3).
+  /** The player to move. A Go game says itself; a chess game uses ply parity, White on even plies, the rule
+    * lila uses when it loads a game (`startedAtPly` makes it hold for Go games that don't start with White
+    * too, ADR 0019 §3).
     */
-  def turnColor: Color = ply.turn
+  def turnColor: Color = go.fold(ply.turn)(g => GoBridge.color(g.toMove))
+
+  def isGo: Boolean = go.isDefined
+
+  /** Replace the Go game after an action or a takeback, taking its new ply (placements and passes, not
+    * resumes, ADR 0019 §3).
+    */
+  def withGo(g: GoGame): Game = copy(go = g.some, ply = startedAtPly + GoBridge.plies(g))
 
   /** The chess game with this game's ply, start and clock, for the chess rules and formats that read them
     * (moves, FEN) until unit 3.17.
@@ -148,7 +161,7 @@ case class Game(
   def playableCorrespondenceClock: Option[CorrespondenceClock] =
     if playable then correspondenceClock else none
 
-  def perfKey: PerfKey = PerfKey(variant, speed)
+  def perfKey: PerfKey = if isGo then GoBridge.perfKey else PerfKey(variant, speed)
 
   def ratingVariant: Variant =
     if isTournament && variant.fromPosition then Standard else variant

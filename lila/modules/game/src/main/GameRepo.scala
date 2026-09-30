@@ -411,10 +411,13 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       then g.copy(rated = chess.Rated.No)
       else g
     val userIds = g2.userIds.distinct
-    val fen: Option[Fen.Full] = initialFen.orElse:
-      (g2.variant.fromPosition || g2.variant.chess960)
-        .option(Fen.write(g2.chessState))
-        .filterNot(_.isInitial)
+    // A Go game's starting position is its Go block's `ip`, never a FEN (ADR 0019 §4).
+    val fen: Option[Fen.Full] = if g2.isGo then none
+    else
+      initialFen.orElse:
+        (g2.variant.fromPosition || g2.variant.chess960)
+          .option(Fen.write(g2.chessState))
+          .filterNot(_.isInitial)
     val checkInHours =
       if g2.isPgnImport then none
       else if g2.sourceIs(_.Api) then some(24 * 7)
