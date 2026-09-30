@@ -2,6 +2,7 @@
 // __screenshots__/ (unit 2.4). After a deliberate visual change, re-record them with
 // `pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts --update-snapshots` (from lila/)
 // and look at every changed picture before committing it.
+import { BOARD_THEMES, STONE_THEMES } from '@ligo/board/themes';
 import { expect, test, type Page } from '@playwright/test';
 
 import { ConfirmMoves, captures, newGame, openPlayground, play, status } from './page';
@@ -66,8 +67,8 @@ for (const [device, options] of Object.entries(viewports)) {
 
     // Every theme ADR 0026 §3 offers: each board with Plain stones, each stone pair on the Plain board.
     const looks = [
-      ...['Plain', 'Book', 'Night Play', 'HNG', 'HNG Night'].map(board => ({ board, stones: 'Plain' })),
-      ...['Slate & Shell', 'Glass', 'Worn Glass', 'Night'].map(stones => ({ board: 'Plain', stones })),
+      ...BOARD_THEMES.map(board => ({ board, stones: 'Plain' })),
+      ...STONE_THEMES.filter(stones => stones !== 'Plain').map(stones => ({ board: 'Plain', stones })),
     ];
     for (const look of looks)
       test(`board look: ${look.board} board, ${look.stones} stones`, async ({ page }) => {

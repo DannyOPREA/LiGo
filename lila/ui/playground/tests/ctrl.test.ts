@@ -166,6 +166,7 @@ describe('PlaygroundCtrl', () => {
     ctrl.setTheme({ stones: 'Slate & Shell' });
     assert.deepEqual(ctrl.boardConfig().theme, { board: 'Book', stones: 'Slate & Shell' });
     assert.deepEqual(new PlaygroundCtrl({}, noop).theme, { board: 'Book', stones: 'Slate & Shell' });
+    localStorage.clear();
   });
 
   test('a stored theme that is no longer offered falls back to Plain', () => {

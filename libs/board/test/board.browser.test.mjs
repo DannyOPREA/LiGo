@@ -329,6 +329,18 @@ describe("board in Chromium", () => {
     assert.deepEqual(await t.page.locator("#board").screenshot(), before, "back to Plain looks as it did");
     assert.deepEqual(t.problems.requests, []);
   });
+
+  test("a theme change keeps a preview waiting for confirm", async () => {
+    await t.page.clock.install();
+    await mount(t.page, { ...game9, movable: "both", autoPlay: true, confirm: true });
+    await click(t.page, "ee");
+    assert.equal(await call(t.page, "pending"), true);
+    await call(t.page, "set", { theme: { board: "Book", stones: "Glass" } });
+    assert.equal(await call(t.page, "pending"), true, "the preview survives the redraw");
+    await t.page.clock.runFor(100);
+    await call(t.page, "confirm");
+    assert.deepEqual(await events(t.page), ["move ee"]);
+  });
 });
 
 test("phone: taps play stones on a board as wide as the screen", async () => {

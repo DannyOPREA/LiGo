@@ -1,5 +1,6 @@
 // Local Go playground (unit 2.2): play both colours on one board. No server game, no clock,
-// nothing stored - every setting resets to LiGo's defaults on reload.
+// game settings reset to LiGo's defaults on reload; only the board look is kept in local storage
+// (ADR 0026 §3).
 import type { Board, BoardConfig, Move, Played } from '@ligo/board/board';
 import { handicapStones, standardKomi } from '@ligo/board/rules';
 import { BOARD_THEMES, DEFAULT_THEME, STONE_THEMES, type Theme } from '@ligo/board/themes';
