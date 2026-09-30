@@ -88,6 +88,7 @@ object home:
             a(href := routes.Cms.tos)(trans.site.termsOfService()),
             a(href := "/privacy")(trans.site.privacy()),
             a(href := "/source")(trans.site.sourceCode()),
+            a(href := "/credits")("Credits"), // LiGo (unit 9.8)
             views.bits.connectLinks
           )
         )

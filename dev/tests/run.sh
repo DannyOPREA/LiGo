@@ -139,5 +139,11 @@ else
   echo "  skip  compose checks (docker compose not installed)"
 fi
 
+# The /credits page (unit 9.8): generated from docs/credits.json, which must cover COPYING.md §3.
+check "credits: the page matches docs/credits.json and covers COPYING.md and the puzzle sources" output_is "credits: the page matches docs/credits.json, which covers COPYING.md and the puzzle sources" node "$ROOT/lila/bin/gen/credits.mjs" --check
+check "credits: the check's own tests (missing section, odd rows, dependency rows, puzzle files)" node --test "$ROOT/lila/bin/gen/credits.test.mjs"
+ln -s "$ROOT" "$ci_repo/credits-link"
+check "credits: run through a symlinked folder, the check still runs" output_is "credits: the page matches docs/credits.json, which covers COPYING.md and the puzzle sources" node "$ci_repo/credits-link/lila/bin/gen/credits.mjs" --check
+
 echo "$PASS passed, $FAIL failed"
 (( FAIL == 0 ))
