@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.5 · The performance budget check
+- Did: `dev/ci/budget.mjs` measures, gzip -9, the board chunk (goban + libs/board, found by following the chunks the manifest's entries import), lila's site JS and CSS, and each LiGo page's JS before the board and its own CSS (the playground now), against `dev/ci/budget.json`; `ui/playground/e2e/budget.spec.ts` times a 19×19, 9-stone board mount with Chromium's CPU slowed 4× (median of five). The `ui` CI job runs the size check after its production build and the mount test with the page tests; `dev/ligo test budget` does both locally (production build first).
+- Worked: following static chunk imports from the manifest finds exactly one board chunk even when `public/compiled` holds stale files from earlier builds.
+- Didn't work / dead ends: a first pass matched every file carrying goban's code and found four (old debug builds). The ADR's "Today" sizes came from a debug build, 30% bigger than CI's minified one; the limits are set from the production build instead (ADR 0026 §5 amendment).
+- Lessons: measure budgets on the build CI makes (`ui/build -p`), never on `dev/ligo compile ui`'s debug build.
+- Decisions: limits from the production build + ~15%; mount limit 300 ms rather than +15% because CI runners' timings vary (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md, ADR 0026 §5 amendment).
+- Verified by Claude: `dev/ligo test budget` on main with 9.4: board 100.3 KiB, site JS 77.5, site CSS 13.4, playground JS 81.4, playground CSS 0.5, all within limits; mount median 130 ms (114–178); lowering one limit below its size makes `budget.mjs` exit 1. · Needs owner verification: `dev/ligo test budget` in native mode, if you like.
+- Follow-ups: pages from 3.18, 6.x, 7.4 and 8.7 add their own line to `budget.json`; 9.10 runs the whole set.
+
 ### 2026-09-29 · unit 9.1 · ADR 0026: PWA, sounds, themes, accessibility, budget, credits, handoff
 - Did: ADR 0026 for Phase 9.
 - Worked: lila's four kept sound sets (sfx, piano, nes, futuristic) each already have Move,

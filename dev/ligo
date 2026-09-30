@@ -43,7 +43,7 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   status              Show what is running
   logs [lila|ws|db|scoring]  Follow logs
   compile [what]      Compile lila, ws, ui, rules or all (default: all)
-  test [what]         Run the unit tests of lila, ws, ui, pages, rules, board, scoring, puzzles or all
+  test [what]         Run the unit tests of lila, ws, ui, pages, budget, rules, board, scoring, puzzles or all
                       (default: all); pages = the playground's screenshots and scripted game in
                       Chromium, from the built ui (compile ui first; docker mode skips them);
                       rules = both Go rules engines: libs/go-rules (server) and libs/board
@@ -534,12 +534,19 @@ cmd_test() {
       need_node_modules
       if ui_built; then (cd "$LILA" && run pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts)
       else say "page browser tests skipped: build the ui first (dev/ligo compile ui)"; fi ;;
+    # LiGo's performance budget (ADR 0026 §5, unit 9.5): sizes of the production build, then the
+    # board's mount time in Chromium. Rebuilds the ui with -p (minified), as CI measures it.
+    docker:budget) say "budget check skipped in docker mode (no Chromium in the ui container); CI runs it" ;;
+    native:budget)
+      need_node_modules
+      (cd "$LILA" && run ./ui/build --no-install -p && run node ../dev/ci/budget.mjs \
+        && run pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts budget) ;;
     docker:scoring) docker_scoring ;;
     native:scoring) native_scoring ;;
     docker:puzzles) say "puzzle tests skipped in docker mode (the ui container has neither tools/ nor KataGo); native mode and CI run them" ;;
     native:puzzles) native_puzzles ;;
     *:all) cmd_test ui; cmd_test pages; cmd_test lila; cmd_test ws; cmd_test rules; cmd_test scoring; cmd_test puzzles ;;
-    *) die "test what? lila, ws, ui, pages, rules, board, scoring, puzzles or all" ;;
+    *) die "test what? lila, ws, ui, pages, budget, rules, board, scoring, puzzles or all" ;;
   esac
 }
 

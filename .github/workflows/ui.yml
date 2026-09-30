@@ -64,6 +64,10 @@ jobs:
         run: pnpm run check-format
       - name: Build
         run: ./ui/build --no-install -p
+      # LiGo's size budget (ADR 0026 §5, unit 9.5) on the production build above; the board's mount
+      # time is checked with the page tests below (ui/playground/e2e/budget.spec.ts).
+      - name: Size budget
+        run: node ../dev/ci/budget.mjs
       - name: Tests
         run: ./ui/test
       # The playground's screenshots (against ui/playground/e2e/__screenshots__) and a scripted game,
