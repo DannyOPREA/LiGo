@@ -42,7 +42,9 @@ def meta(
                   separator,
                   ratedName(game.rated),
                   separator,
-                  variantLink(game.variant, game.perfType, shortName = true)
+                  // a Go game shows its setup: size, rules, komi, handicap (unit 3.16)
+                  game.go.fold(variantLink(game.variant, game.perfType, shortName = true)): go =>
+                    span(cls := "go-setup")(goSetupName(go))
                 )
             ),
             game.pgnImport.flatMap(_.date).fold(pastMomentWithPreload(game.createdAt))(frag(_))

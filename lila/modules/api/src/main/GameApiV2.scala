@@ -272,7 +272,9 @@ final class GameApiV2(
         "totalTime" -> clock.estimateTotalSeconds
       ))
     .add("lastFen" -> (flags.lastFen && !g.isGo).option(Fen.write(g.chess.position)))
-    .add("lastMove" -> flags.lastFen.option(g.go.fold(g.lastMoveKeys)(_.actions.lastOption.map(GoBridge.token))))
+    .add(
+      "lastMove" -> flags.lastFen.option(g.go.fold(g.lastMoveKeys)(_.actions.lastOption.map(GoBridge.token)))
+    )
     // a Go game's position, as live mini boards receive it (ADR 0019 §6)
     .add("lastBoard" -> g.go.ifTrue(flags.lastFen).map(GoBridge.board))
     .add("division" -> division)

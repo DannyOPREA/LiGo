@@ -18,7 +18,6 @@ import lila.puzzle.{
   difficultyCookie
 }
 import lila.rating.PerfType
-import lila.ui.LangPath
 import scalalib.model.Days
 import lila.common.HTTPRequest
 import lila.common.Json.given
@@ -27,36 +26,22 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
 
   import env.puzzle.{ jsonView, selector }
 
-  private def renderShow(
-      puzzle: Puz,
-      angle: PuzzleAngle,
-      color: Option[Color] = None,
-      replay: Option[lila.puzzle.PuzzleReplay] = None,
-      langPath: Option[LangPath] = None,
-      isDaily: Boolean = false
-  )(using ctx: Context)(using Perf) = for
-    json <- jsonView.analysis(puzzle, angle, replay)
-    settings <- ctx.user.traverse(env.puzzle.session.getSettings)
-    prefJson = jsonView.pref(ctx.pref)
-    page <- renderPage:
-      views.puzzle.ui
-        .show(
-          puzzle,
-          json ++ Json.obj("isDaily" -> isDaily),
-          prefJson,
-          settings | PuzzleSettings.default(color),
-          langPath
-        )
-  yield Ok(page).enforceCrossSiteIsolation
+  // The puzzle pages are a placeholder until Phase 8's Go puzzles (units 8.6 and 8.7) replace them (unit
+  // 3.16): they showed chess puzzles on a chess board. The JSON API stays as it was until 8.6.
+  private def comingLater(using Context) = Ok.page:
+    views.site.message.comingLater(
+      "Puzzles",
+      "Go puzzles (tsumego) arrive in a later update."
+    )
 
   def daily = Open:
-    NoBot:
-      Found(env.puzzle.daily.get): daily =>
-        WithPuzzlePerf:
-          negotiateApi(
-            html = renderShow(daily.puzzle, PuzzleAngle.mix, isDaily = true),
-            api = v => jsonView.analysis(daily.puzzle, PuzzleAngle.mix, apiVersion = v.some).dmap { Ok(_) }
-          ).dmap(_.noCache)
+    negotiateApi(
+      html = comingLater,
+      api = v =>
+        Found(env.puzzle.daily.get): daily =>
+          WithPuzzlePerf:
+            jsonView.analysis(daily.puzzle, PuzzleAngle.mix, apiVersion = v.some).dmap { Ok(_) }
+    ).dmap(_.noCache)
 
   def apiDaily = Anon:
     Found(env.puzzle.daily.get): daily =>
@@ -84,21 +69,9 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
           json <- env.puzzle.jsonView.batch(puzzles)
         yield JsonOk(json)
 
-  def home = Open(serveHome)
+  def home = Open(comingLater)
 
-  def homeLang = LangPage(routes.Puzzle.home.url)(serveHome)
-
-  private def serveHome(using Context) = NoBot:
-    val angle = PuzzleAngle.mix
-    WithPuzzlePerf:
-      selector
-        .nextPuzzleFor(angle, none, PuzzleDifficulty.fromReqSession(req))
-        .flatMap:
-          _.fold(redirectNoPuzzle):
-            renderShow(_, angle, langPath = LangPath(routes.Puzzle.home).some)
-
-  private def redirectNoPuzzle: Fu[Result] =
-    Redirect(routes.Puzzle.themes).flashFailure("No more puzzles available! Try another theme.")
+  def homeLang = LangPage(routes.Puzzle.home.url)(comingLater)
 
   def complete(angleStr: String, id: PuzzleId) = OpenBody:
     NoBot:
@@ -120,13 +93,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
           JsonOk(env.puzzle.complete.onComplete(data)(id, angle, mobileBc))
     )
 
-  def ofPlayer(name: Option[UserStr], page: Int) = Open:
-    val userId = name.flatMap(_.validateId)
-    for
-      user <- userId.so(env.user.repo.enabledById).orElse(fuccess(ctx.me.map(_.value)))
-      puzzles <- user.traverse(env.puzzle.api.puzzle.of(_, page))
-      page <- renderPage(views.puzzle.ui.ofPlayer(name.so(_.value), user, puzzles))
-    yield Ok(page)
+  def ofPlayer(@annotation.unused name: Option[UserStr], @annotation.unused page: Int) = Open(comingLater)
 
   def vote(id: PuzzleId) = AuthBody { _ ?=> me ?=>
     NoBot:
@@ -207,77 +174,25 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
   def themesLang = LangPage(routes.Puzzle.themes)(serveThemes)
 
   private def serveThemes(using Context) =
-    env.puzzle.api.angles.flatMap: angles =>
-      negotiate(
-        html = Ok.page(views.puzzle.ui.themes(angles)),
-        json = Ok(lila.puzzle.JsonView.angles(angles))
-      )
+    negotiate(
+      html = comingLater,
+      json = env.puzzle.api.angles.map(angles => Ok(lila.puzzle.JsonView.angles(angles)))
+    )
 
-  def openings(order: String) = Open:
-    env.puzzle.opening.collection.flatMap: collection =>
-      negotiate(
-        html = for
-          // "My openings" came from the insight module, removed in unit 3.5.
-          page = views.puzzle.ui.opening.all(collection, none, lila.puzzle.PuzzleOpening.Order(order))
-          result <- Ok.page(page)
-        yield result,
-        json = Ok(lila.puzzle.JsonView.openings(collection))
-      )
+  def openings(@annotation.unused order: String) = Open:
+    negotiate(
+      html = comingLater,
+      json = env.puzzle.opening.collection.map(collection => Ok(lila.puzzle.JsonView.openings(collection)))
+    )
 
-  def show(angleOrId: String) = Open(serveShow(angleOrId))
+  def show(@annotation.unused angleOrId: String) = Open(comingLater)
   def showLang(language: Language, angleOrId: String) =
-    LangPage(routes.Puzzle.show(angleOrId).url)(serveShow(angleOrId))(language)
+    LangPage(routes.Puzzle.show(angleOrId).url)(comingLater)(language)
 
-  private def serveShow(angleOrId: String)(using ctx: Context) = NoBot:
-    val langPath = LangPath(routes.Puzzle.show(angleOrId)).some
-    WithPuzzlePerf:
-      PuzzleAngle.find(angleOrId) match
-        case Some(angle) =>
-          selector
-            .nextPuzzleFor(angle, none, PuzzleDifficulty.fromReqSession(req))
-            .flatMap:
-              _.fold(redirectNoPuzzle) { renderShow(_, angle, langPath = langPath) }
-        case _ =>
-          Puz.toId(angleOrId) match
-            case Some(id) =>
-              Found(env.puzzle.api.puzzle.find(id)): puzzle =>
-                for
-                  _ <- ctx.me.so { env.puzzle.api.casual.setCasualIfNotYetPlayed(_, puzzle) }
-                  isDaily <- env.puzzle.daily.get.map(_.exists(_.puzzle.id == puzzle.id))
-                  result <- renderShow(puzzle, PuzzleAngle.mix, langPath = langPath, isDaily = isDaily)
-                yield result
-            case _ =>
-              angleOrId.toLongOption
-                .flatMap(Puz.numericalId.apply)
-                .so(env.puzzle.api.puzzle.find)
-                .map:
-                  case None => Redirect(routes.Puzzle.home)
-                  case Some(puz) => Redirect(routes.Puzzle.show(puz.id.value))
+  def showWithAngle(@annotation.unused angleKey: String, @annotation.unused id: PuzzleId) = Open(comingLater)
 
-  def showWithAngle(angleKey: String, id: PuzzleId) = Open:
-    NoBot:
-      val angle = PuzzleAngle.findOrMix(angleKey)
-      Found(env.puzzle.api.puzzle.find(id)): puzzle =>
-        if angle.asTheme.exists(theme => !puzzle.themes.contains(theme))
-        then Redirect(routes.Puzzle.show(puzzle.id.value))
-        else
-          WithPuzzlePerf:
-            for
-              _ <- ctx.me.so(env.puzzle.api.casual.setCasualIfNotYetPlayed(_, puzzle))
-              res <- renderShow(puzzle, angle)
-            yield res
-
-  def angleAndColor(angleKey: String, colorKey: String) = Open:
-    NoBot:
-      PuzzleAngle
-        .find(angleKey)
-        .fold(Redirect(routes.Puzzle.openings()).toFuccess): angle =>
-          val color = Color.fromName(colorKey)
-          WithPuzzlePerf:
-            selector
-              .nextPuzzleFor(angle, color.some, PuzzleDifficulty.fromReqSession(req))
-              .flatMap:
-                _.fold(redirectNoPuzzle) { renderShow(_, angle, color = color) }
+  def angleAndColor(@annotation.unused angleKey: String, @annotation.unused colorKey: String) =
+    Open(comingLater)
 
   private val fetchRateLimit =
     env.security.ipTrust.rateLimit(300, 1.hour, "puzzle.fetch.ip", _.antiScraping(dch = 5, others = 1))
@@ -292,9 +207,7 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
 
   def frame = Anon:
     InEmbedContext:
-      env.puzzle.daily.get.flatMap:
-        _.fold(InternalServerError("No daily puzzle yet").toFuccess): p =>
-          Ok.snip(views.puzzle.embed(p))
+      NotFound("No daily puzzle yet")
 
   def activity = Scoped(_.Puzzle.Read, _.Web.Mobile) { ctx ?=> me ?=>
     val config = lila.puzzle.PuzzleActivity.Config(
@@ -311,23 +224,11 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
       env.puzzle.dashboard(me, days).map2 { env.puzzle.jsonView.dashboardJson(_, days) }
   }
 
-  def dashboard(days: Days, path: String = "home", u: Option[UserStr]) =
-    DashboardPage(u) { ctx ?=> user =>
-      env.puzzle.dashboard(user, days).flatMap { dashboard =>
-        path match
-          case "dashboard" => Ok.page(views.puzzle.dashboard.home(user, dashboard, days))
-          case "improvementAreas" =>
-            Ok.page(views.puzzle.dashboard.improvementAreas(user, dashboard, days))
-          case "strengths" => Ok.page(views.puzzle.dashboard.strengths(user, dashboard, days))
-          case _ =>
-            Redirect(routes.Puzzle.dashboard(days, "dashboard", (ctx.isnt(user)).option(user.username)))
-      }
-    }
+  def dashboard(@annotation.unused days: Days, @annotation.unused path: String = "home", u: Option[UserStr]) =
+    DashboardPage(u) { ctx ?=> _ => comingLater }
 
-  def replay(days: Days, themeKey: String) = Auth { ctx ?=> me ?=>
-    replayOf(days, themeKey).flatMap:
-      case None => Redirect(routes.Puzzle.dashboard(days, "home", none))
-      case Some((puzzle, replay), angle) => WithPuzzlePerf(renderShow(puzzle, angle, replay = replay.some))
+  def replay(@annotation.unused days: Days, @annotation.unused themeKey: String) = Auth { ctx ?=> _ ?=>
+    comingLater
   }
 
   def apiReplay(days: Days, themeKey: String) = Scoped(_.Puzzle.Read, _.Web.Mobile) { ctx ?=> me ?=>
@@ -343,14 +244,8 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
     val checkedDayOpt = lila.puzzle.PuzzleDashboard.getClosestDay(days)
     env.puzzle.replay(checkedDayOpt, theme.key).map2(_ -> PuzzleAngle(theme))
 
-  def history(page: Int, u: Option[UserStr]) = DashboardPage(u) { _ ?=> user =>
-    Reasonable(page):
-      WithPuzzlePerf: perf ?=>
-        Ok.async:
-          env.puzzle
-            .history(user.withPerf(perf), page)
-            .map:
-              views.puzzle.ui.history(user, _)
+  def history(@annotation.unused page: Int, u: Option[UserStr]) = DashboardPage(u) { ctx ?=> _ =>
+    comingLater
   }
 
   def apiBatchSelect(angleStr: String) = AnonOrScoped(_.Puzzle.Read, _.Web.Mobile): ctx ?=>

@@ -144,8 +144,8 @@ object JsonView:
           "toMove" -> GoBridge.color(p.toMove).name
         ))
 
-  /** A Go game's positions as compact boards (`GoBridge.board`): the start, then one after each action.
-    * None if the setup can't be started or an action is refused, which a stored game never has.
+  /** A Go game's positions as compact boards (`GoBridge.board`): the start, then one after each action. None
+    * if the setup can't be started or an action is refused, which a stored game never has.
     */
   def goBoards(g: ligo.gorules.GoGame): Option[Vector[String]] =
     ligo.gorules.GoGame

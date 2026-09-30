@@ -217,12 +217,13 @@ final class Round(
     Found(env.game.gameRepo.game(id)): game =>
       // A Go position can't be carried into the create-game form as a FEN (unit 3.16).
       if game.isGo then Redirect(s"${routes.Lobby.home}#$mode")
-      else Redirect:
-        "%s?fen=%s#%s".format(
-          routes.Lobby.home,
-          get("fen") | (chess.format.Fen.write(game.chessState)).value,
-          mode
-        )
+      else
+        Redirect:
+          "%s?fen=%s#%s".format(
+            routes.Lobby.home,
+            get("fen") | (chess.format.Fen.write(game.chessState)).value,
+            mode
+          )
 
   def resign(fullId: GameFullId) = Open:
     Found(env.round.proxyRepo.pov(fullId)): pov =>

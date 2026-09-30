@@ -91,3 +91,12 @@ class GoBridgeTest extends munit.FunSuite:
     assertEquals(GoBridge.label(Point(18, 18), 19), "T1")
     assertEquals(GoBridge.label(Action.Place(Point(2, 2)), 9), "C7")
     assertEquals(GoBridge.label(Action.Pass, 9), "pass")
+
+  test("setup names"):
+    assertEquals(GoBridge.setupName(setup(0)), "9×9 • Japanese • komi 6.5")
+    val chinese = Setup(BoardSize.Nineteen, Ruleset.Chinese, 0.5, 3)
+    assertEquals(GoBridge.setupName(chinese), "19×19 • Chinese • komi 0.5 • 3 stones")
+    assertEquals(
+      GoBridge.setupName(Setup(BoardSize.Thirteen, Ruleset.Japanese, 0.0, 0)),
+      "13×13 • Japanese • komi 0"
+    )

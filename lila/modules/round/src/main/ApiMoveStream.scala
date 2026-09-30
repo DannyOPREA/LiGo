@@ -112,8 +112,8 @@ final class ApiMoveStream(
   private def toJson(fen: String, lastMove: Option[String], clock: Option[ByColor[Centis]]): JsObject =
     withClock(Json.obj("fen" -> fen).add("lm" -> lastMove), clock)
 
-  /** A Go position as live mini boards receive it (ADR 0019 §6): the compact board, the player to move,
-    * the last move's SGF point or `pass`, and the clocks.
+  /** A Go position as live mini boards receive it (ADR 0019 §6): the compact board, the player to move, the
+    * last move's SGF point or `pass`, and the clocks.
     */
   private def goJson(
       board: String,
