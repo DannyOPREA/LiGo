@@ -111,6 +111,31 @@ final class ByoyomiClock private (private val sg: SgClock):
       s"cannot give $centis cs"
     )
 
+  /** How long a game with these settings is expected to last per player, in seconds, as strategygames
+    * estimates it: what lila's speed categories and its abandoned-game checks read (unit 4.7).
+    */
+  def estimateTotalSeconds: Int = sg.estimateTotalSeconds
+
+  /** The lag compensation lila expects to grant `color` on their next move, in centiseconds, if it knows
+    * any: sent to that player's browser with the clock, as for a Fischer clock.
+    */
+  def lagCompEstimate(color: Color): Option[Int] =
+    sg.lagCompEstimate(ByoyomiClock.playerOf(color)).map(_.centis)
+
+  /** Whether `color` may be given more time now: lila's limit on the "give more time" button. */
+  def moretimeable(color: Color): Boolean = sg.moretimeable(ByoyomiClock.playerOf(color))
+
+  /** An accepted takeback: the side to move goes back to the player whose move was taken back. Time and
+    * periods already used stay used (a byo-yomi clock keeps no per-move history to restore them from).
+    */
+  def takeback: ByoyomiClock = wrap(sg.takeback())
+
+  /** True once either player has used any time: a stopped clock with time used in a game still in play is
+    * one lila treats as out of time, as for a Fischer clock.
+    */
+  def anyTimeUsed: Boolean =
+    List(Player.P1, Player.P2).map(sg.players(_)).exists(p => p.elapsed.centis > 0 || p.spentPeriods > 0)
+
   def state: ByoyomiState =
     val b = sg.players(Player.P1)
     val w = sg.players(Player.P2)

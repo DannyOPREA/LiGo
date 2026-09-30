@@ -1,9 +1,10 @@
 package lila.round
 
-import chess.{ ByColor, Color }
+import chess.{ ByColor, Centis, Color }
 
 import scalalib.data.Preload
-import lila.game.GameExt.withClock
+import lila.core.game.GoBridge
+import lila.game.GameExt.{ withByoyomi, withClock }
 import lila.game.{ Event, Progress }
 import lila.pref.{ Pref, PrefApi }
 
@@ -15,7 +16,7 @@ final class Moretimer(messenger: Messenger, prefApi: PrefApi):
   // pov of the player giving more time
   def apply(pov: Pov, duration: FiniteDuration, force: Boolean): Fu[Option[Progress]] =
     isAllowedIn(pov.game, Preload.none, force).mapz:
-      if pov.game.clock.exists(_.moretimeable(!pov.color))
+      if pov.game.gameClock.exists(_.moretimeable(!pov.color))
       then give(pov.game, List(!pov.color), duration).some
       else if pov.game.correspondenceClock.exists(_.moretimeable(!pov.color))
       then
@@ -35,17 +36,32 @@ final class Moretimer(messenger: Messenger, prefApi: PrefApi):
       unchecked: FiniteDuration,
       reboot: Boolean = false
   ): Progress =
-    game.clock.fold(Progress(game)): clock =>
+    if !game.hasClock then Progress(game)
+    else
       val duration =
         if unchecked < minTime then minTime
         else if unchecked > maxTime then maxTime
         else unchecked
-      val centis = duration.toCentis
-      val newClock = colors.foldLeft(clock): (c, color) =>
-        c.giveTime(color, centis)
       colors.foreach: c =>
         messenger.volatile(game, s"$c + ${duration.toSeconds} seconds", reboot = reboot)
-      (game.withClock(newClock)) ++ colors.map { Event.ClockInc(_, centis, newClock) }
+      addTime(game, colors.map(_ -> duration.toCentis))
+
+  /** Adds time to whichever clock the game has. A byo-yomi clock adds it to main time, or to the current
+    * period once in byo-yomi (go-rules' `giveTime`), and sends the whole clock, since the browsers' "clock
+    * increment" event only knows Fischer clocks.
+    */
+  private[round] def addTime(game: Game, times: List[(Color, Centis)]): Progress =
+    game.clock
+      .map: clock =>
+        val newClock = times.foldLeft(clock) { case (c, (color, centis)) => c.giveTime(color, centis) }
+        game.withClock(newClock) ++ times.map((color, centis) => Event.ClockInc(color, centis, newClock))
+      .orElse:
+        game.byoyomi.map: clock =>
+          val newClock = times.foldLeft(clock) { case (c, (color, centis)) =>
+            c.giveTime(GoBridge.goColor(color), centis.centis).getOrElse(c)
+          }
+          game.withByoyomi(newClock) + Event.Clock(newClock)
+      .getOrElse(Progress(game))
 
   private def isAllowedByPrefs(game: Game, prefs: Preload[ByColor[Pref]]): Fu[Boolean] =
     prefs

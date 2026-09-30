@@ -24,6 +24,7 @@ import scala.util.{ Success, Try }
 import lila.core.game.{
   ClockHistory,
   Game,
+  GameClock,
   GoBridge,
   GameDrawOffers,
   GameMetadata,
@@ -34,6 +35,8 @@ import lila.core.game.{
   Source,
   emptyDrawOffers
 }
+import ligo.gorules.{ ByoyomiClock, ByoyomiConfig, ByoyomiState, Color as GoColor }
+
 import lila.db.BSON
 import lila.db.dsl.{ *, given }
 
@@ -56,6 +59,42 @@ object BSONHandlers:
   )
 
   given BSONHandler[GameRule] = valueMapHandler[String, GameRule](GameRule.byKey)(_.toString)
+
+  /** A byo-yomi clock (ADR 0020 §7, key `cy`): `m` main seconds, `n` periods, `p` period seconds, `t` whose
+    * clock it is (`true` for White), `bt`/`wt` each player's time used in centiseconds, `bp`/`wp` their
+    * periods used up, and `r` since when it has run (epoch milliseconds), absent when stopped.
+    */
+  private[game] given byoyomiStateHandler: BSONDocumentHandler[ByoyomiState] with
+    def readDocument(doc: BSONDocument) = for
+      main <- doc.getAsTry[Int]("m")
+      periods <- doc.getAsTry[Int]("n")
+      period <- doc.getAsTry[Int]("p")
+      white <- doc.getAsTry[Boolean]("t")
+      bt <- doc.getAsTry[Int]("bt")
+      bp <- doc.getAsTry[Int]("bp")
+      wt <- doc.getAsTry[Int]("wt")
+      wp <- doc.getAsTry[Int]("wp")
+    yield ByoyomiState(
+      ByoyomiConfig(main, periods, period),
+      if white then GoColor.White else GoColor.Black,
+      bt,
+      bp,
+      wt,
+      wp,
+      doc.getAsOpt[Long]("r")
+    )
+    def writeTry(s: ByoyomiState) = Success:
+      BSONDocument(
+        "m" -> s.config.mainSeconds,
+        "n" -> s.config.periods,
+        "p" -> s.config.periodSeconds,
+        "t" -> (s.toMove == GoColor.White),
+        "bt" -> s.blackElapsedCentis,
+        "bp" -> s.blackSpentPeriods,
+        "wt" -> s.whiteElapsedCentis,
+        "wp" -> s.whiteSpentPeriods,
+        "r" -> s.runningSince
+      )
 
   given sourceHandler: BSONHandler[Source] = valueMapHandler[Int, Source](Source.byId)(_.id)
 
@@ -221,7 +260,7 @@ object BSONHandlers:
             bb <- blackClockHistory
             history <-
               BinaryFormat.clockHistory
-                .read(clk.limit, bw, bb, (light.status == Status.Outoftime).option(turnColor))
+                .read(clk.startTime, bw, bb, (light.status == Status.Outoftime).option(turnColor))
             _ = lila.mon.game.loadClockHistory.increment()
           yield history,
         status = light.status,
@@ -241,7 +280,8 @@ object BSONHandlers:
           drawOffers = r.getD(F.drawOffers, emptyDrawOffers),
           rules = r.getD(F.rules, Set.empty)
         ),
-        abortedBy = r.getO[Color](F.abortedBy)
+        abortedBy = r.getO[Color](F.abortedBy),
+        byoyomi = r.getO[ByoyomiState](F.byoyomi).flatMap(ByoyomiClock.restore(_).toOption)
       )
 
     def writes(w: BSON.Writer, o: Game) =
@@ -266,8 +306,9 @@ object BSONHandlers:
         },
         F.daysPerTurn -> o.daysPerTurn,
         F.moveTimes -> o.binaryMoveTimes,
-        F.whiteClockHistory -> clockHistory(Color.White, o.clockHistory, o.clock, o.flagged),
-        F.blackClockHistory -> clockHistory(Color.Black, o.clockHistory, o.clock, o.flagged),
+        F.byoyomi -> o.byoyomi.map(_.state),
+        F.whiteClockHistory -> clockHistory(Color.White, o.clockHistory, o.gameClock, o.flagged),
+        F.blackClockHistory -> clockHistory(Color.Black, o.clockHistory, o.gameClock, o.flagged),
         F.rated -> w.yesnoO(o.rated),
         F.variant -> (o.position.variant.exotic && !o.isGo).option(w(o.position.variant.id)),
         F.bookmarks -> w.intO(o.bookmarks),
@@ -329,14 +370,14 @@ object BSONHandlers:
   private def clockHistory(
       color: Color,
       clockHistory: Option[ClockHistory],
-      clock: Option[Clock],
+      clock: Option[GameClock],
       flagged: Option[Color]
   ) =
     for
       clk <- clock
       history <- clockHistory
       times = history(color)
-    yield BinaryFormat.clockHistory.writeSide(clk.limit, times, flagged.has(color))
+    yield BinaryFormat.clockHistory.writeSide(clk.startTime, times, flagged.has(color))
 
   private[game] def clockBSONReader(since: Instant, whiteBerserk: Boolean, blackBerserk: Boolean) =
     new BSONReader[Color => Clock]:

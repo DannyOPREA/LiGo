@@ -6,6 +6,7 @@ import chess.variant.Crazyhouse
 import chess.rating.IntRatingDiff
 import chess.{
   Bitboard,
+  ByColor,
   Centis,
   Check,
   Clock as ChessClock,
@@ -21,7 +22,7 @@ import chess.{
 import play.api.libs.json.*
 
 import lila.common.Json.given
-import lila.core.game.{ Event, Game }
+import lila.core.game.{ Event, Game, GameClock, GoBridge }
 
 import JsonView.given
 
@@ -334,7 +335,15 @@ object Event:
 
   sealed trait ClockEvent extends Event
 
-  case class Clock(white: Centis, black: Centis, nextLagComp: Option[Centis] = None) extends ClockEvent:
+  /** Both clocks after a move. A byo-yomi clock (ADR 0020 §7) adds each side's periods left and the period
+    * length in seconds; `white` and `black` are then the main time, or the time left in the current period.
+    */
+  case class Clock(
+      white: Centis,
+      black: Centis,
+      nextLagComp: Option[Centis] = None,
+      byoyomi: Option[Clock.Byoyomi] = None
+  ) extends ClockEvent:
     def typ = "clock"
     def data =
       Json
@@ -343,12 +352,32 @@ object Event:
           "black" -> black.toSeconds
         )
         .add("lag" -> nextLagComp.filter(_ > Centis(1)))
+        .add("periods" -> byoyomi.map(b => Json.obj("b" -> b.periods.black, "w" -> b.periods.white)))
+        .add("byo" -> byoyomi.map(_.periodSeconds))
   object Clock:
+    case class Byoyomi(periods: ByColor[Int], periodSeconds: Int)
+
     def apply(clock: ChessClock): Clock =
       Clock(
         clock.remainingTime(Color.White),
         clock.remainingTime(Color.Black),
         clock.lagCompEstimate(clock.color)
+      )
+
+    def apply(clock: GameClock): Clock = clock match
+      case GameClock.Fischer(c) => apply(c)
+      case GameClock.Byoyomi(c) => apply(c)
+
+    def apply(clock: ligo.gorules.ByoyomiClock): Clock =
+      def reading(color: Color) = clock.reading(GoBridge.goColor(color))
+      Clock(
+        Centis(reading(Color.White).centis),
+        Centis(reading(Color.Black).centis),
+        clock.lagCompEstimate(clock.toMove).map(Centis(_)),
+        Byoyomi(
+          ByColor(reading(Color.White).periodsLeft, reading(Color.Black).periodsLeft),
+          clock.config.periodSeconds
+        ).some
       )
 
   case class Berserk(color: Color) extends Event:
