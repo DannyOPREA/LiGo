@@ -120,14 +120,11 @@ trait GameHelper:
   def gameLink(
       game: Game,
       color: Color,
-      ownerLink: Boolean = false,
-      tv: Boolean = false
+      ownerLink: Boolean = false
   )(using ctx: Context): String = {
     val owner = ownerLink.so(ctx.me.flatMap(game.player))
-    if tv then routes.Tv.index
-    else
-      owner.fold(routes.Round.watcher(game.id, color)): o =>
-        routes.Round.player(game.fullIdOf(o.color))
+    owner.fold(routes.Round.watcher(game.id, color)): o =>
+      routes.Round.player(game.fullIdOf(o.color))
   }.toString
 
   def gameLink(pov: Pov)(using Context): String = gameLink(pov.game, pov.color)
@@ -141,7 +138,6 @@ trait GameHelper:
   def variantLink(
       variant: chess.variant.Variant,
       pk: PerfKey,
-      initialFen: Option[chess.format.Fen.Full] = None,
       shortName: Boolean = false
   )(using Translate): Frag =
 
@@ -155,8 +151,7 @@ trait GameHelper:
     if variant.exotic then
       link(
         href = variant match
-          case chess.variant.FromPosition =>
-            s"""${routes.Editor.index}?fen=${initialFen.so(_.value.replace(' ', '_'))}"""
+          // FromPosition linked to the board editor, removed in unit 3.7.
           case v => routes.Cms.variant(v.key).url
         ,
         title = variant.variantTitleTrans.txt(),

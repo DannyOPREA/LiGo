@@ -30,8 +30,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
   private def collNamed(name: String): Future[Coll] = mainDb.map(_.collection(name))(using parasitic)
   def securityColl = collNamed("security")
   def userColl = collNamed("user4")
-  def coachColl = collNamed("coach")
-  def streamerColl = collNamed("streamer")
   def gameColl = collNamed("game5")
   def challengeColl = collNamed("challenge")
   def relationColl = collNamed("relation")
@@ -45,8 +43,6 @@ final class Mongo(config: Config)(using Executor)(using cacheApi: util.CacheApi)
     case wr: WriteResult if isDuplicateKey(wr) => ()
 
   def security[A](f: BSONCollection => Future[A]): Future[A] = securityColl.flatMap(f)
-  def coach[A](f: BSONCollection => Future[A]): Future[A] = coachColl.flatMap(f)
-  def streamer[A](f: BSONCollection => Future[A]): Future[A] = streamerColl.flatMap(f)
   def user[A](f: BSONCollection => Future[A]): Future[A] = userColl.flatMap(f)
 
   // None = no such game

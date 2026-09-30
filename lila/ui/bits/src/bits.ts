@@ -1,8 +1,6 @@
 import { spinnerHtml } from 'lib/view';
 import { text } from 'lib/xhr';
 
-import flairPickerLoader from './flairPicker';
-
 // avoid node_modules and pay attention to imports here. we don't want to force people
 // to download the entire toastui editor library just to do some light form processing.
 
@@ -14,8 +12,6 @@ export function initModule(args: { fn: string } & any): void {
       return colorizeYesNoTable();
     case 'contact':
       return contact();
-    case 'dailyFeed':
-      return dailyFeed();
     case 'embedReasonToggle':
       return embedReasonToggle();
     case 'eventCountdown':
@@ -28,8 +24,6 @@ export function initModule(args: { fn: string } & any): void {
       return pmAll();
     case 'setAssetInfo':
       return setAssetInfo();
-    case 'streamerSubscribe':
-      return streamerSubscribe();
     case 'thanksReport':
       return thanksReport();
     case 'validateEmail':
@@ -71,12 +65,6 @@ export function contactEmail(): void {
       $(this).html(address).attr('href', `mailto:${address}`);
     }, 300);
     return false;
-  });
-}
-
-function dailyFeed() {
-  $('.emoji-details').each(function (this: HTMLElement) {
-    flairPickerLoader(this);
   });
 }
 
@@ -180,20 +168,6 @@ function setAssetInfo() {
     .attr('target', '_blank')
     .find('pre')
     .text('...');
-}
-
-function streamerSubscribe() {
-  $('.streamer-show').on('change', '.streamer-subscribe input', (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const action = target.dataset.action;
-    if (action) {
-      const url = new URL(action, location.href);
-      url.searchParams.set('set', String(target.checked));
-      text(url.pathname + url.search, { method: 'post' });
-      url.searchParams.set('set', String(!target.checked));
-      target.dataset.action = url.pathname + url.search;
-    }
-  });
 }
 
 function thanksReport() {

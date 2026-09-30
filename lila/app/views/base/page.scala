@@ -81,7 +81,7 @@ object page:
           (p.flags(PageFlags.noRobots) || !netConfig.crawlable).option(noRobots),
           noTranslate,
           p.openGraph.map(lila.web.ui.openGraph),
-          p.atomLinkTag | dailyNewsAtom,
+          p.atomLinkTag,
           pref.isTransparentBg
             .option(pref.bgImgUrl)
             .map: loc =>
@@ -149,7 +149,6 @@ object page:
           zenable.option(zenZone),
           Option.unless(p.flags(PageFlags.noHeader)):
             ui.siteHeader(
-              zenable = zenable,
               isAppealUser = ctx.isAppealUser,
               challenges = ctx.nbChallenges,
               notifications = ctx.nbNotifications.value,

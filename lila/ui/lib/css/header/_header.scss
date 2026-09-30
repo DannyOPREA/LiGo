@@ -77,24 +77,6 @@ body.zen {
   }
 }
 
-#topnav .community-patron {
-  @extend %flex-center;
-
-  &::after {
-    @extend %data-icon;
-    @include margin-direction(0, 0, 0.08ch, 0.3ch);
-
-    content: $licon-Wings;
-    font-size: 1.3em;
-    color: $c-brag;
-    transform: scaleX(-1);
-
-    @include if-rtl {
-      transform: none;
-    }
-  }
-}
-
 .site-title-nav {
   display: flex;
   justify-content: flex-start;

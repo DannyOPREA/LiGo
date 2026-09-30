@@ -68,11 +68,14 @@
     margin-top: 1rem;
     display: none;
 
-    a {
+    a,
+    > span {
       @extend %nowrap-ellipsis;
 
       color: $c-font-page;
+    }
 
+    a {
       @include transition(color);
 
       &:hover {

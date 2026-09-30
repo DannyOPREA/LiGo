@@ -12,6 +12,8 @@ object Query:
 
   val rated: Bdoc = bdoc(F.rated -> true)
 
+  val casual: Bdoc = F.rated.neq(true)
+
   def rated(u: UserId): Bdoc = user(u) ++ rated
 
   def status(s: Status) = bdoc(F.status -> s.id)

@@ -54,8 +54,6 @@ export class LinksCtrl extends PaneCtrl {
             ),
             i18n.preferences.preferences,
           ),
-          d.coach && hl('a.text', linkCfg('/coach/edit', licon.GraduateCap), i18n.site.coachManager),
-          d.streamer && hl('a.text', linkCfg('/streamer/edit', licon.Mic), i18n.site.streamerManager),
           hl('form.logout', { attrs: { method: 'post', action: '/logout' } }, [
             hl('button.text', { attrs: { type: 'submit', 'data-icon': licon.Power } }, i18n.site.logOut),
           ]),

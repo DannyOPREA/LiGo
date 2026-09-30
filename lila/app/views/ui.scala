@@ -7,14 +7,10 @@ val captcha = lila.web.ui.CaptchaUi(helpers)
 
 val chat = lila.chat.ChatUi
 
-val boardEditor = lila.web.ui.BoardEditorUi(helpers)
-
 val setup = lila.setup.ui.SetupUi(helpers)
 
 // gathering (shared UI for the tournament/swiss/simul "no prizes" notice) was removed with the
 // tournament, swiss and simul modules (unit 3.2).
-
-val atomUi = lila.ui.AtomUi(helpers.routeUrl)
 
 val dgt = lila.web.ui.DgtUi(helpers)
 
@@ -26,15 +22,7 @@ object oAuth:
   val token = lila.oauth.ui.TokenUi(helpers)(account.ui.AccountPage, env.mode)
   val authorize = lila.oauth.ui.AuthorizeUi(helpers)(lightUserFallback, auth.customLogo)
 
-val style = lila.plan.ui.PlanStyle(helpers)
-val plan = lila.plan.ui.PlanUi(helpers)(style, netConfig.email)
-// fishnet went in unit 3.5; the Patron page (unit 3.7) keeps upstream's 40 analyses a day in its table.
-val planPages = lila.plan.ui.PlanPages(helpers)(fishnetPerDay = 40)
-
-val feed =
-  lila.feed.ui.FeedUi(helpers, atomUi)(title => _ ?=> site.ui.SitePage(title, "news", ""))(using
-    env.executor
-  )
+// plan (Patron and donation pages) and feed (the news feed) were removed with their modules (unit 3.7).
 
 val cms = lila.cms.ui.CmsUi(helpers)(views.mod.ui.menu("cms"))
 
@@ -58,9 +46,8 @@ object account:
 
 val timeline = lila.timeline.ui.TimelineUi(helpers)
 
-val video = lila.video.ui.VideoUi(helpers)
-
-val gameSearch = lila.gameSearch.ui.GameSearchUi(helpers)(views.game.widgets(_))
+// video and gameSearch (the video library and advanced game search) were removed with their
+// modules (unit 3.7).
 
 val challenge = lila.challenge.ui.ChallengeUi(helpers)
 
@@ -69,4 +56,4 @@ val dev = lila.web.ui.DevUi(helpers)(views.mod.ui.menu)
 def mobile(p: lila.cms.CmsPage.Render)(using Context) =
   lila.web.ui.mobile(helpers)(cms.render(p))
 
-val recap = lila.recap.ui.RecapUi(helpers)
+// recap (the yearly recap) was removed with its module (unit 3.7).

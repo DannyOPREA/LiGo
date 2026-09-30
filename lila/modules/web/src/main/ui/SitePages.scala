@@ -22,7 +22,6 @@ final class SitePages(helpers: Helpers):
     def activeCls(c: String) = cls := active.activeO(c)
     lila.ui.bits.pageMenuSubnav(
       a(activeCls("about"), href := "/about")(trans.site.aboutX(siteName)),
-      a(activeCls("news"), href := routes.Feed.index(1))(trans.site.lichessUpdates()),
       a(activeCls("faq"), href := routes.Main.faq)(trans.faq.faqAbbreviation()),
       a(activeCls("contact"), href := routes.Main.contact)(trans.contact.contact()),
       a(activeCls("tos"), href := routes.Cms.tos)(trans.site.termsOfService()),
@@ -68,30 +67,7 @@ final class SitePages(helpers: Helpers):
               "."
             )
           ),
-          br,
-          st.section(cls := "box box-pad developers") {
-            val args =
-              """style="width: 400px; aspect-ratio: 10/11;" allowtransparency="true" frameborder="0""""
-            frag(
-              a(href := "#embed-tv")(
-                h1(cls := "box__top", id := "embed-tv")("Embed Lichess TV in your site")
-              ),
-              div(cls := "body")(
-                div(cls := "center")(raw(s"""<iframe src="/tv/frame?theme=brown&bg=dark" $args></iframe>""")),
-                p("Add the following HTML to your site:"),
-                copyMeInput(s"""<iframe src="$netBaseUrl/tv/frame?theme=brown&bg=dark" $args></iframe>"""),
-                parameters(),
-                p(
-                  "You can also show the channel for a specific variant or time control by adding the channel key to the URL, corresponding to the channels available at ",
-                  a(href := "/tv")("lichess.org/tv"),
-                  ". If not included, the top rated game will be shown."
-                ),
-                copyMeInput(
-                  s"""<iframe src="$netBaseUrl/tv/rapid/frame?theme=brown&bg=dark" $args></iframe>"""
-                )
-              )
-            )
-          },
+          // the TV embed went with TV (unit 3.7)
           br,
           st.section(cls := "box box-pad developers") {
             val args =
