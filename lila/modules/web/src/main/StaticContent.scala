@@ -1,6 +1,6 @@
 package lila.web
 
-import play.api.libs.json.{ JsArray, Json }
+import play.api.libs.json.{ JsArray, JsObject, Json }
 import play.api.mvc.RequestHeader
 
 import lila.common.HTTPRequest
@@ -23,36 +23,31 @@ Disallow: /training/of-player
 Allow: /game/export/gif/thumbnail/
 """
 
-  def manifest(net: NetConfig) =
+  // LiGo: the installable app's manifest (unit 9.6, ADR 0026 §1). No related_applications: LiGo has
+  // no store app. ui/playground/e2e/manifest.json is this manifest for asset domain "localhost:8080";
+  // StaticContentTest keeps the two equal and the browser test installs from that copy.
+  def manifest(net: NetConfig): JsObject = manifest(net.assetDomain.value)
+
+  def manifest(assetDomain: String): JsObject =
+    def icon(file: String, size: Int, purpose: String) =
+      Json.obj(
+        "src" -> s"//$assetDomain/assets/logo/$file",
+        "sizes" -> s"${size}x$size",
+        "type" -> "image/png",
+        "purpose" -> purpose
+      )
     Json.obj(
-      "name" -> net.siteName,
-      "short_name" -> net.siteName,
+      "id" -> "/",
+      "name" -> "LiGo",
+      "short_name" -> "LiGo",
+      "description" -> "A free, open-source Go server in the style of lichess",
       "start_url" -> "/",
       "display" -> "standalone",
       "background_color" -> "#161512",
       "theme_color" -> "#161512",
-      "description" -> "The (really) free, no-ads, open source Go server.",
-      "icons" -> List(32, 64, 128, 192, 256, 512).map: size =>
-        Json.obj(
-          "src" -> s"//${net.assetDomain}/assets/logo/ligo-favicon-$size.png",
-          "sizes" -> s"${size}x$size",
-          "type" -> "image/png"
-        ),
-      "related_applications" -> Json.arr(
-        Json.obj(
-          "platform" -> "play",
-          "url" -> mobileAndroidUrl,
-          "id" -> mobileAndroidId
-        ),
-        Json.obj(
-          "platform" -> "itunes",
-          "url" -> mobileIosUrl
-        ),
-        Json.obj(
-          "platform" -> "ios",
-          "url" -> mobileIosUrl
-        )
-      )
+      "icons" -> (List(32, 64, 128, 192, 256, 512)
+        .map(size => icon(s"ligo-favicon-$size.png", size, "any")) :+
+        icon("ligo-maskable-512.png", 512, "maskable"))
     )
 
   val mobileAndroidId = "org.lichess.mobileV2"

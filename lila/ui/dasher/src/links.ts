@@ -1,3 +1,4 @@
+import { install, installOffer } from 'lib/install';
 import { licon, type LiconValue } from 'lib/licon';
 import { pubsub } from 'lib/pubsub';
 import { type Attrs, hl, type VNode, bind } from 'lib/view';
@@ -27,10 +28,36 @@ export class LinksCtrl extends PaneCtrl {
               i18n.preferences.zenMode,
             ),
           ]),
+        this.installEntry(),
       ]),
       this.root.ping.render(),
     ]);
   };
+
+  // LiGo: "Install LiGo" (unit 9.6, ADR 0026 §1). English until LiGo's strings reach i18n.
+  private installEntry(): VNode | null {
+    const offer = installOffer();
+    if (offer === 'prompt')
+      return hl('div.install.selector', [
+        hl(
+          'button.text',
+          {
+            attrs: { 'data-icon': licon.Download, type: 'button' },
+            hook: bind('click', () => install().then(() => this.root.redraw())),
+          },
+          'Install LiGo',
+        ),
+      ]);
+    if (offer === 'ios')
+      return hl('div.install.selector', [
+        hl(
+          'p.text',
+          { attrs: { 'data-icon': licon.ShareIos } },
+          'Install LiGo: Share, then Add to Home Screen',
+        ),
+      ]);
+    return null;
+  }
 
   private get data() {
     return this.root.data;

@@ -4,6 +4,7 @@ import * as ab from 'ab/site';
 import { scrollToInnerSelector, requestIdleCallbackSafe } from 'lib';
 import { dispatchChessgroundResize } from 'lib/chessgroundResize';
 import { prefersLightThemeQuery } from 'lib/device';
+import { watchInstall } from 'lib/install';
 import { licon } from 'lib/licon';
 import { pubsub } from 'lib/pubsub';
 import { eventuallySetupDefaultConnection } from 'lib/socket';
@@ -60,6 +61,7 @@ export function boot() {
 
     if (showDebug) site.asset.loadEsm('bits.diagnosticDialog');
 
+    watchInstall(); // LiGo: keeps the browser's install offer for the account menu (unit 9.6)
     serviceWorker();
 
     console.info('LiGo is open source! See /source');

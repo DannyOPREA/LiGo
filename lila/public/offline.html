@@ -1,0 +1,28 @@
+<!doctype html>
+<!-- LiGo's offline page (unit 9.6, ADR 0026 §1): the service worker caches it from /offline when it
+     installs and shows it when a page can't load. Self-contained (styles and logo inline) so it is
+     the only thing cached. Licence: AGPL-3.0-or-later, like the rest of LiGo. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#161512">
+<title>Offline • LiGo</title>
+<style>
+  html { background: #161512; color: #bababa; font: 16px/1.5 system-ui, sans-serif; }
+  body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; padding: 1rem; box-sizing: border-box; text-align: center; }
+  svg { width: 96px; height: 96px; }
+  h1 { margin: 0; font-size: 1.5rem; font-weight: normal; color: #e0e0e0; }
+  p { margin: 0; }
+  a { display: inline-block; padding: .6em 1.4em; border-radius: 4px; background: #1f6fbf; color: #fff; text-decoration: none; font-weight: bold; }
+  a:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" aria-hidden="true"><circle cx="31" cy="19" r="15.5" fill="#f4f1ea" stroke="#1d1d1d" stroke-width="2.5"/><circle cx="19" cy="31" r="17.5" fill="#1d1d1d" stroke="#f4f1ea" stroke-width="1.5"/></svg>
+<h1>You are offline</h1>
+<p>LiGo needs the internet to play. Check your connection, then try again.</p>
+<!-- An empty href is this page's own address, so "Try again" reloads what you asked for, no script needed. -->
+<a href="">Try again</a>
+</body>
+</html>

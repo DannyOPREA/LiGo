@@ -6,10 +6,44 @@ function assetUrl(path: string): string {
   return `${assetBase}assets/${path}`;
 }
 
-sw.addEventListener('install', () => sw.skipWaiting());
+// LiGo: the offline page (unit 9.6, ADR 0026 §1). The worker caches /offline when it installs and shows
+// it when a page navigation fails. Nothing else is cached and there is no offline play.
+const offlineCache = 'ligo-offline-v1';
+const offlineUrl = '/offline';
+
+sw.addEventListener('install', (e: ExtendableEvent) =>
+  e.waitUntil(
+    caches
+      .open(offlineCache)
+      .then(cache => cache.add(offlineUrl))
+      // Push must keep working even if the page couldn't be fetched; the next update retries.
+      .catch(() => undefined)
+      .then(() => sw.skipWaiting()),
+  ),
+);
 
 sw.addEventListener('activate', (e: ExtendableEvent) => {
-  e.waitUntil(sw.clients.claim());
+  e.waitUntil(
+    (async () => {
+      for (const key of await caches.keys())
+        if (key.startsWith('ligo-offline-') && key !== offlineCache) await caches.delete(key);
+      // The browser starts the page's request while the worker starts, so the worker adds no delay.
+      await sw.registration.navigationPreload?.enable();
+      await sw.clients.claim();
+    })(),
+  );
+});
+
+async function navigate(e: FetchEvent): Promise<Response> {
+  try {
+    return (await e.preloadResponse) ?? (await fetch(e.request));
+  } catch {
+    return (await caches.match(offlineUrl, { cacheName: offlineCache })) ?? Response.error();
+  }
+}
+
+sw.addEventListener('fetch', (e: FetchEvent) => {
+  if (e.request.mode === 'navigate') e.respondWith(navigate(e));
 });
 
 sw.addEventListener('push', (event: PushEvent) => {

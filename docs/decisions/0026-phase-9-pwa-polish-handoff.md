@@ -67,6 +67,17 @@ What lila and goban have today (read for this ADR; paths under `lila/` unless sa
   (`Page.getInstallabilityErrors` empty), the offline page shown with the network cut, push still
   subscribing. Installing on a real phone is on the owner's list.
 
+**Unit 9.6 amendment (2026-09-30):** as built, the offline page is one self-contained file,
+`lila/public/offline.html` (styles and logo inline, a plain "Try again" link back to the page asked
+for), served by lila at `/offline` from the site's own domain (so the worker can cache it even when
+assets come from another domain); the worker caches only that. The worker now registers wherever
+service workers exist, not only where push does (push is unchanged). The maskable icon is
+`public/logo/ligo-maskable-512.png`, the favicon on the dark theme's colour inside the safe zone.
+The install entry's words are English until LiGo's strings reach i18n. The board's full phone
+width is the playground's for now; lila's other board pages follow in 9.7. The browser test uses a
+real Chromium profile, since Chromium never installs from the incognito contexts Playwright
+usually makes.
+
 ### 2. Sounds (units 9.2 and 9.7): lila's free sets, used as they are
 Top rung of the reuse ladder: the four kept sets already hold every sound a Go game needs, so LiGo
 adds **no new sound files** in Phase 9. Go events map onto the existing names:
