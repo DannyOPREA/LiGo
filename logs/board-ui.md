@@ -21,6 +21,40 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · Unit 8.5 · The puzzle board: goban's puzzle mode in libs/board
+- Did: `mountPuzzle` (`libs/board/src/puzzle.ts`, exported as `@ligo/board/puzzle`) mounts goban's
+  own puzzle mode with LiGo's rules and 9.3's themes: the puzzle's setup, bounds and tree, the
+  opponent's reply played by goban, `onResult` once per attempt, `retry`, `line`, touch-confirm.
+  `test/puzzle.browser.test.mjs` plays every puzzle in `tools/puzzles/data/` in Chromium (a right
+  line to the end and a wrong first move) plus 11 tests of what LiGo adds; changed.sh runs the
+  `rules` job when the puzzle set changes.
+- Worked: goban's puzzle mode needed no patching: `getPuzzlePlacementSetting` in the config
+  returning `{mode: 'play'}`, `bounds`, `move_tree` and the two answer events. All 240 puzzles
+  replay right and wrong in 24 s.
+- Didn't work / dead ends: returning any mode other than "play" to stop goban placing (for
+  touch-confirm) makes goban highlight the tree's moves, showing the answer. Touch-confirm instead
+  keeps goban's stone placement off (overriding `updateTitleAndStonePlacement`, which goban calls
+  after every move in puzzle mode), reads the tap itself (`pointerup`, goban's `xy2ij`), shows a
+  see-through stone as a goban mark, and hands the confirmed tap to goban's `tapAt`.
+- Lessons: goban says "wrong" again at every later move of a failed line, and its reply timer
+  can't be cancelled: report the first result only and stop moves, and let a retry wait for a
+  pending reply. goban reads `puzzle_autoplace_delay: 0` as its default 300 ms. With `bounds`,
+  goban draws labels only on the board's own edges.
+- Decisions: touch-confirm glue (a second tap plays), one result per attempt, and a separate
+  `mountPuzzle` instead of PLAN/ADR 0025's "`mountBoard` gains a puzzle option"
+  (logs/decisions.md; Claude, under the owner's 2026-09-28 delegation).
+- Review: 2 blocking, both fixed: a retry during a pending reply let the abandoned attempt's
+  reply and "wrong" reach the page (goban places the reply and fires its answer events in one
+  synchronous call, so a microtask restart came too late: events are now dropped while a retry
+  waits); the separate mount wasn't recorded. Non-blocking fixed: refusal docs (a click on a stone
+  does nothing, puzzle mode never checks superko), stronger retry, click-on-stone and wrong-move
+  tests, `replyDelay: 0`, the rules workflow's header.
+- Verified by Claude: typecheck, lint, the Chromium tests (every puzzle, and 11 more including
+  phone taps), `dev/tests/run.sh`, verify.sh (every gate but go-rules + board, whose strategygames
+  download the cloud proxy refuses; CI's rules job runs the board tests). · Needs owner
+  verification: none now; touch-confirm on a real phone comes with the trainer page (8.7).
+- Follow-ups: 8.7 (the trainer page) mounts it; sounds (9.2) can hang on `onMove`.
+
 ### 2026-09-30 · unit 9.4 review · Reviewer findings fixed
 - Did: a held Enter, Space or P now acts once (key repeat let Confirm moves be skipped and passed twice); P out of turn says "Not your move"; the board says "Waiting for the move to count" while the page hasn't answered; Escape takes back a preview; Tab names the point under the cursor; the board's keys stop at the board so lila's mousetrap hotkeys don't also fire (round, analysis, puzzle pages); the name reads "9 by 9, Go board" instead of saying "Go board" twice; "Up" capitalised. The playground's axe exemption now matches only white on #3692e7. Tests: the vacuous click test now checks what happens (a click doesn't focus the board; Shift+Tab does), plus cursor position with and without coordinates, repeated words, key repeat, Escape and moving the preview, P out of turn, waiting, page hotkeys, and every keyboard test checks for page errors. 41 board browser tests.
 - Worked: a mutation check (key repeat guard off) fails the new test.

@@ -3,8 +3,8 @@
 # tests, formatting, and the strategygames jar pin (unit 1.7). The client's: goban-engine with
 # LiGo's settings (libs/board, ADR 0014) replaying the same fixtures, reading back the server's SGF,
 # and replaying the server's seeded random games move by move (unit 1.8); and the board itself,
-# goban's SVG board driven in Chromium (unit 2.1). Runs when libs/go-rules, libs/board or the
-# fixtures change.
+# goban's SVG board driven in Chromium (unit 2.1), and every puzzle played on the puzzle board
+# (unit 8.5). Runs when libs/go-rules, libs/board, the fixtures or tools/puzzles/data change.
 name: rules
 
 on:
