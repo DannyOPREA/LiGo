@@ -43,12 +43,14 @@ final class UserGameApi(
             .add("aiLevel" -> p.aiLevel)
             .add("rating" -> p.rating)
             .add("ratingDiff" -> p.ratingDiff)),
-        "fen" -> chess.format.Fen.writeBoard(g.position),
         "winner" -> g.winnerColor.map(_.name),
         "bookmarks" -> g.bookmarks
       )
       .add("analysed" -> g.metadata.analysed)
-      .add("lastMove" -> g.lastMoveKeys)
+      // A Go game has no FEN or chess last move: its Go block instead (ADR 0019 §3).
+      .add("fen" -> (!g.isGo).option(chess.format.Fen.writeBoard(g.position)))
+      .add("lastMove" -> (!g.isGo).so(g.lastMoveKeys))
+      .add("go" -> g.go.map(JsonView.go))
       .add("clock" -> g.clock)
       .add("correspondence" -> g.daysPerTurn.map { d =>
         Json.obj("daysPerTurn" -> d)
