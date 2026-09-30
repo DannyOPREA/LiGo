@@ -54,7 +54,7 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
                       scoring fixtures, KataGo client, no build step), plus a real-KataGo test when
                       KataGo is installed (docker mode: not yet, unit 4.5); puzzles = tools/puzzles'
                       tests (solver, catalogue, frame, puzzle checks, SGF), with a real-KataGo test
-                      when KataGo is installed, then `puzzles check` over the committed set
+                      when KataGo is installed, then 'puzzles check' over the committed set
   e2e [-- args]       Smoke-test the running stack (home page + lobby websocket);
                       with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
