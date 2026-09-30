@@ -39,7 +39,7 @@ class Site {
   /** Answer /offline with a 404, as when assets are deployed before the server that serves it. */
   offlineMissing = false;
   private server?: Server;
-  private sockets = new Set<Socket>();
+  private readonly sockets = new Set<Socket>();
   port = 0;
   get origin() {
     return `http://localhost:${this.port}`;
