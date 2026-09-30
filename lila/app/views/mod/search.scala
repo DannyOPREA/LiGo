@@ -116,10 +116,5 @@ object search:
           )
         )
 
-  def clas(c: lila.clas.Clas, users: List[WithPerfsAndEmails])(using Context) =
-    views.clas.ui.search.clas(c, userTable(users))
-
-  export views.clas.ui.search.teacher
-
   def notes(query: String, pager: Paginator[lila.user.Note])(using Context) =
     views.user.noteUi.search(query, pager, views.mod.ui.menu("notes"))

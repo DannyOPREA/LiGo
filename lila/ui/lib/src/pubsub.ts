@@ -19,7 +19,6 @@ export interface PubsubEvents {
   'content-loaded': (el?: HTMLElement) => void;
   flip: (flip: boolean) => void;
   jump: (ply: string) => void;
-  'notify-app.set-read': (user: string) => void;
   ply: (ply: number, isMainline?: boolean) => void;
   'ply.trigger': () => void;
   'round.suggestion': (text: string | null) => void;

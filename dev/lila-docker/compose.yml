@@ -107,6 +107,8 @@ services:
       # LiGo: so is services/scoring, as ../services/scoring (unit 4.4). Without it pnpm finds the
       # lockfile's importer for it missing and refuses the frozen install.
       - ../../services:/services
+      # LiGo: and tools/puzzles, as ../tools/puzzles (unit 8.3), for the same reason.
+      - ../../tools:/tools
       - ../../.git:/ligo.git:ro
       - ./.pnpm-store:/.pnpm-store
     profiles:
@@ -138,6 +140,8 @@ services:
       # which also needs libs/board's sibling path resolved (unit 2.1).
       - ../../libs:/libs:z
       - ../../services:/services:z
+      # LiGo: tools/puzzles joined the workspace too (unit 8.3); the frozen install needs it present.
+      - ../../tools:/tools:z
       - ./.pnpm-store:/.pnpm-store:z
     depends_on:
       - redis

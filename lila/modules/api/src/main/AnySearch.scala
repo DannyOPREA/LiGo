@@ -4,9 +4,7 @@ import lila.core.id.*
 
 final class AnySearch(
     gameEnv: lila.game.Env,
-    puzzleEnv: lila.puzzle.Env,
-    ublogApi: lila.ublog.UblogApi,
-    teamEnv: lila.team.Env
+    puzzleEnv: lila.puzzle.Env
 )(using Executor):
 
   private val idRegex = """^[a-zA-Z0-9]{4,12}$""".r
@@ -21,13 +19,7 @@ final class AnySearch(
 
         // tournament/swiss lookup was removed with the tournament and swiss modules (unit 3.2)
         // broadcast/study/fide-player lookup was removed with the relay, study and fide modules
-        // (unit 3.3)
-
-        def ublog = ublogApi.getPost(UblogPostId(id)).map2(_ => routes.Ublog.redirect(UblogPostId(id)).url)
-
-        def team = teamEnv.teamRepo.enabled(TeamId(id)).map2(_ => routes.Team.show(TeamId(id)).url)
+        // (unit 3.3), blog post and team lookup with the ublog and team modules (unit 3.6)
 
         game
           .orElse(puzzle)
-          .orElse(ublog)
-          .orElse(team)

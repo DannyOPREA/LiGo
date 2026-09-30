@@ -8,7 +8,6 @@ object UiEnv
     extends ScalatagsTemplate
     with lila.pref.PrefHelper
     with SecurityHelper
-    with TeamHelper
     with Helpers
     with AssetFullHelper:
 
@@ -29,7 +28,6 @@ object UiEnv
 
   given lila.core.config.NetDomain = env.net.domain
   given (using ctx: PageContext): Option[Nonce] = ctx.nonce
-  given Conversion[lila.team.Team, lila.core.team.LightTeam] = _.light
   given (using ctx: lila.ui.Context): ClientName = ClientName(ctx.req)
 
   def apiVersion = lila.security.Mobile.Api.currentVersion
@@ -47,8 +45,6 @@ object UiEnv
   val langList = lila.i18n.LangList
   lazy val gameOpening = env.game.gameOpening.of
   protected val namer = lila.game.Namer
-  protected lazy val lightTeamSync = env.team.lightTeamSync
-  protected lazy val syncBelongsTo = env.team.api.syncBelongsTo
 
   protected def isProd = env.mode.isProd
 

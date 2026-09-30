@@ -94,7 +94,6 @@ final class User(
               as <- fetchActivity
               nbs <- showActivityAndGames.not.so(env.userNbGames(u, withCrosstable = false))
               info <- env.userInfo.fetch(u, nbs, isRestricted)
-              _ <- env.userInfo.preloadTeams(info)
               social <- env.socialInfo(u)
               page <- renderPage:
                 lila.mon.chronoSync(lila.mon.user.segment("renderSync")):
@@ -133,8 +132,7 @@ final class User(
                     res <-
                       if HTTPRequest.isSynchronousHttp(ctx.req) then
                         for
-                          info <- env.userInfo.fetch(u, nbs, restricted = isRestricted, withBlog = !isSearch)
-                          _ <- env.team.cached.lightCache.preloadMany(info.teamIds)
+                          info <- env.userInfo.fetch(u, nbs, restricted = isRestricted)
                           social <- env.socialInfo(u)
                           searchForm = (filters.current == GameFilter.search).option(
                             lila.app.mashup.GameFilterMenu.searchForm(userGameSearch, filters.current)
@@ -185,15 +183,14 @@ final class User(
             (
               ctx.userId.so(relationApi.fetchBlocks(user.id, _)),
               ctx.userId.traverse(env.game.crosstableApi(user.id, _)),
-              ctx.isAuth.so(env.pref.api.followable(user.id)),
-              ctx.useMe(env.clas.api.clas.realName(user.id))
-            ).flatMapN: (blocked, crosstable, followable, realName) =>
+              ctx.isAuth.so(env.pref.api.followable(user.id))
+            ).flatMapN: (blocked, crosstable, followable) =>
               negotiate(
                 html = for
                   pov <- ctx.isnt(user).so(env.round.currentlyPlaying.exec(user.user.id))
                   ping = env.socket.isOnline.exec(user.id).so(env.socket.getLagRating(user.id))
                   snip <- Ok.snip:
-                    views.user.mini(user, pov, blocked, followable, relation, ping, crosstable, realName)
+                    views.user.mini(user, pov, blocked, followable, relation, ping, crosstable)
                 yield snip.headerCacheSeconds(5),
                 json =
                   import lila.game.JsonView.given
@@ -354,9 +351,6 @@ final class User(
               .dmap(_ | emptyFrag)
           ): Fu[Frag]
 
-        val student = isGranted(_.AccountInfo).so:
-          env.clas.api.student.findManaged(user).map2(views.user.mod.student).dmap(~_)
-
         val reportLog = isGranted(_.SeeReport).so:
           for
             reports <- env.report.api.by(user, Max(30))
@@ -405,9 +399,6 @@ final class User(
         val oauthTokens = isGranted(_.AccountInfo).so:
           env.oAuth.tokenApi.modRelevantTokens(user.id).map(views.user.mod.oauthTokens)
 
-        val teacher = isGranted(_.AccountInfo).so:
-          env.clas.api.clas.countOf(user).map(ui.teacher(user))
-
         given EventSource.EventDataExtractor[Frag] = EventSource.EventDataExtractor[Frag](_.render)
         Ok.chunked:
           Source
@@ -416,8 +407,6 @@ final class User(
             .merge(modZoneSegment(reportLog, "reportLog", user))
             .merge(modZoneSegment(timeline, "timeline", user))
             .merge(modZoneSegment(plan, "plan", user))
-            .merge(modZoneSegment(student, "student", user))
-            .merge(modZoneSegment(teacher, "teacher", user))
             .merge(modZoneSegment(prefs, "prefs", user))
             .merge(modZoneSegment(appeal, "appeal", user))
             .merge(modZoneSegment(rageSit, "rageSit", user))
@@ -547,28 +536,22 @@ final class User(
           .flatMap(UserSearch.read)
           .fold(BadRequest("No search term provided").toFuccess): term =>
             for
-              userIds <- get("team") match
-                case Some(teamId) =>
-                  val showHidden = ctx.fullAuthOrScope(_.Team.Read)
-                  env.team.api.searchMembersAs(TeamId(teamId), term, 10, showHidden)
-                case _ =>
-                  ctx.me.ifTrue(getBool("friend")) match
-                    case Some(follower) =>
-                      env.relation.api.searchFollowedBy(follower, term, 10).flatMap { userIds =>
-                        val remaining = 10 - userIds.length
-                        if remaining > 0 then
-                          env.user.cached.userIdsLike(term).map { extraUserIds =>
-                            userIds ++ (extraUserIds.diff(userIds)).take(remaining)
-                          }
-                        else fuccess(userIds)
-                      }
-                    case None if getBool("teacher") =>
-                      env.user.repo.userIdsLikeWithRole(term, lila.core.perm.Permission.Teacher.dbKey)
-                    case None =>
-                      for
-                        found <- env.user.cached.userIdsLike(term)
-                        closed <- isGrantedOpt(_.AccountInfo).so(env.user.repo.userIdsLikeClosed(term))
-                      yield found ::: closed
+              userIds <-
+                ctx.me.ifTrue(getBool("friend")) match
+                  case Some(follower) =>
+                    env.relation.api.searchFollowedBy(follower, term, 10).flatMap { userIds =>
+                      val remaining = 10 - userIds.length
+                      if remaining > 0 then
+                        env.user.cached.userIdsLike(term).map { extraUserIds =>
+                          userIds ++ (extraUserIds.diff(userIds)).take(remaining)
+                        }
+                      else fuccess(userIds)
+                    }
+                  case None =>
+                    for
+                      found <- env.user.cached.userIdsLike(term)
+                      closed <- isGrantedOpt(_.AccountInfo).so(env.user.repo.userIdsLikeClosed(term))
+                    yield found ::: closed
               result <-
                 if getBool("names") then
                   for users <- lightUserApi.asyncMany(userIds)

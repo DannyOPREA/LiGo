@@ -44,18 +44,6 @@ end Game
 
 // Study.Id (the study room type) was removed with the study module (unit 3.3).
 
-object Team:
-  opaque type Id = String
-  object Id extends OpaqueString[Id]
-
-  opaque type HasChat = Boolean
-  object HasChat extends YesNo[HasChat]
-
-  enum Access(val id: Int):
-    case None extends Access(0)
-    case Leaders extends Access(10)
-    case Members extends Access(20)
-
 object Challenge:
   opaque type Id = String
   object Id extends OpaqueString[Id]

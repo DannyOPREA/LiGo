@@ -2,7 +2,6 @@ package lila.activity
 package ui
 
 import lila.activity.activities.*
-import lila.core.forum.{ ForumPostMini, ForumTopicMini }
 import lila.core.perf.UserWithPerfs
 import lila.core.rating.{ RatingProg, Score }
 import lila.core.game.{ LightPlayer, LightPov }
@@ -13,9 +12,7 @@ import lila.ui.ScalatagsTemplate.{ *, given }
 final class ActivityUi(helpers: Helpers):
   import helpers.{ *, given }
 
-  def apply(u: UserWithPerfs, as: Iterable[ActivityView])(ublogPosts: ActivityView => Option[Frag])(using
-      Context
-  ) =
+  def apply(u: UserWithPerfs, as: Iterable[ActivityView])(using Context) =
     div(cls := "activity")(
       as.toSeq
         .filterNot(_.isEmpty)
@@ -29,12 +26,9 @@ final class ActivityUi(helpers: Helpers):
               a.racer.map(renderRacer),
               a.streak.map(renderStreak),
               a.games.map(renderGames),
-              canSeeForumPosts(u).option(a.forumPosts.map(renderForumPosts)),
-              ublogPosts(a),
               a.corresMoves.map(renderCorresMoves),
               a.corresEnds.map(renderCorresEnds),
               a.follows.map(renderFollows),
-              a.teams.map(renderTeams),
               a.stream.option(renderStream(u.user)),
               a.signup.option(renderSignup)
             )
@@ -42,7 +36,6 @@ final class ActivityUi(helpers: Helpers):
     )
 
   private def subCount(count: Int) = if count >= maxSubEntries then s"$count+" else s"$count"
-  private def canSeeForumPosts(u: UserWithPerfs)(using ctx: Context) = ctx.is(u) || !u.marks.troll
 
   private def renderPatron(p: Patron)(using Context) =
     div(cls := "entry plan")(
@@ -107,34 +100,6 @@ final class ActivityUi(helpers: Helpers):
         scoreFrag(score)
       )
     }
-
-  private def renderForumPosts(posts: Map[ForumTopicMini, List[ForumPostMini]])(using
-      ctx: Context
-  ) =
-    ctx.kid.no.option(
-      entryTag(
-        iconTag(Icon.BubbleConvo),
-        div(
-          posts.toSeq.map: (topic, posts) =>
-            frag(
-              trans.activity.postedNbMessages
-                .plural(
-                  posts.size,
-                  posts.size,
-                  a(href := routes.ForumTopic.show(topic.categId, topic.slug))(shorten(topic.name, 70))
-                ),
-              subTag(
-                posts.map: post =>
-                  div(cls := "line")(
-                    a(href := routes.ForumPost.redirect(post.id))(
-                      shorten(Markdown(post.text).unlink, 120)
-                    )
-                  )
-              )
-            )
-        )
-      )
-    )
 
   private def renderCorresMoves(nb: Int, povs: List[LightPov])(using Context) =
     entryTag(
@@ -209,17 +174,6 @@ final class ActivityUi(helpers: Helpers):
             )
           )
         }
-      )
-    )
-
-  private def renderTeams(teams: Teams)(using ctx: Context) =
-    ctx.kid.no.option(
-      entryTag(
-        iconTag(Icon.Group),
-        div(
-          trans.activity.joinedNbTeams.pluralSame(teams.value.size),
-          subTag(fragList(teams.value.map(id => teamLink(id))))
-        )
       )
     )
 

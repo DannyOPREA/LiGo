@@ -35,9 +35,9 @@ final class AccessTokenApi(
     lila.common.Bus.pub(AccessToken.Create(token))
     token
 
-  def create(setup: OAuthTokenForm.Data, isStudent: Boolean)(using me: MyId, ua: UserAgent): Fu[AccessToken] =
+  def create(setup: OAuthTokenForm.Data)(using me: MyId, ua: UserAgent): Fu[AccessToken] =
     for
-      noBot <- fuccess(isStudent) >>| userApi.isManaged(me)
+      noBot <- userApi.isManaged(me)
       plain = Bearer.randomPersonal()
       token = AccessToken(
         id = AccessToken.idFrom(plain),
@@ -107,21 +107,6 @@ final class AccessTokenApi(
             )
         .map(user.id -> _)
   yield tokens.toMap
-
-  def clasStudentToken(clasName: String, student: UserId)(using UserAgent): Fu[AccessToken] =
-    given MyId = student.into(MyId)
-    val scopes = OAuthScopes(List(OAuthScope.Team.Read, OAuthScope.Team.Write))
-    findCompatiblePersonal(scopes).flatMap:
-      _.filter(_.description.contains(clasName)) match
-        case Some(token) => fuccess(token)
-        case None =>
-          create(
-            OAuthTokenForm.Data(
-              description = clasName,
-              scopes = scopes.value.map(_.key)
-            ),
-            isStudent = true
-          )
 
   def listPersonal(using me: MyId): Fu[List[AccessToken]] =
     coll

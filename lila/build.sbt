@@ -84,14 +84,14 @@ lazy val modules = Seq(
   // everything else is free from deps; do the big ones first
   security, plan, round,
   mod, challenge, web,
-  team, forum, streamer, activity, msg, ublog,
-  notifyModule, clas, perfStat, timeline,
+  streamer, activity,
+  notifyModule, perfStat, timeline,
   setup, video, push,
   // and then the smaller ones
   pool, lobby, relation, tv, feed, history, recap,
   shutup, appeal, irc, coach,
   cms, i18n,
-  socket, bookmark, gameSearch, forumSearch, teamSearch, irc
+  socket, bookmark, gameSearch, irc
 )
 
 lazy val moduleRefs = modules map projectToRef
@@ -179,11 +179,6 @@ lazy val streamer = module("streamer",
 lazy val feed = module("feed",
   Seq(memo, ui),
   Seq()
-)
-
-lazy val ublog = module("ublog",
-  Seq(search, report),
-  Seq(bloomFilter)
 )
 
 lazy val perfStat = module("perfStat",
@@ -320,36 +315,6 @@ lazy val relation = module("relation",
 lazy val pref = module("pref",
   Seq(memo, ui),
   Seq()
-)
-
-lazy val msg = module("msg",
-  Seq(coreI18n, memo),
-  Seq()
-)
-
-lazy val forum = module("forum",
-  Seq(memo, ui),
-  Seq()
-)
-
-lazy val forumSearch = module("forumSearch",
-  Seq(search),
-  Seq()
-)
-
-lazy val team = module("team",
-  Seq(memo, room, ui),
-  Seq()
-)
-
-lazy val teamSearch = module("teamSearch",
-  Seq(search),
-  Seq()
-)
-
-lazy val clas = module("clas",
-  Seq(user, puzzle),
-  Seq(bloomFilter)
 )
 
 lazy val bookmark = module("bookmark",

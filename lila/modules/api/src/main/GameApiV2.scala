@@ -17,7 +17,6 @@ import lila.game.JsonView.given
 import lila.game.PgnDump.{ WithFlags, applyDelay }
 import lila.game.{ Divider, Query }
 import lila.round.GameProxyRepo
-import lila.team.GameTeams
 import lila.gameSearch.GameSearchApi
 import smithy4s.time.Timestamp
 
@@ -186,7 +185,7 @@ final class GameApiV2(
       .mapAsync(4)(enrich(config.flags))
       .mapAsync(4): (game, fen, analysis) =>
         val opening = config.flags.opening.so(gameOpening.atPly(game, _))
-        formatterFor(config)(game, fen, analysis, opening, None)
+        formatterFor(config)(game, fen, analysis, opening)
 
   private def enrich(flags: WithFlags)(game: Game) =
     gameRepo
@@ -207,10 +206,9 @@ final class GameApiV2(
         game: Game,
         initialFen: Option[Fen.Full],
         analysis: Option[Analysis],
-        opening: Option[Opening.AtPly],
-        teams: Option[GameTeams]
+        opening: Option[Opening.AtPly]
     ) =>
-      toJson(game, initialFen, analysis, opening, config, teams).map: json =>
+      toJson(game, initialFen, analysis, opening, config).map: json =>
         s"${Json.stringify(json)}\n"
 
   private def toJson(
@@ -218,8 +216,7 @@ final class GameApiV2(
       initialFen: Option[Fen.Full],
       analysisOption: Option[Analysis],
       opening: Option[Opening.AtPly],
-      config: Config,
-      teams: Option[GameTeams] = None
+      config: Config
   ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
     flags = config.flags
@@ -250,8 +247,7 @@ final class GameApiV2(
           .player(p, user)
           .add:
             "analysis" -> analysisOption.flatMap:
-              analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy, ~phases)
-          .add("team" -> teams.map(_(p.color))))
+              analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy, ~phases))
     )
     .add("fullId" -> config.by.flatMap(Pov(g, _)).map(_.fullId))
     .add("initialFen" -> initialFen)

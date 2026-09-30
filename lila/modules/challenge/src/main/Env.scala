@@ -21,7 +21,6 @@ final class Env(
     relationApi: lila.core.relation.RelationApi,
     socketKit: lila.core.socket.SocketKit,
     getLagRating: lila.core.socket.userLag.GetLagRating,
-    msgApi: lila.core.msg.MsgApi,
     langPicker: lila.core.i18n.LangPicker,
     setupForm: lila.core.setup.SetupForm,
     oauthServer: lila.oauth.OAuthServer,
@@ -61,8 +60,6 @@ final class Env(
   lazy val bulkSetupApi = wire[ChallengeBulkSetupApi]
 
   lazy val bulk = wire[ChallengeBulkApi]
-
-  lazy val msg = wire[ChallengeMsg]
 
   lazy val keepAliveStream = wire[ChallengeKeepAliveStream]
 

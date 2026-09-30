@@ -92,18 +92,8 @@ object ClientActor:
           services.friends.start(_, clientIn, subscribe = subscribe)
         state
 
-      case ClientOut.MsgType(dest) =>
-        req.user.foreach: orig =>
-          deps.users.tellOne(dest, ClientIn.MsgType(orig))
-        state
-
       case ClientOut.SiteForward(payload) =>
         lilaIn.site(LilaIn.TellSri(req.sri, req.user, payload))
-        state
-
-      case ClientOut.UserForward(payload) =>
-        req.user.foreach: user =>
-          lilaIn.site(LilaIn.TellUser(user, payload))
         state
 
       case ClientOut.Ignore =>

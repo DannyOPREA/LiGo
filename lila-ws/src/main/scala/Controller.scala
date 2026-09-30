@@ -139,25 +139,6 @@ final class Controller(
               interval = 30.seconds
             )
 
-  def team(id: Team.Id, header: RequestHeader) =
-    WebSocket(header): req =>
-      mongo
-        .teamView(id, req.user)
-        .zip(mongo.troll.is(req.user))
-        .map: (view, isTroll) =>
-          if view.exists(_.yes) then
-            endpoint(
-              name = "team",
-              behavior = emit =>
-                TeamClientActor.start(RoomActor.State(id.into(RoomId), isTroll), fromVersion(header)):
-                  Deps(emit, req, services)
-              ,
-              req,
-              credits = 30,
-              interval = 20.seconds
-            )
-          else siteEndpoint(req)
-
   // swiss room endpoint was removed with the swiss module (unit 3.2).
 
   def api(header: RequestHeader) =

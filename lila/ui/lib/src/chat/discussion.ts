@@ -1,7 +1,7 @@
 import { blurIfEscape } from '@/common';
 import { pubsub } from '@/pubsub';
 import { tempStorage } from '@/storage';
-import { type VNode, type VNodeData, snabH, thunk, enter, alert, onInsert, input, li, span } from '@/view';
+import { type VNode, type VNodeData, snabH, thunk, enter, onInsert, input, li, span } from '@/view';
 import { userLink } from '@/view/userLink';
 
 import { licon } from '../licon';
@@ -157,11 +157,8 @@ const setupHooks = (ctrl: ChatCtrl, chatEl: HTMLInputElement) => {
           });
         else {
           if (!ctrl.opts.kobold) spam.selfReport(txt);
-          if (pub && spam.hasTeamUrl(txt)) alert("Please don't advertise teams in the chat.");
-          else {
-            scrollState.pinToBottom = true;
-            ctrl.post(txt);
-          }
+          scrollState.pinToBottom = true;
+          ctrl.post(txt);
           el.value = '';
           storage.inner.remove();
           if (!pub) el.classList.remove('whisper');

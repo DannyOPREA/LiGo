@@ -11,8 +11,7 @@ type ButtonInfo = { gameType: GameType; label: string; disabled?: boolean; title
 export default function table(ctrl: LobbyController) {
   const { data, opts } = ctrl;
   const hasOngoingRealTimeGame = ctrl.hasOngoingRealTimeGame(true);
-  const hookDisabled =
-    opts.playban || opts.hasUnreadLichessMessage || ctrl.me?.isBot || hasOngoingRealTimeGame;
+  const hookDisabled = opts.playban || ctrl.me?.isBot || hasOngoingRealTimeGame;
   const { members, rounds } = data.counters;
   const lobbyButtons: ButtonInfo[] = [
     {

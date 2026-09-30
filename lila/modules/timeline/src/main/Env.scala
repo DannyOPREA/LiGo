@@ -18,8 +18,7 @@ final class Env(
     appConfig: Configuration,
     db: lila.db.Db,
     userApi: lila.core.user.UserApi,
-    relationApi: lila.core.relation.RelationApi,
-    teamApi: lila.core.team.TeamApi
+    relationApi: lila.core.relation.RelationApi
 )(using Executor):
 
   private val config = appConfig.get[TimelineConfig]("timeline")(using AutoConfig.loader)

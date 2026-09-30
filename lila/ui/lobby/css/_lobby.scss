@@ -4,13 +4,11 @@
 @import 'table';
 @import 'stream';
 @import 'spotlight';
-@import 'clas';
 @import 'timeline';
 @import 'box';
 @import 'support';
 @import 'about';
 @import 'feed';
-@import 'carousel';
 @import 'layout';
 
 body {
@@ -105,36 +103,6 @@ body {
   @include mq-at-least-col3 {
     min-height: 21px;
   }
-}
-
-.lobby__blog {
-  gap: $block-gap;
-  font-size: 0.9em;
-
-  h2 {
-    @extend %page-text-shadow !optional;
-    @include line-clamp(3);
-
-    font-size: 1.3em;
-  }
-
-  .ublog-post-card {
-    background: $c-bg-box;
-
-    &:hover {
-      @extend %box-shadow;
-
-      background: $c-bg-zebra;
-    }
-
-    .user-link {
-      border-radius: $small-box-radius-size 0 0 0;
-    }
-  }
-}
-
-.lobby__support {
-  visibility: hidden;
 }
 
 .tour-team-icon {

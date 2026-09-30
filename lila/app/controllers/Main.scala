@@ -120,8 +120,7 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
   def devAsset(@annotation.nowarn v: String, path: String, file: String) = assetsC.at(path, file)
 
   def uploadImage(realm: MarkdownRealm) = AuthBody(lila.web.HashedMultiPart(parse)) { ctx ?=> me ?=>
-    lila.core.security
-      .canUploadImages(realm.key)
+    lila.core.security.canUploadImages
       .so:
         limit.imageUpload(rateLimited):
           ctx.body.body.file("image") match
@@ -149,9 +148,7 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
   def markdownPreview(realm: MarkdownRealm) = AuthBody(parse.tolerantText) { ctx ?=> me ?=>
     val renderKey = s"${realm.key}:${me.userId}"
     val options = realm match
-      case MarkdownRealm.blog => lila.ublog.markdownOptions
       case MarkdownRealm.cms => lila.cms.markdownOptions
-      case _ => env.forum.textExpand.markdownOptions
 
     env.memo.markdown
       .toHtml(renderKey, Markdown(ctx.body.body), options)

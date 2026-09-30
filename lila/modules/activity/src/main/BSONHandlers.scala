@@ -92,19 +92,17 @@ private object BSONHandlers:
   object ActivityFields:
     val id = "_id"
     val games = "g"
-    val forumPosts = "p"
-    val ublogPosts = "u"
     val puzzles = "z"
     val storm = "m"
     val racer = "c"
     val streak = "k"
     val learn = "l"
     // "s" and "w" (simuls, swisses) are retired (unit 3.2), and "r" and "t" (practice, studies)
-    // are retired (unit 3.3): no longer written, still ignored on read.
+    // are retired (unit 3.3), and so are "p", "u" and "e" (forum posts, blog posts, teams; unit
+    // 3.6): no longer written, still ignored on read.
     val corres = "o"
     val patron = "a"
     val follows = "f"
-    val teams = "e"
     val stream = "st"
 
   given lila.db.BSON[Activity] with
@@ -114,8 +112,6 @@ private object BSONHandlers:
     def reads(r: lila.db.BSON.Reader) = Activity(
       id = r.get[Id](id),
       games = r.getO[Games](games),
-      forumPosts = r.getO[ForumPosts](forumPosts),
-      ublogPosts = r.getO[UblogPosts](ublogPosts),
       puzzles = r.getO[Puzzles](puzzles),
       storm = r.getO[Storm](storm),
       racer = r.getO[Racer](racer),
@@ -124,15 +120,12 @@ private object BSONHandlers:
       corres = r.getO[Corres](corres),
       patron = r.getO[Patron](patron),
       follows = r.getO[Follows](follows).filterNot(_.isEmpty),
-      teams = r.getO[Teams](teams),
       stream = r.getD[Boolean](stream)
     )
 
     def writes(w: lila.db.BSON.Writer, o: Activity) = BSONDocument(
       id -> o.id,
       games -> o.games,
-      forumPosts -> o.forumPosts,
-      ublogPosts -> o.ublogPosts,
       puzzles -> o.puzzles,
       storm -> o.storm,
       racer -> o.racer,
@@ -141,6 +134,5 @@ private object BSONHandlers:
       corres -> o.corres,
       patron -> o.patron,
       follows -> o.follows,
-      teams -> o.teams,
       stream -> o.stream.option(true)
     )

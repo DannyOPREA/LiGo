@@ -17,16 +17,6 @@ object activities:
       def hasNonCorres = a.value.exists(_._1 != PerfKey.correspondence)
     given Zero[Games] = Zero(Map.empty)
 
-  opaque type ForumPosts = List[ForumPostId]
-  object ForumPosts extends TotalWrapper[ForumPosts, List[ForumPostId]]:
-    extension (a: ForumPosts) def +(postId: ForumPostId): ForumPosts = postId :: a.value
-    given Zero[ForumPosts] = Zero(Nil)
-
-  opaque type UblogPosts = List[UblogPostId]
-  object UblogPosts extends TotalWrapper[UblogPosts, List[UblogPostId]]:
-    extension (a: UblogPosts) def +(postId: UblogPostId): UblogPosts = postId :: a.value
-    given Zero[UblogPosts] = Zero(Nil)
-
   opaque type Puzzles = Score
   object Puzzles extends TotalWrapper[Puzzles, Score]:
     extension (a: Puzzles) def +(s: Score) = Puzzles(a.value.plus(s))
@@ -86,8 +76,3 @@ object activities:
     def addOut(id: UserId) = copy(out = Some(~out + id))
     def isEmpty = in.forall(_.isEmpty) && out.forall(_.isEmpty)
     def allUserIds = in.so(_.ids) ::: out.so(_.ids)
-
-  opaque type Teams = List[TeamId]
-  object Teams extends TotalWrapper[Teams, List[TeamId]]:
-    extension (a: Teams) def +(s: TeamId): Teams = (s :: a.value).distinct.take(maxSubEntries)
-    given Zero[Teams] = Zero(Nil)

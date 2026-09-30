@@ -40,7 +40,6 @@ final class Auth(env: Env, accountC: => Account) extends LilaController(env):
         for
           povs <- env.round.proxyRepo.urgentGames(u)
           perfs <- ctx.pref.showRatings.optionFu(env.user.perfsRepo.perfsOf(u))
-          _ <- env.msg.systemMsg.lichobileDeprecationMessage(u)
         yield Ok:
           env.user.jsonView.full(u, perfs, withProfile = true) ++ Json.obj(
             "nowPlaying" -> JsArray(povs.value.take(20).map(env.api.lobbyApi.nowPlaying)),
@@ -183,25 +182,6 @@ final class Auth(env: Env, accountC: => Account) extends LilaController(env):
   private def t3Counter(counter: lila.web.T3AuthMonitor => String => Unit)(using Option[ValidReferrer]) =
     simpleSignup.map(_.client.clientId.value).foreach(counter(env.web.t3AuthMonitor))
 
-  private val clasLoginRateLimit =
-    env.security.ipTrust.rateLimit(300, 1.hour, "clas.login")
-
-  def clasLogin = OpenBody:
-    Firewall:
-      val failRedir = Redirect(routes.Clas.index).flashFailure("Invalid or expired login code")
-      bindForm(lila.clas.ClasForm.login)(
-        _ => failRedir,
-        code =>
-          clasLoginRateLimit(rateLimited):
-            for
-              found <- env.clas.login.login(code)
-              res <- found.fold(failRedir.toFuccess): (user, clsId) =>
-                val redir = Redirect(routes.Clas.show(clsId)).flashSuccess:
-                  lila.core.i18n.I18nKey.emails.welcome_subject.txt(user.username)
-                authenticateUser(user, IsPwned.No, false, redir.some)
-            yield res
-      )
-
   def logout = Open:
     val sid = env.security.api.reqSessionId(ctx.req)
     for
@@ -278,7 +258,6 @@ final class Auth(env: Env, accountC: => Account) extends LilaController(env):
   ): Funit =
     garbageCollect(user)(email)
     if sendWelcomeEmail then env.mailer.automaticEmail.welcomeEmail(user, email)
-    env.mailer.automaticEmail.welcomePM(user)
     env.pref.api.saveNewUserPrefs(user)
 
   private def garbageCollect(user: UserModel)(email: EmailAddress)(using ctx: Context) =

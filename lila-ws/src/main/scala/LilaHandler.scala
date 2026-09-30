@@ -83,10 +83,6 @@ final class LilaHandler(
   // simulHandler, swissHandler and tourHandler were removed with the simul, swiss and tournament
   // modules (unit 3.2).
 
-  private val teamHandler: Emit[LilaOut] =
-    case LilaBoot => roomBoot(_.idFilter.team, lila.emit.team)
-    case msg => roomHandler(msg)
-
   // studyHandler removed with the study module (unit 3.3).
 
   import scala.language.implicitConversions
@@ -154,18 +150,9 @@ final class LilaHandler(
     case site: SiteOut => siteHandler(site)
     case msg => logger.warn(s"Unhandled room: $msg")
 
-  private def roomBoot(
-      filter: Mongo => Mongo.IdFilter,
-      lilaIn: Emit[LilaIn.RoomSetVersions]
-  ): Unit =
-    val versions = History.room.allVersions
-    filter(mongo)(versions.map(_._1)).foreach: ids =>
-      lilaIn(LilaIn.RoomSetVersions(versions.filter(v => ids(v._1))))
-
   lila.setHandlers:
     case Lila.chans.round.out => roundHandler
     case Lila.chans.site.out => siteHandler
     case Lila.chans.lobby.out => lobbyHandler
-    case Lila.chans.team.out => teamHandler
     case Lila.chans.challenge.out => roomHandler
     case chan => in => logger.warn(s"Unknown channel $chan sent $in")

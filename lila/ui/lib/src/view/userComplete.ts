@@ -19,7 +19,6 @@ export interface UserCompleteOpts {
   friend?: boolean;
   tour?: string;
   swiss?: string;
-  team?: string;
 }
 
 export function userComplete(opts: UserCompleteOpts): void {
@@ -40,7 +39,7 @@ type ResultOfTerm = { term: string } & UserCompleteResult;
 
 export const fetchUsers = async (
   term: string,
-  { friend, tour, swiss, team }: Partial<UserCompleteOpts>,
+  { friend, tour, swiss }: Partial<UserCompleteOpts>,
 ): Promise<ResultOfTerm> => {
   const result = await xhr.json(
     xhr.url('/api/player/autocomplete', {
@@ -48,7 +47,6 @@ export const fetchUsers = async (
       friend: friend ? 1 : 0,
       tour,
       swiss,
-      team,
       object: 1,
     }),
   );

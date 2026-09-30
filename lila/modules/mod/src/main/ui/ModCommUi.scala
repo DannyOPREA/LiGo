@@ -31,17 +31,6 @@ final class ModCommUi(helpers: Helpers)(highlightBad: String => Frag):
               href := routes.Mod.communicationPrivate(u.username),
               title := "View private messages. This will be logged in #commlog"
             )("PMs")
-        ,
-        (priv && Granter(_.FullCommsExport)).option:
-          postForm(action := routes.Mod.fullCommsExport(u.username)):
-            form3.action(
-              form3.submit(
-                "Full comms export",
-                icon = none,
-                confirm =
-                  s"Confirm you want to export all comms from **${u.username}** (including other party)".some
-              )(cls := "button-red button-empty comms-export")
-            )
       )
     )
 

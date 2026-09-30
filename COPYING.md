@@ -96,6 +96,11 @@ Unit 3.5 removed the chess engines and bots: the `ui/botDev`, `ui/botPlay`, `ui/
 `prettier` 3.5.3 (MIT), `typescript` 5.9.3 (Apache-2.0) and `undici-types` 6.21.0 (MIT); the
 workspace keeps its own pinned TypeScript and Node types. No package was added.
 
+Unit 3.6 removed the forums, blogs, teams, inbox and classes: the `ui/msg` and `ui/team` workspace
+packages and the forum, blog and class bundles in `ui/bits`, and with them the only users of
+`@textcomplete/core` 0.1.13, `@textcomplete/textarea` 0.1.13, `@textcomplete/utils` 0.1.13,
+`textarea-caret` 3.1.0 and `undate` 0.3.0 (all MIT). No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file
@@ -142,6 +147,9 @@ AGPL-3.0). Non-commercial and unclear licences are rejected.
 | OGS's own autoscore test games (31 finished games with KataGo's stored analysis), vendored unchanged as `services/scoring`'s regression set (unit 4.4) and the autoscore benchmark set of `dev/ligo scoring bench` (unit 4.6; its `bench` script adds no dependency) | `services/scoring/test/autoscore_test_files/` | Apache-2.0 | `services/scoring/LICENSE-Apache-2.0.txt`; notice in `services/scoring/test/autoscore_test_files/NOTICE.md`; goban ships no NOTICE file |
 | ioredis `6.0.0` (the scoring service's Redis client, unit 4.5, logs/decisions.md), and its own runtime dependencies (`@ioredis/commands`, `debug`, `ms`, `supports-color`, `redis-errors`, `standard-as-callback`: MIT; `denque`, `cluster-key-slot`: Apache-2.0) | `services/scoring/package.json` (transitive deps not listed there) | MIT / Apache-2.0 | Notices in `services/scoring/NOTICE.md`; `services/scoring/LICENSE-Apache-2.0.txt` |
 | OGS goratings @ `6cab309`: the rank curve and handicap maths ported to Scala (ADR 0013, unit 5.2), and test values it computed | `lila/modules/rating/src/main/GoRating.scala`, `lila/modules/rating/src/test/resources/goRatingCases.json` | MIT | Copyright (c) 2020 online-go.com; notice in `lila/modules/rating/NOTICE-goratings.md`. The port is LiGo's own code (MIT, §2), not derived from lila |
+| OGS goban-engine `8.3.226` a third time, as the puzzle pipeline's rules engine (ADR 0025, unit 8.3) | `tools/puzzles/package.json` | Apache-2.0 | Copyright Online-Go.com; `tools/puzzles/LICENSE-Apache-2.0.txt`, notices in `tools/puzzles/NOTICE.md`; ships no NOTICE file |
+| ajv `8.20.0` (the puzzle JSON Schema validator, unit 8.3, logs/decisions.md) and its dependencies fast-deep-equal, json-schema-traverse, require-from-string (MIT) and fast-uri (BSD-3-Clause) | `tools/puzzles/package.json` (transitive deps not listed there) | MIT / BSD-3-Clause | Notices in `tools/puzzles/NOTICE.md` |
+| KaTrain's tsumego frame (`katrain/core/tsumego_frame.py`, itself ported from lizgoban by kaorahi), ported to TypeScript for KataGo's second opinion on puzzles (ADR 0025 §2, unit 8.3), with test vectors computed by the original | `tools/puzzles/src/frame.ts`, `tools/puzzles/test/fixtures/frame.json` | MIT | Copyright 2020 Sander Land and/or other authors; `tools/puzzles/LICENSE-katrain.txt` |
 | _others added by each unit that introduces one_ | | | |
 
 Apache-2.0 components (e.g. OGS `goban`) must also have their NOTICE text reproduced here if they

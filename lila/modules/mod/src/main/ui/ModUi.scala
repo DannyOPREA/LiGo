@@ -249,8 +249,6 @@ final class ModUi(helpers: Helpers):
       Granter(_.SetEmail)
         .option(a(cls := itemCls(active, "email"), href := routes.Mod.emailConfirmGet)("Email confirm")),
       Granter(_.Pages).option(a(cls := itemCls(active, "cms"), href := routes.Cms.index)("Pages")),
-      Granter(_.ModerateBlog)
-        .option(a(cls := itemCls(active, "carousel"), href := routes.Ublog.modShowCarousel)("Blog carousel")),
       Granter(_.Admin).option(a(cls := itemCls(active, "mods"), href := routes.Mod.table)("Mods")),
       Granter(_.Presets)
         .option(a(cls := itemCls(active, "presets"), href := routes.Mod.presets("PM"))("Msg presets")),
