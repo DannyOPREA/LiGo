@@ -2,6 +2,8 @@ import type { ColorChoice } from 'lib/setup/color';
 import type { ClockConfig } from 'lib/setup/interfaces';
 import type { TimeMode } from 'lib/setup/timeControl';
 
+import type { GoRuleset, GoSetupJson, GoSize } from './goSetup';
+
 export type Sort = 'rating' | 'time';
 export type Mode = 'list' | 'chart';
 export type Tab = 'pools' | 'real_time' | 'seeks' | 'now_playing';
@@ -21,6 +23,7 @@ export interface Hook {
   u?: string; // username
   rating?: number;
   ra?: 1; // rated
+  go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
   action: 'cancel' | 'join';
   disabled?: boolean;
 }
@@ -36,6 +39,7 @@ export interface Seek {
   };
   provisional?: boolean;
   variant?: { key: VariantKey };
+  go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
   action: 'joinSeek' | 'cancelSeek';
 }
 
@@ -65,7 +69,7 @@ export interface LobbyData {
   nbNowPlaying: number;
   nbMyTurn: number;
   nowPlaying: NowPlaying[];
-  ratingMap: Record<Perf, RatingWithProvisional> | null;
+  ratingMap: Record<string, RatingWithProvisional> | null; // by perf key; Go's is `go`
   counters: { members: number; rounds: number };
 }
 
@@ -106,8 +110,9 @@ export type PoolId = string;
 export type PoolRange = string;
 
 export interface SetupStore {
-  variant: VariantKey;
-  fen: FEN;
+  goSize: GoSize;
+  goRuleset: GoRuleset;
+  goKomi: number;
   timeMode: TimeMode;
   gameMode: GameMode;
   color: ColorChoice;
@@ -119,8 +124,9 @@ export interface SetupStore {
 }
 
 export interface ForceSetupOptions {
-  variant?: VariantKey;
-  fen?: FEN;
+  goSize?: GoSize;
+  goRuleset?: GoRuleset;
+  goKomi?: number;
   timeMode?: TimeMode;
   time?: number;
   increment?: number;
