@@ -20,3 +20,4 @@
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick
 - [Perf budget review patterns](perf-budget-review-patterns.md) — undefined limit passes, harness overhead in timings, goban shadow DOM, scratch probes (9.5)
 - [Board a11y review patterns](board-a11y-review-patterns.md) — e.repeat, click never focuses goban, mousetrap clash, broad axe regex, scratch probes (9.4)
+- [sbt build wiring review patterns](sbt-build-wiring-review-patterns.md) — resolver order vs Central, ProjectRef exclusions, dup mounts, verify/CI drift (3.10)

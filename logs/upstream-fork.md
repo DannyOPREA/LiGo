@@ -38,7 +38,13 @@
   `export Runtime/fullClasspath`, not the library's own.
 - Decisions: see logs/decisions.md (3.10 row).
 - Verified by Claude: see the PR.
+- Review (reviewer agent): no blocking findings; its testFull run: 400 tests, 0 failed. Fixed from
+  its non-blocking list: PlayStrategy's repo now comes last in lila's resolvers (after Maven
+  Central), so it is only asked for what no other repo has; `dev/ligo`'s rules runs no longer add
+  a second `/libs` mount; verify.sh's lila gate also runs for `libs/go-rules` changes; stale
+  comments in go-rules' build.sbt and docs/UPSTREAM.md.
 - Follow-ups: 3.11 is the first unit whose code uses go-rules from lila (`GoBridge` in `core`).
+
 ### 2026-09-30 · 3.7 · Remove the extras and search
 - Did: deleted lila modules `streamer`, `coach`, `video`, `feed`, `plan`, `recap`, `tv`, `search`
   and `gameSearch`, their controllers (plus `Editor`), views, routes and config blocks, the

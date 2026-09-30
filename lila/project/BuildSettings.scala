@@ -14,7 +14,10 @@ object BuildSettings:
     // legacy layout places compile/package outputs outside the cache root, so sbt 2.0 floods the
     // log with "Cannot cache task because its output files are outside the output directory".
     Seq(
-      resolvers ++= Seq(jitpack, lilaMaven, psLilaMaven, sonashots, Resolver.sonatypeCentralSnapshots),
+      resolvers ++= Seq(jitpack, lilaMaven, sonashots, Resolver.sonatypeCentralSnapshots),
+      // LiGo: PlayStrategy's unsigned repo goes last, after Maven Central, so it is only asked for
+      // what no other repo has (strategygames and its engines), never for lila's own libraries.
+      externalResolvers := Def.uncached(externalResolvers.value :+ psLilaMaven),
       excludeDependencies ++= goRulesExclusions,
       scalaVersion := globalScalaVersion,
       scalacOptions ++= compilerOptions,

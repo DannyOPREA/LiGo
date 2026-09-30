@@ -12,7 +12,7 @@ object Dependencies:
   val sonashots = "sonashots".at("https://oss.sonatype.org/content/repositories/snapshots")
   // LiGo: PlayStrategy's repo, the only place strategygames is published (ADR 0012). lila reaches
   // strategygames through libs/go-rules (unit 3.10), and sbt resolves a sibling build's libraries
-  // with the depending project's resolvers, so lila needs the repo too.
+  // with the depending project's resolvers, so lila needs the repo too (last: BuildSettings).
   val psLilaMaven = "ps-lila-maven".at("https://raw.githubusercontent.com/Mind-Sports-Games/lila-maven/master")
   // LiGo: the other PlayStrategy games' engines that strategygames drags in, left out as in
   // libs/go-rules/build.sbt (ADR 0012). A sibling build's exclusions don't reach the projects that
