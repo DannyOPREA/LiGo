@@ -9,7 +9,9 @@ import views.account.pages
 import lila.app.{ *, given }
 import lila.common.HTTPRequest
 import lila.core.id.SessionId
-import lila.security.SecurityForm.Reopen
+import lila.security.SecurityForm
+import lila.security.SecurityForm.{ Reopen, SignupData }
+import lila.security.GoRankChange
 import lila.core.user.KidMode
 import lila.security.IsPwned
 import lila.core.security.ClearPassword
@@ -72,6 +74,28 @@ final class Account(
         .inject(Redirect(routes.User.show(me.username)).flashSuccess)
         .recover: e =>
           Redirect(routes.Account.username).flashFailure(e.getMessage)
+  }
+
+  // LiGo: the self-declared Go rank, open to change until the first rated game starts (ADR 0021 §2)
+  private def goRankState(me: Me): Fu[(Perf, Boolean)] =
+    for
+      perf <- env.user.perfsRepo.perfOf(me.userId, PerfKey.go)
+      rated <- if perf.nb > 0 then fuccess(true) else env.game.gameRepo.hasRatedGame(me)
+    yield perf -> GoRankChange.open(perf, rated)
+
+  def goRank = Auth { _ ?=> me ?=>
+    goRankState(me).flatMap: (perf, open) =>
+      Ok.page(pages.goRank(SecurityForm.goRankForm.fill(GoRankChange.choiceOf(perf)), open))
+  }
+
+  def goRankApply = AuthBody { _ ?=> me ?=>
+    goRankState(me).flatMap: (_, open) =>
+      if !open then Redirect(routes.Account.goRank)
+      else
+        FormFuResult(SecurityForm.goRankForm)(err => renderPage(pages.goRank(err, open = true))): choice =>
+          env.user.perfsRepo
+            .setPerf(me.userId, PerfKey.go, GoRankChange.perfOf(SignupData.parseGoRank(choice)))
+            .inject(Redirect(routes.Account.goRank).flashSuccess)
   }
 
   def info = Auth { ctx ?=> me ?=>

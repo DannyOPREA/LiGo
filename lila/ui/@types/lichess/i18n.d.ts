@@ -3815,6 +3815,10 @@ interface I18n {
     goNoOpenChallenges: string;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
+    /** Your Go rating starts there. You can change it until your first rated game starts. */
+    goRankChangeHelp: string;
+    /** Your Go rank now changes only through rated games. */
+    goRankLocked: string;
     /** Rules */
     goRules: string;
     /** Chinese */

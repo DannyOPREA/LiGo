@@ -291,6 +291,13 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
 
   def exists(id: GameId) = coll.exists(bid(id))
 
+  // LiGo: whether the user has a rated game that started and wasn't aborted (ADR 0021 §2, unit 5.4)
+  def hasRatedGame[U: UserIdOf](u: U): Fu[Boolean] =
+    coll.exists:
+      Query.user(u) ++ Query.rated ++ bdoc(
+        F.status -> bdoc("$gte" -> Status.Started.id, "$ne" -> Status.Aborted.id)
+      )
+
   def tournamentId(id: GameId): Fu[Option[String]] = coll.primitiveOne[String](bid(id), F.tournamentId)
 
   def incBookmarks(id: GameId, value: Int) =
