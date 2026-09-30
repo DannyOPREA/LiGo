@@ -115,8 +115,8 @@ final class AccountTermination(
     _ <- deleteAllGameChats(u)
     // the streamer and coach modules went with unit 3.7, but their stored profiles stay until the
     // account is deleted, and hold personal data (name, bio, links, picture)
-    _ <- db(CollName("streamer")).delete.one($id(u.id))
-    _ <- db(CollName("coach")).delete.one($id(u.id))
+    _ <- db(lila.core.config.CollName("streamer")).delete.one(bid(u.id))
+    _ <- db(lila.core.config.CollName("coach")).delete.one(bid(u.id))
     _ <- tokenApi.revokeAllByUser(u.id)
     _ <- u.marks.clean.so:
       securityStore.deleteAllSessionsOf(u.id)
