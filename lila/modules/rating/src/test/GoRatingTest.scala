@@ -190,3 +190,12 @@ class GoRatingTest extends munit.FunSuite:
   test("results are capped with OGS's volatility ceiling, not lila's chess one"):
     assertEquals(cap(Glicko(300, 20, 0.14)), Glicko(400, 45, 0.14))
     assertEquals(cap(Glicko(1500, 900, 0.3)), Glicko(1500, 500, 0.15))
+
+  test("a declared starting rating survives being stored and read back (unit 5.4)"):
+    val handler = lila.rating.Perf.perfHandler
+    val stored = lila.rating.Perf.default.copy(glicko = startingGlicko(Rank.Kyu(5)))
+    val back = handler.readTry(handler.writeTry(stored).get).get
+    assertEquals(back.glicko.rating.round.toInt, 1580)
+    assert(isCloseTo(back.glicko.deviation, 250d, 1e-9), s"deviation ${back.glicko.deviation}")
+    assertEquals(back.glicko.volatility, 0.06)
+    assertEquals(label(back.glicko), "5k?")

@@ -113,7 +113,8 @@ final class SecurityForm(
           "password" -> newPasswordField,
           "email" -> emailField,
           "agreement" -> agreement,
-          "fp" -> optional(nonEmptyText)
+          "fp" -> optional(nonEmptyText),
+          "goRank" -> optional(text.verifying("error.invalid", SignupData.validGoRank))
         )(SignupData.apply)(unapply)
           .verifying(PasswordCheck.errorSame, x => x.password != x.username.value)
 
@@ -127,7 +128,8 @@ final class SecurityForm(
                 password = "",
                 email = prefill.email,
                 agreement = AgreementData(true, true, true),
-                fp = none
+                fp = none,
+                goRank = none
               )
             ,
             simple = true
@@ -269,10 +271,21 @@ object SecurityForm:
       password: String,
       email: EmailAddress,
       agreement: AgreementData,
-      fp: Option[String]
+      fp: Option[String],
+      goRank: Option[String]
   ):
     def fingerPrint = FingerPrint.from(fp.filter(_.nonEmpty))
     def clearPassword = ClearPassword(password)
+    // LiGo: the self-declared Go rank (ADR 0021 §2); none for "I don't know"
+    def declaredGoRank: Option[lila.rating.GoRating.Rank] = goRank.flatMap(SignupData.parseGoRank)
+
+  object SignupData:
+    // the signup form's Go rank choices: "" (I don't know), "new" (25k), or a rank name, 25k to 9d
+    val goRankNew = "new"
+    def parseGoRank(value: String): Option[lila.rating.GoRating.Rank] =
+      import lila.rating.GoRating.Rank
+      if value == goRankNew then Rank.Kyu(Rank.weakestKyu).some else Rank.fromName(value)
+    def validGoRank(value: String): Boolean = value.isEmpty || parseGoRank(value).isDefined
 
   case class PasswordReset(email: EmailAddress)
 

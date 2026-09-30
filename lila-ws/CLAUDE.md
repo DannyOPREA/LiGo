@@ -12,6 +12,9 @@ crowds; lila holds game logic and state.
   channels per area (site, lobby, round, ...; see `chans` in `Lila.scala`); `ipc/LilaIn` /
   `LilaOut` are the messages. lila's side of
   the same protocol lives in `lila/modules/socket` and each module's `*Socket.scala`.
+- Go on the wire (unit 3.14, ADR 0019 §6): the round's `move` carries an SGF point or `pass`
+  (`GoMove` in `model.scala`, shape only); `Fens.scala` turns lila's Go move event into mini-board
+  updates. No chess rules or formats here any more.
 - Flows that matter for Go: lobby (seeks, pools) through `Lobby.scala` and `actor/LobbyClientActor`;
   games through `RoundCrowd.scala` and `actor/RoundClientActor`. The scoring phase will add
   messages here (planned).

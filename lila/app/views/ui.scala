@@ -14,7 +14,7 @@ val setup = lila.setup.ui.SetupUi(helpers)
 
 val relation = lila.relation.ui.RelationUi(helpers)
 
-val auth = lila.web.ui.AuthUi(helpers)
+val auth = lila.web.ui.AuthUi(helpers, lila.rating.GoRating.Rank.all.map(_.name))
 
 object oAuth:
   val token = lila.oauth.ui.TokenUi(helpers)(account.ui.AccountPage, env.mode)

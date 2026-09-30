@@ -12,6 +12,15 @@ private class HumanPlay(
     val moveMetrics: chess.MoveMetrics = chess.MoveMetrics(),
     val promise: Option[Promise[Unit]] = None
 )
+
+/** A Go stone or pass from a player (ADR 0019 §6). */
+private class HumanGoPlay(
+    val playerId: GamePlayerId,
+    val action: ligo.gorules.Action,
+    val blur: Boolean,
+    val moveMetrics: chess.MoveMetrics = chess.MoveMetrics(),
+    val promise: Option[Promise[Unit]] = None
+)
 private case class ByePlayer(playerId: GamePlayerId)
 private case class GetSocketStatus(promise: Promise[SocketStatus])
 private case class GetGameAndSocketStatus(val promise: Promise[GameAndSocketStatus])

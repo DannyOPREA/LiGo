@@ -1,13 +1,13 @@
 package lila.round
 
 import chess.format.{ Fen, Uci }
-import chess.{ Centis, Clock, ErrorStr, MoveMetrics, MoveOrDrop, Status }
+import chess.{ Centis, Clock, Color, ErrorStr, MoveMetrics, MoveOrDrop, Status }
 
 import java.util.concurrent.TimeUnit
 
 import lila.common.Bus
 import lila.core.round.*
-import lila.game.GameExt.applyMove
+import lila.game.GameExt.{ applyGoMove, applyMove, goPlayEnds, stepGoClock }
 import lila.game.actorApi.MoveGameEvent
 import lila.game.Progress
 import lila.round.RoundGame.*
@@ -26,7 +26,8 @@ final private class MovePlayer(
       pov: Pov
   )(using proxy: GameProxy): Fu[Events] =
     import pov.{ game, color }
-    if game.ply > lila.game.Game.maxPlies then
+    if game.isGo then fufail(ClientError(s"$pov a chess move in a Go game"))
+    else if game.ply > lila.game.Game.maxPlies then
       round ! TooManyPlies
       fuccess(Nil)
     else if game.playableBy(color) then
@@ -44,6 +45,51 @@ final private class MovePlayer(
     else if game.aborted then fufail(ClientError(s"$pov game is aborted"))
     else if !game.turnOf(color) then fufail(ClientError(s"$pov not your turn"))
     else fufail(ClientError(s"$pov move refused for some reason"))
+
+  /** A Go stone or pass (ADR 0019 §5–7): checked by go-rules, the clock stepped as scalachess steps it for a
+    * chess move, and the game ended with no winner on the second consecutive pass or at the ply cap (Phase 3
+    * has no scoring phase).
+    */
+  private[round] def goHuman(play: HumanGoPlay, round: RoundAsyncActor)(pov: Pov)(using
+      proxy: GameProxy
+  ): Fu[Events] =
+    import pov.{ game, color }
+    game.go match
+      case None => fufail(ClientError(s"$pov a Go move in a chess game"))
+      case Some(go) if game.playableBy(color) =>
+        go(play.action) match
+          case Left(refusal) => fufail(ClientError(s"$pov ${refusal.key}"))
+          case Right(next) =>
+            // as for chess, the move that ends the game earns no increment
+            val stepped = game.stepGoClock(play.moveMetrics, gameActive = !game.withGo(next).goPlayEnds)
+            if stepped.exists(_.value.outOfTime(color, withGrace = false)) then finisher.outOfTime(game)
+            else
+              stepped
+                .flatMap(_.compensated)
+                .foreach: lag =>
+                  lila.mon.round.move.lag.moveComp.record(lag.millis, TimeUnit.MILLISECONDS)
+              val progress = game.applyGoMove(next, stepped.map(_.value), play.blur)
+              for
+                _ <- proxy.save(progress)
+                events <- postGoPlay(round, progress, pov)
+              yield events
+      case Some(_) =>
+        if game.finished then fufail(GameIsFinishedError(game.id))
+        else if game.aborted then fufail(ClientError(s"$pov game is aborted"))
+        else if !game.turnOf(color) then fufail(ClientError(s"$pov not your turn"))
+        else fufail(ClientError(s"$pov move refused for some reason"))
+
+  private def postGoPlay(round: RoundAsyncActor, progress: Progress, pov: Pov)(using
+      GameProxy
+  ): Fu[Events] =
+    val game = progress.game
+    val action = game.go.flatMap(_.actions.lastOption).fold("pass")(lila.core.game.GoBridge.token)
+    notifyGoMove(game, action, pov.color)
+    if game.goPlayEnds then finisher.other(game, _.UnknownFinish, None).dmap(progress.events ::: _)
+    else
+      if pov.opponent.isProposingTakeback then round ! RoundBus.Takeback(pov.player.id, false)
+      scheduleExpiration.exec(game)
+      fuccess(progress.events)
 
   private def postHumanPlay(
       round: RoundAsyncActor,
@@ -84,18 +130,25 @@ final private class MovePlayer(
           )
 
   private def notifyMove(moveOrDrop: MoveOrDrop, game: Game): Unit =
-    import lila.core.round.{ CorresMoveEvent, MoveEvent, SimulMoveEvent }
+    import lila.core.round.MoveEvent
     val color = moveOrDrop.color
-    val moveEvent = MoveEvent(
-      gameId = game.id,
-      fen = Fen.write(game.chessState),
-      move = moveOrDrop.toUci
-    )
+    val fen = Fen.write(game.chessState)
+    val moveEvent = MoveEvent(gameId = game.id, board = fen.value, move = moveOrDrop.toUci.uci)
 
     // I checked and the bus doesn't do much if there's no subscriber for a classifier,
     // so we should be good here.
     // also used for targeted TvBroadcast subscription
-    Bus.publishDyn(MoveGameEvent(game, moveEvent.fen, moveEvent.move), MoveGameEvent.makeChan(game.id))
+    Bus.publishDyn(MoveGameEvent(game, fen, moveOrDrop.toUci), MoveGameEvent.makeChan(game.id))
+    publishMove(game, moveEvent, color)
+
+  // The API's move stream (`MoveGameEvent`) is chess-only until unit 3.16 streams Go moves.
+  private def notifyGoMove(game: Game, action: String, color: Color): Unit =
+    import lila.core.round.MoveEvent
+    game.go.foreach: go =>
+      publishMove(game, MoveEvent(game.id, lila.core.game.GoBridge.board(go), action), color)
+
+  private def publishMove(game: Game, moveEvent: lila.core.round.MoveEvent, color: Color): Unit =
+    import lila.core.round.{ CorresMoveEvent, SimulMoveEvent }
 
     // publish correspondence moves
     if game.isCorrespondence && game.nonAi then

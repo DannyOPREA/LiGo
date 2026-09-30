@@ -30,7 +30,10 @@ enum RoundBus extends NotBuseable:
 case class Tell(id: GameId, msg: RoundBus)
 case class TellMany(ids: Seq[GameId], msg: StartClock.type | RoundBus.QuietFlagCheck.type)
 
-case class MoveEvent(gameId: GameId, fen: Fen.Full, move: Uci)
+/** A move for the bus (ADR 0019 §6): the position after it (a Go game's compact board, a chess FEN until unit
+  * 3.17) and the move (an SGF point or `pass`, a chess UCI until 3.17).
+  */
+case class MoveEvent(gameId: GameId, board: String, move: String)
 case class CorresMoveEvent(
     move: MoveEvent,
     playerUserId: Option[UserId],

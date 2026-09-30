@@ -16,6 +16,87 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.14 · lila-ws: Go round payloads and live mini boards
+- Did: lila-ws speaks Go on the round (ADR 0019 §6) and no longer uses scalachess's chess rules or
+  formats (no `Uci`, `Fen`, `chess.json`). The browser's `move` message carries `"u": "dd"` (an SGF
+  point, `[a-s]{2}`) or `"u": "pass"`, read into a new `GoMove` type (shape only; lila checks the
+  rules) and relayed as `r/move <fullId> <move> …`, as lila's `RoundSocket` reads since 3.13. Chess
+  moves, the old `from`/`to` form and `drop` are no longer read (they become "unexpected", as any
+  unknown message). `Fens` reads lila's Go move event with play-json instead of upstream's regexes
+  and sends watchers `{"t":"fen","d":{"id","lm","board","turn","wc","bc"}}`: `lm` is the point or
+  `pass`, `board` lila's compact string, `turn` `black`/`white`, clocks in whole seconds. New
+  `GoRoundTest` (10 tests) with move events shaped as lila's `Event.GoMove`.
+- Lobby payloads: nothing to change in lila-ws. It relays the lobby's JSON (`tell/lobby`, hooks,
+  seeks, pools) without reading it; the chess variants in those payloads are written by lila's
+  `lobby`/`setup`/`pool` modules, which unit 3.15 owns. No follow-up needed here.
+- Worked: local `dev/ligo compile ws` and `dev/ligo test ws` (lila-ws needs only scalachess, which the
+  proxy serves); scalafmt fixed two files before the check passed.
+- Didn't work / dead ends: `sbt --batch scalafmtAll check` fails to parse under sbt 2; run the
+  commands one per call.
+- Lessons: lila-ws's lobby is a pass-through; Go fields there are lila's job. Between this unit and
+  3.15 no game in a dev stack can take a move over the socket (chess moves are dropped here, Go games
+  are created from 3.15), and 3.18 gives the round page a Go board.
+- Decisions: Claude, under the owner's 2026-09-28 delegation (logs/decisions.md, 3.14 row): Go-only
+  moves now, as PLAN §5 says ("its own chess-rules use removed"); the mini-board message keeps its
+  upstream name `fen` so the browser's existing socket plumbing still routes it (3.19 draws it);
+  `turn` is a colour name; the move event is parsed as JSON (robust to key order; only watched games
+  pay for it). The wire format matches GoPlayTest's move event unchanged.
+- Order: this unit ships before 3.15, against PLAN §5's dependency column and ADR 0019 §8 (3.15
+  first), because the coordinator started it when 3.13 merged and 3.15 was still being built. The
+  cost is the dev-stack gap above: chess moves are dropped as "unexpected" (logged, no ack). ADR 0019
+  §8 amended.
+- Follow-ups: the browser's mini-board handler (`lila/ui/lib/src/pubsub.ts` `socket.in.fen`,
+  `ui/site/src/boot.ts` → `updateMiniGame`, which reads `data.fen`) still expects the chess payload
+  and will throw on Go updates once Go games exist; unit 3.19 (Go mini boards) must switch it to
+  `board`/`turn`. lila's `Event.GoMove` writes any non-stone action as `{"pass":true}`, so Phase 4's
+  resume (4.8) needs its own key. The move-event JSON in `GoRoundTest` is copied from lila's
+  `Event.GoMove`, not produced by it.
+- Verified by Claude: /verify, `sbt testFull` in lila-ws 13/13 (`dev/ligo test ws` runs sbt 2's
+  cached testQuick, which can report 0 tests), `sbt check` (scalafix + scalafmt). ·
+  Needs owner verification: none on its own; a live game over the socket once 3.15 and 3.18 land.
+
+### 2026-09-30 · 3.13 · Round module: Go moves, passes, clock, takebacks, no draws
+- Did: the round plays Go games (ADR 0019 §5–7). lila-ws's `r/move` token is read as a chess UCI
+  or, failing that, a Go SGF point or `pass` (`GoBridge.actionOf`), giving a new `HumanGoPlay`
+  message; `MovePlayer.goHuman` checks it with go-rules (a refusal is the usual client error with
+  the fixture reason, `occupied`, `suicide`, `superko`, …), steps the Fischer clock as scalachess
+  does for a chess move (`GameExt.stepGoClock`: frame lag, step, start once both sides have played),
+  flags on time, and applies it (`GameExt.applyGoMove`: ply, clock history, move times, blurs). The
+  move event (`Event.GoMove`) is ADR §6's: `p` or `pass`, `ply`, `cap`, `prisoners`, `ko`, `phase`,
+  `board` (the compact mini-board string, `GoBridge.board`) and clock; no `dests`. It carries no
+  status or winner: the end of a game follows as lila's own `end` and `endData` events, and `ply` is
+  lila's absolute ply (a handicap game starts at 0). The second consecutive pass or the 1,000th ply
+  ends the game as "unknown finish" with no winner, and that last move earns no increment, as in chess. The
+  move bus event `MoveEvent` carries strings (board, move) instead of FEN and UCI. Go games have no
+  draws (`drawable` and `forceDrawable` are false, `cannotLose` never applies, running out of time
+  never reads the placeholder chess position's material), though a player who left can still be
+  claimed against (`goneClaimable`); they send no chess legal moves in the round JSON, refuse chess
+  moves (and chess games refuse Go moves), refuse moves from an AI seat, and offer no rematch until
+  3.15 can create a Go game. Takebacks use
+  go-rules' `undo` (`Rewind.go`), with the clock restored from the clock history as for chess; the
+  offer message numbers the moves 1, 2, 3… as SGF points. Resign, abort, flagging and more time
+  needed no change. Tests: `GoPlayTest` (11: a stone, a pass and two passes, a capture, Black-first
+  and handicap clocks, the increment, a takeback of a stone and of a pass and a two-ply one, no
+  draws, the end on two passes but not pass-stone-pass, the 1,000-ply end in even and handicap
+  games), 2 more `GoBridgeTest` cases, `GoMoveReaderTest`, `GoGoneTest`.
+- Review: the independent reviewer found 2 blocking issues, both fixed: making `forceDrawable` false
+  also hid the "opponent left" claim (its other readers), and the two game endings were untested. Of
+  its optional findings, fixed: no increment on the last move, the out-of-time check, the takeback
+  numbering, rematches, the AI seat, stronger takeback tests; disclosed: the event's absolute ply
+  and missing status.
+- Worked: the round's own flow (actor, proxy, finisher, resign, abort, flagging, more time) needed
+  no change; only the move path and three chess-only checks did.
+- Didn't work / dead ends: none.
+- Lessons: scalachess steps the clock inside `chess.Game`, so a move that skips chess must repeat
+  `applyClock` itself; its "start the clock" test reads the ply before the move. Before turning a
+  predicate off for Go, grep every reader of it: `forceDrawable` also gated the "opponent left" claim.
+- Decisions: see logs/decisions.md (3.13 row).
+- Verified by Claude: see the PR.
+- Follow-ups: 3.14 sends the Go tokens from lila-ws and relays `board` to mini boards; 3.15 creates
+  Go games (rematches of Go games come back then); the API move stream (`ApiMoveStream`), the round
+  page's move list (`StepBuilder`) and the chess readers the reviewer listed (`PushApi`'s last move,
+  `FarmBoostDetection`, `RoundMobile`'s PGN) stay chess-only until 3.16–3.18.
+
 ### 2026-09-30 · 3.12 · Game module: Go games stored and loaded
 - Did: lila's `Game` gained `go: Option[GoGame]` beside `chess` (ADR 0019 §3); for a Go game
   `turnColor` comes from `GoGame.toMove`, `perfKey` is `go`, and `withGo` takes a new Go game with

@@ -51,7 +51,9 @@ final private class Finisher(
     else if game.player(!game.player.color).isOfferingDraw then
       apply(game, _.Draw, None, Messenger.SystemMessage.Persistent(trans.site.drawOfferAccepted.txt()).some)
     else
-      val winner = Some(!game.player.color).ifFalse(game.position.opponentHasInsufficientMaterial)
+      // a Go game always has a winner on time (its chess position is only a placeholder until 3.17)
+      val winner =
+        Some(!game.player.color).ifFalse(!game.isGo && game.position.opponentHasInsufficientMaterial)
       for
         events <- apply(game, _.Outoftime, winner)
         _ = winner.foreach: w =>

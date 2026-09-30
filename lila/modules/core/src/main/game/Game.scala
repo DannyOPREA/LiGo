@@ -198,7 +198,8 @@ case class Game(
   def forceResignable =
     resignable && nonAi && hasClock && !isSwiss && !hasRule(_.noClaimWin)
   def forceResignableNow = forceResignable && bothPlayersHaveMoved
-  def drawable = playable && !abortable && !swissPreventsDraw && !rulePreventsDraw
+  // Go has no draws (ADR 0019 §6): no offers, claims or forced draws.
+  def drawable = !isGo && playable && !abortable && !swissPreventsDraw && !rulePreventsDraw
 
   def finished = status >= Status.Mate
 

@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 3.18 merge · Main merged in; 3.13 and 3.14 landed first
+- Did: merged main into PR #74 (it had a conflict in logs/decisions.md and the reviewer's memory index, which kept CI from running). Units 3.13 (#73) and 3.14 (#75) merged meanwhile, so the "land before 3.13 and 3.14" decision recorded in the review entry above no longer applies and was taken out of logs/decisions.md. Checked the page against what they shipped: lila-ws reads `d.u` as an SGF point or `pass` and `d.b` as blur (`ClientOut.scala`), the move event carries `p` or `pass: true`, `ply`, `cap`, `prisoners`, `phase`, `board`, `ko`, `clock`, `status`, `winner` (`game/Event.scala` GoMove), the round JSON's `game.go` block is as the page reads it (`game/JsonView.scala`), and two passes end the game as `UnknownFinish` with no winner (`MovePlayer.scala`).
+- Worked: nothing to change in the page.
+- Didn't work / dead ends: none.
+- Lessons: a conflicted PR runs no `pull_request` CI at all; check `mergeable_state` when checks never appear.
+- Decisions: none new.
+- Verified by Claude: round unit tests, round browser tests, ui build after the merge. · Needs owner verification: a real game between two browsers is now possible (3.13 and 3.14 are in).
+- Follow-ups: none.
+
 ### 2026-09-30 · unit 3.18 review · Reviewer findings fixed
 - Did: an independent review (1 blocking, 4 should-fix, 6 nits) found: the early landing before 3.13/3.14 wasn't recorded (now in logs/decisions.md); a stone sent but not yet played back could be followed by a second one after looking back and forward (the remounted board forgot it was waiting), and one that never arrived stayed drawn when the game ended first (the old chess check read a turn that only flips on the server's echo). A `moveInFlight` flag now blocks moving and Pass until the server plays the move, and the end of the game remounts the board without an unsent stone. A move event whose ply doesn't follow the list fetches the game again; the list takes the ply from the event. A board that can't be drawn says so instead of going blank. Jumping to the start is read out as "Start". New: 4 controller tests (in-flight move, end before arrival, missed event, handicap) and a handicap browser test.
 - Worked: a stand-in board that reports a pass only when it takes moves, like goban's, made the "pass after a sent stone" case visible.
