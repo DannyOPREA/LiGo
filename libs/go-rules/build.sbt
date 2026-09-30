@@ -6,8 +6,8 @@ name := "go-rules"
 organization := "org.ligo"
 version := "0.1.0-SNAPSHOT"
 
-// Same Scala and scalalib as lila (lila/project/BuildSettings.scala, Dependencies.scala), so the
-// library drops into lila's build in Phase 3 without version conflicts.
+// Same Scala and scalalib as lila (lila/project/BuildSettings.scala, Dependencies.scala): lila's
+// build compiles this library (unit 3.10), so bump both together.
 scalaVersion := "3.8.4"
 scalacOptions ++= Seq("-feature", "-deprecation", "-Wunused:all")
 

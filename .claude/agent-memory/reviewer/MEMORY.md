@@ -21,3 +21,4 @@
 - [Perf budget review patterns](perf-budget-review-patterns.md) — undefined limit passes, harness overhead in timings, goban shadow DOM, scratch probes (9.5)
 - [Rebrand text review patterns](rebrand-text-review-patterns.md) — en-US dest fallback, CRLF churn, verify.lichess.org mailto, sbt 2 cached Total 0 (3.8)
 - [Board a11y review patterns](board-a11y-review-patterns.md) — e.repeat, click never focuses goban, mousetrap clash, broad axe regex, scratch probes (9.4)
+- [sbt build wiring review patterns](sbt-build-wiring-review-patterns.md) — resolver order vs Central, ProjectRef exclusions, dup mounts, verify/CI drift (3.10)

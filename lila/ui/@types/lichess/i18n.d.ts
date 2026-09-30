@@ -1007,7 +1007,7 @@ interface I18n {
     announceAllMoves: string;
     /** Announce Move Format */
     announceMoveFormat: string;
-    /** As a last resort: Set up the board identically to LiGo, then %s */
+    /** As a last resort: Set up the board identically to Lichess, then %s */
     asALastResort: I18nFormat;
     /** The board will auto connect to any game that is already on course or any new game that starts. Ability to choose which game to play is coming soon. */
     boardWillAutoConnect: string;
@@ -1045,17 +1045,17 @@ interface I18n {
     ifLiveChessRunningOnThisComputer: I18nFormat;
     /** If a move is not detected */
     ifMoveNotDetected: string;
-    /** The play page needs to remain open on your browser. It does not need to be visible, you can minimize it or set it side to side with the LiGo game page, but don't close it or the board will stop working. */
+    /** The play page needs to remain open on your browser. It does not need to be visible, you can minimize it or set it side to side with the Lichess game page, but don't close it or the board will stop working. */
     keepPlayPageOpen: string;
     /** Keywords are in JSON format. They are used to translate moves and results into your language. Default is English, but feel free to change it. */
     keywordFormatDescription: string;
     /** Keywords */
     keywords: string;
-    /** LiGo & DGT */
+    /** Lichess & DGT */
     lichessAndDgt: string;
-    /** LiGo connectivity */
+    /** Lichess connectivity */
     lichessConnectivity: string;
-    /** SAN is the standard on LiGo, for example "Nf6". UCI is common for engines, for example "g8f6". */
+    /** SAN is the standard on Lichess, for example "Nf6". UCI is common for engines, for example "g8f6". */
     moveFormatDescription: string;
     /** No suitable OAuth token has been created. */
     noSuitableOauthToken: string;
@@ -1071,7 +1071,7 @@ interface I18n {
     speechSynthesisVoice: string;
     /** Text to speech */
     textToSpeech: string;
-    /** This page allows you to connect your DGT board to LiGo and use it for playing games. */
+    /** This page allows you to connect your DGT board to Lichess and use it for playing games. */
     thisPageAllowsConnectingDgtBoard: string;
     /** Time controls for casual games: Classical, Correspondence and Rapid only. */
     timeControlsForCasualGames: string;
@@ -2197,7 +2197,7 @@ interface I18n {
     ifNotRenewedThenAccountWillRevert: string;
     /** Lichess is registered with %s. */
     lichessIsRegisteredWith: I18nFormat;
-    /** LiGo Patron */
+    /** Patron */
     lichessPatron: string;
     /** Lifetime */
     lifetime: string;
@@ -2285,9 +2285,9 @@ interface I18n {
     whereMoneyGoes: string;
     /** Credit Card */
     withCreditCard: string;
-    /** %s became a LiGo Patron */
+    /** %s became a Patron */
     xBecamePatron: I18nFormat;
-    /** %1$s is a LiGo Patron for %2$s months */
+    /** %1$s is a Patron for %2$s months */
     xIsPatronForNbMonths: I18nPlural;
     /** %1$s or %2$s */
     xOrY: I18nFormat;

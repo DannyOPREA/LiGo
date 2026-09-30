@@ -30,6 +30,8 @@ Decision: [ADR 0010](../../docs/decisions/0010-dev-tooling-on-lila-docker.md).
   doesn't lose the database.
 - The `ui` service mounts the monorepo's `.git` read-only and points `GIT_DIR` at it: `ui/build`
   runs `git rev-parse HEAD`, and `lila/` isn't a git repo of its own here.
+- The `lila` service also mounts `../../libs` at `/libs`: lila's sbt build loads `libs/go-rules`
+  from `../libs/go-rules` (unit 3.10).
 - `depends_on` added so lila and lila-ws start after Mongo and Redis.
 - No `profiles: base`: the core services always start. `ui` stays in the `utils` profile.
 - Dropped services LiGo doesn't use: the opening explorer, the one-container `mono` quick setup,
