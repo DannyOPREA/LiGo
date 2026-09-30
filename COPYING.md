@@ -110,6 +110,10 @@ says otherwise. That covers:
 - `services/`, `tools/`, `dev/` (except `dev/lila-docker/`, above)
 - `.claude/`, `.github/`, `docs/`, `logs/`, and top-level project files other than `LICENSE`
 
+**The puzzle set** (`tools/puzzles/data/`, unit 8.4) is LiGo's own generated content and MIT too.
+Its sources list is `tools/puzzles/data/SOURCES.md`, and each puzzle's `provenance` names the
+generator, seed and KataGo network that checked it.
+
 **Exception, screenshots:** screenshots of lila or LiGo (e.g. `docs/research/baseline/`) depict
 AGPL-3.0 software and may show lichess's logo, which isn't free and appears only to refer to lichess.
 Screenshots are **not** MIT-licensed; they fall under the licences of what they depict.
