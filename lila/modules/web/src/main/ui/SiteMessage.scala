@@ -71,3 +71,12 @@ final class SiteMessage(helpers: Helpers):
     p("Your device or network has sent too many requests in a short amount of time. Please try again later.")
 
   def notYet(text: String) = apply("Not yet available")(p(text))
+
+  /** A page that returns for Go in a later phase (unit 3.16): the analysis board (Phase 7) and puzzles (Phase
+    * 8). A plain page with no board, so no chess code runs on it.
+    */
+  def comingLater(title: String, text: String, back: Option[String] = None) = apply(title, back):
+    frag(
+      p(text),
+      p(a(cls := "button", href := routes.Lobby.home)("Play a game"))
+    )

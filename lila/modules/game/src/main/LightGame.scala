@@ -16,7 +16,9 @@ object LightGame:
       F.playerUids -> true,
       F.winnerColor -> true,
       F.status -> true,
-      F.variant -> true
+      F.variant -> true,
+      // the board size: only Go games have it (GoStorage.isGo, unit 3.16)
+      GoStorage.F.size -> true
     )
 
 object LightPlayer:

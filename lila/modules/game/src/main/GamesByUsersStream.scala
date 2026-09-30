@@ -48,7 +48,6 @@ object GameStream:
       .obj(
         "id" -> g.id,
         "rated" -> g.rated,
-        "variant" -> g.variant.key,
         "speed" -> g.speed.key,
         "perf" -> g.perfKey,
         "createdAt" -> g.createdAt,
@@ -69,6 +68,9 @@ object GameStream:
             .add("provisional" -> p.provisional)
             .add("ai" -> p.aiLevel))
       )
+      // a Go game has its setup instead of a chess variant (unit 3.16)
+      .add("variant" -> (!g.isGo).option(g.variant.key))
+      .add("go" -> g.go.map(JsonView.goSetup))
       .add("winner" -> g.winnerColor.map(_.name))
       .add("initialFen" -> initialFen)
       .add("clock" -> g.clock.map: clock =>
