@@ -20,7 +20,8 @@ rules spec, to the server and to a real browser. How it works: [README.md](READM
 - **SGF is `src/sgf.mjs`** (ADR 0023): `@sabaki/sgf` reads and writes the text, every move is
   replayed through `play`. Don't use goban-engine's SGF reader for new code (it hangs on broken
   files); `readSgf` stays for unit 1.8's read-back test. `src/sgf.d.mts` types it by hand.
-- **Lila's pages only see `mountBoard`.** Nothing in lila imports goban; the board reports the
+- **Lila's pages only see `mountBoard` and `mountPuzzle`** (`src/puzzle.ts`, goban's puzzle mode,
+  unit 8.5). Nothing in lila imports goban; the board reports the
   player's move and the page (or server) decides by `play` or `cancel`. Only goban's themes
   drawn from code (`src/themes.ts`, ADR 0026 §3); its picture themes load unlicensed pictures from
   OGS's CDN, and any other name falls back to Plain (`gobanThemes`).

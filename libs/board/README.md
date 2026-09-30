@@ -71,6 +71,46 @@ board.destroy();
   arriving moves. goban only lets the player to move place stones (`player_id`); the adapter keeps
   that id in step with `movable` and the turn.
 
+## The puzzle board (`src/puzzle.ts`, unit 8.5, ADR 0025)
+
+goban's own puzzle mode (the one OGS's puzzle pages use), behind the same kind of API. It takes a
+puzzle in goban's puzzle JSON, as `tools/puzzles` writes it (ADR 0025 §1).
+
+```ts
+import { mountPuzzle } from '@ligo/board/puzzle';
+
+const board = mountPuzzle(el, {
+  puzzle,                    // { width, height, bounds, initial_state, initial_player, move_tree, ... }
+  confirm: false,            // true: a tap shows a see-through stone, a second tap (or confirm()) plays it
+  theme: DEFAULT_THEME,      // as mountBoard's (unit 9.3)
+  replyDelay: 300,           // ms before goban plays the opponent's reply (0 also means 300)
+  onMove: (move, by) => {},  // 'player' | 'opponent', each stone played
+  onResult: result => {},    // 'right' | 'wrong', once per attempt
+  onRefused: reason => {},   // in practice 'suicide': a click on a stone does nothing, no superko check
+  onChange: () => redraw(),
+});
+board.retry();  board.line();  board.result();  board.pending();  board.confirm();
+board.set({ confirm, theme });  board.state();  board.destroy();
+```
+
+- **goban plays the puzzle.** It shows only the puzzle's `bounds` (labels on the board's own edges
+  only), follows the player down the tree, answers with one of the tree's replies at random, and
+  says right or wrong. A move off the tree is wrong (`puzzle_player_move_mode: 'free'`).
+- **One result per attempt.** goban says "wrong" again at each later move of a failed line, so the
+  board reports the first result and then takes no more moves until `retry()`. A `retry` while
+  goban's reply is on its way waits for that reply (goban's timer can't be cancelled), and nothing
+  from the abandoned attempt (the reply, its result) reaches the page.
+- **Touch-confirm is LiGo's.** In puzzle mode goban places the stone on the first tap whatever its
+  submit settings. With `confirm` on, LiGo keeps goban's placement off, shows its own see-through
+  stone (a goban mark), and hands the tap to goban on the second tap of the same point or on
+  `confirm()`. This differs from `mountBoard`, where goban's own play mode takes the preview back
+  on a second tap and the page's button plays it: a puzzle has no confirm button of its own until
+  the trainer page (8.7), so a second tap plays.
+- **A separate mount, not a `mountBoard` option.** PLAN row 8.5 and ADR 0025 said `mountBoard`
+  gains a puzzle option; puzzle mode shares almost nothing with play mode (no referee, no `play` or
+  `cancel`, a result instead of moves), so it is its own `mountPuzzle` beside it (logs/decisions.md).
+- Nothing in lila uses it yet: the trainer page is unit 8.7.
+
 ## The rules engine (`src/engine.mjs`, unit 1.8)
 
 ```js
@@ -138,6 +178,11 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
   resizing, destroy, themes, keyboard play and what the live region says, axe-core's WCAG 2.2 AA
   check, and no images or network requests. Chromium comes from `$LIGO_CHROMIUM`, the
   cloud sessions' `/opt/pw-browsers/chromium`, or `pnpm exec playwright install chromium`.
+- `test/puzzle.browser.test.mjs`: the puzzle board in Chromium. Every puzzle in
+  `tools/puzzles/data/` is played twice by real clicks: a right line to the end, answering
+  whichever reply goban picks from the tree, and a wrong first move, which must end wrong. Then
+  one result per attempt, retry (also while a reply is pending), touch-confirm, a click on a
+  stone, the bounds and sizing, and no network requests.
 
 - `test/conformance.test.mjs`: every `libs/conformance` fixture that applies to the client, under
   each ruleset it names (both when none): 95 cases, 189 runs, 10 of them known gaps (5 cases).
@@ -158,7 +203,7 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
 
 `dev/ligo test board` runs the engine, fixture and browser tests without the server; docker mode
 skips the browser tests (the ui container has no Chromium). The `lint` and `typecheck` scripts
-check `src/board.ts` with lila's oxfmt, oxlint and TypeScript settings.
+check `src/board.ts` and `src/puzzle.ts` with lila's oxfmt, oxlint and TypeScript settings.
 
 ## Packages
 

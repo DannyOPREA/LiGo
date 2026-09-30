@@ -85,6 +85,8 @@ ci_commit scoring services/scoring/src/score.ts logs/scoring.md
 check "changed.sh: services/scoring triggers the scoring and puzzles builds (tools/puzzles uses its KataGo client)" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit puzzles tools/puzzles/src/cli.ts logs/tsumego.md
 check "changed.sh: tools/puzzles triggers only the puzzles build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
+ci_commit puzzle-data tools/puzzles/data/generated-001.json logs/tsumego.md
+check "changed.sh: the puzzle set triggers the puzzles and rules builds (libs/board plays every puzzle)" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit katagosh dev/katago.sh logs/scoring.md
 check "changed.sh: dev/katago.sh triggers the scoring and puzzles builds" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit dep-copying lila-ws/build.sbt COPYING.md

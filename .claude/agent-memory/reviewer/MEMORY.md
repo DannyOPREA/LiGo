@@ -5,7 +5,7 @@
 - [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM licences, §3.1 row scope, spike cross-checks, fixture circularity, run overlap, unlisted params, deferred options
 - [Rules spec review patterns](rules-spec-review-patterns.md) — replay cited sequences, resume vs pass counter, false clock bounds
 - [Conformance fixture review patterns](conformance-fixture-review-patterns.md) — CI wiring, checker argv bug, circular oracles, phase, licence
-- [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, SGF parse, pass-window clicks, play() trust, stale deps line
+- [goban-engine wrapper review patterns](goban-engine-wrapper-review-patterns.md) — probe branches, SGF parse, pass-window clicks, play() trust, puzzle-mode deferred events (8.5)
 - [General review patterns](review-patterns-general.md) — transitive-dep licences, pipefail+find, docker caches, harness vacuity, pin-check order
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
 - [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, goban SGF hangs, goban puzzle-mode glue, solver GHI/ko/spike budget
@@ -16,7 +16,7 @@
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects (3.3–3.6)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
 - [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, lowercase ids, quadratic merges, two-reader parity probes (7.3)
-- [Puzzle solver review patterns](puzzle-solver-review-patterns.md) — settled() pass bug, tree-depth histogram, duplicate shapes, frame port rerun
+- [Puzzle solver review patterns](puzzle-solver-review-patterns.md) — settled() pass bug, tree-depth histogram, duplicate shapes, frame port rerun, indep L&D checker, symmetry dedupe
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick
 - [Perf budget review patterns](perf-budget-review-patterns.md) — undefined limit passes, harness overhead in timings, goban shadow DOM, scratch probes (9.5)
 - [Board a11y review patterns](board-a11y-review-patterns.md) — e.repeat, click never focuses goban, mousetrap clash, broad axe regex, scratch probes (9.4)

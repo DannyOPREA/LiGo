@@ -110,6 +110,10 @@ says otherwise. That covers:
 - `services/`, `tools/`, `dev/` (except `dev/lila-docker/`, above)
 - `.claude/`, `.github/`, `docs/`, `logs/`, and top-level project files other than `LICENSE`
 
+**The puzzle set** (`tools/puzzles/data/`, unit 8.4) is LiGo's own generated content and MIT too.
+Its sources list is `tools/puzzles/data/SOURCES.md`, and each puzzle's `provenance` names the
+generator, seed and KataGo network that checked it.
+
 **Exception, screenshots:** screenshots of lila or LiGo (e.g. `docs/research/baseline/`) depict
 AGPL-3.0 software and may show lichess's logo, which isn't free and appears only to refer to lichess.
 Screenshots are **not** MIT-licensed; they fall under the licences of what they depict.
@@ -136,7 +140,7 @@ AGPL-3.0, MPL-2.0). Non-commercial and unclear licences are rejected.
 | PlayStrategy strategygames `10.2.1-s3-ps14` (Go rules; a dependency, not copied), with its other games' engines excluded (ADR 0012) | `libs/go-rules/build.sbt` | MIT | Notice in `libs/go-rules/NOTICE.md`; jar SHA-256 pinned in `docs/UPSTREAM.md` |
 | joda-time `2.10.10` and scala-parser-combinators `2.4.0`, brought in by strategygames (dependencies, not copied) | `libs/go-rules/build.sbt` (transitive) | Apache-2.0 | joda-time's NOTICE is below and in `libs/go-rules/NOTICE.md`; scala-parser-combinators ships none |
 | OGS goban-engine `8.3.226` (the client's Go rules; a dependency, not copied, ADR 0014) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
-| OGS goban `8.3.226` (the board: its SVG renderer and its own copy of the engine; a dependency, not copied, ADR 0014, unit 2.1). Only its themes drawn in code are used (plain, Book, Night Play, HNG boards; Plain, Slate & Shell, Glass, Worn Glass, Night stones; unit 9.3, ADR 0026 §3); its picture themes are not (their pictures, on OGS's CDN, have no stated licence) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
+| OGS goban `8.3.226` (the board: its SVG renderer and its own copy of the engine; a dependency, not copied, ADR 0014, unit 2.1; its puzzle mode is the puzzle board, unit 8.5). Only its themes drawn in code are used (plain, Book, Night Play, HNG boards; Plain, Slate & Shell, Glass, Worn Glass, Night stones; unit 9.3, ADR 0026 §3); its picture themes are not (their pictures, on OGS's CDN, have no stated licence) | `libs/board/package.json` | Apache-2.0 | Copyright Online-Go.com; licence text and notices in `libs/board/NOTICE.md`; ships no NOTICE file |
 | goscorer (lightvector), bundled inside goban-engine and goban | `libs/board` (inside goban-engine and goban) | MIT | goban's build drops its notice, so `libs/board/NOTICE.md` carries it |
 | eventemitter3 `5.0.4`, goban-engine's and goban's only dependency | `libs/board` (transitive) | MIT | Notice in `libs/board/NOTICE.md` |
 | @sabaki/sgf `3.5.0` (the analysis board's SGF reader and writer; a dependency, not copied, ADR 0023, unit 7.2), with a one-field patch (`browser`) in `libs/board/patches/`; its optional Node-only charset detectors (iconv-lite, jschardet) are not installed (`ignoredOptionalDependencies` in `lila/pnpm-workspace.yaml`) | `libs/board/package.json` | MIT | Copyright Yichuan Shen; notice in `libs/board/NOTICE.md` |
