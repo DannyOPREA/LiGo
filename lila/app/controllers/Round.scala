@@ -131,7 +131,9 @@ final class Round(
           else
             negotiateApi(
               html =
-                if pov.game.replayable then analyseC.replay(pov, userTv = userTv)
+                // A finished Go game stays on the round page, which shows it with its move list (unit
+                // 3.18): the analysis page is a placeholder until Phase 7 (unit 3.16).
+                if pov.game.replayable && !pov.game.isGo then analyseC.replay(pov, userTv = userTv)
                 else
                   for
                     users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
@@ -213,12 +215,15 @@ final class Round(
 
   def continue(id: GameId, mode: String) = Open:
     Found(env.game.gameRepo.game(id)): game =>
-      Redirect:
-        "%s?fen=%s#%s".format(
-          routes.Lobby.home,
-          get("fen") | (chess.format.Fen.write(game.chessState)).value,
-          mode
-        )
+      // A Go position can't be carried into the create-game form as a FEN (unit 3.16).
+      if game.isGo then Redirect(s"${routes.Lobby.home}#$mode")
+      else
+        Redirect:
+          "%s?fen=%s#%s".format(
+            routes.Lobby.home,
+            get("fen") | (chess.format.Fen.write(game.chessState)).value,
+            mode
+          )
 
   def resign(fullId: GameFullId) = Open:
     Found(env.round.proxyRepo.pov(fullId)): pov =>

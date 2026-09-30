@@ -80,7 +80,7 @@ final class PushApi(
         .game(move.gameId)
         .flatMap:
           _.filter(_.playable).so: game =>
-            game.sans.lastOption.so: sanMove =>
+            lastMoveText(game).so: sanMove =>
               game.povs.toList.sequentiallyVoid: pov =>
                 pov.player.userId.so: userId =>
                   val data = LazyFu: () =>
@@ -93,7 +93,7 @@ final class PushApi(
                       payload <- corresGamePayload(pov, "gameMove", userId)
                     yield Data(
                       title = "It's your turn!",
-                      body = s"$opponent played $sanMove",
+                      body = moveBody(opponent, sanMove),
                       key = Key.gameMove,
                       urgency = if pov.isMyTurn then Urgency.Normal else Urgency.Low,
                       payload = payload,
@@ -367,6 +367,18 @@ final class PushApi(
   private def alwaysPushFirebaseData(userId: UserId, monitor: MonitorType, data: LazyFu[Data]): Funit =
     firebasePush(userId, data.dmap(_.copy(firebaseMod = Data.FirebaseMod.DataOnly.some))).addEffects: res =>
       monitor(lila.mon.push.send)("firebaseData", res.isSuccess, 1)
+
+  private def moveBody(opponent: String, move: String): String = move match
+    case "pass" => s"$opponent passed"
+    case "resume" => s"$opponent resumed play"
+    case move => s"$opponent played $move"
+
+  // A Go move as players read it (`D4`, `pass`), else the chess SAN (unit 3.16).
+  private def lastMoveText(game: Game): Option[String] =
+    game.go match
+      case Some(go) =>
+        go.actions.lastOption.map(lila.core.game.GoBridge.label(_, go.size.lines))
+      case None => game.sans.lastOption.map(_.value)
 
   private def describeChallenge(c: Challenge) =
     import lila.core.challenge.Challenge.TimeControl.*

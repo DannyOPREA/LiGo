@@ -1,6 +1,6 @@
 package lila.round
 
-import chess.format.{ Fen, Uci }
+import chess.format.{ Fen, Uci, UciDump }
 import chess.{ Centis, Clock, Color, ErrorStr, MoveMetrics, MoveOrDrop, Status }
 
 import java.util.concurrent.TimeUnit
@@ -138,14 +138,18 @@ final private class MovePlayer(
     // I checked and the bus doesn't do much if there's no subscriber for a classifier,
     // so we should be good here.
     // also used for targeted TvBroadcast subscription
-    Bus.publishDyn(MoveGameEvent(game, fen, moveOrDrop.toUci), MoveGameEvent.makeChan(game.id))
+    Bus.publishDyn(
+      MoveGameEvent(game, fen.value, UciDump.lastMove(moveOrDrop.toUci, game.position)),
+      MoveGameEvent.makeChan(game.id)
+    )
     publishMove(game, moveEvent, color)
 
-  // The API's move stream (`MoveGameEvent`) is chess-only until unit 3.16 streams Go moves.
   private def notifyGoMove(game: Game, action: String, color: Color): Unit =
     import lila.core.round.MoveEvent
     game.go.foreach: go =>
-      publishMove(game, MoveEvent(game.id, lila.core.game.GoBridge.board(go), action), color)
+      val board = lila.core.game.GoBridge.board(go)
+      Bus.publishDyn(MoveGameEvent(game, board, action), MoveGameEvent.makeChan(game.id))
+      publishMove(game, MoveEvent(game.id, board, action), color)
 
   private def publishMove(game: Game, moveEvent: lila.core.round.MoveEvent, color: Color): Unit =
     import lila.core.round.{ CorresMoveEvent, SimulMoveEvent }

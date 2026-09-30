@@ -157,6 +157,9 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
 3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
+(Amended in unit 3.16: the API move stream now streams Go games too, `{board, turn, lm, wc, bc}` per
+position; the bus `MoveGameEvent` carries strings (the FEN or compact board, the last move).
+logs/decisions.md, 3.16 row.)
 (Amended in unit 3.19, part 1: 3.19 is split. Part 1 puts board size (buttons), rules (a list)
 and komi (a number, reset to the ruleset's standard komi when the rules change) in the lobby's
 create-game and challenge forms, drops the chess variant picker and FEN input, hides the

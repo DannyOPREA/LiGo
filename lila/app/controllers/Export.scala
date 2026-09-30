@@ -23,7 +23,8 @@ final class Export(env: Env) extends LilaController(env):
       piece: Option[String]
   ) = Anon:
     NoCrawlersUnlessPreview:
-      exportImageOf(env.game.gameRepo.gameWithInitialFen(id)): g =>
+      // lila-gif draws chess boards only: a Go game has no GIF until a Go renderer exists (unit 3.16)
+      exportImageOf(env.game.gameRepo.gameWithInitialFen(id).map(_.filterNot(_.game.isGo))): g =>
         val options = lila.game.GifExport.Options.fromReq
         val filename = s"lichess-game-${g.game.id}-${color.name}.gif"
         stream(filename, cacheSeconds = if g.game.finishedOrAborted then 3600 * 24 else 10):
@@ -43,7 +44,7 @@ final class Export(env: Env) extends LilaController(env):
     MovedPermanently(routes.Export.gameThumbnail(id, theme, piece).url)
 
   def gameThumbnail(id: GameId, theme: Option[String], piece: Option[String]) = Anon:
-    exportImageOf(env.game.gameRepo.game(id)) { game =>
+    exportImageOf(env.game.gameRepo.game(id).map(_.filterNot(_.isGo))) { game =>
       val filename = s"lichess-game-${game.id}-thumbnail.gif"
       env.game.gifExport
         .gameThumbnail(game, Theme(theme).name, PieceSet.get(piece).name)

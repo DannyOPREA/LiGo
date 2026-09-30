@@ -82,6 +82,8 @@ final class TextLpvExpand(
   private def gameIdToPgn(id: GameId): Fu[Option[LpvEmbed]] =
     gameRepo
       .gameWithInitialFen(id)
+      // A Go game has no PGN to show in the (chess) game viewer: its link stays a plain link (unit 3.16).
+      .map(_.filterNot(_.game.isGo))
       .flatMapz: g =>
         analysisRepo
           .byGame(g.game)

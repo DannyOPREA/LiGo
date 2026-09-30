@@ -42,7 +42,11 @@ final class ActivityReadApi(
       corresEnds <- a.corres.so: corres =>
         getLightPovs(a.id.userId, corres.end).dmap:
           _.map:
-            _.groupBy(pov => PerfKey(pov.game.variant, Correspondence)).view
+            _.groupBy: pov =>
+              // a Go game's perf is `go` (unit 3.16); its `variant` is the unused chess default
+              if pov.game.isGo then lila.core.game.GoBridge.perfKey
+              else PerfKey(pov.game.variant, Correspondence)
+            .view
               .mapValues: groupedPovs =>
                 (Score.make(groupedPovs) -> groupedPovs)
               .toMap
