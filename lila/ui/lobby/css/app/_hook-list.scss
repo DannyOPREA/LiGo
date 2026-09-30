@@ -24,15 +24,6 @@
     &:not(.disabled):hover ::before {
       opacity: 1;
     }
-
-    &.variants td {
-      text-align: center;
-      padding: 3px 0;
-      background: none;
-      text-transform: uppercase;
-      letter-spacing: 3px;
-      cursor: default;
-    }
   }
 
   th {
@@ -40,37 +31,12 @@
 
     padding: 1em 0.7em;
 
-    &.sortable {
-      cursor: pointer;
-    }
-
-    &.sortable:hover,
-    &.sort {
-      font-weight: normal;
-    }
-
-    .is {
-      visibility: hidden;
-    }
-
-    &.sort .is {
-      opacity: 0.7;
-      margin-inline-end: 3px;
-      visibility: visible;
-    }
-
     &.player {
       width: 110px;
     }
 
     @media (max-width: at-most($xx-small)) {
       padding: 1em 0.4em;
-
-      &:nth-child(2) {
-        max-width: 13vw;
-        direction: rtl;
-        text-align: left;
-      }
     }
   }
 
@@ -113,7 +79,7 @@
   }
 }
 
-.lseeks .create {
+.lopen .create {
   margin-top: 20px;
   text-align: center;
 }

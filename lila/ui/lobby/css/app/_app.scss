@@ -1,7 +1,6 @@
 @import 'pool';
-@import 'hook-chart';
-@import 'hook-filters';
 @import 'hook-list';
+@import 'open-challenges';
 
 .lobby__app {
   @extend %flex-column;
@@ -46,44 +45,10 @@
       height: 100px;
     }
   }
-
-  .toggle {
-    @extend %box-radius;
-    @include transition;
-
-    position: absolute;
-    padding: 0.6em;
-    cursor: pointer;
-    z-index: 2;
-    font-size: 1.3em;
-
-    &.toggle-filter {
-      @include inline-end(0);
-    }
-
-    &:hover {
-      color: $c-accent;
-    }
-  }
-
-  .gamesFiltered:not(.active) {
-    color: $c-accent;
-
-    @include transition;
-
-    &:hover {
-      color: $c-accent-dim;
-    }
-  }
 }
 
 @media (max-width: at-most($xx-small)) {
-  .lreal_time,
-  .lseeks .hooks__list {
+  .lopen .hooks__list {
     font-size: 0.9em;
-  }
-
-  .lobby__app .toggle {
-    padding: 0.4em;
   }
 }

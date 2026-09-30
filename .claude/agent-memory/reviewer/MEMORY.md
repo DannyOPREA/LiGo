@@ -26,3 +26,4 @@
 - [Round UI review patterns](round-ui-review-patterns.md) — in-flight move lost on remount, flag-race port, scratch ctrl probes, plan-order deps (3.18)
 - [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, PLAN-row scope gaps, gated-predicate side readers (isGone), empty sans (3.11–3.13)
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, Setup.like/rematch bypass, kept chess rematch, vacuous me=None tests (3.15)
+- [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding tap dead zones, guest "Anonymous" seeks, raw reason tokens, vacuous suits (6.7)

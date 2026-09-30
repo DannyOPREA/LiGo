@@ -291,7 +291,8 @@ export default class SetupController {
       return;
     }
 
-    if (this.gameType === 'hook') this.root.setTab(this.timeControl.isRealTime() ? 'real_time' : 'seeks');
+    if (this.gameType === 'hook')
+      this.root.showOpen(this.timeControl.isRealTime() ? 'live' : 'correspondence');
     this.loading = true;
     this.root.redraw();
 
