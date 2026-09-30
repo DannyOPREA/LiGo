@@ -16,7 +16,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 - Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
   docs/PLAN.md §5. 5.1 (design, ADR 0021, merged) and 5.2 (rating maths in `lila/modules/rating`) need nothing
-  from Phases 3–4 and run now; 5.3–5.8 wait for Phase 3 units 3.11–3.20 (and 4.9). Log: logs/ratings.md.
+  from Phases 3–4 (both merged); 5.4's signup half runs now that 3.11 merged; the rest of 5.3–5.8 waits for
+  Phase 3 units 3.12–3.20 (and 4.9). Log: logs/ratings.md.
 
 - Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
   docs/PLAN.md §5. 6.1 (ADR 0022, PR #41) and 6.2 (auto-handicap pairing in `lila/modules/pool`,

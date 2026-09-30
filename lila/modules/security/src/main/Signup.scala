@@ -12,6 +12,7 @@ import lila.core.email.UserIdOrEmail
 import lila.core.net.{ ApiVersion, IpAddress, ValidReferrer }
 import lila.core.security.IsProxy
 import lila.memo.{ RateLimit, SettingStore }
+import lila.rating.GoRating
 import lila.security.SecurityForm.SignupData
 import lila.oauth.Protocol.ClientId
 
@@ -26,6 +27,7 @@ final class Signup(
     passwordHasher: PasswordHasher,
     authenticator: Authenticator,
     userRepo: lila.user.UserRepo,
+    perfsRepo: lila.user.UserPerfsRepo,
     disposableEmailAttempt: DisposableEmailAttempt,
     verifyMail: VerifyMail,
     pwnedApi: PwnedApi,
@@ -130,6 +132,7 @@ final class Signup(
                                   mustConfirmEmail = mustConfirm.value
                                 )
                                 .orFail(s"No user could be created for ${data.username}")
+                                .flatMap(user => setDeclaredGoRank(user.id, data).inject(user))
                                 .addEffect: user =>
                                   monitor(
                                     data,
@@ -155,6 +158,12 @@ final class Signup(
           yield
             lila.mon.user.register.result(client, res.key).increment()
             res
+
+  // LiGo: a self-declared rank starts the Go rating in the middle of that rank (ADR 0021 §2);
+  // "I don't know" leaves lila's default (1500, deviation 500)
+  private def setDeclaredGoRank(id: UserId, data: SignupData): Funit =
+    data.declaredGoRank.so: rank =>
+      perfsRepo.setPerf(id, PerfKey.go, lila.rating.Perf.default.copy(glicko = GoRating.startingGlicko(rank)))
 
   private def confirmOrAllSet(
       email: EmailAddress,

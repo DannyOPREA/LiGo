@@ -9,7 +9,7 @@ import lila.core.misc.AuthCustomUi
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
-final class AuthUi(helpers: Helpers):
+final class AuthUi(helpers: Helpers, goRanks: List[String]):
   import helpers.{ *, given }
 
   private def addReferrer(url: String)(using referrer: Option[ValidReferrer]): String =
@@ -172,6 +172,13 @@ final class AuthUi(helpers: Helpers):
                 form3.input(f, typ = "email")(required),
                 clearFieldButton
               ),
+            form3.group(
+              form("goRank"),
+              trans.site.signupGoRank(),
+              help = trans.site.signupGoRankHelp().some
+            ):
+              form3.select(_, goRankChoices)
+            ,
             input(id := "signup-fp-input", name := "fp", tpe := "hidden"),
             simple.not.option:
               div(cls := "form-group text", dataIcon := Icon.InfoCircle)(
@@ -195,6 +202,13 @@ final class AuthUi(helpers: Helpers):
             simple.option(small(cls := "form-help")(tosLink))
           )
         )
+
+  // LiGo: the self-declared Go rank (ADR 0021 §2): "" is "I don't know" (lila's default rating),
+  // "new" is 25k, then the rank names 25k to 9d, which the app passes in from lila.rating.GoRating
+  private def goRankChoices(using Translate): List[(String, String)] =
+    ("" -> trans.site.signupGoRankUnknown.txt()) ::
+      ("new" -> trans.site.signupGoRankNew.txt()) ::
+      goRanks.map(r => r -> r)
 
   private def tosLink(using Translate) = trans.site.byRegisteringYouAgreeToBeBoundByOur(
     a(href := routes.Cms.tos)(trans.site.termsOfService())
