@@ -16,6 +16,44 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.16 · The other modules answer Go games in Go; analysis and puzzle placeholders
+- Did: wherever 3.16's modules (and `round`'s leftovers the 3.13 reviewer listed) read the unused
+  chess game a Go game carries, a Go game now gets a Go answer. The API's JSON exports and streams
+  (`GameApiV2`, `GameApi`, `GameStream`, the OAuth-origin stream) send a `go` setup block
+  (`JsonView.goSetup`: size, rules, komi, handicap, position) and moves as SGF points and `pass`
+  (`JsonView.goMoves`), with no chess variant, opening, division, FENs or last FEN (`fens` become
+  compact boards, `JsonView.goBoards`; `lastBoard` and a last move token instead of `lastFen`). The
+  API move stream (`ApiMoveStream`) streams Go games: `{board, turn, lm, wc, bc}` per position
+  (`ApiMoveStream.goFrames`; a resume sends none), fed live by `MoveGameEvent`, which now carries
+  strings and is published for Go moves too. Push says "X played D4" / "passed"
+  (`GoBridge.label`: columns skip I, rows from the bottom). `FarmBoostDetection` compares Go
+  openings, `RoundMobile` sends no PGN, `RageSit` weighs no material, `SandbagWatch` uses the plain
+  threshold, activity groups Go correspondence games under `go` (`LightGame.isGo`, read from `sz`).
+  A finished Go game stays on its game page instead of the chess analysis replay. `/analysis`, its
+  pgn and embed routes, a Go game's `/<id>/<color>/analysis`, and the puzzle pages are a plain "arrives
+  in a later update" page (`SiteMessage.comingLater`); the puzzle JSON API is untouched until 8.6.
+  Game titles and the game side panel show the Go setup (`GoBridge.setupName`, e.g. "9×9 • Japanese
+  • komi 6.5"). Go games get no GIF export, game-viewer embed or PGN link preview. `Round.continue`
+  sends a Go game to the lobby without a FEN. Tests: `GoExportTest` (5), `GoMoveStreamTest` (3), 2
+  more `GoBridgeTest` cases.
+- Review (reviewer agent): 2 blocking findings, both fixed: the branch predated 3.15 (merged main;
+  docs conflicts only), and the move stream counted a resume as a position, flipping the turn and
+  shifting clocks after it (now per-state `toMove`, a ply index that skips resumes, tested). Fixed
+  from its optional list: Go games keep the chess round UI's single start step until 3.18 (an empty
+  `steps` would have crashed today's round page), the push text for a resume, `NoBot` on the daily
+  puzzle's JSON. Disclosed: PGN exports of Go games stay headers only (3.12) until 4.11; the game
+  JSON's `immutable`/`base` still carry `variant` (3.17); the crawler view and open-graph image
+  still draw chess (3.19); the placeholder and setup strings are English only, not i18n keys.
+- Worked: `dev/cloud-setup.sh` fixed the strategygames 403 (the session's `~/.sbt/repositories`
+  lacked PlayStrategy's repo); lila compiles and tests fully in the cloud again.
+- Didn't work / dead ends: sbt 2's thin client ran only the first of several commands in one call.
+- Lessons: two sbt/verify runs in one working tree corrupt each other (a false compile failure and
+  "Total 0" tests); run gates one at a time. `sbt -batch testFull` in lila gives real test counts.
+- Decisions: see logs/decisions.md (3.16 row); ADR 0019 §8 amended.
+- Verified by Claude: see the PR.
+- Follow-ups: 3.17 removes the chess paths these Go branches sit beside; 3.19 draws Go mini boards
+  (and the crawler view); 4.11 SGF export; 7.4 and 8.7 replace the placeholders.
+
 ### 2026-09-30 · 3.15 · Game creation: every new game is a Go game, casual only
 - Did: every creation path now calls `newGoGame` with go-rules' `Setup`: lobby hooks and seeks
   (`Biter`), challenges (`ChallengeJoiner`), Go rematches (`Rematcher`, back on; a chess game is no

@@ -55,15 +55,13 @@ final class ApiMoveStream(
                   black <- c.black.lift((index + clockOffset) >> 1)
                 yield ByColor(white, black)
               game.go match
-                // A Go game: its board after each action from the start, with the move's SGF point or
-                // `pass` (unit 3.16).
+                // A Go game: its board from the start and after each move (unit 3.16).
                 case Some(go) =>
-                  lila.game.JsonView
-                    .goBoards(go)
+                  ApiMoveStream
+                    .goFrames(go)
                     .foreach:
-                      _.zipWithIndex.foreach: (board, index) =>
-                        val lastMove = (index > 0).so(go.actions.lift(index - 1).map(GoBridge.token))
-                        queue.offer(goJson(board, (game.startedAtPly + index).turn, lastMove, clockAt(index)))
+                      _.foreach: f =>
+                        queue.offer(goJson(f.board, f.turn, f.lastMove, clockAt(f.plyIndex)))
                 case None =>
                   Position(game.variant, initialFen)
                     .playPositions(game.sans)
@@ -122,3 +120,36 @@ final class ApiMoveStream(
       clock: Option[ByColor[Centis]]
   ): JsObject =
     withClock(Json.obj("board" -> board, "turn" -> turn.name).add("lm" -> lastMove), clock)
+
+object ApiMoveStream:
+
+  /** One position of a Go game's stream: its compact board (`GoBridge.board`), the player to move, the move
+    * that led to it (an SGF point or `pass`; none at the start) and its index among the game's plies, which
+    * picks its clock times.
+    */
+  case class GoFrame(board: String, turn: Color, lastMove: Option[String], plyIndex: Int)
+
+  /** A Go game's positions: the start, then one after each placement or pass. Resuming from the scoring phase
+    * is not a ply (ADR 0019 §3) and changes neither the board nor the player to move, so it sends none. None
+    * if the setup can't be started or an action is refused, which a stored game never has.
+    */
+  def goFrames(go: ligo.gorules.GoGame): Option[Vector[GoFrame]] =
+    ligo.gorules.GoGame
+      .start(go.setup)
+      .toOption
+      .flatMap: start =>
+        val first = GoFrame(GoBridge.board(start), GoBridge.color(start.toMove), none, 0)
+        go.actions
+          .foldLeft(Option(Vector(first) -> start)): (acc, action) =>
+            acc.flatMap: (frames, g) =>
+              g(action).toOption.map: next =>
+                if action == ligo.gorules.Action.Resume then frames -> next
+                else
+                  val frame = GoFrame(
+                    GoBridge.board(next),
+                    GoBridge.color(next.toMove),
+                    GoBridge.token(action).some,
+                    frames.size
+                  )
+                  (frames :+ frame) -> next
+          .map(_._1)

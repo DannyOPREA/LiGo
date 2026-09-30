@@ -35,13 +35,14 @@ final class Puzzle(env: Env, apiC: => Api) extends LilaController(env):
     )
 
   def daily = Open:
-    negotiateApi(
-      html = comingLater,
-      api = v =>
-        Found(env.puzzle.daily.get): daily =>
-          WithPuzzlePerf:
-            jsonView.analysis(daily.puzzle, PuzzleAngle.mix, apiVersion = v.some).dmap { Ok(_) }
-    ).dmap(_.noCache)
+    NoBot:
+      negotiateApi(
+        html = comingLater,
+        api = v =>
+          Found(env.puzzle.daily.get): daily =>
+            WithPuzzlePerf:
+              jsonView.analysis(daily.puzzle, PuzzleAngle.mix, apiVersion = v.some).dmap { Ok(_) }
+      ).dmap(_.noCache)
 
   def apiDaily = Anon:
     Found(env.puzzle.daily.get): daily =>

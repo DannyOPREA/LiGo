@@ -162,17 +162,15 @@ final private[api] class RoundApi(
           logChessError = lila.log.system.warn
         ))
 
-  // A Go game's move list is built by the browser from `game.go.moves` (unit 3.18); chess steps would
-  // describe the unused chess game it carries until unit 3.17.
+  // A Go game's move list is built by the browser from `game.go.moves` (unit 3.18), which ignores these
+  // steps. Until then a Go game gets the chess round UI's single starting step, so that page still loads.
   private def withSteps(pov: Pov, initialFen: Option[Fen.Full])(obj: JsObject) =
-    if pov.game.isGo then obj + ("steps" -> JsArray())
-    else
-      obj + ("steps" -> lila.round.StepBuilder(
-        id = pov.gameId,
-        sans = pov.game.sans,
-        variant = pov.game.variant,
-        initialFen = initialFen | pov.game.variant.initialFen
-      ))
+    obj + ("steps" -> lila.round.StepBuilder(
+      id = pov.gameId,
+      sans = pov.game.sans,
+      variant = pov.game.variant,
+      initialFen = initialFen | pov.game.variant.initialFen
+    ))
 
   private def withNote(note: String)(json: JsObject) =
     if note.isEmpty then json else json + ("note" -> JsString(note))
