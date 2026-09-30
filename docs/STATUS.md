@@ -131,8 +131,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - `lila/AGENTS.md` (lichess's contributor guide) stays in the tree. Claude Code no longer loads it
   on its own now that CLAUDE.md files exist, and `lila/CLAUDE.md` says LiGo's rules win where it
   disagrees; `guard-bash.sh` blocks non-frozen `pnpm install`, cloud `sbt clean` and `bin/deploy`.
-- Upstream non-free/NC assets were removed in unit 3.1 (COPYING.md §1.1). The manifest text and the
-  default background image URL still say lichess until unit 3.8.
+- Upstream non-free/NC assets were removed in unit 3.1 (COPYING.md §1.1). Unit 3.8 rebranded the
+  English text of the kept pages; other languages, and strings of removed features, still say
+  Lichess until the translations are tidied up.
 
 ## Phase progress
 | Phase | State |

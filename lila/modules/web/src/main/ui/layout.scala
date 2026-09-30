@@ -110,7 +110,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
       }"><input type="hidden" name="redirect" value="${ctx.req.path}"><button id="nvui-button" type="submit">$btnText</button>$tutorialLink</form>"""
 
   val assetsMissingTroubleshooting = raw:
-    """<h2 id="assets-missing"><a href="/page/network-administrators">Your network blocks the Lichess assets!</a></h2>"""
+    """<h2 id="assets-missing"><a href="/page/network-administrators">Your network blocks the LiGo assets!</a></h2>"""
 
   def zenZone(using Translate) = spaceless:
     s"""

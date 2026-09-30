@@ -44,6 +44,6 @@ export function upgradeNag() {
   ) {
     pubsub
       .after('polyfill.dialog')
-      .then(() => alert('Your browser is out of date.\nLichess may not work properly.'));
+      .then(() => alert('Your browser is out of date.\nLiGo may not work properly.'));
   }
 }

@@ -55,7 +55,7 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits):
               trans.puzzle.findTheBestMoveForWhite.txt(),
               trans.puzzle.findTheBestMoveForBlack.txt()
             )
-            s"Lichess tactic trainer: $findMove. Played by ${puzzle.plays} players."
+            s"LiGo tactic trainer: $findMove. Played by ${puzzle.plays} players."
         )
       )
       .hrefLangs(langPath)

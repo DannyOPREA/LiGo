@@ -127,7 +127,7 @@ final class PersonalDataExport(
           Source:
             appeals.flatMap: appeal =>
               List(textTitle("Appeal")) ++ appeal.msgs.map: msg =>
-                val author = if appeal.user.is(msg.by) then "you" else "Lichess"
+                val author = if appeal.user.is(msg.by) then "you" else "LiGo"
                 s"${textDate(msg.at)} by $author\n${msg.text}$bigSep"
 
     val reports = Source.futureSource:

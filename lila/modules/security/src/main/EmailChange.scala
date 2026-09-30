@@ -28,7 +28,7 @@ final class EmailChange(
           Mailer.Message(
             to = email,
             subject = trans.emailChange_subject.txt(user.username),
-            text = Mailer.txt.addServiceNote(s"""
+            text = Mailer.txt.addServiceNote(routeUrl)(s"""
 ${trans.emailChange_intro.txt()}
 ${trans.emailChange_click.txt()}
 
@@ -40,7 +40,7 @@ ${trans.common_linkNotWorking.txt()}
               pDesc(trans.emailChange_intro()),
               p(trans.emailChange_click()),
               potentialAction(metaName("Change email address"), Mailer.html.url(url)),
-              serviceNote
+              serviceNote(routeUrl)
             ).some
           )
       }

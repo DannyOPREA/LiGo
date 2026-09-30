@@ -33,15 +33,10 @@ object contact:
 
   private def howToReportBugs(using Translate): Frag =
     frag(
+      // LiGo (unit 3.8): LiGo's own issue tracker; lichess's mobile app and Discord links went.
       ul(
         li(
-          a(href := "https://github.com/lichess-org/lila/issues")(reportWebsiteIssue())
-        ),
-        li(
-          a(href := "https://github.com/lichess-org/mobile/issues")(reportMobileIssue())
-        ),
-        li(
-          a(href := "https://discord.gg/lichess")(reportBugInDiscord())
+          a(href := s"${LigoBrand.repoUrl}/issues")(reportWebsiteIssue())
         )
       ),
       p(howToReportBug())
@@ -195,9 +190,9 @@ object contact:
               "security",
               "Security vulnerability",
               p(
-                "Please refer to our ",
-                a(href := "https://github.com/lichess-org/lila/security/policy")("Security policy"),
-                "."
+                "Please report it privately through ",
+                a(href := s"${LigoBrand.repoUrl}/security")("the LiGo repository's security page"),
+                ", not in a public issue."
               )
             ),
             Leaf(
@@ -252,7 +247,7 @@ object contact:
               "GDPR erasure",
               p(
                 "You may request the ",
-                a(href := routes.Account.delete)("complete deletion of your Lichess account.")
+                a(href := routes.Account.delete)("complete deletion of your LiGo account.")
               )
             ),
             Leaf(
@@ -261,22 +256,10 @@ object contact:
               p(
                 a(href := "/dmca")("Complete this form"),
                 " ",
-                "if you are the original copyright holder, or an agent acting on behalf of the copyright holder, and believe Lichess is hosting work(s) you hold the copyright to."
+                "if you are the original copyright holder, or an agent acting on behalf of the copyright holder, and believe LiGo is hosting work(s) you hold the copyright to."
               )
             ),
-            Leaf(
-              "contact-broadcast",
-              broadcastTournamentOnLichess(),
-              frag(
-                p(ifYouWantToBroadcastClause1()),
-                p(
-                  ifYouWantToBroadcastClause2(
-                    contactEmailLink("broadcast@lichess.org"),
-                    a(href := "https://discord.gg/Syx9CbN8Jv")(ourDiscordServer())
-                  )
-                )
-              )
-            ),
+            // "Broadcast a tournament" went with broadcasts (units 3.3 and 3.8).
             Leaf(
               "authorize",
               authorizationToUse(),
@@ -294,18 +277,11 @@ object contact:
                 p(
                   monetiseNoAdsTrackingOrTraffic()
                 ),
-                p(monetiseNoMarketingEmail()),
-                br,
-                p(
-                  monetiseEncourageEveryoneTo(a(href := "/ads")(monetiseBlockAllAdsAndTrackers()))
-                )
+                p(monetiseNoMarketingEmail())
+                // the "block all ads" link to lichess's /ads page went in unit 3.8.
               )
             ),
-            Leaf(
-              "buy",
-              buyingLichess(),
-              p("We are not selling, to anyone, for any price. Ever.")
-            ),
+            // "Buying Lichess" went in unit 3.8: LiGo may be handed to OGS one day (docs/PLAN.md).
             Leaf(
               "contact-other",
               noneOfTheAbove(),

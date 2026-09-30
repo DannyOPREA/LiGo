@@ -114,7 +114,7 @@ final class DevUi(helpers: Helpers)(modMenu: String => Context ?=> Frag):
         )
 
   private val cliExamples = """uptime
-announce 10 minutes Lichess will restart!
+announce 10 minutes LiGo will restart!
 announce cancel
 change asset version
 notify url users {username1,username2,username3} {url} {link title} | {link description}

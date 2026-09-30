@@ -35,42 +35,61 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
       .css("bits.faq"):
         div(cls := "faq box box-pad")(
           h1(cls := "box__top")(trf.frequentlyAskedQuestions()),
-          h2("Lichess"),
+          // LiGo (unit 3.8): LiGo's own questions replace lichess's name, contributing and "sites
+          // based on Lichess" questions.
+          h2(siteName),
           question(
-            "name",
-            trf.whyIsLichessCalledLichess.txt(),
+            "what",
+            trf.whatIsLiGo.txt(),
             p(
-              trf.lichessCombinationLiveLightLibrePronounced(em(trf.leechess())),
-              " ",
-              a(href := "https://www.youtube.com/watch?v=KRpPqcrdE-o")(trf.hearItPronouncedBySpecialist())
-            ),
-            p(
-              trf.whyLiveLightLibre()
-            ),
-            p(
-              trf.whyIsLilaCalledLila(
-                a(href := "https://github.com/lichess-org/lila")("lila"),
-                a(href := "https://scala-lang.org/")("Scala")
+              trf.whatIsLiGoAnswer(
+                a(href := "https://lichess.org")("lichess"),
+                a(href := routes.Cms.source)(trans.site.sourceCode())
               )
             )
           ),
-          // The "contributing" question (donations) went with the plan module (unit 3.7).
           question(
-            "sites_based_on_Lichess",
-            trf.areThereWebsitesBasedOnLichess.txt(),
-            p(
-              trf.yesLichessInspiredOtherOpenSourceWebsites(
-                a(href := "/source")(trans.site.sourceCode()),
-                a(href := "/api")("API"),
-                a(href := "https://database.lichess.org")(trans.site.database())
+            "name",
+            trf.whyIsLiGoCalledLiGo.txt(),
+            p(trf.ligoNameExplanation())
+          ),
+          question(
+            "built-from",
+            trf.whatIsLiGoBuiltFrom.txt(),
+            p(trf.ligoReusesFreeSoftware()),
+            ul(
+              li(trf.builtFromLichess(a(href := "https://github.com/lichess-org/lila")("lichess"))),
+              li(
+                trf.builtFromStrategygames(
+                  a(href := "https://github.com/Mind-Sports-Games/strategygames")("strategygames")
+                )
+              ),
+              li(trf.builtFromGoban(a(href := "https://github.com/online-go/goban")("goban"))),
+              li(
+                trf.builtFromKataGoAndGoscorer(
+                  a(href := "https://github.com/lightvector/KataGo")("KataGo"),
+                  a(href := "https://github.com/lightvector/goscorer")("goscorer")
+                )
               )
             ),
-            ul(
-              li(a(href := "https://blitztactics.com/about")("Blitz Tactics")),
-              li(a(href := "https://tailuge.github.io/chess-o-tron/html/blunder-bomb.html")("Blunder Bomb")),
-              li(a(href := "https://lidraughts.org")("lidraughts.org")),
-              li(a(href := "https://playstrategy.org")("playstrategy.org")),
-              li(a(href := "https://lishogi.org")("lishogi.org"))
+            p(
+              trf.otherSitesGrewFromLichess(
+                a(href := "https://lishogi.org")("lishogi.org"),
+                a(href := "https://lidraughts.org")("lidraughts.org"),
+                a(href := "https://playstrategy.org")("playstrategy.org")
+              )
+            )
+          ),
+          question(
+            "rules",
+            trf.whichRulesDoesLiGoUse.txt(),
+            p(trf.ligoRulesExplanation()),
+            p(
+              trf.rulesDetailsInX(
+                a(href := s"${LigoBrand.repoUrl}/blob/${LigoBrand.repoBranch}/docs/rules/spec.md")(
+                  trf.ligoRulesSpec()
+                )
+              )
             )
           ),
           question(
@@ -102,137 +121,16 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
               trf.youCannotApply()
             )
           ),
-          question(
-            "correspondence",
-            trf.isCorrespondenceDifferent.txt(),
-            p(
-              trf.youCanUseOpeningBookNoEngine()
-            ),
-            p(
-              trf.pleaseReadFairPlayPage(a(href := cmsPageUrl("fair-play"))(trf.fairPlayPage()))
-            )
-          ),
-          h2(trf.gameplay()),
-          question(
-            "time-controls",
-            trf.howBulletBlitzEtcDecided.txt(),
-            p(
-              trf.basedOnGameDuration(strong(trf.durationFormula()))
-            ),
-            ul(
-              li(trf.inferiorThanXsEqualYtimeControl(29, trans.site.ultraBullet())),
-              li(trf.inferiorThanXsEqualYtimeControl(179, trans.site.bullet())),
-              li(trf.inferiorThanXsEqualYtimeControl(479, trans.site.blitz())),
-              li(trf.inferiorThanXsEqualYtimeControl(1499, trans.site.rapid())),
-              li(trf.superiorThanXsEqualYtimeControl(1500, trans.site.classical()))
-            )
-          ),
-          question(
-            "variants",
-            trf.whatVariantsCanIplay.txt(),
-            p(
-              trf.lichessSupportChessAnd(
-                a(href := routes.Cms.variantHome)(trf.eightVariants())
-              )
-            )
-          ),
-          question(
-            "acpl",
-            trf.whatIsACPL.txt(),
-            p(
-              trf.acplExplanation()
-            )
-          ),
-          question(
-            "timeout",
-            trf.insufficientMaterial.txt(),
-            p(
-              trf.lichessFollowFIDErules(a(href := fideHandbookUrl)(trf.fideHandbookX("§6.9")))
-            )
-          ),
-          question(
-            "en-passant",
-            trf.discoveringEnPassant.txt(),
-            p(
-              trf.explainingEnPassant(
-                a(href := "https://en.wikipedia.org/wiki/En_passant")(trf.goodIntroduction()),
-                a(href := fideHandbookUrl)(trf.fideHandbook()),
-                trf.lichessTraining()
-              )
-            ),
-            p(
-              trf.watchIMRosenCheckmate(
-                a(href := "https://www.reddit.com/r/AnarchyChess/comments/p9wuic/eric_rosen_ascending/")(
-                  "en passant"
-                )
-              )
-            )
-          ),
-          question(
-            "threefold",
-            trf.threefoldRepetition.txt(),
-            p(
-              trf.threefoldRepetitionExplanation(
-                a(href := "https://en.wikipedia.org/wiki/Threefold_repetition")(
-                  trf.threefoldRepetitionLowerCase()
-                ),
-                a(href := fideHandbookUrl)(trf.fideHandbook())
-              )
-            ),
-            h4(trf.notRepeatedMoves()),
-            p(
-              trf.repeatedPositionsThatMatters(
-                em(trf.positions())
-              )
-            ),
-            h4(trf.weRepeatedthreeTimesPosButNoDraw()),
-            p(
-              trf.threeFoldHasToBeClaimed(
-                a(href := routes.Pref.form("game-behavior"))(trf.configure())
-              )
-            )
-          ),
+          // lichess's gameplay questions (time-control formula, variants, ACPL, insufficient
+          // material, en passant, threefold repetition) went in unit 3.8: they are chess rules.
           h2(trf.accounts()),
-          question(
-            "titles",
-            trf.titlesAvailableOnLichess.txt(),
-            p(
-              trf.lichessRecognizeAllOTBtitles(
-                a(href := "https://github.com/lichess-org/lila/wiki/Handling-title-verification-requests")(
-                  trf.asWellAsManyNMtitles()
-                )
-              )
-            ),
-            ul(
-              li("Grandmaster (GM)"),
-              li("International Master (IM)"),
-              li("FIDE Master (FM)"),
-              li("Candidate Master (CM)"),
-              li("Woman Grandmaster (WGM)"),
-              li("Woman International Master (WIM)"),
-              li("Woman FIDE Master (WFM)"),
-              li("Woman Candidate Master (WCM)")
-            ),
-            // title verification form link removed with the title module (unit 3.3).
-            p(
-              trf.showYourTitle(
-                trf.verificationForm(),
-                a(href := "#lm")("Lichess Master (LM)")
-              )
-            )
-          ),
-          question(
-            "lm",
-            trf.canIbecomeLM.txt(),
-            p(strong(trf.noUpperCaseDot())),
-            p(trf.lMtitleComesToYouDoNotRequestIt())
-          ),
+          // the FIDE titles and "Lichess Master" questions went in unit 3.8.
           question(
             "usernames",
             trf.whatUsernameCanIchoose.txt(),
             p(
               trf.usernamesNotOffensive(
-                a(href := "https://lichess.org/page/username-policy")(trf.guidelines())
+                a(href := cmsPageUrl("username-policy"))(trf.guidelines())
               )
             )
           ),
@@ -241,19 +139,7 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
             trf.canIChangeMyUsername.txt(),
             p(trf.usernamesCannotBeChanged.txt())
           ),
-          question(
-            "trophies",
-            trf.uniqueTrophies.txt(),
-            h4("The Golden Zee"),
-            p(
-              trf.ownerUniqueTrophies(
-                a(href := "https://lichess.org/@/ZugAddict")("ZugAddict")
-              )
-            ),
-            p(
-              trf.goldenZeeExplanation()
-            )
-          ),
+          // the lichess-only trophy question went in unit 3.8.
           h2(trf.lichessRatings()),
           question(
             "ratings",
@@ -354,19 +240,7 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
             h3("Microsoft Edge (", trf.desktop(), ")"),
             p(trf.enableAutoplayForSoundsMicrosoftEdge())
           ),
-          question(
-            "make-a-bot",
-            "Make a Lichess bot?",
-            p(
-              "To learn how to create a ",
-              a(href := "https://lichess.org/blog/WvDNticAAMu_mHKP/welcome-lichess-bots")("Lichess bot"),
-              ", please read ",
-              a(href := "https://lichess.org/@/thibault/blog/how-to-create-a-lichess-bot/FuKyvDuB")(
-                "this blog post"
-              ),
-              "."
-            )
-          ),
+          // "Make a Lichess bot?" went with the bots (units 3.5 and 3.8).
           question(
             "stop-chess-addiction",
             trf.stopMyselfFromPlaying.txt(),
@@ -375,7 +249,7 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
                 a(href := "https://getcoldturkey.com")("ColdTurkey"),
                 a(href := "https://freedom.to")("Freedom"),
                 a(href := "https://www.proginosko.com/leechblock")("LeechBlock"),
-                a(href := "https://lichess.org/page/userstyles")(trf.lichessUserstyles()),
+                a(href := cmsPageUrl("userstyles"))(trf.lichessUserstyles()),
                 a(href := "https://github.com/ornicar/userstyles/blob/master/lichess.fewer-pools.user.css")(
                   trf.fewerLobbyPools()
                 ),

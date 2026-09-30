@@ -61,13 +61,13 @@ final class EmailConfirmMailer(
             Mailer.Message(
               to = email,
               subject = trans.emailConfirm_subject.txt(user.username),
-              text = Mailer.txt.addServiceNote(EmailConfirm.emailText(url)),
+              text = Mailer.txt.addServiceNote(routeUrl)(EmailConfirm.emailText(url)),
               htmlBody = emailMessage(
                 pDesc(trans.emailConfirm_intro()),
                 pDesc(trans.emailConfirm_click()),
                 potentialAction(metaName("Activate account"), Mailer.html.url(url)),
                 small(trans.emailConfirm_justIgnore()),
-                serviceNote
+                serviceNote(routeUrl)
               ).some
             )
         }
@@ -275,5 +275,5 @@ $url
 
 ${trans.common_linkNotWorking.txt()}
 
-${trans.emailConfirm_justIgnore.txt("https://lichess.org")}
+${trans.emailConfirm_justIgnore.txt()}
 """

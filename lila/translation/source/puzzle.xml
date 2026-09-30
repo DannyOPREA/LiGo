@@ -76,7 +76,7 @@
   <string name="fromMyGames">From my games</string>
   <string name="lookupOfPlayer">View puzzles from a player's games</string>
   <string name="searchPuzzles">Search puzzles</string>
-  <string name="fromMyGamesNone">You have no puzzles in the database, but Lichess still loves you very much.
+  <string name="fromMyGamesNone">You have no puzzles in the database, but LiGo still loves you very much.
 
 Play rapid and classical games to increase your chances of having a puzzle added from your games!</string>
   <plurals name="puzzlesFoundInUserGames">
