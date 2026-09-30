@@ -64,7 +64,8 @@ def newGoGame(
           ply = startedAtPly,
           startedAtPly = startedAtPly
         )
-      val sloppy = newSloppy(chess, players, rated, source, pgnImport = None, daysPerTurn, rules)
+      // Go games are casual until unit 5.7 turns rated play on, whatever an older record or game asks for
+      val sloppy = newSloppy(chess, players, Rated.No, source, pgnImport = None, daysPerTurn, rules)
       NewGame(sloppy.copy(go = go.some))
 
 private def newSloppy(

@@ -19,42 +19,54 @@ object SetupForm:
 
   // Games against the computer (ai, aiFilled, api.ai) went with fishnet (unit 3.5).
 
+  // A Go game never starts from a chess position (unit 3.15), so a `fen` in the URL is dropped.
   def friendFilled(fen: Option[Fen.Full])(using Option[Me]): Form[FriendConfig] =
-    friend.fill(fen.foldLeft(FriendConfig.default): (config, f) =>
-      config.copy(fen = f.some, variant = chess.variant.FromPosition))
+    friend.fill(FriendConfig.default)
+
+  private val goFenError = "Go games can't start from a chess position"
+  private val ratedError = "Go games are casual until ratings arrive"
+  private val komiError = "Komi must be a multiple of 0.5 no bigger than the board"
 
   def friend(using me: Option[Me]) = Form:
     mapping(
-      "variant" -> variantWithFenAndVariants,
+      "variant" -> variant,
       "timeMode" -> timeMode,
       "time" -> time,
       "increment" -> increment,
       "days" -> days,
-      "mode" -> mode(withRated = me.isDefined),
+      "mode" -> mode(withRated = false), // casual until Phase 5
       "color" -> color,
-      "fen" -> fenField
+      "fen" -> fenField,
+      "size" -> goSize,
+      "ruleset" -> goRuleset,
+      "komi" -> goKomi
     )(FriendConfig.from)(_.>>)
       .verifying("Invalid clock", _.validClock)
       .verifying("Invalid speed", _.validSpeed(me.exists(_.isBot)))
       .verifying("Can't create rated unlimited game", !_.isRatedUnlimited)
-      .verifying("invalidFen", _.validFen)
+      .verifying(goFenError, _.validFen)
+      .verifying(komiError, _.go.valid)
 
   def hookFilled(timeModeString: Option[String])(using me: Option[Me]): Form[HookConfig] =
     hook.fill(HookConfig.default(me.isDefined).withTimeModeString(timeModeString))
 
   def hook(using me: Option[Me]) = Form:
     mapping(
-      "variant" -> variantWithVariants,
+      "variant" -> variant,
       "timeMode" -> timeMode,
       "time" -> time,
       "increment" -> increment,
       "days" -> days,
-      "mode" -> mode(me.isDefined),
+      "mode" -> mode(withRated = false), // casual until Phase 5
       "ratingRange" -> optional(ratingRange),
-      "color" -> lila.common.Form.empty
+      "color" -> lila.common.Form.empty,
+      "size" -> goSize,
+      "ruleset" -> goRuleset,
+      "komi" -> goKomi
     )(HookConfig.from)(_.>>)
       .verifying("Invalid clock", _.validClock)
       .verifying("Can't create rated unlimited game", !_.isRatedUnlimited)
+      .verifying(komiError, _.go.valid)
 
   private lazy val boardApiHookBase: Mapping[HookConfig] =
     mapping(
@@ -64,8 +76,11 @@ object SetupForm:
       "variant" -> optional(boardApiVariantKeys),
       "rated" -> optional(boolean.into[Rated]),
       "ratingRange" -> optional(ratingRange),
-      "color" -> optional(color)
-    )((t, i, d, v, r, g, c) =>
+      "color" -> optional(color),
+      "size" -> goSize,
+      "ruleset" -> goRuleset,
+      "komi" -> goKomi
+    )((t, i, d, v, r, g, c, size, ruleset, komi) =>
       HookConfig(
         variant = Variant.orDefault(v),
         timeMode = if d.isDefined then TimeMode.Correspondence else TimeMode.RealTime,
@@ -74,10 +89,13 @@ object SetupForm:
         days = d | Days(7),
         rated = r | Rated.No,
         ratingRange = g.fold(RatingRange.default)(RatingRange.orDefault),
-        color = lila.lobby.TriColor.orDefault(c)
+        color = lila.lobby.TriColor.orDefault(c),
+        go = lila.core.setup.GoOptions(size, ruleset, komi)
       )
     )(_ => none)
       .verifying("Invalid clock", _.validClock)
+      .verifying(ratedError, _.rated.no)
+      .verifying(komiError, _.go.valid)
 
   def boardApiHook(allowFastGames: Boolean) = Form:
     boardApiHookBase.verifying(
@@ -103,7 +121,11 @@ object SetupForm:
 
     lazy val optionalDays = "days" -> optional(days)
 
-    lazy val variant = "variant" -> optional(typeIn(Variant.list.all.map(_.key).toSet))
+    lazy val variant = "variant" -> optional(typeIn(boardApiVariants))
+
+    lazy val goSize = "size" -> Mappings.goSize
+    lazy val goRuleset = "ruleset" -> Mappings.goRuleset
+    lazy val goKomi = "komi" -> Mappings.goKomi
 
     lazy val message = "message" -> optional(
       nonEmptyText(maxLength = 8_000).verifying(
@@ -135,10 +157,14 @@ object SetupForm:
         message,
         "keepAliveStream" -> optional(boolean),
         rules,
-        "onlyIfOpponentFollowsMe" -> optional(boolean)
+        "onlyIfOpponentFollowsMe" -> optional(boolean),
+        goSize,
+        goRuleset,
+        goKomi
       )(ApiConfig.from)(_ => none)
-        .verifying("invalidFen", _.validFen)
-        .verifying("can't be rated", _.validRated)
+        .verifying(goFenError, _.validFen)
+        .verifying(ratedError, _.validRated)
+        .verifying(komiError, _.go.valid)
 
     def open(isAdmin: Boolean) = Form:
       openMapping.verifying(
@@ -163,6 +189,11 @@ object SetupForm:
       "expiresAt" -> optional:
         inTheFuture(ISOInstantOrTimestamp.mapping)
           .verifying("Open challenges must expire within 2 weeks", _.isBefore(nowInstant.plusWeeks(2)))
+      ,
+      goSize,
+      goRuleset,
+      goKomi
     )(OpenConfig.from)(_ => none)
-      .verifying("invalidFen", _.validFen)
-      .verifying("rated without a clock", c => c.clock.isDefined || c.days.isDefined || c.rated.no)
+      .verifying(goFenError, _.validFen)
+      .verifying(ratedError, _.rated.no)
+      .verifying(komiError, _.go.valid)

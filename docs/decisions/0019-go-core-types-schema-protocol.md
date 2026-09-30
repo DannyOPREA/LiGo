@@ -160,6 +160,12 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 (Amended in unit 3.16: the API move stream now streams Go games too, `{board, turn, lm, wc, bc}` per
 position; the bus `MoveGameEvent` carries strings (the FEN or compact board, the last move).
 logs/decisions.md, 3.16 row.)
+(Amended in unit 3.15: hooks, seeks, challenges and bulk pairings carry go-rules' `Setup` (size,
+ruleset, komi; handicap 0 until 4.9), stored in `seek`, `challenge` and `challenge_bulk` as an
+optional `go` sub-document with the game's own keys (`sz`, `ru`, `km`, `hc`); a record without one
+is read as 19×19, Japanese, 6.5 komi. Forms and the API take `size`, `ruleset` and `komi` (standard
+komi when omitted), create casual games only until 5.7, refuse chess variants and FENs, and rate in
+the `go` perf; pools create 19×19 Japanese casual games until 6.4. logs/decisions.md, 3.15 row.)
 (Amended in unit 3.14: 3.14 merges before 3.15, so for a while chess moves are no longer relayed and
 no Go games are created yet; lila-ws's lobby needed no change. The mini-board message keeps the
 name `fen`, its payload `{id, lm, board, turn, wc, bc}` with `turn` a colour name. logs/decisions.md,

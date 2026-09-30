@@ -319,6 +319,7 @@ final class Challenge(env: Env) extends LilaController(env):
         lila.challenge.Challenge.make(
           variant = config.variant,
           initialFen = config.position,
+          go = config.goSetup,
           timeControl = timeControl,
           rated = config.rated,
           color = config.color.name,
