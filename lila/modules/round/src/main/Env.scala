@@ -123,8 +123,6 @@ final class Env(
 
   lazy val selfReport = wire[SelfReport]
 
-  lazy val recentTvGames = wire[RecentTvGames]
-
   private lazy val farmBoostDetection = wire[FarmBoostDetection]
 
   lazy val perfsUpdater: PerfsUpdater = wire[PerfsUpdater]
@@ -182,8 +180,6 @@ final class Env(
         .allPlaying(userId)
         .map:
           _.foreach { pov => roundApi.tell(pov.gameId, RoundBus.Resign(pov.playerId)) }
-
-  val onTvGame: lila.game.core.OnTvGame = recentTvGames.put
 
   MoveLatMonitor.start(scheduler)
 

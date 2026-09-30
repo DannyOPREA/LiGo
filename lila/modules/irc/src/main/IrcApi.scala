@@ -218,31 +218,4 @@ final class IrcApi(
   private def impersonatedByText(impersonator: Option[LightUser]): String =
     impersonator.so(mod => s" (impersonated by ${markdown.modLink(mod.name)})")
 
-  object charge:
-    import lila.core.plan.ChargeEvent
-    private var buffer: Vector[ChargeEvent] = Vector.empty
-    private given Ordering[ChargeEvent] = Ordering.by[ChargeEvent, Int](_.cents)
-
-    def apply(event: ChargeEvent): Funit =
-      buffer = buffer :+ event
-      buffer.head.date
-        .isBefore(nowInstant.minusHours(24))
-        .so:
-          val firsts = scalalib.HeapSort
-            .topN(buffer.filter(_.username.value.nonEmpty), 10)
-            .map("@" + _.username)
-            .mkString(", ")
-          val amountSum = buffer.map(_.cents).sum
-          val patrons =
-            if buffer.lengthIs > 10
-            then s"$firsts and, like, ${buffer.length - 10} others,"
-            else firsts
-          displayMessage:
-            s"$patrons donated ${amount(amountSum)}. Monthly progress: ${buffer.last.percent}%"
-          .andDo:
-            buffer = Vector.empty
-
-    private def displayMessage(text: String) =
-      zulip(_.general, "lila")(markdown.linkifyUsers(text))
-
-    private def amount(cents: Int) = s"$$${BigDecimal(cents.toLong, 2)}"
+  // the donation summary (plan ChargeEvent) went with the plan module (unit 3.7).

@@ -280,15 +280,8 @@ final class ModUserUi(helpers: Helpers, modUi: ModUi, mailerEventsUrl: Url):
             ):
               submitButton(cls := "btn-rack__btn yes-no-confirm")("Blank password")
           )
-      ,
-      Granter(_.FreePatron).option {
-        postForm(
-          action := routes.Mod.freePatron(u.username),
-          title := "Give free Patron wings for a month",
-          cls := "btn-rack"
-        ):
-          submitButton(cls := "btn-rack__btn yes-no-confirm")("Free Patron")
-      }
+
+      // "Free Patron" went with the plan module (unit 3.7).
     )
 
   private def gdprEraseForm(u: User)(using Context) =

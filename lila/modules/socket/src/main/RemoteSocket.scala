@@ -9,7 +9,6 @@ import play.api.libs.json.*
 import java.util.concurrent.atomic.AtomicReference
 
 import lila.common.{ Bus, Lilakka }
-import lila.core.misc.streamer.{ StreamersOnline, StreamInfo }
 import lila.core.relation.{ Follow, UnFollow }
 import lila.core.round.Mlat
 import lila.core.security.CloseAccount
@@ -112,9 +111,6 @@ final class RemoteSocket(
 
   Bus.sub[UnFollow]:
     case UnFollow(u1, u2) => send.exec(Out.unfollow(u1, u2))
-
-  Bus.sub[StreamersOnline]: s =>
-    send.exec(Out.streamersOnline(s.streamers))
 
   final class StoppableSender(val conn: PubSub[String, String], channel: Channel) extends Sender:
     def apply(msg: String) = if !stopping then super.sendTo(channel, msg)
@@ -260,9 +256,6 @@ object RemoteSocket:
       def follow(u1: UserId, u2: UserId) = s"rel/follow $u1 $u2"
       def unfollow(u1: UserId, u2: UserId) = s"rel/unfollow $u1 $u2"
       def apiUserOnline(u: UserId, v: Boolean) = s"api/online $u ${boolean(v)}"
-      private given OWrites[StreamInfo] = Json.writes[StreamInfo]
-      def streamersOnline(streamers: Map[UserId, StreamInfo]) =
-        s"streamers/online ${Json.stringify(Json.toJson(streamers.mapKeys(_.value)))}"
       def announceUpdate(up: AnnounceUpdate) = s"announce/update ${up.current.map(_.json).so(Json.stringify)}"
       def respond(reqId: Int, payload: JsObject) = s"req/response $reqId ${Json.stringify(payload)}"
       def stop(reqId: Int) = s"lila/stop $reqId"

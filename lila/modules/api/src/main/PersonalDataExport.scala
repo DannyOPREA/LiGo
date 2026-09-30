@@ -2,12 +2,11 @@ package lila.api
 
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.*
+import reactivemongo.api.bson.BSONDocument
 import reactivemongo.pekkostream.cursorProducer
 
-import lila.coach.Coach
 import lila.db.dsl.{ *, given }
 import lila.game.Game
-import lila.streamer.Streamer
 
 final class PersonalDataExport(
     securityEnv: lila.security.Env,
@@ -16,13 +15,11 @@ final class PersonalDataExport(
     chatEnv: lila.chat.Env,
     relationEnv: lila.relation.Env,
     userRepo: lila.user.UserRepo,
-    streamerApi: lila.streamer.StreamerApi,
-    coachApi: lila.coach.CoachApi,
     appealApi: lila.appeal.AppealApi,
     shutupEnv: lila.shutup.Env,
     modLogApi: lila.mod.ModlogApi,
     reportEnv: lila.report.Env,
-    picfitUrl: lila.memo.PicfitUrl
+    db: lila.db.Db
 )(using Executor, Materializer):
 
   private val lightPerSecond = 60
@@ -57,44 +54,17 @@ final class PersonalDataExport(
         Source(List(textTitle("Followed players")) ++ userIds.map(_.value))
       }
 
-    val streamer = Source.futureSource:
-      streamerApi
-        .find(user)
-        .map:
-          _.map(_.streamer).so: s =>
-            List(textTitle("Streamer profile")) :::
-              List(
-                "name" -> s.name,
-                "image" -> s.picture.so(p => picfitUrl.thumbnail(p)(Streamer.imageDimensions).value),
-                "headline" -> s.headline.so(_.value),
-                "description" -> s.description.so(_.value),
-                "twitch" -> s.twitch.so(_.fullUrl),
-                "youtube" -> s.youtube.so(_.fullUrl),
-                "createdAt" -> textDate(s.createdAt),
-                "updatedAt" -> textDate(s.updatedAt),
-                "seenAt" -> textDate(s.seenAt),
-                "liveAt" -> s.liveAt.so(textDate)
-              ).map: (k, v) =>
-                s"$k: $v"
-        .map(Source.apply)
-
-    val coach = Source.futureSource:
-      coachApi
-        .find(user)
-        .map:
-          _.map(_.coach).so: c =>
-            List(textTitle("Coach profile")) :::
-              c.profile.textLines :::
-              List(
-                "image" -> c.picture.so(p => picfitUrl.thumbnail(p)(Coach.imageDimensions).value),
-                "languages" -> c.languages.mkString(", "),
-                "createdAt" -> textDate(c.createdAt),
-                "updatedAt" -> textDate(c.updatedAt)
-              ).map: (k, v) =>
-                s"$k: $v"
-        .map(Source.apply)
-
     // forum posts and direct messages went with the forum and msg modules (unit 3.6).
+    // The streamer and coach modules went with unit 3.7, but profiles stored before then stay
+    // until the account is deleted, so the export still includes them, as stored.
+    def storedProfile(collName: String, title: String) = Source.futureSource:
+      db(CollName(collName))
+        .byId[Bdoc](user.id.value)
+        .map: doc =>
+          Source(doc.so(d => List(textTitle(title), BSONDocument.pretty(d))))
+
+    val streamer = storedProfile("streamer", "Streamer profile")
+    val coach = storedProfile("coach", "Coach profile")
 
     def gameChatsLookup(lookup: Bdoc) =
       gameEnv.gameRepo.coll

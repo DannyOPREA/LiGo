@@ -10,7 +10,6 @@ import scalalib.actor.AsyncActorConcMap
 import lila.chat.BusChan
 import lila.common.Json.given
 import lila.common.{ Bus, Lilakka }
-import lila.core.game.TvSelect
 import lila.core.net.IpAddress
 import lila.core.round.*
 import lila.core.socket.{ protocol as P, * }
@@ -177,10 +176,6 @@ final class RoundSocket(
       roundHandler.orElse(socketKit.baseHandler)
     )
     .andDo(send(P.Out.boot))
-
-  Bus.sub[TvSelect]:
-    case TvSelect(gameId, speed, _, json) =>
-      sendForGameId(gameId).exec(Protocol.Out.tvSelect(gameId, speed, json))
 
   Bus.sub[Tell]:
     case Tell(gameId, msg) => rounds.tell(gameId, msg)
@@ -430,9 +425,6 @@ object RoundSocket:
         if e.troll then flags += 't'
         if flags.isEmpty then flags += '-'
         s"r/ver $roomId $version $flags ${e.typ} ${e.data}"
-
-      def tvSelect(gameId: GameId, speed: chess.Speed, data: JsObject) =
-        s"tv/select $gameId ${speed.id} ${Json.stringify(data)}"
 
       def tourStanding(tourId: TourId, data: JsValue) =
         s"r/tour/standing $tourId ${Json.stringify(data)}"

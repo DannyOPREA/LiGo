@@ -45,9 +45,6 @@ final class ActivityWriteApi(
   def corresMove(gameId: GameId, userId: UserId) = update(userId): a =>
     bdoc(ActivityFields.corres -> { (~a.corres).add(gameId, moved = true, ended = false) })
 
-  def plan(userId: UserId, months: Int) = update(userId): _ =>
-    bdoc(ActivityFields.patron -> Patron(months))
-
   def follow(from: UserId, to: UserId) =
     update(from) { a =>
       bdoc(ActivityFields.follows -> { (~a.follows).addOut(to) })
@@ -67,10 +64,6 @@ final class ActivityWriteApi(
                 regexId(userId) ++ bdoc("f.i.ids" -> from.id),
                 pull("f.i.ids" -> from.id)
               )
-
-  def streamStart(userId: UserId) =
-    update(userId): _ =>
-      bdoc(ActivityFields.stream -> true)
 
   private def update(userId: UserId)(makeSetters: Activity => Bdoc): Funit =
     withColl: coll =>

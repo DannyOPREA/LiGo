@@ -1,6 +1,5 @@
 import { h } from 'snabbdom';
 
-import { licon } from 'lib/licon';
 import { initMiniBoard } from 'lib/view';
 
 import type SetupController from '@/setupCtrl';
@@ -22,17 +21,9 @@ export const fenInput = (ctrl: SetupController) => {
         hook: { insert: ctrl.validateFen },
         class: { failure: ctrl.fenError },
       }),
-      h('a.button.button-empty', {
-        attrs: {
-          'data-icon': licon.Pencil,
-          title: i18n.site.boardEditor,
-          href: '/editor' + (fen && !ctrl.fenError ? `/${fen.replace(/ /g, '_')}` : ''),
-        },
-      }),
     ]),
     h(
-      'a.fen__board',
-      { attrs: { href: `/editor/${ctrl.lastValidFen.replace(/ /g, '_')}` } },
+      'div.fen__board',
       !ctrl.lastValidFen || !ctrl.validFen()
         ? null
         : h('div.position.mini-board.cg-wrap.is2d', {

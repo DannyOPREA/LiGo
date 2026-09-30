@@ -89,18 +89,6 @@ $regards
     logger.info(e.message)
   }
 
-  def onBecomeCoach(user: User): Funit =
-    sendEmail(user)(
-      subject = _ => "Coach profile unlocked on lichess.org",
-      body = _ => s"""Hello,
-
-It is our pleasure to welcome you as a Lichess coach.
-Your coach profile awaits you on ${routeUrl(routes.Coach.edit)}.
-
-$regards
-"""
-    )
-
   def onAppealReply(user: User): Funit =
     val url = routeUrl(routes.Appeal.home)
     sendEmail(user)(

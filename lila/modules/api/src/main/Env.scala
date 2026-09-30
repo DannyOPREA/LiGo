@@ -11,12 +11,10 @@ import lila.core.misc.lpv.Lpv
 @Module
 final class Env(
     net: lila.core.config.NetConfig,
+    db: lila.db.Db,
     securityEnv: lila.security.Env,
     mailerEnv: lila.mailer.Env,
     puzzleEnv: lila.puzzle.Env,
-    gameSearch: lila.gameSearch.GameSearchApi,
-    coachEnv: lila.coach.Env,
-    planEnv: lila.plan.Env,
     gameEnv: lila.game.Env,
     chatEnv: lila.chat.Env,
     roundEnv: lila.round.Env,
@@ -24,7 +22,6 @@ final class Env(
     prefApi: lila.pref.PrefApi,
     playBanApi: lila.playban.PlaybanApi,
     userEnv: lila.user.Env,
-    streamerEnv: lila.streamer.Env,
     relationEnv: lila.relation.Env,
     analyseEnv: lila.analyse.Env,
     lobbyEnv: lila.lobby.Env,
@@ -40,15 +37,12 @@ final class Env(
     fideIdOf: lila.core.user.PublicFideIdOf,
     modLogApi: lila.mod.ModlogApi,
     activityWriteApi: lila.activity.ActivityWriteApi,
-    picfitUrl: lila.memo.PicfitUrl,
     cacheApi: lila.memo.CacheApi,
     webConfig: lila.web.WebConfig,
     manifest: lila.web.AssetManifest,
     tokenApi: lila.oauth.AccessTokenApi,
-    tv: lila.tv.Tv,
     activityRead: lila.activity.ActivityReadApi,
-    activityJson: lila.activity.JsonView,
-    recapEnv: lila.recap.Env
+    activityJson: lila.activity.JsonView
 )(using scheduler: Scheduler)(using
     Mode,
     Executor,
@@ -106,13 +100,6 @@ final class Env(
     accountTermination.garbageCollect(gc.userId)
   Bus.sub[lila.core.playban.RageSitClose]: close =>
     accountTermination.lichessDisable(close.userId)
-
-  lila.common.Cli.handle():
-    case "push" :: "recap" :: user :: year :: Nil =>
-      for
-        (title, body) <- recapEnv.translateNotif(UserId(user), year)
-        _ <- pushEnv.pushApi.recap(UserId(user), year.toInt, title, body)
-      yield s"""Sent "$title""""
 
   lila.i18n.Registry.asyncLoadLanguages()
 

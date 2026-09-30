@@ -2,7 +2,6 @@ package lila.app
 package mashup
 
 import alleycats.Zero
-import play.api.data.Form
 
 import lila.bookmark.BookmarkApi
 import lila.core.data.SafeJsonStr
@@ -16,9 +15,7 @@ case class UserInfo(
     nbs: UserInfo.NbGames,
     user: UserWithPerfs,
     trophies: lila.api.UserApi.TrophiesAndAwards,
-    ratingChart: Option[SafeJsonStr],
-    isStreamer: Boolean,
-    isCoach: Boolean
+    ratingChart: Option[SafeJsonStr]
 ):
   export trophies.ranks
   export nbs.crosstable
@@ -27,7 +24,7 @@ object UserInfo:
 
   enum Angle(val key: String):
     case Activity extends Angle("activity")
-    case Games(searchForm: Option[Form[?]]) extends Angle("games")
+    case Games extends Angle("games")
     case Other extends Angle("other")
 
   case class Social(
@@ -82,9 +79,7 @@ object UserInfo:
   final class UserInfoApi(
       perfsRepo: lila.user.UserPerfsRepo,
       ratingChartApi: lila.history.RatingChartApi,
-      userApi: lila.api.UserApi,
-      streamerApi: lila.streamer.StreamerApi,
-      coachApi: lila.coach.CoachApi
+      userApi: lila.api.UserApi
   )(using Executor):
     def fetch(user: User, nbs: NbGames, restricted: Boolean)(using
         ctx: Context
@@ -96,7 +91,5 @@ object UserInfo:
         userApi.getTrophiesAndAwards(user).mon(lila.mon.user.segment("trophies")),
         showRatings
           .so(ratingChartApi(user, computeIfNeeded = ctx.isAuth))
-          .mon(lila.mon.user.segment("ratingChart")),
-        streamerApi.isActualStreamer(user).mon(lila.mon.user.segment("streamer")),
-        coachApi.isListedCoach(user).mon(lila.mon.user.segment("coach"))
-      ).mapN(UserInfo(nbs, _, _, _, _, _))
+          .mon(lila.mon.user.segment("ratingChart"))
+      ).mapN(UserInfo(nbs, _, _, _))

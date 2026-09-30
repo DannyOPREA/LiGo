@@ -54,18 +54,7 @@ final class FaqUi(helpers: Helpers, sitePages: SitePages)(
               )
             )
           ),
-          question(
-            "contributing",
-            trf.howCanIContributeToLichess.txt(),
-            p(trf.lichessPoweredByDonationsAndVolunteers()),
-            p(
-              trf.findMoreAndSeeHowHelp(
-                a(href := routes.Plan.index())(trf.beingAPatron()),
-                a(href := routes.Main.costs)(trf.breakdownOfOurCosts()),
-                a(href := routes.Cms.help)(trf.otherWaysToHelp())
-              )
-            )
-          ),
+          // The "contributing" question (donations) went with the plan module (unit 3.7).
           question(
             "sites_based_on_Lichess",
             trf.areThereWebsitesBasedOnLichess.txt(),

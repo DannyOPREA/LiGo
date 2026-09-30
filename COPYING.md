@@ -101,6 +101,12 @@ packages and the forum, blog and class bundles in `ui/bits`, and with them the o
 `@textcomplete/core` 0.1.13, `@textcomplete/textarea` 0.1.13, `@textcomplete/utils` 0.1.13,
 `textarea-caret` 3.1.0 and `undate` 0.3.0 (all MIT). No package was added.
 
+Unit 3.7 removed the extras and search: the `ui/recap` and `ui/editor` workspace packages and the
+streamer, coach, video, news-feed, Patron, TV and game-search bundles in `ui/bits`, and with them the
+only user of `swiper` 12.2.0 (MIT). On the server side, lila's sbt build dropped its dependency on
+lichess's game-search client (`com.github.lichess-org.lila-search` `client` 3.6.0) with the `search`
+module. No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file
