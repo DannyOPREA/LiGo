@@ -19,4 +19,5 @@
 - [Puzzle solver review patterns](puzzle-solver-review-patterns.md) — settled() pass bug, tree-depth histogram, duplicate shapes, frame port rerun, indep L&D checker, symmetry dedupe
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick
 - [Perf budget review patterns](perf-budget-review-patterns.md) — undefined limit passes, harness overhead in timings, goban shadow DOM, scratch probes (9.5)
+- [Rebrand text review patterns](rebrand-text-review-patterns.md) — en-US dest fallback, CRLF churn, verify.lichess.org mailto, sbt 2 cached Total 0 (3.8)
 - [Board a11y review patterns](board-a11y-review-patterns.md) — e.repeat, click never focuses goban, mousetrap clash, broad axe regex, scratch probes (9.4)
