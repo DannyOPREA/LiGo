@@ -41,7 +41,18 @@
   upstream name `fen` so the browser's existing socket plumbing still routes it (3.19 draws it);
   `turn` is a colour name; the move event is parsed as JSON (robust to key order; only watched games
   pay for it). The wire format matches GoPlayTest's move event unchanged.
-- Verified by Claude: /verify, `dev/ligo test ws` 12/12, `sbt check` (scalafix + scalafmt). ·
+- Order: this unit ships before 3.15, against PLAN §5's dependency column and ADR 0019 §8 (3.15
+  first), because the coordinator started it when 3.13 merged and 3.15 was still being built. The
+  cost is the dev-stack gap above: chess moves are dropped as "unexpected" (logged, no ack). ADR 0019
+  §8 amended.
+- Follow-ups: the browser's mini-board handler (`lila/ui/lib/src/pubsub.ts` `socket.in.fen`,
+  `ui/site/src/boot.ts` → `updateMiniGame`, which reads `data.fen`) still expects the chess payload
+  and will throw on Go updates once Go games exist; unit 3.19 (Go mini boards) must switch it to
+  `board`/`turn`. lila's `Event.GoMove` writes any non-stone action as `{"pass":true}`, so Phase 4's
+  resume (4.8) needs its own key. The move-event JSON in `GoRoundTest` is copied from lila's
+  `Event.GoMove`, not produced by it.
+- Verified by Claude: /verify, `sbt testFull` in lila-ws 13/13 (`dev/ligo test ws` runs sbt 2's
+  cached testQuick, which can report 0 tests), `sbt check` (scalafix + scalafmt). ·
   Needs owner verification: none on its own; a live game over the socket once 3.15 and 3.18 land.
 
 ### 2026-09-30 · 3.13 · Round module: Go moves, passes, clock, takebacks, no draws
