@@ -4,7 +4,7 @@ package ui
 import chess.format.Fen
 import chess.format.pgn.PgnStr
 
-import lila.core.game.{ Game, Player }
+import lila.core.game.{ Game, GoBridge, Player }
 import lila.core.i18n.I18nKey
 import lila.game.GameExt.*
 import lila.ui.*
@@ -20,6 +20,10 @@ final class GameUi(helpers: Helpers):
     private val dataTime = attr("data-time")
     private val dataTimeControl = attr("data-tc")
     val cgWrap = span(cls := "cg-wrap")(cgWrapContent)
+    // LiGo (unit 3.19, mini-board slice): a Go game's mini board is drawn by ui/lib's goMini.ts.
+    private val goMini = span(cls := "go-mini")
+
+    def boardWrap(game: Game): Tag = if game.isGo then goMini else cgWrap
 
     def apply(
         pov: Pov,
@@ -37,8 +41,13 @@ final class GameUi(helpers: Helpers):
         renderMini(g.pov(color), gameLink(g, color))
 
     def renderState(pov: Pov)(using me: Option[Me]) =
+      val blind = me.flatMap(pov.game.player).exists(_.blindfold) && pov.game.playable
+      pov.game.go.fold(renderChessState(pov, blind)): go =>
+        dataState := GoBridge.miniState(go, blind)
+
+    private def renderChessState(pov: Pov, blind: Boolean) =
       val fen =
-        if me.flatMap(pov.game.player).exists(_.blindfold) && pov.game.playable
+        if blind
         then chess.format.BoardAndColorFen("8/8/8/8/8/8/8/8 w")
         else Fen.writeBoardAndColor(pov.game.position)
       dataState := s"${fen},${pov.color.name},${~pov.game.lastMoveKeys}"
@@ -59,7 +68,7 @@ final class GameUi(helpers: Helpers):
         renderState(pov)
       )(
         renderPlayer(!pov, withRating = showRatings),
-        cgWrap,
+        boardWrap(game),
         renderPlayer(pov, withRating = showRatings)
       )
 
@@ -273,8 +282,14 @@ final class GameUi(helpers: Helpers):
       )
 
     def miniBoard(pov: Pov)(using ctx: Context): Tag => Tag =
+      val blind = ctx.me.flatMap(pov.game.player).exists(_.blindfold) && pov.game.playable
+      pov.game.go.fold(chessMiniBoard(pov, blind)): go =>
+        // LiGo (unit 3.19, mini-board slice): drawn by ui/lib's goMini.ts
+        _(cls := "go-mini go-mini--init", attr("data-state") := GoBridge.miniState(go, blind))
+
+    private def chessMiniBoard(pov: Pov, blind: Boolean): Tag => Tag =
       chessgroundMini(
-        if ctx.me.flatMap(pov.game.player).exists(_.blindfold) && pov.game.playable
+        if blind
         then Fen.Board("8/8/8/8/8/8/8/8")
         else Fen.writeBoard(pov.game.position),
         if pov.game.variant == chess.variant.RacingKings then chess.White else pov.player.color,

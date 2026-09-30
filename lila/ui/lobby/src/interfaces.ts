@@ -78,7 +78,10 @@ type RatingWithProvisional = number;
 export interface NowPlaying {
   fullId: string;
   gameId: string;
-  fen: FEN;
+  /** A chess game's position (none for Go). */
+  fen?: FEN;
+  /** A Go game's position, as a compact board string (ADR 0019 §6). */
+  board?: string;
   color: Color;
   orientation?: Color;
   lastMove: string;
