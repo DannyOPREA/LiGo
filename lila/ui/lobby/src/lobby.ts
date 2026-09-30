@@ -58,7 +58,7 @@ export function initModule(opts: LobbyOpts) {
         method: 'post',
       },
     );
-    lobbyCtrl.setTab('real_time');
+    lobbyCtrl.showOpen('live');
     history.replaceState(null, '', '/');
   });
 

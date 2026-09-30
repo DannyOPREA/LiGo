@@ -1,0 +1,172 @@
+// The "Open challenges" tab (unit 6.7): Live / Correspondence chip, filter chips, and a table that turns
+// into cards on phones.
+.open {
+  &__bar {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 0.6rem 1.2rem;
+    padding: 0.6rem 0.7rem;
+    border-bottom: $border;
+  }
+
+  &__group {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 0.3rem;
+  }
+
+  &__chips {
+    display: flex;
+    flex-flow: row wrap;
+    gap: 0.4rem 1rem;
+  }
+
+  &__empty {
+    padding: 2em 1em;
+    text-align: center;
+    color: $c-font-dim;
+  }
+
+  &__bar .chip {
+    @extend %box-radius;
+
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.2rem 0.8rem;
+    cursor: pointer;
+    background: $c-bg-low;
+    color: $c-font-dim;
+    border: 1px solid transparent;
+
+    @include transition;
+
+    @media (pointer: fine) {
+      min-height: 32px;
+      min-width: 32px;
+    }
+
+    &:hover {
+      background: $c-bg-zebra2;
+      color: $c-font-clear;
+    }
+
+    &:focus-visible {
+      outline: $outline;
+    }
+
+    &.active {
+      background: $c-primary;
+      color: $c-over;
+    }
+
+    &.reset {
+      border-color: $c-border;
+      background: none;
+    }
+  }
+}
+
+.hooks__list {
+  .rating {
+    margin-inline-start: 0.5em;
+    color: $c-font-dim;
+  }
+
+  // a row you can't join (unit 6.5 fills in which, from the server's new fields)
+  tr.unjoinable td {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+// Phones: each row is a card. Player and rated/casual on the first line, the game's details under them.
+@media (max-width: at-most($xx-small)) {
+  .lopen .hooks__list {
+    thead {
+      // the column names still read to screen readers
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    tbody {
+      display: block;
+    }
+
+    tr {
+      display: grid;
+      grid-template-columns: repeat(4, auto) 1fr;
+      grid-template-areas:
+        'player player player player mode'
+        'board time rules handicap .';
+      gap: 0.1rem 0.8rem;
+      align-items: baseline;
+      padding: 0.6rem 0.8rem;
+      min-height: 44px;
+      border-bottom: $border;
+      background: rgb(from $c-bg r g b / calc(alpha * 0.5));
+      cursor: pointer;
+
+      &.join:hover {
+        background: $c-accent-cloud;
+        color: #fff;
+      }
+
+      &.cancel {
+        background: rgb(from $c-secondary r g b / calc(alpha * 0.4));
+      }
+
+      &.disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+    }
+
+    td {
+      padding: 0;
+      border: 0;
+      background: none !important;
+      max-width: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      &:first-child {
+        padding: 0;
+        max-width: none;
+      }
+
+      &.player {
+        grid-area: player;
+        font-weight: bold;
+      }
+
+      &.board {
+        grid-area: board;
+      }
+
+      &.time {
+        grid-area: time;
+      }
+
+      &.rules {
+        grid-area: rules;
+      }
+
+      &.handicap {
+        grid-area: handicap;
+      }
+
+      &.mode {
+        grid-area: mode;
+        justify-self: end;
+      }
+
+      &:not(.player, .mode) {
+        color: $c-font-dim;
+        font-size: 0.9em;
+      }
+    }
+  }
+}
