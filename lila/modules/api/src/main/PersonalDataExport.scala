@@ -58,7 +58,7 @@ final class PersonalDataExport(
     // The streamer and coach modules went with unit 3.7, but profiles stored before then stay
     // until the account is deleted, so the export still includes them, as stored.
     def storedProfile(collName: String, title: String) = Source.futureSource:
-      db(CollName(collName))
+      db(lila.core.config.CollName(collName))
         .byId[Bdoc](user.id.value)
         .map: doc =>
           Source(doc.so(d => List(textTitle(title), BSONDocument.pretty(d))))
