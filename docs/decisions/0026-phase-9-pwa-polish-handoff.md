@@ -196,6 +196,20 @@ puzzle source from 8.4's list; each with its licence and a link. Its text is gen
 list in the repository (`docs/credits.md` or a data file 9.8 picks) so COPYING.md and the page
 cannot drift; a test fails when COPYING.md names a third party the list lacks.
 
+**Unit 9.8 amendment (2026-09-30):** the list is `docs/credits.json` (four sections: built on;
+sounds, fonts and pictures; puzzles; behind the scenes). `lila/bin/gen/credits.mjs` turns it into
+`lila/public/credits.html`, the page body lila serves inside its usual page at `/credits` (read from
+disk like the offline page); `--check`, run by `dev/tests/run.sh` in CI's tooling job, fails when
+that file is stale, when a COPYING.md §3 row names a third party no entry covers (a row is covered
+when its first cell starts with a name an entry lists), when the section or a row can't be read, or
+when a puzzle file in `tools/puzzles/data/SOURCES.md` has no entry. The site's fonts are credited
+under the SIL OFL 1.1, their current licence (lila's COPYING.md still says Apache-2.0). The
+page is linked from the site menu beside Source code, the home page's About links and the `/source`
+page. Its words are English until LiGo's strings reach i18n. The page drops the zebra rows and
+underlines its links, since lila's link blue is under 4.5:1 on the zebra colour (the site-wide fix
+is 9.7's). The screenshot test renders the generated body inside a trimmed copy of lila's page
+markup, like the playground's tests.
+
 ### 7. The handoff package (unit 9.9)
 In `docs/handoff/`: `README.md` (what LiGo is, what it reuses, what it built, what is unfinished,
 one page); `run-it.md` (a fresh clone to a running site, docker and cloud modes, the KataGo

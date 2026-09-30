@@ -2,9 +2,13 @@
    differently (CI's newer Chromium moved ~2,300 pixels per picture, all of them in the page's text),
    so the pictures hide the page's glyphs and compare everything else: layout, boxes, buttons, the
    board and its stones. The text itself is checked with locators in the tests. goban draws the
-   coordinates in SVG (fill, not color), so they stay; they matched on both Chromium builds. */
+   coordinates in SVG (fill, not color), so they stay; they matched on both Chromium builds.
+   The credits page (unit 9.8) is nearly all text, so its glyphs go too (CI's Chromium moved ~3% of
+   its pixels, every line of it); its headings and links are checked with locators. */
 #playground,
-#playground * {
+#playground *,
+.credits-shot,
+.credits-shot * {
   color: transparent !important;
   text-shadow: none !important;
 }
