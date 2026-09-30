@@ -49,8 +49,8 @@ final class Reopen(
       mailer.sendOrFail:
         Mailer.Message(
           to = email,
-          subject = s"Reopen your lichess.org account: ${user.username}",
-          text = Mailer.txt.addServiceNote(s"""
+          subject = s"Reopen your LiGo account: ${user.username}",
+          text = Mailer.txt.addServiceNote(routeUrl)(s"""
 ${trans.passwordReset_clickOrIgnore.txt()}
 
 $url
@@ -59,7 +59,7 @@ ${trans.common_linkNotWorking.txt()}"""),
           htmlBody = emailMessage(
             p(trans.passwordReset_clickOrIgnore()),
             potentialAction(metaName("Log in"), Mailer.html.url(url)),
-            serviceNote
+            serviceNote(routeUrl)
           ).some
         )
     }

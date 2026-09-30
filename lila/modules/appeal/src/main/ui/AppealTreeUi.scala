@@ -116,7 +116,7 @@ final class AppealTreeUi(helpers: Helpers, ui: AppealUi)(
       div(
         "Remember that an account can only be used by one person at all times.",
         br,
-        "If members of your household play on Lichess please share their usernames and tell which account belongs to which person."
+        "If members of your household play on LiGo please share their usernames and tell which account belongs to which person."
       ),
       textarea(
         cls := "appeal-accounts__household",
@@ -180,8 +180,6 @@ final class AppealTreeUi(helpers: Helpers, ui: AppealUi)(
             br,
             "Please use ",
             a(href := routes.Main.contact)("the contact page"),
-            " or ",
-            a(href := "https://discord.gg/lichess")("our Discord server"),
             " to contact us about other issues.",
             br,
             "You can also ",
@@ -202,7 +200,7 @@ final class AppealTreeUi(helpers: Helpers, ui: AppealUi)(
       "It is important to be honest from the start. If at first you deny doing anything wrong, we'll treat your appeal accordingly, and we will simply disregard any changes in your position. In other words, don't try to deny things at first only to confess to something later on."
     ),
     p(
-      "Note that if your appeal is denied, you are not permitted to open additional accounts on Lichess."
+      "Note that if your appeal is denied, you are not permitted to open additional accounts on LiGo."
     )
   )
 
@@ -537,7 +535,7 @@ final class AppealTreeUi(helpers: Helpers, ui: AppealUi)(
           "On the sign-up page you agreed not to create an excessive number of accounts, generally not more than 3. Violating this term is considered abuse of infrastructure."
         ),
         p(
-          "If you violated our Terms of Service in a previous account and tried to open a new one, this is considered ban evasion. In order to keep using Lichess you must obtain explicit permission by moderators."
+          "If you violated our Terms of Service in a previous account and tried to open a new one, this is considered ban evasion. In order to keep using LiGo you must obtain explicit permission by moderators."
         ),
         p("If you have done nothing wrong and believe this is a mistake, send an appeal.")
       ).some

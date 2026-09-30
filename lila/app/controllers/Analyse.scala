@@ -98,7 +98,7 @@ final class Analyse(
                   views.analyse.embed.lpv(
                     pgn,
                     getPgn = true,
-                    title = "Lichess PGN viewer",
+                    title = "LiGo game viewer",
                     Json.obj("orientation" -> color.name)
                   )
           case _ =>

@@ -170,8 +170,9 @@ final class AccountSecurity(helpers: Helpers)(
                     )
                   )
                 )
-              case Status.EmailSent(name, email, sendTo) =>
-                val mailto = s"mailto:$sendTo?subject=Confirm+account+$name"
+              // LiGo (unit 3.8): the "email us to verify" step went; its address was lichess's
+              // verify.lichess.org inbox.
+              case Status.EmailSent(_, email, _) =>
                 ol(
                   li(
                     p(trans.site.emailSent(strong(email.conceal))),
@@ -181,12 +182,7 @@ final class AccountSecurity(helpers: Helpers)(
                       strong(trans.site.refreshInboxAfterFiveMinutes())
                     )
                   ),
-                  li(trans.site.checkSpamOrJunkFolder()),
-                  li(
-                    p(trans.site.sendEmailForAccountVerification(strong(a(href := mailto)(sendTo)))),
-                    a(cls := "button", href := mailto):
-                      trans.site.send()
-                  )
+                  li(trans.site.checkSpamOrJunkFolder())
                 )
               case Status.Confirmed(name) =>
                 frag(

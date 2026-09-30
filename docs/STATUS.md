@@ -5,8 +5,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
 ## Current unit
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
   docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (PR #24), 3.2 (PR #28), 3.3 (PR #33), 3.4 (PR #38),
-  3.5 (PR #46), 3.6 (PR #56), 3.7 (PR #65) and 3.10 (PR #66) merged; 3.8 (rebrand text) runs in its own
-  thread; 3.11 (core Go types: lila's Game holds ply and clock, `GoBridge`, the `go` perf) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  3.5 (PR #46), 3.6 (PR #56), 3.7 (PR #65), 3.8 (PR #67) and 3.10 (PR #66) merged;
+  3.11 (core Go types: lila's Game holds ply and clock, `GoBridge`, the `go` perf) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   no longer wait on Phase 2 (merged 2026-09-29).
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
@@ -132,8 +132,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - `lila/AGENTS.md` (lichess's contributor guide) stays in the tree. Claude Code no longer loads it
   on its own now that CLAUDE.md files exist, and `lila/CLAUDE.md` says LiGo's rules win where it
   disagrees; `guard-bash.sh` blocks non-frozen `pnpm install`, cloud `sbt clean` and `bin/deploy`.
-- Upstream non-free/NC assets were removed in unit 3.1 (COPYING.md §1.1). The manifest text and the
-  default background image URL still say lichess until unit 3.8.
+- Upstream non-free/NC assets were removed in unit 3.1 (COPYING.md §1.1). Unit 3.8 rebranded the
+  English text of the kept pages; other languages, and strings of removed features, still say
+  Lichess until the translations are tidied up.
 
 ## Phase progress
 | Phase | State |
@@ -141,7 +142,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 0. Claude setup + baseline | done (units 0.1–0.7, PRs #1–#8) |
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
-| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.7, 3.9 and 3.10 merged; 3.8 (own thread) and 3.11 in review (you approved the deletions for 3.1–3.7) |
+| 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.10 merged; 3.11 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.2 merged (ADR 0022), 6.3 in review, 6.4–6.10 wait for Phases 3–5 |

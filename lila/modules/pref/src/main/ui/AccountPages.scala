@@ -86,12 +86,12 @@ final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.use
                   "One of the rights GDPR grants to European citizens is the right to erasure of their personal information, also known as the \"right to be forgotten\"."
                 ),
                 p(
-                  "Lichess generally complies with these requests from citizens of any country, because individuals should have control of their data against organisations. However, in certain cases where accounts broke our ",
+                  "LiGo generally complies with these requests from citizens of any country, because individuals should have control of their data against organisations. However, in certain cases where accounts broke our ",
                   a(href := routes.Cms.tos)("Terms of Service"),
                   ", we cannot comply with those requests."
                 ),
                 p(
-                  "That is because the GDPR allows for exceptions in certain cases, and one of those is where an organisation's overriding legitimate interests would be compromised by erasing the data. In short, by deleting your data, it would make it harder for us to keep Lichess safe and secure from people who have broken our rules."
+                  "That is because the GDPR allows for exceptions in certain cases, and one of those is where an organisation's overriding legitimate interests would be compromised by erasing the data. In short, by deleting your data, it would make it harder for us to keep LiGo safe and secure from people who have broken our rules."
                 ),
                 p(
                   "When you delete your account, your personal data will be hidden from the public, and only accessible by admins."
@@ -283,7 +283,7 @@ final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.use
       div(cls := "security personal-data box box-pad")(
         h1(cls := "box__top")("My personal data"),
         div(cls := "personal-data__header")(
-          p("Here is all personal information Lichess has about ", userLink(u)),
+          p("Here is all personal information LiGo has about ", userLink(u)),
           a(cls := "button", href := s"${routes.Account.data}?user=${u.id}&text=1", downloadAttr):
             trans.site.download()
         )

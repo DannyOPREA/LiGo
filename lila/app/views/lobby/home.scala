@@ -27,7 +27,7 @@ object home:
       .graph(
         OpenGraph(
           image = staticAssetUrl("logo/ligo-tile-wide.png").some,
-          title = "The best free, adless Chess server",
+          title = "LiGo: play Go online",
           url = netBaseUrl.into(Url),
           description = trans.site.siteDescription.txt()
         )
@@ -51,9 +51,9 @@ object home:
             else
               div(cls := "about-side")(
                 ctx.blind.option(h2(trans.site.about())),
-                trans.site.xIsAFreeYLibreOpenSourceChessServer("Lichess", trans.site.really.txt()),
+                trans.site.xIsAFreeYLibreOpenSourceChessServer(siteName, trans.site.really.txt()),
                 " ",
-                a(href := "/about")(trans.site.aboutX("Lichess"), "...")
+                a(href := s"${routes.Main.faq}#what")(trans.site.aboutX(siteName), "...")
               )
           ),
           currentGame
@@ -79,14 +79,15 @@ object home:
           div(cls := "lobby__puzzle")(puzzle.map(p => views.puzzle.bits.dailyLink(p)())),
           div(cls := "lobby__about")(
             ctx.blind.option(h2(trans.site.about())),
-            a(href := "/about")(trans.site.aboutX("Lichess")),
+            // LiGo (unit 3.8): "About" opens the FAQ's first question, what LiGo is (the /about CMS
+            // page is lichess's); the mobile app and ads links went (LiGo has no app, and "Ads" was
+            // lichess's own page).
+            a(href := s"${routes.Main.faq}#what")(trans.site.aboutX(siteName)),
             a(href := "/faq")(trans.faq.faqAbbreviation()),
             a(href := "/contact")(trans.contact.contact()),
-            a(href := "/app")(trans.site.mobileApp()),
             a(href := routes.Cms.tos)(trans.site.termsOfService()),
             a(href := "/privacy")(trans.site.privacy()),
             a(href := "/source")(trans.site.sourceCode()),
-            a(href := "/ads")("Ads"),
             views.bits.connectLinks
           )
         )

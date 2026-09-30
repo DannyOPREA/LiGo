@@ -17,7 +17,7 @@
   <string name="areThereWebsitesBasedOnLichess">Are there websites based on Lichess?</string>
   <string name="yesLichessInspiredOtherOpenSourceWebsites">Yes. Lichess has indeed inspired other open-source sites that use our %1$s, %2$s, or %3$s.</string>
   <string name="keyboardShortcuts">What keyboard shortcuts are there?</string>
-  <string name="keyboardShortcutsExplanation">Some Lichess pages have keyboard shortcuts you can use. Try pressing the '?' key on a study, analysis, puzzle, or game page to list available keyboard shortcuts.</string>
+  <string name="keyboardShortcutsExplanation">Some LiGo pages have keyboard shortcuts you can use. Try pressing the '?' key on an analysis, puzzle, or game page to list available keyboard shortcuts.</string>
   <string name="fairPlay">Fair Play</string>
   <string name="whenAmIEligibleRatinRefund">When am I eligible for the automatic rating refund from cheaters?</string>
   <string name="ratingRefundExplanation">One minute after a player is marked, their 40 latest rated games in the last 5 days are taken. If you were their opponent in one of those games, you lost rating (because of a loss or a draw), and your rating was not provisional, you get a rating refund. The refund is capped based on your peak rating and your rating progress after the game. (For example, if your rating greatly increased after that game, you might get no refund or only a partial refund.) A refund will never exceed 150 points.</string>
@@ -101,8 +101,8 @@ Do not ask for the LM title.</string>
   <string name="ownerUniqueTrophies">That trophy is unique in the history of Lichess; nobody other than %1$s will ever have it.</string>
   <string name="aHourlyBulletTournament">an hourly Bullet tournament</string>
   <string name="goldenZeeExplanation">ZugAddict was streaming and for the last 2 hours he had been trying to defeat A.I. level 8 in a 1+0 game, without success. Thibault told him that if he successfully did it on stream, he'd get a unique trophy. One hour later, he smashed Stockfish, and the promise was honoured.</string>
-  <string name="lichessRatings">Lichess ratings</string>
-  <string name="whichRatingSystemUsedByLichess">What rating system does Lichess use?</string>
+  <string name="lichessRatings">LiGo ratings</string>
+  <string name="whichRatingSystemUsedByLichess">What rating system does LiGo use?</string>
   <string name="ratingSystemUsedByLichess">Ratings are calculated using the Glicko-2 rating method developed by Mark Glickman. This is a very popular rating method, and is used by a significant number of chess organisations (FIDE being a notable counter-example, as they still use the dated Elo rating system).
 
 Fundamentally, Glicko ratings use "confidence intervals" when calculating and representing your rating. When you first start using the site, your rating starts at 1500 ± 1000. The 1500 represents your rating, and the 1000 represents the confidence interval.
@@ -132,47 +132,62 @@ It's best to think of ratings as "relative" figures (as opposed to "absolute" fi
   <string name="enableZenMode">Enable Zen mode in the %1$s, or by pressing %2$s during a game.</string>
   <string name="displayPreferences">display preferences</string>
   <string name="connexionLostCanIGetMyRatingBack">I lost a game due to lag/disconnection. Can I get my rating points back?</string>
-  <string name="weCannotDoThatEvenIfItIsServerSideButThatsRare">Unfortunately, we cannot give back rating points for games lost due to lag or disconnection, regardless of whether the problem was at your end or our end. The latter is very rare though. Also note that when Lichess restarts and you lose on time because of that, we abort the game to prevent an unfair loss.</string>
+  <string name="weCannotDoThatEvenIfItIsServerSideButThatsRare">Unfortunately, we cannot give back rating points for games lost due to lag or disconnection, regardless of whether the problem was at your end or our end. The latter is very rare though. Also note that when LiGo restarts and you lose on time because of that, we abort the game to prevent an unfair loss.</string>
   <string name="howToThreeDots">How do I...</string>
   <string name="enableDisableNotificationPopUps">Enable or disable notification popups?</string>
   <string name="viewSiteInformationPopUp">View site information popup</string>
-  <string name="lichessCanOptionnalySendPopUps">Lichess can optionally send popup notifications, for example when it is your turn or you received a private message.
+  <string name="lichessCanOptionnalySendPopUps">LiGo can optionally send popup notifications, for example when it is your turn or you received a private message.
 
-Click the lock icon next to the lichess.org address in the URL bar of your browser.
+Click the lock icon next to the LiGo address in the URL bar of your browser.
 
-Then select whether to allow or block notifications from Lichess.</string>
+Then select whether to allow or block notifications from LiGo.</string>
   <string name="enableAutoplayForSoundsQ">Enable autoplay for sounds?</string>
   <string name="mostBrowsersPreventSoundAutoplay">Most browsers prevent sound from playing on newly-visited pages to protect users.
 
-The mute icon appears when your browser prevents lichess.org from playing a sound. This restriction is typically lifted once you click something.
+The mute icon appears when your browser prevents LiGo from playing a sound. This restriction is typically lifted once you click something.
 On some mobile browsers, touch-dragging a piece does not count as a click. In that case, you must tap the board to allow sound at the start of each game.
 
-We show the red mute icon to alert you when this happens. You can explicitly allow lichess.org to play sounds on most browsers. Here are instructions to permit the website to play audio on recent versions of some popular browsers:</string>
+We show the red mute icon to alert you when this happens. You can explicitly allow LiGo to play sounds on most browsers. Here are instructions to permit the website to play audio on recent versions of some popular browsers:</string>
   <string name="desktop">desktop</string>
-  <string name="enableAutoplayForSoundsFirefox">1. Go to lichess.org
+  <string name="enableAutoplayForSoundsFirefox">1. Go to LiGo
 2. Press Ctrl+i on Linux/Windows or ⌘+i on macOS
 3. Click the Permissions tab
-4. Allow Audio and Video on lichess.org</string>
-  <string name="enableAutoplayForSoundsChromeSiteInformation" comment="Guidance for Google Chrome users on how to enable audio auto-play if they have sound issues.">1. Go to lichess.org
+4. Allow Audio and Video on LiGo</string>
+  <string name="enableAutoplayForSoundsChromeSiteInformation" comment="Guidance for Google Chrome users on how to enable audio auto-play if they have sound issues.">1. Go to LiGo
 2. Click the site information icon in the address bar
 3. Click Site Settings
 4. Allow Sound</string>
-  <string name="enableAutoplayForSoundsSafari">1. Go to lichess.org
+  <string name="enableAutoplayForSoundsSafari">1. Go to LiGo
 2. Click Safari in the menu bar
-3. Click Settings for lichess.org ...
+3. Click Settings for LiGo ...
 4. Allow All Auto-Play</string>
   <string name="enableAutoplayForSoundsMicrosoftEdge">1. Click the three dots in the top right corner
 2. Click Settings
 3. Click Cookies and Site Permissions
 4. Scroll down and click Media autoplay
-5. Add lichess.org to Allow</string>
+5. Add LiGo to Allow</string>
 <string name="stopMyselfFromPlaying">Stop myself from playing?</string>
 <string name="mentalHealthCondition">stand-alone mental health condition</string>
-<string name="lichessUserstyles">Lichess userstyles</string>
+<string name="lichessUserstyles">userstyles</string>
 <string name="fewerLobbyPools">fewer lobby pools</string>
 <string name="adviceOnMitigatingAddiction">We regularly receive messages from users asking us for help to stop them from playing too much.
 
-While Lichess doesn’t ban or block players except for Terms of Service violations, we recommend the use of external tools to limit excessive playing behavior. Some common suggestions for website blockers include %1$s, %2$s, and %3$s. If you want to keep using the site but not get tempted by fast time controls, you might also be interested in %4$s, here is one with %5$s.
+While LiGo doesn’t ban or block players except for Terms of Service violations, we recommend the use of external tools to limit excessive playing behavior. Some common suggestions for website blockers include %1$s, %2$s, and %3$s. If you want to keep using the site but not get tempted by fast time controls, you might also be interested in %4$s, here is one with %5$s.
 
 Some players may feel like their playing behavior is turning into an addiction. In fact, the WHO classifies gaming disorder as a %6$s, with essential features being 1) impaired control over gaming, 2) increasing priority given to gaming, and 3) escalation of gaming despite negative consequences. If you think that your chess playing behavior follows this pattern, we encourage you to speak about it with a friend or family member and/or with a professional.</string>
+  <string name="whatIsLiGo" comment="LiGo: question">What is LiGo?</string>
+  <string name="whatIsLiGoAnswer" comment="LiGo: %1$s is a link to lichess, %2$s is a link reading 'source code'">LiGo is a site for playing Go (also called baduk or weiqi) online. It is a non-commercial proof of concept: a fork of %1$s, the free chess server, rebuilt for Go. It is free, has no ads, and its %2$s is open.</string>
+  <string name="whyIsLiGoCalledLiGo" comment="LiGo: question">Why is it called LiGo?</string>
+  <string name="ligoNameExplanation">The "Li" comes from lichess, whose code LiGo is built from; lichess itself stands for live, light and libre chess. Go is the game.</string>
+  <string name="whatIsLiGoBuiltFrom" comment="LiGo: question">What is LiGo built from?</string>
+  <string name="ligoReusesFreeSoftware">LiGo reuses free software wherever it can:</string>
+  <string name="builtFromLichess" comment="LiGo: %s is a link to lichess">%s (lila and lila-ws): the site, accounts, lobby and games</string>
+  <string name="builtFromStrategygames" comment="LiGo: %s is a link to strategygames">%s from PlayStrategy: the Go rules on the server</string>
+  <string name="builtFromGoban" comment="LiGo: %s is a link to goban">%s from OGS (online-go.com): the board in your browser</string>
+  <string name="builtFromKataGoAndGoscorer" comment="LiGo: %1$s and %2$s are links to KataGo and goscorer">%1$s and %2$s: counting the score at the end of a game</string>
+  <string name="otherSitesGrewFromLichess" comment="LiGo: three links to other sites">Other sites grew from lichess the same way, such as %1$s, %2$s and %3$s.</string>
+  <string name="whichRulesDoesLiGoUse" comment="LiGo: question">Which rules does LiGo use?</string>
+  <string name="ligoRulesExplanation">Each game uses Japanese rules (territory scoring) or Chinese rules (area scoring), on a 9×9 or 19×19 board. Suicide is not allowed, and under both rulesets a move may not recreate an earlier whole-board position (situational superko).</string>
+  <string name="rulesDetailsInX" comment="LiGo: %s is a link reading 'LiGo's rules spec'">The details are in %s.</string>
+  <string name="ligoRulesSpec">LiGo's rules spec</string>
 </resources>

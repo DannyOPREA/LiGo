@@ -31,7 +31,7 @@ object bits:
           case h => raw(h.replaceIf('\n', "<br>"))
 
   lazy val stage = a(
-    href := "https://lichess.org",
+    href := LigoBrand.repoUrl,
     style := """
 background: #7f1010;
 color: #fff;
@@ -43,32 +43,16 @@ border-top-right-radius: 3px;
 z-index: 99;
 """
   ):
-    "This is an empty Lichess preview website, go to lichess.org instead"
+    "This is a LiGo preview website: games and accounts here may be wiped"
 
+  // LiGo (unit 3.8): lichess's Mastodon, Discord, Bluesky, YouTube and Twitch links went; LiGo's
+  // only public place is its GitHub repository.
   val connectLinks: Frag = div(cls := "connect-links")(
     a(
-      href := "https://mastodon.online/@lichess",
-      targetBlank,
-      noFollow,
-      relMe
-    )("Mastodon"),
-    a(
-      href := "https://github.com/lichess-org",
+      href := LigoBrand.repoUrl,
       targetBlank,
       noFollow
-    )("GitHub"),
-    a(href := "https://discord.gg/lichess", targetBlank, noFollow)("Discord"),
-    a(href := "https://bsky.app/profile/lichess.org", targetBlank, noFollow)("Bluesky"),
-    a(
-      href := "https://youtube.com/@LichessDotOrg",
-      targetBlank,
-      noFollow
-    )("YouTube"),
-    a(
-      href := "https://www.twitch.tv/lichessdotorg",
-      targetBlank,
-      noFollow
-    )("Twitch")
+    )("GitHub")
   )
 
   export lila.ui.bits.logo

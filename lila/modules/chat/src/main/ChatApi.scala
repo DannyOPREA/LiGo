@@ -176,7 +176,7 @@ final class ChatApi(
         .flatMap: isNew =>
           val lineText = scope match
             case ChatTimeout.Scope.Global => s"${user.username} was timed out 15 minutes for ${reason.name}."
-            case _ => s"${user.username} was timed out 15 minutes by a page mod (not a Lichess mod)"
+            case _ => s"${user.username} was timed out 15 minutes by a page mod (not a LiGo mod)"
           val line = (isNew && c.hasRecentLine(user)).option:
             UserLine(UserName.lichess, text = lineText, troll = false, deleted = false)
           val c2 = c.markDeleted(user)

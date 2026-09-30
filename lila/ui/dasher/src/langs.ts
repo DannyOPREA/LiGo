@@ -1,7 +1,5 @@
 import { h, type VNode } from 'snabbdom';
 
-import { licon } from 'lib/licon';
-
 import { PaneCtrl } from './interfaces';
 import { header } from './util';
 
@@ -37,11 +35,7 @@ export class LangsCtrl extends PaneCtrl {
           ),
         ),
       ),
-      h(
-        'a.help.text',
-        { attrs: { href: 'https://crowdin.com/project/lichess', 'data-icon': licon.Heart } },
-        'Help translate Lichess',
-      ),
+      // LiGo (unit 3.8): the "Help translate Lichess" link to lichess's crowdin project went.
     ]);
 
   private get data() {
