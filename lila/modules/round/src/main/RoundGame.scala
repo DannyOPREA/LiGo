@@ -22,8 +22,11 @@ object RoundGame:
       g.playable && g.canTakebackOrAddTime && !g.hasRule(_.noGiveTime) && {
         g.clock.exists(_.moretimeable(color)) || g.correspondenceClock.exists(_.moretimeable(color))
       }
-    def forceDrawable =
-      !g.isGo && g.playable && g.nonAi && !g.abortable && !g.isSwiss && !g.hasRule(_.noClaimWin)
+
+    /** The opponent's absence can be claimed on: a win (a Go game, or chess) or a draw (chess only). */
+    def goneClaimable = g.playable && g.nonAi && !g.abortable && !g.isSwiss && !g.hasRule(_.noClaimWin)
+    // Go has no draws (ADR 0019 §6)
+    def forceDrawable = !g.isGo && goneClaimable
 
     def isSwitchable = g.isCorrespondence || g.isSimul
 

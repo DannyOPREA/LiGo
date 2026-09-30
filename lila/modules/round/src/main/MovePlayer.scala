@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 import lila.common.Bus
 import lila.core.round.*
-import lila.game.GameExt.{ applyGoMove, applyMove, stepGoClock }
+import lila.game.GameExt.{ applyGoMove, applyMove, goPlayEnds, stepGoClock }
 import lila.game.actorApi.MoveGameEvent
 import lila.game.Progress
 import lila.round.RoundGame.*
@@ -60,7 +60,8 @@ final private class MovePlayer(
         go(play.action) match
           case Left(refusal) => fufail(ClientError(s"$pov ${refusal.key}"))
           case Right(next) =>
-            val stepped = game.stepGoClock(play.moveMetrics)
+            // as for chess, the move that ends the game earns no increment
+            val stepped = game.stepGoClock(play.moveMetrics, gameActive = !game.withGo(next).goPlayEnds)
             if stepped.exists(_.value.outOfTime(color, withGrace = false)) then finisher.outOfTime(game)
             else
               stepped
@@ -84,9 +85,7 @@ final private class MovePlayer(
     val game = progress.game
     val action = game.go.flatMap(_.actions.lastOption).fold("pass")(lila.core.game.GoBridge.token)
     notifyGoMove(game, action, pov.color)
-    val twoPasses = game.go.exists(_.phase == ligo.gorules.Phase.Scoring)
-    if twoPasses || game.playedPlies.value >= lila.core.game.GoBridge.maxPlies then
-      finisher.other(game, _.UnknownFinish, None).dmap(progress.events ::: _)
+    if game.goPlayEnds then finisher.other(game, _.UnknownFinish, None).dmap(progress.events ::: _)
     else
       if pov.opponent.isProposingTakeback then round ! RoundBus.Takeback(pov.player.id, false)
       scheduleExpiration.exec(game)

@@ -176,11 +176,20 @@ object GameExt:
       * chess move: the frame lag, a step (which switches the running side), and the clock started once each
       * side has played.
       */
-    def stepGoClock(metrics: chess.MoveMetrics): Option[Clock.WithCompensatedLag[Clock]] =
+    def stepGoClock(
+        metrics: chess.MoveMetrics,
+        gameActive: Boolean
+    ): Option[Clock.WithCompensatedLag[Clock]] =
       g.clock.map: prev =>
         val c1 = metrics.frameLag.fold(prev)(prev.withFrameLag)
-        val c2 = c1.step(metrics, gameActive = true)
+        val c2 = c1.step(metrics, gameActive)
         if g.playedPlies == Ply(1) then c2.map(_.start) else c2
+
+    /** A Phase 3 Go game is over once play stops (ADR 0019 §7): the second consecutive pass, or the ply cap.
+      */
+    def goPlayEnds: Boolean =
+      g.go.exists(_.phase == ligo.gorules.Phase.Scoring) ||
+        g.playedPlies.value >= lila.core.game.GoBridge.maxPlies
 
     /** Apply a Go action already accepted by the rules (`next`), with the clock stepped for it (ADR 0019 §5):
       * the Go game, ply, clock and its history, move times and blurs, and the move event.

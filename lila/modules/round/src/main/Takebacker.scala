@@ -97,9 +97,21 @@ final private class Takebacker(
 
   private def offerTakebackMessage(pov: Pov): String =
     val k = if pov.game.turnOf(pov.color) then 2 else 1
-    // a Go game names its moves as SGF points and passes
-    val lastSans = pov.game.go.fold(pov.game.sans.takeRight(k).toList.map(_.value)): go =>
-      go.actions.takeRight(k).toList.map(lila.core.game.GoBridge.token)
+    pov.game.go.fold(chessTakebackMessage(pov, k))(goTakebackMessage(pov, k, _))
+
+  // Go moves are numbered 1, 2, 3… in play order: "Black proposes takeback (4. ee 5. cc)".
+  private def goTakebackMessage(pov: Pov, k: Int, go: ligo.gorules.GoGame): String =
+    val first = pov.game.playedPlies.value - k + 1
+    val moves = go.actions
+      .takeRight(k)
+      .zipWithIndex
+      .map: (a, i) =>
+        s"${first + i}. ${lila.core.game.GoBridge.token(a)}"
+    val base = pov.color.fold(trans.site.whiteProposesTakeback, trans.site.blackProposesTakeback).txt()
+    s"$base (${moves.mkString(" ")})"
+
+  private def chessTakebackMessage(pov: Pov, k: Int): String =
+    val lastSans = pov.game.sans.takeRight(k).toList.map(_.value)
     val startPly = pov.game.ply - k + 1
     def movePrefix(ply: Ply, secondMove: Boolean): String =
       if secondMove && ply.turn.white then ""

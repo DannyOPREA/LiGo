@@ -25,7 +25,7 @@ class GoPlayTest extends munit.FunSuite:
   /** What the round does for a move the rules accepted: step the clock, then apply. */
   private def play(g: Game, action: Action): Progress =
     val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
-    g.applyGoMove(next, g.stepGoClock(MoveMetrics()).map(_.value))
+    g.applyGoMove(next, g.stepGoClock(MoveMetrics(), gameActive = !g.withGo(next).goPlayEnds).map(_.value))
 
   private def playAll(g: Game, actions: Action*): Game = actions.foldLeft(g)(play(_, _).game)
 
@@ -81,7 +81,7 @@ class GoPlayTest extends munit.FunSuite:
     val g1 = play(g0, Action.Place(p("ee"))).game
     assertEquals((g1.turnColor, g1.clock.map(_.color)), (Color.Black, Some(Color.Black)))
 
-  test("a takeback undoes the last action and its clock history"):
+  test("a takeback undoes the last action, its clock history, and resets the clock as chess does"):
     val g2 = playAll(newGo(), Action.Place(p("ee")), Action.Place(p("cc")))
     val g3 = play(g2, Action.Place(p("gg"))).game
     val back = Rewind.go(g3).fold(fail(_), _.game)
@@ -90,7 +90,29 @@ class GoPlayTest extends munit.FunSuite:
     assertEquals((back.ply, back.turnColor), (g2.ply, g2.turnColor))
     assertEquals(back.clockHistory.map(h => (h.black.size, h.white.size)), Some((1, 1)))
     assertEquals(back.clock.map(_.color), Some(Color.Black))
+    // as in lichess chess: the side that played the undone move keeps the time on its clock, and the other
+    // side's time is reset from its clock history
+    // (its clock runs again, so allow the few centis this test takes)
+    val kept = back.clock.map(_.remainingTime(Color.Black).value).getOrElse(0)
+    assert(kept > 6100 && kept <= 6200, s"Black keeps its increment: $kept")
+    assertEquals(
+      back.clock.map(_.remainingTime(Color.White)),
+      g3.clockHistory.flatMap(_.white.lastOption)
+    )
     assert(Rewind.go(newGo()).isLeft, "nothing to take back")
+
+  test("a takeback undoes a pass, and two takebacks undo both players' moves"):
+    val g2 = playAll(newGo(), Action.Place(p("ee")), Action.Place(p("cc")))
+    val passed = play(g2, Action.Pass).game
+    val undone = Rewind.go(passed).fold(fail(_), _.game)
+    assertEquals(
+      (undone.go.get.actions, undone.ply, undone.turnColor),
+      (g2.go.get.actions, g2.ply, Color.Black)
+    )
+    val g4 = play(passed, Action.Place(p("gg"))).game
+    val twice = Rewind.go(g4).flatMap(pr => Rewind.go(pr.game)).fold(fail(_), _.game)
+    assertEquals((twice.go.get.actions, twice.ply, twice.turnColor), (g2.go.get.actions, g2.ply, Color.Black))
+    assertEquals(twice.clockHistory.map(h => (h.black.size, h.white.size)), Some((1, 1)))
 
   test("Go games have no draws"):
     val g = playAll(newGo(), Action.Place(p("ee")), Action.Place(p("cc")), Action.Place(p("gg")))
@@ -109,3 +131,24 @@ class GoPlayTest extends munit.FunSuite:
       g3.clock.map(_.remainingTime(Color.Black))
     )
     assertEquals(g3.clock.map(c => (c.color, c.isRunning)), Some((Color.White, true)))
+
+  test("play ends on the second consecutive pass, not on a pass, stone, pass"):
+    val once = playAll(newGo(), Action.Place(p("ee")), Action.Pass)
+    assert(!once.goPlayEnds)
+    val broken = playAll(once, Action.Place(p("cc")), Action.Pass)
+    assert(!broken.goPlayEnds, "a stone between the passes resets them")
+    val twice = playAll(broken, Action.Pass)
+    assert(twice.goPlayEnds)
+    // the move that ends play earns no increment, as in chess
+    val g2 = playAll(newGo(), Action.Place(p("ee")), Action.Place(p("cc")), Action.Pass)
+    val last = play(g2, Action.Pass).game
+    assert(
+      last.clock.exists(_.remainingTime(Color.White) <= Centis(6000)),
+      last.clock.map(_.remainingTime(Color.White))
+    )
+
+  test("play ends at the 1,000th ply in an even game and in a handicap game"):
+    for g <- List(newGo(), newGo(handicap = 3)) do
+      def at(plies: Int) = g.copy(ply = g.startedAtPly + plies)
+      assert(!at(999).goPlayEnds, s"999 plies from ${g.startedAtPly}")
+      assert(at(1000).goPlayEnds, s"1000 plies from ${g.startedAtPly}")

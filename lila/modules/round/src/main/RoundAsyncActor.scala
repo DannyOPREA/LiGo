@@ -164,7 +164,8 @@ final private class RoundAsyncActor(
 
     case p: HumanGoPlay =>
       handle(p.playerId): pov =>
-        if pov.game.outoftime(withGrace = true) then finisher.outOfTime(pov.game)
+        if pov.player.isAi then fufail(s"player $pov can't play AI")
+        else if pov.game.outoftime(withGrace = true) then finisher.outOfTime(pov.game)
         else
           recordLag(pov)
           player.goHuman(p, this)(pov)
@@ -214,7 +215,7 @@ final private class RoundAsyncActor(
             if _ then
               finisher.rageQuit(
                 pov.game,
-                Some(pov.color).ifFalse(pov.game.position.opponentHasInsufficientMaterial)
+                Some(pov.color).ifFalse(!pov.game.isGo && pov.game.position.opponentHasInsufficientMaterial)
               )
             else fuccess(List(Event.Reload))
 

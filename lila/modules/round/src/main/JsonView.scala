@@ -86,7 +86,7 @@ final class JsonView(
           commonPlayerJson(game, opponent, users(pov.opponent.color), flags) ++ Json
             .obj("color" -> opponent.color.name)
             .add("ai" -> opponent.aiLevel)
-            .add("isGone" -> (pov.game.forceDrawable && socket.isGone(opponent.color)))
+            .add("isGone" -> (pov.game.goneClaimable && socket.isGone(opponent.color)))
             .add("onGame" -> (opponent.isAi || socket.onGame(opponent.color)))
         },
         "url" -> flags.lichobileCompat.option:
