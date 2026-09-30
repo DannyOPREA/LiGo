@@ -2,6 +2,7 @@ package lila.api
 
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.*
+import reactivemongo.api.bson.BSONDocument
 import reactivemongo.pekkostream.cursorProducer
 
 import lila.db.dsl.{ *, given }
@@ -17,7 +18,8 @@ final class PersonalDataExport(
     appealApi: lila.appeal.AppealApi,
     shutupEnv: lila.shutup.Env,
     modLogApi: lila.mod.ModlogApi,
-    reportEnv: lila.report.Env
+    reportEnv: lila.report.Env,
+    db: lila.db.Db
 )(using Executor, Materializer):
 
   private val lightPerSecond = 60
@@ -52,8 +54,17 @@ final class PersonalDataExport(
         Source(List(textTitle("Followed players")) ++ userIds.map(_.value))
       }
 
-    // forum posts and direct messages went with the forum and msg modules (unit 3.6), the streamer
-    // and coach profiles with their modules (unit 3.7).
+    // forum posts and direct messages went with the forum and msg modules (unit 3.6).
+    // The streamer and coach modules went with unit 3.7, but profiles stored before then stay
+    // until the account is deleted, so the export still includes them, as stored.
+    def storedProfile(collName: String, title: String) = Source.futureSource:
+      db(CollName(collName))
+        .byId[Bdoc](user.id.value)
+        .map: doc =>
+          Source(doc.so(d => List(textTitle(title), BSONDocument.pretty(d))))
+
+    val streamer = storedProfile("streamer", "Streamer profile")
+    val coach = storedProfile("coach", "Coach profile")
 
     def gameChatsLookup(lookup: Bdoc) =
       gameEnv.gameRepo.coll
@@ -156,6 +167,8 @@ final class PersonalDataExport(
       intro,
       connections,
       followedUsers,
+      streamer,
+      coach,
       spectatorGameChats,
       gameNotes,
       reports,

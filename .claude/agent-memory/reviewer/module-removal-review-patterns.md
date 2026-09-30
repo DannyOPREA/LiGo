@@ -55,5 +55,17 @@ Checks that found real problems in Phase 3 removal units (3.2 tournaments, 3.3 s
   deleted file (ui/mod tagify). A def-name `comm -23` per modified file (old vs new) is a fast check
   for script-edit collateral deletions.
 
+- 3.7 (2026-09-30) finds: kept pages carry hard-coded links to removed pages that no route grep
+  catches: lobby counter `href: '/games'` (ui/lobby/src/view/table.ts), the developers page's
+  "Embed TV" iframe (`/tv/frame` in SitePages.scala), ResponseBuilder `movedMap` ("donate" ->
+  "/patron"). Grep string literals in Scala AND TS for every removed path prefix. Also: bundles
+  whose only loader was deleted code (`site.tvEmbed` via the `site.*Embed.ts` glob, `bits.flatpickr`,
+  `bits.confetti`, `bits.feature` css) and their npm deps. Privacy: AccountTermination /
+  PersonalDataExport lose the removed module's delete/export of personal data (streamer/coach
+  profiles) — 3.6 disclosed this, 3.7 didn't; check the decisions row says it. Removing a grid
+  area can widen a kept box ('tv puzzle' -> 'puzzle puzzle' doubles the daily-puzzle board on tablets).
+  Review base: when origin/main has moved, `git diff origin/main` (two-dot) shows other units'
+  merges as reverts; use `git diff $(git merge-base HEAD origin/main)`.
+
 **Why:** compile + UI build pass with all of these; only grep-driven review finds them.
 **How to apply:** every Phase 3 removal unit (3.4–3.7 next). See also [[lila-edit-review-patterns]].

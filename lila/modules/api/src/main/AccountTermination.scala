@@ -46,7 +46,8 @@ final class AccountTermination(
     roundApi: lila.core.round.RoundApi,
     gameRepo: lila.game.GameRepo,
     analysisRepo: lila.analyse.AnalysisRepo,
-    chatApi: lila.chat.ChatApi
+    chatApi: lila.chat.ChatApi,
+    db: lila.db.Db
 )(using Executor, Scheduler, org.apache.pekko.stream.Materializer):
 
   def disable(u: User, forever: Boolean)(using me: Me): Funit = for
@@ -112,6 +113,10 @@ final class AccountTermination(
     singlePlayerGameIds <- gameRepo.deleteAllSinglePlayerOf(u.id)
     _ <- analysisRepo.remove(singlePlayerGameIds)
     _ <- deleteAllGameChats(u)
+    // the streamer and coach modules went with unit 3.7, but their stored profiles stay until the
+    // account is deleted, and hold personal data (name, bio, links, picture)
+    _ <- db(CollName("streamer")).delete.one($id(u.id))
+    _ <- db(CollName("coach")).delete.one($id(u.id))
     _ <- tokenApi.revokeAllByUser(u.id)
     _ <- u.marks.clean.so:
       securityStore.deleteAllSessionsOf(u.id)

@@ -11,6 +11,7 @@ import lila.core.misc.lpv.Lpv
 @Module
 final class Env(
     net: lila.core.config.NetConfig,
+    db: lila.db.Db,
     securityEnv: lila.security.Env,
     mailerEnv: lila.mailer.Env,
     puzzleEnv: lila.puzzle.Env,

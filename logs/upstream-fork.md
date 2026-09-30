@@ -26,7 +26,16 @@
   lila-ws lost `Tv.scala`, `Streamer.scala`, `tv/select`, `streamers/online`,
   `startWatchingTvChannels`, the `?userTv=` round parameter and the coach/streamer `seenAt` updates;
   the browser lost `ui/recap`, `ui/editor`, the streamer/coach/video/feed/plan/TV/game-search
-  bundles and `swiper` (COPYING §1.2).
+  bundles and `swiper` (COPYING §1.2). Smaller visible changes: the mod inquiry's quick rated
+  wins/losses links, the following list's game-count links, the analysis board's `b` hotkey and
+  Board editor button, the lobby position box's editor button, the home page's "games in play" link
+  (now plain text), the developers page's TV embed, the `/donate` redirect and the coach welcome
+  email are gone; PerfStat's "View the games" opens all games; user `tvTime` is no longer added up.
+  Public API: `streaming` and `streamer` leave `/api/users/status`, `/api/user/:u` and the mobile
+  profile; `/api/tv/*`, `/api/streamer/live` and `/api/patron/*` are gone.
+  Account deletion still deletes a stored streamer or coach profile, and the personal data export
+  still includes it (raw deletes/reads on the kept `streamer` and `coach` collections), because
+  those profiles hold personal data (name, bio, links, picture).
 - Worked: the lila-ws and browser workers on disjoint paths again; compiling once and fixing the
   18 `Lila.scala` wiring errors was all the server needed after a grep-driven first pass.
 - Didn't work / dead ends: merging main into the WIP branch after 3.6 was squash-merged produced
@@ -34,7 +43,9 @@
   a fresh branch from main applied cleanly. The browser worker also dropped stored notification
   renderers (stream start, plan start/expire, recap), the 3.6 lesson again; restored without links.
 - Lessons: after a squash merge, move WIP with `git cherry-pick -n <wip commits>` onto main, not
-  `git merge main`. Deleted CSS bundles can have callers outside their feature (`bits.tv.embed` for
+  `git merge main`. Grep string literals for every removed path prefix (`/games`, `/tv/frame`,
+  `/patron`): compile only catches `routes.X` calls. When a module goes, check `AccountTermination`
+  and `PersonalDataExport` for the personal data it deleted or exported. Deleted CSS bundles can have callers outside their feature (`bits.tv.embed` for
   the puzzle embed, `bits.search` for the games download page): grep every removed bundle name.
 - Decisions: see logs/decisions.md (3.7 row).
 - Verified by Claude: see the PR.
@@ -42,7 +53,15 @@
   round rewrite (3.18); `Permission.{Coach,Streamers,FreePatron,PayPal}`, the `Modlog` patron action
   name, `PatronMonths`/colours (existing patrons keep their wings), user `tvTime` counts, the
   `streamStart` notification pref row and the recap/streamer/coach/video i18n keys stay (stored or
-  harmless); `gameRepo.setTv` is unused.
+  harmless); `gameRepo.setTv` is unused. `PushApi.streamStart`/`recap`, `bits.flatpickr`,
+  `bits.confetti`, `bits.feature` and the `flatpickr`/`canvas-confetti` npm packages now have no
+  callers (removing the packages is a dependency change for a later tidy-up). The user game export
+  with a perf filter reads all of the user's games (no index on perf); fine for the POC.
+- Review: independent reviewer found 2 blocking issues (undisclosed loss of the streamer/coach
+  profile delete and export; three kept pages linking to removed ones: lobby `/games`, developers TV
+  embed, `/donate`), both fixed; also fixed the tablet lobby grid (puzzle no longer spans both
+  columns), and removed the orphan TV embed bundle, the dev-mode fake TV game, the donate/patron nav
+  CSS and the dasher `coach` flag.
 
 ### 2026-09-29 · 3.6 · Remove forums, blogs, teams, inbox and classes
 - Did: deleted lila modules `forum`, `forumSearch`, `ublog`, `team`, `teamSearch`, `msg` and `clas`,

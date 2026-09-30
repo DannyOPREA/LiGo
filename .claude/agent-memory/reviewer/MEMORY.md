@@ -13,7 +13,7 @@
 - [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, browser mismatch, verify gate
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
-- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects (3.3–3.6)
+- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects, literal links, privacy deletes (3.3–3.7)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
 - [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, lowercase ids, quadratic merges, two-reader parity probes (7.3)
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick
