@@ -220,6 +220,8 @@ function keyboardAndVoice(
   live.setAttribute('aria-live', 'polite');
   hidden(live);
 
+  // A quick second tap (touch-confirm, or two moves in a row) never zooms the page (unit 9.6).
+  boardDiv.style.touchAction = 'manipulation';
   boardDiv.tabIndex = 0;
   boardDiv.setAttribute('role', 'application');
   // Read as "9 by 9, Go board": the role description names what it is, the label its size.

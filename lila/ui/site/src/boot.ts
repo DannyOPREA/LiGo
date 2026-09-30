@@ -4,6 +4,7 @@ import * as ab from 'ab/site';
 import { scrollToInnerSelector, requestIdleCallbackSafe } from 'lib';
 import { dispatchChessgroundResize } from 'lib/chessgroundResize';
 import { prefersLightThemeQuery } from 'lib/device';
+import { watchInstall } from 'lib/install';
 import { licon } from 'lib/licon';
 import { pubsub } from 'lib/pubsub';
 import { eventuallySetupDefaultConnection } from 'lib/socket';
@@ -22,6 +23,9 @@ import { addExceptionListeners } from './unhandledError';
 
 export function boot() {
   addExceptionListeners();
+  // LiGo: keeps the browser's install offer for the account menu (unit 9.6); not in the idle callback
+  // below, which can run after the browser has offered.
+  watchInstall();
   const setBlind = location.hash === '#blind';
   const showDebug = location.hash.startsWith('#debug');
 

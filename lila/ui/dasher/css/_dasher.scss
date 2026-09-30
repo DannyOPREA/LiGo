@@ -148,10 +148,12 @@
     }
   }
 
-  .zen {
+  .zen,
+  .install {
     margin: 0;
 
-    button {
+    button,
+    p {
       padding: 0.5rem 1rem;
 
       &::before {
