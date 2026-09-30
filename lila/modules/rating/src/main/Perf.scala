@@ -14,13 +14,20 @@ object PerfExt:
   extension (p: Perf)
 
     def addOrReset(counter: kamon.metric.Counter, msg: => String)(player: Glicko, date: Instant): Perf =
+      addOrResetCapped(counter, msg, _.cap)(player, date)
+
+    // LiGo: the same with another cap; Go games use `GoRating.cap` (unit 5.3)
+    def addOrResetCapped(counter: kamon.metric.Counter, msg: => String, cap: Glicko => Glicko)(
+        player: Glicko,
+        date: Instant
+    ): Perf =
       val newGlicko = player.copy(
         rating = player.rating
           .atMost(p.glicko.rating + lila.rating.Glicko.maxRatingDelta)
           .atLeast(p.glicko.rating - lila.rating.Glicko.maxRatingDelta)
       )
       def append(g: Glicko): Perf =
-        val capped = g.cap
+        val capped = cap(g)
         p.copy(
           glicko = capped,
           nb = p.nb + 1,
