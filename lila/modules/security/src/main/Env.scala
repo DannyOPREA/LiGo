@@ -19,6 +19,7 @@ final class Env(
     ws: StandaloneWSClient,
     net: lila.core.config.NetConfig,
     userRepo: lila.user.UserRepo,
+    perfsRepo: lila.user.UserPerfsRepo,
     mailer: lila.mailer.Mailer,
     autoEmail: lila.mailer.AutomaticEmail,
     noteApi: lila.user.NoteApi,

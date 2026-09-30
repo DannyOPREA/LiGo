@@ -4555,6 +4555,14 @@ interface I18n {
     signUp: string;
     /** We will only send you emails about your account and never share your email. */
     signupEmailPromise: string;
+    /** Your Go rank */
+    signupGoRank: string;
+    /** Your Go rating starts there. */
+    signupGoRankHelp: string;
+    /** I'm new to Go */
+    signupGoRankNew: string;
+    /** I don't know */
+    signupGoRankUnknown: string;
     /** Register to join or host a simul */
     signUpToHostOrJoinASimul: string;
     /** Be sure to choose a username appropriate for all ages. You cannot change it later, and accounts with inappropriate usernames will be closed! */

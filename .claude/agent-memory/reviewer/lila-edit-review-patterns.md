@@ -37,3 +37,13 @@ Added from unit 2.3 (Pref.confirmMoves, 2026-09-28):
 
 **Why:** these slip past compile and Playwright checks.
 **How to apply:** any unit touching lila/ Scala views/controllers.
+
+Added from unit 5.4 part 1 (signup Go rank, 2026-09-30):
+- New site.xml keys: key.scala regenerated but `lila/ui/@types/lichess/i18n.d.ts` (checked in, made by
+  `ui/.build --i18n`) often left stale; 3.8 regenerated both.
+- A side effect chained into the signup future after `userRepo.create` (e.g. setPerf) makes its failure
+  kill logSignup + confirmation email for an account that already exists: ask for recover + log.
+- `Perf` with `latest = None` counts as "new": UserPerfs writer's notNew drops it, liveDeviation leaves
+  deviation unchanged (elapsed 0). `$set` via setPerf writes it; whole-doc writers would not.
+- Help text promising a later part's feature ("you can change it until...") ships in part 1.
+- verify.sh "lila tests" is sbt 2 testQuick, cache 100% -> Total 0 everywhere: always run testOnly.
