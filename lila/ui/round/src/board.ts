@@ -12,7 +12,7 @@ const loadMountBoard = (): Promise<MountBoard> => import('@ligo/board/board').th
 
 export class RoundBoard {
   board?: Board;
-  /** goban's chunk couldn't be loaded (offline, a deploy in between). */
+  /** goban's chunk couldn't be loaded (offline, a deploy in between), or the game couldn't be drawn. */
   loadFailed = false;
   private el?: HTMLElement;
   private mountBoard?: MountBoard;
@@ -53,6 +53,14 @@ export class RoundBoard {
   /** Draws the board again from `config` (another ply, a reloaded game). */
   remount = (): void => {
     this.board?.destroy();
-    this.board = this.el && this.mountBoard ? this.mountBoard(this.el, this.config()) : undefined;
+    this.board = undefined;
+    if (!this.el || !this.mountBoard) return;
+    try {
+      this.board = this.mountBoard(this.el, this.config());
+    } catch (e) {
+      // A setup the board can't draw (say, a handicap its rules don't place): say so, don't go blank.
+      console.error(e);
+      this.loadFailed = true;
+    }
   };
 }

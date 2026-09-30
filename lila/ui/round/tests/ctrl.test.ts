@@ -31,7 +31,8 @@ class FakeBoard implements Board {
   }
   play = (move: string) => void this.played.push(move);
   cancel = () => {};
-  pass = () => this.config.onMove?.('pass');
+  // Like goban's board: a pass is reported only by a board that takes the player's moves.
+  pass = () => void (this.movable !== 'none' && this.config.onMove?.('pass'));
   pending = () => false;
   confirm = () => {};
   set = (o: Pick<BoardConfig, 'movable' | 'confirm' | 'theme'>) => {
@@ -43,23 +44,33 @@ class FakeBoard implements Board {
 
 const player = (color: Color) => ({ color, id: color[0], version: 0, onGame: true, isGone: false }) as any;
 
-function data(moves: string, o: { spectator?: boolean; color?: Color } = {}): RoundData {
+function data(moves: string, o: { spectator?: boolean; color?: Color; handicap?: number } = {}): RoundData {
   const n = moves ? moves.split(' ').length : 0;
   const color = o.color ?? 'black';
   const other = color === 'black' ? 'white' : 'black';
+  // ADR 0019: Black's first move is ply 1; a handicap game starts at ply 0 with White to move.
+  const first = o.handicap ? 0 : 1;
   return {
     game: {
       id: 'abcdefgh',
       status: { id: 20, name: 'started' },
-      player: (1 + n) % 2 === 0 ? 'white' : 'black',
-      turns: 1 + n,
-      startedAtTurn: 1,
+      player: (first + n) % 2 === 0 ? 'white' : 'black',
+      turns: first + n,
+      startedAtTurn: first,
       source: 'lobby',
       speed: 'blitz',
       variant: { key: 'standard', name: 'Standard', short: 'Std' },
       perf: 'blitz',
       fen: '',
-      go: { size: 9, rules: 'japanese', komi: 6.5, moves, prisoners: { b: 0, w: 0 }, phase: 'play' },
+      go: {
+        size: 9,
+        rules: 'japanese',
+        komi: o.handicap ? 0.5 : 6.5,
+        moves,
+        prisoners: { b: 0, w: 0 },
+        phase: 'play',
+        ...(o.handicap ? { handicap: o.handicap } : {}),
+      },
     },
     player: { ...player(color), spectator: o.spectator },
     opponent: player(other),
@@ -123,10 +134,10 @@ describe('RoundController on a Go game', () => {
   });
 
   test('a stone the board reports goes to the server as an SGF point, a pass as "pass"', () => {
-    const { ctrl, boards } = round(data(''));
+    const { boards } = round(data(''));
     boards[0].config.onMove!('ee');
     assert.deepEqual([sent.at(-1)![0], (sent.at(-1)![1] as any).u], ['move', 'ee']);
-    ctrl.pass();
+    round(data('')).ctrl.pass();
     assert.deepEqual([sent.at(-1)![0], (sent.at(-1)![1] as any).u], ['move', 'pass']);
   });
 
@@ -182,5 +193,59 @@ describe('RoundController on a Go game', () => {
     const { ctrl } = round(data('ee'));
     ctrl.pass();
     assert.equal(sent.length, 0);
+  });
+  test('a sent move blocks a second one until the server plays it, even after looking back', () => {
+    const { ctrl, boards } = round(data('ee cc'));
+    boards[0].config.onMove!('gg');
+    assert.equal(ctrl.canMove(), false, 'Pass is off while the stone is on its way');
+    ctrl.userJump(2);
+    ctrl.userJump(3);
+    const now = boards.at(-1)!;
+    assert.notEqual(now, boards[0]);
+    assert.equal(now.config.movable, 'none');
+    now.config.onMove!('aa');
+    now.pass();
+    assert.deepEqual(
+      sent.map(([, m]) => (m as any).u),
+      ['gg'],
+    );
+    ctrl.apiMove(moveEvent(4, { p: 'gg' }));
+    assert.deepEqual(now.played, ['gg']);
+    assert.equal(now.movable, 'black', 'the board takes moves again');
+    assert.ok(!ctrl.canMove(), "White's turn now");
+    ctrl.apiMove(moveEvent(5, { p: 'aa' }));
+    assert.ok(ctrl.canMove());
+  });
+
+  test('a game that ends before a sent stone arrives drops that stone from the board', () => {
+    const { ctrl, boards } = round(data('ee cc'));
+    boards[0].config.onMove!('gg');
+    ctrl.endWithData({ status: { id: 35, name: 'outoftime' }, winner: 'white', boosted: false });
+    const now = boards.at(-1)!;
+    assert.notEqual(now, boards[0], 'a fresh board');
+    assert.deepEqual(now.config.moves, ['ee', 'cc']);
+    assert.equal(now.config.movable, 'none');
+  });
+
+  test('a missed move event fetches the game again rather than listing the move out of place', () => {
+    const { ctrl } = round(data('ee'));
+    let reloads = 0;
+    ctrl.socket.reload = () => void reloads++;
+    ctrl.apiMove(moveEvent(4, { p: 'cc' }));
+    assert.equal(reloads, 1);
+    assert.equal(ctrl.data.steps.length, 2, 'nothing listed');
+  });
+
+  test('a handicap game starts at ply 0 with the stones placed and White to move', () => {
+    const { ctrl, boards } = round(data('', { handicap: 2, color: 'white' }));
+    assert.equal(ctrl.ply, 0);
+    assert.equal(boards[0].config.toMove, 'white');
+    assert.equal(boards[0].config.handicap, 2);
+    assert.equal(boards[0].config.movable, 'white');
+    boards[0].config.onMove!('ee');
+    ctrl.apiMove(moveEvent(1, { p: 'ee' }));
+    assert.equal(ctrl.data.game.player, 'black');
+    assert.equal(ctrl.stepAt(1).san, 'E5');
+    assert.equal(boards[0].movable, 'white', 'goban knows it is now Black to move');
   });
 });

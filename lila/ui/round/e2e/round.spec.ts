@@ -87,6 +87,24 @@ for (const phone of [false, true]) {
   });
 }
 
+test.describe('a handicap game', () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test('White moves first after the handicap stones; the list starts on White', async ({ page }) => {
+    const { server, problems } = await openRound(page, { handicap: 2, color: 'white' });
+    const stones = (rows: string[], c: string) => rows.join('').split(c).length - 1;
+    expect(stones(await position(page), 'X')).toBe(2);
+    await play(page, 'ee', 9);
+    // Row 1 has no Black move (…) before White's E5.
+    await expect(moveList(page)).toHaveText(['…', 'E5']);
+    expect(server.received.filter(m => m.t === 'move').map(m => m.d.u)).toEqual(['ee']);
+    server.move('cc');
+    await expect(moveList(page)).toHaveText(['…', 'E5', 'C7']);
+    await expect(page.locator('aPp qZM')).toHaveText(['1', '2']);
+    expect(problems).toEqual({ requests: [], errors: [] });
+  });
+});
+
 test.describe('keyboard and themes (units 9.3, 9.4)', () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 

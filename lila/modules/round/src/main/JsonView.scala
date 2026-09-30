@@ -117,7 +117,7 @@ final class JsonView(
             .add("enablePremove" -> pref.premove)
             .add("showCaptured" -> pref.captured)
             .add("submitMove" -> submitMovePref(pref, game, flags.nvui))
-            // Go's touch-confirm (unit 2.3): the round board previews a tapped stone until confirmed (unit 3.18)
+            // Go's touch-confirm (unit 2.3): the board previews a tapped stone until confirmed (3.18)
             .add("confirmMoves" -> pref.confirmMoves.some)
       )
       .add("clock" -> game.clock.map(clockJson))

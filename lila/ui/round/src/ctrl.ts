@@ -157,13 +157,19 @@ export default class RoundController {
     onChange: this.redraw,
   });
 
-  /** Only the player, only on the last position, only while the game goes on. */
+  /**
+   * A stone or pass sent that the server hasn't played back yet: no second move until it has (a
+   * remount while looking back would otherwise forget that the board is waiting).
+   */
+  private moveInFlight = false;
+
+  /** Only the player, only on the last position, only while the game goes on and no move is on its way. */
   private readonly movable = (): 'black' | 'white' | 'none' =>
-    this.isPlaying() && !this.replaying() ? this.data.player.color : 'none';
+    this.isPlaying() && !this.replaying() && !this.moveInFlight ? this.data.player.color : 'none';
 
   /** The board reported the player's stone or pass: send it (the server's `move` event plays it). */
   private readonly onUserMove = (move: Move): void => {
-    if (!this.isPlaying() || this.replaying()) return this.board.board?.cancel();
+    if (!this.isPlaying() || this.replaying() || this.moveInFlight) return this.board.board?.cancel();
     this.sendMove(move);
   };
 
@@ -180,7 +186,7 @@ export default class RoundController {
   replaying = (): boolean => this.ply !== this.lastPly();
 
   userJump = (ply: Ply): void => {
-    if (ply !== this.ply && this.jump(ply)) site.sound.say(this.stepAt(this.ply).san, true);
+    if (ply !== this.ply && this.jump(ply)) site.sound.say(this.stepAt(this.ply).san || 'Start', true);
     else this.redraw();
   };
 
@@ -199,7 +205,7 @@ export default class RoundController {
   };
 
   /** Whether the player may place a stone now: their turn, on the last position. */
-  canMove = (): boolean => !this.replaying() && game.isPlayerTurn(this.data);
+  canMove = (): boolean => !this.replaying() && !this.moveInFlight && game.isPlayerTurn(this.data);
 
   replayEnabledByPref = (): boolean => {
     const d = this.data;
@@ -231,6 +237,7 @@ export default class RoundController {
       const moveMillis = this.clock.stopClock();
       if (moveMillis !== undefined && this.shouldSendMoveTime) socketOpts.millis = moveMillis;
     }
+    this.moveInFlight = true;
     this.socket.send('move', data, socketOpts);
     this.transientMove.register();
     this.redraw();
@@ -277,10 +284,16 @@ export default class RoundController {
   /** The server's `move` event (ADR 0019 §6): a stone or a pass by either player, the player's own included. */
   apiMove = (o: GoMoveEvent): true => {
     const d = this.data;
+    // A missed move event: the list would drift from the game. Fetch the game again instead.
+    if (o.ply !== this.lastPly() + 1) {
+      this.socket.reload();
+      return true;
+    }
     const playing = this.isPlaying();
     const wasLive = !this.replaying();
     const move = eventMove(o);
     const playedColor = plyOpponentColor(o.ply);
+    if (playedColor === d.player.color) this.moveInFlight = false;
     d.game.turns = o.ply;
     d.game.player = plyColor(o.ply);
     const activeColor = d.player.color === d.game.player;
@@ -291,7 +304,7 @@ export default class RoundController {
     go.prisoners = o.prisoners;
     go.phase = o.phase;
     go.ko = o.ko;
-    const step = stepOf(go.size, this.lastPly() + 1, move);
+    const step = stepOf(go.size, o.ply, move);
     d.steps.push(step);
     this.setTitle();
     if (wasLive) {
@@ -343,6 +356,7 @@ export default class RoundController {
     util.upgradeServerData(d);
     this.data = d;
     this.ply = util.lastPly(d);
+    this.moveInFlight = false;
     this.shouldSendMoveTime = false;
     this.updateClockCtrl();
     if (this.clock)
@@ -364,16 +378,17 @@ export default class RoundController {
 
   endWithData = (o: ApiEnd): void => {
     const d = this.data;
+    // A move sent that the server never played: the game ended first (on time, or the opponent resigned).
+    const unsent = this.moveInFlight;
+    this.moveInFlight = false;
     d.game.winner = o.winner;
     d.game.status = o.status;
     d.game.abortedBy = o.abortedBy;
     d.game.boosted = o.boosted;
     this.jump(this.lastPly());
-    this.board.board?.set({ movable: 'none' });
-    // Lost on time while it's the opponent's turn here: the last move didn't reach the server.
-    if (o.status.name === 'outoftime' && d.player.color !== o.winner && d.game.player === d.opponent.color) {
-      this.reload(d);
-    }
+    // The board still shows the unsent stone, waiting: a fresh board without it (and without moving).
+    if (unsent) this.board.remount();
+    else this.board.board?.set({ movable: 'none' });
     if (o.ratingDiff) {
       d.player.ratingDiff = o.ratingDiff[d.player.color];
       d.opponent.ratingDiff = o.ratingDiff[d.opponent.color];
@@ -400,7 +415,7 @@ export default class RoundController {
     wakeLock.release();
     site.sound.say(this.statusText(), false, false, true);
     this.server.alive();
-    if (!d.player.spectator && o.status.name === 'outoftime' && d.game.player === d.opponent.color) {
+    if (!d.player.spectator && o.status.name === 'outoftime' && unsent) {
       notify(this.statusText());
     }
   };
