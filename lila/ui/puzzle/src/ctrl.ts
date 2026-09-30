@@ -7,8 +7,6 @@ import { parseFen, makeFen } from 'chessops/fen';
 import { makeSanAndPlay } from 'chessops/san';
 import type { Role, Move, Outcome } from 'chessops/types';
 import { parseSquare, parseUci, makeSquare, makeUci, opposite } from 'chessops/util';
-import { ctrl as makeKeyboardMove, type KeyboardMove, type KeyboardMoveRootCtrl } from 'keyboard-move';
-import { makeVoiceMove, type VoiceMove } from 'voice';
 
 import { prop, type Prop, propWithEffect, type Toggle, toggle, requestIdleCallbackSafe, myUserId } from 'lib';
 import { type Deferred, defer } from 'lib/async';
@@ -52,8 +50,6 @@ export default class PuzzleCtrl {
   menu: Toggle;
   flipped = toggle(false);
   googlyEyes?: () => DrawShape[];
-  keyboardMove?: KeyboardMove;
-  voiceMove?: VoiceMove;
   promotion: PromotionCtrl;
   keyboardHelp: Prop<boolean>;
   cgConfig?: CgConfig;
@@ -139,29 +135,6 @@ export default class PuzzleCtrl {
 
   setChessground = (cg: CgApi): void => {
     this.ground(cg);
-    const makeRoot = (): KeyboardMoveRootCtrl => ({
-      data: {
-        game: { variant: { key: 'standard' } },
-        player: { color: this.pov },
-      },
-      pluginMove: this.pluginMove,
-      redraw: this.redraw,
-      flipNow: this.flip,
-      userJumpPlyDelta: this.userJumpPlyDelta,
-      nextPuzzle: this.nextPuzzle,
-      vote: this.vote,
-      solve: this.viewSolution,
-      blindfold: this.blindfold,
-    });
-    const up = { fen: this.node.fen, canMove: true, cg };
-    if (this.opts.pref.voiceMove) {
-      if (this.voiceMove) this.voiceMove.update(up);
-      else this.voiceMove = makeVoiceMove(makeRoot(), up);
-    }
-    if (this.opts.pref.keyboardMove) {
-      if (!this.keyboardMove) this.keyboardMove = makeKeyboardMove(makeRoot());
-      this.keyboardMove.update(up);
-    }
     requestAnimationFrame(() => this.redraw());
 
     this.googlyEyesAuto();
@@ -287,18 +260,11 @@ export default class PuzzleCtrl {
       });
   };
 
-  pluginUpdate = (fen: string): void => {
-    this.voiceMove?.update({ fen, canMove: true });
-    this.keyboardMove?.update({ fen, canMove: true });
-  };
-
   userMove = (orig: Key, dest: Key): void => {
     const isPromoting = this.promotion.start(orig, dest, {
       submit: this.playUserMove,
-      show: this.voiceMove?.promotionHook(),
     });
     if (!isPromoting) this.playUserMove(orig, dest);
-    this.pluginUpdate(this.node.fen);
   };
 
   playUci = (uci: Uci): void => this.sendMove(parseUci(uci)!);
@@ -489,7 +455,6 @@ export default class PuzzleCtrl {
     }
     this.promotion.cancel();
     this.autoScrollRequested = true;
-    this.pluginUpdate(this.node.fen);
     pubsub.emit('ply', this.node.ply);
   };
 

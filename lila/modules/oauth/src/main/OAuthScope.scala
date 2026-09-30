@@ -177,8 +177,6 @@ object OAuthScope:
     )
       .exists(Granter.opt)
 
-  val dgtScopes = select(_.Challenge.Read, _.Challenge.Write, _.Preference.Read, _.Msg.Write, _.Board.Play)
-
   import reactivemongo.api.bson.*
   import lila.db.dsl.*
   private[oauth] given BSONHandler[OAuthScope] = tryHandler[OAuthScope](

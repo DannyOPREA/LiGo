@@ -4,8 +4,9 @@ $buttons-height: 2.5rem;
   @extend %roboto, %zen;
 }
 
+/* Go moves are points (B9) and Pass: the chess figurine font would draw B as a bishop. */
 #{$move-tag} {
-  @extend %san, %zen;
+  @extend %base-font, %zen;
 }
 
 #{$rmoves-tag} {

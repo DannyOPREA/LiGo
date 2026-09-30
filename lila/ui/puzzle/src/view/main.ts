@@ -1,6 +1,4 @@
-import { render as renderKeyboardMove } from 'keyboard-move';
 import { type VNode, h } from 'snabbdom';
-import { renderVoiceBar } from 'voice';
 
 import { licon, type LiconValue } from 'lib/licon';
 import { addPointerListeners } from 'lib/pointer';
@@ -101,13 +99,8 @@ export default function (ctrl: PuzzleCtrl): VNode {
       },
       [chessground(ctrl), ctrl.promotion.view()],
     ),
-    hl('div.puzzle__tools', [
-      ctrl.voiceMove ? renderVoiceBar(ctrl.voiceMove.ctrl, ctrl.redraw, 'puz') : null,
-      renderAnalyse(ctrl),
-      feedbackView(ctrl),
-    ]),
+    hl('div.puzzle__tools', [renderAnalyse(ctrl), feedbackView(ctrl)]),
     controls(ctrl),
-    ctrl.keyboardMove && renderKeyboardMove(ctrl.keyboardMove),
     session(ctrl),
     ctrl.keyboardHelp() && keyboardView(ctrl),
   ]);

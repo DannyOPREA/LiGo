@@ -1,7 +1,6 @@
 package lila.round
 package ui
 
-import chess.variant.{ Crazyhouse, Variant }
 import chess.Square
 
 import lila.ui.*
@@ -10,14 +9,10 @@ import lila.ui.ScalatagsTemplate.{ *, given }
 final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
   import helpers.{ *, given }
 
-  def RoundPage(variant: Variant, title: String)(using ctx: Context) =
+  def RoundPage(title: String)(using ctx: Context) =
     Page(title)
-      .css(if variant == Crazyhouse then "round.zh" else "round")
-      .css(ctx.pref.hasKeyboardMove.option("keyboardMove"))
-      .css(ctx.pref.hasVoice.option("voice"))
-      .css(ctx.blind.option("round.nvui"))
+      .css("round")
       .i18nOpt(ctx.speechSynthesis, _.nvui)
-      .i18nOpt(ctx.blind, _.keyboardMove, _.variant)
       .flag(_.zoom)
       .csp(_.withWebAssembly)
 
@@ -127,6 +122,7 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
 
   def roundAppPreload(pov: Pov)(using Context): Tag =
     div(cls := "round__app")(
-      div(cls := "round__app__board main-board")(povChessground(pov)),
+      // A Go game's board is drawn by the page's script (unit 3.18): an empty square until then.
+      div(cls := "round__app__board main-board")((!pov.game.isGo).option(povChessground(pov))),
       div(cls := "col1-rmoves-preload")
     )

@@ -1,6 +1,6 @@
 import { h } from 'snabbdom';
 
-import { abortable, playable, drawableSwiss, resignable, takebackable, type TopOrBottom } from 'lib/game';
+import { abortable, playable, resignable, takebackable, type TopOrBottom } from 'lib/game';
 import { licon, type LiconValue } from 'lib/licon';
 import { type LooseVNodes, hl, bind, toggleButton as boardMenuToggleButton, dataIcon } from 'lib/view';
 
@@ -12,13 +12,9 @@ import { render as renderReplay, analysisButton } from './replay';
 import { userHtml } from './user';
 
 function renderPlayer(ctrl: RoundController, position: TopOrBottom) {
-  if (ctrl.nvui) return undefined;
   const player = ctrl.playerAt(position);
   return player.ai
-    ? h('div.user-link.online.ruser.ruser-' + position, [
-        h('icon.line'),
-        h('name', i18n.site.aiNameLevelAiLevel('Stockfish', player.ai)),
-      ])
+    ? h('div.user-link.online.ruser.ruser-' + position, [h('icon.line'), h('name', `AI level ${player.ai}`)])
     : userHtml(ctrl, player, position);
 }
 
@@ -48,9 +44,7 @@ const prompt = (ctrl: RoundController) => {
   if (!o) return {};
 
   const btn = (tpe: 'yes' | 'no', icon: LiconValue, text: string, action: () => void) =>
-    ctrl.nvui
-      ? hl('button', { hook: bind('click', action) }, text)
-      : hl(`a.${tpe}`, { attrs: dataIcon(icon), hook: bind('click', action) });
+    hl(`a.${tpe}`, { attrs: { ...dataIcon(icon), title: text }, hook: bind('click', action) });
 
   const noBtn = o.no && btn('no', o.no.icon || licon.X, o.no.text || i18n.site.decline, o.no.action);
   const yesBtn =
@@ -80,27 +74,6 @@ export const renderTablePlay = (ctrl: RoundController): LooseVNodes => {
                   'takeback-yes',
                   ctrl.takebackYes,
                 ),
-            ctrl.drawConfirm
-              ? button.drawConfirm(ctrl)
-              : ctrl.data.game.threefold
-                ? button.claimThreefold(ctrl, d => {
-                    const threefoldable = drawableSwiss(d);
-                    return {
-                      enabled: threefoldable,
-                      overrideHint: threefoldable ? undefined : i18n.site.noDrawBeforeSwissLimit,
-                    };
-                  })
-                : button.standard(
-                    ctrl,
-                    d => ({
-                      enabled: ctrl.canOfferDraw(),
-                      overrideHint: drawableSwiss(d) ? undefined : i18n.site.noDrawBeforeSwissLimit,
-                    }),
-                    licon.OneHalf,
-                    i18n.site.offerDraw,
-                    'draw-yes',
-                    () => ctrl.offerDraw(true),
-                  ),
             ctrl.resignConfirm
               ? button.resignConfirm(ctrl)
               : button.standard(
@@ -114,17 +87,11 @@ export const renderTablePlay = (ctrl: RoundController): LooseVNodes => {
             analysisButton(ctrl),
             boardMenuToggleButton(ctrl.menu, i18n.site.menu),
           ],
-    buttons = loading
-      ? [loader()]
-      : [promptVNode, button.opponentGone(ctrl), button.threefoldSuggestion(ctrl)];
+    buttons = loading ? [loader()] : [promptVNode, button.opponentGone(ctrl), button.goMoves(ctrl)];
   return [
     renderReplay(ctrl),
     hl('div.rcontrols', [
-      hl(
-        'div.ricons',
-        { class: { confirm: !!(ctrl.drawConfirm || ctrl.resignConfirm), empty: !icons.length } },
-        icons,
-      ),
+      hl('div.ricons', { class: { confirm: !!ctrl.resignConfirm, empty: !icons.length } }, icons),
       buttons,
     ]),
   ];

@@ -11,7 +11,7 @@ final class TopNav(helpers: Helpers):
   private def linkTitle(url: String, name: Frag)(using ctx: Context) =
     if ctx.blind then h3(name) else a(href := url)(name)
 
-  def apply(hasDgt: Boolean)(using ctx: Context) =
+  def apply()(using ctx: Context) =
     // Removed menu links: practice and study (unit 3.3), chess basics and coordinates (3.4),
     // classes (3.6), coaches, TV, current games, streamers, videos, donations, the board editor
     // and advanced search (3.7). With no link left, the Learn and Watch sections went too.
@@ -26,9 +26,8 @@ final class TopNav(helpers: Helpers):
         ),
         div(role := "group")(
           if ctx.noBot then a(href := s"${langHref("/")}?any#hook")(trans.site.createLobbyGame())
-          else a(href := "/?any#friend")(trans.site.challengeAFriend()),
-          Option.when(ctx.noBot):
-            hasDgt.option(a(href := routes.DgtCtrl.index)(trans.dgt.dgtBoard()))
+          else a(href := "/?any#friend")(trans.site.challengeAFriend())
+          // The DGT board link went with the DGT page (unit 3.18): it plays chess on a chess board.
         )
       ),
       Option.when(ctx.noBot):

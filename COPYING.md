@@ -107,6 +107,13 @@ only user of `swiper` 12.2.0 (MIT). On the server side, lila's sbt build dropped
 lichess's game-search client (`com.github.lichess-org.lila-search` `client` 3.6.0) with the `search`
 module. No package was added.
 
+Unit 3.18 put `libs/board` on the game page and removed the chess-only move input packages it
+imported: the `ui/voice`, `ui/keyboardMove` and `ui/dgt` workspace packages, and with them the only
+users of `@lichess-org/vosk-browser` 0.0.3 (Apache-2.0, speech recognition) and `uuid` 11.1.0
+(MIT). `ui/round` now depends on the `@ligo/board` workspace package (MIT, §2) in place of
+chessground and chessops, which stay in the lockfile for the pages that still use them. No
+third-party package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file

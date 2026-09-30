@@ -1,9 +1,6 @@
 {
   "extends": "../tsconfig.base.json",
+  "exclude": ["${configDir}/tests", "${configDir}/dist", "${configDir}/e2e"],
   "compilerOptions": { "emitDeclarationOnly": true },
-  "references": [
-    { "path": "../lib/tsconfig.json" },
-    { "path": "../keyboardMove/tsconfig.json" },
-    { "path": "../voice/tsconfig.json" }
-  ]
+  "references": [{ "path": "../lib/tsconfig.json" }, { "path": "../../../libs/board/tsconfig.json" }]
 }

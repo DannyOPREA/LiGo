@@ -114,11 +114,6 @@ final class AccountUi(helpers: Helpers):
           a(activeCls("network"), href := routes.Pref.network)(
             trans.preferences.network()
           ),
-          ctx.noBot.option(
-            a(href := routes.DgtCtrl.index)(
-              trans.dgt.dgtBoard()
-            )
-          ),
           div(cls := "sep"),
           a(activeCls("close"), href := routes.Account.close)(
             trans.settings.closeAccount()
