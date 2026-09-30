@@ -13,9 +13,10 @@ object MatchMaking:
     def userIds = members.map(_.userId)
     def ratingDiff = p1.ratingDiff(p2)
 
-  def apply(members: Vector[PoolMember]): Vector[Couple] =
+  // LiGo: `size` is the pool's board size, which GoPairing's score needs (ADR 0022 §3)
+  def apply(members: Vector[PoolMember], size: Int): Vector[Couple] =
     val (lames, fairs) = members.partition(_.lame)
-    naive(lames) ++ (wmMatching(fairs) | naive(fairs))
+    naive(lames) ++ (wmMatching(fairs, size) | naive(fairs))
 
   private def naive(members: Vector[PoolMember]): Vector[Couple] =
     members
@@ -91,11 +92,15 @@ object MatchMaking:
     private[pool] def provisionalBonus(a: PoolMember, b: PoolMember) =
       if a.provisional && b.provisional then 30 else 0
 
-    def apply(members: Vector[PoolMember]): Option[Vector[Couple]] =
-      WMMatching(members.toArray, pairScore).fold(
+    /* LiGo: pairs by GoPairing's score (ADR 0022 §3), lila's with the miss bonus per second of waiting.
+     * Every member counts as Even only until unit 4.9 lets a game start with handicap stones and the
+     * lobby sends the Handicap OK chip. */
+    def apply(members: Vector[PoolMember], size: Int): Option[Vector[Couple]] =
+      val goMembers = members.map(GoPairing.Member(_, handicapOk = false, rankKnown = false))
+      WMMatching(goMembers.toArray, GoPairing.pairScore(_, _, size)).fold(
         err =>
           logger.error("WMMatching", err)
           none
         ,
-        _.map(Couple.apply).toVector.some
+        _.map((a, b) => Couple(a.pool, b.pool)).toVector.some
       )

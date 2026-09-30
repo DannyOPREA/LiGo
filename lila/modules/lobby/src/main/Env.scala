@@ -22,7 +22,7 @@ final class Env(
     Executor,
     Scheduler,
     lila.core.game.IdGenerator,
-    lila.core.pool.IsClockCompatible,
+    lila.core.pool.IsPoolCompatible,
     lila.core.config.RateLimit
 ):
 

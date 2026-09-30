@@ -57,8 +57,8 @@ final private class GameStarter(
         onStart(game.id)
         Pairing(ByColor(whiteMember.sri -> game.fullIds.white, blackMember.sri -> game.fullIds.black))
 
-  /** A 19×19 Go game with Japanese rules and standard komi (ADR 0022 §1), casual until Phase 5 (unit 3.15).
-    * Pools pick sizes in unit 6.4 and rated play in unit 5.7.
+  /** A Go game on the pool's board size with Japanese rules and standard komi (ADR 0022 §1), casual until
+    * unit 5.7 rates pool games; even until unit 4.9 lets a game start with handicap stones.
     */
   private def makeGame(
       id: GameId,
@@ -68,7 +68,7 @@ final private class GameStarter(
   ): Fu[Game] =
     lila.core.game
       .newGoGame(
-        lila.core.game.GoSetups.default,
+        pool.go,
         pool.clock.toClock.some,
         players = ByColor(whiteUser, blackUser).mapWithColor((u, p) => newPlayer(u, p)),
         rated = chess.Rated.No,
