@@ -136,6 +136,16 @@ adds **no new sound files** in Phase 9. Go events map onto the existing names:
   chess boards). Recorded in logs/decisions.md.
 - Coordinates are the ones printed on a board (letters A–T without I, numbers from the bottom),
   the same as the board's labels, never SGF's two-letter form.
+- **Unit 9.4 amendment (2026-09-30):** the keys as built are the arrows, Home/End (row ends), Page
+  Up/Page Down (top and bottom rows), Enter or Space (play; again to confirm), **P** (pass) and
+  **D** (the point and its four neighbours), and **Escape** takes back a waiting preview; a held
+  key acts once; the board says "Not your move" (or that it waits for the page) and names the
+  point when Tab reaches it. Its keys stop at the board so lila's page hotkeys (mousetrap, on the
+  round, analysis and puzzle pages) don't also fire. The words are
+  English until the board joins lila's i18n in 9.7. goban draws no stone animation, so reduced
+  motion needs nothing. axe finds lila's own `.button` (white on #3692e7, 3.3:1) below 4.5:1 on
+  every page: 9.7 fixes that colour site-wide, and until then the playground's test lets off only
+  that rule on lila's buttons.
 
 ### 5. The performance budget (units 9.5 and 9.10)
 Numbers measured on the built output and in Chromium, gzip -9, checked by a script in `dev/ci`

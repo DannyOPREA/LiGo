@@ -24,6 +24,8 @@ rules spec, to the server and to a real browser. How it works: [README.md](READM
   player's move and the page (or server) decides by `play` or `cancel`. Only goban's themes
   drawn from code (`src/themes.ts`, ADR 0026 §3); its picture themes load unlicensed pictures from
   OGS's CDN, and any other name falls back to Plain (`gobanThemes`).
+- **Keyboard and live region** (`src/access.ts`, ADR 0026 §4): keys drive goban's own `tapAt`, so
+  a key does exactly what a tap does; don't re-create previews or legality for the keyboard.
 - `src/board.ts` is TypeScript in lila's style (lila's tsconfig, oxfmt, oxlint: `pnpm run lint`,
   `pnpm run typecheck`); the rest is plain JavaScript modules with JSDoc, no build step, run by
   Node 24 (`.node-version`). `src/rules.d.mts` types `src/rules.mjs` by hand: change both together.

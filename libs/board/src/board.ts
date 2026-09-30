@@ -8,6 +8,7 @@
 
 import { SVGRenderer, type GobanConfig, type GobanSelectedThemes, type MoveCommand } from 'goban';
 
+import { HELP, describeText, playedText, pointName, pointText, refusedText } from './access';
 import { gameConfig, refusalOf, stateOf, toXY, type BoardState, type Game } from './rules.mjs';
 import { BOARD_THEMES, DEFAULT_THEME, STONE_THEMES, type Theme } from './themes';
 
@@ -85,6 +86,7 @@ export function gobanThemes(theme: Theme = DEFAULT_THEME): GobanSelectedThemes {
 }
 
 const GAME_ID = 1;
+let mounted = 0;
 const IDS = { black: 1, white: 2 } as const;
 
 /**
@@ -92,9 +94,14 @@ const IDS = { black: 1, white: 2 } as const;
  * so it draws in a child of `el`, and the page's CSS gives `el` its width).
  */
 export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
-  const boardDiv = el.appendChild(document.createElement('div'));
+  // The frame holds goban's board and, over it, the keyboard cursor and the words a screen reader
+  // reads out (unit 9.4, ADR 0026 §4).
+  const frame = el.appendChild(document.createElement('div'));
+  frame.style.position = 'relative';
+  const boardDiv = frame.appendChild(document.createElement('div'));
   // goban draws the coordinates in a square-wide band on each side.
-  const squares = (config.coordinates ?? true) ? config.size + 2 : config.size;
+  const band = (config.coordinates ?? true) ? 1 : 0;
+  const squares = config.size + 2 * band;
   const squareSize = () => Math.max(8, Math.floor(el.clientWidth / squares));
   const socket = new StandInSocket();
   let destroyed = false;
@@ -116,20 +123,26 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       onError: e => console.error(e),
     },
     move => destroyed || config.onMove?.(move),
-    reason => config.onRefused?.(reason),
+    reason => {
+      say(refusedText(reason));
+      config.onRefused?.(reason);
+    },
     gobanThemes(config.theme),
   );
   goban.setMovable(config.movable ?? 'none');
   goban.on('update', () => config.onChange?.());
   goban.on('submit_move', () => config.onChange?.());
 
+  const { say, placeCursor } = keyboardAndVoice(frame, boardDiv, goban, config.size, band, () => board);
+
   const resize = new ResizeObserver(() => {
     const size = squareSize();
     if (size !== goban.square_size) goban.setSquareSize(size);
+    placeCursor();
   });
   resize.observe(el);
 
-  return {
+  const board: Board = {
     play: move => {
       if (destroyed) return;
       toXY(goban.engine, move); // throws on a malformed or off-board move, before anything changes
@@ -145,6 +158,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       // goban logs a move it can't place (an occupied point) and carries on: the turn stays.
       if (goban.engine.last_official_move === before) return goban.dropPreview();
       const captured = goban.officialState().captures[color] - captures[color];
+      say(playedText(config.size, move, color, captured));
       config.onPlayed?.({ move, color, captured });
     },
     cancel: () => goban.dropPreview(),
@@ -167,9 +181,206 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       destroyed = true;
       resize.disconnect();
       goban.destroy();
-      boardDiv.remove();
+      frame.remove();
     },
   };
+  return board;
+}
+
+/**
+ * Keyboard play and spoken updates (ADR 0026 §4): the board takes focus with Tab, arrow keys move a
+ * cursor over the points, Enter or Space plays there (as a tap would, so Confirm moves previews
+ * first), P passes and D describes the point. Moves, captures and refusals are read out through a
+ * polite live region. goban has no keyboard support of its own; this drives its tap handling.
+ */
+function keyboardAndVoice(
+  frame: HTMLElement,
+  boardDiv: HTMLElement,
+  goban: LigoGoban,
+  size: number,
+  band: number,
+  board: () => Board,
+) {
+  const id = `ligo-board-${++mounted}`;
+  const hidden = (div: HTMLElement) =>
+    Object.assign(div.style, {
+      position: 'absolute',
+      width: '1px',
+      height: '1px',
+      overflow: 'hidden',
+      clipPath: 'inset(50%)',
+      whiteSpace: 'nowrap',
+    });
+  const help = frame.appendChild(document.createElement('div'));
+  help.id = `${id}-help`;
+  help.textContent = HELP;
+  hidden(help);
+  const live = frame.appendChild(document.createElement('div'));
+  live.setAttribute('role', 'status');
+  live.setAttribute('aria-live', 'polite');
+  hidden(live);
+
+  boardDiv.tabIndex = 0;
+  boardDiv.setAttribute('role', 'application');
+  // Read as "9 by 9, Go board": the role description names what it is, the label its size.
+  boardDiv.setAttribute('aria-roledescription', 'Go board');
+  boardDiv.setAttribute('aria-label', `${size} by ${size}`);
+  boardDiv.setAttribute('aria-describedby', help.id);
+
+  // A black ring inside a white one: at least 3:1 against any board or stone colour.
+  const ring = '0 0 0 2px #fff, 0 0 0 4px #000';
+  const cursorDiv = frame.appendChild(document.createElement('div'));
+  Object.assign(cursorDiv.style, {
+    position: 'absolute',
+    pointerEvents: 'none',
+    borderRadius: '50%',
+    boxShadow: `inset ${ring.replaceAll(', ', ', inset ')}`,
+    display: 'none',
+  });
+  const half = Math.floor(size / 2);
+  let [x, y] = [half, half];
+  let shown = false;
+
+  // The same words twice in a row are still read out: the text changes by a trailing space.
+  let flip = false;
+  const say = (text: string) => {
+    flip = !flip;
+    live.textContent = flip ? text : `${text}\u00a0`;
+  };
+  const placeCursor = () => {
+    const sq = goban.square_size;
+    Object.assign(cursorDiv.style, {
+      left: `${(x + band) * sq}px`,
+      top: `${(y + band) * sq}px`,
+      width: `${sq}px`,
+      height: `${sq}px`,
+    });
+  };
+  const show = (on: boolean) => {
+    shown = on;
+    cursorDiv.style.display = on ? 'block' : 'none';
+    boardDiv.style.boxShadow = on ? ring : '';
+    if (on) placeCursor();
+  };
+
+  /** Why the player can't move now, or undefined when they can. */
+  const cannotMove = () =>
+    goban.pending() || goban.mayMove()
+      ? undefined
+      : goban.waiting()
+        ? 'Waiting for the move to count'
+        : 'Not your move';
+
+  const playHere = () => {
+    const name = pointName(size, x, y);
+    const official = goban.officialState();
+    const preview = goban.move_selected;
+    if (goban.pending() && preview?.x === x && preview.y === y) return board().confirm();
+    if (official.board[y][x] !== '.') return say(refusedText('occupied', name));
+    const why = cannotMove();
+    if (why) return say(why);
+    goban.keyTap(x, y);
+    if (goban.pending()) say(`${name} ready: Enter again to confirm, Escape to take back`);
+  };
+
+  const passHere = () => {
+    const why = goban.pending() ? undefined : cannotMove();
+    if (why) return say(why);
+    board().pass();
+  };
+
+  // Keys the board acts on don't reach lila's page hotkeys (mousetrap listens on the document):
+  // on a game page an arrow must move the cursor, not step through the moves as well.
+  const ours = new Set([
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'Home',
+    'End',
+    'PageUp',
+    'PageDown',
+  ]);
+  for (const k of ['Enter', ' ', 'p', 'P', 'd', 'D']) ours.add(k);
+  const plain = (e: KeyboardEvent) => !e.ctrlKey && !e.altKey && !e.metaKey;
+  boardDiv.addEventListener('keypress', e => {
+    if (plain(e) && ours.has(e.key)) e.stopPropagation();
+  });
+  boardDiv.addEventListener('keyup', e => {
+    if (plain(e) && ours.has(e.key)) e.stopPropagation();
+  });
+
+  // A click never focuses the board (goban handles the pointer itself); Tab does, and then the
+  // cursor shows and says where it is.
+  boardDiv.addEventListener('focus', () => {
+    show(boardDiv.matches(':focus-visible'));
+    if (shown) say(pointText(goban.officialState().board, x, y));
+  });
+  boardDiv.addEventListener('blur', () => show(false));
+  boardDiv.addEventListener('pointerdown', () => show(false));
+  boardDiv.addEventListener('keydown', e => {
+    // Escape takes back a waiting preview; otherwise it belongs to the page (closing a dialog).
+    if (plain(e) && e.key === 'Escape' && goban.pending()) {
+      e.preventDefault();
+      e.stopPropagation();
+      board().cancel();
+      return say('Taken back');
+    }
+    if (!plain(e) || !ours.has(e.key)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // A held key repeats: moving on is fine, playing or passing twice is not (Confirm moves would
+    // preview and play from one press).
+    if (e.repeat && !e.key.startsWith('Arrow') && !['Home', 'End', 'PageUp', 'PageDown'].includes(e.key))
+      return;
+    const [x0, y0] = [x, y];
+    const last = size - 1;
+    switch (e.key) {
+      case 'ArrowLeft':
+        x = Math.max(0, x - 1);
+        break;
+      case 'ArrowRight':
+        x = Math.min(last, x + 1);
+        break;
+      case 'ArrowUp':
+        y = Math.max(0, y - 1);
+        break;
+      case 'ArrowDown':
+        y = Math.min(last, y + 1);
+        break;
+      case 'Home':
+        x = 0;
+        break;
+      case 'End':
+        x = last;
+        break;
+      case 'PageUp':
+        y = 0;
+        break;
+      case 'PageDown':
+        y = last;
+        break;
+      case 'Enter':
+      case ' ':
+        playHere();
+        break;
+      case 'p':
+      case 'P':
+        passHere();
+        break;
+      case 'd':
+      case 'D':
+        say(describeText(goban.officialState().board, x, y));
+        break;
+    }
+    if (!shown) show(true);
+    if (x !== x0 || y !== y0) {
+      placeCursor();
+      say(pointText(goban.officialState().board, x, y));
+    }
+  });
+
+  return { say, placeCursor };
 }
 
 /** goban's SVG board, with its moves going to LiGo instead of OGS's server. */
@@ -222,6 +433,11 @@ class LigoGoban extends SVGRenderer {
     this.setTheme(themes, false);
   }
 
+  /** A tap on a point, from the keyboard: goban's own tap handling, previews and all. */
+  keyTap(x: number, y: number): void {
+    this.tapAt(x, y, false);
+  }
+
   setMovable(movable: Color | 'both' | 'none'): void {
     this.movable = movable;
     if (this.awaiting) return; // placement stays off until the reported move is answered
@@ -245,6 +461,11 @@ class LigoGoban extends SVGRenderer {
    */
   handTurnOver(): void {
     this.player_id = this.idFor(this.engine.colorToMove() === 'black' ? 'white' : 'black');
+  }
+
+  /** A move was reported and the page hasn't answered it yet. */
+  waiting(): boolean {
+    return this.awaiting;
   }
 
   mayMove(): boolean {
