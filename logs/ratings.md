@@ -10,6 +10,33 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 5.4 (part 1) · Go rank at signup
+- Did: the signup form asks "Your Go rank" (I don't know / I'm new to Go / 25k–9d, default "I don't
+  know"); a declared rank sets the new account's `go` perf to `GoRating.startingGlicko` (middle of
+  the rank, deviation 250) right after the user is created; "I don't know" leaves lila's default.
+  Four i18n keys in `translation/source/site.xml` (key.scala regenerated with bin/i18n-file-gen.ts).
+  `SecurityForm.SignupData` gains `goRank`, validated server-side; `Signup` gets `UserPerfsRepo`.
+  The simple-signup prefill leaves it at "I don't know".
+- Worked: 3.11's `PerfKey.go` and `UserPerfsRepo.setPerf` were all that was needed.
+- Didn't work / dead ends: `web` (AuthUi) can't depend on `rating`, so the rank names are passed in
+  from `app/views/ui.scala`. This container's `~/.sbt/repositories` predated 3.10, so strategygames
+  didn't resolve until `dev/cloud-setup.sh` was re-run.
+- Lessons: since 3.10, every lila compile needs PlayStrategy's Maven repo; re-run
+  `dev/cloud-setup.sh` in an older cloud container before building lila.
+- Decisions: split 5.4 (signup now, account page after 3.16); i18n keys rather than English literals
+  (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md).
+- Review (reviewer agent): no blocking findings. Addressed: a failed perf write after the account
+  exists is logged and keeps lila's default rating instead of failing the signup; the help text no
+  longer promises a shown rank; `i18n.d.ts` regenerated; a test that the declared Glicko survives
+  the perf BSON round trip. Not done: a form-binding test (the form needs its Env's dependencies)
+  and routing through `UserApi.setPerf` (same write, one more hop).
+- Verified by Claude: `sbt "rating/testOnly lila.rating.GoRatingTest; security/testOnly
+  lila.security.SignupGoRankTest"` 15/15 and 4/4; `web/compile`; scalafmt; verify.sh (all gates
+  pass). · Needs owner verification: the signup page on the real stack (the full site can't run
+  in cloud sessions): the question shows, and signing up as 5k shows a 5k? rating.
+- Follow-ups: part 2 after 3.16: change the rank on the account page until the first rated game
+  starts; desktop and phone screenshots.
+
 ### 2026-09-29 · unit 5.2 · Rating maths in lila/modules/rating
 - Did: added `GoRating` (lila/modules/rating/src/main/GoRating.scala): OGS's rank curve and its
   inverse, `Rank` (25k–9d) with labels clamped to 25k–9d and "?" while provisional, the rank table,
