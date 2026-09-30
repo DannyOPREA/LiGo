@@ -157,6 +157,12 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
 3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
+(Amended in unit 3.15: hooks, seeks, challenges and bulk pairings carry go-rules' `Setup` (size,
+ruleset, komi; handicap 0 until 4.9), stored in `seek`, `challenge` and `challenge_bulk` as an
+optional `go` sub-document with the game's own keys (`sz`, `ru`, `km`, `hc`); a record without one
+is read as 19×19, Japanese, 6.5 komi. Forms and the API take `size`, `ruleset` and `komi` (standard
+komi when omitted), create casual games only until 5.7, refuse chess variants and FENs, and rate in
+the `go` perf; pools create 19×19 Japanese casual games until 6.4. logs/decisions.md, 3.15 row.)
 (Amended in unit 3.13: the bus `MoveEvent` carries plain strings (board, move) for chess and Go alike
 until 3.17; the API move stream stays chess-only until 3.16. logs/decisions.md, 3.13 row.)
 (Amended in unit 3.12: `ip` is `{b, w, m}`, the stones as strings of SGF points and the player to

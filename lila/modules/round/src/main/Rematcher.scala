@@ -39,10 +39,8 @@ final private class Rematcher(
   def apply(pov: Pov, confirm: Boolean): Fu[Events] =
     if confirm then yes(pov) else no(pov)
 
-  // A Go rematch would be created as a chess game until unit 3.15 creates Go games.
   private def couldRematch(g: Game): Boolean =
-    !g.isGo &&
-      g.finishedOrAborted &&
+    g.finishedOrAborted &&
       g.nonMandatory &&
       !g.hasRule(_.noRematch) &&
       !g.boosted &&
@@ -102,6 +100,26 @@ final private class Rematcher(
       case Some(Rematches.NextGame.Offered(_, id)) => createGame(id.some)
 
   private def returnGame(pov: Pov, withId: Option[GameId]): Fu[Game] =
+    pov.game.go.fold(returnChess(pov, withId))(returnGo(pov, withId, _))
+
+  // A Go rematch replays the game's board size, ruleset, komi and handicap (unit 3.15)
+  private def returnGo(pov: Pov, withId: Option[GameId], go: ligo.gorules.GoGame): Fu[Game] =
+    for
+      users <- userApi.gamePlayersAny(pov.game.userIdPair, pov.game.perfKey)
+      sloppy <- lila.core.game
+        .newGoGame(
+          go.setup.copy(position = None),
+          pov.game.clock.map(c => chess.Clock(c.config)),
+          players = ByColor(returnPlayer(pov.game, _, users)),
+          rated = if users.exists(_.exists(_.user.lame)) then Rated.No else pov.game.rated,
+          source = pov.game.source | lila.core.game.Source.Lobby,
+          daysPerTurn = pov.game.daysPerTurn
+        )
+        .fold(e => fufail(s"Go rematch of ${pov.gameId}: ${e.message}"), fuccess)
+      game <- withId.fold(idGenerator.withUniqueId(sloppy))(id => fuccess(sloppy.withId(id)))
+    yield game
+
+  private def returnChess(pov: Pov, withId: Option[GameId]): Fu[Game] =
     for
       initialFen <- gameRepo.initialFen(pov.game)
       newGame = Rematcher.returnChessGame(

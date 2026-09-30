@@ -2,10 +2,11 @@ package lila.setup
 
 import chess.{ Clock, Rated }
 import chess.format.Fen
-import chess.variant.{ FromPosition, Variant }
+import chess.variant.Variant
 import scalalib.model.Days
 
 import lila.core.game.GameRule
+import lila.core.setup.GoOptions
 
 final case class OpenConfig(
     name: Option[String],
@@ -16,17 +17,17 @@ final case class OpenConfig(
     position: Option[Fen.Full],
     userIds: Option[(UserId, UserId)],
     rules: Set[GameRule] = Set.empty,
-    expiresAt: Option[Instant]
+    expiresAt: Option[Instant],
+    go: GoOptions = GoOptions.default
 ) extends lila.core.setup.OpenConfig:
 
-  def perfType = lila.rating.PerfType(variant, chess.Speed(clock))
+  // Go's one perf (ADR 0021 §1)
+  def perfType = lila.rating.PerfType.Go
 
-  def validFen = Variant.isValidInitialFen(variant, position)
+  def goSetup = go.orDefault
 
-  def autoVariant =
-    if variant.standard && position.exists(!_.isInitial)
-    then copy(variant = FromPosition)
-    else this
+  // Go games start from their setup, never from a chess position (unit 3.15)
+  def validFen = position.isEmpty
 
 object OpenConfig:
 
@@ -39,7 +40,10 @@ object OpenConfig:
       pos: Option[Fen.Full],
       usernames: Option[List[UserStr]],
       rules: Option[Set[GameRule]],
-      expiresAt: Option[Instant]
+      expiresAt: Option[Instant],
+      size: Option[Int],
+      ruleset: Option[String],
+      komi: Option[Double]
   ) =
     OpenConfig(
       name = n.map(_.trim).filter(_.nonEmpty),
@@ -52,5 +56,6 @@ object OpenConfig:
         (w, b)
       },
       rules = ~rules,
-      expiresAt = expiresAt
-    ).autoVariant
+      expiresAt = expiresAt,
+      go = GoOptions(size, ruleset, komi)
+    )

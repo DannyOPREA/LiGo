@@ -1,5 +1,6 @@
 package lila.challenge
 
+import lila.core.game.GoSetups
 import lila.core.game.Player
 import lila.core.user.{ GameUser, WithPerf }
 import lila.game.{ GameRepo, Rematches, rematchAlternatesColor }
@@ -67,6 +68,8 @@ final class ChallengeMaker(
         Challenge.make(
           variant = pov.game.variant,
           initialFen = initialFen,
+          // a rematch replays the game's board size, ruleset and komi (unit 3.15)
+          go = pov.game.go.fold(GoSetups.default)(g => g.setup.copy(position = None)),
           timeControl = timeControl,
           rated = pov.game.rated,
           color = (if alternateColor then !pov.color else pov.color).name,

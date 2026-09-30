@@ -1,6 +1,6 @@
 package lila.lobby
 
-import chess.{ ByColor, Game as ChessGame }
+import chess.ByColor
 
 import lila.core.socket.Sri
 import lila.core.user.{ GameUsers, WithPerf }
@@ -26,11 +26,8 @@ final private class Biter(
       users <- userApi.gamePlayersAny(ByColor(lobbyUserOption.map(_.id), hook.userId), hook.perfType)
       (joiner, owner) = users.toPair
       ownerColor <- assignCreatorColor(owner, joiner, hook.color)
-      game <- idGenerator.withUniqueId:
-        makeGame(
-          hook,
-          ownerColor.fold(ByColor(owner, joiner), ByColor(joiner, owner))
-        )
+      newGame <- makeGame(hook, ownerColor.fold(ByColor(owner, joiner), ByColor(joiner, owner)))
+      game <- idGenerator.withUniqueId(newGame)
       _ <- gameRepo.insertDenormalized(game)
     yield
       lila.mon.lobby.hook.join.increment()
@@ -43,11 +40,8 @@ final private class Biter(
         .orFail(s"No such seek users: $seek")
       (joiner, owner) = users.toPair
       ownerColor <- assignCreatorColor(owner.some, joiner.some, TriColor.Random)
-      game <- idGenerator.withUniqueId:
-        makeGame(
-          seek,
-          ownerColor.fold(ByColor(owner, joiner), ByColor(joiner, owner)).map(some)
-        )
+      newGame <- makeGame(seek, ownerColor.fold(ByColor(owner, joiner), ByColor(joiner, owner)).map(some))
+      game <- idGenerator.withUniqueId(newGame)
       _ <- gameRepo.insertDenormalized(game)
     yield JoinSeek(joiner.id, seek, game, ownerColor)
 
@@ -62,32 +56,30 @@ final private class Biter(
         creator.map(_.id).foreach(userApi.incColor(_, fixed.resolve()))
         fuccess(fixed.resolve())
 
-  private def makeGame(hook: Hook, users: GameUsers) = lila.core.game
-    .newGame(
-      chess = ChessGame(
-        position = hook.realVariant.initialPosition,
-        clock = hook.clock.toClock.some
-      ),
-      players = users.mapWithColor(newPlayer.apply),
-      rated = hook.rated,
-      source = lila.core.game.Source.Lobby,
-      pgnImport = None
-    )
-    .start
+  // A Go game from the hook's or seek's setup (unit 3.15); the setup was checked when it was made.
+  private def makeGame(hook: Hook, users: GameUsers): Fu[lila.core.game.NewGame] =
+    newGo(hook.go, hook.clock.toClock.some, users, hook.rated, daysPerTurn = none)
 
-  private def makeGame(seek: Seek, users: GameUsers) = lila.core.game
-    .newGame(
-      chess = ChessGame(
-        position = seek.realVariant.initialPosition,
-        clock = none
-      ),
-      players = users.mapWithColor(newPlayer.apply),
-      rated = seek.rated,
-      source = lila.core.game.Source.Lobby,
-      daysPerTurn = seek.daysPerTurn,
-      pgnImport = None
-    )
-    .start
+  private def makeGame(seek: Seek, users: GameUsers): Fu[lila.core.game.NewGame] =
+    newGo(seek.goSetup, clock = none, users, seek.rated, seek.daysPerTurn)
+
+  private def newGo(
+      setup: ligo.gorules.Setup,
+      clock: Option[chess.Clock],
+      users: GameUsers,
+      rated: chess.Rated,
+      daysPerTurn: Option[scalalib.model.Days]
+  ): Fu[lila.core.game.NewGame] =
+    lila.core.game
+      .newGoGame(
+        setup,
+        clock,
+        players = users.mapWithColor(newPlayer.apply),
+        rated = rated,
+        source = lila.core.game.Source.Lobby,
+        daysPerTurn = daysPerTurn
+      )
+      .fold(e => fufail(s"Can't start a Go game from $setup: ${e.message}"), g => fuccess(g.start))
 
   def canJoin(hook: Hook, user: Option[LobbyUser]): Boolean =
     hook.isAuth == user.isDefined && user.forall: u =>

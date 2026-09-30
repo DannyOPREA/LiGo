@@ -6,6 +6,9 @@ import chess.{ Clock, Rated, Speed }
 import play.api.libs.json.*
 import scalalib.ThreadLocalRandom
 
+import ligo.gorules.Setup as GoSetup
+
+import lila.core.game.GoSetups
 import lila.core.perf.UserWithPerfs
 import lila.core.rating.RatingRange
 import lila.core.socket.Sri
@@ -13,12 +16,13 @@ import lila.rating.PerfType
 import lila.core.pool.IsClockCompatible
 import lila.core.id.SessionId
 
-// realtime chess, volatile
+// realtime Go, volatile
 case class Hook(
     id: String,
     sri: Sri, // owner socket sri
     sid: Option[SessionId], // owner cookie (used to prevent multiple hooks)
-    variant: Variant.Id,
+    variant: Variant.Id, // always standard chess, carried unused until unit 3.17
+    go: GoSetup, // board size, ruleset and komi (unit 3.15)
     clock: Clock.Config,
     rated: Rated,
     color: TriColor,
@@ -36,6 +40,7 @@ case class Hook(
     isAuth == h.isAuth &&
       rated == h.rated &&
       variant == h.variant &&
+      go == h.go &&
       clock == h.clock &&
       color.compatibleWith(h.color) &&
       ratingRangeCompatibleWith(h) && h.ratingRangeCompatibleWith(this) &&
@@ -58,7 +63,8 @@ case class Hook(
   def username = user.fold(UserName.anonymous)(_.username)
   def lame = user.so(_.lame)
 
-  lazy val perfType: PerfType = lila.rating.PerfType(realVariant, speed)
+  // Go's one perf (ADR 0021 §1)
+  lazy val perfType: PerfType = PerfType.Go
 
   lazy val perf: Option[LobbyPerf] = user.map(_.perfAt(perfType))
   def rating: Option[IntRating] = perf.map(_.rating)
@@ -79,9 +85,12 @@ case class Hook(
     .add("u" -> user.map(_.username))
     .add("rating" -> rating)
     .add("variant" -> realVariant.exotic.option(realVariant.key))
+    .add("go" -> GoSetups.json(go).some)
     .add("ra" -> rated.yes.option(1))
 
-  def seemsCompatibleWithPools = rated.yes && realVariant.standard && color == TriColor.Random
+  // pools play 19×19 Japanese games with standard komi (ADR 0022 §1)
+  def seemsCompatibleWithPools =
+    rated.yes && realVariant.standard && go == GoSetups.default && color == TriColor.Random
 
   def compatibleWithPools(using isClockCompatible: IsClockCompatible) =
     seemsCompatibleWithPools && isClockCompatible.exec(clock)
@@ -98,6 +107,7 @@ object Hook:
   def make(
       sri: Sri,
       variant: chess.variant.Variant,
+      go: GoSetup,
       clock: Clock.Config,
       rated: Rated,
       color: TriColor,
@@ -111,6 +121,7 @@ object Hook:
       id = ThreadLocalRandom.nextString(idSize),
       sri = sri,
       variant = variant.id,
+      go = go,
       clock = clock,
       rated = rated,
       color = color,
