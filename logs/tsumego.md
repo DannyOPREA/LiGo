@@ -5,6 +5,28 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · Unit 8.3 · tools/puzzles: generator, solver, checker and pipeline
+- Did: finished 8.3 from the stopped branch. Added a known multi-move answer (a rabbity six the
+  attacker kills at the vital point, the defender's three replies each answered), completed ADR
+  0025's amendment (bands from the sample's quartiles, KataGo checks every first move, wrong moves
+  in the solver's order) and the decisions lines. Everything else is in the stopped entry below.
+- Worked: the rabbity six test passed as the textbook answer on the first run; 33 tests pass with a
+  real KataGo; the feasibility gate passed (250 of 265 settled, 46 s).
+- Didn't work / dead ends: pnpm 12 `workspace:*` links from tools/puzzles (see the stopped entry).
+- Lessons: check a generator by a histogram of its real output, not only hand cases (the review
+  caught every puzzle ending after one move); a detached defender stone makes "lose any stone" the
+  goal, so the wall check requires one group.
+- Decisions: ADR 0025's amendment and the ajv dependency, Claude's calls under the owner's
+  2026-09-28 delegation (logs/decisions.md).
+- Verified by Claude: typecheck, lint, 33 tests with KataGo, `dev/tests/run.sh`, verify.sh (all
+  gates but go-rules, whose strategygames download the cloud proxy blocks; CI runs it). Reviewer:
+  2 blocking (the settled test; no log or decisions lines), both fixed; non-blocking fixed: the
+  bent-four shape, KataGo's ownership side pinned per query, the verify trigger on lila's lockfile,
+  a CLI crash on a null entry; noted in the ADR: KataGo checks first moves only, the wrong-move
+  order. Not changed: repeated solves in generate() (performance only).
+  · Needs owner verification: add the `puzzles` check to main's required checks.
+- Follow-ups: 8.4 (the first 200+ puzzles), 8.5 (goban's puzzle mode in libs/board).
+
 ### 2026-09-29 · Unit 8.3 (in progress, stopped) · tools/puzzles pipeline
 - Did: built `tools/puzzles` (catalogue, wall check, exact solver with Benson and a ko cut-off,
   puzzle tree, difficulty, KaTrain frame port, KataGo second opinion via services/scoring's new

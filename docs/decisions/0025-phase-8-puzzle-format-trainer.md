@@ -258,7 +258,7 @@ What lila and goban have today (read for this ADR; paths under `lila/` and goban
 ## Amendments
 
 ### 2026-09-29, unit 8.3 (as built)
-Building the generator made six points of §2 concrete. Claude's calls under the owner's
+Building the generator made these points of §2 concrete. Claude's calls under the owner's
 2026-09-28 delegation (logs/decisions.md):
 - **The table key** is the region's points, the number of passes in a row and the side to move. No
   simple-ko point is needed: a move that captures one stone in a ko shape is cut off as unknown
@@ -270,10 +270,14 @@ Building the generator made six points of §2 concrete. Claude's calls under the
 - **The wall check also requires one group**: the defender's stones outside the region must be a
   single chain. Otherwise "lose any stone" would be the goal, and KataGo rightly disagreed on
   puzzles where the attacker only captured a detached stone.
-- **Difficulty bands are calibrated on the generated set.** Most generated puzzles are one or two
-  moves deep, so the band edges sit where the measured scores spread them into four bands
-  (`BAND_EDGES` in `tools/puzzles/src/generate.ts`); lila's puzzle Glicko moves each rating as
-  people play.
+- **Difficulty bands are calibrated on the generated set.** In a sample of 60 (seed 1), 44 puzzles
+  are one move and 16 take 3 to 7 plies, so the band edges sit at the sample's quartiles of the
+  measured score (`BAND_EDGES` in `tools/puzzles/src/generate.ts`); lila's puzzle Glicko moves
+  each rating as people play.
+- **KataGo checks each first move**: every right first move, and every wrong first move with its
+  refutation. The later moves of a right line rest on the exact search alone.
+- **"The 6 most plausible wrong first moves"** are the first 6 in the solver's move order (points
+  with the most empty neighbours and chains short of liberties first), not a separate ranking.
 - **Validation uses ajv** (MIT, already in lila's lockfile) against `schema/puzzle.schema.json`,
   and `tools/puzzles` imports `services/scoring`'s KataGo client and `libs/board`'s SGF reader by
   path rather than as workspace packages (pnpm 12 linked those to the wrong directory).

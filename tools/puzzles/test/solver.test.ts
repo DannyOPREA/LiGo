@@ -63,3 +63,36 @@ test('straight three: the puzzle tree to kill', () => {
   assert.equal(b.rightFirstMoves, 1);
   assert.deepEqual(b.tree.branches![0], { x: 1, y: 0, correct_answer: true });
 });
+
+// A rabbity six with one of the attacker's stones inside: the attacker kills at the vital point in
+// the middle, and the defender's reply needs an answer, so the right line is three moves long.
+const RABBITY_SIX = parseDiagram(`
+  - - - - - - - - -
+  - - O O O O O O -
+  - O O X X X X O -
+  - O X X . . X O -
+  - O X o . . X O -
+  - O X X . X X O -
+  - O O X X X O O -
+  - - O O O O O - -
+  - - - - - - - - -
+`);
+
+test('rabbity six: the vital point kills, and the line goes on until it is settled', () => {
+  const b = buildPuzzle(place(RABBITY_SIX, 19, BLACK), WHITE);
+  assert.equal(b.goal, 'kill');
+  assert.equal(b.rightFirstMoves, 1);
+  assert.equal(b.depth, 3);
+  const right = b.tree.branches!.find(n => !n.wrong_answer && !n.branches?.every(r => r.wrong_answer))!;
+  assert.deepEqual([right.x, right.y], [4, 4]);
+  assert.equal(right.correct_answer, undefined, 'the vital point alone does not settle it');
+  // Black's most resisting replies, each with every answer that kills.
+  const replies = Object.fromEntries(
+    right.branches!.map(r => [`${r.x},${r.y}`, r.branches!.map(a => `${a.x},${a.y}`).sort()]),
+  );
+  assert.deepEqual(replies, { '5,3': ['4,3', '4,5', '5,4'], '4,3': ['5,4'], '5,4': ['4,3'] });
+  for (const r of right.branches!) for (const a of r.branches!) assert.equal(a.correct_answer, true);
+  // Every other first move is refuted by Black taking the vital point.
+  for (const w of b.tree.branches!.filter(n => n !== right))
+    assert.deepEqual(w.branches, [{ x: 4, y: 4, wrong_answer: true }]);
+});
