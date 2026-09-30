@@ -63,12 +63,16 @@ final private class GameStarter(
       whiteUser: (UserId, Perf),
       blackUser: (UserId, Perf)
   ) =
+    val chessGame = chess.Game(
+      position = chess.variant.Standard.initialPosition,
+      clock = pool.clock.toClock.some
+    )
     Game(
       id = id,
-      chess = chess.Game(
-        position = chess.variant.Standard.initialPosition,
-        clock = pool.clock.toClock.some
-      ),
+      chess = chessGame,
+      ply = chessGame.ply,
+      startedAtPly = chessGame.startedAtPly,
+      clock = chessGame.clock,
       players = ByColor(whiteUser, blackUser).mapWithColor((u, p) => newPlayer(u, p)),
       rated = chess.Rated.Yes,
       status = chess.Status.Created,

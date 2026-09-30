@@ -413,7 +413,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
     val userIds = g2.userIds.distinct
     val fen: Option[Fen.Full] = initialFen.orElse:
       (g2.variant.fromPosition || g2.variant.chess960)
-        .option(Fen.write(g2.chess))
+        .option(Fen.write(g2.chessState))
         .filterNot(_.isInitial)
     val checkInHours =
       if g2.isPgnImport then none

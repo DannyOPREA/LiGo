@@ -69,9 +69,11 @@ final private class MovePlayer(
     uci
       .match
         case Uci.Move(orig, dest, prom) =>
-          game.chess.moveWithCompensated(orig, dest, prom, metrics)
+          game.chessState.moveWithCompensated(orig, dest, prom, metrics)
         case Uci.Drop(role, pos) =>
-          game.chess.drop(role, pos, metrics).map((ncg, drop) => Clock.WithCompensatedLag(ncg, None) -> drop)
+          game.chessState
+            .drop(role, pos, metrics)
+            .map((ncg, drop) => Clock.WithCompensatedLag(ncg, None) -> drop)
       .map:
         case (ncg, _) if ncg.value.clock.exists(_.outOfTime(game.turnColor, withGrace = false)) => Flagged
         case (ncg, moveOrDrop: MoveOrDrop) =>
@@ -86,7 +88,7 @@ final private class MovePlayer(
     val color = moveOrDrop.color
     val moveEvent = MoveEvent(
       gameId = game.id,
-      fen = Fen.write(game.chess),
+      fen = Fen.write(game.chessState),
       move = moveOrDrop.toUci
     )
 

@@ -29,7 +29,11 @@ object perf:
     val racingKings: PerfKey = "racingKings"
     val crazyhouse: PerfKey = "crazyhouse"
     val puzzle: PerfKey = "puzzle"
+    // Go's one rating pool (ADR 0019 §3, ADR 0021 §1): every rated Go game, whatever its board size
+    // or speed, updates this perf.
+    val go: PerfKey = "go"
     val list: List[PerfKey] = List(
+      go,
       bullet,
       blitz,
       rapid,
@@ -64,7 +68,8 @@ object perf:
       horde -> 16,
       racingKings -> 17,
       crazyhouse -> 18,
-      puzzle -> 20
+      puzzle -> 20,
+      go -> 30
     )
 
     extension (key: PerfKey)
@@ -127,6 +132,7 @@ object perf:
 
   case class UserPerfs(
       id: UserId,
+      go: Perf,
       bullet: Perf,
       blitz: Perf,
       rapid: Perf,
@@ -164,6 +170,7 @@ object perf:
       case "racingKings" => racingKings
       case "crazyhouse" => crazyhouse
       case "puzzle" => puzzle
+      case "go" => go
       // impossible because PerfKey can't be instantiated with arbitrary values
       case key => sys.error(s"Unknown perf key: $key")
 
@@ -186,6 +193,7 @@ object perf:
       case "racingKings" => this.focus(_.racingKings)
       case "crazyhouse" => this.focus(_.crazyhouse)
       case "puzzle" => this.focus(_.puzzle)
+      case "go" => this.focus(_.go)
       // impossible because PerfKey can't be instantiated with arbitrary values
       case key => sys.error(s"Unknown perf key: $key")
 

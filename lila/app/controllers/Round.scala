@@ -216,7 +216,7 @@ final class Round(
       Redirect:
         "%s?fen=%s#%s".format(
           routes.Lobby.home,
-          get("fen") | (chess.format.Fen.write(game.chess)).value,
+          get("fen") | (chess.format.Fen.write(game.chessState)).value,
           mode
         )
 

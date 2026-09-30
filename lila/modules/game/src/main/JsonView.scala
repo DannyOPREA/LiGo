@@ -24,7 +24,7 @@ final class JsonView(rematches: Rematches):
         "source" -> game.source,
         "createdAt" -> game.createdAt
       )
-      .add("startedAtTurn" -> game.chess.startedAtPly.some.filter(_ > 0))
+      .add("startedAtTurn" -> game.startedAtPly.some.filter(_ > 0))
       .add("initialFen" -> initialFen)
       .add("tournamentId" -> game.tournamentId)
       .add("swissId" -> game.swissId)
@@ -33,7 +33,7 @@ final class JsonView(rematches: Rematches):
   def base(game: Game, initialFen: Option[Fen.Full]) =
     immutable(game, initialFen) ++ Json
       .obj(
-        "fen" -> Fen.write(game.chess).some,
+        "fen" -> Fen.write(game.chessState).some,
         "turns" -> game.ply,
         "status" -> game.status
       )
@@ -88,7 +88,7 @@ final class JsonView(rematches: Rematches):
       .add("ratingDiff" -> pov.player.ratingDiff)
 
   def maybeFen(pov: Pov): Fen.Full =
-    if pov.player.blindfold then Fen.Full("8/8/8/8/8/8/8/8") else Fen.write(pov.game.chess)
+    if pov.player.blindfold then Fen.Full("8/8/8/8/8/8/8/8") else Fen.write(pov.game.chessState)
 
   def player(p: Player, user: Option[LightUser]) =
     Json

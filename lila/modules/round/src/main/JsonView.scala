@@ -231,7 +231,7 @@ final class JsonView(
       division: Option[chess.Division] = None
   ) =
     import pov.*
-    val fen = Fen.write(game.chess)
+    val fen = Fen.write(game.chessState)
     Json
       .obj(
         "game" -> Json

@@ -153,6 +153,17 @@ enum PerfType(
         descKey = I18nKey.variant.crazyhouseTitle
       )
 
+  // Go's one rating pool (ADR 0021 §1). Its name and description are plain English, not i18n keys,
+  // as LiGo's new text has been since unit 0.7 (a missing key shows its own text).
+  case Go
+      extends PerfType(
+        PerfId(30),
+        key = PerfKey.go,
+        icon = Icon.DiscBig,
+        nameKey = I18nKey("Go"),
+        descKey = I18nKey("One rating for every Go game, on any board size and at any speed.")
+      )
+
   case Puzzle
       extends PerfType(
         PerfId(20),
@@ -167,7 +178,7 @@ object PerfType:
   // all but standard and puzzle
   type GamePerf = Bullet.type | Blitz.type | Rapid.type | Classical.type | UltraBullet.type |
     Correspondence.type | Crazyhouse.type | Chess960.type | KingOfTheHill.type | ThreeCheck.type |
-    Antichess.type | Atomic.type | Horde.type | RacingKings.type
+    Antichess.type | Atomic.type | Horde.type | RacingKings.type | Go.type
 
   def gamePerf(pt: PerfType): Option[GamePerf] = pt match
     case gp: GamePerf => Some(gp)

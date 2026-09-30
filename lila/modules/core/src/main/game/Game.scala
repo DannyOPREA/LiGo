@@ -31,6 +31,13 @@ case class Game(
     id: GameId,
     players: ByColor[Player],
     chess: ChessGame,
+    // The ply count, the ply the game started at and the Fischer clock belong to the game, not to
+    // its chess position (ADR 0019 §3): lila's Game keeps them, and a Go game (unit 3.12) will too.
+    // Until unit 3.17 removes chess, `chess` still carries copies that chess rules read, kept in
+    // step by `withChess` and handed to chess code by `chessState`.
+    ply: Ply,
+    startedAtPly: Ply,
+    clock: Option[Clock],
     loadClockHistory: Clock => Option[ClockHistory] = _ => ClockHistory.empty.some,
     status: Status,
     daysPerTurn: Option[Days],
@@ -43,11 +50,25 @@ case class Game(
     abortedBy: Option[Color] = None
 ):
 
-  export chess.{ position, ply, clock, sans, startedAtPly, player as turnColor, history, variant }
+  export chess.{ position, sans, history, variant }
   export metadata.{ tournamentId, simulId, swissId, drawOffers, source, pgnImport, hasRule }
   export players.{ white as whitePlayer, black as blackPlayer, apply as player }
 
-  lazy val clockHistory = chess.clock.flatMap(loadClockHistory)
+  lazy val clockHistory = clock.flatMap(loadClockHistory)
+
+  /** The player to move: White on even plies, Black on odd ones, the parity rule lila uses everywhere
+    * (`startedAtPly` makes it hold for games that don't start with White, ADR 0019 §3).
+    */
+  def turnColor: Color = ply.turn
+
+  /** The chess game with this game's ply, start and clock, for the chess rules and formats that read them
+    * (moves, FEN) until unit 3.17.
+    */
+  def chessState: ChessGame = chess.copy(ply = ply, startedAtPly = startedAtPly, clock = clock)
+
+  /** Replace the chess game after a chess move or rewind, taking its new ply and clock. */
+  def withChess(c: ChessGame): Game =
+    copy(chess = c, ply = c.ply, startedAtPly = c.startedAtPly, clock = c.clock)
 
   def player[U: UserIdOf](user: U): Option[Player] = players.find(_.isUser(user))
   def opponentOf[U: UserIdOf](user: U): Option[Player] = player(user).map(opponent)
