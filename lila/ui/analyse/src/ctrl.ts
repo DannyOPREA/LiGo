@@ -691,16 +691,6 @@ export default class AnalyseCtrl {
 
   showBestMoveArrows = () => this.settings.showBestMoveArrows;
 
-  boardEditorUrl = () =>
-    this.data.userAnalysis
-      ? '/editor?' +
-        new URLSearchParams({
-          fen: this.node.fen,
-          variant: this.data.game.variant.key,
-          color: this.chessground.state.orientation,
-        })
-      : `/${this.data.game.id}/edit?fen=${this.node.fen}`;
-
   private readonly resetAutoShapes = () => {
     if (
       this.showBestMoveArrows() ||

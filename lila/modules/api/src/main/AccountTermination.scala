@@ -33,11 +33,9 @@ final class AccountTermination(
     relationApi: lila.relation.RelationApi,
     rankingApi: lila.user.RankingApi,
     challengeApi: lila.challenge.ChallengeApi,
-    planApi: lila.plan.PlanApi,
     seekApi: lila.lobby.SeekApi,
     securityStore: lila.security.SessionStore,
     pushEnv: lila.push.Env,
-    streamerApi: lila.streamer.StreamerApi,
     reportApi: lila.report.ReportApi,
     modApi: lila.mod.ModApi,
     modLogApi: lila.mod.ModlogApi,
@@ -64,13 +62,11 @@ final class AccountTermination(
     followedIds <- relationApi.accountTermination(u)
     _ <- rankingApi.remove(u.id)
     _ <- challengeApi.removeByUserId(u.id)
-    _ <- planApi.cancelIfAny(u).recoverDefault
     _ <- seekApi.removeByUser(u)
     _ <- securityStore.closeAllSessionsOf(u.id)
     _ <- selfClose.so(tokenApi.revokeAllByUser(u.id))
     _ <- pushEnv.browserSub.unsubscribeByUser(u)
     _ <- pushEnv.unregisterDevices(u)
-    _ <- streamerApi.demote(u.id)
     reports <- reportApi.processAndGetBySuspect(lila.report.Suspect(u))
     _ <-
       if selfClose then modLogApi.selfCloseAccount(u.id, forever, reports)
@@ -116,7 +112,6 @@ final class AccountTermination(
     singlePlayerGameIds <- gameRepo.deleteAllSinglePlayerOf(u.id)
     _ <- analysisRepo.remove(singlePlayerGameIds)
     _ <- deleteAllGameChats(u)
-    _ <- streamerApi.repo.delete(u)
     _ <- tokenApi.revokeAllByUser(u.id)
     _ <- u.marks.clean.so:
       securityStore.deleteAllSessionsOf(u.id)

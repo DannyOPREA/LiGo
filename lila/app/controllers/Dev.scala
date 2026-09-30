@@ -93,18 +93,13 @@ final class Dev(env: Env) extends LilaController(env):
       env.mailer.mailerSecondaryPermilleSetting,
       env.mailer.canSendEmailsSetting
     ),
-    "Streamer" -> List(
-      env.streamer.homepageMaxSetting,
-      env.streamer.alwaysFeaturedSetting
-    ),
     "Permissions" -> List(
       env.web.settings.noDelaySecret,
       env.web.settings.prizeTournamentMakers
     ),
     "Limits" -> List(
       env.web.settings.apiTimeline,
-      env.web.settings.apiExplorerGamesPerSecond,
-      env.recap.parallelismSetting
+      env.web.settings.apiExplorerGamesPerSecond
     ),
     // "Broadcast" dev settings (relay proxy) removed with the relay module (unit 3.3); "Tutor" and
     // fishnet's opening book depth with the tutor and fishnet modules (unit 3.5).
@@ -117,8 +112,6 @@ final class Dev(env: Env) extends LilaController(env):
     ),
     "Mobile" -> List(
       env.web.lichobileAnnounceApi.lichobileUpgrade
-    ),
-    "Config" -> List(
-      env.plan.donationGoalSetting
     )
+    // streamer, recap and donation-goal settings went with those modules (unit 3.7).
   )

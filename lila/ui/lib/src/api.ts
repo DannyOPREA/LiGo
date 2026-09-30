@@ -57,10 +57,7 @@ export interface Api {
   chessground?: () => CgApi;
 }
 
-export interface Overrides {
-  // file://./../../bits/src/bits.tvGames.ts
-  tvGamesOnFinish: (id: string) => void;
-}
+export type Overrides = Record<string, never>;
 
 // this object is available to extensions as window.lichess
 export const api: Api = {
@@ -117,5 +114,5 @@ export const api: Api = {
   },
   // some functions will be exposed here
   // to be overriden by browser extensions
-  overrides: {} as Overrides,
+  overrides: {},
 };

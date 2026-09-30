@@ -1,10 +1,6 @@
 package lila.game
 package core
 
-import lila.core.game.Game
-
-type OnTvGame = Game => Unit
-
 object insight:
 
   trait InsightDb

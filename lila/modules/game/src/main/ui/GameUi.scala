@@ -23,12 +23,11 @@ final class GameUi(helpers: Helpers):
 
     def apply(
         pov: Pov,
-        ownerLink: Boolean = false,
-        tv: Boolean = false
+        ownerLink: Boolean = false
     )(using ctx: Context): Tag =
       renderMini(
         pov,
-        gameLink(pov.game, pov.color, ownerLink, tv),
+        gameLink(pov.game, pov.color, ownerLink),
         showRatings = ctx.pref.showRatings
       )
 
@@ -36,11 +35,6 @@ final class GameUi(helpers: Helpers):
       val color = chess.White
       games.map: g =>
         renderMini(g.pov(color), gameLink(g, color))
-
-    def noCtx(pov: Pov, tv: Boolean = false, channelKey: Option[String] = None): Tag =
-      val link = if tv then channelKey.fold(routes.Tv.index)(routes.Tv.onChannel)
-      else routes.Round.watcher(pov.gameId, pov.color)
-      renderMini(pov, link.url)(using transDefault, None)
 
     def renderState(pov: Pov)(using me: Option[Me]) =
       val fen =

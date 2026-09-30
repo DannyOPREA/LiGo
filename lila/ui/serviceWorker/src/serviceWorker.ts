@@ -40,7 +40,6 @@ async function handleNotificationClick(e: NotificationEvent) {
   let url = data.path || '/';
   if (data.fullId) url = '/' + data.fullId;
   else if (data.challengeId) url = '/' + data.challengeId;
-  else if (data.streamerId) url = `/streamer/${data.streamerId}?redirect=1`;
   else if (data.invitedBy) url = `/study/${data.studyId}`;
 
   // focus open window with same url

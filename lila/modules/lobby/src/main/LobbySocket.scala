@@ -7,7 +7,6 @@ import chess.IntRating
 
 import lila.common.Json.given
 import lila.common.Bus
-import lila.core.game.ChangeFeatured
 import lila.core.pool.{ PoolConfigId, PoolMember, PoolFrom }
 import lila.core.security.{ UserTrust, UserTrustApi }
 import lila.core.socket.{ protocol as P, * }
@@ -104,8 +103,6 @@ final class LobbySocket(
 
       case SetupBus.AddSeek(_) | RemoveSeek(_) => tellActive(makeMessage("reload_seeks"))
 
-      case ChangeFeatured(msg) => tellActive(msg)
-
       case SetIdle(sri, true) => idleSris += sri.value
       case SetIdle(sri, false) => idleSris -= sri.value
 
@@ -115,7 +112,6 @@ final class LobbySocket(
         hookSubscriberSris += member.sri.value
 
     Bus.subscribeActor[ReloadTimelines](this)
-    Bus.subscribeActor[ChangeFeatured](this)
     Bus.subscribeActor[lila.core.pool.Pairings](this)
     scheduler.scheduleOnce(7.seconds)(this ! SendHookRemovals)
     scheduler.scheduleWithFixedDelay(31.seconds, 31.seconds)(() => this ! Cleanup)

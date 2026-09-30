@@ -55,4 +55,3 @@ object UiEnv
   def flagApi = lila.user.Flags
 
   def lightUserFallback = env.user.lightUserSyncFallback
-  def isStreaming = env.streamer.liveApi.isStreaming
