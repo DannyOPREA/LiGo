@@ -1,9 +1,8 @@
 import { blurIfPrimaryClick, repeater } from 'lib';
 import { throttle } from 'lib/async';
 import { displayColumns } from 'lib/device';
-import { finished, aborted, userAnalysable, playable, capitalize } from 'lib/game';
+import { finished, aborted, userAnalysable, playable } from 'lib/game';
 import { game as gameRoute } from 'lib/game/router';
-import viewStatus from 'lib/game/view/status';
 import { licon, type LiconKey } from 'lib/licon';
 import { addPointerListeners } from 'lib/pointer';
 import {
@@ -17,6 +16,7 @@ import {
 } from 'lib/view';
 
 import type RoundController from '../ctrl';
+import { resultText } from '../go';
 import type { Step } from '../interfaces';
 import * as util from '../util';
 import boardMenu from './boardMenu';
@@ -24,7 +24,6 @@ import boardMenu from './boardMenu';
 const scrollMax = 99999,
   moveTag = 'Z7yx',
   indexTag = 'qZM',
-  indexTagUC = indexTag.toUpperCase(),
   movesTag = 'aPp',
   rmovesTag = 'i5d',
   rbuttonsTag = 'bo3';
@@ -51,29 +50,15 @@ const autoScroll = throttle(100, (movesEl: HTMLElement, ctrl: RoundController) =
   }),
 );
 
-const renderDrawOffer = () => hl('draw', { attrs: { title: 'Draw offer' } }, '½?');
+const moverOf = (step: Step): Color => (step.ply % 2 === 0 ? 'black' : 'white');
 
-const renderMove = (step: Step, curPly: number, orEmpty: boolean, drawOffers: Set<number>) =>
+const renderMove = (step: Step | undefined, curPly: number) =>
   step
-    ? hl(moveTag, { class: { a1t: step.ply === curPly } }, [
-        step.san.startsWith('P') ? step.san.slice(1) : step.san,
-        drawOffers.has(step.ply) ? renderDrawOffer() : undefined,
-      ])
-    : orEmpty && hl(moveTag, '…');
+    ? hl(moveTag, { class: { a1t: step.ply === curPly }, attrs: { 'data-ply': step.ply } }, step.san)
+    : hl(moveTag, '…');
 
 export function renderResult(ctrl: RoundController): VNode | undefined {
-  let result: string | undefined;
-  if (finished(ctrl.data))
-    switch (ctrl.data.game.winner) {
-      case 'white':
-        result = '1-0';
-        break;
-      case 'black':
-        result = '0-1';
-        break;
-      default:
-        result = '½-½';
-    }
+  const result = finished(ctrl.data) ? resultText(ctrl.data.game.status, ctrl.data.game.winner) : undefined;
   if (result || aborted(ctrl.data)) {
     return hl('div.result-wrap', [
       hl('p.result', result || ''),
@@ -85,39 +70,32 @@ export function renderResult(ctrl: RoundController): VNode | undefined {
             else setTimeout(() => ctrl.autoScroll(), 200);
           }),
         },
-        viewStatus(ctrl.data),
+        ctrl.statusText(),
       ),
     ]);
   }
   return undefined;
 }
 
+/**
+ * The moves in rows of two, Black's then White's, each row led by the number of its first move (Go
+ * numbers every move). A game where White moves first (handicap) starts with an empty Black cell.
+ */
 function renderMoves(ctrl: RoundController): LooseVNodes {
-  const pending = ctrl.pendingStep(),
-    steps = pending ? [...ctrl.data.steps, pending] : ctrl.data.steps,
-    firstPly = util.firstPly(ctrl.data),
-    lastPly = util.lastPly(ctrl.data),
-    indexOffset = Math.trunc(firstPly / 2) + 1,
-    drawPlies = new Set(ctrl.data.game.drawOffers || []);
-
-  if (typeof lastPly === 'undefined') return [];
-
-  const pairs: Array<Array<any>> = [];
-  let startAt = 1;
-  if (firstPly % 2 === 1) {
-    pairs.push([null, steps[1]]);
-    startAt = 2;
+  const steps = ctrl.data.steps.slice(1),
+    firstPly = util.firstPly(ctrl.data);
+  const rows: Array<[Step | undefined, Step | undefined]> = [];
+  let i = 0;
+  if (steps.length && moverOf(steps[0]) === 'white') {
+    rows.push([undefined, steps[0]]);
+    i = 1;
   }
-  for (let i = startAt; i < steps.length; i += 2) pairs.push([steps[i], steps[i + 1]]);
+  for (; i < steps.length; i += 2) rows.push([steps[i], steps[i + 1]]);
 
-  const els: LooseVNodes = [],
-    curPly = pending ? pending.ply : ctrl.ply;
-  for (let i = 0; i < pairs.length; i++) {
-    els.push(
-      hl(indexTag, i + indexOffset),
-      renderMove(pairs[i][0], curPly, true, drawPlies),
-      renderMove(pairs[i][1], curPly, false, drawPlies),
-    );
+  const els: LooseVNodes = [];
+  for (const [b, w] of rows) {
+    const first = (b ?? w)!;
+    els.push(hl(indexTag, first.ply - firstPly), renderMove(b, ctrl.ply), w ? renderMove(w, ctrl.ply) : null);
   }
   els.push(renderResult(ctrl));
 
@@ -128,7 +106,6 @@ export function analysisButton(ctrl: RoundController): LooseVNode {
   const forecastCount = ctrl.data.forecastCount;
   return (
     userAnalysable(ctrl.data) &&
-    !ctrl.data.local &&
     hl(
       'a.fbt.analysis',
       {
@@ -188,15 +165,18 @@ function renderButtons(ctrl: RoundController) {
 
 function initMessage(ctrl: RoundController) {
   const d = ctrl.data;
+  const go = d.game.go;
   return (
     (ctrl.replayEnabledByPref() || displayColumns() > 1) &&
     playable(d) &&
-    d.game.turns === 0 &&
+    ctrl.data.steps.length === 1 &&
     !d.player.spectator &&
     hl('div.message', { attrs: dataIcon(licon.InfoCircle) }, [
       hl('div', [
-        i18n.site[`youPlayThe${capitalize(ctrl.data.player.color)}Pieces`],
-        d.player.color === 'white' && [hl('br'), hl('strong', i18n.site.itsYourTurn)],
+        `You play ${d.player.color === 'black' ? 'Black' : 'White'}.`,
+        hl('br'),
+        `${go.size}×${go.size}, ${go.rules === 'japanese' ? 'Japanese' : 'Chinese'} rules, komi ${go.komi}.`,
+        d.game.player === d.player.color && [hl('br'), hl('strong', i18n.site.itsYourTurn)],
       ]),
     ])
   );
@@ -217,18 +197,10 @@ export function render(ctrl: RoundController): LooseVNode {
         {
           hook: onInsert(el => {
             el.addEventListener('mousedown', e => {
-              let node = e.target as HTMLElement,
-                offset = -2;
-              if (node.tagName !== moveTag.toUpperCase()) return;
-              while ((node = node.previousSibling as HTMLElement)) {
-                offset++;
-                if (node.tagName === indexTagUC) {
-                  if (ctrl.toSubmit) ctrl.submitMove(false);
-                  ctrl.userJump(2 * parseInt(node.textContent || '') + offset);
-                  ctrl.redraw();
-                  break;
-                }
-              }
+              const ply = (e.target as HTMLElement).getAttribute('data-ply');
+              if (ply === null) return;
+              ctrl.userJump(parseInt(ply));
+              ctrl.redraw();
             });
             ctrl.autoScroll = () => autoScroll(el, ctrl);
             if (ctrl.ply > 2) {
@@ -243,19 +215,16 @@ export function render(ctrl: RoundController): LooseVNode {
         renderMoves(ctrl),
       );
   const renderMovesOrResult = moves ? moves : renderResult(ctrl);
-  return (
-    !ctrl.nvui &&
-    hl(rmovesTag, [
-      renderButtons(ctrl),
-      boardMenu(ctrl),
-      initMessage(ctrl) ||
-        (displayColumns() === 1
-          ? hl('div.col1-moves', [
-              col1Button(ctrl, -1, licon.JumpPrev, ctrl.ply === util.firstPly(d)),
-              renderMovesOrResult,
-              col1Button(ctrl, 1, licon.JumpNext, ctrl.ply === util.lastPly(d)),
-            ])
-          : renderMovesOrResult),
-    ])
-  );
+  return hl(rmovesTag, [
+    renderButtons(ctrl),
+    boardMenu(ctrl),
+    initMessage(ctrl) ||
+      (displayColumns() === 1
+        ? hl('div.col1-moves', [
+            col1Button(ctrl, -1, licon.JumpPrev, ctrl.ply === util.firstPly(d)),
+            renderMovesOrResult,
+            col1Button(ctrl, 1, licon.JumpNext, ctrl.ply === util.lastPly(d)),
+          ])
+        : renderMovesOrResult),
+  ]);
 }

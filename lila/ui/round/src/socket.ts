@@ -1,11 +1,7 @@
-import { COLORS } from 'chessops';
-
 import { defined } from 'lib';
 import { throttle } from 'lib/async';
-import { type Simul, setOnGame, isPlayerTurn, plyColor } from 'lib/game';
-import { pubsub } from 'lib/pubsub';
+import { setOnGame } from 'lib/game';
 import { wsSign, wsVersion } from 'lib/socket';
-import { domDialog } from 'lib/view';
 
 import type RoundController from './ctrl';
 import type { RoundSocketSend, EventsWithoutPayload } from './interfaces';
@@ -79,7 +75,6 @@ export function make(send: RoundSocketSend, ctrl: RoundController): RoundSocket 
       ctrl.redraw();
     },
     move: ctrl.apiMove,
-    drop: ctrl.apiMove,
     reload,
     redirect: ctrl.setRedirecting,
     clockInc(o: { color: Color; time: number }) {
@@ -97,7 +92,7 @@ export function make(send: RoundSocketSend, ctrl: RoundController): RoundSocket 
       }
     },
     crowd(o: { white: boolean; black: boolean }) {
-      COLORS.forEach(c => {
+      (['white', 'black'] as const).forEach(c => {
         if (defined(o[c])) setOnGame(ctrl.data, c, o[c]);
       });
       ctrl.redraw();
@@ -114,54 +109,12 @@ export function make(send: RoundSocketSend, ctrl: RoundController): RoundSocket 
       if (!ctrl.data.player.spectator) ctrl.setLoading(true);
       else ctrl.redraw();
     },
-    drawOffer(by?: Color) {
-      if (ctrl.isPlaying()) {
-        ctrl.data.player.offeringDraw = by === ctrl.data.player.color;
-        const fromOp = (ctrl.data.opponent.offeringDraw = by === ctrl.data.opponent.color);
-        if (fromOp) ctrl.opponentRequest('draw', i18n.site.yourOpponentOffersADraw);
-      }
-      if (by) {
-        let ply = ctrl.lastPly();
-        if (by === plyColor(ply)) ply++;
-        ctrl.data.game.drawOffers = (ctrl.data.game.drawOffers || []).concat([ply]);
-      }
-      ctrl.redraw();
-    },
     berserk(color: Color) {
       ctrl.setBerserk(color);
     },
     gone: ctrl.setGone,
     goneIn: ctrl.setGone,
-    checkCount(e: { white: number; black: number }) {
-      ctrl.data.player.checks = ctrl.data.player.color === 'white' ? e.white : e.black;
-      ctrl.data.opponent.checks = ctrl.data.opponent.color === 'white' ? e.white : e.black;
-      ctrl.redraw();
-    },
-    simulPlayerMove(gameId: string) {
-      if (
-        ctrl.opts.userId &&
-        ctrl.data.simul &&
-        ctrl.opts.userId === ctrl.data.simul.hostId &&
-        gameId !== ctrl.data.game.id &&
-        ctrl.moveOn.get() &&
-        !isPlayerTurn(ctrl.data)
-      ) {
-        ctrl.setRedirecting();
-        site.sound.play('move');
-        location.href = '/' + gameId;
-      }
-    },
-    simulEnd(simul: Simul) {
-      domDialog({
-        easyClose: 'clickOutside',
-        htmlText:
-          '<div><p>Simul complete!</p><br /><br />' +
-          `<a class="button" href="/simul/${simul.id}">Back to ${simul.name} simul</a></div>`,
-      });
-    },
   };
-
-  pubsub.on('ab.rep', n => send('rep', { n }));
 
   return {
     send,

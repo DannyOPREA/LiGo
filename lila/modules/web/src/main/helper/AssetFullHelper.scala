@@ -38,7 +38,6 @@ trait AssetFullHelper:
           case json: JsValue => safeJsonValue(json).value
           case json => json.toString
 
-  def roundNvuiTag(using ctx: Context) = ctx.blind.option(Esm("round.nvui"))
   def cashTag: Frag = iifeModule("javascripts/vendor/cash.min.js")
   def chessgroundTag: Frag = script(tpe := "module", src := assetUrl("npm/chessground.min.js"))
 

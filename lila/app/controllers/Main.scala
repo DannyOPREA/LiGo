@@ -92,9 +92,8 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
 
   def helpPath(path: String) = Open:
     path match
-      case "keyboard-move" => Ok.snip(lila.web.ui.help.keyboardMove)
-      case "voice/move" => Ok.snip(lila.web.ui.help.voiceMove)
-      // "master" (title verification help) removed with the title module (unit 3.3).
+      // "master" (title verification help) removed with the title module (unit 3.3); "keyboard-move" and
+      // "voice/move" with chess's keyboard and voice input (unit 3.18).
       case _ => notFound
 
   def movedPermanently(to: String) = Anon:

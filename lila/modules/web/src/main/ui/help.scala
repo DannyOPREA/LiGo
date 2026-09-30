@@ -14,8 +14,6 @@ object help:
   private val alt = span(cls := "kbd-mod")("or")
   private val tap = span(cls := "kbd-mod")("tap")
   private val kbd = tag("kbd")
-  private def voice(text: String) = strong(cls := "val-to-word", text)
-  private def phonetic(text: String) = strong(cls := "val-to-word phonetic", text)
 
   private def navigateMoves(using Translate) = frag(
     header(trans.site.moveListNavigation()),
@@ -32,10 +30,17 @@ object help:
   private def zen(using Translate) = row(kbd("z"), trans.preferences.zenMode())
   private def helpDialog(using Translate) = row(kbd("?"), trans.site.showHelpDialog())
   private def menu(using Translate) = row(kbd("h"), trans.site.menu())
-  private def phonetics = "abcdefgh"
-    .map(_.toString)
-    .map: letter =>
-      frag(s"${letter.capitalize} = ", phonetic(letter), ". ")
+
+  // The Go board's own keys (libs/board, unit 9.4), once Tab has put the focus on it. English until the
+  // board's words reach lila's translations (unit 9.7).
+  private def goBoard = frag(
+    header("On the board (Tab to reach it)"),
+    row(frag(kbd("←"), kbd("→"), kbd("↑"), kbd("↓")), "Move the cursor"),
+    row(frag(kbd("Enter"), or, kbd("Space")), "Play a stone at the cursor"),
+    row(kbd("p"), "Pass"),
+    row(kbd("d"), "Describe the point"),
+    row(kbd("Esc"), "Take back a stone waiting to be confirmed")
+  )
 
   def round(hasChat: Boolean)(using Translate) =
     frag(
@@ -43,8 +48,8 @@ object help:
       table(
         tbody(
           navigateMoves,
+          goBoard,
           header(trans.site.other()),
-          flip,
           zen,
           hasChat.option(
             row(kbd("c"), trans.site.focusChat())
@@ -138,129 +143,6 @@ object help:
                     li(trans.site.primaryColorArrowsHowTo())
                   )
                 )
-              )
-            )
-          )
-        )
-      )
-    )
-
-  def keyboardMove(using Translate) =
-    import trans.keyboardMove.*
-    frag(
-      h2(keyboardInputCommands()),
-      table(
-        tbody(
-          header(performAMove()),
-          row(kbd("e2e4"), movePieceFromE2ToE4()),
-          row(kbd("5254"), movePieceFromE2ToE4()),
-          row(kbd("Nc3"), moveKnightToC3()),
-          row(kbd("O-O"), kingsideCastle()),
-          row(kbd("O-O-O"), queensideCastle()),
-          row(kbd("c8=Q"), promoteC8ToQueen()),
-          row(kbd("R@b4"), dropARookAtB4()),
-          header(otherCommands()),
-          row(kbd("/"), trans.site.focusChat()),
-          row(kbd("clock"), readOutClocks()),
-          row(kbd("who"), readOutOpponentName()),
-          row(kbd("draw"), offerOrAcceptDraw()),
-          row(kbd("resign"), trans.site.resignTheGame()),
-          row(kbd("zerk"), trans.arena.berserk()),
-          row(kbd("next"), trans.puzzle.nextPuzzle()),
-          row(kbd("upv"), trans.puzzle.upVote()),
-          row(kbd("downv"), trans.puzzle.downVote()),
-          row(frag(kbd("help"), or, kbd("?")), trans.site.showHelpDialog()),
-          header(tips()),
-          tr(
-            td(cls := "tips", colspan := 2)(
-              ul(
-                li(
-                  ifTheAboveMoveNotationIsUnfamiliar(),
-                  a(targetBlank, href := "https://en.wikipedia.org/wiki/Algebraic_notation_(chess)")(
-                    "Algebraic notation"
-                  )
-                ),
-                li(includingAXToIndicateACapture()),
-                li(bothTheLetterOAndTheDigitZero()),
-                li(ifItIsLegalToCastleBothWays()),
-                li(capitalizationOnlyMattersInAmbiguousSituations()),
-                li(toPremoveSimplyTypeTheDesiredPremove())
-              )
-            )
-          )
-        )
-      )
-    )
-
-  def voiceMove(using Translate) =
-    import trans.voiceCommands.*
-    frag(
-      h2(voiceCommands()),
-      table(
-        tbody(
-          tr(th(p(trans.site.instructions()))),
-          tr(
-            td(cls := "tips")(
-              ul(
-                li(
-                  instructions1(
-                    iconTag(Icon.Voice),
-                    iconTag(Icon.InfoCircle),
-                    iconTag(Icon.Gear)
-                  )
-                ),
-                li(instructions2()),
-                li(instructions3(voice("yes"), voice("no"))),
-                li(
-                  instructions4(strong("Push to Talk")),
-                  strong(" Shift"),
-                  " also cancels any ongoing speech."
-                ),
-                li(
-                  "Enable ",
-                  a(href := "/account/preferences/game-behavior#moveConfirmation")("Move Confirmation"),
-                  " in Settings, set timer off, and set clarity to clear if you are playing blindfolded",
-                  " with speech synthesis. This enables spoken move confirmation."
-                ),
-                li(instructions5(), phonetics)
-              )
-            )
-          )
-        ),
-        div(cls := "commands")(
-          table(
-            tbody(
-              header(trans.keyboardMove.performAMove()),
-              row(voice("e,4"), moveToE4OrSelectE4Piece()),
-              row(voice("B"), selectOrCaptureABishop()),
-              row(voice("N,c,3"), trans.keyboardMove.moveKnightToC3()),
-              row(voice("Q,x,R"), takeRookWithQueen()),
-              row(voice("c,8,=,Q"), trans.keyboardMove.promoteC8ToQueen()),
-              row(voice("castle"), castle()),
-              row(voice("O-O-O"), trans.keyboardMove.queensideCastle()),
-              row(phonetic("a,7,g,1"), phoneticAlphabetIsBest()),
-              row(voice("draw"), trans.keyboardMove.offerOrAcceptDraw()),
-              row(voice("resign"), trans.site.resignTheGame()),
-              row(voice("takeback"), trans.site.proposeATakeback())
-            )
-          ),
-          table(
-            tbody(
-              header(trans.keyboardMove.otherCommands()),
-              row(voice("no"), cancelTimerOrDenyARequest()),
-              row(voice("yes"), playPreferredMoveOrConfirmSomething()),
-              row(voice("vocabulary"), "List all available commands"),
-              row(voice("blindfold"), "Toggle blindfold mode"),
-              row(voice("clock"), "Read out clocks"),
-              row(voice("pieces"), "Read out pieces"),
-              row(voice("white-pieces"), "Read out white pieces"),
-              row(voice("next"), trans.puzzle.nextPuzzle()),
-              row(voice("upvote"), trans.puzzle.upVote()),
-              row(voice("solve"), showPuzzleSolution()),
-              row(voice("help"), trans.site.showHelpDialog()),
-              tr(
-                td,
-                td(button(cls := "button", cls := "all-phrases-button")(trans.site.showMeEverything()))
               )
             )
           )

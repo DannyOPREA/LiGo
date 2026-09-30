@@ -1,44 +1,73 @@
-import type { MoveMetadata as CgMoveMetadata } from '@lichess-org/chessground/types';
-
 import type { ChatOpts as BaseChatOpts, ChatCtrl, ChatPlugin } from 'lib/chat/interfaces';
-import type { GameData, Status, RoundStep } from 'lib/game';
+import type { GameData, Status } from 'lib/game';
 import type { ClockData } from 'lib/game/clock/clockCtrl';
 import * as Prefs from 'lib/prefs';
 import type { EnhanceOpts } from 'lib/richText';
-import type { NodeCrazy } from 'lib/tree/types';
-import type { VNode } from 'lib/view';
 
 import type { CorresClockData } from './corresClock/corresClockCtrl';
-import type { RoundSocket } from './socket';
 
 export { type RoundSocket } from './socket';
 export { type CorresClockData } from './corresClock/corresClockCtrl';
-export type { RoundStep as Step } from 'lib/game';
 export type { default as RoundController } from './ctrl';
 export type { ClockData } from 'lib/game/clock/clockCtrl';
 
-export interface NvuiPlugin {
-  submitMove?: (submitStoredPremove?: boolean) => void;
-  playPremove: () => void;
-  premoveInput: string;
-  render(): VNode;
+/** A move sent to the server (ADR 0019 §6): an SGF point such as `"dd"`, or `"pass"`. */
+export interface SocketMove {
+  u: string;
+  b?: 1;
 }
 
-export interface SocketMove {
-  u: Uci;
-  b?: 1;
+/** One entry of the move list: the position after `ply` plies, reached by `uci`. */
+export interface Step {
+  ply: Ply;
+  /** The move as sent on the wire: an SGF point or `"pass"`; empty for the starting position. */
+  uci: string;
+  /** The move as printed on the board ("D4", "Pass"); empty for the starting position. */
+  san: string;
 }
-export interface SocketDrop {
-  role: Role;
-  pos: Key;
-  b?: 1;
+
+/** A Go game's setup and moves (lila/modules/game `JsonView.go`, units 3.12–3.13). */
+export interface GoData {
+  size: 9 | 13 | 19;
+  rules: 'japanese' | 'chinese';
+  komi: number;
+  /** SGF points, `pass` and (from Phase 4) `resume`, separated by spaces. */
+  moves: string;
+  /** `b` counts the White stones Black has taken. */
+  prisoners: { b: number; w: number };
+  phase: 'play' | 'scoring';
+  handicap?: number;
+  /** A custom starting position (later: analysis, puzzles). */
+  position?: { black: string[]; white: string[]; toMove: Color };
+  ko?: string;
+}
+
+/** The server's `move` event for a Go game (ADR 0019 §6, lila/modules/game `Event.GoMove`). */
+export interface GoMoveEvent {
+  /** The stone's SGF point; absent for a pass. */
+  p?: string;
+  pass?: true;
+  ply: number;
+  /** The points this move captured. */
+  cap: string[];
+  prisoners: { b: number; w: number };
+  ko?: string;
+  phase: 'play' | 'scoring';
+  /** The position for live mini boards (rows of `b`, `w` and runs of empty points). */
+  board: string;
+  clock?: {
+    white: Seconds;
+    black: Seconds;
+    lag?: Centis;
+  };
+  status?: Status;
+  winner?: Color;
+  volume?: number;
 }
 
 export interface EventsWithPayload {
-  rep: { n: string };
   flag: Color;
   move: SocketMove;
-  drop: SocketDrop;
 }
 
 export type EventsWithoutPayload =
@@ -48,14 +77,8 @@ export type EventsWithoutPayload =
   | 'rematch-no'
   | 'takeback-yes'
   | 'takeback-no'
-  | 'draw-yes'
-  | 'draw-no'
-  | 'blindfold-yes'
-  | 'blindfold-no'
-  | 'draw-force'
   | 'bye2'
   | 'resign-force'
-  | 'draw-claim'
   | 'resign'
   | 'abort';
 
@@ -74,25 +97,20 @@ export interface RoundSocketSend {
   ): void;
 }
 
-export type EncodedDests = string | Record<string, string>;
-
 export interface RoundData extends GameData {
+  game: GameData['game'] & { go: GoData };
   clock?: ClockData;
   pref: Pref;
-  steps: RoundStep[];
-  possibleMoves?: EncodedDests;
-  possibleDrops?: string;
+  /** Built from `game.go` on arrival (`util.upgradeServerData`); the server's chess steps are ignored. */
+  steps: Step[];
   forecastCount?: number;
   opponentSignal?: number;
-  crazyhouse?: NodeCrazy;
   correspondence?: CorresClockData;
   tv?: Tv;
   userTv?: {
     id: UserId;
   };
   expiration?: Expiration;
-  local?: RoundProxy;
-  noab?: boolean;
 }
 
 export interface Expiration {
@@ -106,15 +124,9 @@ export interface Tv {
   flip: boolean;
 }
 
-export interface RoundProxy extends RoundSocket {
-  analyse(): void;
-  newOpponent(): void;
-}
-
 export interface RoundOpts {
   data: RoundData;
   userId?: string;
-  noab?: boolean;
   socketSend?: RoundSocketSend;
   onChange(d: RoundData): void;
   element?: HTMLElement;
@@ -131,41 +143,6 @@ export interface ChatOpts extends BaseChatOpts {
   noteAge?: number;
   noteText?: string;
   instance?: ChatCtrl;
-}
-
-export interface ApiMove {
-  dests: string | Record<string, string>;
-  ply: number;
-  fen: string;
-  san: string;
-  uci: string;
-  clock?: {
-    white: Seconds;
-    black: Seconds;
-    lag?: Centis;
-  };
-  status?: Status;
-  winner?: Color;
-  check?: boolean;
-  threefold?: boolean;
-  fiftyMoves?: boolean;
-  wDraw?: boolean;
-  bDraw?: boolean;
-  crazyhouse?: NodeCrazy;
-  role?: Role;
-  drops?: string;
-  promotion?: {
-    key: Key;
-    pieceClass: Role;
-  };
-  castle?: {
-    king: [Key, Key];
-    rook: [Key, Key];
-    color: Color;
-  };
-  isMove?: true;
-  isDrop?: true;
-  volume?: number;
 }
 
 export interface ApiEnd {
@@ -185,32 +162,16 @@ export interface ApiEnd {
 
 export interface Pref {
   animationDuration: number;
-  autoQueen: Prefs.AutoQueen;
-  blindfold: boolean;
   clockBar: boolean;
   clockSound: boolean;
   clockTenths: Prefs.ShowClockTenths;
   confirmResign: boolean;
+  /** `Pref.ConfirmMoves` (unit 2.3): 0 never, 1 on touch screens, 2 always. */
+  confirmMoves?: number;
   coords: Prefs.Coords;
-  destination: boolean;
-  enablePremove: boolean;
-  highlight: boolean;
-  is3d: boolean;
-  keyboardMove: boolean;
-  voiceMove: boolean;
-  moveEvent: Prefs.MoveEvent;
   ratings: boolean;
   replay: Prefs.Replay;
-  rookCastle?: boolean;
-  showCaptured: boolean;
-  submitMove: boolean;
   resizeHandle: Prefs.ShowResizeHandle;
-}
-
-export interface MoveMetadata extends CgMoveMetadata {
-  preConfirmed?: boolean;
-  justDropped?: Role;
-  justCaptured?: Piece;
 }
 
 export interface RoundTour {

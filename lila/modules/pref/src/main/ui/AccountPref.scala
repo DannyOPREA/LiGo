@@ -179,16 +179,6 @@ final class AccountPref(helpers: Helpers, helper: PrefHelper, bits: AccountUi):
               "castleByMovingTheKingTwoSquaresOrOntoTheRook"
             ),
             setting(
-              trp.inputMovesWithTheKeyboard(),
-              radios(form("behavior.keyboardMove"), booleanChoices),
-              "inputMovesWithTheKeyboard"
-            ),
-            setting(
-              trp.inputMovesWithVoice(),
-              radios(form("behavior.voice"), booleanChoices),
-              "inputMovesWithVoice"
-            ),
-            setting(
               trp.snapArrowsToValidMoves(),
               radios(form("behavior.arrowSnap"), booleanChoices),
               "snapArrowsToValidMoves"

@@ -4,11 +4,14 @@ import { pubsub } from 'lib/pubsub';
 import { snabDialog } from 'lib/view';
 
 import type RoundController from './ctrl';
+import { firstPly, lastPly } from './util';
 
 export const prev = (ctrl: RoundController): void => ctrl.userJump(ctrl.ply - 1);
 
 export const next = (ctrl: RoundController): void => ctrl.userJump(ctrl.ply + 1);
 
+// The board takes its own keys while it has focus (libs/board, unit 9.4: arrows move its cursor,
+// Enter plays, P passes) and keeps them from reaching these page keys.
 export const init = (ctrl: RoundController): LichessMousetrap =>
   site.mousetrap
     .bind(['left', 'k'], () => {
@@ -20,17 +23,14 @@ export const init = (ctrl: RoundController): LichessMousetrap =>
       ctrl.redraw();
     })
     .bind(['up', '0', 'home'], () => {
-      ctrl.userJump(0);
+      ctrl.userJump(firstPly(ctrl.data));
       ctrl.redraw();
     })
     .bind(['down', '$', 'end'], () => {
-      ctrl.userJump(ctrl.data.steps.length - 1);
+      ctrl.userJump(lastPly(ctrl.data));
       ctrl.redraw();
     })
-    .bind('f', ctrl.flipNow)
     .bind('z', () => pubsub.emit('zen'))
-    .bind('F', ctrl.yeet)
-    .bind('G', ctrl.googlyEyesStart)
     .bind('?', () => {
       ctrl.keyboardHelp = !ctrl.keyboardHelp;
       ctrl.redraw();

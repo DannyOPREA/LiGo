@@ -447,12 +447,6 @@ GET   /variant/:key                    controllers.Cms.variant(key: chess.varian
 GET   /help/contribute                 controllers.Cms.help
 GET   /help/*path                      controllers.Main.helpPath(path)
 
-# DGT
-GET   /dgt                             controllers.DgtCtrl.index
-GET   /dgt/play                        controllers.DgtCtrl.play
-GET   /dgt/config                      controllers.DgtCtrl.config
-POST  /dgt/config/token                controllers.DgtCtrl.generateToken
-
 POST  /jslog/$id<\w{12}>               controllers.Main.jslog(id: GameFullId)
 
 GET   /assets/_$v<\w{6}>/*file         controllers.Main.devAsset(v, path="public", file)

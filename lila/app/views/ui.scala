@@ -12,8 +12,6 @@ val setup = lila.setup.ui.SetupUi(helpers)
 // gathering (shared UI for the tournament/swiss/simul "no prizes" notice) was removed with the
 // tournament, swiss and simul modules (unit 3.2).
 
-val dgt = lila.web.ui.DgtUi(helpers)
-
 val relation = lila.relation.ui.RelationUi(helpers)
 
 val auth = lila.web.ui.AuthUi(helpers, lila.rating.GoRating.Rank.all.map(_.name))
