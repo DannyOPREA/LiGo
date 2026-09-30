@@ -16,6 +16,34 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.14 · lila-ws: Go round payloads and live mini boards
+- Did: lila-ws speaks Go on the round (ADR 0019 §6) and no longer uses scalachess's chess rules or
+  formats (no `Uci`, `Fen`, `chess.json`). The browser's `move` message carries `"u": "dd"` (an SGF
+  point, `[a-s]{2}`) or `"u": "pass"`, read into a new `GoMove` type (shape only; lila checks the
+  rules) and relayed as `r/move <fullId> <move> …`, as lila's `RoundSocket` reads since 3.13. Chess
+  moves, the old `from`/`to` form and `drop` are no longer read (they become "unexpected", as any
+  unknown message). `Fens` reads lila's Go move event with play-json instead of upstream's regexes
+  and sends watchers `{"t":"fen","d":{"id","lm","board","turn","wc","bc"}}`: `lm` is the point or
+  `pass`, `board` lila's compact string, `turn` `black`/`white`, clocks in whole seconds. New
+  `GoRoundTest` (10 tests) with move events shaped as lila's `Event.GoMove`.
+- Lobby payloads: nothing to change in lila-ws. It relays the lobby's JSON (`tell/lobby`, hooks,
+  seeks, pools) without reading it; the chess variants in those payloads are written by lila's
+  `lobby`/`setup`/`pool` modules, which unit 3.15 owns. No follow-up needed here.
+- Worked: local `dev/ligo compile ws` and `dev/ligo test ws` (lila-ws needs only scalachess, which the
+  proxy serves); scalafmt fixed two files before the check passed.
+- Didn't work / dead ends: `sbt --batch scalafmtAll check` fails to parse under sbt 2; run the
+  commands one per call.
+- Lessons: lila-ws's lobby is a pass-through; Go fields there are lila's job. Between this unit and
+  3.15 no game in a dev stack can take a move over the socket (chess moves are dropped here, Go games
+  are created from 3.15), and 3.18 gives the round page a Go board.
+- Decisions: Claude, under the owner's 2026-09-28 delegation (logs/decisions.md, 3.14 row): Go-only
+  moves now, as PLAN §5 says ("its own chess-rules use removed"); the mini-board message keeps its
+  upstream name `fen` so the browser's existing socket plumbing still routes it (3.19 draws it);
+  `turn` is a colour name; the move event is parsed as JSON (robust to key order; only watched games
+  pay for it). The wire format matches GoPlayTest's move event unchanged.
+- Verified by Claude: /verify, `dev/ligo test ws` 12/12, `sbt check` (scalafix + scalafmt). ·
+  Needs owner verification: none on its own; a live game over the socket once 3.15 and 3.18 land.
+
 ### 2026-09-30 · 3.13 · Round module: Go moves, passes, clock, takebacks, no draws
 - Did: the round plays Go games (ADR 0019 §5–7). lila-ws's `r/move` token is read as a chess UCI
   or, failing that, a Go SGF point or `pass` (`GoBridge.actionOf`), giving a new `HumanGoPlay`
