@@ -293,9 +293,9 @@ final class JsonView(
   private[round] def clockJson(clock: Clock): JsObject =
     Json.toJsObject(clock) + moretimeJson
 
+  // A Go game sends no legal moves: the browser's goban engine knows them (ADR 0019 §6).
   private def possibleMoves(pov: Pov): Option[JsValue] =
-    pov.game
-      .playableBy(pov.player)
+    (!pov.game.isGo && pov.game.playableBy(pov.player))
       .option(lila.game.Event.PossibleMoves.json(pov.game.position.destinations))
 
   private def possibleDrops(pov: Pov): Option[JsValue] =

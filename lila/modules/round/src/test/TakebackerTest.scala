@@ -53,3 +53,20 @@ class TakebackerTest extends munit.FunSuite:
       acceptedPlies(currentPly = Ply(25), proposedAt = Ply(24), Color.Black, playedPlies = Ply(5)),
       3
     )
+
+class GoMoveReaderTest extends munit.FunSuite:
+
+  import lila.core.socket.protocol.RawMsg
+  import RoundSocket.Protocol.In.*
+
+  private def read(move: String) =
+    RoundSocket.Protocol.In.reader(RawMsg("r/move", s"abcdefgh1234 $move + 10 20 0"))
+
+  test("reads a Go point, a pass, and still a chess move"):
+    assertEquals(
+      read("pd").collect { case m: PlayerGoMove => m.action },
+      Some(ligo.gorules.Action.Place(ligo.gorules.Point(15, 3)))
+    )
+    assertEquals(read("pass").collect { case m: PlayerGoMove => m.action }, Some(ligo.gorules.Action.Pass))
+    assert(read("e2e4").exists(_.isInstanceOf[PlayerMove]))
+    assertEquals(read("zz"), None)

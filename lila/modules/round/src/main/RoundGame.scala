@@ -22,7 +22,8 @@ object RoundGame:
       g.playable && g.canTakebackOrAddTime && !g.hasRule(_.noGiveTime) && {
         g.clock.exists(_.moretimeable(color)) || g.correspondenceClock.exists(_.moretimeable(color))
       }
-    def forceDrawable = g.playable && g.nonAi && !g.abortable && !g.isSwiss && !g.hasRule(_.noClaimWin)
+    def forceDrawable =
+      !g.isGo && g.playable && g.nonAi && !g.abortable && !g.isSwiss && !g.hasRule(_.noClaimWin)
 
     def isSwitchable = g.isCorrespondence || g.isSimul
 
@@ -35,6 +36,7 @@ object RoundGame:
 
   // We are always the player in the pov. However for a scalachess Position, the "player" and "opponent"
   // are based on whose turn it is.
-  def cannotLose(p: Pov) =
+  def cannotLose(p: Pov) = !p.game.isGo && (
     (p.isMyTurn && p.game.position.opponentHasInsufficientMaterial) ||
       (!p.isMyTurn && p.game.position.playerHasInsufficientMaterial)
+  )

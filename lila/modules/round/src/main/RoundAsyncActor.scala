@@ -162,6 +162,23 @@ final private class RoundAsyncActor(
           MoveLatMonitor.recordMicros(lap.micros)
       )
 
+    case p: HumanGoPlay =>
+      handle(p.playerId): pov =>
+        if pov.game.outoftime(withGrace = true) then finisher.outOfTime(pov.game)
+        else
+          recordLag(pov)
+          player.goHuman(p, this)(pov)
+      .chronometer.lap.addEffects(
+        err =>
+          p.promise.foreach(_.failure(err))
+          socketSend.exec(Protocol.Out.resyncPlayer(GameFullId(gameId, p.playerId)))
+        ,
+        lap =>
+          p.promise.foreach(_.success {})
+          lila.mon.round.move.time.record(lap.nanos)
+          MoveLatMonitor.recordMicros(lap.micros)
+      )
+
     case RoundBus.Abort(playerId) =>
       handle(playerId): pov =>
         pov.game.abortableByUser.so(finisher.abort(pov))

@@ -97,7 +97,9 @@ final private class Takebacker(
 
   private def offerTakebackMessage(pov: Pov): String =
     val k = if pov.game.turnOf(pov.color) then 2 else 1
-    val lastSans = pov.game.sans.takeRight(k).toList
+    // a Go game names its moves as SGF points and passes
+    val lastSans = pov.game.go.fold(pov.game.sans.takeRight(k).toList.map(_.value)): go =>
+      go.actions.takeRight(k).toList.map(lila.core.game.GoBridge.token)
     val startPly = pov.game.ply - k + 1
     def movePrefix(ply: Ply, secondMove: Boolean): String =
       if secondMove && ply.turn.white then ""
@@ -127,13 +129,20 @@ final private class Takebacker(
         else fufail(ClientError("[takebacker] disallowed by preferences " + game.id))
 
   private def rewind(pov: Pov, plies: Int)(using GameProxy): Fu[Events] =
-    for
-      fen <- gameRepo.initialFen(pov.game)
-      progress <- (1 to plies).foldLeft(fuccess(Progress(pov.game))): (prev, _) =>
-        prev.flatMap: prog =>
-          Rewind(prog.game, fen).toFuture.dmap(rewinded => prog.withGame(rewinded.game))
-      events <- saveAndNotify(progress, pov)
-    yield events
+    if pov.game.isGo then
+      // go-rules' undo, one action at a time (ADR 0019 §6)
+      (1 to plies)
+        .foldLeft[Either[String, Progress]](Right(Progress(pov.game))): (prev, _) =>
+          prev.flatMap(prog => Rewind.go(prog.game).map(rewinded => prog.withGame(rewinded.game)))
+        .fold(e => fufail(ClientError(s"[takebacker] $e")), saveAndNotify(_, pov))
+    else
+      for
+        fen <- gameRepo.initialFen(pov.game)
+        progress <- (1 to plies).foldLeft(fuccess(Progress(pov.game))): (prev, _) =>
+          prev.flatMap: prog =>
+            Rewind(prog.game, fen).toFuture.dmap(rewinded => prog.withGame(rewinded.game))
+        events <- saveAndNotify(progress, pov)
+      yield events
 
   private def saveAndNotify(p1: Progress, pov: Pov)(using proxy: GameProxy): Fu[Events] =
     val p2 = p1 + Event.Reload

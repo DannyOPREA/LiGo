@@ -16,6 +16,34 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.13 · Round module: Go moves, passes, clock, takebacks, no draws
+- Did: the round plays Go games (ADR 0019 §5–7). lila-ws's `r/move` token is read as a chess UCI
+  or, failing that, a Go SGF point or `pass` (`GoBridge.actionOf`), giving a new `HumanGoPlay`
+  message; `MovePlayer.goHuman` checks it with go-rules (a refusal is the usual client error with
+  the fixture reason, `occupied`, `suicide`, `superko`, …), steps the Fischer clock as scalachess
+  does for a chess move (`GameExt.stepGoClock`: frame lag, step, start once both sides have played),
+  flags on time, and applies it (`GameExt.applyGoMove`: ply, clock history, move times, blurs). The
+  move event (`Event.GoMove`) is ADR §6's: `p` or `pass`, `ply`, `cap`, `prisoners`, `ko`, `phase`,
+  `board` (the compact mini-board string, `GoBridge.board`), clock, status, winner; no `dests`. The
+  second consecutive pass or the 1,000th ply ends the game as "unknown finish" with no winner. The
+  move bus event `MoveEvent` carries strings (board, move) instead of FEN and UCI. Go games have no
+  draws (`drawable` and `forceDrawable` are false, `cannotLose` never applies), send no chess legal
+  moves in the round JSON, and refuse chess moves (and chess games refuse Go moves). Takebacks use
+  go-rules' `undo` (`Rewind.go`), with the clock restored from the clock history as for chess; the
+  offer message names the moves as SGF points. Resign, abort, flagging and more time needed no change.
+  Tests: `GoPlayTest` (8: a stone, a pass and two passes, a capture, Black-first and handicap clocks,
+  the increment, a takeback, no draws), 2 more `GoBridgeTest` cases, `GoMoveReaderTest`.
+- Worked: the round's own flow (actor, proxy, finisher, resign, abort, flagging, more time) needed
+  no change; only the move path and three chess-only checks did.
+- Didn't work / dead ends: none.
+- Lessons: scalachess steps the clock inside `chess.Game`, so a move that skips chess must repeat
+  `applyClock` itself; its "start the clock" test reads the ply before the move.
+- Decisions: see logs/decisions.md (3.13 row).
+- Verified by Claude: see the PR.
+- Follow-ups: 3.14 sends the Go tokens from lila-ws and relays `board` to mini boards; 3.15 creates
+  Go games (a rematch of a Go game is still a chess game until then); the API move stream
+  (`ApiMoveStream`) and the round page's move list (`StepBuilder`) stay chess-only until 3.16/3.18.
+
 ### 2026-09-30 · 3.12 · Game module: Go games stored and loaded
 - Did: lila's `Game` gained `go: Option[GoGame]` beside `chess` (ADR 0019 §3); for a Go game
   `turnColor` comes from `GoGame.toMove`, `perfKey` is `go`, and `withGo` takes a new Go game with
