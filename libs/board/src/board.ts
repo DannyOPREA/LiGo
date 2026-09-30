@@ -72,7 +72,7 @@ export interface Board {
  * goban's plain board and stones: drawn in colour, no images. goban's default (Kaya, Slate, Shell)
  * loads its wood picture from OGS's CDN, and its image themes wait for a licence check (logs/board-ui.md).
  */
-const PLAIN: GobanSelectedThemes = {
+export const PLAIN: GobanSelectedThemes = {
   board: 'Plain',
   black: 'Plain',
   white: 'Plain',
@@ -301,6 +301,8 @@ function fromGoban(move: string): Move {
   return move === '..' || move === '' ? 'pass' : move;
 }
 
-function labels(on: boolean) {
+export function labels(
+  on: boolean,
+): Pick<GobanConfig, 'draw_top_labels' | 'draw_left_labels' | 'draw_bottom_labels' | 'draw_right_labels'> {
   return { draw_top_labels: on, draw_left_labels: on, draw_bottom_labels: on, draw_right_labels: on };
 }
