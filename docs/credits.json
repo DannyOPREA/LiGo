@@ -1,0 +1,186 @@
+{
+  "$comment": "The one list behind LiGo's /credits page (unit 9.8, ADR 0026 §6). lila/bin/gen/credits.mjs turns it into lila/public/credits.html; `--check` fails when that file is stale, when a third party named in COPYING.md §3 matches no entry's `copying` names, or when a puzzle file in tools/puzzles/data/SOURCES.md is missing. Licence: MIT (COPYING.md §2).",
+  "sections": [
+    {
+      "title": "LiGo is built on",
+      "entries": [
+        {
+          "name": "lichess (lila and lila-ws)",
+          "by": "Thibault Duplessis and the lichess contributors",
+          "url": "https://github.com/lichess-org/lila",
+          "what": "The whole site: server, pages, accounts, lobby, clocks, ratings, sockets. LiGo is a fork of it.",
+          "licence": "AGPL-3.0-or-later",
+          "copying": ["Assets imported with lila"]
+        },
+        {
+          "name": "lishogi",
+          "by": "the lishogi contributors",
+          "url": "https://github.com/WandererXII/lishogi",
+          "what": "Showed how to fork lichess for another board game. No code copied.",
+          "licence": "AGPL-3.0-or-later",
+          "copying": []
+        },
+        {
+          "name": "PlayStrategy strategygames",
+          "by": "Mind Sports Games",
+          "url": "https://github.com/Mind-Sports-Games/strategygames",
+          "what": "The server's Go rules and byo-yomi clock.",
+          "licence": "MIT",
+          "copying": ["strategygames"]
+        },
+        {
+          "name": "OGS goban and goban-engine",
+          "by": "Online-Go.com",
+          "url": "https://github.com/online-go/goban",
+          "what": "The board you play on, its themes drawn in code, the puzzle board, and the browser's Go rules.",
+          "licence": "Apache-2.0",
+          "copying": ["goban-engine", "goban `8.3.226`", "OGS goban's tests"]
+        },
+        {
+          "name": "goscorer",
+          "by": "David J Wu (lightvector)",
+          "url": "https://github.com/lightvector/goscorer",
+          "what": "Counts territory and area at the end of a game (inside goban).",
+          "licence": "MIT",
+          "copying": ["goscorer"]
+        },
+        {
+          "name": "KataGo",
+          "by": "David J Wu (lightvector)",
+          "url": "https://github.com/lightvector/KataGo",
+          "what": "Proposes the dead stones when a game ends and checks every puzzle. Its test positions check LiGo's rules.",
+          "licence": "MIT",
+          "copying": ["KataGo's tests"]
+        },
+        {
+          "name": "KataGo's neural networks",
+          "by": "David J Wu (lightvector)",
+          "url": "https://katagotraining.org/network_license/",
+          "what": "The trained networks KataGo plays with: the full-size network for scoring (downloaded, not shipped with LiGo) and the small g170 test network that checked the puzzles.",
+          "licence": "KataGo Neural Network License (MIT-style)",
+          "copying": []
+        },
+        {
+          "name": "OGS goratings",
+          "by": "Online-Go.com",
+          "url": "https://github.com/online-go/goratings",
+          "what": "How ratings become kyu and dan ranks, and the handicap maths.",
+          "licence": "MIT",
+          "copying": ["goratings"]
+        },
+        {
+          "name": "@sabaki/sgf",
+          "by": "Yichuan Shen",
+          "url": "https://github.com/SabakiHQ/sgf",
+          "what": "Reads and writes SGF game records in the browser.",
+          "licence": "MIT",
+          "copying": ["@sabaki/sgf"]
+        }
+      ]
+    },
+    {
+      "title": "Sounds, fonts and pictures",
+      "entries": [
+        {
+          "name": "Sound sets: SFX, Piano, NES and Futuristic",
+          "by": "Enigmahack",
+          "url": "https://github.com/Enigmahack",
+          "what": "Every sound LiGo plays (they came with lichess).",
+          "licence": "AGPL-3.0-or-later",
+          "copying": []
+        },
+        {
+          "name": "Noto Sans",
+          "by": "Google",
+          "url": "https://fonts.google.com/specimen/Noto+Sans",
+          "what": "The site's text font.",
+          "licence": "Apache-2.0",
+          "copying": []
+        },
+        {
+          "name": "Roboto",
+          "by": "Christian Robertson",
+          "url": "https://fonts.google.com/specimen/Roboto",
+          "what": "The site's secondary font.",
+          "licence": "Apache-2.0",
+          "copying": []
+        },
+        {
+          "name": "lichess icon font",
+          "by": "Dave Gandy, GitHub, Webalys, Zurb, Daniel Bruce, Shapemade, Sergey Shmidt and the lichess authors",
+          "url": "https://github.com/lichess-org/lila/blob/master/COPYING.md",
+          "what": "The site's icons.",
+          "licence": "OFL, MIT, CC BY 3.0 and AGPL-3.0-or-later",
+          "copying": []
+        },
+        {
+          "name": "Flag icons",
+          "by": "Go Squared Ltd.",
+          "url": "https://www.gosquared.com/resources/flag-icons/",
+          "what": "Country flags on profiles.",
+          "licence": "MIT",
+          "copying": []
+        },
+        {
+          "name": "Everything else that came with lichess",
+          "by": "listed in lila/COPYING.md",
+          "url": "https://github.com/DannyOPREA/LiGo/blob/main/lila/COPYING.md",
+          "what": "Other pictures still in the code until the chess leftovers go.",
+          "licence": "various free licences",
+          "copying": []
+        }
+      ]
+    },
+    {
+      "title": "Puzzles",
+      "entries": [
+        {
+          "name": "LiGo's own puzzles (generated-001.json, 240 puzzles)",
+          "by": "LiGo's generator (tools/puzzles, seed 1)",
+          "url": "https://github.com/DannyOPREA/LiGo/blob/main/tools/puzzles/data/SOURCES.md",
+          "what": "Every tsumego on the site: each answer proved by an exact search, then checked by KataGo.",
+          "licence": "MIT",
+          "copying": [],
+          "puzzleFile": "generated-001.json"
+        },
+        {
+          "name": "KaTrain's tsumego frame",
+          "by": "Sander Land, ported from lizgoban by kaorahi",
+          "url": "https://github.com/sanderland/katrain",
+          "what": "Frames a puzzle so KataGo can check it.",
+          "licence": "MIT",
+          "copying": ["KaTrain"]
+        }
+      ]
+    },
+    {
+      "title": "Used behind the scenes",
+      "entries": [
+        {
+          "name": "OGS's autoscore test games",
+          "by": "Online-Go.com",
+          "url": "https://github.com/online-go/goban",
+          "what": "31 finished games that check LiGo's dead-stone scoring.",
+          "licence": "Apache-2.0",
+          "copying": ["autoscore test games"]
+        },
+        {
+          "name": "Small libraries",
+          "by": "their authors",
+          "url": "https://github.com/DannyOPREA/LiGo/blob/main/COPYING.md",
+          "what": "eventemitter3, doken, joda-time, scala-parser-combinators, ioredis and its dependencies, ajv and its dependencies. Each is listed with its notice in COPYING.md.",
+          "licence": "MIT, Apache-2.0 and BSD-3-Clause",
+          "copying": ["eventemitter3", "doken", "joda-time", "ioredis", "ajv"]
+        },
+        {
+          "name": "axe-core",
+          "by": "Deque Systems",
+          "url": "https://github.com/dequelabs/axe-core",
+          "what": "Checks LiGo's pages for accessibility problems in its tests (never sent to players).",
+          "licence": "MPL-2.0",
+          "copying": ["axe-core"]
+        }
+      ]
+    }
+  ]
+}

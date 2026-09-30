@@ -124,6 +124,13 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
   // Read from lila/public like the asset manifest, since Play's asset controller serves nothing in prod.
   private lazy val offlineHtml =
     java.nio.file.Files.readString(env.getFile.exec("public/offline.html").toPath)
+  // LiGo: the credits page (unit 9.8, ADR 0026 §6), its body generated into lila/public like the offline page.
+  private lazy val creditsHtml =
+    java.nio.file.Files.readString(env.getFile.exec("public/credits.html").toPath)
+  def credits = Open:
+    pageHit
+    Ok.page(views.site.ui.credits(creditsHtml))
+
   def offline = Anon:
     Ok(offlineHtml).as(HTML).withHeaders(CACHE_CONTROL -> "no-cache")
 

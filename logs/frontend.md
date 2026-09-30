@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.8 · The credits page
+- Did: `docs/credits.json` lists who and what LiGo is built from (lichess, lishogi, strategygames, OGS goban and goratings, goscorer, KataGo and its networks, @sabaki/sgf, the sound sets, fonts, icons and flags, the puzzles and KaTrain's frame, the scoring and tool libraries, axe-core), each with author, use, licence and link. `lila/bin/gen/credits.mjs` writes it as `lila/public/credits.html`, which lila serves at `/credits`; the site menu, the home page's About links and `/source` link to it. `--check` (in `dev/tests/run.sh`) fails on a stale page, a COPYING.md §3 third party no entry covers, or a puzzle file without an entry. `ui/playground/e2e/credits.spec.ts` screenshots the page at desktop and phone sizes, runs axe, and checks every entry's link.
+- Worked: one generated HTML body lets the Scala page and the browser test show the same thing without a lila server.
+- Didn't work / dead ends: axe found lila's link blue (3.96:1) and dim text (4.27:1) too faint on the table's zebra rows, and a colour-only link in the intro; the page drops the zebra rows and underlines its links.
+- Lessons: a list checked against COPYING.md by names each entry claims is simple and catches a new dependency the credits forgot.
+- Decisions: the list as JSON in docs/ with a generated page body; English words; no zebra rows (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md, ADR 0026 §6 amendment).
+- Verified by Claude: the two credits browser tests (screenshots looked at), `credits.mjs --check` and its negative test in dev/tests/run.sh (62 passed), oxfmt, oxlint, stylelint, scalafmt. · Needs owner verification: open localhost:8080/credits after `dev/ligo up`, and the Credits links in the menu, on the home page and on /source.
+- Follow-ups: 9.7 fixes the link contrast site-wide; the credits list grows with each unit that adds a third party (the check enforces it).
+
 ### 2026-09-30 · unit 9.6 review · Reviewer findings fixed
 - Did: an independent review found the push test passing only in full Chromium (CI's default headless shell shows no notifications), the ADR's "push still subscribing" not matching the check, a failed `/offline` cache never retried, the install offer missable (watched in an idle callback) and lost for good after an uninstall. Fixed: the PWA tests run on Chromium's `chromium` channel; the ADR amendment says what push check is made; the worker re-caches a missing `/offline` after any page that loads, with a test (404 at install, push still shows, then cached and shown offline); `watchInstall` runs at boot; a live offer wins over a stored "installed"; the menu redraws even if the dialog fails; the offline page gets a `<main>`.
 - Worked: `channel: 'chromium'` resolves to the full Chromium build that `playwright install chromium` fetches alongside the headless shell.

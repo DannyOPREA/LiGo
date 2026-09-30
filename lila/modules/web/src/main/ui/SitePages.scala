@@ -30,6 +30,8 @@ final class SitePages(helpers: Helpers):
       // title verification link removed with the title module (unit 3.3).
       sep,
       a(activeCls("source"), href := routes.Cms.source)(trans.site.sourceCode()),
+      // LiGo (unit 9.8): who and what LiGo is built from. English until LiGo's strings reach i18n.
+      a(activeCls("credits"), href := routes.Main.credits)("Credits"),
       a(activeCls("help"), href := routes.Cms.help)(trans.site.contribute()),
       a(activeCls("changelog"), href := routes.Cms.menuPage(CmsPageKey("changelog")))(trans.site.changelog()),
       a(activeCls("thanks"), href := "/thanks")(trans.site.thankYou()),
@@ -160,6 +162,12 @@ final class SitePages(helpers: Helpers):
       "."
     )
 
+  // LiGo (unit 9.8, ADR 0026 §6): the credits page. Its body is lila/public/credits.html, generated
+  // from docs/credits.json by bin/gen/credits.mjs.
+  def credits(body: String)(using Context) =
+    SitePage(title = "Credits", active = "credits", contentCls = "page").css("bits.credits"):
+      st.section(cls := "box")(h1(cls := "box__top")("Credits"), raw(body))
+
   def source(pageTitle: String, rendered: Frag, version: Option[WebConfig.LilaVersion])(using
       Context
   ) =
@@ -206,7 +214,15 @@ final class SitePages(helpers: Helpers):
             )
           ),
           br,
-          st.section(cls := "box box-pad body")(rendered)
+          st.section(cls := "box box-pad body")(
+            rendered,
+            // LiGo (unit 9.8): who and what LiGo is built from.
+            p(
+              "LiGo is built from other people's free software and art: see the ",
+              a(href := routes.Main.credits)("credits"),
+              "."
+            )
+          )
         )
 
   def lag(using Context) =

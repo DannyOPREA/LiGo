@@ -1,0 +1,67 @@
+// LiGo's /credits page (unit 9.8, ADR 0026 §6); its body is lila/public/credits.html.
+@import '../../../lib/css/plugin';
+@import '../../../lib/css/component/slist';
+
+.credits {
+  > p {
+    @extend %box-padding;
+
+    margin: 0;
+  }
+
+  h2 {
+    @extend %box-padding-horiz;
+
+    font-size: 1.4em;
+    margin: 1.5em 0 0.5em;
+  }
+
+  table {
+    width: 100%;
+  }
+
+  td:first-child {
+    width: 30%;
+  }
+
+  td:last-child {
+    width: 20%;
+  }
+
+  small {
+    color: $c-font-dim;
+  }
+
+  // No zebra rows: lila's link blue and dim text are under 4.5:1 on the zebra colour (the site-wide
+  // link contrast is 9.7's, ADR 0026 §4). Links are underlined so they don't rely on colour alone.
+  .slist tbody tr:nth-child(even) {
+    background: none;
+  }
+
+  a {
+    text-decoration: underline;
+  }
+
+  // Phones: each entry is a block of three lines rather than a squeezed three-column row.
+  @include mq-is-col1 {
+    thead {
+      display: none;
+    }
+
+    tr,
+    td {
+      display: block;
+      width: auto !important;
+    }
+
+    td {
+      border: none;
+      padding-block: 0.2em;
+    }
+
+    tr {
+      padding-block: 0.6em;
+      border-top: $border;
+    }
+  }
+}
