@@ -1,18 +1,6 @@
 import type LobbyController from './ctrl';
 import type { Hook } from './interfaces';
 
-function ratingOrder(a: Hook, b: Hook) {
-  return (a.rating || 0) > (b.rating || 0) ? -1 : 1;
-}
-
-function timeOrder(a: Hook, b: Hook) {
-  return a.t < b.t ? -1 : 1;
-}
-
-export function sort(ctrl: LobbyController, hooks: Hook[]) {
-  hooks.sort(ctrl.sort === 'time' ? timeOrder : ratingOrder);
-}
-
 export function init(hook: Hook) {
   hook.action = hook.sri === site.sri ? 'cancel' : 'join';
   hook.variant = hook.variant || 'standard';

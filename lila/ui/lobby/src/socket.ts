@@ -35,7 +35,7 @@ export default class LobbySocket {
         ctrl.redraw();
       },
       reload_seeks() {
-        if (ctrl.tab === 'seeks') ctrl.fetchSeeks();
+        if (ctrl.showsCorrespondence()) ctrl.fetchSeeks();
       },
     };
 

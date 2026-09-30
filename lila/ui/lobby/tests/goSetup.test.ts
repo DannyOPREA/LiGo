@@ -11,10 +11,7 @@ import {
 
 import type LobbyController from '../src/ctrl';
 import { goSetupName, standardKomi, validKomi } from '../src/goSetup';
-import type { Hook, Seek } from '../src/interfaces';
 import SetupController from '../src/setupCtrl';
-import correspondence from '../src/view/correspondence';
-import { render as renderHooks } from '../src/view/realTime/list';
 import { goOptions } from '../src/view/setup/components/goOptions';
 
 // The shared test setup's i18n strings are functions; the site's are strings, which snabbdom renders as
@@ -293,58 +290,5 @@ describe('the Go options in the form', () => {
     komi.dispatchEvent(new window.Event('change'));
     assert.equal(setup.goKomi(), 6.5);
     assert.equal(komi.value, '6.5');
-  });
-});
-
-describe("the lobby's lists", () => {
-  const go = { size: 13, rules: 'chinese', komi: 7.5 } as const;
-
-  test('a lobby game shows its board size, rules and komi', () => {
-    const { ctrl } = lobby();
-    const hook = {
-      id: 'h1',
-      sri: 'other',
-      clock: '5+3',
-      t: 480,
-      s: 3,
-      i: 1,
-      variant: 'standard',
-      perf: 'go',
-      rating: 1500,
-      u: 'bob',
-      action: 'join',
-      go,
-    } as unknown as Hook;
-    const el = mount(renderHooks(ctrl, [hook]));
-    const cells = [...el.querySelectorAll('tbody tr td')].map(td => td.textContent);
-    assert.deepEqual(cells, [
-      'bob',
-      '1500',
-      '5+3',
-      '13×13 · site.goRulesChinese · site.goKomi 7.5',
-      'site.casual',
-    ]);
-    assert.match(el.querySelector('tbody tr')!.getAttribute('title')!, /13×13/);
-    assert.deepEqual(
-      [...el.querySelectorAll('thead th')].map(th => th.textContent),
-      ['', 'site.rating', 'site.time', 'site.gameSetup', 'site.mode'],
-    );
-  });
-
-  test('a correspondence seek shows its board size, rules and komi', () => {
-    const { ctrl } = lobby();
-    const seek = {
-      id: 's1',
-      username: 'bob',
-      rating: 1500,
-      mode: 0,
-      perf: { key: 'go' },
-      action: 'joinSeek',
-      go,
-    } as unknown as Seek;
-    ctrl.data.seeks = [seek];
-    const el = mount(correspondence(ctrl) as VNode[]);
-    const cells = [...el.querySelectorAll('tbody tr td')].map(td => td.textContent);
-    assert.deepEqual(cells.slice(3), ['13×13 · site.goRulesChinese · site.goKomi 7.5', 'site.casual']);
   });
 });

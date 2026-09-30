@@ -4,9 +4,9 @@ import type { TimeMode } from 'lib/setup/timeControl';
 
 import type { GoRuleset, GoSetupJson, GoSize } from './goSetup';
 
-export type Sort = 'rating' | 'time';
-export type Mode = 'list' | 'chart';
-export type Tab = 'pools' | 'real_time' | 'seeks' | 'now_playing';
+// Open challenges come in two kinds: real-time hooks ('live') and correspondence seeks.
+export type Mode = 'live' | 'correspondence';
+export type Tab = 'pools' | 'open' | 'now_playing';
 export type GameType = 'hook' | 'friend';
 export type GameMode = 'casual' | 'rated';
 

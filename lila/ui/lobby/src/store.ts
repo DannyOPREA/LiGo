@@ -1,6 +1,7 @@
 import { storage } from 'lib/storage';
 
-import type { Tab, Mode, Sort } from './interfaces';
+import type { Tab, Mode } from './interfaces';
+import { parseChips, type Chips } from './openChallenges';
 
 interface Store<A> {
   set(v: string): A;
@@ -10,7 +11,6 @@ interface Store<A> {
 export interface Stores {
   tab: Store<Tab>;
   mode: Store<Mode>;
-  sort: Store<Sort>;
 }
 
 interface Config<A> {
@@ -19,16 +19,21 @@ interface Config<A> {
 }
 
 function isTab(value: string | null): value is Tab {
-  return value === 'pools' || value === 'real_time' || value === 'seeks' || value === 'now_playing';
+  return value === 'pools' || value === 'open' || value === 'now_playing';
 }
 
 function isMode(value: string | null): value is Mode {
-  return value === 'list' || value === 'chart';
+  return value === 'live' || value === 'correspondence';
 }
 
-function isSort(value: string | null): value is Sort {
-  return value === 'rating' || value === 'time';
-}
+// lila's "Lobby" and "Correspondence" tabs became one tab (unit 6.7): a tab remembered under the old
+// names opens Open challenges on the same kind of game. (The mode store held 'list' or 'chart' before;
+// those read as 'live'.)
+export const migrateTab = (stored: string | null): { tab: Tab; mode?: Mode } | undefined => {
+  if (stored === 'real_time') return { tab: 'open', mode: 'live' };
+  if (stored === 'seeks') return { tab: 'open', mode: 'correspondence' };
+  return undefined;
+};
 
 const tab: Config<Tab> = {
   key: 'lobby.tab',
@@ -41,14 +46,7 @@ const mode: Config<Mode> = {
   key: 'lobby.mode',
   fix(m: string | null): Mode {
     if (isMode(m)) return m;
-    return 'list';
-  },
-};
-const sort: Config<Sort> = {
-  key: 'lobby.sort',
-  fix(s: string | null): Sort {
-    if (isSort(s)) return s;
-    return 'rating';
+    return 'live';
   },
 };
 
@@ -67,9 +65,20 @@ function makeStore<A>(conf: Config<A>, userId?: string): Store<A> {
 }
 
 export function make(userId?: string): Stores {
-  return {
-    tab: makeStore<Tab>(tab, userId),
-    mode: makeStore<Mode>(mode, userId),
-    sort: makeStore<Sort>(sort, userId),
-  };
+  const stores = { tab: makeStore<Tab>(tab, userId), mode: makeStore<Mode>(mode, userId) };
+  const old = migrateTab(storage.get(tab.key + ':' + (userId || '-')));
+  if (old) {
+    stores.tab.set(old.tab);
+    if (old.mode) stores.mode.set(old.mode);
+  }
+  return stores;
 }
+
+// The filter chips are remembered for the browser, not per user, as lila's filter form was.
+const chipsKey = 'lobby.chips';
+
+export const readChips = (): Chips => parseChips(storage.get(chipsKey));
+
+export const writeChips = (chips: Chips): void => {
+  storage.set(chipsKey, JSON.stringify(chips));
+};

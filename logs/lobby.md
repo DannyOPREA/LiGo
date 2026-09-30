@@ -8,6 +8,39 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 6.7 (part one) · The open-challenges table
+- Did: lila's Lobby and Correspondence tabs are one "Open challenges" tab (tabs: Quick pairing · Open
+  challenges · Now playing) with a Live / Correspondence chip, remembered like the tab was (a tab stored
+  under the old names opens the new one on the same kind of game). One table for hooks and seeks:
+  player + rating, board, time, rules + komi, Even (handicap column, from the setup's `handicap` when it
+  has one), rated/casual; each row a card on phones (CSS grid, same data). Filter chips (board size,
+  live speed from the hook's speed id with ultra-bullet as bullet, rated/casual; none pressed means all;
+  your own challenge stays) filter in the browser and are remembered (`lobby.chips`). The rating-vs-time
+  chart, the filter form (and its `/setup/filter` fetch), the rating/time column sort, the chess "variants"
+  separator and lila's duplicate-hook hiding are gone. `src/openChallenges.ts` holds the pure parts: the
+  row shape, the chips, `fit` (joinable / reason / suits: own challenge, guest vs member today) and
+  `sortRows` (own first, then suits, joinable, the rest; closest rating to yours first, shortest game
+  when there is none), plus `playerRatingLabel` for unit 5.5. Five new `site.xml` keys
+  (`openChallenges`, `live`, `goEven`, `goHandicap`, `goNoOpenChallenges`). 25 new tests (node:test, as the others) in
+  `tests/openChallenges.test.ts` (rows, chips, fit and sort, the rendered table, the Live chip, the tab
+  migration); `goSetup.test.ts` lost its two list tests, now covered there. Checked in Chromium with
+  lila's built CSS on a static harness (scratch, not committed): desktop and 390 px phone, live and
+  correspondence, a 9x9 chip pressed.
+- Worked: one row shape for both kinds made the filter, sort and table code shared; keeping the
+  decision in `fit` means 6.5 only edits one function.
+- Didn't work / dead ends: importing the controller in a test pulls in lib/socket and the locale
+  formatter, so the table is tested with a stand-in controller and `viewerOf`, a pure helper.
+- Lessons: the ui test runner can load view files but not `ctrl.ts`; keep testable logic in pure modules.
+- Decisions: logs/decisions.md (Claude, under the owner's 2026-09-28 delegation).
+- Review (reviewer agent): 2 blocking, fixed before the PR: taps on a phone card's padding did nothing (the row is now found with `closest`), and guests saw every correspondence seek as Anonymous (lila names seek players to everyone); also dropped a raw reason word from the hover title and the double dimming of taken rows. 4 tests added.
+- Verified by Claude: `node ui/test lobby` 47/47 (43 before the review fixes), `pnpm lint` (oxlint type-aware, stylelint), `pnpm
+  check-format`, `ui/build --no-install --debug` (tsc, esbuild, sass, i18n). · Needs owner
+  verification: the live site (hooks arriving over the socket, joining from a phone card); the cloud
+  cannot run the full stack.
+- Follow-ups: part two after 6.5, 5.5 and 4.9 (rank label, greying and "suits you" ordering from the
+  server's fields, handicap column); the server's `/setup/filter` page and `FilterUi` are now unused
+  (Scala, another thread); the old `lobby.filter` browser key is left unread.
+
 ### 2026-09-30 · unit 6.4 (part one) · Pools play Go
 - Did: pools gain a board size (all 19×19 for now) and play in the `go` perf (the lobby's `poolIn`
   now reads the Go rating); every pool runs a wave every 5 s; `MatchMaking` pairs with 6.2's
