@@ -19,3 +19,6 @@ Things that slipped past authors more than once; check them on every review.
 - Fixture harnesses: verify with quick mutations in a scratchpad copy (not the repo) that each
   adapter feature is caught; also check unknown `expect` keys aren't silently ignored.
 - Integrity checks (jar SHA pins) should run before tests execute the artifact, not after.
+- "Uncommitted diff" units: the caller may commit to a wip branch and check out another branch
+  mid-review. Before trusting a test rerun, check `git status`/`git reflog`; count the tests that
+  ran against the `test(` lines you expect (a green run on the wrong branch looks identical).

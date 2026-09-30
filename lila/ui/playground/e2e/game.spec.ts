@@ -3,7 +3,7 @@
 // refused move, undo, two passes and playing on after them.
 import { expect, test, type Page } from '@playwright/test';
 
-import { ConfirmMoves, captures, openPlayground, play, status } from './page';
+import { ConfirmMoves, captures, openPlayground, play, sounds, status } from './page';
 
 /** Plays one move: a click, or on a phone a tap that previews it and Confirm move. */
 async function move(page: Page, point: string, phone: boolean): Promise<void> {
@@ -66,6 +66,27 @@ for (const phone of [false, true]) {
       await expect(status(page)).toHaveText('White to play.');
       await expect(captures(page)).toContainText('Black prisoners: 1');
 
+      // Each move that counted made one sound (ADR 0026 §2); the refused click and undo made none.
+      const stone = (n: number) => Array<string>(n).fill('move');
+      expect(await sounds(page)).toEqual([
+        ...stone(5),
+        'capture',
+        ...stone(4),
+        'capture',
+        'confirmation',
+        'confirmation',
+        'capture',
+      ]);
+      expect(problems).toEqual({ requests: [], errors: [] });
+    });
+
+    test('a suicide is refused with the error sound', async ({ page }) => {
+      const { problems } = await openPlayground(page, phone ? ConfirmMoves.TOUCH : ConfirmMoves.NEVER);
+      // White's stones at B9 and A8 leave Black's A9 no liberty (R-MOVE-5).
+      for (const point of ['ee', 'ba', 'ff', 'ab']) await move(page, point, phone);
+      await play(page, 'aa', 9, phone);
+      await expect.poll(() => sounds(page)).toEqual(['move', 'move', 'move', 'move', 'error']);
+      await expect(status(page)).toHaveText('Black to play.');
       expect(problems).toEqual({ requests: [], errors: [] });
     });
   });

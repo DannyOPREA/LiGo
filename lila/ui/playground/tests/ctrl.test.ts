@@ -3,7 +3,7 @@ import { describe, test } from 'node:test';
 
 import { isTouchDevice } from 'lib/device';
 
-import PlaygroundCtrl, { resolveConfirm } from '../src/ctrl';
+import PlaygroundCtrl, { resolveConfirm, soundOf } from '../src/ctrl';
 
 const noop = () => {};
 
@@ -143,5 +143,18 @@ describe('PlaygroundCtrl', () => {
     test('an anonymous visitor (no confirmMoves passed) gets the pref default: on touch screens', () => {
       assert.equal(new PlaygroundCtrl({}, noop).confirm, isTouchDevice());
     });
+  });
+
+  test('sounds (ADR 0026 §2): a stone, a capture, a pass, and a refused move', () => {
+    assert.equal(soundOf({ move: 'dd', color: 'black', captured: 0 }), 'move');
+    assert.equal(soundOf({ move: 'ab', color: 'black', captured: 3 }), 'capture');
+    assert.equal(soundOf({ move: 'pass', color: 'white', captured: 0 }), 'confirmation');
+    const ctrl = new PlaygroundCtrl({}, noop);
+    const heard: string[] = [];
+    ctrl.sound = name => heard.push(name);
+    const config = ctrl.boardConfig();
+    config.onPlayed!({ move: 'ee', color: 'black', captured: 0 });
+    config.onRefused!('superko');
+    assert.deepEqual(heard, ['move', 'error']);
   });
 });
