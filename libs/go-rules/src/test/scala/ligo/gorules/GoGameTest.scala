@@ -98,3 +98,24 @@ class GoGameTest extends munit.FunSuite:
     val corners = start(setup(size = BoardSize.Thirteen)).play(p("aa")).ok.play(p("mm")).ok
     assertEquals(corners.stones, Map(p("aa") -> Color.Black, p("mm") -> Color.White))
     assertEquals(corners.play(Point(13, 0)), Left(Refusal.OffBoard))
+
+  test("replay gives the same game as playing the actions, resumes included"):
+    val played = start(setup()).play(p("ee")).ok.pass.ok.pass.ok.resume.ok.play(p("cc")).ok
+    val replayed = GoGame.replay(setup(), played.actions).fold(e => fail(e.message), identity)
+    assertEquals(replayed.stones, played.stones)
+    assertEquals(replayed.toMove, played.toMove)
+    assertEquals(replayed.phase, played.phase)
+    assertEquals(replayed.actions, played.actions)
+
+  test("replay returns a refused action with the game before it, and never throws"):
+    val actions = Vector(Action.Place(p("ee")), Action.Pass, Action.Place(p("ee")), Action.Pass)
+    GoGame.replay(setup(), actions) match
+      case Left(ReplayError.Refused(index, action, refusal, before)) =>
+        assertEquals((index, action, refusal), (2, Action.Place(p("ee")), Refusal.Occupied))
+        assertEquals(before.actions, actions.take(2))
+      case other => fail(s"expected a refusal, got $other")
+    assertEquals(
+      GoGame.replay(setup(handicap = 12), Nil),
+      Left(ReplayError.BadSetup(SetupError.HandicapOutOfRange(12)))
+    )
+    assert(GoGame.replay(setup(), Vector(Action.Resume)).isLeft)

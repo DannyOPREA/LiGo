@@ -110,7 +110,7 @@ final class GoGame private (
   def undo: Either[Refusal, GoGame] =
     if phase == Phase.Scoring then Left(Refusal.InScoring)
     else if actions.lastOption.forall(_ == Action.Resume) then Left(Refusal.NothingToUndo)
-    else Right(GoGame.replay(setup, actions.init))
+    else Right(GoGame.replayAccepted(setup, actions.init))
 
   def apply(action: Action): Either[Refusal, GoGame] = action match
     case Action.Place(at) => play(at)
@@ -151,11 +151,22 @@ object GoGame:
       _ <- noChainWithoutLiberties(board, setup.size)
     yield GoGame(setup, Game(Situation(board, playerOf(start.toMove))), Phase.Play, true, Vector.empty)
 
+  /** The game after `actions` from `setup`: how lila loads a stored game (ADR 0019 §3). A stored document can
+    * be corrupt, so a setup or action the rules refuse is returned, never thrown; [[ReplayError.Refused]]
+    * carries the game as it was before the refused action.
+    */
+  def replay(setup: Setup, actions: Seq[Action]): Either[ReplayError, GoGame] =
+    start(setup).left
+      .map(ReplayError.BadSetup(_))
+      .flatMap: start =>
+        actions.iterator.zipWithIndex.foldLeft[Either[ReplayError, GoGame]](Right(start)):
+          case (Right(game), (action, index)) =>
+            game(action).left.map(ReplayError.Refused(index, action, _, game))
+          case (refused, _) => refused
+
   // Actions this setup already accepted once; replaying them cannot be refused.
-  private def replay(setup: Setup, actions: Vector[Action]): GoGame =
-    val start = GoGame.start(setup).fold(e => sys.error(s"replaying a started game: ${e.message}"), identity)
-    actions.foldLeft(start): (game, action) =>
-      game(action).fold(r => sys.error(s"replaying an accepted action $action: ${r.key}"), identity)
+  private def replayAccepted(setup: Setup, actions: Vector[Action]): GoGame =
+    replay(setup, actions).fold(e => sys.error(s"replaying accepted actions: ${e.message}"), identity)
 
   // R-HCP-2..4. Handicap stones come from strategygames' own tables; 1 stone places none.
   private def startingPosition(setup: Setup, variant: Variant): Either[SetupError, Position] =
@@ -198,3 +209,11 @@ object GoGame:
 
   private def pointOf(pos: Pos, size: BoardSize): Point =
     Point(pos.file.index, size.lines - 1 - pos.rank.index)
+
+/** Why [[GoGame.replay]] could not replay stored actions. */
+enum ReplayError(val message: String):
+  case BadSetup(error: SetupError) extends ReplayError(error.message)
+
+  /** The action at `index` (from 0) was refused; `before` is the game after the actions before it. */
+  case Refused(index: Int, action: Action, refusal: Refusal, before: GoGame)
+      extends ReplayError(s"action $index ($action) refused: ${refusal.key}")

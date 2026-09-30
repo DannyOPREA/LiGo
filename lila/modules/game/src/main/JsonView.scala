@@ -33,10 +33,12 @@ final class JsonView(rematches: Rematches):
   def base(game: Game, initialFen: Option[Fen.Full]) =
     immutable(game, initialFen) ++ Json
       .obj(
-        "fen" -> Fen.write(game.chessState).some,
         "turns" -> game.ply,
         "status" -> game.status
       )
+      // A Go game has no FEN: its setup, moves and position facts instead (ADR 0019 §3).
+      .add("fen" -> (!game.isGo).option(Fen.write(game.chessState)))
+      .add("go" -> game.go.map(JsonView.go))
       .add("threefold" -> game.history.threefoldRepetition)
       .add("winner" -> game.winnerColor)
       .add("abortedBy" -> game.abortedBy)
@@ -102,6 +104,33 @@ final class JsonView(rematches: Rematches):
       .add("blindfold" -> p.blindfold)
 
 object JsonView:
+
+  /** A Go game's setup, its moves (SGF points, `pass`, `resume`), prisoners (`b` counts the White stones
+    * Black took), phase and ko point.
+    */
+  def go(g: ligo.gorules.GoGame): JsObject =
+    import ligo.gorules.{ Action, Phase, Ruleset }
+    val s = g.setup
+    Json
+      .obj(
+        "size" -> s.size.lines,
+        "rules" -> (s.ruleset match
+          case Ruleset.Japanese => "japanese"
+          case Ruleset.Chinese => "chinese"),
+        "komi" -> s.komi,
+        "moves" -> g.actions
+          .map:
+            case Action.Place(at) => at.sgf
+            case Action.Pass => "pass"
+            case Action.Resume => "resume"
+          .mkString(" "),
+        "prisoners" -> Json.obj("b" -> g.captures.black, "w" -> g.captures.white),
+        "phase" -> (g.phase match
+          case Phase.Play => "play"
+          case Phase.Scoring => "scoring")
+      )
+      .add("handicap" -> Option.when(s.handicap > 0)(s.handicap))
+      .add("ko" -> g.koPoint.map(_.sgf))
 
   def expiration(game: Game) =
     game.expirable.option:
