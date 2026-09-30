@@ -11,6 +11,7 @@
 - Removing a module: grep its `lila.core.<module>` Bus messages (publishers compile fine with no subscriber) and `ui/*/src` for its URLs (kept in-repo clients like dgt aren't caught by the compiler) (2026-09-29, unit 3.5).
 - Script edits: cut code blocks by indentation or with adjacent markers, never "from marker A to far marker B"; list the removed `def`s in the diff afterwards. sbt 2 caches by content, so `touch` won't re-show a file's warnings (2026-09-29, unit 3.6).
 - A sibling sbt build used via `ProjectRef` passes on its libraries but not its resolvers or `excludeDependencies`: repeat them in lila and check lila's own classpath (2026-09-30, unit 3.10).
+- Moving a field out of a nested case class: grep `copy(inner = ...)` too (it keeps compiling while the outer copy goes stale), and `case PerfKey.x` matches (an opaque String, never flagged as missing) when adding a perf (2026-09-30, unit 3.11).
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
@@ -39,6 +40,12 @@
   as well as constructions: `copy` keeps compiling while the outer copy goes stale.
 - Decisions: see logs/decisions.md (3.11 row).
 - Verified by Claude: see the PR.
+- Review (reviewer agent): no blocking findings. Fixed from its optional list: `History.apply` had no
+  `go` case (a MatchError once charts ask for it; now empty), the game-download page showed a "Go"
+  perf toggle (filtered out), two `GameStateTest` checks could not fail (now check the stored chess
+  copy and White's remaining time after more time was given), ADR 0019 §8 gained a 3.11 amendment
+  line, and STATUS's two 3.8 lines now agree. Lesson from it: `PerfKey` is an opaque `String`, so
+  the compiler never flags a missing `case PerfKey.x`; grep for them whenever a perf is added.
 - Follow-ups: the `go` perf reaches leaderboards, the rating history (`History`), perf stats and the
   browser's perf lists when Phase 5 rates Go games (5.3–5.6); 3.12 adds `go: Option[GoGame]` and
   makes `turnColor` come from `GoGame.toMove` for Go games; the Go setup is stored in 3.12.

@@ -39,15 +39,17 @@ class GameStateTest extends munit.FunSuite:
     assertEquals(g.ply, Ply(2))
     assertEquals(g.playedPlies, Ply(2))
     assertEquals(g.turnColor, Color.White)
-    assertEquals(g.chessState.ply, g.ply)
+    // the copy the chess game still carries stays in step
+    assertEquals(g.chess.ply, g.ply)
 
   test("a clock change on lila's game reaches the chess rules"):
     val g = game.startClock.fold(fail("no clock"))(_.game)
     val moreTime = g.clock.map(_.giveTime(Color.White, chess.Centis(1500)))
     val g2 = g.withClock(moreTime.get).game
-    assertEquals(g2.chessState.clock, g2.clock)
     assertNotEquals(g2.clock, g.clock)
-    // the next move steps the clock lila holds, not a stale copy
+    // the next move steps the clock lila holds, not a stale copy: White keeps the 15 s given
     val after = move(g2, Square.E2, Square.E4)
-    assertEquals(after.clock.map(_.config), g2.clock.map(_.config))
+    assertEquals(after.chess.clock, after.clock)
+    // 300 s + 15 s given (+ 3 s increment); a stale clock would leave White at most 303 s
+    assert(after.clock.exists(_.remainingTime(Color.White) > chess.Centis(31000)))
     assert(after.clock.exists(_.isRunning))
