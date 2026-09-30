@@ -39,8 +39,10 @@ final private class Rematcher(
   def apply(pov: Pov, confirm: Boolean): Fu[Events] =
     if confirm then yes(pov) else no(pov)
 
+  // Only Go games are rematched: from unit 3.15 on, no chess game is created (ADR 0019 §8).
   private def couldRematch(g: Game): Boolean =
-    g.finishedOrAborted &&
+    g.isGo &&
+      g.finishedOrAborted &&
       g.nonMandatory &&
       !g.hasRule(_.noRematch) &&
       !g.boosted &&
@@ -100,7 +102,7 @@ final private class Rematcher(
       case Some(Rematches.NextGame.Offered(_, id)) => createGame(id.some)
 
   private def returnGame(pov: Pov, withId: Option[GameId]): Fu[Game] =
-    pov.game.go.fold(returnChess(pov, withId))(returnGo(pov, withId, _))
+    pov.game.go.fold(fufail(s"${pov.gameId} is not a Go game"))(returnGo(pov, withId, _))
 
   // A Go rematch replays the game's board size, ruleset, komi and handicap (unit 3.15)
   private def returnGo(pov: Pov, withId: Option[GameId], go: ligo.gorules.GoGame): Fu[Game] =
@@ -111,34 +113,12 @@ final private class Rematcher(
           go.setup.copy(position = None),
           pov.game.clock.map(c => chess.Clock(c.config)),
           players = ByColor(returnPlayer(pov.game, _, users)),
-          rated = if users.exists(_.exists(_.user.lame)) then Rated.No else pov.game.rated,
+          rated = Rated.No, // casual until unit 5.7
           source = pov.game.source | lila.core.game.Source.Lobby,
           daysPerTurn = pov.game.daysPerTurn
         )
         .fold(e => fufail(s"Go rematch of ${pov.gameId}: ${e.message}"), fuccess)
       game <- withId.fold(idGenerator.withUniqueId(sloppy))(id => fuccess(sloppy.withId(id)))
-    yield game
-
-  private def returnChess(pov: Pov, withId: Option[GameId]): Fu[Game] =
-    for
-      initialFen <- gameRepo.initialFen(pov.game)
-      newGame = Rematcher.returnChessGame(
-        pov.game.variant,
-        pov.game.clock,
-        initialFen,
-        !chess960.get(pov.gameId)
-      )
-      users <- userApi.gamePlayersAny(pov.game.userIdPair, pov.game.perfKey)
-      sloppy = lila.core.game.newGame(
-        chess = newGame,
-        players = ByColor(returnPlayer(pov.game, _, users)),
-        rated = if users.exists(_.exists(_.user.lame)) then Rated.No else pov.game.rated,
-        source = pov.game.source | lila.core.game.Source.Lobby,
-        daysPerTurn = pov.game.daysPerTurn,
-        pgnImport = None
-      )
-      game <- withId.fold(idGenerator.withUniqueId(sloppy)): id =>
-        fuccess(sloppy.withId(id))
     yield game
 
   private def incUserColors(game: Game): Unit =

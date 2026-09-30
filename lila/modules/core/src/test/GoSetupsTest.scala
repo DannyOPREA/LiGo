@@ -51,3 +51,10 @@ class GoSetupsTest extends munit.FunSuite:
     assertEquals((js \ "rules").as[String], "chinese")
     assertEquals((js \ "komi").as[Double], 7.5)
     assert((js \ "handicap").toOption.isEmpty)
+
+  test("a new Go game is casual until unit 5.7, even when asked for a rated one"):
+    val players = _root_.chess.ByColor(c =>
+      Player(lila.core.id.GamePlayerId(if c.white then "wwww" else "bbbb"), c, none)
+    )
+    val g = newGoGame(GoSetups.default, none, players, _root_.chess.Rated.Yes, Source.Lobby)
+    assertEquals(g.map(_.sloppy.rated), Right(_root_.chess.Rated.No))

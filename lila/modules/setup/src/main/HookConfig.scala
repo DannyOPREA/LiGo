@@ -86,12 +86,12 @@ case class HookConfig(
 
   def updateFrom(game: Game) =
     val h1 = copy(
-      variant = game.variant,
+      variant = HookConfig.variantDefault, // only Go games are created (unit 3.15)
       timeMode = TimeMode.ofGame(game),
       time = game.clock.map(_.limitInMinutes) | time,
       increment = game.clock.map(_.incrementSeconds) | increment,
       days = game.daysPerTurn | days,
-      rated = game.rated,
+      rated = Rated.No, // casual until unit 5.7, even after an older rated game
       go = game.go.fold(go)(g => GoOptions.of(g.setup.copy(handicap = 0, position = None)))
     )
     val h2 = if h1.isRatedUnlimited then h1.copy(rated = Rated.No) else h1

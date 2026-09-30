@@ -67,11 +67,11 @@ final class ChallengeMaker(
         val alternateColor = rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
         Challenge.make(
           variant = pov.game.variant,
-          initialFen = initialFen,
+          initialFen = none, // a Go game never starts from a chess position
           // a rematch replays the game's board size, ruleset and komi (unit 3.15)
           go = pov.game.go.fold(GoSetups.default)(g => g.setup.copy(position = None)),
           timeControl = timeControl,
-          rated = pov.game.rated,
+          rated = chess.Rated.No, // casual until unit 5.7
           color = (if alternateColor then !pov.color else pov.color).name,
           // for anon, we don't know the secret, but this challenge is only serialized to json and sent to a listening bot anyway,
           // which doesn't use the secret, so we just use an empty string

@@ -16,6 +16,42 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · 3.15 · Game creation: every new game is a Go game, casual only
+- Did: every creation path now calls `newGoGame` with go-rules' `Setup`: lobby hooks and seeks
+  (`Biter`), challenges (`ChallengeJoiner`), Go rematches (`Rematcher`, back on; a chess game is no
+  longer rematched), bulk pairings (`ChallengeBulk`) and pools (`GameStarter`, 19×19 Japanese).
+  `newGoGame` itself makes every game casual until 5.7, whatever an older rated game, seek,
+  challenge or bulk asks for; "New opponent" (`HookConfig.updateFrom`) no longer copies a chess
+  variant or the rated flag. `lila.core.game.GoSetups` holds the
+  default (19×19, Japanese, 6.5), `make` from form values (komi defaults to the ruleset's standard),
+  the JSON block (`size`, `rules`, `komi`) and a BSON handler with the game's own keys (`sz`, `ru`,
+  `km`, `hc`). `lila.core.setup.GoOptions` carries the three optional form fields. The friend, lobby,
+  board-API seek, challenge-API, open-challenge and bulk forms take `size`, `ruleset` and `komi`;
+  refuse rated games, chess variants and FENs; and rate in the `go` perf. Hooks, seeks, challenges
+  and bulks carry the setup (seeks, challenges and bulks as an optional `go` sub-document, older
+  records reading as the default); lobby, seek, challenge and bulk JSON gain a `go` block. The setup
+  module's unused `fenGame` and chess variant lists went. Tests: `GoSetupsTest` (6), `GoSetupFormTest`
+  (8, the setup module's first), `GoHookTest` (3), `JoinerTest` rewritten for Go (3), and a
+  casual-clamp case in `GoSetupsTest` (7 in all).
+- Review: the independent reviewer found 3 blocking issues, all fixed: "New opponent", rematches and
+  records saved before this unit could still make rated games (the rule lived only in the forms),
+  and rematching an old chess game still made a chess game. Optional, fixed: rematch challenges
+  dropped their chess FEN. Left: a bulk game that fails to start is logged and skipped (its setup was
+  checked when the bulk was scheduled).
+- Worked: the creation paths were few and each needed only its `newGame` call swapped; keeping the
+  unused chess `variant` fields until 3.17 kept the diff small.
+- Didn't work / dead ends: a Play form can't nest a mapping without prefixing its keys, so the three
+  Go fields sit flat in each form and the komi check against the board size is a form-level check.
+- Lessons: a rule that the forms enforce must also hold where games are made from stored records or
+  old games ("New opponent", rematches, accepted challenges): put it in the one constructor they all
+  call. `IdGenerator.withUniqueId` takes a `NewGame`, so a creation that can fail (`Either`) has to
+  be turned into a future before it, not inside it.
+- Decisions: see logs/decisions.md (3.15 row) and the ADR 0019 §8 amendment.
+- Verified by Claude: see the PR.
+- Follow-ups: 3.19 puts the Go options in the create-game and challenge forms and drops the `variant`
+  field; 4.9 adds handicap; 5.7 turns rated games on; 6.4 gives pools their sizes; 3.14 sends the
+  `go` block to lila-ws's lobby.
+
 ### 2026-09-30 · 3.13 · Round module: Go moves, passes, clock, takebacks, no draws
 - Did: the round plays Go games (ADR 0019 §5–7). lila-ws's `r/move` token is read as a chess UCI
   or, failing that, a Go SGF point or `pass` (`GoBridge.actionOf`), giving a new `HumanGoPlay`

@@ -57,3 +57,18 @@ class GoSetupFormTest extends munit.FunSuite:
     assert(!ok.hasErrors, ok.errors)
     assertEquals(ok.get.goSetup.size, BoardSize.Nine)
     assert(board.bind(Map("time" -> "10", "increment" -> "5", "rated" -> "true")).hasErrors)
+
+  test("New opponent after an older rated chess game makes a casual Go hook"):
+    import lila.core.game.{ Player, Source, newGame }
+    val players =
+      chess.ByColor(c => Player(lila.core.id.GamePlayerId(if c.white then "wwww" else "bbbb"), c, none))
+    val old = newGame(
+      chess.Game(chess.variant.Chess960),
+      players,
+      chess.Rated.Yes,
+      Source.Lobby,
+      pgnImport = none
+    ).sloppy
+    val config = HookConfig.default(auth = true).updateFrom(old)
+    assertEquals((config.rated, config.variant), (chess.Rated.No, chess.variant.Standard))
+    assertEquals(config.goSetup, GoSetups.default)
