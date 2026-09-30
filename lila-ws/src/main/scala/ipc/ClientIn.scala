@@ -112,8 +112,6 @@ object ClientIn:
 
   // TourReminder was removed with the tournament module (unit 3.2).
 
-  def tvSelect(data: JsonString) = payload("tvSelect", data)
-
   case class Ack(id: Option[Int]) extends ClientIn:
     def write = id.fold(cliMsg("ack")) { cliMsg("ack", _) }
 

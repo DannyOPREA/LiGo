@@ -4,7 +4,7 @@
   grid-area: main;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'app' 'table' 'side' 'support' 'feed' 'tv' 'puzzle' 'timeline' 'about';
+  grid-template-areas: 'app' 'table' 'side' 'puzzle' 'timeline' 'about';
   gap: $block-gap;
 
   &__start {
@@ -15,21 +15,13 @@
     ---cols: 2; // ui/lobby/src/main.ts
 
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: auto fit-content(0) repeat(2, min-content) 20em;
+    grid-template-rows: auto fit-content(0) min-content;
     grid-template-areas:
       'app      app'
       'side     table'
-      'tv       puzzle'
-      'support  support'
-      'feed     feed'
+      'puzzle   .'
       'timeline timeline'
       'about    about';
-
-    &__support {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2%;
-    }
 
     &__start {
       margin-inline: 0 $block-gap;
@@ -44,14 +36,11 @@
     ---cols: 3; // ui/lobby/src/main.ts
 
     grid-template-columns: 34% 1fr;
-    grid-template-rows:
-      minmax(12em, auto) fit-content(0) 1fr fit-content(15em) repeat(2, fit-content(0))
-      minmax(0, 1fr);
+    grid-template-rows: minmax(12em, auto) fit-content(0) 1fr fit-content(0);
     grid-template-areas:
       'table  app'
       'side   app'
-      'tv     support'
-      'puzzle feed'
+      'puzzle app'
       'about  about';
 
     &__start {
@@ -61,10 +50,6 @@
 
     &__counters {
       display: flex;
-    }
-
-    &__support {
-      margin-bottom: 1.65em;
     }
 
     &__side,
@@ -80,8 +65,7 @@
     grid-template-rows: fit-content(0) fit-content(0);
     grid-template-areas:
       'side   app     app     table'
-      'tv     feed    feed    puzzle'
-      'about  about   .       .';
+      'about  about   about   puzzle';
 
     &__start {
       margin: 0;
@@ -98,15 +82,6 @@
       position: absolute;
       bottom: 0;
     }
-
-    &__support {
-      display: none;
-    }
-
-    &__tv .lobby__support-link,
-    &__puzzle .lobby__support-link {
-      display: flex;
-    }
   }
 
   &__side {
@@ -122,20 +97,8 @@
     grid-area: table;
   }
 
-  &__tv {
-    grid-area: tv;
-  }
-
   &__puzzle {
     grid-area: puzzle;
-  }
-
-  &__support {
-    grid-area: support;
-  }
-
-  &__feed {
-    grid-area: feed;
   }
 
   &__about {

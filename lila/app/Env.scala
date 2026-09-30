@@ -55,8 +55,6 @@ final class Env(
   val history: lila.history.Env = wire[lila.history.Env]
   val bookmark: lila.bookmark.Env = wire[lila.bookmark.Env]
   val round: lila.round.Env = wire[lila.round.Env]
-  val search: lila.search.Env = wire[lila.search.Env]
-  val gameSearch: lila.gameSearch.Env = wire[lila.gameSearch.Env]
   val perfStat: lila.perfStat.Env = wire[lila.perfStat.Env]
   val mod: lila.mod.Env = wire[lila.mod.Env]
   val pool: lila.pool.Env = wire[lila.pool.Env]
@@ -66,16 +64,9 @@ final class Env(
   val appeal: lila.appeal.Env = wire[lila.appeal.Env]
   val timeline: lila.timeline.Env = wire[lila.timeline.Env]
   val puzzle: lila.puzzle.Env = wire[lila.puzzle.Env]
-  val tv: lila.tv.Env = wire[lila.tv.Env]
-  val feed: lila.feed.Env = wire[lila.feed.Env]
-  val video: lila.video.Env = wire[lila.video.Env]
   val push: lila.push.Env = wire[lila.push.Env]
   val challenge: lila.challenge.Env = wire[lila.challenge.Env]
-  val plan: lila.plan.Env = wire[lila.plan.Env]
-  val coach: lila.coach.Env = wire[lila.coach.Env]
   val activity: lila.activity.Env = wire[lila.activity.Env]
-  val streamer: lila.streamer.Env = wire[lila.streamer.Env]
-  val recap: lila.recap.Env = wire[lila.recap.Env]
   val cms: lila.cms.Env = wire[lila.cms.Env]
   val web: lila.web.Env = wire[lila.web.Env]
   val api: lila.api.Env = wire[lila.api.Env]
@@ -87,9 +78,6 @@ final class Env(
   val gamePaginator = wire[mashup.GameFilterMenu.PaginatorBuilder]
   val pageCache = wire[http.PageCache]
 
-  lila.common.Bus.sub[lila.tv.RenderFeaturedJs]:
-    case lila.tv.RenderFeaturedJs(game, promise) =>
-      promise.success(Html(views.game.mini.noCtx(Pov.naturalOrientation(game), tv = true)))
   lila.common.Bus.sub[lila.puzzle.DailyPuzzle.Render]:
     case lila.puzzle.DailyPuzzle.Render(puzzle, fen, lastMove, promise) =>
       promise.success(Html(views.puzzle.bits.daily(puzzle, fen, lastMove)))

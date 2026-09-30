@@ -278,9 +278,6 @@ importers:
       debounce-promise:
         specifier: ^3.1.2
         version: 3.1.2
-      editor:
-        specifier: workspace:*
-        version: link:../editor
       keyboard-move:
         specifier: workspace:*
         version: link:../keyboardMove
@@ -410,15 +407,6 @@ importers:
 
   ui/dgt: {}
 
-  ui/editor:
-    dependencies:
-      '@badrap/result':
-        specifier: ^0.3.1
-        version: 0.3.1
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-
   ui/keyboardMove:
     dependencies:
       lib:
@@ -511,15 +499,6 @@ importers:
       voice:
         specifier: workspace:*
         version: link:../voice
-
-  ui/recap:
-    dependencies:
-      lib:
-        specifier: workspace:*
-        version: link:../lib
-      swiper:
-        specifier: ^12.2.0
-        version: 12.2.0
 
   ui/round:
     dependencies:
@@ -2143,10 +2122,6 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  swiper@12.2.0:
-    resolution: {integrity: sha512-K8uXsBZU6ME97Ia3xbBge8IRCnR1lOmIILzvY/jGVic7dSTQ530s3uO8RvXbPUtkkXLWIwmZLRPbtDxRWVAFdg==}
-    engines: {node: '>= 4.7.0'}
-
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
 
@@ -3675,8 +3650,6 @@ snapshots:
       csso: 5.0.5
       picocolors: 1.1.1
       sax: 1.6.1
-
-  swiper@12.2.0: {}
 
   symbol-tree@3.2.4: {}
 

@@ -186,13 +186,6 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
       .filter(100 >=)
   } | 80
 
-  val dailyNewsAtom = link(
-    href := routes.Feed.atom,
-    st.title := "Lichess Updates Feed",
-    tpe := "application/atom+xml",
-    rel := "alternate"
-  )
-
   val dataVapid = attr("data-vapid")
   def dataSocketDomains = attr("data-socket-domains") := netConfig.socketDomains.mkString(",")
   val dataNonce = attr("data-nonce")
@@ -275,7 +268,6 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
           )
 
     def apply(
-        zenable: Boolean,
         isAppealUser: Boolean,
         challenges: Int,
         notifications: Int,
@@ -291,14 +283,7 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
             div(cls := "site-icon")(lila.web.ui.bits.logo),
             div(cls := "site-name")(siteName)
           ),
-          (!isAppealUser).option(
-            frag(
-              topnav,
-              (ctx.kid.no && !ctx.me.exists(_.isPatron) && !zenable).option(
-                a(cls := "site-title-nav__donate")(href := routes.Plan.index())(trans.patron.donate())
-              )
-            )
-          ),
+          (!isAppealUser).option(topnav),
           ctx.blind.option(h2("Navigation"))
         ),
         div(cls := "site-buttons")(

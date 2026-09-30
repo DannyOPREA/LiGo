@@ -6,12 +6,6 @@ import play.api.i18n.Lang
 import lila.core.id.{ GameId, PuzzleId }
 import lila.core.userId.*
 
-package streamer:
-  case class StreamStart(userId: UserId, streamerName: String)
-
-  case class StreamInfo(name: String, lang: String)
-  case class StreamersOnline(streamers: Map[UserId, StreamInfo])
-
 package puzzle:
   case class DailyChange(id: PuzzleId)
 

@@ -72,6 +72,8 @@ ci_commit toolingonly dev/x.sh .claude/y.json logs/tooling.md
 check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit board libs/board/src/engine.mjs logs/rules-engine.md
 check "changed.sh: libs/board triggers the rules, ui and puzzles builds (the playground screenshots; the puzzles' SGF reader)" output_is $'lila=false\nws=false\nui=true\nrules=true\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
+ci_commit budget dev/ci/budget.json logs/frontend.md
+check "changed.sh: the budget limits trigger only the ui build" output_is $'lila=false\nws=false\nui=true\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit fixtures libs/conformance/fixtures/x.json logs/rules-engine.md
 check "changed.sh: rules fixtures trigger the rules and scoring builds (the scoring service replays them too)" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=true\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit dep lila/package.json logs/tooling.md

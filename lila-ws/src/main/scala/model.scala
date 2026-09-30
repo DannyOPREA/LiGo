@@ -97,9 +97,6 @@ case class RoundEventFlags(
     troll: Boolean
 )
 
-opaque type UserTv = String
-object UserTv extends OpaqueString[UserTv]
-
 case class Clock(white: Int, black: Int)
 case class Position(lastUci: Uci, fen: Fen.Board, clock: Option[Clock], turnColor: Color):
   def fenWithColor = fen.andColor(turnColor)

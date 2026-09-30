@@ -18,7 +18,6 @@ object ClientOut:
   case class Ping(lag: Option[Int]) extends ClientOutSite
 
   case class Watch(ids: Set[Game.Id]) extends ClientOutSite
-  case object StartWatchingTvChannels extends ClientOutSite
 
   case object MoveLat extends ClientOutSite
 
@@ -77,7 +76,6 @@ object ClientOut:
                     Watch(Game.Id.from(d.split(" ", 17).take(16).toSet))
                   }
                   .orElse(Some(Ignore)) // old apps send empty watch lists
-              case "startWatchingTvChannels" => Some(StartWatchingTvChannels)
               case "moveLat" => Some(MoveLat)
               case "notified" => Some(Notified)
               case "following_onlines" => Some(FollowingOnline(o.boolean("d").getOrElse(true)))

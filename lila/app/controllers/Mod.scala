@@ -399,14 +399,6 @@ final class Mod(
     yield Redirect(routes.User.show(username)).flashSuccess("Password blanked")
   }
 
-  def freePatron(username: UserStr) = Secure(_.FreePatron) { _ ?=> me ?=>
-    Found(env.user.repo.enabledById(username)): dest =>
-      for
-        _ <- env.plan.api.freeMonths(dest, 1)
-        _ <- env.mod.logApi.giftPatronMonth(me.modId, dest.id)
-      yield Redirect(routes.User.show(username)).flashSuccess("Free patron month granted")
-  }
-
   def chatUser(username: UserStr) = SecureOrScoped(_.ChatTimeout) { _ ?=> _ ?=>
     JsonOptionOk:
       env.chat.api.userChat.userModInfo(username).map2(env.chat.json.userModInfo)
@@ -424,19 +416,11 @@ final class Mod(
       bindForm(lila.security.Permission.form)(
         _ => BadRequest.page(views.mod.permissions(user)),
         permissions =>
-          val newPermissions = Permission.ofDbKeys(permissions).diff(Permission(user))
-          (api.setPermissions(user.username, Permission.ofDbKeys(permissions)) >> {
-            newPermissions(Permission.Coach).so(env.mailer.automaticEmail.onBecomeCoach(user))
-          } >> {
-            Permission
-              .ofDbKeys(permissions)
-              .exists(p =>
-                p.grants(Permission.SeeReport) || p.grants(Permission.DeveloperTeam) || p.grants(
-                  Permission.ContentTeam
-                ) || p.grants(Permission.BroadcastTeam)
-              )
-              .so(env.plan.api.setLifetime(user))
-          }).inject(Redirect(routes.Mod.permissions(user.username)).flashSuccess)
+          // The coach welcome email and free lifetime patron wings for staff went with the coach
+          // and plan modules (unit 3.7).
+          api
+            .setPermissions(user.username, Permission.ofDbKeys(permissions))
+            .inject(Redirect(routes.Mod.permissions(user.username)).flashSuccess)
       )
   }
 

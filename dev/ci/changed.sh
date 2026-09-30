@@ -24,7 +24,7 @@ head=${2:-HEAD}
 areas=(
   'lila|^(lila/(app|conf|modules|project|translation)/|libs/go-rules/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ws|^(lila-ws/|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
-  'ui|^(lila/|libs/board/|\.github/workflows/ui\.yml$|dev/ci/changed\.sh$)'
+  'ui|^(lila/|libs/board/|\.github/workflows/ui\.yml$|dev/ci/(changed\.sh|budget\.(mjs|json))$)'
   'rules|^(libs/go-rules/|libs/board/|libs/conformance/fixtures/|tools/puzzles/data/|lila/pnpm-(lock|workspace)\.yaml$|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
   'scoring|^(services/scoring/|libs/conformance/fixtures/|lila/pnpm-(lock|workspace)\.yaml$|dev/katago\.sh$|\.github/workflows/scoring\.yml$|dev/ci/changed\.sh$)'
   'puzzles|^(tools/puzzles/|services/scoring/|libs/board/|lila/pnpm-(lock|workspace)\.yaml$|dev/katago\.sh$|\.github/workflows/puzzles\.yml$|dev/ci/changed\.sh$)'

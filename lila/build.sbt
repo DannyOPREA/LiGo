@@ -79,19 +79,19 @@ lazy val modules = Seq(
   memo, rating,
   // level 5
   game, user, puzzle, analyse,
-  report, pref, chat, playban, lobby, mailer, oauth, search,
+  report, pref, chat, playban, lobby, mailer, oauth,
   // level 7
   // everything else is free from deps; do the big ones first
-  security, plan, round,
+  security, round,
   mod, challenge, web,
-  streamer, activity,
+  activity,
   notifyModule, perfStat, timeline,
-  setup, video, push,
+  setup, push,
   // and then the smaller ones
-  pool, lobby, relation, tv, feed, history, recap,
-  shutup, appeal, irc, coach,
+  pool, lobby, relation, history,
+  shutup, appeal, irc,
   cms, i18n,
-  socket, bookmark, gameSearch, irc
+  socket, bookmark, irc
 )
 
 lazy val moduleRefs = modules map projectToRef
@@ -166,26 +166,6 @@ lazy val puzzle = module("puzzle",
   tests.bundle
 )
 
-lazy val video = module("video",
-  Seq(memo, ui),
-  macwire.bundle
-)
-
-lazy val coach = module("coach",
-  Seq(memo, rating),
-  Seq()
-)
-
-lazy val streamer = module("streamer",
-  Seq(ui, memo),
-  Seq()
-)
-
-lazy val feed = module("feed",
-  Seq(memo, ui),
-  Seq()
-)
-
 lazy val perfStat = module("perfStat",
   Seq(memo, rating),
   Seq()
@@ -194,11 +174,6 @@ lazy val perfStat = module("perfStat",
 lazy val history = module("history",
   Seq(rating, memo),
   Seq()
-)
-
-lazy val search = module("search",
-  Seq(memo),
-  Seq(playWs.ahc, lilaSearch)
 )
 
 lazy val chat = module("chat",
@@ -231,16 +206,7 @@ lazy val game = module("game",
   Seq(compression) ++ tests.bundle ++ Seq(scalacheck, munitCheck, chess.testKit)
 )
 
-lazy val gameSearch = module("gameSearch",
-  Seq(search, ui),
-  tests.bundle
-)
-
  // good dep to game
-lazy val tv = module("tv",
-  Seq(game),
-  Seq(hasher)
-)
 
 lazy val analyse = module("analyse",
   Seq(tree, memo, ui),
@@ -307,11 +273,6 @@ lazy val mailer = module("mailer",
   Seq(hasher, play.mailer)
 )
 
-lazy val plan = module("plan",
-  Seq(memo, ui),
-  tests.bundle
-)
-
 lazy val relation = module("relation",
   Seq(memo, ui),
   Seq()
@@ -339,11 +300,6 @@ lazy val appeal = module("appeal",
 
 lazy val notifyModule = module("notify",
   Seq(memo, ui),
-  Seq()
-)
-
-lazy val recap = module("recap",
-  Seq(user, game, puzzle),
   Seq()
 )
 
