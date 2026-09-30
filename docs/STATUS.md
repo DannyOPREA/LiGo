@@ -30,9 +30,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 - Phase 8 (under the owner's "work until I tell you to stop" delegation): units 8.1–8.8 in
   docs/PLAN.md §5. 8.1 (ADR 0024: puzzles LiGo generates and checks itself, plus a small classics tail, PR #49)
-  merged; 8.2 (design ADR 0025: goban's own puzzle format and puzzle mode) in review; 8.3 (the `tools/puzzles` import
-  pipeline), 8.4 (the first ≥ 200 puzzles) and 8.5 (goban's puzzle mode in `libs/board`) run
-  now; 8.6–8.8 wait for Phase 3 units 3.11, 3.16, 3.18 and 3.20. Log: logs/tsumego.md.
+  and 8.2 (design ADR 0025: goban's own puzzle format and puzzle mode, PR #53) merged; 8.3 (the `tools/puzzles`
+  generator and pipeline) in review; 8.4 (the first ≥ 200 puzzles) and 8.5 (goban's puzzle mode in `libs/board`) run
+  next; 8.6–8.8 wait for Phase 3 units 3.11, 3.16, 3.18 and 3.20. Log: logs/tsumego.md.
 
 - Phase 9 (under the owner's "work until I tell you to stop" delegation): units 9.1–9.10 in
   docs/PLAN.md §5. 9.1 (design ADR), 9.2 (sounds), 9.3 (board themes) and 9.4 (board accessibility)
@@ -112,7 +112,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 
 ## Waiting on owner
 - Confirm the choices the spec left open in unit 0.4 (listed in PR #4).
-- Add the `rules` job to the `main` ruleset's required checks.
+- Add the `rules` job to the `main` ruleset's required checks (and `puzzles`, unit 8.3).
 - Paste `dev/cloud-setup.sh` into the cloud environment's Setup script (Project settings). It now
   also installs bats, shellcheck and KataGo (CPU).
 - Cloud network allowlist: add `media.katagotraining.org` (full-size KataGo networks) and

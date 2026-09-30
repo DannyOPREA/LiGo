@@ -1,0 +1,37 @@
+2026-09-29 21:37:29+0000: Running with following config:
+logDir = analysis_logs
+maxVisits = 500
+nnCacheSizePowerOfTwo = 23
+nnMaxBatchSize = 64
+nnMutexPoolSizePowerOfTwo = 17
+nnRandomize = true
+numAnalysisThreads = 2
+numSearchThreads = 16
+reportAnalysisWinratesAs = BLACK
+
+2026-09-29 21:37:29+0000: Analysis Engine starting...
+2026-09-29 21:37:29+0000: KataGo v1.18.1
+2026-09-29 21:37:29+0000: nnRandSeed0 = 13232966158074545736
+2026-09-29 21:37:29+0000: After dedups: nnModelFile0 = /root/.local/share/ligo/katago/g170-b6c96-s175395328-d26788732.bin.gz useFP16 auto
+2026-09-29 21:37:29+0000: Initializing neural net buffer to be size 19 * 19 allowing smaller boards
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 2: Model version 8
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 2: Model name: g170-b6c96-s175395328-d26788732 (convnet, 1027911 params)
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 0: Model version 8
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 0: Model name: g170-b6c96-s175395328-d26788732 (convnet, 1027911 params)
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 3: Model version 8
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 3: Model name: g170-b6c96-s175395328-d26788732 (convnet, 1027911 params)
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 1: Model version 8
+2026-09-29 21:37:29+0000: Eigen (CPU) backend thread 1: Model name: g170-b6c96-s175395328-d26788732 (convnet, 1027911 params)
+2026-09-29 21:37:29+0000: Loaded config /root/.local/opt/katago-v1.18.1-cpu/analysis_example.cfg
+2026-09-29 21:37:29+0000: Loaded model /root/.local/share/ligo/katago/g170-b6c96-s175395328-d26788732.bin.gz
+2026-09-29 21:37:29+0000: Analyzing up to 2 positions at a time in parallel
+2026-09-29 21:37:29+0000: Started, ready to begin handling requests
+2026-09-29 21:37:29+0000: /root/.local/share/ligo/katago/g170-b6c96-s175395328-d26788732.bin.gz
+2026-09-29 21:37:29+0000: NN rows: 5
+2026-09-29 21:37:29+0000: NN batches: 5
+2026-09-29 21:37:29+0000: NN avg batch size: 1
+2026-09-29 21:37:29+0000: GPU -1 finishing, processed 2 rows 2 batches
+2026-09-29 21:37:29+0000: GPU -1 finishing, processed 1 rows 1 batches
+2026-09-29 21:37:29+0000: GPU -1 finishing, processed 1 rows 1 batches
+2026-09-29 21:37:29+0000: GPU -1 finishing, processed 1 rows 1 batches
+2026-09-29 21:37:29+0000: All cleaned up, quitting

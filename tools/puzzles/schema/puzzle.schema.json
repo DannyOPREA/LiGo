@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DannyOPREA/LiGo/tools/puzzles/schema/puzzle.schema.json",
+  "title": "LiGo puzzle",
+  "description": "A tsumego as goban's PuzzleConfig (OGS's puzzle format) plus LiGo's fields (ADR 0025 §1). Licence: MIT (ADR 0007).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "width",
+    "height",
+    "bounds",
+    "initial_state",
+    "initial_player",
+    "move_tree",
+    "puzzle_player_move_mode",
+    "puzzle_opponent_move_mode",
+    "goal",
+    "themes",
+    "rating",
+    "provenance"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[0-9A-Za-z]{5}$" },
+    "width": { "enum": [9, 13, 19] },
+    "height": { "enum": [9, 13, 19] },
+    "bounds": {
+      "description": "The part of the board to show, inclusive (goban's GobanBounds).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["top", "left", "bottom", "right"],
+      "properties": {
+        "top": { "type": "integer", "minimum": 0, "maximum": 18 },
+        "left": { "type": "integer", "minimum": 0, "maximum": 18 },
+        "bottom": { "type": "integer", "minimum": 0, "maximum": 18 },
+        "right": { "type": "integer", "minimum": 0, "maximum": 18 }
+      }
+    },
+    "initial_state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["black", "white"],
+      "properties": {
+        "black": { "$ref": "#/$defs/points" },
+        "white": { "$ref": "#/$defs/points" }
+      }
+    },
+    "initial_player": { "enum": ["black", "white"] },
+    "move_tree": { "$ref": "#/$defs/root" },
+    "puzzle_player_move_mode": { "enum": ["free", "fixed"] },
+    "puzzle_opponent_move_mode": { "const": "automatic" },
+    "goal": { "enum": ["live", "kill", "ko", "capture", "connect"] },
+    "themes": {
+      "type": "array",
+      "uniqueItems": true,
+      "minItems": 1,
+      "items": {
+        "enum": [
+          "lifeAndDeath",
+          "living",
+          "killing",
+          "ko",
+          "capturingRace",
+          "tesuji",
+          "eyeShape",
+          "snapback",
+          "throwIn",
+          "corner",
+          "edge",
+          "centre"
+        ]
+      }
+    },
+    "rating": { "type": "integer", "minimum": 400, "maximum": 3000 },
+    "provenance": { "oneOf": [{ "$ref": "#/$defs/generated" }, { "$ref": "#/$defs/transcribed" }] }
+  },
+  "$defs": {
+    "points": { "type": "string", "pattern": "^([a-s][a-s])*$" },
+    "root": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "branches"],
+      "properties": {
+        "x": { "const": -1 },
+        "y": { "const": -1 },
+        "branches": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/node" } },
+        "text": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0, "maximum": 18 },
+        "y": { "type": "integer", "minimum": 0, "maximum": 18 },
+        "branches": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/node" } },
+        "correct_answer": { "const": true },
+        "wrong_answer": { "const": true },
+        "text": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "katago": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "network", "sha256", "visits"],
+      "properties": {
+        "version": { "type": "string" },
+        "network": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "visits": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "generated": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "generator", "version", "seed", "shape", "anchor", "variation", "orientation", "katago"],
+      "properties": {
+        "source": { "const": "generated" },
+        "generator": { "const": "@ligo/puzzles" },
+        "version": { "type": "string" },
+        "seed": { "type": "integer", "minimum": 0 },
+        "shape": { "type": "string" },
+        "anchor": { "enum": ["corner", "edge", "centre"] },
+        "variation": { "type": "string" },
+        "orientation": { "type": "integer", "minimum": 0, "maximum": 7 },
+        "katago": { "$ref": "#/$defs/katago" }
+      }
+    },
+    "transcribed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "work", "edition", "problem", "scan_url", "page", "rights", "transcriber", "checker"],
+      "properties": {
+        "source": { "const": "transcribed" },
+        "work": { "type": "string" },
+        "edition": { "type": "string" },
+        "library_id": { "type": "string" },
+        "problem": { "type": "string" },
+        "scan_url": { "type": "string", "pattern": "^https://" },
+        "page": { "type": "string" },
+        "rights": { "type": "string" },
+        "transcriber": { "type": "string" },
+        "checker": { "type": "string" }
+      }
+    }
+  }
+}

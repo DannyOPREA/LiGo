@@ -51,11 +51,11 @@ in_ci_repo() { (cd "$ci_repo" && "$@"); }
 META="$ROOT/dev/ci/meta_checks.py"
 CHANGED="$ROOT/dev/ci/changed.sh"
 ci_commit docs docs/x.md
-check "changed.sh: a docs-only change needs no build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false' in_ci_repo "$CHANGED" main
+check "changed.sh: a docs-only change needs no build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 check "log check: Markdown only passes" in_ci_repo "$META" logs main HEAD
 ci_commit scala lila/modules/a.scala
-check "changed.sh: lila/modules triggers the lila and ui builds" output_is $'lila=true\nws=false\nui=true\nrules=false\nscoring=false' in_ci_repo "$CHANGED" main
-check "changed.sh: no base commit means build everything" output_is $'lila=true\nws=true\nui=true\nrules=true\nscoring=true' in_ci_repo "$CHANGED" ""
+check "changed.sh: lila/modules triggers the lila and ui builds" output_is $'lila=true\nws=false\nui=true\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
+check "changed.sh: no base commit means build everything" output_is $'lila=true\nws=true\nui=true\nrules=true\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" ""
 check "log check: code without a logs/ entry fails" fails in_ci_repo "$META" logs main HEAD
 ci_commit scala-logged lila/modules/a.scala logs/backend.md
 check "log check: code with a logs/ entry passes" in_ci_repo "$META" logs main HEAD
@@ -63,26 +63,28 @@ ci_commit decisions-only lila/modules/a.scala logs/decisions.md
 check "log check: logs/decisions.md alone isn't a log entry" fails in_ci_repo "$META" logs main HEAD
 (cd "$ci_repo" && git checkout -q -B moved main && mkdir -p lila-ws/src && echo x > lila-ws/src/A.scala && git add -A && git commit -qm a \
   && git mv lila-ws/src/A.scala docs/A.scala && git commit -qm mv) >/dev/null 2>&1
-check "changed.sh: moving a file out of lila-ws triggers the ws build" output_is $'lila=false\nws=true\nui=false\nrules=false\nscoring=false' in_ci_repo "$CHANGED" HEAD~1
+check "changed.sh: moving a file out of lila-ws triggers the ws build" output_is $'lila=false\nws=true\nui=false\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" HEAD~1
 ci_commit newlib tools/newthing/index.ts logs/general.md
-check "changed.sh: a file outside every area runs everything" output_is $'lila=true\nws=true\nui=true\nrules=true\nscoring=true' in_ci_repo "$CHANGED" main
+check "changed.sh: a file outside every area runs everything" output_is $'lila=true\nws=true\nui=true\nrules=true\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit rules libs/go-rules/src/Rules.scala logs/rules-engine.md
-check "changed.sh: libs/go-rules triggers only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=false' in_ci_repo "$CHANGED" main
+check "changed.sh: libs/go-rules triggers only the rules build" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit toolingonly dev/x.sh .claude/y.json logs/tooling.md
-check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false' in_ci_repo "$CHANGED" main
+check "changed.sh: dev/ and .claude/ changes need no build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit board libs/board/src/engine.mjs logs/rules-engine.md
-check "changed.sh: libs/board triggers the rules and ui builds (the playground screenshots)" output_is $'lila=false\nws=false\nui=true\nrules=true\nscoring=false' in_ci_repo "$CHANGED" main
+check "changed.sh: libs/board triggers the rules, ui and puzzles builds (the playground screenshots; the puzzles' SGF reader)" output_is $'lila=false\nws=false\nui=true\nrules=true\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit fixtures libs/conformance/fixtures/x.json logs/rules-engine.md
-check "changed.sh: rules fixtures trigger the rules and scoring builds (the scoring service replays them too)" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=true' in_ci_repo "$CHANGED" main
+check "changed.sh: rules fixtures trigger the rules and scoring builds (the scoring service replays them too)" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=true\npuzzles=false' in_ci_repo "$CHANGED" main
 ci_commit dep lila/package.json logs/tooling.md
-check "changed.sh: lila/package.json triggers the ui build" output_is $'lila=false\nws=false\nui=true\nrules=false\nscoring=false' in_ci_repo "$CHANGED" main
+check "changed.sh: lila/package.json triggers the ui build" output_is $'lila=false\nws=false\nui=true\nrules=false\nscoring=false\npuzzles=false' in_ci_repo "$CHANGED" main
 check "manifest check: package.json without COPYING.md fails" fails in_ci_repo "$META" manifests main HEAD
 ci_commit lockfile lila/pnpm-lock.yaml logs/tooling.md
-check "changed.sh: lila's pnpm lockfile triggers the ui, rules and scoring builds (libs/board's and services/scoring's packages)" output_is $'lila=false\nws=false\nui=true\nrules=true\nscoring=true' in_ci_repo "$CHANGED" main
+check "changed.sh: lila's pnpm lockfile triggers the ui, rules, scoring and puzzles builds (every workspace package outside lila/)" output_is $'lila=false\nws=false\nui=true\nrules=true\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit scoring services/scoring/src/score.ts logs/scoring.md
-check "changed.sh: services/scoring triggers only the scoring build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=true' in_ci_repo "$CHANGED" main
+check "changed.sh: services/scoring triggers the scoring and puzzles builds (tools/puzzles uses its KataGo client)" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
+ci_commit puzzles tools/puzzles/src/cli.ts logs/tsumego.md
+check "changed.sh: tools/puzzles triggers only the puzzles build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit katagosh dev/katago.sh logs/scoring.md
-check "changed.sh: dev/katago.sh triggers only the scoring build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=true' in_ci_repo "$CHANGED" main
+check "changed.sh: dev/katago.sh triggers the scoring and puzzles builds" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit dep-copying lila-ws/build.sbt COPYING.md
 check "manifest check: build.sbt with COPYING.md passes" in_ci_repo "$META" manifests main HEAD
 ci_commit lib-plugins libs/go-rules/project/plugins.sbt logs/rules-engine.md

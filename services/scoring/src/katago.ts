@@ -1,7 +1,7 @@
 // A client for one long-running `katago analysis` process (docs/build-vs-buy/scoring.md,
-// ADR 0016): JSON-lines queries by id, restarted after it crashes. Only what `propose` needs:
-// two ownership maps per position (black to move, white to move), each under its own per-request
-// timeout (ADR 0020 §4).
+// ADR 0016): JSON-lines queries by id, restarted after it crashes. What `propose` needs: two
+// ownership maps per position (black to move, white to move), each under its own per-request
+// timeout (ADR 0020 §4). `analyse` passes any other query through, for `tools/puzzles` (ADR 0025).
 //
 // Coordinates: KataGo's analysis engine accepts a location as `"(x,y)"` with explicit integer
 // coordinates (its docs/Analysis_Engine.md); its own source (cpp/game/board.cpp,
@@ -190,6 +190,16 @@ export class KataGoClient {
       blackToMove: toRows(black.ownership, boardXSize),
       whiteToMove: toRows(white.ownership, boardXSize),
     };
+  }
+
+  /**
+   * One analysis query as KataGo's analysis engine takes it (its docs/Analysis_Engine.md), without
+   * `id`, which the client sets. The reply must carry ownership, so pass `includeOwnership: true`:
+   * a reply without it is taken for one of KataGo's warnings and waited past. Used by
+   * `tools/puzzles` for its second opinion (ADR 0025 §2); `propose` uses `ownershipMaps`.
+   */
+  analyse(payload: Record<string, unknown>): Promise<Record<string, unknown> & { ownership: number[] }> {
+    return this.query(payload) as Promise<Record<string, unknown> & { ownership: number[] }>;
   }
 
   close(): void {

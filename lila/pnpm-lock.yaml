@@ -213,6 +213,22 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  ../tools/puzzles:
+    dependencies:
+      ajv:
+        specifier: 8.20.0
+        version: 8.20.0
+      goban-engine:
+        specifier: 8.3.226
+        version: 8.3.226
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.5
+        version: 24.13.5
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
   bin:
     dependencies:
       '@types/node':
