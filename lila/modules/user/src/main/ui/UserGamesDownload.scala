@@ -117,7 +117,7 @@ final class UserGamesDownload(helpers: Helpers):
       th(cls := "top")(label(`for` := "dl-perfs")(trans.site.variants())),
       td(
         div(id := "dl-perfs", cls := "toggle-columns")(
-          lila.rating.PerfType.nonPuzzle.map(_.key).map(perfToggle)
+          lila.rating.PerfType.nonPuzzle.filter(_ != lila.rating.PerfType.Go).map(_.key).map(perfToggle)
         )
       )
     )

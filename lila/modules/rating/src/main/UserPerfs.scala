@@ -27,7 +27,8 @@ object UserPerfsExt:
       PerfKey.horde -> p.horde,
       PerfKey.racingKings -> p.racingKings,
       PerfKey.crazyhouse -> p.crazyhouse,
-      PerfKey.puzzle -> p.puzzle
+      PerfKey.puzzle -> p.puzzle,
+      PerfKey.go -> p.go
     )
 
     def best8Perfs: List[PerfKey] = UserPerfs.firstRow ::: bestOf(UserPerfs.secondRow, 4)
@@ -129,6 +130,7 @@ object UserPerfs:
     val p = lila.rating.Perf.default
     new UserPerfs(
       id,
+      p, // go
       p,
       p,
       p,
@@ -216,6 +218,7 @@ object UserPerfs:
       inline def perf(key: String) = r.getO[Perf](key).getOrElse(lila.rating.Perf.default)
       new UserPerfs(
         id = r.get[UserId]("_id"),
+        go = perf("go"),
         standard = perf("standard"),
         chess960 = perf("chess960"),
         kingOfTheHill = perf("kingOfTheHill"),
@@ -242,6 +245,7 @@ object UserPerfs:
     def writes(w: BSON.Writer, o: UserPerfs) =
       BSONDocument(
         "id" -> o.id,
+        "go" -> notNew(o.go),
         "standard" -> notNew(o.standard),
         "chess960" -> notNew(o.chess960),
         "kingOfTheHill" -> notNew(o.kingOfTheHill),

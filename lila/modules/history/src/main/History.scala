@@ -40,6 +40,8 @@ case class History(
       case PerfKey.crazyhouse => crazyhouse
       case PerfKey.puzzle => puzzle
       case PerfKey.ultraBullet => ultraBullet
+      // the go perf's rating history arrives with rated Go games (Phase 5)
+      case _ => Nil
 
 object History:
 

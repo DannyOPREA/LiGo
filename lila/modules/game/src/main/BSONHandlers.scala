@@ -174,6 +174,9 @@ object BSONHandlers:
         id = light.id,
         players = ByColor(whitePlayer, blackPlayer),
         chess = chessGame,
+        ply = chessGame.ply,
+        startedAtPly = chessGame.startedAtPly,
+        clock = chessGame.clock,
         loadClockHistory = clk =>
           for
             bw <- whiteClockHistory
@@ -218,15 +221,15 @@ object BSONHandlers:
         F.whitePlayer -> w.docO(Player.playerWrite(o.whitePlayer)),
         F.blackPlayer -> w.docO(Player.playerWrite(o.blackPlayer)),
         F.status -> o.status,
-        F.turns -> o.chess.ply,
-        F.startedAtTurn -> w.intO(o.chess.startedAtPly.value),
-        F.clock -> o.chess.clock.flatMap { c =>
+        F.turns -> o.ply,
+        F.startedAtTurn -> w.intO(o.startedAtPly.value),
+        F.clock -> o.clock.flatMap { c =>
           clockBSONWrite(o.createdAt, c).toOption
         },
         F.daysPerTurn -> o.daysPerTurn,
         F.moveTimes -> o.binaryMoveTimes,
-        F.whiteClockHistory -> clockHistory(Color.White, o.clockHistory, o.chess.clock, o.flagged),
-        F.blackClockHistory -> clockHistory(Color.Black, o.clockHistory, o.chess.clock, o.flagged),
+        F.whiteClockHistory -> clockHistory(Color.White, o.clockHistory, o.clock, o.flagged),
+        F.blackClockHistory -> clockHistory(Color.Black, o.clockHistory, o.clock, o.flagged),
         F.rated -> w.yesnoO(o.rated),
         F.variant -> o.position.variant.exotic.option(w(o.position.variant.id)),
         F.bookmarks -> w.intO(o.bookmarks),

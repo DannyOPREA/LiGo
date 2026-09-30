@@ -80,8 +80,8 @@ private object ChallengeJoiner:
 
   def addGameHistory(position: Option[Position.AndFullMoveNumber])(game: Game): Game =
     position.fold(game): sp =>
-      game.copy(
-        chess = game.chess.copy(
+      game.withChess(
+        game.chessState.copy(
           position = game.position.copy(history = sp.position.history),
           ply = sp.ply
         )

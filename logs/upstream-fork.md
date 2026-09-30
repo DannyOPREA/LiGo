@@ -11,9 +11,44 @@
 - Removing a module: grep its `lila.core.<module>` Bus messages (publishers compile fine with no subscriber) and `ui/*/src` for its URLs (kept in-repo clients like dgt aren't caught by the compiler) (2026-09-29, unit 3.5).
 - Script edits: cut code blocks by indentation or with adjacent markers, never "from marker A to far marker B"; list the removed `def`s in the diff afterwards. sbt 2 caches by content, so `touch` won't re-show a file's warnings (2026-09-29, unit 3.6).
 - A sibling sbt build used via `ProjectRef` passes on its libraries but not its resolvers or `excludeDependencies`: repeat them in lila and check lila's own classpath (2026-09-30, unit 3.10).
+- Moving a field out of a nested case class: grep `copy(inner = ...)` too (it keeps compiling while the outer copy goes stale), and `case PerfKey.x` matches (an opaque String, never flagged as missing) when adding a perf (2026-09-30, unit 3.11).
 - Lishogi forked in July 2020 and is now frozen on Scala 2.13: a warning about how hard forks age (2026-09-25, planning research).
 
 ## Entries (newest first)
+
+### 2026-09-30 · 3.11 · Core types: lila's Game holds ply and clock, GoBridge, the go perf
+- Did: lila's `Game` (`modules/core/.../game/Game.scala`) gained `ply`, `startedAtPly` and `clock`
+  fields instead of exporting them from `chess.Game`; `turnColor` is now ply parity (`ply.turn`).
+  The chess game still carries copies until 3.17: chess rules get them through `chessState`, and a
+  chess move or rewind hands its result back with `withChess`. Callers moved: the BSON reader/writer,
+  `newGame`, the pool's game, move application, clock changes (start, berserk, more time, finish),
+  takebacks, the challenge and setup starting positions, FEN writers (game/round JSON, the round
+  controller, `insertDenormalized`) and the round's move player. New `GoBridge` in `core`
+  (`lila.core.game.GoBridge`): colour conversion both ways, a Go game's starting ply for lila's
+  parity rule, and the `go` perf key. New perf `go` (`PerfKey.go`, id 30, `UserPerfs.go`, stored as
+  `go` in `user_perf`, `PerfType.Go` with the disc icon and plain-English name). Tests:
+  `GoBridgeTest` (lila's turn equals go-rules' `toMove` over 60 actions for handicaps 0–9 and over 40
+  for custom positions with either player to move) and `GameStateTest` (ply, turn and a clock change
+  reaching the chess rules).
+- Worked: making the three fields constructor parameters without defaults let the compiler find
+  every place that builds a `Game` directly (two: the BSON reader, the pool); the rest go through
+  `newGame`, which copies them from the chess game.
+- Didn't work / dead ends: the compiler can't find `copy(chess = ...)` calls, which compile but would
+  leave lila's ply and clock stale; they were found by grepping `chess = `, `.chess.` and `.chess)`
+  and moved to `withChess`/`chessState` by hand.
+- Lessons: when a field moves between two nested case classes, grep for `copy(` of the inner one
+  as well as constructions: `copy` keeps compiling while the outer copy goes stale.
+- Decisions: see logs/decisions.md (3.11 row).
+- Verified by Claude: see the PR.
+- Review (reviewer agent): no blocking findings. Fixed from its optional list: `History.apply` had no
+  `go` case (a MatchError once charts ask for it; now empty), the game-download page showed a "Go"
+  perf toggle (filtered out), two `GameStateTest` checks could not fail (now check the stored chess
+  copy and White's remaining time after more time was given), ADR 0019 §8 gained a 3.11 amendment
+  line, and STATUS's two 3.8 lines now agree. Lesson from it: `PerfKey` is an opaque `String`, so
+  the compiler never flags a missing `case PerfKey.x`; grep for them whenever a perf is added.
+- Follow-ups: the `go` perf reaches leaderboards, the rating history (`History`), perf stats and the
+  browser's perf lists when Phase 5 rates Go games (5.3–5.6); 3.12 adds `go: Option[GoGame]` and
+  makes `turnColor` come from `GoGame.toMove` for Go games; the Go setup is stored in 3.12.
 
 ### 2026-09-30 · 3.8 · Rebrand text: strings, footer, FAQ, contact, emails
 - Did: "Lichess"/"lichess.org" → "LiGo" in the English source strings that kept pages still use

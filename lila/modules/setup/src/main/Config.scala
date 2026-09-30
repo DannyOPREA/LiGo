@@ -91,8 +91,8 @@ trait Positional:
         else game -> baseState
     builder(chessGame).dmap { game =>
       state.fold(game) { case sit @ Position.AndFullMoveNumber(position, _) =>
-        game.copy(
-          chess = game.chess.copy(
+        game.withChess(
+          game.chessState.copy(
             position = game.position.copy(
               history = position.history,
               variant = FromPosition
