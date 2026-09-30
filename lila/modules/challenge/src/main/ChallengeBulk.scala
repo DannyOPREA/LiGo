@@ -1,7 +1,7 @@
 package lila.challenge
 
 import org.apache.pekko.stream.scaladsl.*
-import chess.{ Clock, Speed }
+import chess.Clock
 import reactivemongo.api.bson.*
 import scalalib.model.Days
 
@@ -24,6 +24,7 @@ final class ChallengeBulkApi(
   private given BSONHandler[chess.variant.Variant] = variantByKeyHandler
   private given BSONHandler[Clock.Config] = clockConfigHandler
   private given BSONHandler[Either[Clock.Config, Days]] = eitherHandler[Clock.Config, Days]
+  import lila.core.game.GoSetups.given
   private given BSONDocumentHandler[ScheduledBulk] = Macros.handler
 
   private val coll = colls.bulk
@@ -82,10 +83,6 @@ final class ChallengeBulkApi(
           coll.updateField(bid(bulk.id), "startedClocksAt", nowInstant).void
 
   private def makePairings(bulk: ScheduledBulk): Funit =
-    def timeControl =
-      bulk.clock.fold(Challenge.TimeControl.Clock.apply, Challenge.TimeControl.Correspondence.apply)
-    val (chessGame, state) = ChallengeJoiner.gameSetup(bulk.variant, timeControl, bulk.fen)
-    lila.rating.PerfType(bulk.variant, Speed(bulk.clock.left.toOption))
     Source(bulk.games)
       .mapAsyncUnordered(8): game =>
         userApi
@@ -93,21 +90,25 @@ final class ChallengeBulkApi(
           .map2: users =>
             (game.id, users)
       .mapConcat(_.toList)
-      .map: (id, users) =>
-        val game = lila.core.game
-          .newGame(
-            chess = chessGame,
+      .mapConcat: (id, users) =>
+        // a Go game from the bulk's setup (unit 3.15), checked when the bulk was scheduled
+        lila.core.game
+          .newGoGame(
+            bulk.goSetup,
+            bulk.clock.left.toOption.map(_.toClock),
             players = users.map(some).mapWithColor(lila.game.Player.make),
             rated = bulk.rated,
             source = lila.core.game.Source.Api,
             daysPerTurn = bulk.clock.toOption,
-            pgnImport = None,
             rules = bulk.rules
           )
-          .withId(id)
-          .pipe(ChallengeJoiner.addGameHistory(state))
-          .start
-        (game, users)
+          .fold(
+            e =>
+              logger.error(s"Bulk.makePairings ${bulk.id} game $id: ${e.message}")
+              Nil
+            ,
+            g => List((g.withId(id).start: Game, users))
+          )
       .mapAsyncUnordered(8): (game, _) =>
         for
           _ <- gameRepo

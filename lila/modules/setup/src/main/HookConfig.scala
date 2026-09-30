@@ -7,6 +7,7 @@ import scalalib.model.Days
 
 import lila.core.perf.UserWithPerfs
 import lila.core.rating.RatingRange
+import lila.core.setup.GoOptions
 import lila.core.id.SessionId
 import lila.lobby.{ Hook, Seek, TriColor }
 import lila.rating.RatingRange.withinLimits
@@ -19,7 +20,8 @@ case class HookConfig(
     days: Days,
     rated: Rated,
     color: TriColor,
-    ratingRange: RatingRange
+    ratingRange: RatingRange,
+    go: GoOptions = GoOptions.default
 ) extends HumanConfig:
 
   def withinLimits(using me: Option[Me], perf: Perf): HookConfig =
@@ -34,7 +36,10 @@ case class HookConfig(
     days,
     rated.id.some,
     ratingRange.toString.some,
-    color.name.some
+    color.name.some,
+    go.size,
+    go.ruleset,
+    go.komi
   ).some
 
   def withTimeModeString(tc: Option[String]) =
@@ -57,6 +62,7 @@ case class HookConfig(
           Hook.make(
             sri = sri,
             variant = variant,
+            go = goSetup,
             clock = clock,
             rated = if lila.core.game.allowRated(variant, clock.some) then rated else Rated.No,
             color = color,
@@ -70,6 +76,7 @@ case class HookConfig(
           user.map: u =>
             Seek.make(
               variant = variant,
+              go = goSetup,
               daysPerTurn = makeDaysPerTurn,
               rated = rated,
               user = u,
@@ -79,12 +86,13 @@ case class HookConfig(
 
   def updateFrom(game: Game) =
     val h1 = copy(
-      variant = game.variant,
+      variant = HookConfig.variantDefault, // only Go games are created (unit 3.15)
       timeMode = TimeMode.ofGame(game),
       time = game.clock.map(_.limitInMinutes) | time,
       increment = game.clock.map(_.incrementSeconds) | increment,
       days = game.daysPerTurn | days,
-      rated = game.rated
+      rated = Rated.No, // casual until unit 5.7, even after an older rated game
+      go = game.go.fold(go)(g => GoOptions.of(g.setup.copy(handicap = 0, position = None)))
     )
     val h2 = if h1.isRatedUnlimited then h1.copy(rated = Rated.No) else h1
     if !h2.validClock then h2.copy(time = 1) else h2
@@ -104,7 +112,10 @@ object HookConfig extends BaseConfig:
       d: Days,
       m: Option[Int],
       e: Option[String],
-      c: Option[String]
+      c: Option[String],
+      size: Option[Int] = None,
+      ruleset: Option[String] = None,
+      komi: Option[Double] = None
   ) =
     new HookConfig(
       variant = chess.variant.Variant.orDefault(v),
@@ -114,10 +125,12 @@ object HookConfig extends BaseConfig:
       days = d,
       rated = m.fold(Rated.default)(Rated.orDefault),
       color = TriColor.orDefault(c),
-      ratingRange = e.fold(RatingRange.default)(RatingRange.orDefault)
+      ratingRange = e.fold(RatingRange.default)(RatingRange.orDefault),
+      go = GoOptions(size, ruleset, komi)
     )
 
-  def default(auth: Boolean): HookConfig = default.copy(rated = Rated(auth))
+  // Go games are casual until Phase 5 (PLAN §5, unit 3.15)
+  def default(auth: Boolean): HookConfig = default.copy(rated = Rated.No)
 
   private val default = HookConfig(
     variant = variantDefault,

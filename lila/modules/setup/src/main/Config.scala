@@ -1,10 +1,11 @@
 package lila.setup
 
 import chess.format.Fen
-import chess.variant.{ FromPosition, Variant }
-import chess.{ Clock, Game as ChessGame, Position, Speed }
+import chess.variant.Variant
+import chess.{ Clock, Speed }
 import scalalib.model.Days
 
+import lila.core.setup.GoOptions
 import lila.lobby.TriColor
 import lila.rating.PerfType
 
@@ -22,15 +23,15 @@ private[setup] trait Config:
   // Correspondence days per turn
   val days: Days
 
-  // Game variant code
+  // Game variant code: always standard chess, which a Go game carries unused until unit 3.17
   val variant: Variant
 
+  // Board size, ruleset and komi (unit 3.15)
+  val go: GoOptions
+
+  def goSetup: ligo.gorules.Setup = go.orDefault
+
   def hasClock = timeMode == TimeMode.RealTime
-
-  def makeGame(v: Variant): ChessGame =
-    ChessGame(position = v.initialPosition, clock = makeClock.map(_.toClock))
-
-  def makeGame: ChessGame = makeGame(variant)
 
   def validClock = !hasClock || clockHasTime
 
@@ -52,7 +53,8 @@ private[setup] trait Config:
 
   def makeSpeed: Speed = chess.Speed(makeClock)
 
-  def perfType: PerfType = lila.rating.PerfType(variant, makeSpeed)
+  // Go's one perf (ADR 0021 §1)
+  def perfType: PerfType = PerfType.Go
   def perfKey = perfType.key
 
 trait WithColor:
@@ -68,59 +70,16 @@ trait Positional:
 
   def fen: Option[Fen.Full]
 
-  def strictFen: Boolean
-
-  lazy val validFen = variant != FromPosition ||
-    fen.exists: f =>
-      Fen.read(f).exists(_.playable(strictFen))
-
-  def fenGame(builder: ChessGame => Fu[Game]): Fu[Game] =
-    val baseState = fen
-      .ifTrue(variant.fromPosition)
-      .flatMap:
-        Fen.readWithMoveNumber(FromPosition, _)
-    val (chessGame, state) = baseState.fold(makeGame -> none):
-      case sit @ Position.AndFullMoveNumber(s, _) =>
-        val game = ChessGame(
-          position = s,
-          ply = sit.ply,
-          startedAtPly = sit.ply,
-          clock = makeClock.map(_.toClock)
-        )
-        if Fen.write(game).isInitial then makeGame(chess.variant.Standard) -> none
-        else game -> baseState
-    builder(chessGame).dmap { game =>
-      state.fold(game) { case sit @ Position.AndFullMoveNumber(position, _) =>
-        game.withChess(
-          game.chessState.copy(
-            position = game.position.copy(
-              history = position.history,
-              variant = FromPosition
-            ),
-            ply = sit.ply
-          )
-        )
-      }
-    }
+  // Go games start from their setup, never from a chess position (unit 3.15)
+  def validFen = fen.isEmpty
 
 object Config extends BaseConfig
 
 trait BaseConfig:
-  val variants = List(chess.variant.Standard.id, chess.variant.Chess960.id)
+  // Only games of Go are created (unit 3.15): the forms still take lila's `variant` field until the create
+  // forms change in unit 3.19, and refuse any chess variant.
+  val variants = List(chess.variant.Standard.id)
   val variantDefault = chess.variant.Standard
-
-  val variantsWithFen = variants :+ FromPosition.id
-  val variantsWithVariants =
-    variants :+
-      chess.variant.Crazyhouse.id :+
-      chess.variant.KingOfTheHill.id :+
-      chess.variant.ThreeCheck.id :+
-      chess.variant.Antichess.id :+
-      chess.variant.Atomic.id :+
-      chess.variant.Horde.id :+
-      chess.variant.RacingKings.id
-  val variantsWithFenAndVariants =
-    variantsWithVariants :+ FromPosition.id
 
   val speeds = Speed.all.map(_.id)
 

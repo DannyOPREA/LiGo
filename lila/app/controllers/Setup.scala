@@ -53,6 +53,7 @@ final class Setup(
                       val challenge = lila.challenge.Challenge.make(
                         variant = config.variant,
                         initialFen = config.fen,
+                        go = config.goSetup,
                         timeControl = timeControl,
                         rated = config.rated,
                         color = config.color.name,

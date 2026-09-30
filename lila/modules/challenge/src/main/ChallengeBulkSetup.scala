@@ -3,7 +3,8 @@ package lila.challenge
 import cats.mtl.Handle.*
 import org.apache.pekko.stream.scaladsl.*
 import chess.format.Fen
-import chess.variant.{ FromPosition, Variant }
+import chess.variant.Variant
+import ligo.gorules.Setup as GoSetup
 import chess.{ ByColor, Clock, Rated }
 import play.api.data.*
 import play.api.data.Forms.*
@@ -13,7 +14,8 @@ import scalalib.model.Days
 import scalalib.net.Bearer
 
 import lila.core.data.Template
-import lila.core.game.GameRule
+import lila.core.game.{ GameRule, GoSetups }
+import lila.core.setup.GoOptions
 import lila.game.IdGenerator
 import lila.oauth.{ EndpointScopes, OAuthScope, OAuthServer }
 import lila.common.Form.into
@@ -40,7 +42,10 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
       "pairAt" -> optional(timestampInNearFuture),
       "startClocksAt" -> optional(timestampInNearFuture),
       setupForm.message,
-      setupForm.rules
+      setupForm.rules,
+      setupForm.goSize,
+      setupForm.goRuleset,
+      setupForm.goKomi
     ) {
       (
           tokens: String,
@@ -52,7 +57,10 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
           pairTs: Option[Long],
           clockTs: Option[Long],
           message: Option[String],
-          rules: Option[Set[GameRule]]
+          rules: Option[Set[GameRule]],
+          size: Option[Int],
+          ruleset: Option[String],
+          komi: Option[Double]
       ) =>
         BulkFormData(
           tokens,
@@ -64,14 +72,17 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
           clockTs.map(millisToInstant),
           message.map(Template.apply),
           ~rules,
-          fen
-        ).autoVariant
+          fen,
+          GoOptions(size, ruleset, komi)
+        )
     }(_ => None)
       .verifying(
         "clock or correspondence days required",
         c => c.clock.isDefined || c.days.isDefined
       )
-      .verifying("invalidFen", _.validFen)
+      .verifying("Go games can't start from a chess position", _.validFen)
+      .verifying("Go games are casual until ratings arrive", _.rated.no)
+      .verifying("Komi must be a multiple of 0.5 no bigger than the board", _.go.valid)
       .verifying(
         "Tokens must be unique for real-time games (not correspondence)",
         data =>
@@ -151,7 +162,7 @@ final class ChallengeBulkSetupApi(
                     message = data.message,
                     rules = data.rules,
                     scheduledAt = nowInstant,
-                    fen = data.fen.filterNot(_.isInitial)
+                    go = data.go.orDefault.some
                   )
 
 object ChallengeBulkSetup:
@@ -179,14 +190,17 @@ object ChallengeBulkSetup:
       message: Option[Template],
       rules: Set[GameRule] = Set.empty,
       pairedAt: Option[Instant] = None,
-      fen: Option[Fen.Full] = None
+      fen: Option[Fen.Full] = None, // never set since unit 3.15
+      // board size, ruleset and komi (unit 3.15); none on bulks scheduled before it
+      go: Option[GoSetup] = None
   ):
+    def goSetup: GoSetup = go | GoSetups.default
     def userSet = Set(games.flatMap(g => List(g.white, g.black)))
     def collidesWith(other: ScheduledBulk) = {
       pairAt == other.pairAt || startClocksAt.exists(other.startClocksAt.contains)
     } && userSet.exists(other.userSet.contains)
     def nonEmptyRules = rules.nonEmpty.option(rules)
-    def perfType = lila.rating.PerfType(variant, chess.Speed(clock.left.toOption))
+    def perfType = lila.rating.PerfType.Go // Go's one perf (ADR 0021 §1)
 
   enum ScheduleError:
     case BadTokens(tokens: List[BadToken])
@@ -203,17 +217,15 @@ object ChallengeBulkSetup:
       startClocksAt: Option[Instant],
       message: Option[Template],
       rules: Set[GameRule],
-      fen: Option[Fen.Full] = None
+      fen: Option[Fen.Full] = None,
+      go: GoOptions = GoOptions.default
   ):
     def clockOrDays = clock.toLeft(days | Days(3))
 
     def allowMultiplePairingsPerUser = clock.isEmpty
 
-    def validFen = Variant.isValidInitialFen(variant, fen)
-
-    def autoVariant =
-      if variant.standard && fen.exists(!_.isInitial) then copy(variant = FromPosition)
-      else this
+    // Go games start from their setup, never from a chess position (unit 3.15)
+    def validFen = fen.isEmpty
 
   def toJson(bulk: ScheduledBulk) =
     import bulk.*
@@ -245,6 +257,7 @@ object ChallengeBulkSetup:
       .add("message" -> message.map(_.value))
       .add("rules" -> nonEmptyRules)
       .add("fen" -> fen)
+      .add("go" -> GoSetups.json(goSetup).some)
 
   private[challenge] def extractTokenPairs(str: String): List[PairOf[Bearer]] =
     str
