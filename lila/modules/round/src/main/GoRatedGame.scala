@@ -11,25 +11,28 @@ import lila.rating.GoRating
 private object GoRatedGame:
 
   /* Why a Go game can't move ratings, if it can't. ADR 0021 §4 rates only games the handicap
-   * maths was calibrated for: no custom position, the spec's komi, and 0-9 stones on 19x19,
-   * 0-4 on 9x9, none on 13x13. Game creation keeps other games casual (unit 5.7); this is the
-   * last check, so a stray rated game is left unrated rather than rated wrongly. */
+   * maths was calibrated for: 9x9 or 19x19 (13x13 is left to its own ADR), no custom position,
+   * the spec's komi, and at most 9 stones on 19x19 or 4 on 9x9. Game creation keeps other games
+   * casual (unit 5.7); this is the last check, so a stray rated game is left unrated rather than
+   * rated wrongly. */
   def refusal(setup: GoSetup): Option[String] =
     val maxHandicap = setup.size match
-      case BoardSize.Nineteen => 9
-      case BoardSize.Nine => 4
-      case BoardSize.Thirteen => 0
-    if setup.position.isDefined then "a custom starting position".some
-    else if setup.handicap > maxHandicap then
-      s"handicap ${setup.handicap} on ${setup.size.lines}x${setup.size.lines}".some
-    else if setup.komi != Komi.standard(setup.ruleset, setup.handicap) then s"komi ${setup.komi}".some
-    else none
+      case BoardSize.Nineteen => 9.some
+      case BoardSize.Nine => 4.some
+      case BoardSize.Thirteen => none
+    maxHandicap match
+      case None => s"a ${setup.size.lines}x${setup.size.lines} board".some
+      case _ if setup.position.isDefined => "a custom starting position".some
+      case Some(max) if setup.handicap > max =>
+        s"handicap ${setup.handicap} on ${setup.size.lines}x${setup.size.lines}".some
+      case _ if setup.komi != Komi.standard(setup.ruleset, setup.handicap) => s"komi ${setup.komi}".some
+      case _ => none
 
   def scoring(ruleset: Ruleset): GoRating.Scoring = ruleset match
     case Ruleset.Japanese => GoRating.Scoring.Territory
     case Ruleset.Chinese => GoRating.Scoring.Area
 
-  // how many ranks Black's head start is worth in this game (0 in an even game)
+  // how many ranks Black's head start is worth in this game (komi alone shifts an even game a little)
   def rankDifference(setup: GoSetup): Double =
     GoRating.rankDifference(setup.handicap, setup.size.lines, setup.komi, scoring(setup.ruleset))
 

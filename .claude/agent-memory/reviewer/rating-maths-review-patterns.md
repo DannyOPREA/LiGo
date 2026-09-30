@@ -23,4 +23,13 @@ From unit 5.2 (GoRating in lila/modules/rating, 2026-09-29):
 - **New MIT files inside lila/**: COPYING §1 says LiGo's lila/ changes are AGPL, §2 doesn't list
   lila/; UPSTREAM.md claims every lila/ change is registered. Check both for new files.
 
+From unit 5.3 (PerfsUpdater Go branch, 2026-09-30):
+
+- **Tests that bypass PerfsUpdater** (testing only the pure helper) leave the Go branch
+  (updateStandard skip, cap, RatingRegulator) unguarded; ask for a pure extracted step to be tested.
+- **Re-read ADR scope rules against match arms**: 5.3 rated even 13x13 though ADR 0021 §4 says 13x13
+  needs its own ADR.
+- **FarmBoostDetection compares `g.sans`**, empty for Go games: repeated bot wins look like farming.
+- New lila/ files and edited upstream files need COPYING §1 exception + UPSTREAM.md rows.
+
 **How to apply:** 5.3 (PerfsUpdater), 5.4–5.7 reviews and any later rating-maths change.

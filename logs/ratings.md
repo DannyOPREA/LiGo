@@ -16,18 +16,28 @@
   ceiling (new `GoRatedGame` in `lila/modules/round`, `Perf.addOrResetCapped` in `rating`). No
   `RatingRegulator` factor for `go`; a Go game no longer recomputes the chess `standard` perf.
   Resignation and time already end Go games with a winner (3.13); the scoring phase follows in 4.8.
-- Worked: the memo's 4-stone game gives the same numbers from a finished lila `Game` as 5.2 did from
-  the maths alone (1602.04 and 1937.12).
+- Worked: three of goratings' own games from 5.2's `goRatingCases.json` (an even 19x19 resignation,
+  the memo's 4-stone game, a 9x9 two-stone loss on time) come out of `PerfsUpdater.newPerfs` from a
+  finished lila `Game` to 1e-6, ratings, deviations and volatilities.
 - Didn't work / dead ends: my first even-game test expected a rank difference of 0; goratings counts
   6.5 komi as half a point over its fair 6 (a 24th of a rank for White), so the test now expects that.
 - Lessons: lila's `addOrReset` and `toGlickoPlayer` cap volatility at chess's 0.1; Go needs its own
   cap at both ends or ADR 0013's 0.15 ceiling is silently lost.
-- Decisions: a rated Go game ADR 0021 §4 keeps casual (custom position, other komi, too many stones,
-  any 13x13 handicap) is logged and left unrated rather than rated wrongly; `FarmBoostDetection`
+- Decisions: a rated Go game ADR 0021 §4 keeps casual (13x13, custom position, other komi, too many
+  stones) is logged and left unrated rather than rated wrongly; `FarmBoostDetection`
   unchanged (its standard-chess thresholds apply to Go: two related new accounts need 40+ plies or
   90+ s for the game to count, which 5.8's demo must respect) (Claude, under the owner's 2026-09-28
   delegation; logs/decisions.md).
-- Verified by Claude: `sbt "round/testOnly lila.round.GoRatedGameTest"` 5/5; verify.sh.
+- Review (reviewer agent): 3 blocking, all fixed: 13x13 games were rated (ADR 0021 §4 keeps server
+  games 9x9 and 19x19); no test went through `PerfsUpdater` and the even-game test compared the code
+  with itself (the pure rating step is now `PerfsUpdater.newPerfs`, tested against goratings' values;
+  dropping the Go cap or the `standard` skip now fails a test); COPYING and UPSTREAM rows. Also done:
+  a loss on time. Noted, not changed: `botFarming` compares chess SANs, empty for Go, so a rated Go
+  game against a bot repeating a pairing's winner would go unrated (LiGo has no bots since 3.5); a
+  "crazy Glicko" reset writes lila's default (1500, 500, 0.09), the same start ADR 0021 gives an
+  account that never declared a rank.
+- Verified by Claude: `sbt "round/testOnly lila.round.GoRatedGameTest"` 6/6 (and 1 failing with the
+  `standard` skip removed); verify.sh.
   · Needs owner verification: none until rated games can be created (5.7); the 5.8 demo plays one.
 - Follow-ups: 5.7 keeps un-rateable Go games casual at creation; retune `FarmBoostDetection` for Go
   if the demo or player tests trip it.
