@@ -1,12 +1,13 @@
 package lila.setup
 
 import chess.format.Fen
-import chess.variant.{ FromPosition, Variant }
+import chess.variant.Variant
 import chess.{ Rated, Clock, Speed }
 import scalalib.model.Days
 
 import lila.core.data.Template
 import lila.core.game.GameRule
+import lila.core.setup.GoOptions
 import lila.lobby.TriColor
 import lila.rating.PerfType
 
@@ -20,24 +21,25 @@ final case class ApiConfig(
     message: Option[Template],
     keepAliveStream: Boolean,
     rules: Set[GameRule] = Set.empty,
-    onlyIfOpponentFollowsMe: Boolean = false
+    onlyIfOpponentFollowsMe: Boolean = false,
+    go: GoOptions = GoOptions.default
 ):
 
-  def perfType: PerfType = lila.rating.PerfType(variant, chess.Speed(days.isEmpty.so(clock)))
+  // Go's one perf (ADR 0021 §1)
+  def perfType: PerfType = PerfType.Go
   def perfKey = perfType.key
 
-  def validFen = Variant.isValidInitialFen(variant, position)
+  def goSetup = go.orDefault
+
+  // Go games start from their setup, never from a chess position (unit 3.15)
+  def validFen = position.isEmpty
 
   def validSpeed(isBot: Boolean) =
     !isBot || clock.forall: c =>
       Speed(c) >= Speed.Bullet
 
-  def validRated = rated.no || ((clock.isDefined || variant.standard) && variant.fromPosition.not)
-
-  def autoVariant =
-    if variant.standard && position.exists(!_.isInitial)
-    then copy(variant = FromPosition)
-    else this
+  // Go games are casual until Phase 5 (unit 3.15)
+  def validRated = rated.no
 
 object ApiConfig extends BaseConfig:
 
@@ -54,7 +56,10 @@ object ApiConfig extends BaseConfig:
       msg: Option[String],
       keepAliveStream: Option[Boolean],
       rules: Option[Set[GameRule]],
-      onlyIfOpponentFollowsMe: Option[Boolean] = None
+      onlyIfOpponentFollowsMe: Option[Boolean],
+      size: Option[Int],
+      ruleset: Option[String],
+      komi: Option[Double]
   ) =
     ApiConfig(
       variant = chess.variant.Variant.orDefault(v),
@@ -66,5 +71,6 @@ object ApiConfig extends BaseConfig:
       message = msg.map(Template.apply),
       keepAliveStream = ~keepAliveStream,
       rules = ~rules,
-      onlyIfOpponentFollowsMe = ~onlyIfOpponentFollowsMe
-    ).autoVariant
+      onlyIfOpponentFollowsMe = ~onlyIfOpponentFollowsMe,
+      go = GoOptions(size, ruleset, komi)
+    )

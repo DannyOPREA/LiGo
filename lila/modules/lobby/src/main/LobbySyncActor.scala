@@ -3,7 +3,7 @@ package lila.lobby
 import scalalib.actor.SyncActor
 
 import lila.common.Bus
-import lila.core.pool.{ HookThieve, IsClockCompatible }
+import lila.core.pool.{ HookThieve, IsPoolCompatible }
 import lila.core.socket.{ Sri, Sris }
 import lila.mon.extensions.*
 
@@ -14,7 +14,7 @@ final private class LobbySyncActor(
     hasCurrentPlayban: lila.core.playban.HasCurrentPlayban,
     poolApi: lila.core.pool.PoolApi,
     onStart: lila.core.game.OnStart
-)(using Executor, IsClockCompatible)
+)(using Executor, IsPoolCompatible)
     extends SyncActor:
 
   import LobbySyncActor.*
@@ -128,8 +128,8 @@ final private class LobbySyncActor(
     case HookSub(member, true) =>
       socket ! AllHooksFor(member, hookRepo.filter { biter.showHookTo(_, member) }.toSeq)
 
-    case HookThieve.HookBus.GetCandidates(clock, promise) =>
-      promise.success(HookThieve.PoolHooks(hookRepo.poolCandidates(clock)))
+    case HookThieve.HookBus.GetCandidates(clock, go, promise) =>
+      promise.success(HookThieve.PoolHooks(hookRepo.poolCandidates(clock, go)))
 
     case HookThieve.HookBus.StolenHookIds(ids) =>
       hookRepo.byIds(ids.toSet).foreach(remove)

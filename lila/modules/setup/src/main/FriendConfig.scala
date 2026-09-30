@@ -5,6 +5,7 @@ import chess.variant.Variant
 import chess.{ Clock, Rated }
 import scalalib.model.Days
 
+import lila.core.setup.GoOptions
 import lila.lobby.TriColor
 
 case class FriendConfig(
@@ -15,14 +16,26 @@ case class FriendConfig(
     days: Days,
     rated: Rated,
     color: TriColor,
-    fen: Option[Fen.Full] = None
+    fen: Option[Fen.Full] = None,
+    go: GoOptions = GoOptions.default
 ) extends HumanConfig
     with Positional
     with WithColor:
 
-  val strictFen = false
-
-  def >> = (variant.id, timeMode.id, time, increment, days, rated.id.some, color.name, fen).some
+  def >> =
+    (
+      variant.id,
+      timeMode.id,
+      time,
+      increment,
+      days,
+      rated.id.some,
+      color.name,
+      fen,
+      go.size,
+      go.ruleset,
+      go.komi
+    ).some
 
   def isPersistent = timeMode == TimeMode.Unlimited || timeMode == TimeMode.Correspondence
 
@@ -36,7 +49,10 @@ object FriendConfig extends BaseConfig:
       d: Days,
       m: Option[Int],
       c: String,
-      fen: Option[Fen.Full]
+      fen: Option[Fen.Full],
+      size: Option[Int] = None,
+      ruleset: Option[String] = None,
+      komi: Option[Double] = None
   ) =
     new FriendConfig(
       variant = chess.variant.Variant.orDefault(v),
@@ -46,7 +62,8 @@ object FriendConfig extends BaseConfig:
       days = d,
       rated = m.fold(Rated.default)(Rated.orDefault),
       color = TriColor(c).err("Invalid color " + c),
-      fen = fen
+      fen = fen,
+      go = GoOptions(size, ruleset, komi)
     )
 
   val default = FriendConfig(
@@ -55,7 +72,7 @@ object FriendConfig extends BaseConfig:
     time = 5d,
     increment = Clock.IncrementSeconds(8),
     days = Days(2),
-    rated = Rated.default,
+    rated = Rated.No, // casual until Phase 5
     color = TriColor.default
   )
 

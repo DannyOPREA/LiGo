@@ -95,6 +95,7 @@ final class JsonView(
       .add("declineReasonKey" -> c.declineReason.map(_.key))
       .add("open" -> c.open)
       .add("rules" -> c.nonEmptyRules)
+      .add("go" -> lila.core.game.GoSetups.json(c.goSetup).some)
 
   def all(challenges: AllChallenges)(using Translate) = Json.obj(
     "in" -> challenges.in.map(apply(Direction.In.some)),

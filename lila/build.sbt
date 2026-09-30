@@ -235,7 +235,7 @@ lazy val lobby = module("lobby",
 
 lazy val setup = module("setup",
   Seq(lobby),
-  Seq()
+  tests.bundle
 )
 
 lazy val oauth = module("oauth",

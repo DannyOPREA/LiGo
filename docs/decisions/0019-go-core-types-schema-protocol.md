@@ -157,6 +157,18 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
 3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
+(Amended in unit 3.19, part 1: 3.19 is split. Part 1 puts board size (buttons), rules (a list)
+and komi (a number, reset to the ruleset's standard komi when the rules change) in the lobby's
+create-game and challenge forms, drops the chess variant picker and FEN input, hides the
+casual/rated choice until 5.7, shows the `go` rating, and shows each lobby game's and seek's size,
+rules and komi in the lists. The mini-board switch goes with 3.16's thread; chessground and the
+chess UI packages go in part 2, after 3.17. logs/decisions.md, 3.19 row.)
+(Amended in unit 3.15: hooks, seeks, challenges and bulk pairings carry go-rules' `Setup` (size,
+ruleset, komi; handicap 0 until 4.9), stored in `seek`, `challenge` and `challenge_bulk` as an
+optional `go` sub-document with the game's own keys (`sz`, `ru`, `km`, `hc`); a record without one
+is read as 19×19, Japanese, 6.5 komi. Forms and the API take `size`, `ruleset` and `komi` (standard
+komi when omitted), create casual games only until 5.7, refuse chess variants and FENs, and rate in
+the `go` perf; pools create 19×19 Japanese casual games until 6.4. logs/decisions.md, 3.15 row.)
 (Amended in unit 3.14: 3.14 merges before 3.15, so for a while chess moves are no longer relayed and
 no Go games are created yet; lila-ws's lobby needed no change. The mini-board message keeps the
 name `fen`, its payload `{id, lm, board, turn, wc, bc}` with `turn` a colour name. logs/decisions.md,

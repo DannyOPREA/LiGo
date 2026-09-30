@@ -31,7 +31,7 @@ class GoRatedGameTest extends munit.FunSuite:
       ByColor(c => Player(GamePlayerId(if c.white then "wwww" else "bbbb"), c, aiLevel = none)),
       rated = Rated.Yes,
       source = Source.Lobby
-    ).fold(e => fail(e.message), _.start.sloppy)
+    ).fold(e => fail(e.message), _.start.sloppy.copy(rated = Rated.Yes)) // newGoGame is casual until 5.7
     val played = List("ab", "ba", "ac", "ca").foldLeft(g0): (g, sgf) =>
       g.withGo(g.go.get(Action.Place(Point.fromSgf(sgf).get)).fold(r => fail(r.key), identity))
     played.finish(status, winner.some)

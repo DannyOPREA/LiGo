@@ -8,6 +8,28 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 6.4 (part one) · Pools play Go
+- Did: pools gain a board size (all 19×19 for now) and play in the `go` perf (the lobby's `poolIn`
+  now reads the Go rating); every pool runs a wave every 5 s; `MatchMaking` pairs with 6.2's
+  `GoPairing.pairScore` (lila's score with the miss bonus per second), every member Even only;
+  `GameStarter` creates the pool's own setup. `IsClockCompatible` became `IsPoolCompatible` (clock and
+  Go setup), and a hook goes to a pool only when rated, random colour, even, Japanese, standard komi,
+  with that pool's clock and size (ADR 0022 §6). 7 tests in `GoPoolTest`, 2 more in `GoHookTest`.
+- Worked: 6.2's score dropped into lila's `WMMatching` unchanged, as the typed score function.
+- Didn't work / dead ends: ADR 0022's pool list can't land yet: the lobby page hard-codes lila's pool
+  ids (`ui/lobby/src/lobby.ts`, another thread's files) and 5 of the 7 pools need byo-yomi (4.7). The
+  first sbt run failed on unrelated `common`/`ui` errors from a stale cache; compiling `core` alone
+  and re-running fixed it.
+- Lessons: lila's lobby page carries its own copy of the pool list; changing pool ids is a server
+  and UI change together.
+- Decisions: split 6.4 in two and build part one now (Claude, under the owner's 2026-09-28
+  delegation; logs/decisions.md).
+- Verified by Claude: pool tests 30/30 (run by name: verify.sh's testQuick skips them), lobby `GoHookTest` 5/5, `setup` compiles, scalafmt; reviewer
+  agent. · Needs owner verification: none until pools can be played (after 3.20); the app module is
+  compiled only by CI here.
+- Follow-ups: part two (ADR 0022's pool list with byo-yomi, the Handicap OK chip, handicap and rated
+  pool games) after 4.7, 4.9, 5.3 and 5.7, with the lobby page's pool list.
+
 ### 2026-09-29 · unit 6.3 · The player-test kit
 - Did: `docs/research/lobby-test/`: README (when and how to run it, set-up once, what happens to the
   notes), protocol.md (the session script: consent, four tasks read word for word on OGS and LiGo,

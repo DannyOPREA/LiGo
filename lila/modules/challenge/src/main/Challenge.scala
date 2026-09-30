@@ -4,12 +4,13 @@ import cats.derived.*
 import chess.format.Fen
 import chess.variant.{ Chess960, FromPosition, Horde, RacingKings, Variant }
 import chess.{ Color, Rated, Speed }
+import ligo.gorules.Setup as GoSetup
 import reactivemongo.api.bson.Macros.Annotations.Key
 import scalalib.ThreadLocalRandom
 import scalalib.model.Days
 
 import lila.core.challenge as hub
-import lila.core.game.GameRule
+import lila.core.game.{ GameRule, GoSetups }
 import lila.core.i18n.I18nKey
 import lila.core.id.GameFullId
 import lila.core.user.{ GameUser, WithPerf }
@@ -33,7 +34,9 @@ case class Challenge(
     open: Option[Challenge.Open] = None,
     name: Option[String] = None,
     declineReason: Option[Challenge.DeclineReason] = None,
-    rules: Set[GameRule] = Set.empty
+    rules: Set[GameRule] = Set.empty,
+    // board size, ruleset and komi (unit 3.15); none on challenges made before it
+    go: Option[GoSetup] = None
 ) extends hub.Challenge:
 
   import Challenge.*
@@ -73,6 +76,8 @@ case class Challenge(
     case _ => none
 
   def isOpen = open.isDefined
+
+  def goSetup: GoSetup = go | GoSetups.default
 
   lazy val perfType = perfTypeOf(variant, timeControl)
 
@@ -155,8 +160,8 @@ object Challenge:
     case TimeControl.Clock(config) => Speed(config)
     case _ => Speed.Correspondence
 
-  private def perfTypeOf(variant: Variant, timeControl: TimeControl): PerfType =
-    lila.rating.PerfType(variant, speedOf(timeControl))
+  // Go's one perf (ADR 0021 §1)
+  private def perfTypeOf(variant: Variant, timeControl: TimeControl): PerfType = PerfType.Go
 
   private val idSize = 8
   private def randomId = ChallengeId(ThreadLocalRandom.nextString(idSize))
@@ -175,6 +180,7 @@ object Challenge:
   def make(
       variant: Variant,
       initialFen: Option[Fen.Full],
+      go: GoSetup,
       timeControl: TimeControl,
       rated: Rated,
       color: String,
@@ -219,5 +225,6 @@ object Challenge:
       },
       open = isOpen.option(Open(openToUserIds)),
       name = name,
-      rules = rules
+      rules = rules,
+      go = go.some
     )

@@ -3801,10 +3801,20 @@ interface I18n {
     giveNbSeconds: I18nPlural;
     /** Glicko-2 rating */
     glicko2Rating: string;
+    /** Board size */
+    goBoardSize: string;
     /** Go deeper */
     goDeeper: string;
+    /** Komi */
+    goKomi: string;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
+    /** Rules */
+    goRules: string;
+    /** Chinese */
+    goRulesChinese: string;
+    /** Japanese */
+    goRulesJapanese: string;
     /** Graph */
     graph: string;
     /** Hang on! */

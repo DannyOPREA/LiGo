@@ -7,16 +7,14 @@ import play.api.data.format.Formats.doubleFormat
 import scalalib.model.Days
 
 import lila.common.Form.{ *, given }
+import lila.core.game.GoSetups
 import lila.core.rating.RatingRange
 import lila.lobby.TriColor
 
 private object Mappings:
 
   val variant = typeIn(Config.variants.toSet)
-  val variantWithFen = typeIn(Config.variantsWithFen.toSet)
-  val variantWithVariants = typeIn(Config.variantsWithVariants.toSet)
-  val variantWithFenAndVariants = typeIn(Config.variantsWithFenAndVariants.toSet)
-  val boardApiVariants = V.Variant.list.all.view.filterNot(_.fromPosition).map(_.key).toSet
+  val boardApiVariants = Set(V.Standard.key)
   val boardApiVariantKeys = typeIn(boardApiVariants)
   val time = of[Double].verifying(HookConfig.validateTime(_))
   val increment = of[Clock.IncrementSeconds].verifying(HookConfig.validateIncrement(_))
@@ -31,6 +29,10 @@ private object Mappings:
   val ratingRange = text.verifying(RatingRange.isValid)
   val color = text.verifying(TriColor.names contains _)
   val speed = number.verifying(Config.speeds contains _)
+  // Board size, ruleset and komi (unit 3.15); a bad komi for the board is checked by `GoOptions.valid`
+  val goSize = optional(number.verifying("Board size must be 9, 13 or 19", GoSetups.sizes.contains))
+  val goRuleset = optional(text.verifying("Ruleset must be japanese or chinese", GoSetups.rulesets.contains))
+  val goKomi = optional(of[Double])
   val fenField = optional:
     import lila.common.Form.fen.{ mapping, truncateMoveNumber }
     mapping.transform[Fen.Full](truncateMoveNumber, identity)
