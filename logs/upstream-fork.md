@@ -53,6 +53,7 @@
 - Verified by Claude: see the PR.
 - Follow-ups: 3.17 removes the chess paths these Go branches sit beside; 3.19 draws Go mini boards
   (and the crawler view); 4.11 SGF export; 7.4 and 8.7 replace the placeholders.
+
 ### 2026-09-30 · 3.19 (part 1) · Go options in the lobby's create-game and challenge forms
 - Did: the lobby's create-game ("hook") and challenge ("friend") forms offer board size (19×19,
   13×13, 9×9 buttons; a list in screen-reader mode), rules (Japanese, Chinese) and komi (multiples
