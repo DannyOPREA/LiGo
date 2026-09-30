@@ -386,9 +386,13 @@ test("phone, confirm on: a second tap on the preview takes it back (goban's way)
 describe("keyboard and screen readers", () => {
   let t;
   beforeEach(async () => (t = await open()));
-  afterEach(() => t.close());
+  afterEach(async () => {
+    assert.deepEqual(t.problems, { requests: [], errors: [] });
+    await t.close();
+  });
 
-  const said = (page) => page.locator("#board [role=status]").textContent().then((s) => s.trim());
+  const raw = (page) => page.locator("#board [role=status]").textContent();
+  const said = (page) => raw(page).then((s) => s.trim());
   const keys = async (page, ...list) => {
     for (const k of list) await page.keyboard.press(k);
   };
@@ -414,11 +418,104 @@ describe("keyboard and screen readers", () => {
     assert.equal(await said(t.page), "White passes");
   });
 
-  test("a mouse click focuses the board without showing the cursor", async () => {
+  test("a click doesn't focus the board or show the cursor; Shift+Tab then does, and names the point", async () => {
     await mount(t.page, { ...game9, movable: "both", autoPlay: true });
     await click(t.page, "ee");
+    assert.equal(await t.page.evaluate(() => document.activeElement.getAttribute("role")), null);
     assert.equal(await cursorShown(t.page), false);
-    assert.deepEqual(t.problems.errors, []);
+    // The click moved the page's Tab starting point into the board, so Shift+Tab is the way back.
+    await keys(t.page, "Shift+Tab");
+    assert.equal(await cursorShown(t.page), true);
+    assert.equal(await said(t.page), "E5 black");
+  });
+
+  test("the board is named by its size, described as a Go board", async () => {
+    await mount(t.page, { ...game9 });
+    const board = t.page.getByRole("application", { name: "9 by 9" });
+    assert.equal(await board.getAttribute("aria-roledescription"), "Go board");
+  });
+
+  test("the cursor sits on its point, with coordinates and without, at any width", async () => {
+    for (const [coordinates, width] of [[true, 570], [false, 333]]) {
+      await t.page.evaluate((w) => (document.getElementById("board").style.width = `${w}px`), width);
+      await mount(t.page, { ...game9, movable: "both", autoPlay: true, coordinates });
+      await keys(t.page, "Tab", "Home", "PageUp");
+      await t.page.keyboard.press("Shift+Tab"); // leave the board so its keys don't matter below
+      const box = await t.page.evaluate(() => {
+        const d = [...document.querySelectorAll("#board div")].find((e) => e.style.borderRadius === "50%");
+        d.style.display = "block";
+        const r = d.getBoundingClientRect();
+        return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+      });
+      await t.page.mouse.click(box.x, box.y);
+      assert.deepEqual(await events(t.page), ["move aa"], `coordinates ${coordinates}, ${width} px`);
+    }
+  });
+
+  test("the same words twice are still read out (the text changes)", async () => {
+    await mount(t.page, { ...game9, movable: "both" });
+    await keys(t.page, "Tab", "d");
+    const first = await raw(t.page);
+    await keys(t.page, "d");
+    const second = await raw(t.page);
+    assert.notEqual(first, second);
+    assert.equal(first.trim(), second.trim());
+  });
+
+  test("a held Enter or P acts once: Confirm moves can't be skipped, nobody passes twice", async () => {
+    await t.page.clock.install();
+    await mount(t.page, { ...game9, movable: "both", autoPlay: true, confirm: true });
+    await keys(t.page, "Tab");
+    await t.page.keyboard.down("Enter");
+    await t.page.clock.runFor(100);
+    await t.page.keyboard.down("Enter"); // a repeat
+    await t.page.keyboard.up("Enter");
+    assert.equal(await call(t.page, "pending"), true, "still only a preview");
+    assert.deepEqual(await events(t.page), []);
+    await keys(t.page, "Escape");
+    await t.page.keyboard.down("p");
+    await t.page.keyboard.down("p");
+    await t.page.keyboard.up("p");
+    assert.deepEqual(await events(t.page), ["move pass"]);
+  });
+
+  test("Escape takes back a preview; arrows then Enter move it; Enter on it plays", async () => {
+    await t.page.clock.install();
+    await mount(t.page, { ...game9, movable: "both", autoPlay: true, confirm: true });
+    await keys(t.page, "Tab", "Enter", "Escape");
+    assert.equal(await call(t.page, "pending"), false);
+    assert.equal(await said(t.page), "Taken back");
+    await keys(t.page, "Enter", "ArrowLeft", "Enter");
+    assert.equal(await said(t.page), "D5 ready: Enter again to confirm, Escape to take back");
+    await t.page.clock.runFor(100);
+    await keys(t.page, "Enter");
+    assert.deepEqual(await events(t.page), ["move de"]);
+  });
+
+  test("P out of turn says so", async () => {
+    await mount(t.page, { ...game9, movable: "black", moves: ["ee"] });
+    await keys(t.page, "Tab", "p");
+    assert.deepEqual(await events(t.page), []);
+    assert.equal(await said(t.page), "Not your move");
+  });
+
+  test("while the page hasn't answered a move, the board says it is waiting", async () => {
+    await mount(t.page, { ...game9, movable: "both" }); // no autoPlay: the move stays reported
+    await keys(t.page, "Tab", "Enter", "ArrowLeft", "Enter");
+    assert.deepEqual(await events(t.page), ["move ee"]);
+    assert.equal(await said(t.page), "Waiting for the move to count");
+  });
+
+  test("the board's keys don't reach the page's own hotkeys; other keys do", async () => {
+    await mount(t.page, { ...game9, movable: "both", autoPlay: true });
+    await t.page.evaluate(() => {
+      window.pageKeys = [];
+      for (const type of ["keydown", "keypress", "keyup"]) document.addEventListener(type, (e) => window.pageKeys.push(`${type} ${e.key}`));
+    });
+    await keys(t.page, "Tab");
+    await t.page.evaluate(() => (window.pageKeys = []));
+    await keys(t.page, "ArrowLeft", "d", "f", "Escape");
+    assert.deepEqual(await t.page.evaluate(() => window.pageKeys), ["keydown f", "keypress f", "keyup f", "keydown Escape", "keyup Escape"]);
   });
 
   test("an occupied point and a move out of turn are read out; so are the opponent's moves", async () => {
@@ -453,7 +550,7 @@ describe("keyboard and screen readers", () => {
     await mount(t.page, { ...game9, movable: "both", autoPlay: true, confirm: true });
     await keys(t.page, "Tab", "Enter");
     assert.equal(await call(t.page, "pending"), true);
-    assert.equal(await said(t.page), "E5 ready: Enter again to confirm");
+    assert.equal(await said(t.page), "E5 ready: Enter again to confirm, Escape to take back");
     assert.deepEqual(await events(t.page), []);
     await t.page.clock.runFor(100);
     await keys(t.page, "Enter");
@@ -464,13 +561,16 @@ describe("keyboard and screen readers", () => {
   test("D describes the point and its neighbours", async () => {
     await mount(t.page, { ...game9, movable: "both", moves: ["ed", "fe"] });
     await keys(t.page, "Tab", "d");
-    assert.equal(await said(t.page), "E5 empty. up E6 black, down E4 empty, left D5 empty, right F5 white");
+    assert.equal(await said(t.page), "E5 empty. Up E6 black, down E4 empty, left D5 empty, right F5 white");
   });
 
   test("keys with Ctrl, Alt or Meta are left to the page", async () => {
     await mount(t.page, { ...game9, movable: "both", autoPlay: true });
-    await keys(t.page, "Tab", "Control+ArrowLeft", "Alt+Enter");
+    await keys(t.page, "Tab");
+    const before = await raw(t.page);
+    await keys(t.page, "Control+ArrowLeft", "Alt+Enter", "Control+d");
     assert.deepEqual(await events(t.page), []);
+    assert.equal(await raw(t.page), before, "nothing read out: the cursor didn't move");
   });
 
   test("axe finds no serious or critical problem, with and without the cursor", async () => {

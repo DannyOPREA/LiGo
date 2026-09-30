@@ -21,6 +21,15 @@
 
 ## Entries (newest first)
 
+### 2026-09-30 · unit 9.4 review · Reviewer findings fixed
+- Did: a held Enter, Space or P now acts once (key repeat let Confirm moves be skipped and passed twice); P out of turn says "Not your move"; the board says "Waiting for the move to count" while the page hasn't answered; Escape takes back a preview; Tab names the point under the cursor; the board's keys stop at the board so lila's mousetrap hotkeys don't also fire (round, analysis, puzzle pages); the name reads "9 by 9, Go board" instead of saying "Go board" twice; "Up" capitalised. The playground's axe exemption now matches only white on #3692e7. Tests: the vacuous click test now checks what happens (a click doesn't focus the board; Shift+Tab does), plus cursor position with and without coordinates, repeated words, key repeat, Escape and moving the preview, P out of turn, waiting, page hotkeys, and every keyboard test checks for page errors. 41 board browser tests.
+- Worked: a mutation check (key repeat guard off) fails the new test.
+- Didn't work / dead ends: after a click, Tab goes past the board (the click set the Tab starting point inside it); Shift+Tab reaches it.
+- Lessons: key handlers that act must ignore `e.repeat`; a click never focuses goban's board.
+- Decisions: Escape takes back a preview (Claude, under the owner's 2026-09-28 delegation; ADR 0026 §4 amendment).
+- Verified by Claude: board browser tests 41/41; `dev/ligo test pages` 35/35; lint, typecheck. · Needs owner verification: as in the entry below.
+- Follow-ups: none new.
+
 ### 2026-09-30 · unit 9.4 · Keyboard and screen-reader play on the board
 - Did: `libs/board` gets keyboard play (Tab focuses the board; arrows, Home/End, Page Up/Down move a two-tone cursor; Enter or Space plays there through goban's own tap handling, so Confirm moves previews first and a second Enter plays; P passes; D reads the point and its four neighbours) and a polite live region that reads out each move played ("Black D4", "White passes", "Black A8, 1 stone captured"), refusals ("Illegal: ko", "Illegal: suicide", "Illegal: D4 is occupied"), "Not your move" and the point under the cursor. The board is a focusable `role="application"` with a name and a hidden help text. Point names are the printed ones (`src/access.ts`, letters without I). axe-core (`@axe-core/playwright` 4.13.0, MPL-2.0) runs in the board's browser tests and a new playground page test (desktop and phone); MPL-2.0 joined the allowed licences (`dev/ci/meta_checks.py`, PLAN §2.2, COPYING.md) as ADR 0026 §4 decided.
 - Worked: goban's protected `tapAt` gives the keyboard exactly a click's behaviour (previews, the preview moving, captures); the cursor shows only on keyboard focus (`:focus-visible`, or any board key), so no screenshot baseline changed. goban draws no stone animation, so reduced motion needs nothing.

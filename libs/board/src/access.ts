@@ -48,7 +48,8 @@ export function describeText(board: string[], x: number, y: number): string {
   )
     .filter(([, i, j]) => i >= 0 && j >= 0 && i < size && j < size)
     .map(([side, i, j]) => `${side} ${pointText(board, i, j)}`);
-  return `${pointText(board, x, y)}. ${near.join(', ')}`;
+  const text = near.join(', ');
+  return `${pointText(board, x, y)}. ${text[0].toUpperCase()}${text.slice(1)}`;
 }
 
 export const HELP: string =

@@ -222,8 +222,9 @@ function keyboardAndVoice(
 
   boardDiv.tabIndex = 0;
   boardDiv.setAttribute('role', 'application');
+  // Read as "9 by 9, Go board": the role description names what it is, the label its size.
   boardDiv.setAttribute('aria-roledescription', 'Go board');
-  boardDiv.setAttribute('aria-label', `Go board, ${size} by ${size}`);
+  boardDiv.setAttribute('aria-label', `${size} by ${size}`);
   boardDiv.setAttribute('aria-describedby', help.id);
 
   // A black ring inside a white one: at least 3:1 against any board or stone colour.
@@ -262,22 +263,76 @@ function keyboardAndVoice(
     if (on) placeCursor();
   };
 
+  /** Why the player can't move now, or undefined when they can. */
+  const cannotMove = () =>
+    goban.pending() || goban.mayMove()
+      ? undefined
+      : goban.waiting()
+        ? 'Waiting for the move to count'
+        : 'Not your move';
+
   const playHere = () => {
     const name = pointName(size, x, y);
     const official = goban.officialState();
     const preview = goban.move_selected;
     if (goban.pending() && preview?.x === x && preview.y === y) return board().confirm();
     if (official.board[y][x] !== '.') return say(refusedText('occupied', name));
-    if (!goban.pending() && !goban.mayMove()) return say('Not your move');
+    const why = cannotMove();
+    if (why) return say(why);
     goban.keyTap(x, y);
-    if (goban.pending()) say(`${name} ready: Enter again to confirm`);
+    if (goban.pending()) say(`${name} ready: Enter again to confirm, Escape to take back`);
   };
 
-  boardDiv.addEventListener('focus', () => show(boardDiv.matches(':focus-visible')));
+  const passHere = () => {
+    const why = goban.pending() ? undefined : cannotMove();
+    if (why) return say(why);
+    board().pass();
+  };
+
+  // Keys the board acts on don't reach lila's page hotkeys (mousetrap listens on the document):
+  // on a game page an arrow must move the cursor, not step through the moves as well.
+  const ours = new Set([
+    'ArrowLeft',
+    'ArrowRight',
+    'ArrowUp',
+    'ArrowDown',
+    'Home',
+    'End',
+    'PageUp',
+    'PageDown',
+  ]);
+  for (const k of ['Enter', ' ', 'p', 'P', 'd', 'D']) ours.add(k);
+  const plain = (e: KeyboardEvent) => !e.ctrlKey && !e.altKey && !e.metaKey;
+  boardDiv.addEventListener('keypress', e => {
+    if (plain(e) && ours.has(e.key)) e.stopPropagation();
+  });
+  boardDiv.addEventListener('keyup', e => {
+    if (plain(e) && ours.has(e.key)) e.stopPropagation();
+  });
+
+  // A click never focuses the board (goban handles the pointer itself); Tab does, and then the
+  // cursor shows and says where it is.
+  boardDiv.addEventListener('focus', () => {
+    show(boardDiv.matches(':focus-visible'));
+    if (shown) say(pointText(goban.officialState().board, x, y));
+  });
   boardDiv.addEventListener('blur', () => show(false));
   boardDiv.addEventListener('pointerdown', () => show(false));
   boardDiv.addEventListener('keydown', e => {
-    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    // Escape takes back a waiting preview; otherwise it belongs to the page (closing a dialog).
+    if (plain(e) && e.key === 'Escape' && goban.pending()) {
+      e.preventDefault();
+      e.stopPropagation();
+      board().cancel();
+      return say('Taken back');
+    }
+    if (!plain(e) || !ours.has(e.key)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // A held key repeats: moving on is fine, playing or passing twice is not (Confirm moves would
+    // preview and play from one press).
+    if (e.repeat && !e.key.startsWith('Arrow') && !['Home', 'End', 'PageUp', 'PageDown'].includes(e.key))
+      return;
     const [x0, y0] = [x, y];
     const last = size - 1;
     switch (e.key) {
@@ -311,16 +366,13 @@ function keyboardAndVoice(
         break;
       case 'p':
       case 'P':
-        board().pass();
+        passHere();
         break;
       case 'd':
       case 'D':
         say(describeText(goban.officialState().board, x, y));
         break;
-      default:
-        return;
     }
-    e.preventDefault();
     if (!shown) show(true);
     if (x !== x0 || y !== y0) {
       placeCursor();
@@ -409,6 +461,11 @@ class LigoGoban extends SVGRenderer {
    */
   handTurnOver(): void {
     this.player_id = this.idFor(this.engine.colorToMove() === 'black' ? 'white' : 'black');
+  }
+
+  /** A move was reported and the page hasn't answered it yet. */
+  waiting(): boolean {
+    return this.awaiting;
   }
 
   mayMove(): boolean {

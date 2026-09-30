@@ -54,8 +54,11 @@ board.destroy();
   any name not in the lists becomes Plain, so the board never fetches anything.
 - **Keyboard and screen readers** (unit 9.4, ADR 0026 §4, `src/access.ts`). The board is a
   focusable `role="application"`: arrows, Home/End and Page Up/Down move a cursor (shown only on
-  keyboard focus), Enter or Space plays there as a tap would (with `confirm`, again to play), P
-  passes, D reads the point and its neighbours. A polite live region reads out each move `play`
+  keyboard focus), Enter or Space plays there as a tap would (with `confirm`, again to play, and
+  Escape takes the preview back), P passes, D reads the point and its neighbours. A held key acts
+  once. A click doesn't focus the board (goban handles the pointer); Shift+Tab after a click does.
+  The keys the board uses stop at the board, so a page's own hotkeys (lila's mousetrap) don't
+  also fire. A polite live region reads out each move `play`
   plays ("Black D4, 1 stone captured", "White passes"), refusals ("Illegal: ko") and the point
   under the cursor, with the names printed on the board (letters without I). English for now.
 - **Same rules as the engine.** The board takes its settings from `src/rules.mjs`, the ones
