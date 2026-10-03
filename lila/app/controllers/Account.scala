@@ -80,7 +80,7 @@ final class Account(
   private def goRankState(me: Me): Fu[(Perf, Boolean)] =
     for
       perf <- env.user.perfsRepo.perfOf(me.userId, PerfKey.go)
-      rated <- if perf.nb > 0 then fuccess(true) else env.game.gameRepo.hasRatedGame(me)
+      rated <- if perf.nb > 0 then fuccess(true) else env.game.gameRepo.hasRatedGame(me.userId)
     yield perf -> GoRankChange.open(perf, rated)
 
   def goRank = Auth { _ ?=> me ?=>

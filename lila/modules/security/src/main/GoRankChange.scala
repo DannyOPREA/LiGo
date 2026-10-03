@@ -7,7 +7,7 @@ import lila.rating.GoRating
 import lila.rating.GoRating.Rank
 
 /* LiGo: the self-declared Go rank, which a player may change on their account page until their
- * first rated game starts (ADR 0021 §2, unit 5.4). LiGo's own code, MIT (COPYING.md §2). */
+ * first rated game starts (ADR 0021 §2, unit 5.4). */
 object GoRankChange:
 
   private val default = lila.rating.Perf.default

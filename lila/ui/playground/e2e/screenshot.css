@@ -4,11 +4,14 @@
    board and its stones. The text itself is checked with locators in the tests. goban draws the
    coordinates in SVG (fill, not color), so they stay; they matched on both Chromium builds.
    The credits page (unit 9.8) is nearly all text, so its glyphs go too (CI's Chromium moved ~3% of
-   its pixels, every line of it); its headings and links are checked with locators. */
+   its pixels, every line of it); its headings and links are checked with locators. The account
+   Go rank page (unit 5.4) is text and a list too, so its glyphs go the same way. */
 #playground,
 #playground *,
 .credits-shot,
-.credits-shot * {
+.credits-shot *,
+.account-shot,
+.account-shot * {
   color: transparent !important;
   text-shadow: none !important;
 }
