@@ -1,7 +1,7 @@
 - [Guard hook review patterns](guard-hook-review-patterns.md) — `--flag=value` bypasses, doc stragglers, stale origin/main
 - [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs
 - [Dev script review patterns](dev-script-review-patterns.md) — missing .ligo mkdir, hidden failures, unbounded curl, pending-decision merges
-- [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, brand constants, CMS path, snabbdom input attrs, ui package.json COPYING, new-pref checklist, vacuous isTouchDevice tests
+- [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, brand constants, snabbdom input attrs, new-pref checklist, stranded is3d, live chess pages (9.7)
 - [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM licences, §3.1 row scope, spike cross-checks, fixture circularity, run overlap, unlisted params, deferred options
 - [Rules spec review patterns](rules-spec-review-patterns.md) — replay cited sequences, resume vs pass counter, false clock bounds
 - [Conformance fixture review patterns](conformance-fixture-review-patterns.md) — CI wiring, checker argv bug, circular oracles, phase, licence

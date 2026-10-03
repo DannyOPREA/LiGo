@@ -124,6 +124,9 @@ function roundData(o: Required<GameOptions>) {
   };
 }
 
+/** Text safe inside a double-quoted HTML attribute ("Slate & Shell"). */
+const attr = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
 function html(o: Required<GameOptions>): string {
   const m = manifest();
   const css = (name: string) => `<link rel="stylesheet" href="/assets/css/${name}.${m.css[name]}.css">`;
@@ -142,7 +145,7 @@ ${css('round')}
 <link id="favicon" rel="icon" href="/assets/logo/ligo-favicon.svg">
 </head>
 <body data-theme="dark" class="coords-in playing fixed-scroll" data-socket-domains="ligo.test"
-  data-user="${opts.userId}" data-sound-set="standard" data-board="${o.board}" data-piece-set="${o.stones}"
+  data-user="${opts.userId}" data-sound-set="standard" data-board="${attr(o.board)}" data-piece-set="${attr(o.stones)}"
   style="---zoom:80">
 <div id="main-wrap"><main class="round">
   <aside class="round__side"></aside>

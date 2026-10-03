@@ -4315,7 +4315,7 @@ interface I18n {
     permanentLinkForAnyoneToChallengeYou: string;
     /** Picture */
     picture: string;
-    /** Piece set */
+    /** Stones */
     pieceSet: string;
     /** Pinned pieces */
     pinnedPieces: string;

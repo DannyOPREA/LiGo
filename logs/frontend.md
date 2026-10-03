@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-03 · unit 9.7 part one review · Reviewer findings fixed (PR #84)
+- Did: an independent review found nothing blocking; fixed its 5 should-fix and 4 of its 6 nits. 3D now always reads off on the server (`PrefHandlers`, `RequestPref`), since the menu lost its switch and a stored `is3d=true` would have kept lila's 3D board stylesheet squashing the Go board. A test keeps the three copies of the theme names in step (lila's lists, `libs/board`'s, the menu's swatch styles), and the menu's two panes are tested (list, `aria-pressed`, the `/pref/theme` and `/pref/pieceSet` posts, `<body>` and `board.change`). The stones pane reads "Stones" (English text of the `pieceSet` key). The public preferences JSON gives the Go name for a stored chess one. Night's swatch uses goban's own stone colours; the round controller test restores `<body>` in a `finally`; the test page escapes its attributes. Added the PR's row to docs/UPSTREAM.md (new project rule).
+- Worked: reading the Scala lists in a node test with a regex, no Scala build needed.
+- Didn't work / dead ends: none.
+- Lessons: removing a UI switch doesn't remove the stored value behind it; neutralise it where it's read.
+- Decisions: none new. Not changed: the chess thumbnail routes still pass the theme to lila-gif (moot until a Go renderer exists); the menu's "failed to save" toast stays English like upstream's.
+- Verified by Claude: ui tests 267/267, round browser tests 13/13, oxlint, oxfmt, stylelint, lila scalafmt. · Needs owner verification: as in PR #84.
+- Follow-ups: part two as listed in the entry below.
+
 ### 2026-09-30 · unit 9.7 part one (paused, not yet a PR) · Go themes in lila's preferences
 - Did: lila's board (`theme`) and piece (`pieceSet`) preferences now hold goban's board and stone theme names (ADR 0026 §3); the account menu's Board and Piece set panes list them by name with a colour swatch, keep only the size slider, and drop the 2D/3D switch; the page no longer loads chess piece images or preloads a board picture (`PieceSetImages` removed). The game page draws its board in those preferences (read from `<body>`) and redraws when the menu changes them; `themeOf` in `libs/board/src/themes.ts` picks a still-offered name or the default (the playground uses it too and keeps its own stored choice). axe on the game page (desktop and phone, during and after a game) found the move buttons unnamed: they now have names (4 new `site` strings). New: a controller test, a preference-theme browser test, the accessibility test and 8 game-page screenshots.
 - Worked: the playground's axe helper, shared as `ui/playground/e2e/axe.ts`, now prints a contrast failure's colours.
