@@ -1,26 +1,29 @@
-import { wsConnect } from 'lib/socket';
+// The analysis board page's module (lila `views.analyse.ui.userAnalysis`, unit 7.4): a Go board,
+// lila's move tree and the SGF box, all in the browser. lila's chess analysis (its engine socket,
+// the replay of a stored game) went with chess; a finished Go game opens here in unit 7.5.
 
-import type { AnalyseOpts } from '@/interfaces';
+import menuHover from 'lib/menuHover';
 
-import makeBoot from './boot';
-import makeStart from './start';
+import AnalyseCtrl from './ctrl';
+import type { AnalyseApi, AnalyseOpts } from './interfaces';
+import view from './view/main';
 import { patch } from './view/util';
 
 export { patch };
 
-const start = makeStart(patch);
-const boot = makeBoot(start);
-
-export async function initModule({ mode, cfg }: { mode: 'userAnalysis' | 'replay'; cfg: AnalyseOpts }) {
-  await site.asset.loadPieces;
-  if (mode === 'replay') boot(cfg);
-  else userAnalysis(cfg);
-}
-
-function userAnalysis(cfg: any) {
-  cfg.$side = $('.analyse__side').clone();
-  cfg.socketSend = wsConnect(cfg.socketUrl || '/analysis/socket/v5', cfg.socketVersion, {
-    receive: (t: string, d: any) => analyse.socketReceive(t, d),
-  }).send;
-  const analyse = start(cfg);
+export function initModule({
+  cfg,
+}: {
+  cfg: Omit<AnalyseOpts, 'element'>;
+}): AnalyseApi & { ctrl: AnalyseCtrl } {
+  const element = document.querySelector('main.analyse') as HTMLElement;
+  let vnode: ReturnType<typeof patch> | undefined;
+  const redraw = () => {
+    if (vnode) vnode = patch(vnode, view(ctrl));
+  };
+  const ctrl = new AnalyseCtrl({ ...cfg, element }, redraw);
+  element.innerHTML = '';
+  vnode = patch(element, view(ctrl));
+  menuHover();
+  return { ctrl, path: () => ctrl.path };
 }

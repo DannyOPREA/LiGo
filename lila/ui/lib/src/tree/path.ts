@@ -1,6 +1,6 @@
 // no side effects allowed due to re-export by index.ts
 
-import type { TreeNode, TreePath } from './types';
+import type { TreeNodeId, TreePath } from './types';
 
 export const root: TreePath = '';
 
@@ -18,7 +18,7 @@ export const contains = (p1: TreePath, p2: TreePath): boolean => p1.startsWith(p
 
 export const areComparable = (p1: TreePath, p2: TreePath): boolean => contains(p1, p2) || contains(p2, p1);
 
-export const fromNodeList = (nodes: TreeNode[]): TreePath => nodes.map(n => n.id).join('');
+export const fromNodeList = (nodes: Array<{ id: TreeNodeId }>): TreePath => nodes.map(n => n.id).join('');
 
 export const intersection = (p1: TreePath, p2: TreePath): TreePath => {
   const head1 = head(p1),
