@@ -111,6 +111,31 @@ board.set({ confirm, theme });  board.state();  board.destroy();
   `cancel`, a result instead of moves), so it is its own `mountPuzzle` beside it (logs/decisions.md).
 - Nothing in lila uses it yet: the trainer page is unit 8.7.
 
+## The position editor (`src/editor.ts`, unit 7.4, ADR 0023 §1)
+
+The analysis board's setup mode: a new position with black and white stones. It is goban's own
+puzzle-mode "setup" placement (the one OGS's puzzle editor uses), behind the same kind of API.
+
+```ts
+import { mountEditor } from '@ligo/board/editor';
+
+const editor = mountEditor(el, {
+  size: 19,                                  // 9, 13 or 19
+  stones: { black: ['dd'], white: ['pp'] },  // to start from; default none
+  color: 'black',                            // what a tap places
+  coordinates: true,
+  theme: DEFAULT_THEME,
+  onChange: stones => {},                    // { black, white } SGF points, after every tap
+});
+editor.setColor('white');  editor.stones();  editor.destroy();
+```
+
+- A tap puts a stone of the chosen colour on an empty point or on the other colour's stone, and
+  takes away a stone of the chosen colour. Stones are placed as they are, with no captures, so a
+  stone without liberties can be placed: the analysis board refuses such a position when it is
+  used, by reading it as an SGF root with `readTree`.
+- Used by `lila/ui/analyse` (unit 7.4).
+
 ## The rules engine (`src/engine.mjs`, unit 1.8)
 
 ```js
@@ -183,6 +208,8 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
   whichever reply goban picks from the tree, and a wrong first move, which must end wrong. Then
   one result per attempt, retry (also while a reply is pending), touch-confirm, a click on a
   stone, the bounds and sizing, and no network requests.
+- `test/editor.browser.test.mjs`: the position editor in Chromium: taps of each colour, taking a
+  stone away or replacing the other colour's, no captures, phone taps, starting stones, destroy.
 
 - `test/conformance.test.mjs`: every `libs/conformance` fixture that applies to the client, under
   each ruleset it names (both when none): 95 cases, 189 runs, 10 of them known gaps (5 cases).
@@ -203,7 +230,7 @@ only 30 moves and never at the starting position. The fixtures mark the five cas
 
 `dev/ligo test board` runs the engine, fixture and browser tests without the server; docker mode
 skips the browser tests (the ui container has no Chromium). The `lint` and `typecheck` scripts
-check `src/board.ts` and `src/puzzle.ts` with lila's oxfmt, oxlint and TypeScript settings.
+check `src/board.ts`, `src/puzzle.ts` and `src/editor.ts` with lila's oxfmt, oxlint and TypeScript settings.
 
 ## Packages
 

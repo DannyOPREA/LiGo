@@ -1,9 +1,6 @@
 {
   "extends": "../tsconfig.base.json",
+  "exclude": ["${configDir}/tests", "${configDir}/dist", "${configDir}/e2e"],
   "compilerOptions": { "noEmit": true, "isolatedDeclarations": false },
-  "references": [
-    { "path": "../bits/tsconfig.json" },
-    { "path": "../chart/tsconfig.json" },
-    { "path": "../lib/tsconfig.json" }
-  ]
+  "references": [{ "path": "../lib/tsconfig.json" }, { "path": "../../../libs/board/tsconfig.json" }]
 }
