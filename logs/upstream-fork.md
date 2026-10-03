@@ -17,10 +17,10 @@
 ## Entries (newest first)
 
 ### 2026-10-03 · register backfill · docs/UPSTREAM.md lists every merged change to lila/ and lila-ws/
-- Did: added 31 rows to docs/UPSTREAM.md's modification register (AGPL §5(a)), one per merged PR
+- Did: added 30 rows to docs/UPSTREAM.md's modification register (AGPL §5(a)), one per merged PR
   on main that changed a file under `lila/` or `lila-ws/` and had no row: units 0.4, 0.6, 0.7,
-  2.1–2.4, 4.4, 4.5, 7.2, 8.3, 9.2–9.6, 9.8, 3.8, 3.10–3.16, 3.18, 3.19 part one, 5.4 part one,
-  6.7 part one, and the CI fixes PR #81 and #83. Rows go in date order, at module level like the
+  2.1–2.4, 4.4, 4.5, 7.2, 8.3, 9.2–9.6, 9.8, 3.8, 3.10–3.16, 3.18, 3.19 part one, 6.7 part one,
+  and the CI fixes PR #81 and #83. (5.4 part one's row came with 5.4 part two, PR #85.) Rows go in date order, at module level like the
   existing ones; existing rows are unchanged.
 - Worked: `git log --first-parent main -- lila lila-ws` plus `git show --first-parent -m
   --name-status` per commit (the 0.4 PR is a merge commit, so `-m` is needed) gave the exact file

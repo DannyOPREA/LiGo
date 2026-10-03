@@ -279,6 +279,9 @@ object SecurityForm:
     // LiGo: the self-declared Go rank (ADR 0021 §2); none for "I don't know"
     def declaredGoRank: Option[lila.rating.GoRating.Rank] = goRank.flatMap(SignupData.parseGoRank)
 
+  // LiGo: the account page's Go rank (ADR 0021 §2, unit 5.4), with the signup form's choices
+  val goRankForm = Form(single("goRank" -> text.verifying("error.invalid", SignupData.validGoRank)))
+
   object SignupData:
     // the signup form's Go rank choices: "" (I don't know), "new" (25k), or a rank name, 25k to 9d
     val goRankNew = "new"
