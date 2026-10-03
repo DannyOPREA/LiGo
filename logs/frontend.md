@@ -5,6 +5,24 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-03 · unit 9.7 part one review · Reviewer findings fixed (PR #84)
+- Did: an independent review found nothing blocking; fixed its 5 should-fix and 4 of its 6 nits. 3D now always reads off on the server (`PrefHandlers`, `RequestPref`), since the menu lost its switch and a stored `is3d=true` would have kept lila's 3D board stylesheet squashing the Go board. A test keeps the three copies of the theme names in step (lila's lists, `libs/board`'s, the menu's swatch styles), and the menu's two panes are tested (list, `aria-pressed`, the `/pref/theme` and `/pref/pieceSet` posts, `<body>` and `board.change`). The stones pane reads "Stones" (English text of the `pieceSet` key). The public preferences JSON gives the Go name for a stored chess one. Night's swatch uses goban's own stone colours; the round controller test restores `<body>` in a `finally`; the test page escapes its attributes. Added the PR's row to docs/UPSTREAM.md (new project rule).
+- Worked: reading the Scala lists in a node test with a regex, no Scala build needed.
+- Didn't work / dead ends: none.
+- Lessons: removing a UI switch doesn't remove the stored value behind it; neutralise it where it's read.
+- Decisions: none new. Not changed: the chess thumbnail routes still pass the theme to lila-gif (moot until a Go renderer exists); the menu's "failed to save" toast stays English like upstream's.
+- Verified by Claude: ui tests 267/267, round browser tests 13/13, oxlint, oxfmt, stylelint, lila scalafmt. · Needs owner verification: as in PR #84.
+- Follow-ups: part two as listed in the entry below.
+
+### 2026-09-30 · unit 9.7 part one (paused, not yet a PR) · Go themes in lila's preferences
+- Did: lila's board (`theme`) and piece (`pieceSet`) preferences now hold goban's board and stone theme names (ADR 0026 §3); the account menu's Board and Piece set panes list them by name with a colour swatch, keep only the size slider, and drop the 2D/3D switch; the page no longer loads chess piece images or preloads a board picture (`PieceSetImages` removed). The game page draws its board in those preferences (read from `<body>`) and redraws when the menu changes them; `themeOf` in `libs/board/src/themes.ts` picks a still-offered name or the default (the playground uses it too and keeps its own stored choice). axe on the game page (desktop and phone, during and after a game) found the move buttons unnamed: they now have names (4 new `site` strings). New: a controller test, a preference-theme browser test, the accessibility test and 8 game-page screenshots.
+- Worked: the playground's axe helper, shared as `ui/playground/e2e/axe.ts`, now prints a contrast failure's colours.
+- Didn't work / dead ends: Rematch's colour changes as it glows, so an exact colour exemption failed 10 of 135 repeated runs; the game-page check leaves `.rematch` out until lila's colours are fixed.
+- Lessons: an animated element can't be judged by exact colours; fix the colour or leave the element out, never allow-list a pair.
+- Decisions: none new (ADR 0026 §3 and §4 as written).
+- Verified by Claude: ui unit tests 263/263; round browser tests 135/135 over 15 repeats; playground a11y 3/3; oxlint, stylelint. Not yet: Scala compile (CI), /verify, review. · Needs owner verification: none yet.
+- Follow-ups: finish part one (review, PR, merge) on "Continue"; part two: the game page's words in i18n, lila's colours site-wide (then drop the `.rematch` exclusion and the #3692e7 let-off), the chess sound files and board/piece pictures and 3D, the blind mode.
+
 ### 2026-10-03 · unit 7.4 review · Reviewer findings fixed
 - Did: an independent review (1 blocking, 4 should-fix, 7 nits). Fixed:
   - COPYING.md had no note for `ui/analyse`'s new `@ligo/board` link, so CI's `meta` check would fail (paragraph added, as 3.18's).
@@ -29,6 +47,7 @@ _none yet_
 - Decisions: the inline-only numbered move list, setup mode's tools, what of lila's analysis page doesn't come back, the redirects, the generic tree (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md, ADR 0023 amendment).
 - Verified by Claude: ui unit tests 237/237; analysis browser tests 13/13 with the screenshots looked at (text visible and hidden); libs/board tests 371/371 (`dev/ligo test board`); tsc, oxlint, oxfmt, stylelint; `pnpm install --frozen-lockfile`; verify.sh (lila compile and lila tests included). Not verified: the page inside the real lila layout. · Needs owner verification: `dev/ligo up`, open localhost:8080/analysis on a computer and a phone: play a few stones and a pass, make a variation, paste an SGF, try New position.
 - Follow-ups: 7.5 opens finished games here; 9.7 translates the page and gives it lila's theme preferences; 3.19 part 2 can drop chessground and chessops from `ui/analyse` (no imports left there; `ui/puzzle/src/chessNode.ts` still needs chessops until 8.7).
+
 
 ### 2026-09-30 · unit 3.18 merge · Main merged in; 3.13 and 3.14 landed first
 - Did: merged main into PR #74 (it had a conflict in logs/decisions.md and the reviewer's memory index, which kept CI from running). Units 3.13 (#73) and 3.14 (#75) merged meanwhile, so the "land before 3.13 and 3.14" decision recorded in the review entry above no longer applies and was taken out of logs/decisions.md. Checked the page against what they shipped: lila-ws reads `d.u` as an SGF point or `pass` and `d.b` as blur (`ClientOut.scala`), the move event carries `p` or `pass: true`, `ply`, `cap`, `prisoners`, `phase`, `board`, `ko`, `clock`, `status`, `winner` (`game/Event.scala` GoMove), the round JSON's `game.go` block is as the page reads it (`game/JsonView.scala`), and two passes end the game as `UnknownFinish` with no winner (`MovePlayer.scala`).

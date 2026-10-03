@@ -1,7 +1,6 @@
 @import 'theme';
 @import 'board';
 @import 'link';
-@import 'piece';
 
 #dasher_app {
   @extend %box-radius-left;
@@ -211,15 +210,5 @@
 
   .piece .list {
     overflow: auto;
-  }
-
-  .button.more {
-    @extend %box-radius-bottom-left;
-
-    width: 100%;
-    color: $c-over;
-    font-size: 1.2em;
-    font-weight: bold;
-    padding: 0.4em 0;
   }
 }
