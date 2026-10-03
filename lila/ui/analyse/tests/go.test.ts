@@ -80,9 +80,10 @@ describe('sounds', () => {
     assert.equal(capturedBy(w1, b2), 1);
     assert.equal(capturedBy(root, b1), 0);
     assert.equal(capturedBy(b2, pass), 0);
-    assert.equal(soundOf(b2.move!, 1), 'capture');
-    assert.equal(soundOf(b1.move!, 0), 'move');
-    assert.equal(soundOf(pass.move!, 0), 'confirmation');
+    assert.deepEqual([b1.move, b2.move, pass.move], ['ab', 'ba', '..']);
+    assert.equal(soundOf('ba', 1), 'capture');
+    assert.equal(soundOf('ab', 0), 'move');
+    assert.equal(soundOf('..', 0), 'confirmation');
   });
 });
 
