@@ -22,23 +22,9 @@ object RageSit:
     case Reset
     case Inc(v: Int)
 
-  def imbalanceInc(game: Game, loser: Color) = Update.Inc:
-    {
-      import chess.variant.*
-      (game.chess.position.materialImbalance, game.variant) match
-        // a Go game has no material to weigh (its chess game is unused until unit 3.17)
-        case _ if game.isGo => 0
-        case (_, Crazyhouse | Horde | Antichess) => 0
-        case (a, _) if a >= 4 => 1
-        case (a, _) if a <= -4 => -1
-        case _ => 0
-    } * {
-      if loser.white then 1 else -1
-    } * {
-      if game.speed <= Speed.Bullet then 5
-      else if game.speed == Speed.Blitz then 10
-      else 15
-    }
+  // A rage quit or a flag after a lopsided position counted extra in chess; Go has no material to weigh, so
+  // it counts nothing extra (unit 3.17).
+  val imbalanceInc: Update = Update.Inc(0)
 
   def redeem(game: Game) = Update.Inc:
     game.speed match

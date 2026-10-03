@@ -1,7 +1,7 @@
 package lila.game
 
 import chess.{ ByColor, Centis, Clock, Color, MoveMetrics, Ply, Rated }
-import ligo.gorules.{ Action, BoardSize, GoGame, Point, Ruleset, Setup as GoSetup }
+import ligo.gorules.{ Action, BoardSize, Point, Ruleset, Setup as GoSetup }
 import play.api.libs.json.*
 
 import lila.core.game.{ Game, Player, Source, newGoGame }
@@ -28,7 +28,7 @@ class GoPlayTest extends munit.FunSuite:
 
   /** What the round does for a move the rules accepted: step the clock, then apply. */
   private def play(g: Game, action: Action): Progress =
-    val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
+    val next = g.go(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
     g.applyGoMove(next, g.stepGoClock(MoveMetrics(), gameActive = !g.withGo(next).goPlayEnds).map(_.value))
 
   private def playAll(g: Game, actions: Action*): Game = actions.foldLeft(g)(play(_, _).game)
@@ -42,7 +42,7 @@ class GoPlayTest extends munit.FunSuite:
     val progress = play(newGo(), Action.Place(p("ee")))
     val g = progress.game
     assertEquals((g.ply, g.turnColor, g.playedPlies), (Ply(2), Color.White, Ply(1)))
-    assertEquals(g.go.get.actions, Vector(Action.Place(p("ee"))))
+    assertEquals(g.go.actions, Vector(Action.Place(p("ee"))))
     val js = moveJson(progress)
     assertEquals((js \ "p").as[String], "ee")
     assertEquals((js \ "ply").as[Int], 2)
@@ -55,7 +55,7 @@ class GoPlayTest extends munit.FunSuite:
   test("a pass, and two passes open the scoring phase"):
     val once = play(newGo(), Action.Pass)
     assertEquals((moveJson(once) \ "pass").as[Boolean], true)
-    assertEquals(once.game.go.get.phase, ligo.gorules.Phase.Play)
+    assertEquals(once.game.go.phase, ligo.gorules.Phase.Play)
     val twice = play(once.game, Action.Pass)
     assertEquals((moveJson(twice) \ "phase").as[String], "scoring")
     assertEquals(twice.game.playedPlies, Ply(2))
@@ -89,8 +89,8 @@ class GoPlayTest extends munit.FunSuite:
     val g2 = playAll(newGo(), Action.Place(p("ee")), Action.Place(p("cc")))
     val g3 = play(g2, Action.Place(p("gg"))).game
     val back = Rewind.go(g3).fold(fail(_), _.game)
-    assertEquals(back.go.get.actions, g2.go.get.actions)
-    assertEquals(back.go.get.stones, g2.go.get.stones)
+    assertEquals(back.go.actions, g2.go.actions)
+    assertEquals(back.go.stones, g2.go.stones)
     assertEquals((back.ply, back.turnColor), (g2.ply, g2.turnColor))
     assertEquals(back.clockHistory.map(h => (h.black.size, h.white.size)), Some((1, 1)))
     assertEquals(back.clock.map(_.color), Some(Color.Black))
@@ -108,12 +108,12 @@ class GoPlayTest extends munit.FunSuite:
     val passed = play(g2, Action.Pass).game
     val undone = Rewind.go(passed).fold(fail(_), _.game)
     assertEquals(
-      (undone.go.get.actions, undone.ply, undone.turnColor),
-      (g2.go.get.actions, g2.ply, Color.Black)
+      (undone.go.actions, undone.ply, undone.turnColor),
+      (g2.go.actions, g2.ply, Color.Black)
     )
     val g4 = play(passed, Action.Place(p("gg"))).game
     val twice = Rewind.go(g4).flatMap(pr => Rewind.go(pr.game)).fold(fail(_), _.game)
-    assertEquals((twice.go.get.actions, twice.ply, twice.turnColor), (g2.go.get.actions, g2.ply, Color.Black))
+    assertEquals((twice.go.actions, twice.ply, twice.turnColor), (g2.go.actions, g2.ply, Color.Black))
     assertEquals(twice.clockHistory.map(h => (h.black.size, h.white.size)), Some((1, 1)))
 
   test("Go games have no draws"):

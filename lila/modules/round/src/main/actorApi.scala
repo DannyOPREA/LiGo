@@ -1,17 +1,8 @@
 package lila.round
 
-import chess.format.Uci
-import chess.{ Color, MoveMetrics }
+import chess.Color
 
 import lila.core.socket.SocketVersion
-
-private class HumanPlay(
-    val playerId: GamePlayerId,
-    val uci: Uci,
-    val blur: Boolean,
-    val moveMetrics: chess.MoveMetrics = chess.MoveMetrics(),
-    val promise: Option[Promise[Unit]] = None
-)
 
 /** A Go stone or pass from a player (ADR 0019 §6). */
 private class HumanGoPlay(

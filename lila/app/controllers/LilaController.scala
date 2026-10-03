@@ -369,8 +369,6 @@ abstract private[controllers] class LilaController(val env: Env)
   def meOrFetch[U: UserIdOf](id: Option[U])(using me: Option[Me]): Fu[Option[lila.user.User]] =
     id.fold(fuccess(me.map(_.value)))(meOrFetch)
 
-  def anyCaptcha = env.game.captcha.any
-
   def bindForm[T, R](form: Form[T])(error: Form[T] => R, success: T => R)(using Request[?], FormBinding): R =
     val bound =
       if getBool("patch")

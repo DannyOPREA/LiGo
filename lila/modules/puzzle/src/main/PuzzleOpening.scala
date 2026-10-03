@@ -132,18 +132,8 @@ final class PuzzleOpeningApi(
       .result
       .void
 
-  private[puzzle] def updateOpening(puzzle: Puzzle): Funit =
-    (!puzzle.hasTheme(PuzzleTheme.equality) && puzzle.initialPly < 36).so:
-      gameRepo.gameFromSecondary(puzzle.gameId).flatMapz { game =>
-        OpeningDb.search(game.sans).map(_.opening).flatMap(SimpleOpening.apply) match
-          case None =>
-            fuccess:
-              logger.warn(s"No opening for https://lichess.org/training/${puzzle.id}")
-          case Some(o) =>
-            val keys = List(o.family.key.value, o.key.value)
-            colls.puzzle:
-              _.updateField(bid(puzzle.id), Puzzle.BSONFields.opening, keys).void
-      }
+  // A puzzle's opening came from its chess game's moves; Go games have no openings (unit 3.17).
+  private[puzzle] def updateOpening(@annotation.unused puzzle: Puzzle): Funit = funit
 
 object PuzzleOpening:
 

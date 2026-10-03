@@ -42,8 +42,6 @@ final private[round] class Drawer(
 
   def yes(pov: Pov)(using proxy: GameProxy): Fu[Events] = pov.game.drawable.so:
     pov match
-      case pov if pov.game.history.threefoldRepetition =>
-        finisher.other(pov.game, _.Draw, None)
       case pov if pov.opponent.isOfferingDraw =>
         finisher.other(
           pov.game,
@@ -52,14 +50,12 @@ final private[round] class Drawer(
           Messenger.SystemMessage.Persistent(trans.site.drawOfferAccepted.txt()).some
         )
       case Pov(g, color) if g.playerCanOfferDraw(color) =>
-        if RoundGame.cannotLose(pov) then finisher.other(pov.game, _.InsufficientMaterialClaim, None)
-        else
-          val progress = Progress(g).map(offerDraw(color))
-          messenger.system(g, color.fold(trans.site.whiteOffersDraw, trans.site.blackOffersDraw).txt())
-          for
-            _ <- proxy.save(progress)
-            _ = publishDrawOffer(progress.game)
-          yield List(Event.DrawOffer(by = color.some))
+        val progress = Progress(g).map(offerDraw(color))
+        messenger.system(g, color.fold(trans.site.whiteOffersDraw, trans.site.blackOffersDraw).txt())
+        for
+          _ <- proxy.save(progress)
+          _ = publishDrawOffer(progress.game)
+        yield List(Event.DrawOffer(by = color.some))
       case _ => fuccess(List(Event.ReloadOwner))
 
   def no(pov: Pov)(using proxy: GameProxy): Fu[Events] = pov.game.drawable.so:
@@ -74,8 +70,8 @@ final private[round] class Drawer(
       case _ => fuccess(List(Event.ReloadOwner))
     : Fu[Events]
 
-  def claim(pov: Pov)(using GameProxy): Fu[Events] =
-    (pov.game.drawable && pov.game.history.threefoldRepetition).so(finisher.other(pov.game, _.Draw, None))
+  // Go has no repetition draw to claim (ADR 0019 §6).
+  def claim(@annotation.unused pov: Pov): Fu[Events] = fuccess(Nil)
 
   def force(game: Game)(using GameProxy): Fu[Events] = finisher.other(game, _.Draw, None, None)
 

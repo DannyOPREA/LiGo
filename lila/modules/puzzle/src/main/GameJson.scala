@@ -1,7 +1,6 @@
 package lila.puzzle
 
 import chess.Ply
-import chess.format.{ Fen, UciCharPair }
 import play.api.libs.json.*
 
 import lila.common.Json.given
@@ -60,7 +59,8 @@ final private class GameJson(
         "perf" -> perfJson(game),
         "rated" -> game.rated,
         "players" -> playersJson(game),
-        "pgn" -> game.chess.sans.take(plies.value + 1).mkString(" ")
+        // the game's first moves as SGF points and `pass` (unit 3.17: the chess game is gone)
+        "pgn" -> game.go.actions.take(plies.value + 1).map(lila.core.game.GoBridge.token).mkString(" ")
       )
       .add("clock", game.clock.map(_.config.show))
 
@@ -77,30 +77,12 @@ final private class GameJson(
         .obj("color" -> p.color.name)
         .add("rating" -> p.rating))
 
-  private def generateBc(game: Game, plies: Ply): JsObject =
+  private def generateBc(game: Game, @annotation.unused plies: Ply): JsObject =
     Json
       .obj(
         "id" -> game.id,
         "perf" -> perfJson(game),
         "players" -> playersJson(game),
-        "rated" -> game.rated,
-        "treeParts" -> {
-          val pgnMoves = game.sans.take(plies.value + 1)
-          for
-            pgnMove <- pgnMoves.lastOption
-            position =
-              game.variant.initialPosition
-                .forward(pgnMoves)
-                .valueOr: err =>
-                  sys.error(s"GameJson.generateBc ${game.id} $err")
-            uciMove <- position.history.lastMove
-          yield Json.obj(
-            "fen" -> Fen.write(position).value,
-            "ply" -> (plies + 1),
-            "san" -> pgnMove,
-            "id" -> UciCharPair(uciMove).toString,
-            "uci" -> uciMove.uci
-          )
-        }
+        "rated" -> game.rated
       )
       .add("clock", game.clock.map(_.config.show))

@@ -373,12 +373,9 @@ final class PushApi(
     case "resume" => s"$opponent resumed play"
     case move => s"$opponent played $move"
 
-  // A Go move as players read it (`D4`, `pass`), else the chess SAN (unit 3.16).
+  // A Go move as players read it (`D4`, `pass`) (unit 3.16).
   private def lastMoveText(game: Game): Option[String] =
-    game.go match
-      case Some(go) =>
-        go.actions.lastOption.map(lila.core.game.GoBridge.label(_, go.size.lines))
-      case None => game.sans.lastOption.map(_.value)
+    game.go.actions.lastOption.map(lila.core.game.GoBridge.label(_, game.go.size.lines))
 
   private def describeChallenge(c: Challenge) =
     import lila.core.challenge.Challenge.TimeControl.*

@@ -2,8 +2,7 @@ package lila.round
 
 import scala.math
 import chess.format.Fen
-import chess.{ ByColor, Clock, Color, Speed }
-import chess.opening.Opening
+import chess.{ ByColor, Clock, Speed }
 import play.api.libs.json.*
 import scalalib.data.Preload
 
@@ -23,14 +22,10 @@ final class JsonView(
     getSocketStatus: Game => Fu[SocketStatus],
     takebacker: Takebacker,
     moretimer: Moretimer,
-    divider: lila.game.Divider,
     isOfferingRematch: lila.core.round.IsOfferingRematch
 )(using Executor):
 
   import lila.tree.ExportOptions
-
-  private def checkCount(game: Game, color: Color) =
-    (game.variant == chess.variant.ThreeCheck).option(game.history.checkCount(color))
 
   private def commonPlayerJson(
       g: Game,
@@ -53,7 +48,6 @@ final class JsonView(
       .add("offeringRematch" -> isOfferingRematch.exec(Pov(g, p).ref))
       .add("offeringDraw" -> p.isOfferingDraw)
       .add("proposingTakeback" -> p.isProposingTakeback)
-      .add("checks" -> checkCount(g, p.color))
       .add("berserk" -> p.berserk)
       .add("blindfold" -> p.blindfold)
       .add("blurs" -> (withFlags.blurs.so(blurs(g, p))))
@@ -73,7 +67,7 @@ final class JsonView(
     import pov.*
     Json
       .obj(
-        "game" -> gameJsonView.baseWithChessDenorm(game, initialFen),
+        "game" -> gameJsonView.baseWithPlayer(game, initialFen),
         "player" -> {
           commonPlayerJson(game, player, users(pov.color), flags) ++ Json
             .obj(
@@ -103,8 +97,7 @@ final class JsonView(
               "coords" -> pref.coords,
               "resizeHandle" -> pref.resizeHandle,
               "replay" -> pref.replay,
-              "autoQueen" -> (if pov.game.variant == chess.variant.Antichess then Pref.AutoQueen.NEVER
-                              else pref.autoQueen),
+              "autoQueen" -> pref.autoQueen,
               "clockTenths" -> pref.clockTenths,
               "moveEvent" -> pref.moveEvent
             )
@@ -125,9 +118,6 @@ final class JsonView(
       .add("correspondence" -> game.correspondenceClock)
       .add("takebackable" -> takebackable)
       .add("moretimeable" -> moretimeable)
-      .add("crazyhouse" -> pov.game.position.crazyData)
-      .add("possibleMoves" -> possibleMoves(pov))
-      .add("possibleDrops" -> possibleDrops(pov))
       .add("expiration" -> game.expirable.option:
         Json.obj(
           "idleMillis" -> (nowMillis - game.movedAt.toMillis),
@@ -155,14 +145,12 @@ final class JsonView(
       .add("goRank" -> lila.game.Namer.ratingString(p).ifTrue(withFlags.rating))
       .add("ratingDiff" -> p.ratingDiff.ifTrue(withFlags.rating))
       .add("provisional" -> (p.provisional.yes && withFlags.rating))
-      .add("checks" -> checkCount(g, p.color))
       .add("berserk" -> p.berserk)
       .add("blurs" -> (withFlags.blurs.so(blurs(g, p))))
 
   def watcherJson(
       pov: Pov,
       users: GameUsers,
-      opening: Option[Opening],
       pref: Option[Pref],
       me: Option[UserId],
       tv: Option[OnTv],
@@ -174,10 +162,8 @@ final class JsonView(
       Json
         .obj(
           "game" -> gameJsonView
-            .baseWithChessDenorm(game, initialFen)
+            .baseWithPlayer(game, initialFen)
             .add("moveCentis" -> (flags.movetimes.so(game.moveTimes.map(_.map(_.centis)))))
-            .add("division" -> flags.division.option(divider(game, initialFen)))
-            .add("opening" -> opening)
             .add("importedBy" -> game.pgnImport.flatMap(_.user)),
           "clock" -> game.clock.map(clockJson),
           "correspondence" -> game.correspondenceClock,
@@ -223,56 +209,6 @@ final class JsonView(
           Json.obj("id" -> userId)
         })
 
-  def userAnalysisJson(
-      pov: Pov,
-      pref: Pref,
-      initialFen: Option[Fen.Full],
-      orientation: Color,
-      owner: Boolean,
-      opening: Option[chess.opening.Opening],
-      division: Option[chess.Division] = None
-  ) =
-    import pov.*
-    val fen = Fen.write(game.chessState)
-    Json
-      .obj(
-        "game" -> Json
-          .obj(
-            "id" -> gameId,
-            "variant" -> game.variant,
-            "opening" -> opening,
-            "fen" -> fen,
-            "turns" -> game.ply,
-            "player" -> game.turnColor.name,
-            "status" -> game.status
-          )
-          .add("initialFen", initialFen)
-          .add("division", division)
-          .add("winner", game.winner.map(_.color.name)),
-        "player" -> Json.obj(
-          "id" -> owner.option(pov.playerId),
-          "color" -> color.name
-        ),
-        "opponent" -> Json.obj(
-          "color" -> opponent.color.name,
-          "ai" -> opponent.aiLevel
-        ),
-        "orientation" -> orientation.name,
-        "pref" -> Json
-          .obj(
-            "animationDuration" -> animationMillis(pov, pref),
-            "coords" -> pref.coords,
-            "moveEvent" -> pref.moveEvent,
-            "showCaptured" -> pref.captured,
-            "keyboardMove" -> pref.hasKeyboardMove
-          )
-          .add("rookCastle" -> (pref.rookCastle == Pref.RookCastle.YES))
-          .add("is3d" -> pref.is3d)
-          .add("highlight" -> pref.highlight)
-          .add("destination" -> pref.destination),
-        "userAnalysis" -> true
-      )
-
   def submitMovePref(pref: Pref, game: Game, nvui: Boolean) =
     import Pref.SubmitMove.*
     pref.submitMove match
@@ -294,18 +230,6 @@ final class JsonView(
   private val moretimeJson = ("moretime" -> JsNumber(lila.core.round.Moretime.defaultDuration.toSeconds))
   private[round] def clockJson(clock: Clock): JsObject =
     Json.toJsObject(clock) + moretimeJson
-
-  // A Go game sends no legal moves: the browser's goban engine knows them (ADR 0019 §6).
-  private def possibleMoves(pov: Pov): Option[JsValue] =
-    (!pov.game.isGo && pov.game.playableBy(pov.player))
-      .option(lila.game.Event.PossibleMoves.json(pov.game.position.destinations))
-
-  private def possibleDrops(pov: Pov): Option[JsValue] =
-    pov.game
-      .playableBy(pov.player)
-      .so:
-        pov.game.position.drops.map: drops =>
-          JsString(drops.map(_.key).mkString)
 
   private def animationMillis(pov: Pov, pref: Pref) =
     pref.animationMillis * {
