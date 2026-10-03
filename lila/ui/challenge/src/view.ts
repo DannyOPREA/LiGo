@@ -138,7 +138,13 @@ function timeControl(c: TimeControl): string {
 
 const renderUser = (u: ChallengeUser | undefined, showRating: boolean): VNode =>
   u
-    ? userLink({ ...u, line: true, rating: showRating ? u.rating : undefined, attrs: { 'data-pt-pos': 'w' } })
+    ? userLink({
+        ...u,
+        line: true,
+        rating: showRating ? u.rating : undefined,
+        goRank: u.goRank,
+        attrs: { 'data-pt-pos': 'w' },
+      })
     : h('span', 'Open challenge');
 
 const renderLag = (u?: ChallengeUser) =>

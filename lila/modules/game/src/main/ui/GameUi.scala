@@ -314,8 +314,7 @@ final class GameUi(helpers: Helpers):
               player.berserk.option(berserkIconSpan),
               ctx.pref.showRatings.option(
                 frag(
-                  rating,
-                  player.provisional.yes.option("?"),
+                  goRank(rating, player.provisional), // LiGo: kyu/dan (ADR 0021 §3, unit 5.5)
                   player.ratingDiff.map: d =>
                     frag(" ", showRatingDiff(d))
                 )
