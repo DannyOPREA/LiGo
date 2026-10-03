@@ -13,9 +13,7 @@ import lila.core.config.*
 final private class GameConfig(
     @ConfigName("collection.game") val gameColl: CollName,
     @ConfigName("collection.crosstable") val crosstableColl: CollName,
-    @ConfigName("collection.matchup") val matchupColl: CollName,
-    @ConfigName("captcher.duration") val captcherDuration: FiniteDuration,
-    val gifUrl: String
+    @ConfigName("collection.matchup") val matchupColl: CollName
 )
 
 @Module
@@ -37,15 +35,7 @@ final class Env(
 
   given idGenerator: IdGenerator = wire[IdGenerator]
 
-  val divider = wire[Divider]
-
-  val gameOpening = wire[GameOpening]
-
-  val gameOpeningOf: lila.core.game.GameOpening = gameOpening.of
-
   val cached: Cached = wire[Cached]
-
-  lazy val gifExport = GifExport(ws, lightUserApi, routeUrl, config.gifUrl)
 
   lazy val paginator = wire[PaginatorBuilder]
 
@@ -65,10 +55,6 @@ final class Env(
 
   lazy val jsonView = wire[JsonView]
 
-  lazy val captcha = wire[CaptchaApi]
-
-  lazy val importer = wire[lila.game.importer.Importer]
-
   lazy val userGameApi = UserGameApi(lightUserApi)
 
   lazy val api: lila.core.game.GameApi = new:
@@ -83,6 +69,3 @@ final class Env(
       Player.makeAnon(color, aiLevel)
 
   val namer: lila.core.game.Namer = Namer
-
-  scheduler.scheduleWithFixedDelay(config.captcherDuration, config.captcherDuration): () =>
-    captcha.newCaptcha()

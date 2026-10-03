@@ -43,7 +43,6 @@ trait AssetHelper:
     Esm(key, embedJsUnsafeLoadThen(s"site.asset.loadEsmPage('$key')"))
 
   val infiniteScrollEsmInit: Esm = esmInit("bits.infiniteScroll")
-  val captchaEsm: Esm = Esm("bits.captcha")
 
   // load iife scripts in <head> and defer
   def iifeModule(path: String): Frag = script(deferAttr, src := assetUrl(path).value)
@@ -84,19 +83,3 @@ trait AssetHelper:
   def analyseNvuiTag(using ctx: Context) = ctx.blind.option(Esm("analyse.nvui"))
 
   def pathUrl(path: String): Url = Url(s"${netBaseUrl}$path")
-
-  def fenThumbnailUrl(
-      fen: chess.format.StandardFen,
-      color: Option[chess.Color] = None,
-      variant: chess.variant.Variant = chess.variant.Standard
-  )(using ctx: Context): Url = cdnUrl:
-    routes.Export
-      .fenThumbnail(
-        fen.value,
-        color,
-        none,
-        Option.when(variant.exotic)(variant.key),
-        ctx.pref.theme.some,
-        ctx.pref.pieceSet.some
-      )
-      .url

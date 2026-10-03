@@ -43,9 +43,6 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits):
       )
       .graph(
         OpenGraph(
-          image = cdnUrl(
-            routes.Export.puzzleThumbnail(puzzle.id, ctx.pref.theme.some, ctx.pref.pieceSet.some).url
-          ).some,
           title = s"Chess tactic #${puzzle.id} - ${puzzle.color.name.capitalize} to play",
           url = routeUrl(routes.Puzzle.show(puzzle.id.value)),
           description =

@@ -1,7 +1,6 @@
 package lila.round
 
 import org.apache.pekko.actor.{ Cancellable, CoordinatedShutdown, Scheduler }
-import chess.format.Uci
 import chess.{ ByColor, Black, Centis, Color, MoveMetrics, Speed, White }
 import play.api.libs.json.*
 import reactivemongo.api.Cursor
@@ -100,8 +99,6 @@ final class RoundSocket(
     roundActor
 
   private val roundHandler: SocketHandler =
-    case Protocol.In.PlayerMove(fullId, uci, blur, lag) if !stopping =>
-      rounds.tell(fullId.gameId, HumanPlay(fullId.playerId, uci, blur, lag, none))
     case Protocol.In.PlayerGoMove(fullId, action, blur, lag) if !stopping =>
       rounds.tell(fullId.gameId, HumanGoPlay(fullId.playerId, action, blur, lag, none))
     case Protocol.In.PlayerDo(fullId, tpe) if !stopping =>
@@ -300,12 +297,6 @@ object RoundSocket:
           case Speed.Blitz => 2
           case _ => 1
       } / {
-        import chess.variant.*
-        (pov.game.chess.position.materialImbalance, pov.game.variant) match
-          case (_, Antichess | Crazyhouse | Horde) => 1
-          case (i, _) if (pov.color.white && i <= -4) || (pov.color.black && i >= 4) => 2
-          case _ => 1
-      } / {
         if pov.player.hasUser then 1 else 2
       }
 
@@ -315,7 +306,6 @@ object RoundSocket:
 
       case class PlayerOnlines(onlines: Iterable[(GameId, Option[RoomCrowd])]) extends P.In
       case class PlayerDo(fullId: GameFullId, tpe: String) extends P.In
-      case class PlayerMove(fullId: GameFullId, uci: Uci, blur: Boolean, lag: MoveMetrics) extends P.In
       case class PlayerGoMove(
           fullId: GameFullId,
           action: ligo.gorules.Action,
@@ -357,13 +347,10 @@ object RoundSocket:
           raw.get(6) { case Array(fullId, moveS, blurS, lagS, mtS, fraS) =>
             val blur = P.In.boolean(blurS)
             val metrics = MoveMetrics(centis(lagS), centis(mtS), centis(fraS))
-            // a chess UCI (4-5 characters) until unit 3.17, or a Go SGF point (2) or `pass` (ADR 0019 §6)
-            Uci(moveS)
-              .map(PlayerMove(GameFullId(fullId), _, blur, metrics))
-              .orElse:
-                lila.core.game.GoBridge
-                  .actionOf(moveS)
-                  .map(PlayerGoMove(GameFullId(fullId), _, blur, metrics))
+            // a Go SGF point or `pass` (ADR 0019 §6)
+            lila.core.game.GoBridge
+              .actionOf(moveS)
+              .map(PlayerGoMove(GameFullId(fullId), _, blur, metrics))
           }
         case P.RawMsg("chat/say", raw) =>
           raw.get(3) { case Array(roomId, author, msg) =>

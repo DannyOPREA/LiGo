@@ -16,6 +16,34 @@
 
 ## Entries (newest first)
 
+### 2026-10-03 · 3.17 part 1 · lila's game holds only the Go game
+- Did: `Game.go` is required and the chess game is gone from lila's `Game` (`core`), with chess
+  game storage (the BSON reader and writer read and write the Go block only; `PgnStorage`, the
+  chess binary formats and their keys removed), chess moves over the socket (`HumanPlay`,
+  `PlayerMove`), server-side forecasts, draws by chess rules (threefold, fifty moves, insufficient
+  material), `Divider`, `GameOpening`, `TreeBuilder` and `ParseImport`, the chess captcha, GIF
+  export (game, position and puzzle thumbnails) and the analysis replay page. Stored chess games
+  are not read: lookups by id and the per-user game queries add `Query.go` (`sz` exists). PGN
+  import is an "arrives in a later update" page (SGF import is 7.5); its API answers 501. Game
+  embeds in forum text stay plain links. `PerfsUpdater`, `Rematcher`, `Takebacker`, `Finisher`,
+  `RoundApi`, the game and API JSON and the mobile round JSON are Go only. Tests ported to Go
+  games: `ComputeMoveTimesTest`, `GameStateTest`, `AnnotatorTest`, `GoSetupFormTest`,
+  `TakebackerTest` (a chess move is now refused); a new `GoStorageTest` case checks a chess
+  document is not read. Tests of deleted chess code deleted with it (`RematcherTest`,
+  `BinaryCLMTest`, `BinaryPieceTest`, `BinaryUnmovedRooksTest`, `PgnDumpTest`).
+- Review (reviewer agent): REVIEW_PLACEHOLDER
+- Worked: fixing compile errors module by module with a script that prints only `file:line: msg`;
+  touching the changed files and recompiling to list their unused-import warnings.
+- Didn't work / dead ends: none.
+- Lessons: a lila-wide change surfaces compile errors in waves (one module's errors hide the
+  modules that depend on it); budget several rounds.
+- Decisions: see logs/decisions.md (3.17 part 1 row); ADR 0019 §8 amended.
+- Verified by Claude: see the PR.
+- Follow-ups: part 2 (FEN, PGN, UCI, variants and openings in the remaining signatures, `tree`,
+  `PgnDump`, `TextLpvExpand`, `Annotator`, setup and lobby variants); part 3 (the CI check,
+  scalachess-tiebreak, -test-kit and maybe -play-json, COPYING). Phase 7 removes the browser's
+  forecast and GIF code in ui/analyse (7.4/7.6).
+
 ### 2026-09-30 · 3.16 · The other modules answer Go games in Go; analysis and puzzle placeholders
 - Did: wherever 3.16's modules (and `round`'s leftovers the 3.13 reviewer listed) read the unused
   chess game a Go game carries, a Go game now gets a Go answer. The API's JSON exports and streams

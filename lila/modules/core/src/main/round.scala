@@ -1,8 +1,7 @@
 package lila.core
 package round
 
-import _root_.chess.format.{ Fen, Uci }
-import _root_.chess.{ Color, MoveOrDrop }
+import _root_.chess.Color
 import play.api.libs.json.{ JsArray, JsObject }
 import scalalib.bus.NotBuseable
 
@@ -30,8 +29,8 @@ enum RoundBus extends NotBuseable:
 case class Tell(id: GameId, msg: RoundBus)
 case class TellMany(ids: Seq[GameId], msg: StartClock.type | RoundBus.QuietFlagCheck.type)
 
-/** A move for the bus (ADR 0019 §6): the position after it (a Go game's compact board, a chess FEN until unit
-  * 3.17) and the move (an SGF point or `pass`, a chess UCI until 3.17).
+/** A move for the bus (ADR 0019 §6): the position after it (the compact board) and the move (an SGF point or
+  * `pass`).
   */
 case class MoveEvent(gameId: GameId, board: String, move: String)
 case class CorresMoveEvent(
@@ -65,7 +64,6 @@ case class Moretime(
 )
 case class ClientFlag(color: Color, fromPlayerId: Option[GamePlayerId])
 case object Abandon
-case class ForecastPlay(lastMove: MoveOrDrop)
 case class Cheat(color: Color)
 case class HoldAlert(playerId: GamePlayerId, mean: Int, sd: Int, ip: IpAddress)
 case class GoBerserk(color: Color, promise: Promise[Boolean])

@@ -3,8 +3,6 @@ package views
 import lila.app.UiEnv.{ *, given }
 export lila.web.ui.bits
 
-val captcha = lila.web.ui.CaptchaUi(helpers)
-
 val chat = lila.chat.ChatUi
 
 val setup = lila.setup.ui.SetupUi(helpers)

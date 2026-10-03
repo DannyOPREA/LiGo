@@ -116,7 +116,6 @@ final class LilaComponents(
   lazy val challenge: Challenge = wire[Challenge]
   lazy val dasher: Dasher = wire[Dasher]
   lazy val dev: Dev = wire[Dev]
-  lazy val `export`: Export = wire[Export]
   lazy val game: Game = wire[Game]
   lazy val github: Github = wire[Github]
   lazy val i18n: I18n = wire[I18n]

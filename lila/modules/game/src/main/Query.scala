@@ -10,6 +10,9 @@ object Query:
 
   import Game.BSONFields as F
 
+  /** A Go game (ADR 0019 §4): chess documents from before unit 3.17 have no board size. */
+  val go: Bdoc = GoStorage.F.size.exists(true)
+
   val rated: Bdoc = bdoc(F.rated -> true)
 
   val casual: Bdoc = F.rated.neq(true)
@@ -52,8 +55,8 @@ object Query:
 
   def clockHistory(c: Boolean): Bdoc = F.whiteClockHistory.exists(c)
 
-  def user[U: UserIdOf](u: U): Bdoc = bdoc(F.playerUids -> u.id)
-  def users(u: Iterable[UserId]): Bdoc = F.playerUids.in(u)
+  def user[U: UserIdOf](u: U): Bdoc = bdoc(F.playerUids -> u.id) ++ go
+  def users(u: Iterable[UserId]): Bdoc = F.playerUids.in(u) ++ go
 
   val noAnon = bdoc(
     "p0.e".exists(true),
