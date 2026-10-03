@@ -150,15 +150,20 @@ final private[api] class RoundApi(
       initialFen: Option[Fen.Full],
       withFlags: ExportOptions
   )(obj: JsObject) =
-    obj + ("treeParts" ->
-      Tree.makePartitionTreeJson(
-        pov.game,
-        analysis,
-        initialFen | pov.game.variant.initialFen,
-        withFlags,
-        logChessError = lila.log.system.warn
-      ))
+    // A Go game's analysis tree comes with the analysis board (Phase 7); until then it has none.
+    if pov.game.isGo then obj
+    else
+      obj + ("treeParts" ->
+        Tree.makePartitionTreeJson(
+          pov.game,
+          analysis,
+          initialFen | pov.game.variant.initialFen,
+          withFlags,
+          logChessError = lila.log.system.warn
+        ))
 
+  // A Go game's move list is built by the browser from `game.go.moves` (unit 3.18), which ignores these
+  // steps. Until then a Go game gets the chess round UI's single starting step, so that page still loads.
   private def withSteps(pov: Pov, initialFen: Option[Fen.Full])(obj: JsObject) =
     obj + ("steps" -> lila.round.StepBuilder(
       id = pov.gameId,

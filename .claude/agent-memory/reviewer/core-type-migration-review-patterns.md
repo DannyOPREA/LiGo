@@ -40,5 +40,13 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   line. `dev/ligo test ws`/verify report Total 0 when sbt 2 caches: rerun with `sbt --batch testFull`
   in lila-ws. Wire payload renames: grep lila/ui consumers (`socket.in.fen` in boot.ts/pubsub.ts).
 
+- 3.16 (other modules on Go): anything that walks `go.actions` by index and maps it to ply or clock
+  index breaks after a `Resume` (an action, not a ply, toMove unchanged). Ask for per-state `toMove`.
+  Sending `steps: []` to the round UI crashes it (`util.firstPly` reads `steps[0]`) until 3.18.
+  PGN export/pgnInJson still emit chess PGN for Go. Check `git fetch` + merge-tree: main moved (3.15)
+  mid-review. Another session shared the worktree and ran verify concurrently -> bogus compile
+  failure; rerun alone. `pgrep -f verify.sh` in an until-loop matches its own bash line.
+  Unit-scoped rerun: `cd lila && ./lila.sh --batch "game/testFull"` (one project per call).
+
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

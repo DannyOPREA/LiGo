@@ -111,8 +111,10 @@ final class RoundMobile(
       Json
         .obj(
           "game" -> {
+            // A Go game's moves are in the base JSON's `go` block; it has no PGN (unit 3.16).
             jsonView.base(game, initialFen) ++ Json
-              .obj("pgn" -> game.sans.mkString(" "))
+              .obj()
+              .add("pgn" -> (!game.isGo).option(game.sans.mkString(" ")))
               .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
           },
           "white" -> playerJson(Color.White),

@@ -1,8 +1,5 @@
 package controllers
 
-import chess.format.Fen
-import chess.variant.{ FromPosition, Standard, Variant, Chess960 }
-import chess.{ Position, ByColor }
 import play.api.libs.json.Json
 import play.api.mvc.*
 
@@ -17,87 +14,23 @@ final class UserAnalysis(
 ) extends LilaController(env)
     with lila.web.TheftPrevention:
 
-  def index = load(none, Standard)
+  // The analysis board is a placeholder until Phase 7's Go analysis board (unit 7.4) replaces it (unit
+  // 3.16): the chess board it was can't show a Go position.
+  private def comingLater(using Context) = Ok.page:
+    views.site.message.comingLater(
+      "Analysis board",
+      "The analysis board for Go arrives in a later update. Finished games can be replayed on their game page."
+    )
 
-  def parseArg(arg: String) =
-    arg.split("/", 2) match
-      case Array(key) => load(none, Variant.orDefault(Variant.LilaKey(key)))
-      case Array(key, fen) =>
-        Variant(Variant.LilaKey(key)) match
-          case Some(variant) if variant != Standard => load(fen.some, variant)
-          case _ if Fen.Full.clean(fen) == Standard.initialFen => load(none, Standard)
-          case Some(Standard) => load(fen.some, FromPosition)
-          case _ => load(arg.some, FromPosition)
-      case _ => load(none, Standard)
+  def index = Open(comingLater)
 
-  private def load(urlFen: Option[String], variant: Variant) = Open:
-    val inputFen: Option[Fen.Full] = urlFen.orElse(get("fen")).flatMap(readFen)
-    val chess960PositionNum: Option[Int] = variant.chess960.so:
-      getInt("position").orElse: // no input fen or num defaults to standard start position
-        Chess960.positionNumber(inputFen | variant.initialFen)
-    val decodedFen: Option[Fen.Full] = inputFen.orElse(chess960PositionNum.flatMap(Chess960.positionToFen))
-    val pov = makePov(decodedFen, variant)
-    val orientation = getColor() | pov.color
-    for
-      data <- env.api.roundApi.userAnalysisJson(
-        pov,
-        ctx.pref,
-        decodedFen,
-        orientation,
-        owner = false
-      )
-      page <- renderPage(views.analyse.ui.userAnalysis(data, pov, chess960PositionNum))
-    yield Ok(page)
-      .withCanonical(routes.UserAnalysis.index)
-      .enforceCrossSiteIsolation
+  def parseArg(@annotation.unused arg: String) = Open(comingLater)
 
-  def pgn(pgn: String) = Open:
-    val pov = makePov(none, Standard)
-    val orientation = getColor() | pov.color
-    val decodedPgn =
-      lila.common.String
-        .decodeUriPath(pgn.take(5000))
-        .map(_.replace("_", " ").replace("+", " ").trim)
-        .filter(_.nonEmpty)
-    Ok.async:
-      env.api.roundApi
-        .userAnalysisJson(pov, ctx.pref, none, orientation, owner = false)
-        .map: data =>
-          views.analyse.ui.userAnalysis(data, pov, inlinePgn = decodedPgn)
-    .map(_.enforceCrossSiteIsolation)
+  def pgn(@annotation.unused pgn: String) = Open(comingLater)
 
   def embed = Anon:
     InEmbedContext:
-      val pov = makePov(none, Standard)
-      val orientation = getColor() | pov.color
-      val fen = get("fen").flatMap(readFen)
-      env.api.roundApi
-        .userAnalysisJson(pov, ctx.pref, fen, orientation, owner = false)
-        .map: data =>
-          Ok(views.analyse.embed.userAnalysis(data)).enforceCrossSiteIsolation
-
-  def readFen(from: String): Option[Fen.Full] = lila.common.String
-    .decodeUriPath(from)
-    .filter(_.trim.nonEmpty)
-    .map(Fen.Full.clean)
-
-  private[controllers] def makePov(fen: Option[Fen.Full], variant: Variant): Pov =
-    makePov:
-      Position.AndFullMoveNumber(variant, fen.filter(_.value.nonEmpty))
-
-  private[controllers] def makePov(from: Position.AndFullMoveNumber): Pov =
-    Pov(
-      lila.core.game
-        .newGame(
-          chess = chess.Game(position = from.position, ply = from.ply),
-          players = ByColor(lila.game.Player.make(_, none)),
-          rated = chess.Rated.No,
-          source = lila.core.game.Source.Api,
-          pgnImport = None
-        )
-        .withId(lila.game.Game.syntheticId),
-      from.position.color
-    )
+      NotFound.snip(views.analyse.embed.notFound)
 
   // correspondence premove aka forecast
   // also used by lichobile for post-game analysis
@@ -108,6 +41,7 @@ final class UserAnalysis(
         negotiateApi(
           html =
             if game.replayable then Redirect(routes.Round.watcher(game.id, color))
+            else if game.isGo then comingLater
             else
               val owner = isMyPov(pov)
               for
