@@ -100,3 +100,15 @@ class GoBridgeTest extends munit.FunSuite:
       GoBridge.setupName(Setup(BoardSize.Thirteen, Ruleset.Japanese, 0.0, 0)),
       "13×13 • Japanese • komi 0"
     )
+
+  test("a mini game's state: board, player to move, last move, plies; a resume isn't a move"):
+    def act(g: GoGame, a: Action) = g(a).fold(r => fail(s"refused $a: ${r.key}"), identity)
+    val fresh = start(setup(0))
+    assertEquals(GoBridge.miniState(fresh, blind = false), s"${GoBridge.board(fresh)},black,,0")
+    val played = act(fresh, Action.Place(Point(0, 1)))
+    assertEquals(GoBridge.miniState(played, blind = false), "9/b8/9/9/9/9/9/9/9,white,ab,1")
+    val resumed = List(Action.Pass, Action.Pass, Action.Resume).foldLeft(played)(act)
+    assertEquals(GoBridge.lastMove(resumed), "pass")
+    assertEquals(GoBridge.miniState(resumed, blind = false).split(',').last, "3")
+    assertEquals(GoBridge.miniBoard(played, blind = true), List.fill(9)("9").mkString("/"))
+    assertEquals(GoBridge.miniState(start(setup(2)), blind = false).split(',')(1), "white")
