@@ -15,7 +15,13 @@ export const ratingView = ({ opts, data, setupCtrl }: LobbyController): MaybeVNo
     !opts.showRatings
       ? ['Go']
       : [
-          ...i18n.site.yourRatingIsX.asArray(h('strong', { attrs: { title: String(rating) } }, data.goRank ?? rating + (setupCtrl.isProvisional() ? '?' : ''))),
+          ...i18n.site.yourRatingIsX.asArray(
+            h(
+              'strong',
+              { attrs: { title: String(rating) } },
+              data.goRank ?? rating + (setupCtrl.isProvisional() ? '?' : ''),
+            ),
+          ),
           'Go',
         ],
   );

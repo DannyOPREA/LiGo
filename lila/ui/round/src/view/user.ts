@@ -60,7 +60,11 @@ export function userHtml(ctrl: RoundController, player: Player, position: TopOrB
         !!signal && signalBars(signal),
         // LiGo: the kyu/dan label, the rating in its title (ADR 0021 §3)
         !!rating &&
-          hl('rating', { attrs: { title: String(rating) } }, goRank ?? rating + (player.provisional ? '?' : '')),
+          hl(
+            'rating',
+            { attrs: { title: String(rating) } },
+            goRank ?? rating + (player.provisional ? '?' : ''),
+          ),
         !!rating && ratingDiff(player),
         player.engine &&
           hl('span', {

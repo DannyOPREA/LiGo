@@ -64,11 +64,11 @@ object GoRating:
 
   /* The label shown instead of a rating: "5k", or "5k?" while the rating is
    * provisional (deviation ≥ 110, scalachess's threshold, kept by ADR 0013). */
-  def label(glicko: Glicko): String =
-    val name = Rank.ofRating(glicko.rating).name
-    if glicko.provisional.yes then s"$name?" else name
+  def label(glicko: Glicko): String = label(glicko.intRating, glicko.provisional)
 
-  // the same from a whole rating and its provisional flag, as games and lobby entries keep them (unit 5.5)
+  /* The same from a whole rating and its provisional flag, as games and lobby entries keep them.
+   * Every label comes from the whole rating, so one player shows one rank everywhere, matching the
+   * whole-point edges of `rankTable` (unit 5.5). */
   def label(rating: IntRating, provisional: RatingProvisional): String =
     val name = Rank.ofRating(rating.value.toDouble).name
     if provisional.yes then s"$name?" else name

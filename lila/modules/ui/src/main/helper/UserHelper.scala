@@ -37,6 +37,7 @@ trait UserHelper:
   def goRank(rating: IntRating, provisional: RatingProvisional): Tag =
     span(cls := "go-rank", title := rating.value.toString)(ratingApi.goLabel(rating, provisional))
 
+  // LiGo: Go has one rating (ADR 0021 §1), so any perf shown here is read as the go perf (unit 5.5)
   def renderRating(perf: Perf): Frag = frag(" (", goRank(perf.intRating, perf.provisional), ")")
 
   // LiGo: UserPerfs shows the one Go rating (ADR 0021 §1), not lila's best perf
