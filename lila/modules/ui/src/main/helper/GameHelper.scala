@@ -55,10 +55,16 @@ trait GameHelper:
             withRating.option(
               span(cls := "rating")(
                 " (",
+                // LiGo: the Go rank label, the rating in its title (ADR 0021 §3, unit 5.5)
                 player.rating.fold(frag("?")): rating =>
                   if player.provisional.yes then
-                    abbr(title := trans.perfStat.notEnoughRatedGames.txt())(rating, "?")
-                  else rating,
+                    abbr(
+                      cls := "go-rank",
+                      title := s"$rating? · ${trans.perfStat.notEnoughRatedGames.txt()}"
+                    )(
+                      ratingApi.goLabel(rating, player.provisional)
+                    )
+                  else goRank(rating, player.provisional),
                 ")"
               )
             )

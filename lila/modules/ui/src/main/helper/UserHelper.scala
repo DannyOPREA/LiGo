@@ -33,12 +33,17 @@ trait UserHelper:
   def userFlair(flair: Flair): Tag = img(cls := "uflair", src := flairSrc(flair))
   def userFlairSync(userId: UserId): Option[Tag] = lightUserSync(userId).flatMap(_.flair).map(userFlair)
 
-  def renderRating(perf: Perf): Frag = frag(" (", perf.intRating, perf.provisional.yes.option("?"), ")")
+  // LiGo: the Go rank label, with the rating itself in the hover title (ADR 0021 §3, unit 5.5)
+  def goRank(rating: IntRating, provisional: RatingProvisional): Tag =
+    span(cls := "go-rank", title := rating.value.toString)(ratingApi.goLabel(rating, provisional))
 
-  // UserPerfs selects the best perf
+  // LiGo: Go has one rating (ADR 0021 §1), so any perf shown here is read as the go perf (unit 5.5)
+  def renderRating(perf: Perf): Frag = frag(" (", goRank(perf.intRating, perf.provisional), ")")
+
+  // LiGo: UserPerfs shows the one Go rating (ADR 0021 §1), not lila's best perf
   def userRating(perf: Perf | UserPerfs): Frag = perf match
     case p: Perf => renderRating(p)
-    case p: UserPerfs => ratingApi.bestRated(p).map(_.perf).so(renderRating)
+    case p: UserPerfs => renderRating(p.go)
 
   def anonUserSpan(cssClass: Option[String] = None, modIcon: Boolean = false) =
     span(cls := List("offline" -> true, "user-link" -> true, ~cssClass -> cssClass.isDefined))(
@@ -219,14 +224,18 @@ trait UserHelper:
       nb: Int,
       provisional: RatingProvisional,
       clueless: Boolean,
-      icon: Icon
+      icon: Icon,
+      go: Boolean = false
   )(using Translate): Frag =
+    val games = trans.site.ratingXOverYGames.pluralTxt(nb, name, nb.localize)
     span(
-      title := trans.site.ratingXOverYGames.pluralTxt(nb, name, nb.localize),
+      // LiGo: a Go rating shows as its rank label, always, with the number in the title (ADR 0021 §3)
+      title := (if go then s"$rating${provisional.yes.so("?")} · $games" else games),
       dataIcon := icon,
       cls := "text"
     )(
-      if clueless then frag(nbsp, nbsp, nbsp, if nb < 1 then "-" else "?")
+      if go then ratingApi.goLabel(rating, provisional)
+      else if clueless then frag(nbsp, nbsp, nbsp, if nb < 1 then "-" else "?")
       else frag(rating, provisional.yes.option("?"))
     )
 
@@ -238,14 +247,16 @@ trait UserHelper:
       nb,
       provisional,
       glicko.clueless,
-      p.key.perfIcon
+      p.key.perfIcon,
+      go = p.key == PerfKey.go
     )
 
   def showPerfRating(perfs: UserPerfs, perfKey: PerfKey)(using Translate): Frag =
     showPerfRating(perfs.keyed(perfKey))
 
+  // LiGo: the one Go rating (ADR 0021 §1)
   def showBestPerf(perfs: UserPerfs)(using Translate): Option[Frag] =
-    ratingApi.bestRated(perfs).map(showPerfRating)
+    showPerfRating(perfs.keyed(PerfKey.go)).some
 
   def showRatingDiff(diff: IntRatingDiff): Frag = diff.value match
     case 0 => span("±0")

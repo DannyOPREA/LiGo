@@ -84,6 +84,7 @@ case class Hook(
     .add("prov" -> perf.map(_.provisional))
     .add("u" -> user.map(_.username))
     .add("rating" -> rating)
+    .add("goRank" -> perf.map(p => lila.rating.GoRating.label(p.rating, p.provisional))) // LiGo (unit 5.5)
     .add("variant" -> realVariant.exotic.option(realVariant.key))
     .add("go" -> GoSetups.json(go).some)
     .add("ra" -> rated.yes.option(1))
