@@ -4,7 +4,7 @@
 // mode the same element holds libs/board's position editor instead.
 // Licence: MIT (LiGo's own code, ADR 0006).
 
-import type { Board, BoardConfig } from '@ligo/board/board';
+import type { Board, BoardConfig, Color } from '@ligo/board/board';
 import type { Editor, EditorConfig } from '@ligo/board/editor';
 
 interface Mounters {
@@ -72,6 +72,23 @@ export class AnalyseBoard {
     } catch (e) {
       console.error(e);
       this.loadFailed = true;
+    }
+  };
+
+  /**
+   * Plays the move the board just reported on the board itself, instead of drawing it again, so
+   * the focus and goban's keyboard cursor stay (libs/board's keyboard play, ADR 0026 §4). False
+   * when there is no board to play it on; the caller then remounts.
+   */
+  advance = (move: string, toMove: Color): boolean => {
+    if (!this.board) return false;
+    try {
+      this.board.play(move);
+      this.board.set({ movable: toMove });
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
     }
   };
 

@@ -55,9 +55,11 @@ export function renderSetup(ctrl: AnalyseCtrl, setup: Setup): VNode {
           attrs: { type: 'number', step: '0.5', min: '-150', max: '150', inputmode: 'decimal' },
           props: { value: String(setup.komi) },
           hook: bind('change', e => {
-            const komi = Number((e.target as HTMLInputElement).value);
-            if (Number.isFinite(komi) && Number.isInteger(komi * 2)) ctrl.setSetupKomi(komi);
-            else ctrl.redraw();
+            const input = e.target as HTMLInputElement;
+            const komi = input.value.trim() === '' ? NaN : Number(input.value);
+            // A multiple of 0.5 within the box's limits; anything else goes back to the komi in use.
+            if (Number.isInteger(komi * 2) && Math.abs(komi) <= 150) ctrl.setSetupKomi(komi);
+            else input.value = String(setup.komi);
           }),
         }),
       ]),

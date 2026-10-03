@@ -123,6 +123,20 @@ test.describe('desktop', () => {
     expect(problems).toEqual({ requests: [], errors: [] });
   });
 
+  test('keyboard play keeps the focus on the board from move to move', async ({ page }) => {
+    const { problems } = await openAnalysis(page);
+    const board = page.locator('.analyse__go-board [role="application"]');
+    await board.focus();
+    await page.keyboard.press('Enter');
+    await expect(moveList(page)).toHaveCount(1);
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('Enter');
+    await expect(moveList(page)).toHaveCount(2);
+    await expect(board).toBeFocused();
+    expect(await sgfOf(page)).toMatch(/;W\[[a-s]{2}\]/);
+    expect(problems).toEqual({ requests: [], errors: [] });
+  });
+
   test('SGF: load a record with variations, refuse a bad one, download', async ({ page }) => {
     const { problems } = await openAnalysis(page);
     await loadSgf(
@@ -141,7 +155,9 @@ test.describe('desktop', () => {
 
     // A record with an illegal move is refused, saying which move, and the tree stays.
     await loadSgf(page, '(;GM[1]FF[4]SZ[9];B[ee];W[ee])');
-    await expect(page.locator('.analyse__sgf-error')).toHaveText(/^Move 2: /);
+    await expect(page.locator('.analyse__sgf-error')).toHaveText(
+      'Move 2: W[ee] is not a legal move (occupied)',
+    );
     await expect(moveList(page)).toHaveCount(5);
 
     // The download is the tree as SGF, variations and comment included.
@@ -153,6 +169,16 @@ test.describe('desktop', () => {
     expect(text).toBe(await sgfOf(page));
     expect(text).toContain('C[A fine start.]');
     expect(text.replace(/\s+/g, '')).toMatch(/\(;B\[gg\];W\[gc\]\)\(;B\[cg\]\)\)$/);
+
+    // Playing on goes on from the tree: the refusal goes, and the box shows the tree again.
+    await sgfBox(page).fill('(;GM[1]FF[4]SZ[9];B[aa])');
+    await moveList(page).filter({ hasText: 'C7' }).click();
+    await boardMoves(page, 2);
+    await play(page, 'ce');
+    await expect(moveList(page)).toHaveCount(6);
+    await expect(page.locator('.analyse__sgf-error')).toHaveCount(0);
+    await expect(sgfBox(page)).toHaveValue(await sgfOf(page));
+    await expect.poll(() => flat(page)).toContain(';B[ce]');
 
     // An SGF file opens the same way.
     await page.locator('input.analyse__sgf-file').setInputFiles({
@@ -172,6 +198,11 @@ test.describe('desktop', () => {
     await page.getByRole('button', { name: 'New position' }).click();
     await expect(page.locator('.analyse__setup h2')).toHaveText('New position');
     await page.getByRole('button', { name: '9×9' }).click();
+    // A komi that isn't a multiple of 0.5 goes back to the one in use.
+    await page.locator('#analyse-setup-komi').fill('7.25');
+    await page.locator('#analyse-setup-komi').press('Enter');
+    await page.locator('#analyse-setup-komi').blur();
+    await expect(page.locator('#analyse-setup-komi')).toHaveValue('6.5');
 
     await place(page, 9, ['cc', 'gg']);
     await page.getByRole('button', { name: 'White stones' }).click();
@@ -204,7 +235,7 @@ test.describe('desktop', () => {
     await page.getByRole('button', { name: 'Black stones' }).click();
     await place(page, 9, ['ba', 'ab']);
     await page.getByRole('button', { name: 'Start analysis' }).click();
-    await expect(page.locator('.analyse__setup-error')).toBeVisible();
+    await expect(page.locator('.analyse__setup-error')).toHaveText('The setup stone at A9 has no liberties');
     await page.getByRole('button', { name: 'Cancel' }).click();
     expect(await moves(page)).toEqual(['1 E5']);
 

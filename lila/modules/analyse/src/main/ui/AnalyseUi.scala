@@ -16,11 +16,9 @@ final class AnalyseUi(helpers: Helpers):
   // The explorer and tablebase settings went with the explorer (unit 3.4), and the external
   // engine and WebAssembly (browser engine) permissions with the engines (unit 3.5).
 
-  /**
-   * The Go analysis board (unit 7.4, ADR 0023 §1): the board, the move tree and the SGF box are built in
-   * the browser by `ui/analyse` on `libs/board`; the page only gives them somewhere to load. Nothing is
-   * stored.
-   */
+  /** The Go analysis board (unit 7.4, ADR 0023 §1): the board, the move tree and the SGF box are built in the
+    * browser by `ui/analyse` on `libs/board`; the page only gives them somewhere to load. Nothing is stored.
+    */
   def userAnalysis(coords: Int)(using ctx: Context): Page =
     Page(trans.site.analysis.txt())
       .css("analyse.free")

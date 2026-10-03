@@ -111,7 +111,7 @@ describe("position editor in Chromium", () => {
     assert.deepEqual(await stones(t.page), { black: ["dd", "jj"], white: ["dj"] });
   });
 
-  test("a destroyed editor leaves nothing behind and reports nothing", async () => {
+  test("a destroyed editor leaves nothing behind", async () => {
     await mount(t.page, { size: 9 });
     await t.page.evaluate(() => window.harness.editor.destroy());
     assert.equal(await t.page.locator("#board").innerHTML(), "");

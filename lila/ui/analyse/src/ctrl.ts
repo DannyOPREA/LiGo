@@ -16,6 +16,7 @@ import {
   boardMove,
   boardSetup,
   capturedBy,
+  pointName,
   positionSgf,
   soundOf,
   treeMove,
@@ -148,7 +149,7 @@ export default class AnalyseCtrl {
             ...boardSetup(this.nodeList),
             movable: this.node.toMove,
             coordinates: this.coordinates(),
-            onMove: move => this.playMove(treeMove(move)),
+            onMove: move => this.playMove(treeMove(move), true),
             onRefused: reason => this.refused(reason),
           },
         };
@@ -159,19 +160,34 @@ export default class AnalyseCtrl {
    * A move from the board (a stone or `..` for a pass): the child already there, or a new node if
    * the rules allow it here. Either way the board is drawn again from the tree.
    */
-  playMove = (move: string): void => {
+  playMove = (move: string, fromBoard = false): void => {
     if (this.setup) return;
     const path = this.path + move;
-    if (this.tree.pathExists(path)) return this.userJump(path);
-    const played = playFrom(this.nodeList, boardMove(move));
-    if ('refused' in played) return this.refused(played.refused);
-    const newPath = this.tree.addNode(played.node, this.path);
+    const played = fromBoard ? move : undefined;
+    if (this.tree.pathExists(path)) return this.stepTo(path, played);
+    const result = playFrom(this.nodeList, boardMove(move));
+    if ('refused' in result) return this.refused(result.refused);
+    const newPath = this.tree.addNode(result.node, this.path);
     if (!newPath) return this.redraw();
-    this.version++;
-    this.userJump(newPath);
+    this.treeChanged();
+    this.stepTo(newPath, played);
   };
 
+  /** One move forward. A move picked on the board is played on it, so a keyboard player keeps focus. */
+  private stepTo(path: TreePath, playedOnBoard?: string): void {
+    this.autoplay.stop();
+    this.jump(path, playedOnBoard);
+    this.redraw();
+  }
+
   pass = (): void => this.playMove('..');
+
+  /** The tree changed here: the SGF box follows it again, and an old file's refusal goes. */
+  private treeChanged(): void {
+    this.version++;
+    this.sgfInput = undefined;
+    this.sgfError = undefined;
+  }
 
   private refused(reason: 'occupied' | 'suicide' | 'superko'): void {
     site.sound.play('error');
@@ -180,14 +196,16 @@ export default class AnalyseCtrl {
     this.redraw();
   }
 
-  jump(path: TreePath): void {
+  /** Moves the cursor; `playedOnBoard`: the move the board reported, which it can play itself. */
+  jump(path: TreePath, playedOnBoard?: string): void {
     const oneForward = path.length === this.path.length + 2 && path.startsWith(this.path);
     if (path !== this.path)
       this.treeView.requestAutoScroll(treeOps.distance(this.path, path) > 8 ? 'instant' : 'smooth');
     const parent = this.node;
     this.setPath(path);
     if (oneForward && this.node.move) site.sound.play(soundOf(this.node.move, capturedBy(parent, this.node)));
-    this.board.remount();
+    if (!(oneForward && playedOnBoard && this.board.advance(boardMove(playedOnBoard), this.node.toMove)))
+      this.board.remount();
   }
 
   userJump = (path: TreePath): void => {
@@ -215,7 +233,7 @@ export default class AnalyseCtrl {
     )
       return;
     this.tree.deleteNodeAt(path);
-    this.version++;
+    this.treeChanged();
     if (treePath.contains(this.path, path)) this.userJump(treePath.init(path));
     else this.jump(this.path);
     this.redraw();
@@ -223,7 +241,7 @@ export default class AnalyseCtrl {
 
   promote(path: TreePath, toMainline: boolean): void {
     this.tree.promoteAt(path, toMainline);
-    this.version++;
+    this.treeChanged();
     this.jump(path);
     this.redraw();
   }
@@ -358,7 +376,12 @@ export default class AnalyseCtrl {
       this.sgfError = undefined;
       this.load(readTree(positionSgf(this.setup)));
     } catch (e) {
-      this.setup.error = errorText(e);
+      const size = this.setup.size;
+      // "the setup stone at cc has no liberties": the point as the board names it.
+      this.setup.error = errorText(e).replace(
+        /\bat ([a-s]{2})\b/,
+        (_, pt: string) => `at ${pointName(size, pt)}`,
+      );
     }
     this.redraw();
   };
@@ -375,7 +398,8 @@ const plural = (noun: string, nb: number): string => `${nb} ${nb === 1 ? noun : 
 
 /** An SGF refusal as the page says it: the reason, and the move number when a move is the cause. */
 export function errorText(e: unknown): string {
-  if (e instanceof SgfError) return e.move ? `Move ${e.move}: ${e.message}` : e.message;
+  // libs/board's messages start in lower case, with "move N: " when a move is the cause.
+  if (e instanceof SgfError) return e.message.charAt(0).toUpperCase() + e.message.slice(1);
   console.error(e);
   return 'That record could not be read.';
 }

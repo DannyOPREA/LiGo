@@ -114,7 +114,10 @@ describe('a new position', () => {
       white: ['aa'],
       toMove: 'black',
     });
-    assert.throws(() => readTree(sgf));
+    assert.throws(() => readTree(sgf), {
+      name: 'SgfError',
+      message: /the setup stone at aa has no liberties/,
+    });
   });
 
   test('settings read as the side panel shows them', () => {
