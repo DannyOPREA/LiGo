@@ -16,9 +16,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
   Logs: logs/scoring.md, logs/clocks.md.
 
 - Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
-  docs/PLAN.md §5. 5.1 (ADR 0021, PR #37), 5.2 (rating maths, PR #39) and 5.4's signup half (PR #70)
-  merged; 5.3 (rated Go games move ratings with handicap) in review. 5.4's account page waits for 3.16,
-  5.5–5.8 for Phase 3 units 3.15–3.20 and 4.9. Log: logs/ratings.md.
+  docs/PLAN.md §5. 5.1 (ADR 0021, PR #37), 5.2 (rating maths, PR #39), 5.4's signup half (PR #70)
+  and 5.3 (rated Go games move ratings with handicap, PR #76) merged; 5.4's account page in review;
+  5.5 and 5.6 next; 5.7 waits for 4.9, 5.8 for all of them. Log: logs/ratings.md.
 
 - Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
   docs/PLAN.md §5. 6.1 (ADR 0022, PR #41) and 6.2 (auto-handicap pairing in `lila/modules/pool`,
