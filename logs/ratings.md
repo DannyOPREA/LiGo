@@ -7,8 +7,42 @@
 - goratings' handicap/rank maths is in `analysis/util/RatingMath.py`, not its package; its `analysis/util/__init__` needs filelock etc., so load RatingMath.py and CLI.py directly (2026-09-27).
 - Handicap per OGS: update each player against the opponent's effective rating (shift in rank space), i.e. two calculator calls per game; scalachess `ColorAdvantage` is symmetric and fixed, not a fit (2026-09-27).
 - The "?" threshold (`provisionalDeviation = 110`) is a scalachess top-level val, not a lila constant; changing it means a fork or replacing call sites (2026-09-27).
+- lila starts games at pairing and aborts them before 2 plies; `NoStart` (37) is a third "never played" status. "Has played a rated game" must exclude Aborted and NoStart (`Query.gotGoing`) (2026-10-03, unit 5.4).
 
 ## Entries (newest first)
+
+### 2026-10-03 · unit 5.4 (part 2) · Change the Go rank on the account page
+- Did: a "Your Go rank" account page (`/account/go-rank`, menu entry after "Change username") with
+  "I don't know" or 25k–9d, preselected from the stored `go` perf; saving rewrites the perf as at
+  signup (`GoRankChange.perfOf`, now shared with `Signup`). It is open while the `go` perf has no
+  games and the player has no rated game that got going (`Query.gotGoing`: started, not aborted,
+  not abandoned before the first move); otherwise the page says the rank now moves only by playing
+  and a POST just redirects. Two i18n keys. Desktop and phone screenshots, open and locked, with an
+  axe check (`ui/playground/e2e/account-go-rank.spec.ts`, served without a lila server like the
+  credits page).
+- Worked: 5.4 part 1's form parsing and `UserPerfsRepo.setPerf`; `Query.rated(u)`.
+- Didn't work / dead ends: pref's UI can't depend on rating, so the rank names come in from
+  `app/views/ui.scala` (as AuthUi's do). The full site can't run in cloud sessions, so the
+  screenshots are of a trimmed copy of the page's markup, not lila's own render.
+- Lessons: lila starts a game at pairing (status Started) and aborts it before 2 plies; `NoStart`
+  (37) is a third "never really played" status, used for no-abort games, and PerfsUpdater never
+  rates any of them. A "has played a rated game" query must exclude all three.
+- Decisions: "until the first rated game starts" means a rated game that got going (not aborted or
+  abandoned before its first move); "I don't know" stays a choice and resets to lila's default; the
+  page's axe check lets off lila's own button blue and orange headings, as a11y.spec.ts does, until
+  9.7 (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md).
+- Review (reviewer agent): blocking: screenshots missing, an MIT licence line on a file partly moved
+  from AGPL code, no UPSTREAM rows for this unit or part 1; all fixed (screenshots added, the MIT
+  line dropped, both rows added). Non-blocking fixed: `NoStart` games locked the rank; the query
+  now uses `Query.rated(u)` and a shared, tested status predicate. Left: the check and the write
+  aren't atomic (a pairing landing in the same milliseconds keeps the new rank; documented); the
+  form also takes "new" (25k), harmless. Reported to the coordinator: docs/UPSTREAM.md lacks rows
+  for several earlier units that edited lila/.
+- Verified by Claude: `game/testOnly lila.game.GotGoingTest` 3/3, `security/testOnly
+  lila.security.GoRankChangeTest` 5/5, lila compile, the 4 page tests (screenshots looked at, also
+  unmasked), verify.sh. · Needs owner verification: the page on the real stack: change the rank,
+  see the flash and the new selection, then after a rated game (from 5.7) see the locked text.
+  `hasRatedGame` hasn't run against a real Mongo.
 
 ### 2026-09-30 · unit 5.3 · Rated Go games move ratings with handicap
 - Did: `PerfsUpdater` rates a finished rated Go game in the one `go` perf with 5.2's `GoRating`:

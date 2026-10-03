@@ -7,7 +7,12 @@ import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 import lila.core.security.TurnstilePublicConfig
 
-final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.user.FlagApi):
+final class AccountPages(
+    helpers: Helpers,
+    ui: AccountUi,
+    flagApi: lila.core.user.FlagApi,
+    goRanks: List[String]
+):
   import helpers.{ *, given }
   import trans.settings as trs
   import ui.AccountPage
@@ -260,6 +265,24 @@ final class AccountPages(helpers: Helpers, ui: AccountUi, flagApi: lila.core.use
           )(form3.input(_)(autofocus, required, autocomplete := "username")),
           form3.action(form3.submit(trans.site.apply()))
         )
+      )
+
+  // LiGo: the self-declared Go rank, open to change until the first rated game starts (ADR 0021 §2)
+  def goRank(form: Form[?], open: Boolean)(using Context) =
+    AccountPage(trans.site.signupGoRank.txt(), "goRank"):
+      div(cls := "box box-pad")(
+        h1(cls := "box__top")(trans.site.signupGoRank()),
+        standardFlash,
+        if open then
+          postForm(cls := "form3", action := routes.Account.goRankApply)(
+            form3.group(
+              form("goRank"),
+              trans.site.signupGoRank(),
+              help = trans.site.goRankChangeHelp().some
+            )(form3.select(_, ("" -> trans.site.signupGoRankUnknown.txt()) :: goRanks.map(r => r -> r))),
+            form3.action(form3.submit(trans.site.apply()))
+          )
+        else p(trans.site.goRankLocked())
       )
 
   def email(form: Form[?], managed: Boolean)(using Context) =

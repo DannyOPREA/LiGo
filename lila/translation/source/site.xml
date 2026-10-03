@@ -244,6 +244,8 @@
   <string name="signupGoRankHelp">Your Go rating starts there.</string>
   <string name="signupGoRankNew">I'm new to Go</string>
   <string name="signupGoRankUnknown">I don't know</string>
+  <string name="goRankChangeHelp">Your Go rating starts there. You can change it until your first rated game starts.</string>
+  <string name="goRankLocked">Your Go rank now changes only through rated games.</string>
   <string name="goBoardSize">Board size</string>
   <string name="goRules">Rules</string>
   <string name="goRulesJapanese">Japanese</string>
