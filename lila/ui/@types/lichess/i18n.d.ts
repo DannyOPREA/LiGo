@@ -3807,14 +3807,26 @@ interface I18n {
     goDeeper: string;
     /** Even */
     goEven: string;
+    /** First move */
+    goFirstMove: string;
     /** Handicap */
     goHandicap: string;
     /** Komi */
     goKomi: string;
+    /** Last move */
+    goLastMove: string;
+    /** Next move */
+    goNextMove: string;
     /** No open challenges match. Try other filters, or create a game. */
     goNoOpenChallenges: string;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
+    /** Previous move */
+    goPreviousMove: string;
+    /** Your Go rating starts there. You can change it until your first rated game starts. */
+    goRankChangeHelp: string;
+    /** Your Go rank now changes only through rated games. */
+    goRankLocked: string;
     /** Rules */
     goRules: string;
     /** Chinese */
@@ -4307,7 +4319,7 @@ interface I18n {
     permanentLinkForAnyoneToChallengeYou: string;
     /** Picture */
     picture: string;
-    /** Piece set */
+    /** Stones */
     pieceSet: string;
     /** Pinned pieces */
     pinnedPieces: string;

@@ -27,6 +27,13 @@ object Query:
 
   def started(u: UserId): Bdoc = user(u) ++ started
 
+  /* LiGo: a game that got going: started, and neither aborted nor abandoned before its first move
+   * (`NoStart`); such a game ends a player's chance to change their declared Go rank (unit 5.4) */
+  def gotGoing(s: Status): Boolean =
+    s.id >= Status.Started.id && s != Status.Aborted && s != Status.NoStart
+
+  val gotGoing: Bdoc = F.status.in(Status.all.filter(gotGoing).map(_.id))
+
   val playable: Bdoc = F.status.lt(Status.Aborted.id)
 
   val mate: Bdoc = status(Status.Mate)

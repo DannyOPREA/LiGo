@@ -170,6 +170,7 @@ final private[api] class GameApi(
             )
             .add("name", p.name)
             .add("provisional" -> p.provisional)
+            .add("goRank" -> lila.game.Namer.ratingString(p)) // LiGo (unit 5.5)
             .add("moveCentis" -> withFlags.moveTimes.so:
               lila.game.GameExt.computeMoveTimes(g, p.color).map(_.map(_.centis)))
             .add("blurs" -> withFlags.blurs.option(p.blurs.nb))

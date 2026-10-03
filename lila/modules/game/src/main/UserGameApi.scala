@@ -42,6 +42,7 @@ final class UserGameApi(
             .add("id" -> as.exists(p.isUser).option(p.id))
             .add("aiLevel" -> p.aiLevel)
             .add("rating" -> p.rating)
+            .add("goRank" -> Namer.ratingString(p)) // LiGo (unit 5.5)
             .add("ratingDiff" -> p.ratingDiff)),
         "winner" -> g.winnerColor.map(_.name),
         "bookmarks" -> g.bookmarks

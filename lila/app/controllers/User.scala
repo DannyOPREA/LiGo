@@ -17,7 +17,6 @@ import lila.core.perf.UserWithPerfs
 import lila.game.GameFilter
 import lila.mod.UserWithModlog
 import lila.rating.PerfType
-import lila.rating.UserPerfsExt.best8Perfs
 import lila.security.{ UserAgentParser, UserLogins }
 import lila.user.WithPerfsAndEmails
 import lila.mon.extensions.*
@@ -191,7 +190,7 @@ final class User(
                   Ok:
                     Json.obj(
                       "crosstable" -> crosstable,
-                      "perfs" -> lila.user.JsonView.perfsJson(user.perfs, user.perfs.best8Perfs)
+                      "perfs" -> lila.user.JsonView.perfsJson(user.perfs, List(PerfKey.go)) // LiGo (unit 5.5)
                     )
               )
           else Ok(views.user.bits.miniClosed(user.user, relation))

@@ -4,7 +4,6 @@ import lila.app.UiEnv.{ *, given }
 import lila.core.data.SafeJsonStr
 import lila.core.perf.UserWithPerfs
 import lila.perfStat.PerfStatData
-import lila.rating.UserPerfsExt.best8Perfs
 import lila.user.Profile.flagInfo
 
 val bits = lila.user.ui.UserBits(helpers)
@@ -35,7 +34,7 @@ def mini(
   val playing = playingGame.map(views.game.mini(_))
   def userMarks = views.mod.user.userMarks(u.user, None)
   val flag = u.profileOrDefault.flagInfo
-  val perfs = u.perfs.best8Perfs
+  val perfs = List(PerfKey.go) // LiGo: the one Go rating, as kyu/dan (ADR 0021 §1, §3; unit 5.5)
   show.ui.mini(u, playing, blocked, ping, rel, crosstable, flag, perfs, userMarks)
 
 val perfStat = lila.perfStat.PerfStatUi(helpers)(views.user.bits.communityMenu("ratings"))

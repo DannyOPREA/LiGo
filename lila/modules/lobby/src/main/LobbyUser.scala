@@ -37,9 +37,11 @@ private[lobby] object LobbyUser:
       blocking = blocking
     )
 
-  private def perfMapOf(perfs: UserPerfs): PerfMap =
+  /* LiGo (unit 5.5): the go perf is kept even before its first game, so a player who declared a rank
+   * at signup shows that rank on their hooks and seeks rather than lila's default (ADR 0021 §2). */
+  private[lobby] def perfMapOf(perfs: UserPerfs): PerfMap =
     perfs.perfsList.view.collect {
-      case (pk, perf) if pk != PerfKey.puzzle && perf.nonEmpty =>
+      case (pk, perf) if pk == PerfKey.go || (pk != PerfKey.puzzle && perf.nonEmpty) =>
         pk -> LobbyPerf(perf.intRating, perf.provisional)
     }.toMap
 

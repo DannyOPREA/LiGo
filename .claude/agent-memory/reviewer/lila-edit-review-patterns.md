@@ -47,3 +47,12 @@ Added from unit 5.4 part 1 (signup Go rank, 2026-09-30):
   deviation unchanged (elapsed 0). `$set` via setPerf writes it; whole-doc writers would not.
 - Help text promising a later part's feature ("you can change it until...") ships in part 1.
 - verify.sh "lila tests" is sbt 2 testQuick, cache 100% -> Total 0 everywhere: always run testOnly.
+
+Added from unit 9.7 part one (Go themes in board prefs, 2026-10-03):
+- Removing a dasher toggle (2D/3D) strands users whose stored pref (or RequestPref `?is3d=true`) is on:
+  page.scala still loads lib.board-3d (`.main-board` padding 93%). Ask to force the pref off server-side.
+- Deleting a site-wide loader (PieceSetImages, board image CSS by data-board) breaks still-live chess
+  pages (/training, analysis, embeds): blank boards, invisible pieces. Ask for disclosure at least.
+- Pref value lists now exist 3x (Scala Theme/PieceSet, libs/board themes.ts, dasher SCSS selectors) with
+  no sync test. Export/lila-gif still forwards the pref names.
+- ui/dasher has no tests dir: dasher edits are untested unless a browser test opens the menu.

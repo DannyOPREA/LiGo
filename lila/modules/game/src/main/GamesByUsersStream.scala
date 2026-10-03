@@ -66,6 +66,7 @@ object GameStream:
             )
             .add("name" -> user.map(_.name))
             .add("provisional" -> p.provisional)
+            .add("goRank" -> Namer.ratingString(p)) // LiGo (unit 5.5)
             .add("ai" -> p.aiLevel))
       )
       // a Go game has its setup instead of a chess variant (unit 3.16)

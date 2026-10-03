@@ -1,7 +1,7 @@
 - [Guard hook review patterns](guard-hook-review-patterns.md) — `--flag=value` bypasses, doc stragglers, stale origin/main
 - [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs
 - [Dev script review patterns](dev-script-review-patterns.md) — missing .ligo mkdir, hidden failures, unbounded curl, pending-decision merges
-- [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, brand constants, CMS path, snabbdom input attrs, ui package.json COPYING, new-pref checklist, vacuous isTouchDevice tests
+- [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, brand constants, snabbdom input attrs, new-pref checklist, stranded is3d, live chess pages (9.7)
 - [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM licences, §3.1 row scope, spike cross-checks, fixture circularity, run overlap, unlisted params, deferred options
 - [Rules spec review patterns](rules-spec-review-patterns.md) — replay cited sequences, resume vs pass counter, false clock bounds
 - [Conformance fixture review patterns](conformance-fixture-review-patterns.md) — CI wiring, checker argv bug, circular oracles, phase, licence
@@ -27,3 +27,4 @@
 - [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, gated-predicate readers, Resume drift, Query.go must guard every Game reader (3.11–3.17)
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, Setup.like/rematch bypass, kept chess rematch, vacuous me=None tests (3.15)
 - [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding tap dead zones, guest "Anonymous" seeks, raw reason tokens, vacuous suits (6.7)
+- [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)

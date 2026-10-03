@@ -19,3 +19,16 @@ export interface Theme {
 }
 
 export const DEFAULT_THEME: Theme = { board: 'Plain', stones: 'Plain' };
+
+/**
+ * The theme for two stored names (a preference, local storage): each one still offered, else the default,
+ * since a name stored by an earlier release (or a chess one) may no longer be in the lists.
+ */
+export const themeOf = (board?: string, stones?: string): Theme => ({
+  board: (BOARD_THEMES as readonly string[]).includes(board ?? '')
+    ? (board as BoardTheme)
+    : DEFAULT_THEME.board,
+  stones: (STONE_THEMES as readonly string[]).includes(stones ?? '')
+    ? (stones as StoneTheme)
+    : DEFAULT_THEME.stones,
+});

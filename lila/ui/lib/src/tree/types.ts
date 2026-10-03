@@ -1,5 +1,6 @@
-import type { Result } from '@badrap/result';
-import type { Outcome, Position } from 'chessops';
+// lila's move tree, for any game (unit 7.4): the chess node's rules (`pos`, `dests`, `check`…) live
+// with the chess puzzle page that still uses them (ui/puzzle `src/chessNode.ts`); the Go analysis
+// board's node is libs/board's `GoNode` (ADR 0023 §1).
 
 export type TreeNodeId = string;
 export type TreePath = string;
@@ -16,53 +17,51 @@ export interface PvDataServer extends EvalScore {
   moves: string;
 }
 
-export interface TreeNodeBase {
-  // file://./../../tree/src/tree.ts
+/** What the tree's operations (`ops.ts`, `tree.ts`) use of a node, whatever the game. */
+export interface TreeNodeShape {
   id?: TreeNodeId;
-  children?: TreeNodeBase[];
+  children?: TreeNodeShape[];
   ply: Ply;
-  uci?: Uci;
-  fen: FEN;
   comments?: TreeComment[];
-  gamebook?: Gamebook;
   eval?: ServerEval;
   glyphs?: Glyph[];
   clock?: Clock;
-  parentClock?: Clock;
   forceVariation?: boolean;
   shapes?: Shape[];
   comp?: boolean;
+  collapsed?: boolean;
+}
+
+/** A node as lila's server sends it for a chess game. */
+export interface TreeNodeBase extends TreeNodeShape {
+  // file://./../../tree/src/tree.ts
+  children?: TreeNodeBase[];
+  uci?: Uci;
+  fen: FEN;
+  gamebook?: Gamebook;
+  parentClock?: Clock;
   san?: string;
   threefold?: boolean;
   fail?: boolean;
   puzzle?: 'win' | 'fail' | 'good' | 'retry';
   crazy?: NodeCrazy;
-  collapsed?: boolean;
-  pos?: () => PositionResult; // precomputed
-  dests?: () => Dests;
-  drops?: () => Key[] | undefined;
-  check?: () => boolean;
-  outcome?: () => Outcome | undefined;
 }
 
-type TreeNodeFunctionProps<T> = {
-  [K in keyof T]-?: NonNullable<T[K]> extends (...args: any) => any ? K : never;
-}[keyof T];
-
-export interface TreeNodeLite extends Omit<TreeNodeBase, TreeNodeFunctionProps<TreeNodeBase>> {
+export interface TreeNodeLite extends TreeNodeBase {
   id: TreeNodeId;
   children: TreeNodeLite[];
 }
 
-export type PositionResult = Result<Position>;
-
+/** A node the tree holds: an id and children at every level. */
 export interface TreeNode extends TreeNodeLite {
   children: TreeNode[];
-  pos: () => PositionResult;
-  dests: () => Dests;
-  drops: () => Key[] | undefined;
-  check: () => boolean;
-  outcome: () => Outcome | undefined;
+}
+
+/** A node `makeTree` can hold, whose children are nodes of its own kind: chess (`TreeNode`) or Go
+ * (libs/board's `GoNode`). */
+export interface TreeNodeOf<N extends TreeNodeShape> extends TreeNodeShape {
+  id: TreeNodeId;
+  children: N[];
 }
 
 export interface NodeCrazy {

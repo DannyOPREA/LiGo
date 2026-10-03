@@ -12,7 +12,6 @@ import lila.core.email.UserIdOrEmail
 import lila.core.net.{ ApiVersion, IpAddress, ValidReferrer }
 import lila.core.security.IsProxy
 import lila.memo.{ RateLimit, SettingStore }
-import lila.rating.GoRating
 import lila.security.SecurityForm.SignupData
 import lila.oauth.Protocol.ClientId
 
@@ -164,7 +163,7 @@ final class Signup(
   private def setDeclaredGoRank(id: UserId, data: SignupData): Funit =
     data.declaredGoRank.so: rank =>
       perfsRepo
-        .setPerf(id, PerfKey.go, lila.rating.Perf.default.copy(glicko = GoRating.startingGlicko(rank)))
+        .setPerf(id, PerfKey.go, GoRankChange.perfOf(rank.some))
         .recover: e =>
           // the account exists by now: keep lila's default rating rather than fail the signup
           logger.warn(s"Could not set the declared Go rank ${rank.name} of $id", e)

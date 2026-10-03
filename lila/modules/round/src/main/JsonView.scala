@@ -42,6 +42,7 @@ final class JsonView(
         case _ if p.hasUser => userJsonView.ghost.some
         case _ => none)
       .add("rating" -> p.rating.ifTrue(withFlags.rating))
+      .add("goRank" -> lila.game.Namer.ratingString(p).ifTrue(withFlags.rating))
       .add("ratingDiff" -> p.ratingDiff.ifTrue(withFlags.rating))
       .add("provisional" -> (p.provisional.yes && withFlags.rating))
       .add("offeringRematch" -> isOfferingRematch.exec(Pov(g, p).ref))
@@ -141,6 +142,7 @@ final class JsonView(
         case _ => none)
       .add("ai" -> p.aiLevel)
       .add("rating" -> p.rating.ifTrue(withFlags.rating))
+      .add("goRank" -> lila.game.Namer.ratingString(p).ifTrue(withFlags.rating))
       .add("ratingDiff" -> p.ratingDiff.ifTrue(withFlags.rating))
       .add("provisional" -> (p.provisional.yes && withFlags.rating))
       .add("berserk" -> p.berserk)

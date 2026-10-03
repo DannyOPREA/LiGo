@@ -1,0 +1,9 @@
+/* Applied only while a screenshot is taken (unit 9.7), as on the playground (ui/playground/e2e/
+   screenshot.css): the page's glyphs are hidden, since Chromium builds rasterise text a little
+   differently, and everything else is compared. The text is checked with locators in the tests.
+   goban draws its coordinates in SVG (fill, not color), so they stay. */
+main.round,
+main.round * {
+  color: transparent !important;
+  text-shadow: none !important;
+}

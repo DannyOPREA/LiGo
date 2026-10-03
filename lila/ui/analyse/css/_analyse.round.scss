@@ -1,4 +1,10 @@
-/* analyse a game replay */
+/* analyse a game replay (lila's chess replay; a Go game's analysis comes with unit 7.5) */
 @import 'analyse.base';
+@import 'training';
+@import 'fork';
+@import 'player-clock';
+@import 'persistence';
+@import 'keyboard';
+@import 'settings';
 @import 'round-training';
 @import 'round-underboard';

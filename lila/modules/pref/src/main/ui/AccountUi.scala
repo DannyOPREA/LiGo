@@ -95,6 +95,9 @@ final class AccountUi(helpers: Helpers):
           a(activeCls("username"), href := routes.Account.username)(
             trans.site.changeUsername()
           ),
+          a(activeCls("goRank"), href := routes.Account.goRank)(
+            trans.site.signupGoRank()
+          ),
           a(activeCls("password"), href := routes.Account.passwd)(
             trans.site.changePassword()
           ),

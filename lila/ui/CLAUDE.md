@@ -22,7 +22,13 @@ snabbdom, styled with SCSS, bundled by the custom esbuild-based `ui/.build/` (`u
 - Page browser tests (unit 2.4): `ui/playground/e2e/` holds Playwright screenshots and a scripted
   game against the _built_ page (`dev/ligo compile ui`, then `dev/ligo test pages`), served from
   `public/` without a lila server. After a deliberate visual change, re-record with
-  `--update-snapshots` and look at every changed picture before committing it.
+  `--update-snapshots` and look at every changed picture before committing it. `ui/round/e2e/`
+  (the game page, unit 3.18) and `ui/analyse/e2e/` (the analysis board, unit 7.4) follow the same
+  pattern. Build the whole UI first: a partial `ui/build <package>` leaves `public/compiled/manifest.json`
+  pointing at older bundles.
+- `ui/analyse` (unit 7.4) is the Go analysis board: lila's move tree (`ui/lib/src/tree`, generic
+  over its node type) holding libs/board's Go nodes, `mountBoard` for positions and `mountEditor`
+  for setup mode (ADR 0023).
 - Dependencies: never non-frozen `pnpm install`; any `package.json` change needs an approved
   build-vs-buy memo (you will get a permission prompt).
 

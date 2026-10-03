@@ -43,6 +43,24 @@
   `PgnDump`, `TextLpvExpand`, `Annotator`, setup and lobby variants); part 3 (the CI check,
   scalachess-tiebreak, -test-kit and maybe -play-json, COPYING). Phase 7 removes the browser's
   forecast and GIF code in ui/analyse (7.4/7.6).
+### 2026-10-03 · register backfill · docs/UPSTREAM.md lists every merged change to lila/ and lila-ws/
+- Did: added 30 rows to docs/UPSTREAM.md's modification register (AGPL §5(a)), one per merged PR
+  on main that changed a file under `lila/` or `lila-ws/` and had no row: units 0.4, 0.6, 0.7,
+  2.1–2.4, 4.4, 4.5, 7.2, 8.3, 9.2–9.6, 9.8, 3.8, 3.10–3.16, 3.18, 3.19 part one, 6.7 part one,
+  and the CI fixes PR #81 and #83. (5.4 part one's row came with 5.4 part two, PR #85.) Rows go in date order, at module level like the
+  existing ones; existing rows are unchanged.
+- Worked: `git log --first-parent main -- lila lila-ws` plus `git show --first-parent -m
+  --name-status` per commit (the 0.4 PR is a merge commit, so `-m` is needed) gave the exact file
+  lists; the repo had to be unshallowed first.
+- Didn't work / dead ends: none.
+- Lessons: the register only stays complete if every unit that touches `lila/` or `lila-ws/` adds
+  its row in its own PR, including lockfile/workspace-only and added-only changes; 5.4 part one was
+  missing too, not only the units the reviewer listed.
+- Decisions: lockfile and workspace-only changes (4.4, 4.5, 7.2, 8.3) and files LiGo added inside
+  `lila/` (CLAUDE.md files, tests) get rows too, since the header says "every change".
+- Verified by Claude: every lila/lila-ws commit on main up to 3.16 (c98a5d31) now has a row; table
+  renders (all rows have 5 cells). · Needs owner verification: none.
+- Follow-ups: in-flight units add their own rows.
 
 ### 2026-09-30 · 3.16 · The other modules answer Go games in Go; analysis and puzzle placeholders
 - Did: wherever 3.16's modules (and `round`'s leftovers the 3.13 reviewer listed) read the unused
