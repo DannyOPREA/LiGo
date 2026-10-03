@@ -281,7 +281,19 @@ object BSONHandlers:
           rules = r.getD(F.rules, Set.empty)
         ),
         abortedBy = r.getO[Color](F.abortedBy),
-        byoyomi = r.getO[ByoyomiState](F.byoyomi).flatMap(ByoyomiClock.restore(_).toOption)
+        byoyomi = r
+          .getO[BSONDocument](F.byoyomi)
+          .flatMap: doc =>
+            // an unreadable clock loads the game without it, logged, rather than failing the whole game
+            byoyomiStateHandler
+              .readDocument(doc)
+              .toEither
+              .left
+              .map(_.getMessage)
+              .flatMap(ByoyomiClock.restore(_))
+              .left
+              .map(e => lila.log("game").warn(s"Go game ${light.id}: unreadable byo-yomi clock: $e"))
+              .toOption
       )
 
     def writes(w: BSON.Writer, o: Game) =

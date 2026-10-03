@@ -186,9 +186,9 @@ object GameExt:
 
     /** The clock after a Go move (ADR 0019 §5, ADR 0020 §7), started once each side has played. A Fischer
       * clock is stepped as scalachess' `Game.applyClock` steps it after a chess move: the frame lag, then a
-      * step (which switches the running side and adds the increment). A byo-yomi clock is stepped by
-      * go-rules with the same reported lag and move time: it charges main time or the current period and
-      * switches. Only the Fischer step reports how much lag it compensated.
+      * step (which switches the running side and adds the increment). A byo-yomi clock is stepped by go-rules
+      * with the same reported lag and move time: it charges main time or the current period and switches.
+      * Only the Fischer step reports how much lag it compensated.
       */
     def stepGoClock(
         metrics: chess.MoveMetrics,
@@ -317,7 +317,7 @@ object GameExt:
         g.source.exists(Source.expirable.contains) &&
         g.playable &&
         g.nonAi &&
-        g.clock.exists(!_.isRunning)
+        g.gameClock.exists(!_.isRunning)
 
   end extension
 

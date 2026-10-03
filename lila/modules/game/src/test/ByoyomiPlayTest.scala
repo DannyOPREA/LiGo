@@ -45,6 +45,35 @@ class ByoyomiPlayTest extends munit.FunSuite:
 
   private def p(sgf: String) = Point.fromSgf(sgf).get
 
+  private def created(
+      byoyomi: Option[ByoyomiConfig],
+      fischer: Option[chess.Clock] = None,
+      source: Source = Source.Lobby
+  ) =
+    newGoGame(
+      GoSetup(BoardSize.Nine, Ruleset.Japanese, 6.5, 0),
+      fischer,
+      ByColor(c => Player(GamePlayerId(if c.white then "wwww" else "bbbb"), c, aiLevel = none)),
+      rated = Rated.No,
+      source = source,
+      byoyomi = byoyomi
+    )
+
+  test("a new Go game can be created with a byo-yomi clock, which replaces any Fischer clock"):
+    val g =
+      created(Some(config), Some(chess.Clock(chess.Clock.LimitSeconds(60), chess.Clock.IncrementSeconds(2))))
+        .fold(e => fail(e.message), _.sloppy)
+    assertEquals(g.clock, None)
+    assertEquals(g.byoyomi.map(_.config), Some(config))
+    assertEquals(g.byoyomi.map(_.toMove), Some(GoColor.Black))
+    assert(!g.byoyomi.get.isRunning)
+    val bad = ByoyomiConfig(60, 0, 30)
+    assertEquals(created(Some(bad)).map(_.sloppy.id), Left(ligo.gorules.SetupError.BadByoyomi(bad)))
+
+  test("a byo-yomi lobby game nobody starts expires, as a Fischer one does"):
+    val g = created(Some(config)).fold(e => fail(e.message), _.start.sloppy)
+    assert(g.expirable, "the first-move countdown applies")
+
   // What the round does for a move the rules accepted: step the clock, then apply.
   private def play(g: Game, action: Action, metrics: MoveMetrics = MoveMetrics()): Progress =
     val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
@@ -184,3 +213,14 @@ class ByoyomiPlayTest extends munit.FunSuite:
 
   private def playAll(g: Game, moves: String*): Game =
     moves.foldLeft(g)((g, m) => play(g, Action.Place(p(m))).game)
+
+  test("an unreadable cy loads the game without a byo-yomi clock instead of failing"):
+    given w: Wall = Wall()
+    val doc = (gameHandler.write(newGo()) -- "cy") ++ BSONDocument("cy" -> BSONDocument("m" -> 60))
+    assertEquals(gameHandler.read(doc).byoyomi, None)
+
+  test("the end-of-game event carries the byo-yomi clocks"):
+    given w: Wall = Wall()
+    val g = playAll(newGo(), "ee", "cc").finish(Status.Resign, Some(Color.White))
+    val js = Event.EndData(g, None).data.as[JsObject]
+    assertEquals((js \ "clock" \ "wc").as[Int], 6000)

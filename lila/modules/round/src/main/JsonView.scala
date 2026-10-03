@@ -312,4 +312,7 @@ final class JsonView(
     }
 
   private def estimateTotalTime(g: Game) =
-    g.gameClock.map(_.estimateTotalSeconds).orElse(g.correspondenceClock.map(_.estimateTotalTime)).getOrElse(1200)
+    g.gameClock
+      .map(_.estimateTotalSeconds)
+      .orElse(g.correspondenceClock.map(_.estimateTotalTime))
+      .getOrElse(1200)

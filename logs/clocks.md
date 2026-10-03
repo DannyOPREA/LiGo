@@ -28,8 +28,16 @@
   delegation).
 - Verified by Claude: see the PR. · Needs owner verification: none until 4.9 lets you create a
   byo-yomi game; the round page shows its periods from 4.10.
-- Follow-ups: 4.8 stops and restarts the clock around the scoring phase; 4.9 creates byo-yomi games
-  (setup, pools, `Query.clock` for game filters); 4.10 shows periods on the round page.
+- Review (reviewer agent): fixed its two blocking findings (a byo-yomi game nobody started was never
+  expirable, so never aborted; a rematch dropped the byo-yomi clock: `newGoGame` now takes byo-yomi
+  settings) and four small ones (end-of-game clocks, time left in the "your turn" list, "give more
+  time" availability, a corrupt `cy` logged instead of silently dropped).
+- Follow-ups: 4.8 stops and restarts the clock around the scoring phase, and must keep
+  `Game.outoftime` from treating that stopped clock as flagged; 4.9 creates byo-yomi games (setup,
+  pools, `Query.clock` for game filters and "my turn" lists, the time-control label on mini games
+  and page meta); 4.10 shows periods on the round page. Known gaps: the byo-yomi step ignores the
+  browser's frame lag and reports no compensated lag (go-rules doesn't expose them), so lag
+  statistics and playban's flag-sitting checks only cover Fischer games for now.
 ### 2026-09-28 · unit 4.2 · Byo-yomi clock in libs/go-rules
 - Did: `ligo.gorules.ByoyomiClock` wraps strategygames' `ByoyomiClock` (ADR 0012) behind
   go-rules' own types: settings, start/stop, a move with lag compensation, out of time, a reading

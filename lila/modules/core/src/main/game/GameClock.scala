@@ -5,9 +5,9 @@ import _root_.chess.{ Centis, Clock, Color, Speed }
 import ligo.gorules.ByoyomiClock
 
 /** A game's real-time clock, whichever kind it is (ADR 0020 §7): scalachess's Fischer clock, kept in
-  * `Game.clock` and read by the chess-era code as before, or go-rules' byo-yomi clock, kept in `Game.byoyomi`.
-  * The round reads a game's clock through this, so it treats both the same way where they behave the same:
-  * running, out of time, time left, the expected length and the speed category.
+  * `Game.clock` and read by the chess-era code as before, or go-rules' byo-yomi clock, kept in
+  * `Game.byoyomi`. The round reads a game's clock through this, so it treats both the same way where they
+  * behave the same: running, out of time, time left, the expected length and the speed category.
   */
 enum GameClock:
   case Fischer(clock: Clock)

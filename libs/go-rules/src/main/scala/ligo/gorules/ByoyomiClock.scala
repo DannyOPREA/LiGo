@@ -116,8 +116,8 @@ final class ByoyomiClock private (private val sg: SgClock):
     */
   def estimateTotalSeconds: Int = sg.estimateTotalSeconds
 
-  /** The lag compensation lila expects to grant `color` on their next move, in centiseconds, if it knows
-    * any: sent to that player's browser with the clock, as for a Fischer clock.
+  /** The lag compensation lila expects to grant `color` on their next move, in centiseconds, if it knows any:
+    * sent to that player's browser with the clock, as for a Fischer clock.
     */
   def lagCompEstimate(color: Color): Option[Int] =
     sg.lagCompEstimate(ByoyomiClock.playerOf(color)).map(_.centis)
@@ -130,8 +130,8 @@ final class ByoyomiClock private (private val sg: SgClock):
     */
   def takeback: ByoyomiClock = wrap(sg.takeback())
 
-  /** True once either player has used any time: a stopped clock with time used in a game still in play is
-    * one lila treats as out of time, as for a Fischer clock.
+  /** True once either player has used any time: a stopped clock with time used in a game still in play is one
+    * lila treats as out of time, as for a Fischer clock.
     */
   def anyTimeUsed: Boolean =
     List(Player.P1, Player.P2).map(sg.players(_)).exists(p => p.elapsed.centis > 0 || p.spentPeriods > 0)

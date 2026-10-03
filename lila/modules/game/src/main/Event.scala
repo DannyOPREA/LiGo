@@ -289,7 +289,7 @@ object Event:
           "status" -> game.status
         )
         .add("abortedBy" -> game.abortedBy)
-        .add("clock" -> game.clock.map: c =>
+        .add("clock" -> game.gameClock.map: c =>
           Json.obj(
             "wc" -> c.remainingTime(Color.White).centis,
             "bc" -> c.remainingTime(Color.Black).centis

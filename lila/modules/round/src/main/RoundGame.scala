@@ -20,7 +20,7 @@ object RoundGame:
 
     def moretimeable(color: Color) =
       g.playable && g.canTakebackOrAddTime && !g.hasRule(_.noGiveTime) && {
-        g.clock.exists(_.moretimeable(color)) || g.correspondenceClock.exists(_.moretimeable(color))
+        g.gameClock.exists(_.moretimeable(color)) || g.correspondenceClock.exists(_.moretimeable(color))
       }
 
     /** The opponent's absence can be claimed on: a win (a Go game, or chess) or a draw (chess only). */
