@@ -12,6 +12,7 @@ export function userHtml(ctrl: RoundController, player: Player, position: TopOrB
     user = player.user,
     perf = user?.perfs?.[d.game.perf],
     rating = player.rating || perf?.rating,
+    goRank = player.goRank || perf?.goRank,
     showSignals = defined(d.opponentSignal) && defined(user?.id) && ctrl.isPlaying(),
     signal = showSignals
       ? user.id === d.opponent.user?.id
@@ -57,7 +58,9 @@ export function userHtml(ctrl: RoundController, player: Player, position: TopOrB
           line: false,
         }),
         !!signal && signalBars(signal),
-        !!rating && hl('rating', rating + (player.provisional ? '?' : '')),
+        // LiGo: the kyu/dan label, the rating in its title (ADR 0021 §3)
+        !!rating &&
+          hl('rating', { attrs: { title: String(rating) } }, goRank ?? rating + (player.provisional ? '?' : '')),
         !!rating && ratingDiff(player),
         player.engine &&
           hl('span', {

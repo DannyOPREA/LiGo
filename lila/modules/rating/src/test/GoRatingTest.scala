@@ -191,6 +191,18 @@ class GoRatingTest extends munit.FunSuite:
     assertEquals(cap(Glicko(300, 20, 0.14)), Glicko(400, 45, 0.14))
     assertEquals(cap(Glicko(1500, 900, 0.3)), Glicko(1500, 500, 0.15))
 
+  test("a whole rating and its provisional flag give the same label as the Glicko (unit 5.5)"):
+    list("ranks").foreach: c =>
+      val g = Glicko((c \ "rating").as[Double], (c \ "deviation").as[Double], 0.06)
+      // games and lobby entries keep the rating rounded down to a whole point
+      val whole = chess.IntRating(g.rating.toInt)
+      val expected = label(Glicko(whole.value, g.deviation, 0.06))
+      assertEquals(label(whole, g.provisional), expected, s"rating ${g.rating}")
+    assertEquals(label(chess.IntRating(1580), chess.rating.RatingProvisional.Yes), "5k?")
+    assertEquals(label(chess.IntRating(1960), chess.rating.RatingProvisional.No), "1d")
+    assertEquals(label(chess.IntRating(100), chess.rating.RatingProvisional.No), "25k")
+    assertEquals(label(chess.IntRating(4000), chess.rating.RatingProvisional.No), "9d")
+
   test("a declared starting rating survives being stored and read back (unit 5.4)"):
     val handler = lila.rating.Perf.perfHandler
     val stored = lila.rating.Perf.default.copy(glicko = startingGlicko(Rank.Kyu(5)))

@@ -14,6 +14,7 @@ export type AnyUser = {
   moderator?: boolean; // turn i.line into a mod icon
   rating?: number;
   provisional?: boolean;
+  goRank?: string; // LiGo: the server's kyu/dan label, shown instead of the rating (ADR 0021 §3)
   brackets?: boolean; // display the rating in brackets/parentheses, true by default
 };
 
@@ -50,9 +51,11 @@ export const userTitle = ({ title }: Pick<AnyUser, 'title'>): VNode | undefined 
 
 export const fullName = (u: AnyUser): MaybeVNodes => [userTitle(u), u.name, userFlair(u)];
 
-export const userRating = (u: Pick<AnyUser, 'rating' | 'provisional' | 'brackets'>): string | undefined => {
+export const userRating = (
+  u: Pick<AnyUser, 'rating' | 'provisional' | 'goRank' | 'brackets'>,
+): string | undefined => {
   if (u.rating) {
-    const rating = `${u.rating}${u.provisional ? '?' : ''}`;
+    const rating = u.goRank ?? `${u.rating}${u.provisional ? '?' : ''}`;
     return u.brackets !== false ? `(${rating})` : rating;
   }
   return undefined;
