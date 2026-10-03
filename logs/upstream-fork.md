@@ -31,7 +31,19 @@
   `TakebackerTest` (a chess move is now refused); a new `GoStorageTest` case checks a chess
   document is not read. Tests of deleted chess code deleted with it (`RematcherTest`,
   `BinaryCLMTest`, `BinaryPieceTest`, `BinaryUnmovedRooksTest`, `PgnDumpTest`).
-- Review (reviewer agent): REVIEW_PLACEHOLDER
+- Review (reviewer agent): 2 blocking findings, both handled. (1) Only some game queries skipped
+  stored chess games, and one chess document would have broken login's game list, profile tabs
+  and exports: every query helper that reads games (`nowPlaying*`, `opponents`, `imported`,
+  `user(s)`) and every `GameRepo` reader, the paginators, the bookmark export and the
+  correspondence email now skip documents without `sz` (tested). `sz` has no index, so these
+  queries filter one more field after the index. (2) The mini-board Scala (`GoBridge.miniState`,
+  `miniBoard`, `lastMove`, GameUi, `ownerPreview`) is copied from PR #88 (3.19 mini-board slice)
+  so part 1 compiles without the chess board; #88 brings the browser side, so part 1 merges only
+  after #88. From the optional list: removed `TooManyPlies` and `Drawer.force` (they could still
+  declare a Go game drawn), `maxPlies`, `forecastable`, `StepBuilder`, the GIF and import rate
+  limiters, an unused game `ws`; the import API answers 501 whatever the Accept header.
+  Disclosed: the puzzle JSON APIs fail for their chess games until 8.6 replaces them; the analysis
+  page's GIF and forecast code in ui/analyse is Phase 7's; the placeholder text is English only.
 - Worked: fixing compile errors module by module with a script that prints only `file:line: msg`;
   touching the changed files and recompiling to list their unused-import warnings.
 - Didn't work / dead ends: none.
