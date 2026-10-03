@@ -89,13 +89,13 @@ final class Env(
     case "puzzle" :: "issue" :: id :: issue :: Nil =>
       api.puzzle.setIssue(PuzzleId(id), issue).map(if _ then "done" else "not found")
     case "puzzle" :: "paths" :: "regenerate" :: Nil =>
-      pathApi.regenerate.map(nb => s"$nb paths written")
+      pathApi.refresh(force = true).map(nb => s"$nb paths written")
 
   // LiGo (ADR 0025 section 3): lichess builds the puzzle paths with a cron script outside lila; here
   // lila does. It checks soon after boot and then every 5 minutes, and builds new paths when there
   // are none, they are over a day old, or the puzzle count changed (`dev/ligo puzzles load`).
   scheduler.scheduleAtFixedRate(10.seconds, 5.minutes): () =>
-    pathApi.refresh
+    pathApi.refresh()
 
 final class PuzzleColls(
     val puzzle: AsyncColl,

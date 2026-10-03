@@ -20,12 +20,15 @@
   (path builder, BSON reader, JSON view) in a scratch Scala 3 harness, 26 tests.
 - Didn't work / dead ends: lila doesn't compile in the cloud (strategygames isn't in this
   container's sbt repositories), so CI is the first full compile of the rest.
-- Lessons: lila reads a rating or vote as a double, but mongosh writes a whole number as an int:
-  the loader writes them with `Double()`. Path ids carry their generation, so a rebuild inserts the
-  new paths before deleting the old and selection never sees an empty collection.
+- Lessons: mongosh writes a whole number as an int; lila's reader takes it either way, but the
+  loader writes ratings and votes with `Double()` to match what lila writes. Path ids carry their
+  generation and band index, so a rebuild inserts the new paths before deleting the old and
+  selection never sees an empty collection; the review caught that bands sharing a rating (52
+  puzzles sit at 2150) gave two paths one id. Test builders on the real data's distribution.
 - Decisions: band size 25, tiers by vote, theme votes kept on rounds only, loader leaves paths to
   lila (logs/decisions.md, ADR 0025 amendment).
-- Verified by Claude: loader run, tools/puzzles tests, CI. · Needs owner verification:
+- Verified by Claude: loader run against Mongo 7, tools/puzzles tests, CI on the PR (the first
+  full Scala compile). · Needs owner verification:
   `dev/ligo puzzles load` and `/api/puzzle/daily` on your box.
 - Follow-ups: 8.7 (the trainer page on `mountPuzzle`).
 

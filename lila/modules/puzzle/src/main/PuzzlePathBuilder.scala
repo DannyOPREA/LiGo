@@ -28,7 +28,7 @@ object PuzzlePathBuilder:
       ratingMin: Int,
       ratingMax: Int,
       ids: Vector[PuzzleId],
-      index: Int
+      index: Int // the band's place in its angle: two bands can share a rating range (equal ratings)
   ):
     import PuzzlePath.sep
 
@@ -98,7 +98,9 @@ object PuzzlePathBuilder:
       val ratingMin = if bandIndex == 0 then lowestRating else starts(bandIndex).atLeast(lowestRating)
       val ratingMax =
         if bandIndex == bands.size - 1 then highestRating else starts(bandIndex + 1).atLeast(ratingMin)
-      val bestVotedFirst = band.sortBy(c => (-c.vote.toDouble, c.id.value))
+      // shuffled first so equal votes (every puzzle, before anyone votes) don't make `top` the
+      // first half by id; sortBy is stable
+      val bestVotedFirst = rng.shuffle(band).sortBy(-_.vote.toDouble)
       tierShares.map: (tier, share) =>
         val nb = math.round(bestVotedFirst.size * share).toInt.atLeast(1).atMost(bestVotedFirst.size)
         Path(
@@ -107,7 +109,7 @@ object PuzzlePathBuilder:
           ratingMin = ratingMin,
           ratingMax = ratingMax,
           ids = rng.shuffle(bestVotedFirst.take(nb).map(_.id)),
-          index = 0
+          index = bandIndex
         )
 
   /** Every path: one angle per theme that has puzzles, and the mix of all of them. */

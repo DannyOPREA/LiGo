@@ -235,7 +235,8 @@ puzzles_load() {
 }
 puzzles_seed() {  # on an empty database only; a failure here never stops `up`
   local n
-  n=$(mongo_exec mongosh --quiet lichess --eval 'db.puzzle2_puzzle.estimatedDocumentCount()' 2>/dev/null) || return 0
+  n=$(mongo_exec mongosh --quiet lichess --eval 'db.puzzle2_puzzle.estimatedDocumentCount()' 2>/dev/null) ||
+    { say "puzzles: Mongo not ready, skipped; run dev/ligo puzzles load"; return 0; }
   [[ "$n" == 0 ]] && { puzzles_load || say "puzzles: load failed; run dev/ligo puzzles load"; }
   return 0
 }

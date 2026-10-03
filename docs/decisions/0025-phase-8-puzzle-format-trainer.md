@@ -264,6 +264,11 @@ Claude's calls under the owner's 2026-09-28 delegation (logs/decisions.md):
   `puzzle2_path` shortly after boot and rebuilds it when the paths are a day old or the number of
   puzzles changed, so a load shows up within minutes without the loader calling the build.
 - **Bands of 25 puzzles** (lichess's hold thousands), tiers top/good/all by the puzzle's vote.
+- **The loader doesn't check the schema.** mongosh has no ajv; CI's `puzzles check` checks every
+  committed file, and the loader only loads committed files.
+- **The daily puzzle** is a random never-daily puzzle rated 1000–1800, else any never-daily one,
+  else the oldest daily.
+- **Puzzle trust** (how much a vote counts) reads the player's `go` perf in place of chess ones.
 - **Theme votes stay on rounds.** lichess folds them into a puzzle's themes with a job outside lila;
   that job isn't ported yet, so themes are the generator's for now.
 

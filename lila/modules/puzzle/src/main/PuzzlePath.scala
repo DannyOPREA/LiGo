@@ -94,34 +94,45 @@ h":"5B7ADA38","planCacheKey":"7FF0C349","queryFramework":"classic","reslen":286,
 
   private val regenerating = java.util.concurrent.atomic.AtomicBoolean(false)
 
-  /** Builds new paths if they are stale. Safe to call often, and while another call is running. */
-  def refresh: Funit =
-    if !regenerating.compareAndSet(false, true) then funit
+  /** Builds new paths if they are stale, or always with `force`. Safe to call often, and while another call
+    * is running: that call's build wins and this one does nothing. Returns the number of paths written.
+    */
+  def refresh(force: Boolean = false): Fu[Int] =
+    if !regenerating.compareAndSet(false, true) then fuccess(0)
     else
-      isStale
+      (if force then fuccess(true) else isStale)
         .flatMap: stale =>
           if stale then
             regenerate.map: nb =>
               logger.info(s"Puzzle paths regenerated: $nb paths")
-          else funit
+              nb
+          else fuccess(0)
         .recover { case e: Exception =>
           logger.error("Puzzle paths regeneration failed", e)
+          0
         }
         .andThen { case _ => regenerating.set(false) }
 
   /** Writes a new generation of paths, then deletes the previous ones, so that selection never finds the
     * collection empty. Returns the number of paths written.
     */
-  def regenerate: Fu[Int] =
-    candidates.flatMap: puzzles =>
-      val gen = nowInstant.toMillis
-      val paths = PuzzlePathBuilder.build(puzzles, Random(gen))
-      if paths.isEmpty then fuccess(0)
-      else
-        for
-          _ <- colls.path(_.insert.many(paths.map(_.toDoc(gen, puzzles.size))))
-          _ <- colls.path(_.delete.one(bdoc("gen" -> bdoc("$ne" -> gen))))
-        yield paths.size
+  private def regenerate: Fu[Int] =
+    for
+      // the count isStale compares with, so one unreadable puzzle doesn't make every tick rebuild
+      total <- colls.puzzle(_.countSel(eligible))
+      puzzles <- candidates
+      nb <- writePaths(puzzles, total)
+    yield nb
+
+  private def writePaths(puzzles: Vector[PuzzlePathBuilder.Candidate], total: Int): Fu[Int] =
+    val gen = nowInstant.toMillis
+    val paths = PuzzlePathBuilder.build(puzzles, Random(gen))
+    if paths.isEmpty then fuccess(0)
+    else
+      for
+        _ <- colls.path(_.insert.many(paths.map(_.toDoc(gen, total))))
+        _ <- colls.path(_.delete.one(bdoc("gen" -> bdoc("$ne" -> gen))))
+      yield paths.size
 
   private def candidates: Fu[Vector[PuzzlePathBuilder.Candidate]] =
     colls

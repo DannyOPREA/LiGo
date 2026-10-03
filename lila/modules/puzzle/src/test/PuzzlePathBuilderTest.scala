@@ -141,3 +141,25 @@ class PuzzlePathBuilderTest extends munit.FunSuite:
     assertEquals(doc.long("gen"), Some(gen))
     assertEquals(doc.int("total"), Some(240))
     assertEquals(doc.getAsOpt[List[String]]("ids"), Some(first.ids.map(_.value).toList))
+
+  test("many puzzles at one rating (the generator's top band is 2150): ids stay unique, all reachable"):
+    // like the committed set, where 52 of 240 sit at exactly 2150, but twice as big
+    val clustered = Vector.tabulate(480): i =>
+      val rating = if i < 120 then 2150d else 650d + (i - 120) * 1400d / 359
+      Candidate(PuzzleId(f"c$i%04d"), rating, vote = 0, Set(key("lifeAndDeath")))
+    val built = build(clustered, Random(1))
+    val gen = 1_700_000_000_000L
+    val ids = built.map(_.id(gen))
+    assertEquals(ids.size, ids.distinct.size, "path ids collide")
+    val mixAll = built.filter(p => p.angle == "mix" && p.tier == PuzzleTier.all)
+    assert(mixAll.count(_.ratingMin == 2150) >= 2, "the test needs bands sharing a start")
+    assertEquals(mixAll.flatMap(_.ids).toSet, clustered.map(_.id).toSet)
+    val k = "mix|all|2150"
+    assert(mixAll.exists(p => p.min <= k && p.max >= k))
+
+  test("with no votes yet, `top` is not the first half of a band by id"):
+    val unvoted = puzzles.map(_.copy(vote = 0))
+    val built = build(unvoted, Random(1))
+    val band = built.filter(p => p.angle == "mix" && p.tier == PuzzleTier.all).minBy(_.ratingMin)
+    val top = built.filter(p => p.angle == "mix" && p.tier == PuzzleTier.top).minBy(_.ratingMin)
+    assertNotEquals(top.ids.sortBy(_.value), band.ids.sortBy(_.value).take(top.ids.size))
