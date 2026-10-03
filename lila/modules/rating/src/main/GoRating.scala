@@ -1,6 +1,8 @@
 package lila.rating
 
 import chess.{ ByColor, Color, Outcome }
+import chess.IntRating
+import chess.rating.RatingProvisional
 import chess.rating.glicko.{ Glicko, GlickoCalculator, Player, Tau }
 import scala.util.Try
 
@@ -62,9 +64,14 @@ object GoRating:
 
   /* The label shown instead of a rating: "5k", or "5k?" while the rating is
    * provisional (deviation ≥ 110, scalachess's threshold, kept by ADR 0013). */
-  def label(glicko: Glicko): String =
-    val name = Rank.ofRating(glicko.rating).name
-    if glicko.provisional.yes then s"$name?" else name
+  def label(glicko: Glicko): String = label(glicko.intRating, glicko.provisional)
+
+  /* The same from a whole rating and its provisional flag, as games and lobby entries keep them.
+   * Every label comes from the whole rating, so one player shows one rank everywhere, matching the
+   * whole-point edges of `rankTable` (unit 5.5). */
+  def label(rating: IntRating, provisional: RatingProvisional): String =
+    val name = Rank.ofRating(rating.value.toDouble).name
+    if provisional.yes then s"$name?" else name
 
   /* The rating at the lower edge of each rank, 25k to 9d. The browser turns
    * rank ranges into rating ranges with it, and the rating graph draws its

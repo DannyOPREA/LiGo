@@ -33,6 +33,8 @@ final class LobbyApi(
             )
           )
           .add("ratingMap", me.map(_.perfs).map(ratingMap))
+          // LiGo: the viewer's Go rank label (ADR 0021 §3, unit 5.5)
+          .add("goRank", me.map(u => lila.rating.GoRating.label(u.perfs.go.glicko)))
           .add(
             "me",
             me.map: u =>

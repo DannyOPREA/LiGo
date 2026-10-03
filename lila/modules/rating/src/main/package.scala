@@ -17,3 +17,4 @@ val ratingApi: lila.ui.RatingApi = new:
   val toIcon = PerfType(_).icon
   val bestRated = UserPerfsExt.bestRatedPerf
   val dubiousPuzzle = UserPerfs.dubiousPuzzle
+  val goLabel = (r: IntRating, p: chess.rating.RatingProvisional) => GoRating.label(r, p)

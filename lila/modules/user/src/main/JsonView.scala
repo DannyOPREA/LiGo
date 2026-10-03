@@ -93,7 +93,12 @@ object JsonView:
       .add("prov", o.glicko.provisional)
 
   def keyedPerfJson(p: KeyedPerf): JsObject =
-    Json.obj(p.key.value -> p.perf)
+    Json.obj(p.key.value -> perfWrites.writes(p.perf).add("goRank" -> goRankOf(p.key, p.perf)))
+
+  // LiGo: the Go perf's kyu/dan label beside its rating (ADR 0021 §3, unit 5.5); `rank` is lila's
+  // leaderboard position
+  private def goRankOf(key: PerfKey, perf: Perf): Option[String] =
+    (key == PerfKey.go).option(lila.rating.GoRating.label(perf.glicko))
 
   def perfsJson(p: UserPerfs, rankMap: Option[UserRankMap] = None): JsObject =
     JsObject:
@@ -102,6 +107,7 @@ object JsonView:
           key.value -> perfWrites
             .writes(perf)
             .add("rank" -> rankMap.flatMap(_.get(key)))
+            .add("goRank" -> goRankOf(key, perf))
     .add("storm", p.storm.option)
       .add("racer", p.racer.option)
       .add("streak", p.streak.option)
@@ -115,7 +121,7 @@ object JsonView:
   def perfsJson(perfs: UserPerfs, onlyPerfs: List[PerfKey]) =
     JsObject:
       onlyPerfs.map: key =>
-        key.value -> perfWrites.writes(perfs(key))
+        key.value -> perfWrites.writes(perfs(key)).add("goRank" -> goRankOf(key, perfs(key)))
 
   def notes(ns: List[Note])(using lightUser: LightUserApi) =
     lightUser
