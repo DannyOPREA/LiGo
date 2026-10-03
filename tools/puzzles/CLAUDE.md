@@ -43,6 +43,10 @@ both ways. How it works: [README.md](README.md).
   `goban-engine`, `ajv` (the schema). A dependency change needs COPYING.md and `NOTICE.md`.
 - Code and puzzle files are MIT (ADR 0007, ADR 0024).
 
+- **Loading into lila** is `mongo/doc.js` (the file→document mapping, ADR 0025 §5) and
+  `mongo/load.js`, plain mongosh scripts so docker mode needs no host Node. Keep `doc.js`'s field
+  names in step with `lila/modules/puzzle`'s BSON reader.
+
 ## Test
 `dev/ligo test puzzles` (native mode): typecheck, lint, `pnpm --filter @ligo/puzzles run test`
 (the straight three's known answers, the catalogue and wall check, the frame against KaTrain's

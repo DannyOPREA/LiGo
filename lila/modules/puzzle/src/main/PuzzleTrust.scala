@@ -54,7 +54,8 @@ final private class PuzzleTrustApi(colls: PuzzleColls, userApi: lila.core.user.U
   // 1500 = 0
   // 1800 = 1
   // 3000 = 5
-  private def ratingBonus(user: UserWithPerfs) = user.perfs.standard.glicko.establishedIntRating
+  // LiGo: from the player's Go rating, where lichess uses their standard chess rating
+  private def ratingBonus(user: UserWithPerfs) = user.perfs.go.glicko.establishedIntRating
     .so { rating =>
       (rating.value - 1500) / 300
     }

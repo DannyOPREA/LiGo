@@ -7,7 +7,6 @@ import chess.variant.Variant
 import play.api.mvc.Result
 
 import lila.app.{ *, given }
-import lila.core.id.PuzzleId
 import lila.pref.{ PieceSet, Theme }
 
 final class Export(env: Env) extends LilaController(env):
@@ -50,19 +49,6 @@ final class Export(env: Env) extends LilaController(env):
         .gameThumbnail(game, Theme(theme).name, PieceSet.get(piece).name)
         .pipe(stream(filename, cacheSeconds = if game.finishedOrAborted then 3600 * 24 else 10))
     }
-
-  def puzzleThumbnail(id: PuzzleId, theme: Option[String], piece: Option[String]) = Anon:
-    exportImageOf(env.puzzle.api.puzzle.find(id)): puzzle =>
-      env.game.gifExport
-        .thumbnail(
-          position = puzzle.boardAfterInitialMove.err(s"invalid puzzle ${puzzle.id}"),
-          lastMove = puzzle.line.head.some,
-          orientation = puzzle.color,
-          theme = Theme(theme).name,
-          piece = PieceSet.get(piece).name,
-          description = s"puzzleThumbnail ${puzzle.id}"
-        )
-        .pipe(stream(s"lichess-puzzle-${puzzle.id}.gif"))
 
   def fenThumbnail(
       fen: String,
