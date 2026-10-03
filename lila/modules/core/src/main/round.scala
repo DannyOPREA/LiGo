@@ -69,7 +69,6 @@ case class HoldAlert(playerId: GamePlayerId, mean: Int, sd: Int, ip: IpAddress)
 case class GoBerserk(color: Color, promise: Promise[Boolean])
 case object NoStart
 case object StartClock
-case object TooManyPlies
 
 opaque type IsOfferingRematch = game.PovRef => Boolean
 object IsOfferingRematch extends FunctionWrapper[IsOfferingRematch, game.PovRef => Boolean]

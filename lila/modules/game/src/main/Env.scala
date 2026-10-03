@@ -5,7 +5,6 @@ import org.apache.pekko.stream.Materializer
 import com.softwaremill.macwire.*
 import com.softwaremill.tagging.*
 import play.api.Configuration
-import play.api.libs.ws.StandaloneWSClient
 
 import lila.common.autoconfig.{ *, given }
 import lila.core.config.*
@@ -19,7 +18,6 @@ final private class GameConfig(
 @Module
 final class Env(
     appConfig: Configuration,
-    ws: StandaloneWSClient,
     db: lila.db.Db,
     yoloDb: lila.db.AsyncDb @@ lila.db.YoloDb,
     routeUrl: RouteUrl,

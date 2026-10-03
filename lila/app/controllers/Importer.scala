@@ -14,9 +14,7 @@ final class Importer(env: Env) extends LilaController(env):
   def importGame = Open(comingLater)
 
   def sendGame = OpenOrScopedBody(parse.anyContent)()(doSendGame)
-  def apiSendGame = AnonOrScopedBody(parse.anyContent)()(doSendGame)
+  def apiSendGame = AnonOrScopedBody(parse.anyContent)()(notImplemented)
   private def doSendGame(using BodyContext[Any]) =
-    negotiate(
-      html = comingLater,
-      json = NotImplemented(jsonError("Game import takes SGF files from a later update."))
-    )
+    negotiate(html = comingLater, json = notImplemented)
+  private def notImplemented = NotImplemented(jsonError("Game import takes SGF files from a later update."))

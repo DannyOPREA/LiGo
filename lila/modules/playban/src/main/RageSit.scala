@@ -1,6 +1,6 @@
 package lila.playban
 
-import chess.{ Color, Speed }
+import chess.Speed
 import scalalib.ThreadLocalRandom
 
 import lila.core.playban.RageSit

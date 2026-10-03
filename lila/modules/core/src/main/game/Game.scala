@@ -240,8 +240,6 @@ case class Game(
 
   def isBeingPlayed = !isPgnImport && !finishedOrAborted
 
-  def forecastable = started && playable && isCorrespondence && !hasAi
-
   def userIds: List[UserId] = players.flatMap(_.userId)
 
   def twoUserIds: Option[PairOf[UserId]] = for

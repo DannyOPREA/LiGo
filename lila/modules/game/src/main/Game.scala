@@ -236,8 +236,6 @@ object Game:
 
   val syntheticId = GameId("synthetic")
 
-  val maxPlies = Ply(600) // unlimited would be a DoS target
-
   val analysableVariants: Set[Variant] = Set(
     chess.variant.Standard,
     chess.variant.Crazyhouse,

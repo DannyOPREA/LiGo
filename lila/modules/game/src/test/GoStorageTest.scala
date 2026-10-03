@@ -149,7 +149,18 @@ class GoStorageTest extends munit.FunSuite:
     val chessDoc = gameHandler.write(played) -- GoStorage.F.size
     assert(gameHandler.readDocument(chessDoc).isFailure)
     assertEquals(Query.go, bdoc(GoStorage.F.size -> bdoc("$exists" -> true)))
-    assert(Query.user(UserId("alice")).contains(GoStorage.F.size))
+    val (alice, bob) = (UserId("alice"), UserId("bob"))
+    List(
+      Query.user(alice),
+      Query.users(List(alice, bob)),
+      Query.nowPlaying(alice),
+      Query.recentlyPlaying(alice),
+      Query.nowPlayingVs(alice, bob),
+      Query.nowPlayingVs(List(alice, bob)),
+      Query.opponents(List(alice, bob)),
+      Query.imported(alice)
+    ).foreach: selector =>
+      assert(selector.contains(GoStorage.F.size), selector)
 
   test("GameDiff writes the actions and the ply, and no chess key"):
     val before = act(newGo(setup()), Action.Place(p("ee")))

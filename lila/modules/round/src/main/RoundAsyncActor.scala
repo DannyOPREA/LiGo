@@ -238,7 +238,6 @@ final private class RoundAsyncActor(
       handle: game =>
         (game.playable && !game.sourceIs(_.Import)).so:
           finisher.other(game, _.Cheat, Some(!color))
-    case TooManyPlies => handle(drawer.force(_))
 
     case Threefold =>
       proxy.withGame: game =>

@@ -44,7 +44,7 @@ object Query:
 
   val frozen: Bdoc = F.status.gte(Status.Mate.id)
 
-  def imported(u: UserId): Bdoc = bdoc(s"${F.pgnImport}.user" -> u)
+  def imported(u: UserId): Bdoc = bdoc(s"${F.pgnImport}.user" -> u) ++ go
   def importedSort: Bdoc = sort.desc(s"${F.pgnImport}.ca")
 
   val friend: Bdoc = bdoc(F.source -> Source.Friend.id)
@@ -73,19 +73,19 @@ object Query:
     "p1.ai".exists(true)
   )
 
-  def nowPlaying[U: UserIdOf](u: U) = bdoc(F.playingUids -> u.id)
+  def nowPlaying[U: UserIdOf](u: U) = bdoc(F.playingUids -> u.id) ++ go
 
   def recentlyPlaying(u: UserId) =
     nowPlaying(u) ++ bdoc(F.movedAt.gt(nowInstant.minusMinutes(5)))
 
-  def nowPlayingVs(u1: UserId, u2: UserId) = bdoc(F.playingUids.all(List(u1, u2)))
+  def nowPlayingVs(u1: UserId, u2: UserId) = bdoc(F.playingUids.all(List(u1, u2))) ++ go
 
   def nowPlayingVs(userIds: Iterable[UserId]) =
     bdoc(
       F.playingUids.in(userIds), // as to use the index
       s"${F.playingUids}.0".in(userIds),
       s"${F.playingUids}.1".in(userIds)
-    )
+    ) ++ go
 
   // use the us index
   def win(u: UserId) = user(u) ++ bdoc(F.winnerId -> u)
@@ -100,14 +100,14 @@ object Query:
     )
 
   def opponents(u1: User, u2: User) =
-    bdoc(F.playerUids.all(List(u1, u2).sortBy(_.count.game).map(_.id)))
+    bdoc(F.playerUids.all(List(u1, u2).sortBy(_.count.game).map(_.id))) ++ go
 
   def opponents(userIds: Iterable[UserId]) =
     bdoc(
       F.playerUids.in(userIds), // as to use the index
       s"${F.playerUids}.0".in(userIds),
       s"${F.playerUids}.1".in(userIds)
-    )
+    ) ++ go
 
   val noProvisional: Bdoc = bdoc(
     "p0.p".exists(false),
