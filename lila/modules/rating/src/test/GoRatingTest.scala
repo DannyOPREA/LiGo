@@ -191,6 +191,24 @@ class GoRatingTest extends munit.FunSuite:
     assertEquals(cap(Glicko(300, 20, 0.14)), Glicko(400, 45, 0.14))
     assertEquals(cap(Glicko(1500, 900, 0.3)), Glicko(1500, 500, 0.15))
 
+  test("one player shows one rank everywhere: labels come from the whole rating (unit 5.5)"):
+    import chess.rating.RatingProvisional.No
+    // a fractional rating just under 1d's edge shows 1k from its Glicko and from its whole rating
+    assertEquals(label(Glicko(1918.6, 60, 0.06)), "1k")
+    assertEquals(label(chess.IntRating(1918), No), "1k")
+    assertEquals(label(Glicko(1919.2, 60, 0.06)), "1d")
+    // every rank starts exactly at its rankTable edge, which the browser uses for rank ranges
+    rankTable
+      .zip(rankTable.drop(1))
+      .foreach:
+        case ((name, edge), (next, nextEdge)) =>
+          assertEquals(label(chess.IntRating(edge), No), name)
+          assertEquals(label(chess.IntRating(nextEdge - 1), No), name)
+          assertEquals(label(Glicko(nextEdge - 0.01, 60, 0.06)), name, s"just under $next")
+    assertEquals(label(chess.IntRating(1580), chess.rating.RatingProvisional.Yes), "5k?")
+    assertEquals(label(chess.IntRating(100), No), "25k")
+    assertEquals(label(chess.IntRating(4000), No), "9d")
+
   test("a declared starting rating survives being stored and read back (unit 5.4)"):
     val handler = lila.rating.Perf.perfHandler
     val stored = lila.rating.Perf.default.copy(glicko = startingGlicko(Rank.Kyu(5)))

@@ -7,8 +7,77 @@
 - goratings' handicap/rank maths is in `analysis/util/RatingMath.py`, not its package; its `analysis/util/__init__` needs filelock etc., so load RatingMath.py and CLI.py directly (2026-09-27).
 - Handicap per OGS: update each player against the opponent's effective rating (shift in rank space), i.e. two calculator calls per game; scalachess `ColorAdvantage` is symmetric and fixed, not a fit (2026-09-27).
 - The "?" threshold (`provisionalDeviation = 110`) is a scalachess top-level val, not a lila constant; changing it means a fork or replacing call sites (2026-09-27).
+- lila starts games at pairing and aborts them before 2 plies; `NoStart` (37) is a third "never played" status. "Has played a rated game" must exclude Aborted and NoStart (`Query.gotGoing`) (2026-10-03, unit 5.4).
 
 ## Entries (newest first)
+
+### 2026-10-03 · unit 5.5 (part 1) · Go ranks instead of rating numbers
+- Did: wherever lila showed a rating, LiGo now shows the Go rank label ("5k", "5k?" while
+  provisional) with the number in the hover title: user links, mini-profiles, game lists and
+  player boxes, the round page, the lobby's open challenges and "your rating", challenge pages and
+  lists. User links and best-perf spots show the Go perf, not lila's best chess perf. The JSON of
+  games, rounds, hooks, seeks, challenges, the API game exports and user perfs gains a `goRank`
+  string beside `rating` (made on the server by `GoRating.label`, through `RatingApi.goLabel` where
+  a module can't depend on `rating`). The lobby keeps the `go` perf before its first game, so a
+  declared rank shows on hooks and seeks. Labels come from the whole rating.
+- Worked: lila's injected `RatingApi` trait carries the label to `ui` without a new module
+  dependency; 6.7's single `playerRatingLabel` function in the lobby made the browser side one edit.
+- Didn't work / dead ends: ADR 0021's `rank` field name collides with the leaderboard position in
+  user perf JSON, so the field is `goRank`. An overloaded `GoRating.label` broke Scala's automatic
+  function conversion (eta-expansion); an explicit lambda fixed it. The game `JsonView` class needs
+  a GameRepo, so its test covers `Namer` and the label only.
+- Lessons: a rank label must come from the same number on every page. Glicko ratings are
+  fractional but games, lobby entries and challenges keep the whole rating, so labelling the
+  fraction showed a player as 1d on their profile and 1k in their games for up to a point.
+- Decisions: `goRank` as the field name; Go perf in user links; puzzle ratings stay numbers;
+  labels from the whole rating; the one Go leaderboard waits for 3.17 (part 2) (Claude, under the
+  owner's 2026-09-28 delegation; logs/decisions.md, ADR 0021 §3 amendment).
+- Review (reviewer agent): blocking: oxfmt, labels disagreeing at rank edges with a test that
+  could not fail, three missed pages (game list players, mini-profile, challenge page), and the
+  lobby dropping a declared rank before the first game (showing "6k?"); all fixed, the rating
+  fixtures' label rule now uses the whole rating. Non-blocking fixed: the ADR amendment, the
+  provisional label's class, a comment on `renderRating`. Left for 5.6: activity and the
+  profile's OG title; left to its owners: `Relation`'s JSON (best perf) and the analysis page's
+  nvui view (Phase 7).
+- Verified by Claude: `rating/test` 16/16 (GoRatingTest, with the regenerated fixtures),
+  `game/testOnly lila.game.GoRankLabelTest`, `lobby/testOnly lila.lobby.GoHookTest` 6/6,
+  `security/testOnly lila.security.GoRankChangeTest` 5/5, lila compile with no warnings,
+  `node ui/test lobby`, verify.sh. · Needs owner verification: the labels on the real stack (a
+  user link, a game list, the lobby, a challenge, the round page), and their hover titles.
+- Follow-ups: part 2 (the one Go leaderboard, deviation ≤ 75) after 3.17; 5.6 the profile.
+
+### 2026-10-03 · unit 5.4 (part 2) · Change the Go rank on the account page
+- Did: a "Your Go rank" account page (`/account/go-rank`, menu entry after "Change username") with
+  "I don't know" or 25k–9d, preselected from the stored `go` perf; saving rewrites the perf as at
+  signup (`GoRankChange.perfOf`, now shared with `Signup`). It is open while the `go` perf has no
+  games and the player has no rated game that got going (`Query.gotGoing`: started, not aborted,
+  not abandoned before the first move); otherwise the page says the rank now moves only by playing
+  and a POST just redirects. Two i18n keys. Desktop and phone screenshots, open and locked, with an
+  axe check (`ui/playground/e2e/account-go-rank.spec.ts`, served without a lila server like the
+  credits page).
+- Worked: 5.4 part 1's form parsing and `UserPerfsRepo.setPerf`; `Query.rated(u)`.
+- Didn't work / dead ends: pref's UI can't depend on rating, so the rank names come in from
+  `app/views/ui.scala` (as AuthUi's do). The full site can't run in cloud sessions, so the
+  screenshots are of a trimmed copy of the page's markup, not lila's own render.
+- Lessons: lila starts a game at pairing (status Started) and aborts it before 2 plies; `NoStart`
+  (37) is a third "never really played" status, used for no-abort games, and PerfsUpdater never
+  rates any of them. A "has played a rated game" query must exclude all three.
+- Decisions: "until the first rated game starts" means a rated game that got going (not aborted or
+  abandoned before its first move); "I don't know" stays a choice and resets to lila's default; the
+  page's axe check lets off lila's own button blue and orange headings, as a11y.spec.ts does, until
+  9.7 (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md).
+- Review (reviewer agent): blocking: screenshots missing, an MIT licence line on a file partly moved
+  from AGPL code, no UPSTREAM rows for this unit or part 1; all fixed (screenshots added, the MIT
+  line dropped, both rows added). Non-blocking fixed: `NoStart` games locked the rank; the query
+  now uses `Query.rated(u)` and a shared, tested status predicate. Left: the check and the write
+  aren't atomic (a pairing landing in the same milliseconds keeps the new rank; documented); the
+  form also takes "new" (25k), harmless. Reported to the coordinator: docs/UPSTREAM.md lacks rows
+  for several earlier units that edited lila/.
+- Verified by Claude: `game/testOnly lila.game.GotGoingTest` 3/3, `security/testOnly
+  lila.security.GoRankChangeTest` 5/5, lila compile, the 4 page tests (screenshots looked at, also
+  unmasked), verify.sh. · Needs owner verification: the page on the real stack: change the rank,
+  see the flash and the new selection, then after a rated game (from 5.7) see the locked text.
+  `hasRatedGame` hasn't run against a real Mongo.
 
 ### 2026-09-30 · unit 5.3 · Rated Go games move ratings with handicap
 - Did: `PerfsUpdater` rates a finished rated Go game in the one `go` perf with 5.2's `GoRating`:

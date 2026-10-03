@@ -63,6 +63,7 @@ export interface Player {
   checks?: number;
   rating?: number;
   provisional?: boolean;
+  goRank?: string; // LiGo: the kyu/dan label the server made for `rating` (ADR 0021 §3)
   engine?: boolean;
   berserk?: boolean;
   version: number;
@@ -138,6 +139,7 @@ export interface Perf {
   rd: number;
   prog: number;
   prov?: boolean;
+  goRank?: string; // LiGo: the Go perf's kyu/dan label (ADR 0021 §3)
 }
 
 export interface Blurs {
