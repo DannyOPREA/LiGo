@@ -5,6 +5,30 @@
 
 ## Entries (newest first)
 
+### 2026-10-03 · Unit 8.6 · Puzzles on the server
+- Did: `lila/modules/puzzle` now stores and serves ADR 0025's Go puzzle (size, bounds, setup stones,
+  player, goban's move tree kept as BSON, goal, provenance, glicko, plays, votes, Go themes). The
+  JSON view sends goban's own puzzle fields, the shape `mountPuzzle` takes, plus id, rating, themes,
+  goal and a one-line source. Selection, sessions, difficulty, the daily puzzle, rounds, the puzzle
+  Glicko-2, votes, reports, dashboard, history, replay and activity are kept. New:
+  `PuzzlePathBuilder` (the `puzzle2_path` build lichess ran outside lila) and a job that rebuilds
+  the paths shortly after boot, then whenever they are a day old or the puzzle count changed.
+  `dev/ligo puzzles load` (a mongosh script, both modes) upserts the 240 puzzles, and `dev/ligo up`
+  runs it on an empty database. Removed: PuzzleBatch, PuzzleOpening, PuzzleTagger, GameJson, the GIF
+  thumbnail, of-player, openings, colour choice and the mobile routes (ADR 0025 §3).
+- Worked: the loader against a real Mongo (240 new, then 0 changed on a second run); the pure Scala
+  (path builder, BSON reader, JSON view) in a scratch Scala 3 harness, 26 tests.
+- Didn't work / dead ends: lila doesn't compile in the cloud (strategygames isn't in this
+  container's sbt repositories), so CI is the first full compile of the rest.
+- Lessons: lila reads a rating or vote as a double, but mongosh writes a whole number as an int:
+  the loader writes them with `Double()`. Path ids carry their generation, so a rebuild inserts the
+  new paths before deleting the old and selection never sees an empty collection.
+- Decisions: band size 25, tiers by vote, theme votes kept on rounds only, loader leaves paths to
+  lila (logs/decisions.md, ADR 0025 amendment).
+- Verified by Claude: loader run, tools/puzzles tests, CI. · Needs owner verification:
+  `dev/ligo puzzles load` and `/api/puzzle/daily` on your box.
+- Follow-ups: 8.7 (the trainer page on `mountPuzzle`).
+
 ### 2026-09-30 · Unit 8.4 · The first puzzle set: 240 generated life-and-death puzzles
 - Did: ran `puzzles build --seed 1 --count 240` with KataGo (g170 test network, 400 visits) into
   `tools/puzzles/data/generated-001.json`; wrote the sources list `tools/puzzles/data/SOURCES.md`

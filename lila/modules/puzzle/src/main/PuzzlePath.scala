@@ -1,5 +1,6 @@
 package lila.puzzle
 
+import scala.util.Random
 import scalalib.Iso
 
 import lila.db.dsl.{ *, given }
@@ -73,7 +74,70 @@ h":"5B7ADA38","planCacheKey":"7FF0C349","queryFramework":"classic","reslen":286,
     "max".gte(f"${angle.key}${sep}${tier}${sep}${rating.min}%04d")
   )
 
-  def isStale = colls
-    .path(_.primitiveOne[Long](emptyBdoc, "gen"))
-    .map:
-      _.forall(_ < nowInstant.minusDays(1).toMillis)
+  // The puzzles the paths are built from: all but the ones reported with an issue.
+  private val eligible = bdoc(Puzzle.BSONFields.issue.exists(false))
+
+  /* LiGo (ADR 0025 section 3): the paths are stale when they are more than a day old, so rating
+   * bands follow the puzzles' ratings, or when they were built for another number of puzzles than
+   * there are now (`dev/ligo puzzles load` adds puzzles while lila runs). */
+  def isStale: Fu[Boolean] =
+    for
+      latest <- colls.path(
+        _.find(emptyBdoc, bdoc("gen" -> true, "total" -> true).some)
+          .sort(sort.desc("gen"))
+          .one[Bdoc]
+      )
+      nbPuzzles <- colls.puzzle(_.countSel(eligible))
+    yield latest.fold(true): doc =>
+      val tooOld = doc.getAsOpt[Long]("gen").forall(_ < nowInstant.minusDays(1).toMillis)
+      tooOld || !doc.getAsOpt[Int]("total").contains(nbPuzzles)
+
+  private val regenerating = java.util.concurrent.atomic.AtomicBoolean(false)
+
+  /** Builds new paths if they are stale. Safe to call often, and while another call is running. */
+  def refresh: Funit =
+    if !regenerating.compareAndSet(false, true) then funit
+    else
+      isStale
+        .flatMap: stale =>
+          if stale then
+            regenerate.map: nb =>
+              logger.info(s"Puzzle paths regenerated: $nb paths")
+          else funit
+        .recover { case e: Exception =>
+          logger.error("Puzzle paths regeneration failed", e)
+        }
+        .andThen { case _ => regenerating.set(false) }
+
+  /** Writes a new generation of paths, then deletes the previous ones, so that selection never finds the
+    * collection empty. Returns the number of paths written.
+    */
+  def regenerate: Fu[Int] =
+    candidates.flatMap: puzzles =>
+      val gen = nowInstant.toMillis
+      val paths = PuzzlePathBuilder.build(puzzles, Random(gen))
+      if paths.isEmpty then fuccess(0)
+      else
+        for
+          _ <- colls.path(_.insert.many(paths.map(_.toDoc(gen, puzzles.size))))
+          _ <- colls.path(_.delete.one(bdoc("gen" -> bdoc("$ne" -> gen))))
+        yield paths.size
+
+  private def candidates: Fu[Vector[PuzzlePathBuilder.Candidate]] =
+    colls
+      .puzzle:
+        _.find(eligible, bdoc("themes" -> true, "glicko.r" -> true, "vote" -> true).some)
+          .cursor[Bdoc]()
+          .listAll()
+      .map: docs =>
+        docs.flatMap(readCandidate).toVector
+
+  private def readCandidate(doc: Bdoc): Option[PuzzlePathBuilder.Candidate] = for
+    id <- doc.string("_id").map(PuzzleId(_))
+    rating <- doc.child("glicko").flatMap(_.double("r"))
+  yield PuzzlePathBuilder.Candidate(
+    id = id,
+    rating = rating,
+    vote = doc.double("vote").fold(0f)(_.toFloat),
+    themes = doc.getAsOpt[List[String]]("themes").getOrElse(Nil).map(PuzzleTheme.Key(_)).toSet
+  )

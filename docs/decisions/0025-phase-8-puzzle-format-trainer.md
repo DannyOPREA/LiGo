@@ -257,6 +257,16 @@ What lila and goban have today (read for this ADR; paths under `lila/` and goban
 
 ## Amendments
 
+### 2026-10-03, unit 8.6 (as built)
+Claude's calls under the owner's 2026-09-28 delegation (logs/decisions.md):
+- **The loader doesn't build paths.** `dev/ligo puzzles load` is a mongosh script (no Mongo driver
+  in `tools/puzzles`, and docker mode needs no host Node). lila's puzzle module builds
+  `puzzle2_path` shortly after boot and rebuilds it when the paths are a day old or the number of
+  puzzles changed, so a load shows up within minutes without the loader calling the build.
+- **Bands of 25 puzzles** (lichess's hold thousands), tiers top/good/all by the puzzle's vote.
+- **Theme votes stay on rounds.** lichess folds them into a puzzle's themes with a job outside lila;
+  that job isn't ported yet, so themes are the generator's for now.
+
 ### 2026-09-29, unit 8.3 (as built)
 Building the generator made these points of §2 concrete. Claude's calls under the owner's
 2026-09-28 delegation (logs/decisions.md):
