@@ -9,6 +9,7 @@ import type { TreePath } from 'lib/tree/types';
 import { type MaybeVNode, type LooseVNodes, hl, onInsert } from 'lib/view';
 
 import type PuzzleCtrl from '@/ctrl';
+
 import type { ChessNode } from '../chessNode';
 
 interface Ctx {

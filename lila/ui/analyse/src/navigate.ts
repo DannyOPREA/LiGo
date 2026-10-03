@@ -43,7 +43,8 @@ export default class Navigate {
   stepLine = (which: 'prev' | 'next'): void => {
     const from = this.ctrl.path;
     let [path, kids] = this.familyOf(from);
-    while (path && kids.length < 2 && !this.ctrl.tree.pathIsMainline(path)) [path, kids] = this.familyOf(path);
+    while (path && kids.length < 2 && !this.ctrl.tree.pathIsMainline(path))
+      [path, kids] = this.familyOf(path);
     const i = kids.findIndex(k => from.slice(path.length).startsWith(k.id));
     const to = which === 'next' ? (kids[i + 1] ?? kids[0]) : (kids[i - 1] ?? kids[kids.length - 1]);
     if (to) this.ctrl.userJumpIfCan(path + to.id);

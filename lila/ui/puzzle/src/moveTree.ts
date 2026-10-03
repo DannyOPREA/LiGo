@@ -9,8 +9,8 @@ import { plyOpponentColor } from 'lib/game';
 import { type TreeWrapper, path as pathOps } from 'lib/tree/tree';
 import type { TreePath } from 'lib/tree/types';
 
-import type PuzzleCtrl from './ctrl';
 import { type ChessNode, completeNode } from './chessNode';
+import type PuzzleCtrl from './ctrl';
 
 export function pgnToTree(pgn: San[]): ChessNode {
   const pos = Chess.default();
@@ -29,7 +29,12 @@ export function pgnToTree(pgn: San[]): ChessNode {
   return root;
 }
 
-export function mergeSolution(root: TreeWrapper<ChessNode>, initialPath: TreePath, solution: Uci[], pov: Color): void {
+export function mergeSolution(
+  root: TreeWrapper<ChessNode>,
+  initialPath: TreePath,
+  solution: Uci[],
+  pov: Color,
+): void {
   const initialNode = root.nodeAtPath(initialPath);
   const pos = Chess.fromSetup(parseFen(initialNode.fen).unwrap()).unwrap();
   const fromPly = initialNode.ply;

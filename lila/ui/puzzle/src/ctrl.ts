@@ -23,6 +23,7 @@ import { alert } from 'lib/view';
 import { toggleZenMode } from 'lib/view/zen';
 
 import computeAutoShapes from './autoShape';
+import { type ChessNode, completeNode } from './chessNode';
 import type {
   PuzzleOpts,
   PuzzleData,
@@ -37,7 +38,6 @@ import moveTest from './moveTest';
 import { pgnToTree, mergeSolution, nextCorrectMove } from './moveTree';
 import PuzzleSession from './session';
 import * as xhr from './xhr';
-import { type ChessNode, completeNode } from './chessNode';
 
 export default class PuzzleCtrl {
   data: PuzzleData;

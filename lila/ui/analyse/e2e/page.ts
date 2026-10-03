@@ -138,8 +138,10 @@ export async function pointOf(page: Page, move: string, coords = true): Promise<
   return { x: box.x + (x + band + 0.5) * square, y: box.y + (y + band + 0.5) * square };
 }
 
-/** Clicks (or taps) an SGF point on the board shown, and waits for the board to be drawn again. */
+/** Clicks (or taps) an SGF point on the board shown. */
 export async function play(page: Page, move: string, touch = false): Promise<void> {
+  // The SGF box is under the board: after using it, the board may be scrolled out of view.
+  await boardSvg(page).scrollIntoViewIfNeeded();
   const p = await pointOf(page, move);
   if (touch) await page.touchscreen.tap(p.x, p.y);
   else await page.mouse.click(p.x, p.y);
@@ -147,6 +149,7 @@ export async function play(page: Page, move: string, touch = false): Promise<voi
 
 /** Clicks (or taps) points in the setup editor, which has the size chosen in the panel. */
 export async function place(page: Page, size: number, moves: string[], touch = false): Promise<void> {
+  await boardSvg(page).scrollIntoViewIfNeeded();
   for (const move of moves) {
     const box = (await boardSvg(page).boundingBox())!;
     const square = box.width / (size + 2);
@@ -161,8 +164,15 @@ export async function place(page: Page, size: number, moves: string[], touch = f
 export const moveList = (page: Page) => page.locator('.analyse__moves move');
 
 /** The move list's text, move by move. */
-export const moves = async (page: Page): Promise<string[]> =>
-  (await moveList(page).allInnerTexts()).map(t => t.replace(/\s+/g, ' ').trim());
+export const moves = (page: Page): Promise<string[]> =>
+  moveList(page).evaluateAll(els =>
+    els.map(el =>
+      [...el.children]
+        .map(c => c.textContent?.trim())
+        .filter(Boolean)
+        .join(' '),
+    ),
+  );
 
 /** The move the cursor is on. */
 export const active = (page: Page) => page.locator('.analyse__moves move.active');
@@ -185,6 +195,4 @@ export const sounds = (page: Page) => page.evaluate(() => (window as unknown as 
 
 /** Waits for the board to show `n` moves played after the setup. */
 export const boardMoves = (page: Page, n: number) =>
-  expect
-    .poll(() => page.evaluate(() => ((window as any).analyse.ctrl.nodeList.length - 1) as number))
-    .toBe(n);
+  expect.poll(() => page.evaluate(() => (window as any).analyse.ctrl.nodeList.length - 1)).toBe(n);

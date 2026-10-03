@@ -16,7 +16,7 @@ export function renderSetup(ctrl: AnalyseCtrl, setup: Setup): VNode {
     hl(
       'button.button.button-thin',
       {
-        class: { 'button-empty': value !== current, active: value === current },
+        class: { 'button-empty': value !== current },
         attrs: { type: 'button', 'aria-pressed': String(value === current) },
         hook: bind('click', () => set(value)),
       },

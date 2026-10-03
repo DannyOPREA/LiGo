@@ -1,6 +1,6 @@
 import { licon } from 'lib/licon';
 import { storage } from 'lib/storage';
-import { type VNode, bind, bindNonPassive, hl, onInsert } from 'lib/view';
+import { type LooseVNodes, type VNode, bind, bindNonPassive, hl, onInsert } from 'lib/view';
 import stepwiseScroll from 'lib/view/stepwiseScroll';
 
 import type AnalyseCtrl from '@/ctrl';
@@ -94,7 +94,7 @@ function renderTools(ctrl: AnalyseCtrl): VNode {
 const renderEngine = (_ctrl: AnalyseCtrl): VNode | undefined => undefined;
 
 /** The game the tree is played under, and what its file says about the game. */
-function renderSide(ctrl: AnalyseCtrl): VNode[] {
+function renderSide(ctrl: AnalyseCtrl): LooseVNodes {
   const s = ctrl.root.settings;
   const info = ctrl.root.sgf;
   const one = (key: string) => info[key]?.[0]?.trim();
@@ -113,13 +113,14 @@ function renderSide(ctrl: AnalyseCtrl): VNode[] {
         ]),
       one('RE') && hl('p', `Result: ${one('RE')}`),
     ]),
-    hl(
-      'button.button.button-empty.text',
-      {
-        attrs: { 'data-icon': licon.Pencil },
-        hook: onInsert(el => el.addEventListener('click', ctrl.startSetup)),
-      },
-      'New position',
-    ),
+    !ctrl.setup &&
+      hl(
+        'button.button.button-empty.text',
+        {
+          attrs: { 'data-icon': licon.Pencil },
+          hook: onInsert(el => el.addEventListener('click', ctrl.startSetup)),
+        },
+        'New position',
+      ),
   ];
 }

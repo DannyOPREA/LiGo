@@ -6,9 +6,9 @@ import { fenColor } from 'lib/game';
 import { annotationShapes } from 'lib/game/glyphs';
 import type { Glyph } from 'lib/tree/types';
 
+import type { ChessNode } from './chessNode';
 // import { makeGooglyShapes } from '../../bits/src/bits.googlyHorsey';
 import type PuzzleCtrl from './ctrl';
-import type { ChessNode } from './chessNode';
 
 function makeAutoShapesFromUci(
   color: Color,

@@ -153,7 +153,7 @@ export default class AnalyseCtrl {
           },
         };
 
-  private coordinates = (): boolean => this.opts.coords !== 0;
+  private readonly coordinates = (): boolean => this.opts.coords !== 0;
 
   /**
    * A move from the board (a stone or `..` for a pass): the child already there, or a new node if

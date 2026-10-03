@@ -18,6 +18,7 @@ import type { PuzzleNvuiContext } from '@/puzzle.nvui';
 import { makeConfig } from '@/view/chessground';
 import { puzzleBox, renderDifficultyForm, userBox } from '@/view/side';
 import theme from '@/view/theme';
+
 import type { ChessNode } from '../chessNode';
 
 const throttled = (sound: string) => throttle(100, () => site.sound.play(sound));

@@ -36,8 +36,16 @@ export function view(ctrl: AnalyseCtrl): VNode {
     hl('div.title', i18n.site.analysis),
     hl('div.inner', [
       hl('div.action-menu__tools', [
-        hl('a', { hook: bind('click', ctrl.startSetup, ctrl.redraw), attrs: { 'data-icon': licon.Pencil } }, 'New position'),
-        hl('a', { hook: bind('click', ctrl.downloadSgf), attrs: { 'data-icon': licon.Download } }, 'Download SGF'),
+        hl(
+          'a',
+          { hook: bind('click', ctrl.startSetup, ctrl.redraw), attrs: { 'data-icon': licon.Pencil } },
+          'New position',
+        ),
+        hl(
+          'a',
+          { hook: bind('click', ctrl.downloadSgf), attrs: { 'data-icon': licon.Download } },
+          'Download SGF',
+        ),
       ]),
       ctrl.mainline.length > 4 && [hl('h2', i18n.site.replayMode), autoplayButtons(ctrl)],
     ]),

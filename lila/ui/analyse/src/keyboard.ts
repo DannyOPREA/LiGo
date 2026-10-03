@@ -21,8 +21,14 @@ export const bind = (ctrl: AnalyseCtrl): void => {
     .bind(['down', '$', 'end'], run(ctrl.navigate.last))
     .bind(['shift+left', 'shift+k'], run(ctrl.navigate.previousBranch))
     .bind(['shift+right', 'shift+j'], run(ctrl.navigate.nextBranch))
-    .bind('shift+up', run(() => ctrl.navigate.stepLine('prev')))
-    .bind('shift+down', run(() => ctrl.navigate.stepLine('next')))
+    .bind(
+      'shift+up',
+      run(() => ctrl.navigate.stepLine('prev')),
+    )
+    .bind(
+      'shift+down',
+      run(() => ctrl.navigate.stepLine('next')),
+    )
     .bind(
       'shift+c',
       run(() => {
