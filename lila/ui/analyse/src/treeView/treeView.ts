@@ -8,25 +8,21 @@ import type { TreePath } from 'lib/tree/types';
 import { onInsert } from 'lib/view';
 
 import type AnalyseCtrl from '@/ctrl';
-import type { ConcealOf } from '@/interfaces';
 
-import { renderColumnView } from './columnView';
 import { renderContextMenu } from './contextMenu';
 import { renderInlineView } from './inlineView';
 
+/**
+ * The move list: lila's inline tree view, where every move carries its number (a Go record is
+ * read move by move, and a handicap game starts with White, so lila's two-column view of chess
+ * move pairs doesn't fit, unit 7.4).
+ */
 export class TreeView {
   constructor(readonly ctrl: AnalyseCtrl) {}
   private autoScrollRequest: ScrollBehavior | false = false;
 
-  mode: 'column' | 'inline';
-
-  get hidden(): boolean {
-    return !this.ctrl.asyncReady;
-  }
-
-  render(concealOf?: ConcealOf): VNode {
-    this.mode = concealOf || !this.ctrl.settings.inline ? 'column' : 'inline';
-    return this.mode === 'column' ? renderColumnView(this.ctrl, concealOf) : renderInlineView(this.ctrl);
+  render(): VNode {
+    return renderInlineView(this.ctrl);
   }
 
   requestAutoScroll(request: ScrollBehavior | false) {
@@ -54,7 +50,7 @@ export class TreeView {
         }
         el.addEventListener('pointerup', (e: PointerEvent) => {
           if (!(e.target instanceof HTMLElement)) return;
-          if (e.target.classList.contains('disclosure') || (defined(e.button) && e.button !== 0)) return;
+          if (defined(e.button) && e.button !== 0) return;
           const path = eventPath(e);
           if (path) ctrl.userJump(path);
           this.autoScrollRequest = false;

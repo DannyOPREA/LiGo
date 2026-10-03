@@ -4,6 +4,7 @@
   "type": "module",
   "dependencies": {
     "@badrap/result": "^0.3.1",
+    "@ligo/board": "workspace:*",
     "@types/debounce-promise": "^3.1.9",
     "@types/sortablejs": "^1.15.9",
     "@types/yaireo__tagify": "4.27.0",
