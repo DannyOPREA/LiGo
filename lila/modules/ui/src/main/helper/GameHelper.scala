@@ -15,8 +15,13 @@ trait GameHelper:
 
   def titleGame(g: Game) =
     val speed = chess.Speed(g.clock.map(_.config)).name
-    val variant = g.variant.exotic.so(s" ${g.variant.name}")
-    s"$speed$variant Chess • ${playerText(g.whitePlayer)} vs ${playerText(g.blackPlayer)}"
+    val game = g.go match
+      case Some(go) => s"${go.size.lines}×${go.size.lines} Go"
+      case None => s"${g.variant.exotic.so(s"${g.variant.name} ")}Chess"
+    s"$speed $game • ${playerText(g.whitePlayer)} vs ${playerText(g.blackPlayer)}"
+
+  /** A Go game's setup as players read it, e.g. `9×9 • Japanese • komi 6.5 • 2 stones` (unit 3.16). */
+  def goSetupName(g: ligo.gorules.GoGame): String = lila.core.game.GoBridge.setupName(g.setup)
 
   def shortClockName(clock: Option[Clock.Config])(using t: Translate): Frag =
     clock.fold[Frag](trans.site.unlimited())(shortClockName)

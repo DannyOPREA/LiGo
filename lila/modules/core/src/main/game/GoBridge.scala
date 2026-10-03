@@ -2,7 +2,7 @@ package lila.core
 package game
 
 import _root_.chess.{ Color, Ply }
-import ligo.gorules.{ Action, Color as GoColor, GoGame, Point }
+import ligo.gorules.{ Action, Color as GoColor, GoGame, Point, Ruleset, Setup }
 
 import lila.core.perf.PerfKey
 
@@ -46,6 +46,27 @@ object GoBridge:
     case Action.Place(at) => at.sgf
     case Action.Pass => "pass"
     case Action.Resume => "resume"
+
+  /** A point as players read it, e.g. `D4`: the column letter (A to T, skipping I, as on printed boards and
+    * in GTP) and the row counted from the bottom. `lines` is the board's size.
+    */
+  def label(at: Point, lines: Int): String =
+    val column = ('A' + at.col + (if at.col >= 8 then 1 else 0)).toChar
+    s"$column${lines - at.row}"
+
+  /** An action as players read it: `D4`, `pass` or `resume`. */
+  def label(a: Action, lines: Int): String = a match
+    case Action.Place(at) => label(at, lines)
+    case other => token(other)
+
+  /** A setup as players read it, e.g. `9×9 • Japanese • komi 6.5 • 2 stones`. */
+  def setupName(s: Setup): String =
+    val rules = s.ruleset match
+      case Ruleset.Japanese => "Japanese"
+      case Ruleset.Chinese => "Chinese"
+    val komi = if s.komi == s.komi.toInt then s.komi.toInt.toString else s.komi.toString
+    val handicap = Option.when(s.handicap > 0)(s"${s.handicap} stones")
+    (List(s"${s.size.lines}×${s.size.lines}", rules, s"komi $komi") ++ handicap).mkString(" • ")
 
   /** The position as a compact string for live mini boards (ADR 0019 §6): rows from the top, separated by
     * `/`, `b` and `w` for stones and a number for a run of empty points, e.g. `9/9/2b6/…`.
