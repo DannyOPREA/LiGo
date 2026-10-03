@@ -17,6 +17,7 @@ export interface OpenRow {
   user?: string; // undefined for a guest
   rating?: number;
   provisional: boolean;
+  goRank?: string; // the server's kyu/dan label for `rating`
   size?: GoSize;
   rules?: GoRuleset;
   komi?: number;
@@ -52,6 +53,7 @@ export const hookRow = (hook: Hook): OpenRow => ({
   user: hook.u,
   rating: hook.rating,
   provisional: !!hook.prov,
+  goRank: hook.goRank,
   size: hook.go?.size,
   rules: hook.go?.rules,
   komi: hook.go?.komi,
@@ -70,6 +72,7 @@ export const seekRow = (seek: Seek): OpenRow => ({
   user: seek.rating ? seek.username : undefined,
   rating: seek.rating || undefined,
   provisional: !!seek.provisional,
+  goRank: seek.goRank,
   size: seek.go?.size,
   rules: seek.go?.rules,
   komi: seek.go?.komi,
@@ -82,10 +85,10 @@ export const seekRow = (seek: Seek): OpenRow => ({
   disabled: false,
 });
 
-// The one place that turns a rating into the text beside a player's name. Unit 5.5 swaps this for the
-// kyu/dan label.
-export const playerRatingLabel = (rating: number, provisional: boolean): string =>
-  rating + (provisional ? '?' : '');
+// The one place that picks the text beside a player's name: the server's kyu/dan label (unit 5.5),
+// or the rating itself from a server that sent none.
+export const playerRatingLabel = (rating: number, provisional: boolean, goRank?: string): string =>
+  goRank ?? rating + (provisional ? '?' : '');
 
 // ---- filter chips ----
 

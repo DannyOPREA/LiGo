@@ -14,7 +14,10 @@
 # The last step is the ui CI job's formatter (oxfmt formats JSON under lila/).
 #
 # The kyu/dan labels and LiGo's clamping to 25k-9d are ADR 0021's rule, written
-# here independently of the Scala code.
+# here independently of the Scala code. A label comes from the whole rating (the
+# rating rounded down, as games and lobby entries keep it), so one player shows
+# one rank everywhere (unit 5.5): a hair above a rank's fractional edge still
+# shows the rank below until the rating reaches the next whole point.
 import argparse, json, math, sys
 
 sys.path.insert(0, sys.argv[1])
@@ -25,7 +28,7 @@ rm.configure_rating_to_rank(argparse.Namespace(ranks="log", a=525.0, c=23.15, d=
 
 
 def label(rating, deviation):
-    r = rm.rating_to_rank(rating)
+    r = rm.rating_to_rank(math.floor(rating))
     name = f"{min(25, math.ceil(30 - r))}k" if r < 30 else f"{min(9, math.floor(r - 29))}d"
     return name + ("?" if deviation >= 110 else "")
 

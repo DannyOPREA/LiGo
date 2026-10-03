@@ -79,7 +79,11 @@ const renderRow = (ctrl: LobbyController, row: OpenRow): VNode => {
           ? span('.ulink.ulpt.mobile-powertip', { 'data-href': profileUrl(row.user) }, row.user)
           : i18n.site.anonymous,
         ctrl.opts.showRatings && row.rating
-          ? span('.rating', playerRatingLabel(row.rating, row.provisional))
+          ? span(
+              '.rating',
+              { attrs: { title: String(row.rating) } },
+              playerRatingLabel(row.rating, row.provisional, row.goRank),
+            )
           : null,
       ]),
       td('.board', row.size ? sizeName(row.size) : ''),

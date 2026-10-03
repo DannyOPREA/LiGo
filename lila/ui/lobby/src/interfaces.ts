@@ -22,6 +22,7 @@ export interface Hook {
   prov?: true; // is rating provisional
   u?: string; // username
   rating?: number;
+  goRank?: string; // LiGo: the kyu/dan label for `rating` (ADR 0021 §3)
   ra?: 1; // rated
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
   action: 'cancel' | 'join';
@@ -32,6 +33,7 @@ export interface Seek {
   id: string;
   username: string;
   rating: number;
+  goRank?: string; // LiGo: the kyu/dan label for `rating` (ADR 0021 §3)
   mode: number;
   days?: number;
   perf: {
@@ -70,6 +72,7 @@ export interface LobbyData {
   nbMyTurn: number;
   nowPlaying: NowPlaying[];
   ratingMap: Record<string, RatingWithProvisional> | null; // by perf key; Go's is `go`
+  goRank?: string; // LiGo: the viewer's kyu/dan label (ADR 0021 §3, unit 5.5)
   counters: { members: number; rounds: number };
 }
 

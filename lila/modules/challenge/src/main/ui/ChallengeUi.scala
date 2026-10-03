@@ -15,6 +15,10 @@ import ScalatagsTemplate.{ *, given }
 final class ChallengeUi(helpers: Helpers):
   import helpers.{ *, given }
 
+  // LiGo: a challenger's Go rating as its kyu/dan label (ADR 0021 §3, unit 5.5)
+  private def goLabel(r: lila.core.challenge.Challenge.Rating) =
+    lila.rating.GoRating.label(r.int, r.provisional)
+
   def page(c: Challenge, json: JsObject, owner: Boolean, color: Option[Color] = None)(using
       ctx: Context
   ) =
@@ -44,13 +48,13 @@ final class ChallengeUi(helpers: Helpers):
     }
     val variant = c.variant.exotic.so(s" ${c.variant.name}")
     val challenger = c.challengerUser.fold(trans.site.anonymous.txt()): reg =>
-      s"${titleNameOrId(reg.id)}${ctx.pref.showRatings.so(s" (${reg.rating.show})")}"
+      s"${titleNameOrId(reg.id)}${ctx.pref.showRatings.so(s" (${goLabel(reg.rating)})")}"
     val players =
       if c.isOpen then "Open challenge"
       else
         c.destUser.fold(s"Challenge from $challenger"): dest =>
-          s"$challenger challenges ${titleNameOrId(dest.id)}${ctx.pref.showRatings.so(s" (${dest.rating.show})")}"
-    s"$speed$variant ${c.rated.name} Chess • $players"
+          s"$challenger challenges ${titleNameOrId(dest.id)}${ctx.pref.showRatings.so(s" (${goLabel(dest.rating)})")}"
+    s"$speed$variant ${c.rated.name} Go • $players"
 
   private def details(c: Challenge, requestedColor: Option[Color])(using ctx: Context) =
     div(cls := "details-wrapper")(
@@ -241,7 +245,8 @@ final class ChallengeUi(helpers: Helpers):
                     user.fold[Frag]("Anonymous"): u =>
                       frag(
                         userLink(u.user),
-                        ctx.pref.showRatings.option(frag(" (", u.perf.glicko.display, ")"))
+                        ctx.pref.showRatings
+                          .option(frag(" (", goRank(u.perf.intRating, u.perf.provisional), ")"))
                       )
               ,
               details(c, color),
