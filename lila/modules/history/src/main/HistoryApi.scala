@@ -33,8 +33,10 @@ final class HistoryApi(
         .void
 
   def add(user: User, game: Game, perfs: UserPerfs): Funit = withColl: coll =>
-    val isStd = game.ratingVariant.standard
+    val isStd = game.ratingVariant.standard && !game.isGo
+    // LiGo (unit 5.6): a Go game moves only the go perf, so only its history gets a point
     val changes = List(
+      game.isGo.option("go" -> perfs.go),
       isStd.option("standard" -> perfs.standard),
       game.ratingVariant.chess960.option("chess960" -> perfs.chess960),
       game.ratingVariant.kingOfTheHill.option("kingOfTheHill" -> perfs.kingOfTheHill),

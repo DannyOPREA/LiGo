@@ -26,7 +26,9 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
       .js(ratingChart.map: rc =>
         esmInit(
           "chart.ratingHistory",
-          SafeJsonStr(s"{data:$rc,singlePerfName:'${perfType.trans(using transDefault)}'}")
+          SafeJsonStr(
+            s"{data:$rc,singlePerfName:'${perfType.trans(using transDefault)}'${goAxis(perfType)}}"
+          )
         ))
       .css("user.perf.stat"):
         main(cls := s"page-menu")(
@@ -53,6 +55,10 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
             content(data)
           )
         )
+
+  // LiGo (unit 5.6): the Go graph's kyu/dan axis (ADR 0021 §3)
+  private def goAxis(pt: PerfType) =
+    (pt.key == PerfKey.go).so(s",rankTable:${lila.rating.GoRating.rankTableJson}")
 
   private def percentileText(u: User, pk: PerfKey, percentile: Double)(using ctx: Context): Frag =
     if ctx.is(u) then
@@ -82,7 +88,7 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
     import data.*
     div(cls := "box__pad perf-stat__content")(
       glicko(user.user, stat.perfType, user.perfs(stat.perfType), percentile),
-      counter(stat.count),
+      counter(stat.count, stat.perfType.key == PerfKey.go),
       highlow(stat, percentileLow, percentileHigh, user.user),
       resultStreak(stat.resultStreak, user.user),
       result(stat, user.user),
@@ -96,10 +102,15 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
     st.section(cls := "glicko")(
       h2(
         trans.site.perfRatingLabel(
-          strong(
-            if perf.glicko.clueless then "?"
-            else decimal(perf.glicko.rating).toString
-          )
+          if perf.glicko.clueless then strong("?")
+          // LiGo: the Go rank first, the exact rating after it (ADR 0021 §3, unit 5.6)
+          else if pt.key == PerfKey.go then
+            frag(
+              strong(goRankOf(perf.glicko.rating)),
+              " ",
+              span(cls := "details")(decimal(perf.glicko.rating).toString)
+            )
+          else strong(decimal(perf.glicko.rating).toString)
         ),
         perf.glicko.provisional.yes.option(
           frag(
@@ -143,7 +154,12 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
   private def pct(num: Int, denom: Int): String =
     (denom != 0).so(s"${Math.round(num * 100.0 / denom)}%")
 
-  private def counter(count: lila.perfStat.Count)(using Translate): Frag =
+  // LiGo (unit 5.6): a stored rating as its Go rank, with the number in the hover title
+  private def goRankOf(rating: Double) =
+    lila.rating.GoRating.label(chess.IntRating(rating.toInt), chess.rating.RatingProvisional.No)
+  private def goRankTag(rating: Double): Tag = span(title := decimal(rating).toString)(goRankOf(rating))
+
+  private def counter(count: lila.perfStat.Count, go: Boolean)(using Translate): Frag =
     st.section(cls := "counter split")(
       div(
         table(
@@ -182,7 +198,10 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
           tbody(
             tr(
               th(tps.averageOpponent()),
-              td(decimal(count.opAvg.avg).toString),
+              td(
+                if go && count.opAvg.pop > 0 then goRankTag(count.opAvg.avg)
+                else decimal(count.opAvg.avg).toString
+              ),
               td
             ),
             tr(cls := "full")(
@@ -217,11 +236,23 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
       opt: Option[lila.perfStat.RatingAt],
       pctStr: Option[String],
       color: String,
-      u: User
+      u: User,
+      go: Boolean
   )(using Translate): Frag = opt match
     case Some(r) =>
       div(
-        h2(title(strong(tag(color)(r.int, pctStr.map(st.title := _))))),
+        h2(
+          title(
+            strong(
+              tag(color)(
+                if go then goRankOf(r.int.value) else r.int,
+                // LiGo: the Go rank's rating joins the percentile in the hover title (unit 5.6)
+                (if go then (r.int.toString :: pctStr.toList).mkString(" · ").some else pctStr)
+                  .map(st.title := _)
+              )
+            )
+          )
+        ),
         a(
           cls := "glpt",
           href := s"${routes.Round.watcher(r.gameId, Color.white)}?pov=${u.username}"
@@ -234,10 +265,11 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
       Translate
   ): Frag =
     import stat.perfType
+    val go = perfType.key == PerfKey.go
     def titleOf(v: Double) = trans.site.betterThanPercentPlayers.txt(s"$v%", perfType.trans)
     st.section(cls := "highlow split")(
-      highlowSide(tps.highestRating(_), stat.highest, pctHigh.filter(_ != 0.0).map(titleOf), "green", u),
-      highlowSide(tps.lowestRating(_), stat.lowest, pctLow.filter(_ != 0.0).map(titleOf), "red", u)
+      highlowSide(tps.highestRating(_), stat.highest, pctHigh.filter(_ != 0.0).map(titleOf), "green", u, go),
+      highlowSide(tps.lowestRating(_), stat.lowest, pctLow.filter(_ != 0.0).map(titleOf), "red", u, go)
     )
 
   private def fromTo(s: lila.perfStat.Streak, u: User)(using Translate): Frag =

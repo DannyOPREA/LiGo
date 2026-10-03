@@ -1844,6 +1844,8 @@ object I18nKey:
     val `signupGoRankUnknown`: I18nKey = "signupGoRankUnknown"
     val `goRankChangeHelp`: I18nKey = "goRankChangeHelp"
     val `goRankLocked`: I18nKey = "goRankLocked"
+    val `ratingGraphStart`: I18nKey = "ratingGraphStart"
+    val `ratingGraphEnd`: I18nKey = "ratingGraphEnd"
     val `goBoardSize`: I18nKey = "goBoardSize"
     val `goRules`: I18nKey = "goRules"
     val `goRulesJapanese`: I18nKey = "goRulesJapanese"

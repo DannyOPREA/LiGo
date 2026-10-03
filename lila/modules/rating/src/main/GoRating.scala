@@ -73,6 +73,12 @@ object GoRating:
     val name = Rank.ofRating(rating.value.toDouble).name
     if provisional.yes then s"$name?" else name
 
+  /* The rank a change of rating ends on, and the rank it started from when that differs: the
+   * profile's activity says "5k → 4k" (unit 5.6). No "?": the activity keeps no deviation. */
+  def rankChange(before: IntRating, after: IntRating): (Option[String], String) =
+    val (b, a) = (label(before, RatingProvisional.No), label(after, RatingProvisional.No))
+    ((b != a).option(b), a)
+
   /* The rating at the lower edge of each rank, 25k to 9d. The browser turns
    * rank ranges into rating ranges with it, and the rating graph draws its
    * kyu/dan axis from it (ADR 0021 §3). Edges are rounded up to whole
@@ -80,6 +86,11 @@ object GoRating:
    * 25k's edge still show 25k, ratings above 9d's still show 9d. */
   val rankTable: List[(String, Int)] =
     Rank.all.map(r => r.name -> math.ceil(r.lowerRating).toInt)
+
+  // the same as the JSON both rating graph pages pass to `chart.ratingHistory` (unit 5.6)
+  lazy val rankTableJson: String =
+    import play.api.libs.json.Json
+    Json.stringify(Json.toJson(rankTable.map((name, rating) => Json.arr(name, rating))))
 
   // Glicko-2 as OGS runs it: tau 0.5, and the deviation increase (step 6)
   // is applied in each update, i.e. `skipDeviationIncrease = false` (ADR 0013)

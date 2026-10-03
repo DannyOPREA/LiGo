@@ -5,13 +5,16 @@
    coordinates in SVG (fill, not color), so they stay; they matched on both Chromium builds.
    The credits page (unit 9.8) is nearly all text, so its glyphs go too (CI's Chromium moved ~3% of
    its pixels, every line of it); its headings and links are checked with locators. The account
-   Go rank page (unit 5.4) is text and a list too, so its glyphs go the same way. */
+   Go rank page (unit 5.4) is text and a list too, so its glyphs go the same way, as do the
+   profile's (unit 5.6). */
 #playground,
 #playground *,
 .credits-shot,
 .credits-shot *,
 .account-shot,
-.account-shot * {
+.account-shot *,
+.profile-shot,
+.profile-shot * {
   color: transparent !important;
   text-shadow: none !important;
 }
