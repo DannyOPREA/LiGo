@@ -71,6 +71,10 @@ Numbers below use the curve `rank = ln(rating / 525) × 23.15`, where rank 30 is
   standard chess). lila's `pairingDefault` (1450 for a first pairing) stays for the lobby.
 - The scalachess provisional threshold (110) is not changed, so ADR 0019's revisit clause for it is
   not triggered.
+- _Amended by unit 5.5 (2026-10-03):_ the JSON field is **`goRank`**, not `rank`, because lila's
+  user perf JSON already uses `rank` for the leaderboard position. A label comes from the **whole
+  rating** (rounded down, as games and lobby entries keep it), so one player shows one rank on
+  every page and each rank starts exactly at its rank-table edge.
 
 ### 4. Rated handicap games
 - Server games are 9×9 and 19×19 only (R-SCOPE-1); 13×13 needs its own ADR, with a placement table

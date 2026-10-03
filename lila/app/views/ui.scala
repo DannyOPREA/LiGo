@@ -29,7 +29,7 @@ val cms = lila.cms.ui.CmsUi(helpers)(views.mod.ui.menu("cms"))
 
 object account:
   val ui = lila.pref.ui.AccountUi(helpers)
-  val pages = lila.pref.ui.AccountPages(helpers, ui, flagApi)
+  val pages = lila.pref.ui.AccountPages(helpers, ui, flagApi, lila.rating.GoRating.Rank.all.map(_.name))
   val pref = lila.pref.ui.AccountPref(helpers, prefHelper, ui)
   val twoFactor = lila.pref.ui.TwoFactorUi(helpers, ui)(netConfig.domain)
   val security = lila.security.ui.AccountSecurity(helpers)(ui.AccountPage)

@@ -95,3 +95,16 @@ class GoHookTest extends munit.FunSuite:
       lila.core.pool.IsPoolCompatible((c, go) => c == poolClock && go == GoSetups.default)
     assert(rated(GoSetups.default).compatibleWithPools)
     assert(!rated(nine).compatibleWithPools)
+
+  // Unit 5.5: a declared rank shows before the first game
+  test("a player who declared 5k and has no games yet shows 5k? on their hook, not lila's default"):
+    import lila.rating.GoRating
+    val declared =
+      lila.rating.Perf.default.copy(glicko = GoRating.startingGlicko(GoRating.Rank.fromName("5k").get))
+    val perfs = lila.rating.UserPerfs.default(UserId("u")).copy(go = declared)
+    val perfMap = LobbyUser.perfMapOf(perfs)
+    assertEquals(perfMap.get(PerfKey.go).map(_.rating), Some(declared.intRating))
+    val user =
+      LobbyUser(UserId("u"), UserName("U"), false, false, perfMap, lila.core.pool.Blocking(Set.empty))
+    val h = hook(nine, "d").copy(user = user.some)
+    assertEquals((h.render \ "goRank").as[String], "5k?")
