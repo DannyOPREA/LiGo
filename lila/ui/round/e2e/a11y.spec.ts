@@ -18,7 +18,9 @@ for (const phone of [false, true])
         : { viewport: { width: 1280, height: 800 } },
     );
 
-    test('axe: no serious or critical WCAG 2.2 AA problem, during the game and after it', async ({ page }) => {
+    test('axe: no serious or critical WCAG 2.2 AA problem, during the game and after it', async ({
+      page,
+    }) => {
       const { problems: seen } = await openRound(page, {
         moves: ['ee', 'cc'],
         confirmMoves: phone ? ConfirmMoves.TOUCH : ConfirmMoves.NEVER,

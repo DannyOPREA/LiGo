@@ -123,7 +123,10 @@ test.describe('keyboard and themes (units 9.3, 9.4)', () => {
     page,
   }) => {
     await openRound(page, { moves: ['ee', 'cc'], board: 'brown', stones: 'cburnett' });
-    expect(await page.evaluate(() => (window as any).round.theme)).toEqual({ board: 'Plain', stones: 'Plain' });
+    expect(await page.evaluate(() => (window as any).round.theme)).toEqual({
+      board: 'Plain',
+      stones: 'Plain',
+    });
     const plain = await boardSvg(page).screenshot();
     const night = await page.context().newPage();
     await openRound(night, { moves: ['ee', 'cc'], board: 'Night Play', stones: 'Glass' });
