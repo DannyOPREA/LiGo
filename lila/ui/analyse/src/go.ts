@@ -19,7 +19,7 @@ export const PASS = '..';
 
 /** "D16" for an SGF point on a board of `size` (rows counted from the bottom), "Pass" for a pass. */
 export function pointName(size: number, move: string): string {
-  if (move === PASS || move === 'pass' || move === '') return 'Pass';
+  if (move === PASS || move === 'pass' || move === '') return i18n.site.goPass;
   return `${LETTERS[move.charCodeAt(0) - 97]}${size - (move.charCodeAt(1) - 97)}`;
 }
 
@@ -30,8 +30,8 @@ export const moveName = (size: number, node: GoNode): string =>
 /** A node's full name, for the move list's menu: "12. Black D16", or "Start" at the root. */
 export const nodeFullName = (size: number, node: GoNode): string =>
   node.move === null
-    ? 'Start'
-    : `${node.ply}. ${node.color === 'white' ? 'White' : 'Black'} ${moveName(size, node)}`;
+    ? i18n.site.goStart
+    : `${node.ply}. ${node.color === 'white' ? i18n.site.white : i18n.site.black} ${moveName(size, node)}`;
 
 /** libs/board's move for a node's move: an SGF point or "pass". */
 export const boardMove = (move: string): string => (move === PASS ? 'pass' : move);
@@ -88,11 +88,11 @@ export function positionSgf(p: NewPosition): string {
 
 /** "19×19 · Japanese · komi 6.5", the game the tree is played under. */
 export function settingsText(s: SgfSettings): string {
-  const rules = s.ruleset === 'chinese' ? 'Chinese' : 'Japanese';
+  const rules = s.ruleset === 'chinese' ? i18n.site.goRulesChinese : i18n.site.goRulesJapanese;
   return [
     `${s.size}×${s.size}`,
     rules,
-    `komi ${s.komi}`,
-    ...(s.handicap >= 2 ? [`${s.handicap} handicap stones`] : []),
+    `${i18n.site.goKomi} ${s.komi}`,
+    ...(s.handicap >= 2 ? [i18n.site.goNbHandicapStones(s.handicap, s.handicap)] : []),
   ].join(' · ');
 }

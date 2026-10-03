@@ -40,11 +40,12 @@ export interface Setup extends NewPosition {
 }
 
 /** Why the rules refused a move, for the line under the board. */
-const refusalText: Record<'occupied' | 'suicide' | 'superko', string> = {
-  occupied: 'There is a stone there already.',
-  suicide: 'That move would take the last liberty of its own stones (suicide).',
-  superko: 'That move would repeat an earlier position (ko).',
-};
+const refusalText = (reason: 'occupied' | 'suicide' | 'superko'): string =>
+  reason === 'occupied'
+    ? i18n.site.goStoneThereAlready
+    : reason === 'suicide'
+      ? i18n.site.goSuicideRefused
+      : i18n.site.goKoRefused;
 
 export default class AnalyseCtrl {
   tree: TreeWrapper<AnalyseNode>;
@@ -192,7 +193,7 @@ export default class AnalyseCtrl {
   private refused(reason: 'occupied' | 'suicide' | 'superko'): void {
     site.sound.play('error');
     this.board.remount();
-    this.notice = refusalText[reason];
+    this.notice = refusalText(reason);
     this.redraw();
   }
 
@@ -228,7 +229,14 @@ export default class AnalyseCtrl {
     if (
       (count.nodes >= 10 || count.comments > 0) &&
       !(await confirm(
-        `Delete ${plural('move', count.nodes)}${count.comments ? ` and ${plural('comment', count.comments)}` : ''}?`,
+        i18n.site.goDeleteX(
+          count.comments
+            ? i18n.site.goXAndY(
+                i18n.site.goNbMoves(count.nodes, count.nodes),
+                i18n.site.goNbComments(count.comments, count.comments),
+              )
+            : i18n.site.goNbMoves(count.nodes, count.nodes),
+        ),
       ))
     )
       return;
@@ -290,7 +298,7 @@ export default class AnalyseCtrl {
   /** Opens an SGF file: UTF-8 unless its `CA` names another charset. */
   async loadSgfFile(file: File): Promise<void> {
     if (file.size > MAX_SGF_LENGTH * 4) {
-      this.sgfError = 'That file is too big to be an SGF record.';
+      this.sgfError = i18n.site.goSgfTooBig;
       return this.redraw();
     }
     this.loadSgf(decodeSgf(new Uint8Array(await file.arrayBuffer())));
@@ -394,12 +402,10 @@ export default class AnalyseCtrl {
   };
 }
 
-const plural = (noun: string, nb: number): string => `${nb} ${nb === 1 ? noun : noun + 's'}`;
-
 /** An SGF refusal as the page says it: the reason, and the move number when a move is the cause. */
 export function errorText(e: unknown): string {
   // libs/board's messages start in lower case, with "move N: " when a move is the cause.
   if (e instanceof SgfError) return e.message.charAt(0).toUpperCase() + e.message.slice(1);
   console.error(e);
-  return 'That record could not be read.';
+  return i18n.site.goSgfUnreadable;
 }
