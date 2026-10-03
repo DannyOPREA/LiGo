@@ -6,7 +6,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
   docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (PR #24), 3.2 (PR #28), 3.3 (PR #33), 3.4 (PR #38),
   3.5 (PR #46), 3.6 (PR #56), 3.7 (PR #65), 3.8 (PR #67), 3.10 (PR #66), 3.11 (PR #68), 3.12 (PR #72),
-  3.13 (PR #73), 3.14 (PR #75) and 3.15 (PR #77) merged; 3.16 (the other modules answer Go games in Go; analysis and puzzle placeholders) and 3.19 part 1 (Go options in the create-game forms) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  3.13 (PR #73), 3.14 (PR #75), 3.15 (PR #77), 3.16 (PR #80) and 3.18 (PR #74) merged; 3.19's mini-board slice (Go mini boards in game lists, TV, the lobby and profiles) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   no longer wait on Phase 2 (merged 2026-09-29).
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in

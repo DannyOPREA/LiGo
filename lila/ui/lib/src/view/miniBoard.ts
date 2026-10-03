@@ -125,8 +125,9 @@ const updateGoMiniGame = (node: HTMLElement, board: HTMLElement, data: GoMiniGam
 
 export const updateMiniGame = (node: HTMLElement, data: MiniGameUpdateData | GoMiniGameUpdateData): void => {
   const goBoard = goMiniOf(node);
-  if ('board' in data) {
-    if (goBoard) updateGoMiniGame(node, goBoard, data);
+  // a Go board only takes Go positions, and a chess board only chess ones
+  if (goBoard || 'board' in data) {
+    if (goBoard && 'board' in data) updateGoMiniGame(node, goBoard, data);
     return;
   }
   const lm = data.lm,

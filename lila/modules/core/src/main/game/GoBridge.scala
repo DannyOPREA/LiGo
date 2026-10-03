@@ -89,9 +89,9 @@ object GoBridge:
         sb.toString
       .mkString("/")
 
-  /** A Go mini game's `data-state` (unit 3.19, read by ui/lib's miniBoard.ts): the board, the player to
-    * move, the last stone or pass (empty before the first one) and the plies played, which tell the page
-    * whether the clocks run yet. `blind` shows an empty board, as chess mini games do for a blindfold player.
+  /** A Go mini game's `data-state` (unit 3.19, read by ui/lib's miniBoard.ts): the board, the player to move,
+    * the last stone or pass (empty before the first one) and the plies played, which tell the page whether
+    * the clocks run yet. `blind` shows an empty board, as chess mini games do for a blindfold player.
     */
   def miniState(g: GoGame, blind: Boolean): String =
     s"${miniBoard(g, blind)},${color(g.toMove).name},${lastMove(g)},${plies(g)}"
