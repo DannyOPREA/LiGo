@@ -41,6 +41,11 @@ object GoSetups:
   def hasStandardKomi(s: GoSetup): Boolean = s.komi == Komi.standard(s.ruleset, s.handicap)
 
   /** `{ size, rules, komi, handicap? }`, the keys of a game's own `go` block (unit 3.12). */
+  /** The `variant` the browser still reads from game and challenge JSON (as lichess's standard chess) until
+    * 3.19 part 2 takes chess out of it; lila itself has no chess variants since unit 3.17.
+    */
+  val legacyVariantJson: JsObject = Json.obj("key" -> "standard", "name" -> "Standard", "short" -> "Std")
+
   def json(s: GoSetup): JsObject =
     Json
       .obj("size" -> s.size.lines, "rules" -> rulesetKey(s.ruleset), "komi" -> s.komi)

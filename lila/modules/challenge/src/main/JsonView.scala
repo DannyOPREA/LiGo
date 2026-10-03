@@ -66,7 +66,7 @@ final class JsonView(
         "status" -> c.status.name,
         "challenger" -> c.challengerUser,
         "destUser" -> c.destUser,
-        "variant" -> c.variant,
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "rated" -> c.rated,
         "speed" -> c.speed.key,
         "timeControl" -> c.timeControl.match
@@ -105,7 +105,4 @@ final class JsonView(
     "out" -> challenges.out.map(apply(Direction.Out.some))
   )
 
-  private def iconOf(c: Challenge): Icon =
-    if c.variant == chess.variant.FromPosition
-    then Icon.Feather
-    else c.perfType.icon
+  private def iconOf(c: Challenge): Icon = c.perfType.icon

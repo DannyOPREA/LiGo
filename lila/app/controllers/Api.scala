@@ -109,7 +109,6 @@ final class Api(env: Env, gameC: => Game) extends LilaController(env):
                       Json
                         .obj("id" -> g.id)
                         .add("clock", g.clock.map(_.config.show))
-                        .add("variant", g.variant.exotic.option(g.variant.key))
                   )
               .some
           else none

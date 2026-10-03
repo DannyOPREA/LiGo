@@ -1,7 +1,6 @@
 package lila.core
 package setup
 
-import _root_.chess.variant.Variant
 import _root_.chess.{ Rated, Clock, format }
 import scalalib.model.Days
 
@@ -30,7 +29,6 @@ object GoOptions:
 
 trait OpenConfig:
   val name: Option[String]
-  val variant: Variant
   val clock: Option[Clock.Config]
   val days: Option[Days]
   val rated: Rated
@@ -43,7 +41,8 @@ trait OpenConfig:
 trait SetupForm:
   import play.api.data.Mapping
   private type Named[T] = (String, Mapping[T])
-  def variant: Named[Option[Variant.LilaKey]]
+  // Refuses a chess `variant` field: only Go games are created (unit 3.17).
+  def variant: Named[Option[String]]
   def message: Named[Option[String]]
   def clock: Named[Option[Clock.Config]]
   def optionalDays: Named[Option[Days]]

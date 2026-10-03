@@ -46,7 +46,6 @@ final class ChallengeUi(helpers: Helpers):
     val speed = c.clock.map(_.config).fold(chess.Speed.Correspondence.name) { clock =>
       s"${chess.Speed(clock).name} (${clock.show})"
     }
-    val variant = c.variant.exotic.so(s" ${c.variant.name}")
     val challenger = c.challengerUser.fold(trans.site.anonymous.txt()): reg =>
       s"${titleNameOrId(reg.id)}${ctx.pref.showRatings.so(s" (${goLabel(reg.rating)})")}"
     val players =
@@ -54,7 +53,7 @@ final class ChallengeUi(helpers: Helpers):
       else
         c.destUser.fold(s"Challenge from $challenger"): dest =>
           s"$challenger challenges ${titleNameOrId(dest.id)}${ctx.pref.showRatings.so(s" (${goLabel(dest.rating)})")}"
-    s"$speed$variant ${c.rated.name} Go • $players"
+    s"$speed ${c.rated.name} Go • $players"
 
   private def details(c: Challenge, requestedColor: Option[Color])(using ctx: Context) =
     div(cls := "details-wrapper")(
@@ -64,7 +63,7 @@ final class ChallengeUi(helpers: Helpers):
           dataIcon := (if c.initialFen.isDefined then Icon.Feather else c.perfType.icon)
         )(
           div(
-            variantLink(c.variant, c.perfType),
+            perfLink(c.perfType),
             br,
             span(cls := "clock"):
               c.daysPerTurn

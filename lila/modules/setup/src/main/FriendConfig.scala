@@ -1,7 +1,6 @@
 package lila.setup
 
 import chess.format.Fen
-import chess.variant.Variant
 import chess.{ Clock, Rated }
 import scalalib.model.Days
 
@@ -9,7 +8,6 @@ import lila.core.setup.GoOptions
 import lila.lobby.TriColor
 
 case class FriendConfig(
-    variant: chess.variant.Variant,
     timeMode: TimeMode,
     time: Double,
     increment: Clock.IncrementSeconds,
@@ -24,7 +22,7 @@ case class FriendConfig(
 
   def >> =
     (
-      variant.id,
+      none[String],
       timeMode.id,
       time,
       increment,
@@ -42,7 +40,7 @@ case class FriendConfig(
 object FriendConfig extends BaseConfig:
 
   def from(
-      v: Variant.Id,
+      @annotation.unused v: Option[String], // a chess variant, refused by the form (unit 3.17)
       tm: Int,
       t: Double,
       i: Clock.IncrementSeconds,
@@ -55,7 +53,6 @@ object FriendConfig extends BaseConfig:
       komi: Option[Double] = None
   ) =
     new FriendConfig(
-      variant = chess.variant.Variant.orDefault(v),
       timeMode = TimeMode(tm).err(s"Invalid time mode $tm"),
       time = t,
       increment = i,
@@ -67,7 +64,6 @@ object FriendConfig extends BaseConfig:
     )
 
   val default = FriendConfig(
-    variant = variantDefault,
     timeMode = TimeMode.Unlimited,
     time = 5d,
     increment = Clock.IncrementSeconds(8),
@@ -83,7 +79,6 @@ object FriendConfig extends BaseConfig:
 
     def reads(r: BSON.Reader): FriendConfig =
       FriendConfig(
-        variant = Variant.idOrDefault(r.getO[Variant.Id]("v")),
         timeMode = TimeMode.orDefault(r.int("tm")),
         time = r.double("t"),
         increment = r.get("i"),
@@ -95,7 +90,6 @@ object FriendConfig extends BaseConfig:
 
     def writes(w: BSON.Writer, o: FriendConfig) =
       bdoc(
-        "v" -> o.variant.id,
         "tm" -> o.timeMode.id,
         "t" -> o.time,
         "i" -> o.increment,

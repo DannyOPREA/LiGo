@@ -67,5 +67,5 @@ class GoSetupFormTest extends munit.FunSuite:
       .fold(e => fail(e.message), _.sloppy)
       .copy(rated = chess.Rated.Yes)
     val config = HookConfig.default(auth = true).updateFrom(old)
-    assertEquals((config.rated, config.variant), (chess.Rated.No, chess.variant.Standard))
+    assertEquals(config.rated, chess.Rated.No)
     assertEquals(config.goSetup, nine.copy(handicap = 0))

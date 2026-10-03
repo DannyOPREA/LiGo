@@ -4,7 +4,6 @@ import org.apache.pekko.stream.scaladsl.*
 import chess.ByColor
 import chess.format.Fen
 import chess.format.pgn.{ PgnStr, Tag }
-import chess.opening.Opening
 import play.api.libs.json.*
 import reactivemongo.pekkostream.cursorProducer
 
@@ -40,17 +39,16 @@ final class GameApiV2(
       case None =>
         for
           (game, initialFen, analysis) <- enrich(config.flags)(game)
-          opening = none
           formatted <- config.format match
             case Format.JSON =>
-              toJson(game, initialFen, analysis, opening, config).map(Json.stringify)
+              toJson(game, initialFen, analysis, config).map(Json.stringify)
             case Format.PGN =>
               PgnStr.raw(
                 pgnDump(
                   game,
                   initialFen,
                   analysis,
-                  opening,
+                  none, // a Go game has no chess opening
                   config.flags
                 ).map(annotator.toPgnString)
               )
@@ -110,7 +108,7 @@ final class GameApiV2(
     config = MobileRecentConfig(user)
     enriched <- games.sequentially(enrich(config.flags))
     jsons <- enriched.sequentially: (game, fen, analysis) =>
-      toJson(game, fen, analysis, none, config)
+      toJson(game, fen, analysis, config)
   yield JsArray(jsons)
 
   def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
@@ -120,7 +118,7 @@ final class GameApiV2(
       .flatMapz: game =>
         val config = OneConfig(GameApiV2.Format.JSON, false, WithFlags())
         enrich(config.flags)(game).flatMap: (game, fen, analysis) =>
-          toJson(game, fen, analysis, none, config).dmap(some)
+          toJson(game, fen, analysis, config).dmap(some)
 
   def exportByIds(config: ByIdsConfig): Source[String, ?] =
     gameRepo
@@ -174,8 +172,7 @@ final class GameApiV2(
       .throttle(config.perSecond.value, 1.second)
       .mapAsync(4)(enrich(config.flags))
       .mapAsync(4): (game, fen, analysis) =>
-        // a Go game has no chess opening (unit 3.16)
-        formatterFor(config)(game, fen, analysis, none)
+        formatterFor(config)(game, fen, analysis)
 
   private def enrich(flags: WithFlags)(game: Game) =
     gameRepo
@@ -188,30 +185,31 @@ final class GameApiV2(
 
   private def formatterFor(config: Config) =
     config.format match
-      case Format.PGN => pgnDump.formatter(config.flags)
+      case Format.PGN =>
+        // a Go game has no chess opening (unit 3.16)
+        (game: Game, initialFen: Option[Fen.Full], analysis: Option[Analysis]) =>
+          pgnDump.formatter(config.flags)(game, initialFen, analysis, none)
       case Format.JSON => jsonFormatter(config)
 
   private def jsonFormatter(config: Config) =
     (
         game: Game,
         initialFen: Option[Fen.Full],
-        analysis: Option[Analysis],
-        opening: Option[Opening.AtPly]
+        analysis: Option[Analysis]
     ) =>
-      toJson(game, initialFen, analysis, opening, config).map: json =>
+      toJson(game, initialFen, analysis, config).map: json =>
         s"${Json.stringify(json)}\n"
 
   private def toJson(
       g: Game,
       initialFen: Option[Fen.Full],
       analysisOption: Option[Analysis],
-      opening: Option[Opening.AtPly],
       config: Config
   ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
     flags = config.flags
     pgn <- config.flags.pgnInJson.optionFu:
-      pgnDump(g, initialFen, analysisOption, opening, config.flags).map(annotator.toPgnString)
+      pgnDump(g, initialFen, analysisOption, none, config.flags).map(annotator.toPgnString)
     bookmarked <- config.flags.bookmark.so(bookmarkApi.exists(g, config.by.map(_.userId)))
     // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
     // exists any more to name it, so "arenaTour" is never populated for new games.
@@ -242,7 +240,6 @@ final class GameApiV2(
     .add("fullId" -> config.by.flatMap(Pov(g, _)).map(_.fullId))
     .add("initialFen" -> initialFen)
     .add("winner" -> g.winnerColor.map(_.name))
-    .add("opening" -> opening)
     .add("moves" -> flags.moves.option {
       val moves = lila.game.JsonView.goMoves(g.go)
       applyDelay(moves, flags.keepDelayIf(g.playable)).mkString(" ")

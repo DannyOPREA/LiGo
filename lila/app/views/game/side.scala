@@ -18,7 +18,7 @@ def apply(
 
 def meta(
     pov: Pov,
-    initialFen: Option[chess.format.Fen.Full],
+    @annotation.unused initialFen: Option[chess.format.Fen.Full], // no chess positions since unit 3.17
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =
@@ -34,7 +34,7 @@ def meta(
                 div(
                   a(href := routes.Importer.importGame, title := trans.site.importGame.txt())("IMPORT"),
                   separator,
-                  variantLink(game.variant, game.perfType, shortName = true)
+                  perfLink(game.perfType)
                 )
               else
                 frag(
@@ -86,19 +86,6 @@ def meta(
             )
         )
       ),
-      game.variant.chess960.option:
-        chess.variant.Chess960
-          .positionNumber(initialFen | chess.format.Fen.initial)
-          .map: number =>
-            st.section(
-              trans.site.chess960StartPosition(
-                a(
-                  targetBlank,
-                  href := "https://chess960.net/pub/chess960-positions.pdf"
-                )(number)
-              )
-            )
-      ,
       userTv.map: u =>
         st.section(cls := "game__tv"):
           h2(cls := "top user-tv text", dataUserTv := u.id, dataIcon := Icon.AnalogTv)(u.titleUsername)

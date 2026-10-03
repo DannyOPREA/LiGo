@@ -1,7 +1,6 @@
 package lila.setup
 
 import chess.format.Fen
-import chess.variant.Variant
 import chess.{ Rated, Clock, Speed }
 import scalalib.model.Days
 
@@ -12,7 +11,6 @@ import lila.lobby.TriColor
 import lila.rating.PerfType
 
 final case class ApiConfig(
-    variant: chess.variant.Variant,
     clock: Option[Clock.Config],
     days: Option[Days],
     rated: Rated,
@@ -47,7 +45,7 @@ object ApiConfig extends BaseConfig:
     Clock.LimitSeconds.from(Set(0, 15, 30, 45, 60, 90) ++ (2 to 180).view.map(_ * 60).toSet)
 
   def from(
-      v: Option[Variant.LilaKey],
+      @annotation.unused v: Option[String], // a chess variant, refused by the form (unit 3.17)
       cl: Option[Clock.Config],
       d: Option[Days],
       r: Rated,
@@ -62,7 +60,6 @@ object ApiConfig extends BaseConfig:
       komi: Option[Double]
   ) =
     ApiConfig(
-      variant = chess.variant.Variant.orDefault(v),
       clock = cl,
       days = d,
       rated = r,

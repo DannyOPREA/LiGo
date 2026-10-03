@@ -325,10 +325,6 @@ object Form:
     def bind(key: String, data: Map[String, String]) = base.bind(key, data).map(sr.apply)
     def unbind(key: String, value: T) = base.unbind(key, rs(value))
 
-  given Formatter[chess.variant.Variant] =
-    import chess.variant.Variant
-    formatter.stringFormatter[Variant](_.key.value, str => Variant.orDefault(Variant.LilaKey(str)))
-
   given Formatter[PerfKey] = formatter.stringOptionFormatter[PerfKey](_.value, PerfKey(_))
   val perfKey: Mapping[PerfKey] = typeIn[PerfKey](PerfKey.all)
 

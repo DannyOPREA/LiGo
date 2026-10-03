@@ -2,13 +2,12 @@ package lila.setup
 
 import chess.{ Clock, Rated }
 import chess.format.Fen
-import chess.variant.Variant
 import play.api.data.*
 import play.api.data.Forms.*
 import scalalib.model.Days
 
 import lila.common.Form as LilaForm
-import lila.common.Form.{ *, given }
+import lila.common.Form.*
 import lila.core.rating.RatingRange
 
 object SetupForm:
@@ -73,16 +72,15 @@ object SetupForm:
       "time" -> optional(time),
       "increment" -> optional(increment),
       "days" -> optional(days),
-      "variant" -> optional(boardApiVariantKeys),
+      "variant" -> variant,
       "rated" -> optional(boolean.into[Rated]),
       "ratingRange" -> optional(ratingRange),
       "color" -> optional(color),
       "size" -> goSize,
       "ruleset" -> goRuleset,
       "komi" -> goKomi
-    )((t, i, d, v, r, g, c, size, ruleset, komi) =>
+    )((t, i, d, _, r, g, c, size, ruleset, komi) =>
       HookConfig(
-        variant = Variant.orDefault(v),
         timeMode = if d.isDefined then TimeMode.Correspondence else TimeMode.RealTime,
         time = t | 10,
         increment = i | Clock.IncrementSeconds(5),
@@ -121,7 +119,7 @@ object SetupForm:
 
     lazy val optionalDays = "days" -> optional(days)
 
-    lazy val variant = "variant" -> optional(typeIn(boardApiVariants))
+    lazy val variant = "variant" -> Mappings.variant
 
     lazy val goSize = "size" -> Mappings.goSize
     lazy val goRuleset = "ruleset" -> Mappings.goRuleset

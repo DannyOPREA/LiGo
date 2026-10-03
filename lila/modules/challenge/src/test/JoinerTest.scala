@@ -1,6 +1,5 @@
 package lila.challenge
 
-import chess.variant.Standard
 import chess.{ Clock, Color, Ply }
 import ligo.gorules.{ BoardSize, Ruleset, Setup as GoSetup }
 
@@ -13,7 +12,6 @@ final class JoinerTest extends munit.FunSuite:
     Challenge.TimeControl.Clock(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(0)))
 
   private def challenge(go: GoSetup) = Challenge.make(
-    variant = Standard,
     initialFen = None,
     go = go,
     timeControl = timeControl,

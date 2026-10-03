@@ -431,10 +431,6 @@ GET   /survey                          controllers.Main.survey
 GET   /qa/:id/:slug                    controllers.Main.legacyQaQuestion(id: Int, slug)
 GET   /page/:key                       controllers.Cms.lonePage(key: CmsPageKey)
 
-# Variants
-GET   /variant                         controllers.Cms.variantHome
-GET   /variant/:key                    controllers.Cms.variant(key: chess.variant.Variant.LilaKey)
-
 # Help
 GET   /help/contribute                 controllers.Cms.help
 GET   /help/*path                      controllers.Main.helpPath(path)

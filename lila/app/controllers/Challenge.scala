@@ -317,7 +317,6 @@ final class Challenge(env: Env) extends LilaController(env):
       .withPerf(orig -> dest, config.perfType, _.sec)
       .map: (orig, dest) =>
         lila.challenge.Challenge.make(
-          variant = config.variant,
           initialFen = config.position,
           go = config.goSetup,
           timeControl = timeControl,

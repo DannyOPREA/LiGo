@@ -17,7 +17,7 @@ final class JsonView(rematches: Rematches):
     Json
       .obj(
         "id" -> game.id,
-        "variant" -> game.variant,
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> game.speed.key,
         "perf" -> game.perfKey,
         "rated" -> game.rated,
@@ -56,10 +56,7 @@ final class JsonView(rematches: Rematches):
         "lastMove" -> GoBridge.lastMove(pov.game.go),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
-        "variant" -> Json.obj(
-          "key" -> pov.game.variant.key,
-          "name" -> pov.game.variant.name
-        ),
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> pov.game.speed.key,
         "perf" -> pov.game.perfKey,
         "rated" -> pov.game.rated,
@@ -80,7 +77,6 @@ final class JsonView(rematches: Rematches):
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)
       .add("swissId" -> pov.game.swissId)
-      // .add("orientation" -> pov.game.variant.racingKings.option(chess.White))
       .add("winner" -> pov.game.winnerColor)
       .add("rating" -> pov.player.rating)
       .add("goRank" -> Namer.ratingString(pov.player))
@@ -196,12 +192,6 @@ object JsonView:
       "bits" -> blurs.binaryString
     )
 
-  given OWrites[chess.variant.Variant] = OWrites: v =>
-    Json.obj(
-      "key" -> v.key,
-      "name" -> v.name,
-      "short" -> v.shortName
-    )
 
   given OWrites[Clock] = OWrites: c =>
     Json.obj(

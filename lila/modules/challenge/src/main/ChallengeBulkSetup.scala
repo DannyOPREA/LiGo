@@ -3,7 +3,6 @@ package lila.challenge
 import cats.mtl.Handle.*
 import org.apache.pekko.stream.scaladsl.*
 import chess.format.Fen
-import chess.variant.Variant
 import ligo.gorules.Setup as GoSetup
 import chess.{ ByColor, Clock, Rated }
 import play.api.data.*
@@ -49,7 +48,7 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
     ) {
       (
           tokens: String,
-          variant: Option[Variant.LilaKey],
+          _: Option[String], // a chess variant, refused by the form (unit 3.17)
           clock: Option[Clock.Config],
           days: Option[Days],
           fen: Option[Fen.Full],
@@ -64,7 +63,6 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
       ) =>
         BulkFormData(
           tokens,
-          Variant.orDefault(variant),
           clock,
           days,
           rated,
@@ -154,7 +152,6 @@ final class ChallengeBulkSetupApi(
                     id = ThreadLocalRandom.nextString(8),
                     by = me.id,
                     _,
-                    data.variant,
                     data.clockOrDays,
                     data.rated,
                     pairAt = data.pairAt | nowInstant,
@@ -181,7 +178,6 @@ object ChallengeBulkSetup:
       @Key("_id") id: ID,
       by: UserId,
       games: List[ScheduledGame],
-      variant: Variant,
       clock: Either[Clock.Config, Days],
       rated: Rated,
       pairAt: Instant,
@@ -209,7 +205,6 @@ object ChallengeBulkSetup:
 
   case class BulkFormData(
       tokens: String,
-      variant: Variant,
       clock: Option[Clock.Config],
       days: Option[Days],
       rated: Rated,
@@ -240,7 +235,6 @@ object ChallengeBulkSetup:
             "white" -> g.white,
             "black" -> g.black
           ),
-        "variant" -> variant.key,
         "rated" -> rated,
         "pairAt" -> pairAt,
         "startClocksAt" -> startClocksAt,

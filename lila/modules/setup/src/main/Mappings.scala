@@ -1,7 +1,7 @@
 package lila.setup
 
 import chess.format.Fen
-import chess.{ Clock, Rated, variant as V }
+import chess.{ Clock, Rated }
 import play.api.data.Forms.*
 import play.api.data.format.Formats.doubleFormat
 import scalalib.model.Days
@@ -13,9 +13,9 @@ import lila.lobby.TriColor
 
 private object Mappings:
 
-  val variant = typeIn(Config.variants.toSet)
-  val boardApiVariants = Set(V.Standard.key)
-  val boardApiVariantKeys = typeIn(boardApiVariants)
+  // Only Go games are created (unit 3.17): a `variant` field is refused unless it names standard chess,
+  // which older clients (and the lobby's create-game form, until 3.19 part 2) still send.
+  val variant = optional(text).verifying("Only Go games can be created", _.forall(Set("1", "standard")))
   val time = of[Double].verifying(HookConfig.validateTime(_))
   val increment = of[Clock.IncrementSeconds].verifying(HookConfig.validateIncrement(_))
   val daysChoices = Days.from(List(1, 2, 3, 5, 7, 10, 14))

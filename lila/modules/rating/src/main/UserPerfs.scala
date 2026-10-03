@@ -176,19 +176,6 @@ object UserPerfs:
       chess960 = bot
     )
 
-  def variantLens(variant: chess.variant.Variant): Option[UserPerfs => Perf] =
-    variant match
-      case chess.variant.Standard => Some(_.standard)
-      case chess.variant.Chess960 => Some(_.chess960)
-      case chess.variant.KingOfTheHill => Some(_.kingOfTheHill)
-      case chess.variant.ThreeCheck => Some(_.threeCheck)
-      case chess.variant.Antichess => Some(_.antichess)
-      case chess.variant.Atomic => Some(_.atomic)
-      case chess.variant.Horde => Some(_.horde)
-      case chess.variant.RacingKings => Some(_.racingKings)
-      case chess.variant.Crazyhouse => Some(_.crazyhouse)
-      case _ => none
-
   def speedLens(speed: Speed): UserPerfs => Perf = perfs =>
     speed match
       case Speed.Bullet => perfs.bullet

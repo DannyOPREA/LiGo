@@ -47,7 +47,7 @@ final class GameUi(helpers: Helpers):
       import pov.game
       a(
         href := link,
-        cls := s"mini-game mini-game-${game.id} mini-game--init ${game.variant.key} is2d",
+        cls := s"mini-game mini-game-${game.id} mini-game--init is2d",
         dataLive := game.isBeingPlayed.option(game.id),
         dataTimeControl := game.clock.map(_.config).fold("correspondence")(showTimeControl),
         renderState(pov)
@@ -84,7 +84,6 @@ final class GameUi(helpers: Helpers):
   def gameIcon(game: Game): Icon =
     if game.fromPosition then Icon.Feather
     else if game.sourceIs(_.Import) then Icon.UploadCloud
-    else if game.variant.exotic then game.perfType.icon
     else if game.hasAi then Icon.Cogs
     else game.perfType.icon
 
@@ -125,11 +124,7 @@ final class GameUi(helpers: Helpers):
         else trans.site.blackDidntMove.txt()
       case S.Cheat => trans.site.cheatDetected.txt()
       case S.VariantEnd =>
-        game.variant match
-          case chess.variant.KingOfTheHill => trans.site.kingInTheCenter.txt()
-          case chess.variant.ThreeCheck => trans.site.threeChecks.txt()
-          case chess.variant.RacingKings => trans.site.raceFinished.txt()
-          case _ => trans.site.variantEnding.txt()
+        trans.site.variantEnding.txt()
       case _ => ""
 
   object crosstable:
@@ -232,13 +227,13 @@ final class GameUi(helpers: Helpers):
               frag(" ", trans.site.by(userIdLink(user.some, None, withOnline = false)))
             },
             separator,
-            variantLink(g.variant, g.perfType)
+            perfLink(g.perfType)
           )
         else
           frag(
             showClock(g),
             separator,
-            if g.fromPosition then g.variant.name else g.perfType.trans,
+            g.perfType.trans,
             separator,
             ratedName(g.rated)
           )

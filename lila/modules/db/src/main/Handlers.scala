@@ -1,7 +1,6 @@
 package lila.db
 
 import scala.util.{ Failure, NotGiven, Success, Try }
-import chess.variant.Variant
 import reactivemongo.api.bson.*
 import reactivemongo.api.bson.exceptions.TypeDoesNotMatchException
 import scalalib.model.Percent
@@ -177,18 +176,6 @@ trait Handlers:
   )
 
   val minutesHandler = BSONIntegerHandler.as[FiniteDuration](_.minutes, _.toMinutes.toInt)
-
-  val variantByKeyHandler: BSONHandler[Variant] = quickHandler[Variant](
-    {
-      case BSONString(v) => Variant.orDefault(Variant.LilaKey(v))
-      case _ => Variant.default
-    },
-    v => BSONString(v.key.value)
-  )
-  val variantByIdHandler: BSONHandler[Variant] = tryHandler(
-    { case BSONInteger(v) => Variant(Variant.Id(v)).toTry(s"No such variant: $v") },
-    x => BSONInteger(x.id.value)
-  )
 
   val clockConfigHandler = tryHandler[chess.Clock.Config](
     { case doc: BSONDocument =>

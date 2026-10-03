@@ -386,7 +386,7 @@ final class PushApi(
         case Correspondence(d) => s"$d days"
         case c: Clock => c.show
       ,
-      c.variant.name
+      "Go"
     ).mkString(" • ")
 
   private def IfAway(pov: Pov)(f: => Funit): Funit =

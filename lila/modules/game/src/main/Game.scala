@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.variant.Variant
 import chess.{ Centis, Clock, Color, Ply, Speed, Status }
 import scalalib.model.Days
 
@@ -46,9 +45,7 @@ object GameExt:
     everyOther(mts.toList))
 
   def analysable(g: Game) =
-    g.replayable && g.playedPlies > 4 &&
-      Game.analysableVariants(g.variant) &&
-      !Game.isOldHorde(g)
+    g.replayable && g.playedPlies > 4
 
   extension (clockHistory: ClockHistory)
 
@@ -238,25 +235,6 @@ object Game:
 
   val maxPlies = Ply(600) // unlimited would be a DoS target
 
-  val analysableVariants: Set[Variant] = Set(
-    chess.variant.Standard,
-    chess.variant.Crazyhouse,
-    chess.variant.Chess960,
-    chess.variant.KingOfTheHill,
-    chess.variant.ThreeCheck,
-    chess.variant.Antichess,
-    chess.variant.FromPosition,
-    chess.variant.Horde,
-    chess.variant.Atomic,
-    chess.variant.RacingKings
-  )
-
-  val unanalysableVariants: Set[Variant] = Variant.list.all.toSet -- analysableVariants
-
-  private val hordeWhitePawnsSince = instantOf(2015, 4, 11, 10, 0)
-  def isOldHorde(game: Game) =
-    game.variant == chess.variant.Horde && game.createdAt.isBefore(Game.hordeWhitePawnsSince)
-
   val abandonedDays = Days(21)
   def abandonedDate = nowInstant.minusDays(abandonedDays.value)
 
@@ -287,7 +265,6 @@ object Game:
     val whiteClockHistory = "cw"
     val blackClockHistory = "cb"
     val rated = "ra"
-    val variant = "v"
     val bookmarks = "bm"
     val source = "so"
     val tournamentId = "tid"

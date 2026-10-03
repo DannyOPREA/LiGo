@@ -202,7 +202,7 @@ final class CmsUi(helpers: Helpers)(menu: Context ?=> Frag):
           "Canonical path",
           half = true,
           help =
-            frag("The URL of the dedicated page of this content, if any. Example: /variant/crazyhouse").some
+            frag("The URL of the dedicated page of this content, if any. Example: /source").some
         )(form3.input(_))
       ),
       form3.group(

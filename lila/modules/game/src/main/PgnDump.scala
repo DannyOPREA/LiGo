@@ -115,7 +115,7 @@ final class PgnDump(
       fideIds.black.map(Tag(_.BlackFideId, _)),
       game.whitePlayer.berserk.option(Tag("WhiteBerserk", game.whitePlayer.berserk)),
       game.blackPlayer.berserk.option(Tag("BlackBerserk", game.blackPlayer.berserk)),
-      Tag(_.Variant, game.variant.name.capitalize).some,
+      Tag(_.Variant, chess.variant.Standard.name.capitalize).some,
       game.daysPerTurn
         .map(dpt => Tag(_.TimeControl, s"$dpt day${if dpt.value > 1 then "s" else ""} per move"))
         .orElse(Tag.timeControl(game.clock.map(_.config)).some),
@@ -134,7 +134,7 @@ final class PgnDump(
             case UnknownFinish => "Unknown"
         }
       ).some
-    ).flatten ::: customStartPosition(game.variant)
+    ).flatten ::: customStartPosition(chess.variant.Standard)
       .so(initialFen)
       .so(fen => List(Tag(_.FEN, fen.value), Tag("SetUp", "1")))
 

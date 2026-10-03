@@ -63,7 +63,6 @@ final class ChallengeMaker(
         case _ => TimeControl.Unlimited
       val alternateColor = rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
       Challenge.make(
-        variant = pov.game.variant,
         initialFen = none, // a Go game never starts from a chess position
         // a rematch replays the game's board size, ruleset and komi (unit 3.15)
         go = pov.game.go.setup.copy(position = None),

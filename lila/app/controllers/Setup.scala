@@ -51,7 +51,6 @@ final class Setup(
                     .so: challenger =>
                       val timeControl = makeTimeControl(config.makeClock, config.makeDaysPerTurn)
                       val challenge = lila.challenge.Challenge.make(
-                        variant = config.variant,
                         initialFen = config.fen,
                         go = config.goSetup,
                         timeControl = timeControl,

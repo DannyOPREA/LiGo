@@ -35,7 +35,6 @@ final class ChallengeApi(
 
   def createOpen(config: lila.core.setup.OpenConfig)(using me: Option[Me]): Fu[Challenge] =
     val c = Challenge.make(
-      variant = config.variant,
       initialFen = config.position,
       go = config.goSetup,
       timeControl = Challenge.makeTimeControl(config.clock, config.days),

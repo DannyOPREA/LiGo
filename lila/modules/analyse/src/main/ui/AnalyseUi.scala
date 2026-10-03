@@ -1,7 +1,6 @@
 package lila.analyse
 package ui
 
-import chess.variant.*
 import chess.format.{ Uci, Fen }
 import play.api.libs.json.*
 
@@ -20,14 +19,13 @@ final class AnalyseUi(helpers: Helpers):
   def userAnalysis(
       data: JsObject,
       pov: Pov,
-      chess960PositionNum: Option[Int] = None,
+      @annotation.unused chess960PositionNum: Option[Int] = None, // no chess variants since unit 3.17
       withForecast: Boolean = false,
       inlinePgn: Option[String] = None
   )(using ctx: Context): Page =
-    val hasWiki = pov.game.synthetic && pov.game.variant.standard
+    val hasWiki = pov.game.synthetic
     Page(trans.site.analysis.txt())
       .css("analyse.free")
-      .css((pov.game.variant == Crazyhouse).option("analyse.zh"))
       .css(withForecast.option("analyse.forecast"))
       .css(ctx.blind.option("round.nvui"))
       .csp(_.withWikiBooks)
@@ -59,21 +57,6 @@ final class AnalyseUi(helpers: Helpers):
         )(
           pov.game.synthetic.option(
             st.aside(cls := "analyse__side")(
-              lila.ui.bits.mselect(
-                "analyse-variant",
-                span(cls := "text", dataIcon := iconByVariant(pov.game.variant))(
-                  pov.game.variant.variantTrans()
-                ),
-                Variant.list.all
-                  .filter(FromPosition != _)
-                  .map: v =>
-                    a(
-                      dataIcon := iconByVariant(v),
-                      cls := (pov.game.variant == v).option("current"),
-                      href := routes.UserAnalysis.parseArg(v.key.value)
-                    )(v.variantTrans())
-              ),
-              pov.game.variant.chess960.option(chess960selector(chess960PositionNum)),
               hasWiki.option:
                 fieldset(cls := "analyse__wiki empty toggle-box toggle-box--toggle", id := "wikibook-field")(
                   legend(tabindex := 0)("WikiBook"),
@@ -86,33 +69,8 @@ final class AnalyseUi(helpers: Helpers):
           div(cls := "analyse__controls")
         )
 
-  private def chess960selector(num: Option[Int])(using Translate) =
-    div(cls := "jump-960")(
-      num.map(pos => label(`for` := "chess960-position")(trans.site.chess960StartPosition(pos))),
-      br,
-      form(
-        cls := "control-960",
-        method := "GET",
-        action := routes.UserAnalysis.parseArg("chess960")
-      )(
-        input(
-          id := "chess960-position",
-          `type` := "number",
-          name := "position",
-          min := 0,
-          max := 959,
-          value := num
-        ),
-        form3.submit(trans.site.loadPosition(), icon = none)
-      )
-    )
-
-  private def iconByVariant(variant: Variant): Icon =
-    PerfKey.byVariant(variant).fold(Icon.CrownElite)(_.perfIcon)
-
   def titleFull(pov: Pov)(using ctx: Context) =
-    val openingName = gameOpening(pov.game, ctx.isAuth).fold(trans.site.analysis.txt())(_.name)
-    s"${titlePlayerVs(pov.game)} - $openingName"
+    s"${titlePlayerVs(pov.game)} - ${trans.site.analysis.txt()}"
 
   def titlePlayerVs(g: Game) = s"${playerText(g.whitePlayer)} vs ${playerText(g.blackPlayer)}"
 

@@ -1,7 +1,6 @@
 package lila.setup
 
 import chess.format.Fen
-import chess.variant.Variant
 import chess.{ Clock, Speed }
 import scalalib.model.Days
 
@@ -22,9 +21,6 @@ private[setup] trait Config:
 
   // Correspondence days per turn
   val days: Days
-
-  // Game variant code: always standard chess, which a Go game carries unused until unit 3.17
-  val variant: Variant
 
   // Board size, ruleset and komi (unit 3.15)
   val go: GoOptions
@@ -76,11 +72,6 @@ trait Positional:
 object Config extends BaseConfig
 
 trait BaseConfig:
-  // Only games of Go are created (unit 3.15): the forms still take lila's `variant` field until the create
-  // forms change in unit 3.19, and refuse any chess variant.
-  val variants = List(chess.variant.Standard.id)
-  val variantDefault = chess.variant.Standard
-
   val speeds = Speed.all.map(_.id)
 
   private val timeMin = 0

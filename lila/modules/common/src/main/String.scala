@@ -25,19 +25,13 @@ object String:
   private[common] def isShouting(text: String) =
     text.lengthIs >= 5 && {
       import java.lang.Character.*
-      import chess.format.Fen
-      import chess.variant.Crazyhouse
-      // true if >1/2 of the latin letters are uppercase (or castling notation / fen board field)
+      // true if >1/2 of the latin letters are uppercase (or castling notation)
       text
         .take(1000)
         .split("\\s+")
         .filter(_.nonEmpty)
         .map(word =>
-          if Set("O-O", "O-O-O").contains(word.filter(c => c.isLetter || c == '-')) || (
-              word.length < 100 &&
-                Set(8, 9).contains(word.split('/').count(_.nonEmpty)) &&
-                Fen.makeBoard(Crazyhouse, word).isDefined
-            )
+          if Set("O-O", "O-O-O").contains(word.filter(c => c.isLetter || c == '-'))
           then word.toLowerCase
           else word
         )

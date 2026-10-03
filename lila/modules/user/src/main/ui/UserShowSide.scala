@@ -2,7 +2,6 @@ package lila.user
 package ui
 
 import lila.core.perf.{ PuzPerf, UserWithPerfs }
-import lila.rating.UserWithPerfs.hasVariantRating
 import lila.ui.*
 
 import ScalatagsTemplate.{ *, given }
@@ -80,7 +79,6 @@ final class UserShowSide(helpers: Helpers):
           showPerf(u.perfs.rapid, PerfKey.rapid),
           showPerf(u.perfs.classical, PerfKey.classical),
           showPerf(u.perfs.correspondence, PerfKey.correspondence),
-          u.hasVariantRating.option(hr),
           showNonEmptyPerf(u.perfs.crazyhouse, PerfKey.crazyhouse),
           showNonEmptyPerf(u.perfs.chess960, PerfKey.chess960),
           showNonEmptyPerf(u.perfs.kingOfTheHill, PerfKey.kingOfTheHill),
