@@ -1,9 +1,10 @@
 package lila.game
 
 import chess.{ ByColor, Status }
-import ligo.gorules.{ GameResult, Sgf, SgfInfo, SgfTime }
+import ligo.gorules.{ GameResult, GoGame, Sgf, SgfInfo, SgfTime }
 
 import lila.core.LightUser
+import lila.core.game.PgnDump.WithFlags
 import lila.core.game.{ Game, GoBridge, Player }
 
 /** A Go game as an SGF record (unit 4.11): the game's own state, written by `libs/go-rules`' `Sgf.write`,
@@ -14,9 +15,23 @@ object SgfDump:
 
   val contentType = "application/x-go-sgf"
 
-  /** The record, or `None` for a game that is not a Go game. */
-  def apply(game: Game, names: ByColor[String], place: String): Option[String] =
-    game.go.map(go => Sgf.write(go, info(game, names, place)))
+  /** The record, or `None` for a game that is not a Go game. Like the PGN and JSON exports, it holds back a
+    * game in play's last moves when `flags.delayMoves` asks for it (an untrusted caller), and has no moves
+    * with `moves = false`.
+    */
+  def apply(
+      game: Game,
+      names: ByColor[String],
+      place: String,
+      flags: WithFlags = WithFlags()
+  ): Option[String] =
+    game.go.flatMap: go =>
+      val shown =
+        if flags.moves then PgnDump.applyDelay(go.actions, flags.keepDelayIf(game.playable)).toVector
+        else Vector.empty
+      // A prefix of a stored game's accepted actions replays; the record is the game as far as it is shown.
+      val record = if shown.size == go.actions.size then Some(go) else GoGame.replay(go.setup, shown).toOption
+      record.map(r => Sgf.write(r, info(game, names, place)))
 
   def info(game: Game, names: ByColor[String], place: String): SgfInfo =
     SgfInfo(
@@ -47,10 +62,10 @@ object SgfDump:
       .map(d => SgfTime.Correspondence(d.value))
       .orElse(game.clockConfig.map(c => SgfTime.Fischer(c.limitSeconds.value, c.incrementSeconds.value)))
 
-  /** `RE` (R-RES-2). Only the endings that need no count are written: resignation `B+R`, a flag `W+T` and
-    * abandonment `B+F`. A game that ended with a count, by two passes or the ply cap, or never finished or
-    * started, has none. Counted results (`B+3.5`, `0`, `Void`) follow once the scoring phase (unit 4.8)
-    * stores them.
+  /** `RE` (R-RES-2). Only the endings that need no count are written: resignation `B+R`, a flag `W+T`, and a
+    * forfeit `B+F` (a player who left, never moved in a game that couldn't be aborted, or cheated). A game
+    * that ended with a count, by two passes or the ply cap, or never finished or started, has none. Counted
+    * results (`B+3.5`, `0`, `Void`) follow once the scoring phase (unit 4.8) stores them.
     */
   def result(game: Game): Option[GameResult] =
     for
@@ -58,6 +73,6 @@ object SgfDump:
       r <- game.status match
         case Status.Resign => Some(GameResult.Resigned(winner))
         case Status.Outoftime => Some(GameResult.OutOfTime(winner))
-        case Status.Timeout | Status.Cheat => Some(GameResult.Forfeit(winner))
+        case Status.Timeout | Status.NoStart | Status.Cheat => Some(GameResult.Forfeit(winner))
         case _ => None
     yield r

@@ -23,8 +23,8 @@ class GameExportFormatTest extends munit.FunSuite:
           .toList
           .filter(_.contains('='))
           .map { kv =>
-            val Array(k, v) = kv.split('=')
-            k -> Seq(v)
+            val (k, v) = kv.span(_ != '=')
+            k -> Seq(v.drop(1))
           }
           .toMap
       ),

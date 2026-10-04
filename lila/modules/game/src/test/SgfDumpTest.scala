@@ -5,6 +5,7 @@ import chess.rating.RatingProvisional
 import ligo.gorules.{ Action, BoardSize, GameResult, Point, Ruleset, SgfTime, Setup as GoSetup }
 import scalalib.model.Days
 
+import lila.core.game.PgnDump.WithFlags
 import lila.core.game.{ Game, Player, Source, newGoGame }
 import lila.core.id.GamePlayerId
 
@@ -57,6 +58,8 @@ class SgfDumpTest extends munit.FunSuite:
     assert(SgfDump(finished(played, Status.Resign, b), names, "x").get.contains("RE[B+R]"))
     assert(SgfDump(finished(played, Status.Outoftime, Some(Color.White)), names, "x").get.contains("RE[W+T]"))
     assert(SgfDump(finished(played, Status.Timeout, b), names, "x").get.contains("RE[B+F]"))
+    assert(SgfDump(finished(played, Status.NoStart, b), names, "x").get.contains("RE[B+F]"))
+    assert(SgfDump(finished(played, Status.Cheat, b), names, "x").get.contains("RE[B+F]"))
     // two passes without a count, aborted, no winner recorded: no RE until the scoring phase stores results
     assertEquals(SgfDump.result(finished(played, Status.UnknownFinish, None)), None)
     assertEquals(SgfDump.result(finished(played, Status.Aborted, None)), None)
@@ -84,6 +87,29 @@ class SgfDumpTest extends munit.FunSuite:
     val corres = played.copy(daysPerTurn = Some(Days(3)))
     assertEquals(SgfDump.time(corres), Some(SgfTime.Correspondence(3)))
     assert(SgfDump(corres, names, "x").get.contains("OT[3 days per move]"))
+
+  private val nine = act(newGo(), List("ee", "cc", "gc", "cg", "gg", "eg", "ec", "ce", "dc").map(place)*)
+  private def moveCount(sgf: String) = ";[BW]\\[".r.findAllIn(sgf).size
+
+  test("a game in play holds back its last 3 moves for an untrusted caller, as the PGN and JSON exports do"):
+    assert(nine.playable)
+    assertEquals(moveCount(SgfDump(nine, names, "x").get), 9)
+    val delayed = SgfDump(nine, names, "x", WithFlags(delayMoves = true)).get
+    assertEquals(moveCount(delayed), 6, delayed)
+    assert(!delayed.contains("W[ce]") && !delayed.contains("B[dc]"), delayed)
+    // a finished game shows every move
+    val over = finished(nine, Status.Resign, Some(Color.White))
+    assertEquals(moveCount(SgfDump(over, names, "x", WithFlags(delayMoves = true)).get), 9)
+
+  test("moves=false leaves the moves out and keeps the game information"):
+    val sgf = SgfDump(nine, names, "x", WithFlags(moves = false)).get
+    assertEquals(moveCount(sgf), 0, sgf)
+    assert(sgf.contains("PB[Black Bob]"), sgf)
+
+  test("a player name with SGF's special characters is escaped"):
+    val sgf = SgfDump(played, ByColor(white = "a]b", black = "c\\d"), "x").get
+    assert(sgf.contains("PW[a\\]b]"), sgf)
+    assert(sgf.contains("PB[c\\\\d]"), sgf)
 
   test("a game that is not Go has no SGF"):
     assertEquals(SgfDump(played.copy(go = None), names, "x"), None)

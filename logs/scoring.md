@@ -19,6 +19,17 @@
 - Grade autoscore's raw `result`/`needs_sealing` (as `src/grade.ts` does), never goscorer's `owner`, against OGS's `correct_ownership`: under Japanese rules `owner` marks territory only, so a correct answer would fail by construction (2026-09-29, unit 4.6).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 4.11 review · SGF export holds back a live game's last moves
+- Did: an independent review of PR #99 found the SGF export skipped lila's move delay (an untrusted caller
+  gets a game in play without its last 3 moves in PGN and JSON) and ignored `moves=false`. `SgfDump` now
+  takes the export flags and writes the record from the shown prefix of the actions (replayed by go-rules).
+  Also: `NoStart` (a player who never moved in a game that couldn't be aborted) writes `B+F` like a forfeit;
+  `?format=sgf` on a game that isn't Go falls back to PGN instead of an empty `.sgf`; the format test's query
+  parsing no longer throws on `a=b=c`. Tests: `SgfDumpTest` 9 (delay, `moves=false`, NoStart, Cheat, escaping).
+- Worked: `GoGame.replay(setup, prefix)` rebuilds the shown game; `Sgf.write` reads only setup and actions.
+- Lessons: any new export format must go through `applyDelay`/`keepDelayIf` like PGN and JSON.
+- Left as is: a bulk SGF export's filename keeps upstream's `lichess_<user>_<date>` stem (the rename is 3.17's).
+
 ### 2026-10-04 · unit 4.11 · SGF export of a Go game
 - Did: `lila.game.SgfDump` (pure) builds `SgfInfo` from a stored Go game (names, rank label from unit 5.5,
   creation date in UTC, place `LiGo <game url>`, Fischer or days-per-move clock, `RE` for resign, flag and

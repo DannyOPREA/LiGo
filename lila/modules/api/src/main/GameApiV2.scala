@@ -46,7 +46,7 @@ final class GameApiV2(
           formatted <- config.format match
             case Format.JSON =>
               toJson(game, initialFen, analysis, opening, config).map(Json.stringify)
-            case Format.SGF => sgfOf(game).map(_ | "")
+            case Format.SGF => sgfOf(game, config.flags).map(_ | "")
             case Format.PGN =>
               PgnStr.raw(
                 pgnDump(
@@ -204,10 +204,10 @@ final class GameApiV2(
       case Format.JSON => jsonFormatter(config)
 
   // Unit 4.11: a Go game as SGF. The bulk formatter keeps a game that isn't Go as PGN.
-  private def sgfOf(game: Game): Fu[Option[String]] =
+  private def sgfOf(game: Game, flags: WithFlags): Fu[Option[String]] =
     gameLightUsers(game).map: users =>
       val names = users.map((p, u) => SgfDump.playerName(p, u))
-      SgfDump(game, names, s"LiGo ${pgnDump.dumper.gameUrl(game.id)}")
+      SgfDump(game, names, s"LiGo ${pgnDump.dumper.gameUrl(game.id)}", flags)
 
   private def sgfFormatter(config: Config) =
     val pgn = pgnDump.formatter(config.flags)
@@ -217,7 +217,7 @@ final class GameApiV2(
         analysis: Option[Analysis],
         opening: Option[Opening.AtPly]
     ) =>
-      sgfOf(game).flatMap:
+      sgfOf(game, config.flags).flatMap:
         case Some(sgf) => fuccess(s"$sgf\n\n")
         case None => pgn(game, initialFen, analysis, opening)
 
