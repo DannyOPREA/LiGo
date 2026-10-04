@@ -60,7 +60,7 @@ if has '^lila/(modules|app|conf|project|build\.sbt)|^libs/go-rules/(src/main/|bu
   add "lila scalafmt" "cd lila && ./lila.sh --server --batch scalafmtCheckAll"
   add "lila tests" "dev/ligo test lila"
 fi
-if has '^lila-ws/'; then add "lila-ws tests" "dev/ligo test ws"; fi
+if has '^lila-ws/'; then add "lila-ws tests" "dev/ligo test ws"; add "lila-ws scalafmt and scalafix" "cd lila-ws && sbt --batch check"; fi
 if has '^libs/go-rules/|^libs/board/|^libs/conformance/fixtures/|^dev/ligo$'; then
   add "go-rules scalafmt" "cd libs/go-rules && sbt --server --batch scalafmtCheckAll"
   add "go-rules + board: pin, tests, fixtures, parity" "dev/ligo test rules"

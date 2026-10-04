@@ -55,7 +55,8 @@ object Fens:
   /* Reads lila's Go move event (ADR 0019 §6), e.g.
    * {"p":"ee","ply":2,"cap":[],"prisoners":{"b":0,"w":0},"phase":"play","board":"9/9/9/9/4b4/9/9/9/9",
    *  "clock":{"white":61.5,"black":60}}
-   * or {"pass":true,...}. Only games someone watches are read. */
+   * or {"pass":true,...}. A byo-yomi clock adds "periods":{"b":n,"w":n} and "byo" (ADR 0020 §7).
+   * Only games someone watches are read. */
   private[ws] def readMove(json: JsonString, moveBy: Option[Color]): Option[MiniBoard] =
     Try(Json.parse(json.value)).toOption
       .collect { case o: JsObject => o }
@@ -72,7 +73,12 @@ object Fens:
               for
                 white <- (c \ "white").asOpt[Double]
                 black <- (c \ "black").asOpt[Double]
-              yield Clock(white.toInt, black.toInt)
+                periods =
+                  for
+                    w <- (c \ "periods" \ "w").asOpt[Int]
+                    b <- (c \ "periods" \ "b").asOpt[Int]
+                  yield (w, b)
+              yield Clock(white.toInt, black.toInt, periods)
         yield MiniBoard(lastMove, board, clock, moveBy.fold(Color.black)(c => !c))
 
   private val BoardShape = "[0-9bw/]+".r

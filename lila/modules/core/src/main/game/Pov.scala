@@ -31,7 +31,7 @@ case class Pov(game: Game, color: Color):
   lazy val isMyTurn = game.started && game.playable && game.turnColor == color
 
   lazy val remainingSeconds: Option[Seconds] =
-    game.clock
+    game.gameClock
       .map(c => c.remainingTime(color).roundSeconds)
       .orElse:
         Seconds.from(game.playableCorrespondenceClock.map(_.remainingTime(color).toInt))
