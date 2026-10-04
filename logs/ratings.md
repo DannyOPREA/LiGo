@@ -18,8 +18,8 @@
   a named opponent, stones outside the allowed range). A rated challenge to a named player fetches
   `/setup/go-handicap/:username` (suggested stones per board, ±1, and who takes Black), shows the
   suggestion and "You play X", and moves out-of-range stones to the suggestion. The rating filter is in
-  whole Go ranks (lobby page data carries GoRating's rank table). Rated lobby games stay out of pools;
-  a signed-in player's casual game that fits a pool joins it (pools are casual until 6.4 part 2).
+  whole Go ranks (lobby page data carries GoRating's rank table). Pools follow 6.4 part 2 (rated
+  pools), which merged while this PR was open: a rated game that fits a pool joins it.
 - Worked: the server's eligibility check stays the source of truth; the form mirrors it, so a missed
   case still gets the server's refusal. 77 lobby tests (stubbed fetch for the suggestion).
 - Didn't work / dead ends: `@/options` imports fail under the test resolver (use a relative path);
@@ -28,12 +28,11 @@
   the 25k edge was outside their own range); a "reset to the suggestion" must never override what is
   always allowed (an even game) or fixed by a link; and a pool test with `pools: []` passed vacuously
   while the pool path had become dead code. Give a stub the data that makes the branch reachable.
-- Decisions: casual stays the form's default (lila's is rated); casual signed-in hooks may join a
-  pool. Claude's calls under the 2026-09-28 delegation (logs/decisions.md).
+- Decisions: casual stays the form's default (lila's is rated). Claude's calls under the 2026-09-28 delegation (logs/decisions.md).
 - Verified by Claude: `node ui/test lobby` (77/77), `dev/ligo compile ui` (tsc), oxlint, verify.sh.
   · Needs owner verification: the windows on desktop and phone, a guest's sign-up link, a rated
   handicap challenge's colours vs "You play X", the rank filter.
-- Follow-ups: 5.5 part 2 (the Go leaderboard); 6.4 part 2 flips the pool rule to rated.
+- Follow-ups: 5.5 part 2 (the Go leaderboard).
 
 ### 2026-10-04 · unit 5.7 (part 1) · Rated Go games in the server
 - Did: rated Go games are back. Signed-in players may create rated lobby games, correspondence

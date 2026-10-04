@@ -189,6 +189,7 @@ final class LobbySocket(
           perf <- poolApi.poolPerfKeys.get(PoolConfigId(id))
           ratingRange = d.str("range").flatMap(RatingRange.parse)
           blocking = d.get[UserId]("blocking")
+          handicapOk = ~d.boolean("handicap") // the Handicap OK chip (ADR 0022 §2)
         yield
           lobby ! CancelHook(member.sri) // in case there's one...
           for
@@ -196,17 +197,22 @@ final class LobbySocket(
             trust <-
               if glicko.exists(_.established) then fuccess(UserTrust.Yes) else userTrustApi.get(user.id)
           do
+            val rankKnown = glicko.exists(hasRank)
             poolApi.join(
               PoolConfigId(id),
               PoolMember(
                 userId = user.id,
                 sri = member.sri,
                 from = PoolFrom.Socket,
-                rating = toJoinRating(glicko, trust),
+                // LiGo: a player with a rank joins at their own rating, which handicap stones are counted
+                // from (ADR 0022 §3); lila's guess around a provisional rating is kept for the rest
+                rating = glicko.filter(hasRank).fold(toJoinRating(glicko, trust))(_.intRating),
                 provisional = glicko.forall(_.provisional.yes),
                 ratingRange = ratingRange,
                 lame = user.lame,
-                blocking = user.blocking.map(_ ++ blocking)
+                blocking = user.blocking.map(_ ++ blocking),
+                handicapOk = handicapOk,
+                rankKnown = rankKnown
               )
             )
     // leaving a pool
@@ -276,6 +282,11 @@ private object LobbySocket:
     def bot = user.exists(_.bot)
     def userId = user.map(_.id)
     def isAuth = userId.isDefined
+
+  /* An account with a rank: one that declared it at signup or finished a rated game, so its Go rating has
+   * moved off lila's starting 1500 / 500 (ADR 0021 §4). Only those get handicap stones in a pool. */
+  def hasRank(g: chess.rating.glicko.Glicko): Boolean =
+    g.rating != Glicko.default.rating || g.deviation < Glicko.default.deviation
 
   def toJoinRating(g: Option[chess.rating.glicko.Glicko], trust: UserTrust) =
     val glicko = g | Glicko.pairingDefault

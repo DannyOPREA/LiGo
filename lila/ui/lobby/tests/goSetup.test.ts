@@ -66,7 +66,7 @@ const edge = (name: string) => rankTable.find(([n]) => n === name)![1];
 const lobby = (
   ratingMap: Record<string, number> | null = null,
   signedIn = true,
-  pools: { id: string }[] = [],
+  pools: { id: string; size: number; lim?: number; inc?: number }[] = [],
 ) => {
   const ctrl = {
     me: signedIn ? { username: 'alice', isBot: false } : undefined,
@@ -306,19 +306,21 @@ describe('the create-game form', () => {
     assert.ok(setup.valid());
   });
 
-  test('a rated lobby game stays in the lobby, a casual one that fits a pool joins it: pools make casual games until unit 6.4', () => {
-    const { setup } = lobby({ go: 1580 }, true, [{ id: '10+0' }]);
+  test('a rated game that fits a pool joins it; a casual one, or a guest’s, stays a lobby game (unit 6.4)', () => {
+    const pool = { id: '19x19-10+0', size: 19, lim: 10, inc: 0 };
+    const { setup } = lobby({ go: 1580 }, true, [pool]);
     setup.openModal('hook', { mode: 'rated', timeMode: 'realTime', time: 10, increment: 0 });
-    assert.equal(setup.timeControl.clockStr(), '10+0');
-    assert.equal(setup.hookToPoolMember('random'), null);
-    setup.gameMode('casual');
-    assert.equal(setup.hookToPoolMember('random')?.id, '10+0');
+    assert.equal(setup.hookToPoolMember('random')?.id, '19x19-10+0');
     assert.equal(setup.hookToPoolMember('black'), null);
+    setup.gameMode('casual');
+    assert.equal(setup.hookToPoolMember('random'), null);
+    setup.gameMode('rated');
     setup.setGoSize(9);
     assert.equal(setup.hookToPoolMember('random'), null);
-    // a guest's game is a lobby game: guests join pools from the pool buttons
-    const guest = lobby(null, false, [{ id: '10+0' }]).setup;
-    guest.openModal('hook', { timeMode: 'realTime', time: 10, increment: 0 });
+    // a guest can't choose rated, so their game stays a lobby game: guests join pools from the pool tiles
+    const guest = lobby(null, false, [pool]).setup;
+    guest.openModal('hook', { mode: 'rated', timeMode: 'realTime', time: 10, increment: 0 });
+    assert.equal(guest.gameMode(), 'casual');
     assert.equal(guest.hookToPoolMember('random'), null);
   });
 

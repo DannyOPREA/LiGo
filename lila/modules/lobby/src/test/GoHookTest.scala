@@ -100,10 +100,10 @@ class GoHookTest extends munit.FunSuite:
     assert(!rated(GoSetups.default.copy(handicap = 2, komi = 0.5)).seemsCompatibleWithPools, "handicap")
 
   test("a hook goes to a pool only with that pool's clock and board size"):
-    val poolClock = Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))
+    val poolClock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3)))
     assert(rated(GoSetups.default).compatibleWithPool(poolClock, GoSetups.default))
     assert(!rated(nine).compatibleWithPool(poolClock, GoSetups.default))
-    val other = Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0))
+    val other = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0)))
     assert(!rated(GoSetups.default).compatibleWithPool(other, GoSetups.default))
     given lila.core.pool.IsPoolCompatible =
       lila.core.pool.IsPoolCompatible((c, go) => c == poolClock && go == GoSetups.default)
@@ -177,11 +177,15 @@ class GoHookTest extends munit.FunSuite:
     assert(h.compatibleWith(hook(GoSetups.default, "z").copy(clock = byo)))
     assert(!h.compatibleWith(hook(GoSetups.default, "f")), "Fischer")
 
-  test("byo-yomi hooks don't go to the pools, which are all Fischer for now"):
+  // Unit 6.4 (second part): byo-yomi pools take byo-yomi hooks with their clock
+  test("a rated byo-yomi hook goes to the pool with the same byo-yomi clock, not a Fischer one"):
     val h = rated(GoSetups.default).copy(clock = byo)
-    given lila.core.pool.IsPoolCompatible = lila.core.pool.IsPoolCompatible((_, _) => true)
-    assert(!h.compatibleWithPools)
-    assert(!h.compatibleWithPool(Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0)), h.go))
+    assert(h.compatibleWithPool(byo, GoSetups.default))
+    val fischer = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0)))
+    assert(!h.compatibleWithPool(fischer, GoSetups.default))
+    given lila.core.pool.IsPoolCompatible = lila.core.pool.IsPoolCompatible((c, _) => c == byo)
+    assert(h.compatibleWithPools)
+    assert(!rated(GoSetups.default).compatibleWithPools)
 
   // Unit 6.5: open games a player can't join are sent anyway, greyed by the browser (ADR 0022 §5)
   private def member(id: String, rating: Int, lame: Boolean = false, blocks: Set[String] = Set.empty) =
@@ -262,3 +266,11 @@ class GoHookTest extends munit.FunSuite:
     assert(!a.compatibleWith(b.copy(go = nine.some)))
     assert(!a.compatibleWith(b.copy(go = GoSetups.default.copy(handicap = 2, komi = 0.5).some)))
     assert(!a.compatibleWith(b.copy(daysPerTurn = Some(Days(3)))))
+
+  // Unit 6.4 (second part): who has a rank in a pool (ADR 0021 §4, ADR 0022 §3)
+  test("an account at lila's starting 1500 / 500 has no rank; a declared or played one has"):
+    import lila.rating.{ Glicko, GoRating }
+    assert(!LobbySocket.hasRank(Glicko.default))
+    assert(LobbySocket.hasRank(GoRating.startingGlicko(GoRating.Rank.fromName("5k").get)))
+    assert(LobbySocket.hasRank(Glicko.default.copy(deviation = 480)), "one rated game played")
+    assert(LobbySocket.hasRank(Glicko.default.copy(rating = 1520)))

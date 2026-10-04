@@ -26,6 +26,7 @@ import {
   validKomi,
 } from './goSetup';
 import type { ForceSetupOptions, GameMode, GameType, PoolMember, SetupStore } from './interfaces';
+import { fischerPresets, poolForClock } from './poolList';
 import { clampSteps, maxRankSteps, rankRange, type RankRange } from './rankRange';
 
 // The handicap ADR 0021 §4 suggests for a rated challenge to a named player, per rated board size, and
@@ -139,7 +140,7 @@ export default class SetupController {
       forceOptions?.periods ?? storeProps.periods ?? defaultPeriods,
       forceOptions?.periodTime ?? storeProps.periodTime ?? defaultPeriodTime,
       this.onPropChange,
-      this.root.pools,
+      fischerPresets(this.root.pools),
     );
     this.gameMode = this.propWithApply(forceOptions?.mode ?? storeProps.gameMode);
     this.ratingMin = this.propWithApply(storeProps.ratingMin);
@@ -340,20 +341,26 @@ export default class SetupController {
   };
 
   hookToPoolMember = (color: ColorChoice): PoolMember | null => {
-    // Pools make casual games until unit 6.4's second part rates them, so a signed-in player's casual game
-    // that fits a pool joins it, and a rated one stays a lobby game rather than turning casual (unit 5.7).
     const valid =
       color === 'random' &&
       this.gameType === 'hook' &&
-      !!this.root.me &&
-      this.gameMode() === 'casual' &&
-      // pools play 19×19 Japanese games with standard komi (ADR 0022 §1), as the server checks
-      this.goSize() === defaultGoSize &&
+      // pools play even Japanese games with standard komi (ADR 0022 §1), as the server checks
+      this.handicap() === 0 &&
       this.goRuleset() === defaultGoRuleset &&
       this.goKomi() === standardKomi(defaultGoRuleset) &&
-      this.timeControl.isRealTime();
-    const id = this.timeControl.clockStr();
-    return valid && this.root.pools.some(p => p.id === id) ? { id, range: this.ratingRange() } : null;
+      this.gameMode() === 'rated' &&
+      this.timeControl.isLive();
+    const tc = this.timeControl;
+    const pool =
+      valid &&
+      poolForClock(
+        this.root.pools,
+        this.goSize(),
+        tc.isByoyomi()
+          ? { byo: { limit: tc.time() * 60, periods: tc.periods(), period: tc.periodTime() } }
+          : { lim: tc.time(), inc: tc.increment() },
+      );
+    return pool ? { id: pool.id, range: this.ratingRange() } : null;
   };
 
   propsToFormData = (color: ColorChoice) =>

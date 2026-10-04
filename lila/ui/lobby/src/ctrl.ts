@@ -20,6 +20,7 @@ import type {
   LobbyMe,
 } from './interfaces';
 import { noChips, viewerOf, type Chips, type Viewer } from './openChallenges';
+import { poolFromHash } from './poolList';
 import * as seekRepo from './seekRepo';
 import SetupController from './setupCtrl';
 import LobbySocket from './socket';
@@ -360,17 +361,15 @@ export default class LobbyController {
   // also handles onboardink link for anon users
   private readonly joinPoolFromLocationHash = () => {
     if (location.hash.startsWith('#pool/')) {
-      const regex = /^#pool\/(\d+\+\d+)(?:\/(.+))?$/,
-        match = regex.exec(location.hash),
-        member: PoolMember = { id: match![1], blocking: match![2] },
-        range = poolRangeStorage.get(this.me?.username, member.id);
-      if (range) member.range = range;
-      if (match) {
+      const member: PoolMember | undefined = poolFromHash(location.hash, this.pools);
+      if (member) {
+        const range = poolRangeStorage.get(this.me?.username, member.id);
+        if (range) member.range = range;
         this.setTab('pools');
         if (this.me) this.enterPool(member);
         else setTimeout(() => this.clickPool(member.id), 1500);
-        history.replaceState(null, '', '/');
       }
+      history.replaceState(null, '', '/');
     }
   };
 }
