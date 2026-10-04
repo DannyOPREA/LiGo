@@ -260,6 +260,10 @@
   <string name="openChallenges">Open challenges</string>
   <string name="live">Live</string>
   <string name="goEven">Even</string>
+  <string name="goUnjoinableRated">Rated games need an account</string>
+  <string name="goUnjoinableRange">Your rank is outside this game's range</string>
+  <string name="goUnjoinableMembers">For signed-in players</string>
+  <string name="goUnjoinableGuests">For guests</string>
   <string name="goHandicap">Handicap</string>
   <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>
   <string name="goFirstMove">First move</string>

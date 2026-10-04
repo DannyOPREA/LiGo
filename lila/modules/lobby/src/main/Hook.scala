@@ -51,8 +51,9 @@ case class Hook(
     manualRatingRange.filter:
       _ != RatingRange(r - IntRating(500), r + IntRating(500))
 
-  lazy val ratingRangeOrDefault: RatingRange =
-    nonWideRatingRange.orElse(rating.map(lila.rating.RatingRange.defaultFor)).getOrElse(RatingRange.default)
+  // a hook without a range of its own accepts any rank: lila's chess default range around the
+  // creator's rating is gone (ADR 0022 §7, unit 6.5)
+  lazy val ratingRangeOrDefault: RatingRange = nonWideRatingRange | RatingRange.default
 
   def userId = user.map(_.id)
   def username = user.fold(UserName.anonymous)(_.username)
@@ -82,6 +83,10 @@ case class Hook(
     .add("goRank" -> perf.map(p => lila.rating.GoRating.label(p.rating, p.provisional))) // LiGo (unit 5.5)
     .add("go" -> GoSetups.json(go).some)
     .add("ra" -> rated.yes.option(1))
+    // what the browser needs to grey the rows you can't join (ADR 0022 §5, unit 6.5): whether the
+    // creator is signed in, and the rating range they asked for, in ratings and in ranks
+    .add("auth" -> isAuth.some)
+    .add("rr" -> nonWideRatingRange.map(RatingRanges.json))
     .add("byo" -> clock.byoyomi.map: c =>
       Json.obj("limit" -> c.mainSeconds, "periods" -> c.periods, "period" -> c.periodSeconds))
 

@@ -6,7 +6,6 @@ import lila.memo.CacheApi.*
 final class SeekApi(
     userApi: lila.core.user.UserApi,
     config: SeekApi.Config,
-    biter: Biter,
     relationApi: lila.core.relation.RelationApi,
     cacheApi: lila.memo.CacheApi
 )(using Executor):
@@ -44,10 +43,15 @@ final class SeekApi(
 
   def forUser(user: LobbyUser): Fu[List[Seek]] =
     cache.get(ForUser).map { seeks =>
+      // every seek they may see, joinable or not (ADR 0022 §5); joining checks `Biter.canJoin`
       val filtered = seeks.filter: seek =>
-        seek.user.is(user) || biter.canJoin(seek, user)
+        seek.user.is(user) || Biter.visible(seek, user)
       SeekApi.noDupsFor(user, filtered).take(maxPerPage.value)
     }
+
+  // the seeks a player can join, uncapped: what a new seek of theirs may match at once
+  def joinableBy(user: LobbyUser): Fu[List[Seek]] =
+    cache.get(ForUser).map(_.filter(Biter.canJoin(_, user)))
 
   def find(id: String): Fu[Option[Seek]] =
     coll.find(bid(id)).one[Seek]
