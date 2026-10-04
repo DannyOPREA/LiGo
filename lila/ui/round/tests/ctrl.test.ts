@@ -424,6 +424,22 @@ describe('the scoring phase', () => {
     assert.equal(boards[0].scoring, undefined);
   });
 
+  test("it is the player's turn until they accept: lila's Pov.isMyTurn, for the lists and the next game", () => {
+    const { ctrl } = scoring();
+    assert.equal(ctrl.isMyTurn(), true, 'Black has not accepted');
+    assert.match(document.title, /^site\.scoringPhaseStarted/, 'the tab says so too');
+    ctrl.apiScoring(proposal({ accepted: { b: true, w: false } }));
+    assert.equal(ctrl.isMyTurn(), false, 'Black accepted: the game waits for White');
+    assert.match(document.title, /^site\.waitingForOpponent/);
+    ctrl.apiScoring(proposal({ v: '1:2', accepted: { b: false, w: true } }));
+    assert.equal(ctrl.isMyTurn(), true, 'a toggle clears the accepts');
+  });
+
+  test("a spectator's game is nobody's turn in the scoring phase", () => {
+    const { ctrl } = scoring({ spectator: true });
+    assert.equal(ctrl.isMyTurn(), false);
+  });
+
   test('a game loaded in its scoring phase shows the marks at once', () => {
     const d = data('ee cc pass pass');
     d.game.go.phase = 'scoring';

@@ -403,7 +403,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       else g
     val userIds = g2.userIds.distinct
     val checkInHours =
-      if g2.isPgnImport then none
+      if g2.isSgfImport then none
       else if g2.sourceIs(_.Api) then some(24 * 7)
       else if g2.hasClock then 1.some
       else some(24 * 10)

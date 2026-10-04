@@ -49,6 +49,11 @@ export interface GameOptions {
   clock?: number;
   /** A byo-yomi clock (unit 4.7): periods each side has left and their length in seconds. */
   byoyomi?: { periods: number; byo: number } | null;
+  /**
+   * A correspondence game (unit 7.7): lila's days-per-turn clock, with the seconds each side has left
+   * when the page loads. Give `clock: 0` with it, as a correspondence game has no real-time clock.
+   */
+  correspondence?: { days: number; white: number; black: number } | null;
   /** A game loaded in its scoring phase: the server's `scoring` (ADR 0020 §6). */
   scoring?: unknown;
   /** The board and stone preferences (`theme`, `pieceSet`) lila puts on <body>: goban's theme names. */
@@ -75,7 +80,7 @@ function roundData(o: Required<GameOptions>) {
     game: {
       id: gameId,
       variant: { key: 'standard', name: 'Standard', short: 'Std' },
-      speed: 'blitz',
+      speed: o.correspondence ? 'correspondence' : 'blitz',
       perf: 'go',
       rated: false,
       source: 'lobby',
@@ -108,6 +113,16 @@ function roundData(o: Required<GameOptions>) {
       confirmResign: true,
       confirmMoves: o.confirmMoves,
     },
+    ...(o.correspondence
+      ? {
+          correspondence: {
+            daysPerTurn: o.correspondence.days,
+            increment: o.correspondence.days * 86400,
+            white: o.correspondence.white,
+            black: o.correspondence.black,
+          },
+        }
+      : {}),
     ...(o.clock
       ? {
           clock: {
@@ -125,7 +140,7 @@ function roundData(o: Required<GameOptions>) {
         }
       : {}),
     takebackable: true,
-    moretimeable: true,
+    moretimeable: !o.correspondence, // lila gives extra time only on a real-time clock
     steps: [
       { ply: 0, uci: null, san: null, fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1' },
     ],
@@ -271,6 +286,7 @@ export async function openRound(page: Page, options: GameOptions = {}): Promise<
     confirmMoves: ConfirmMoves.NEVER,
     clock: 180,
     byoyomi: null,
+    correspondence: null,
     scoring: null,
     board: 'Plain',
     stones: 'Plain',

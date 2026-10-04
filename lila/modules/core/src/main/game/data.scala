@@ -8,7 +8,7 @@ import lila.core.userId.UserId
 
 case class GameMetadata(
     source: Option[Source],
-    pgnImport: Option[PgnImport],
+    sgfImport: Option[SgfImport],
     tournamentId: Option[TourId],
     swissId: Option[SwissId],
     simulId: Option[SimulId],
@@ -16,8 +16,8 @@ case class GameMetadata(
     drawOffers: GameDrawOffers,
     rules: Set[GameRule]
 ):
-  def pgnDate = pgnImport.flatMap(_.date)
-  def pgnUser = pgnImport.flatMap(_.user)
+  def sgfDate = sgfImport.flatMap(_.date)
+  def sgfUser = sgfImport.flatMap(_.user)
   def hasRule(rule: GameRule.type => GameRule) = rules(rule(GameRule))
   def nonEmptyRules = rules.nonEmpty.option(rules)
 
@@ -48,12 +48,17 @@ case class GameDrawOffers(white: Set[Ply], black: Set[Ply]):
 
   def normalizedPlies: Set[Ply] = normalize(Color.white) ++ normalize(Color.black)
 
-case class PgnImport(
+case class SgfImport(
     user: Option[UserId],
     date: Option[String],
-    pgn: String,
-    // hashed PGN for DB unicity
-    h: Option[Array[Byte]]
+    sgf: String,
+    // hash of the whole SGF text for DB unicity
+    h: Option[Array[Byte]],
+    // the file's result (`RE`) as SGF writes it (`B+3.5`, `W+`, `0`) for a game that ended by counting,
+    // so the page needs no parse of the text; absent for older documents and other endings
+    re: Option[String] = None,
+    // the `RU` text when it named a ruleset LiGo doesn't know (Japanese was used), shown on the game page
+    ru: Option[String] = None
 )
 
 type ClockHistory = ByColor[Vector[Centis]]

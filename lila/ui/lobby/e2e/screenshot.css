@@ -6,3 +6,15 @@ main.lobby * {
   color: transparent !important;
   text-shadow: none !important;
 }
+
+/* The custom-game window (unit 6.8) is a dialog whose labels and buttons set their own colours and
+   text shadows with more specific !important rules: these selectors outrank them (:not(#x#y#z) adds
+   the weight of three ids and matches everything). */
+dialog:not(#x#y#z),
+dialog *:not(#x#y#z),
+dialog *:not(#x#y#z)::before,
+dialog *:not(#x#y#z)::after {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+}

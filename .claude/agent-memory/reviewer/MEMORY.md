@@ -10,7 +10,7 @@
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
 - [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, goban SGF hangs, goban puzzle-mode glue, solver GHI/ko/spike budget
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
-- [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, headless-shell mismatch (9.6 push), SW probes
+- [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs, CI area gaps, headless-shell, `--list` for import.meta, no Origin → CSRF 403, casual /training/:id (8.8)
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, deleted-TS DOM effects, privacy deletes, stand-ins keeping dead code (3.3–3.19p2)
@@ -30,11 +30,11 @@
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, Setup.like/rematch bypass, kept chess rematch, vacuous me=None tests (3.15)
 - [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, PLAN-row scope gaps, gated-predicate side readers (isGone), empty sans, Resume index drift, empty steps (3.11–3.16)
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, rematch bypass, vacuous me=None; 4.9: TS TimeControl switches, handicap rematch swap, sg speed formula
-- [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding dead zones, guest seeks, raw reasons (6.7); negative provisional ratingMap, own-by-sri, capped lists (6.5)
+- [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR dead zones, guest seeks (6.7); provisional ratingMap (6.5); guest byo presets, persisted suggestions (6.8)
 - [Mini board review patterns](mini-board-review-patterns.md) — ownerPreview is public API, fen-message ply undercount, DOM-testable miniBoard.ts (3.19)
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, stand-in rating carry-over, checklist words vs data (8.7–8.8)
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, scratch PW probes (8.7)
-- [Correspondence review patterns](correspondence-review-patterns.md) — sorted i18n.d.ts, unrendered notify types, decision rows vs code, alarm races (7.6)
+- [Correspondence review patterns](correspondence-review-patterns.md) — sorted i18n.d.ts, unrendered notify types, decision rows vs code, alarm races (7.6); flag msg name, post-end tick (7.7)
 - [Review patterns (5.7)](feedback_review_patterns.md) — verify.sh sbt cache (use testFull), two rematch paths, toFriend retarget, licences, vacuous pool test, 25k floor

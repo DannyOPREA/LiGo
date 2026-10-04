@@ -82,7 +82,7 @@ final private class Titivate(
     case Right(game) =>
       game match
 
-        case game if game.finished || game.isPgnImport || (game.aborted && game.bothPlayersHaveMoved) =>
+        case game if game.finished || game.isSgfImport || (game.aborted && game.bothPlayersHaveMoved) =>
           gameRepo.unsetCheckAt(game.id)
 
         // the scoring phase's deadline (ADR 0020 §2): `ck` follows it, so it survives a lila restart

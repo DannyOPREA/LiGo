@@ -21,7 +21,11 @@ const createHandler = (ctrl: LobbyController) => (e: Event) => {
   }
   const id = target.dataset['id']!;
   if (target.dataset['kind'] === 'cancel') ctrl.stopWaiting();
-  else if (id === 'custom') ctrl.setupCtrl.openModal('hook');
+  else if (id === 'custom')
+    // the lobby's Rated / Casual chip counts only until the player has settings of their own
+    ctrl.setupCtrl.openModal('hook', undefined, undefined, {
+      gameMode: effectiveChips(ctrl.quickChips, !!ctrl.me).rated ? 'rated' : 'casual',
+    });
   else if (target.dataset['kind'] === 'corres') ctrl.clickCorres(id);
   else ctrl.clickPool(id);
   ctrl.redraw();

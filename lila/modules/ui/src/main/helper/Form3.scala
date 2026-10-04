@@ -319,5 +319,5 @@ final class Form3(formHelper: FormHelper & I18nHelper & AssetHelper, flairApi: F
   object file:
     def image(name: String): Frag =
       st.input(tpe := "file", st.name := name, accept := "image/png, image/jpeg, image/webp")
-    def pgn(name: String): Frag = st.input(tpe := "file", st.name := name, accept := ".pgn")
+    def sgf(name: String): Frag = st.input(tpe := "file", st.name := name, accept := ".sgf")
     def selectImage = button(cls := "button select-image", tpe := "button")("Select image")

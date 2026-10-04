@@ -239,3 +239,18 @@ delegation; logs/decisions.md):
   chess fields; the chess node and its chessops position code moved into `ui/puzzle`, its only
   user, until 8.7 replaces the puzzle page.
 - The page's words are English until 9.7 translates the analysis page, as the round page's are.
+
+## Amendment (2026-10-04, unit 7.5)
+What SGF import settled while it was built (Claude, under the owner's 2026-09-28 delegation;
+logs/decisions.md):
+- **Body limit.** `/paste` and `/api/import` read one urlencoded field, `sgf`, through
+  `parse.formUrlEncoded(600 KB)`: form encoding writes `(`, `;`, `[` and `]` as three characters, so a
+  200 KB file can be 600 KB on the wire. The 200 KB limit itself is checked in bytes on the decoded
+  field, before the rate limiter, the duplicate lookup and the parse.
+- **`sgfi` has two more optional fields**, absent in older documents: `re`, the file's result as SGF
+  writes it (`B+3.5`, `W+`, `0`) for a game that ended by counting, so the page shows the margin
+  without parsing the text; and `ru`, the `RU` text when it named a ruleset LiGo doesn't know (§2:
+  Japanese is used). The game page's side panel shows "Ruleset not recognised: X. Imported as
+  Japanese." from `ru`; the analysis board also says so itself.
+- **An import's SGF download is the stored text**, verbatim (`/game/export/<id>?format=sgf`), not a
+  rewrite of its main line; other games are written from their moves (unit 4.11).
