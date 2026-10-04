@@ -148,7 +148,9 @@ async function signUp(page: Page, name: string) {
   await page.goto('/signup');
   await page.getByRole('textbox', { name: 'Username' }).fill(name);
   await page.getByRole('textbox', { name: 'Password' }).fill(`demo-pass-${name}`);
-  await page.getByRole('textbox', { name: 'Email' }).fill(`${name}@example.com`);
+  // a domain on lila's allowlist (DisposableEmailDomain.whitelist) skips its MX lookup, which a CI runner
+  // can fail: example.com has no mail server, so signup refused it there
+  await page.getByRole('textbox', { name: 'Email' }).fill(`${name}@gmail.com`);
   // the switches are styled: their label (not the text beside them) is what a person clicks
   for (const agreement of ['assistance', 'nice', 'account'])
     await page.locator(`label.form-check__label[for="form3-agreement_${agreement}"]`).click();
@@ -226,7 +228,9 @@ test('correspondence: a move each, the bell, two passes, the count and the resul
       await dialog.locator('label[for="sf_size_9"]').click();
       await dialog.getByRole('tab', { name: 'Correspondence' }).click();
       await expect(dialog.locator('.time-panel .val-box')).toHaveText('2');
-      await dialog.getByRole('button', { name: `Challenge ${names.b}` }).click();
+      // the window is titled after the opponent; its button sends the challenge (unit 6.8's one window)
+      await expect(dialog.getByRole('heading', { name: `Challenge ${names.b}` })).toBeVisible();
+      await dialog.getByRole('button', { name: 'Send challenge' }).click();
       // the challenge waits on its own game page
       await expect(a).toHaveURL(/\/[A-Za-z0-9]{8}$/, { timeout: 5000 });
     }).toPass({ intervals: [5_000, 10_000, 15_000], timeout: 120_000 });

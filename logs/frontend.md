@@ -4,6 +4,19 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.8 CI fix · The demo's sign-up and challenge on a fresh database
+- Did: the `e2e` job failed on #135 at sign-up, desktop and phone: lila looks up the mail server of an
+  email's domain, and `example.com` has none, so the CI runner's sign-up was refused (locally it went
+  through). The players now use `@gmail.com` addresses, a domain on lila's own allowlist that skips the
+  lookup (as Phase 5's #132 does). Run on a fresh database here, the demo then stopped at the challenge:
+  unit 6.8 (#127, merged meanwhile) made one setup window whose button reads "Send challenge" (the window
+  keeps the "Challenge <name>" title), so the spec checks the title and presses the new button; the
+  checklist says the same.
+- Verified: `dev/ligo up`, accounts file removed so both players sign up fresh, phase7 demo 6/6
+  (desktop and phone); oxlint and oxfmt clean.
+- Lessons: run a real-stack demo once from a fresh database before the PR; a run that signs in as
+  remembered accounts skips the sign-up path CI takes.
+
 ### 2026-10-04 · unit 7.8 review · Reviewer findings fixed
 - Did: the reviewer found nothing blocking. Its three should-fix items are fixed in
   `lila/tests/e2e-demo/phase7-demo.spec.ts`; all three were checks weakened by the demo's reused accounts.

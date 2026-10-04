@@ -57,7 +57,7 @@ You need two browsers (or one normal window and one private window): player A an
       `dev/ligo logs lila`.)
 - [ ] **3.2 Challenge.** As A, open B's profile and press the swords (Challenge to a game), or open
       `http://localhost:8080/?user=<B's name>#friend`. Choose board size 9×9 and the **Correspondence** tab
-      (2 days per turn), Casual, and press **Challenge <B>**. A waits on the game's page.
+      (2 days per turn), Casual, and press **Send challenge**. A waits on the game's page.
 - [ ] **3.3 Accept.** In B's window, the crossed swords at the top show a 1; open them, see the
       challenge ("Casual • 2 days • 9×9 ..."); point at it and press the tick that appears. Both windows now show the 9×9 board,
       and each clock shows days (for example "2 days") instead of minutes.
