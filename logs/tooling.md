@@ -29,6 +29,15 @@
 - sbt 2 in the cloud: `~/.sbt/repositories` overrides build resolvers, so a project needing an extra repo passes `-Dsbt.repository.config=<copy with the repo added>`; and the thin client keeps a running server's JVM options, so `sbt shutdown` first (2026-09-27, 1.1).
 
 ## Entries (newest first)
+### 2026-10-04 · verify runs oxlint --type-aware, as CI does
+- Did: `.claude/skills/verify/verify.sh` lints changed TypeScript with `oxlint --type-aware`, the mode CI's
+  `pnpm lint` uses (`lint:code` in lila/package.json). Plain oxlint skipped the type-aware `typescript/*`
+  rules, so #109 and #115 passed verify and failed CI on `no-unnecessary-type-assertion`.
+- Worked: reproduced with a needless `a as number` in ui/round/src/ctrl.ts: plain oxlint exit 0,
+  `--type-aware` exit 1; verify.sh then reported "ui lint (oxlint --type-aware) FAIL" on it; clean
+  tree passes. Type-aware on a single file takes about a second.
+- Lessons: a local gate must run the same command as its CI step, not an approximation of it.
+
 ### 2026-10-04 · unit 3.17 part 3 · The chess guard in CI
 - Did: `dev/ci/chess_guard.py` scans every tracked `.scala`/`.sbt` file (comments stripped) and finds
   any `chess.format|variant|opening|eval` and `chess.Board|Position|Square|Move|Game` (written out
