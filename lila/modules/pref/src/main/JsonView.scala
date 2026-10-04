@@ -4,11 +4,8 @@ import play.api.libs.json.*
 
 def toJson(p: Pref, lichobileCompat: Boolean) = Json.obj(
   "bgImg" -> p.bgImgUrl,
-  "is3d" -> p.is3d,
   "theme" -> p.currentTheme.name, // LiGo: a stored chess name reads as the Go default
   "pieceSet" -> p.currentPieceSet.name,
-  "theme3d" -> p.theme3d,
-  "pieceSet3d" -> p.pieceSet3d,
   "soundSet" -> p.soundSet,
   "autoQueen" -> p.autoQueen,
   "autoThreefold" -> p.autoThreefold,

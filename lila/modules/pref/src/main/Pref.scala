@@ -6,11 +6,8 @@ case class Pref(
     @Key("_id") id: UserId,
     bg: Int,
     bgImg: Option[String],
-    is3d: Boolean,
     theme: String,
     pieceSet: String,
-    theme3d: String,
-    pieceSet3d: String,
     soundSet: String,
     autoQueen: Int,
     autoThreefold: Int,
@@ -55,8 +52,6 @@ case class Pref(
 
   def realTheme = Theme(theme)
   def realPieceSet = PieceSet.get(pieceSet)
-  def realTheme3d = Theme3d(theme3d)
-  def realPieceSet3d = PieceSet3d.get(pieceSet3d)
 
   val themeColorLight = "#dbd7d1"
   val themeColorDark = "#2e2a24"
@@ -96,8 +91,6 @@ case class Pref(
   def showRatings = ratings != Ratings.NO
   def hideRatingsInGame = ratings == Ratings.EXCEPT_GAME
 
-  def is2d = !is3d
-
   def agree = copy(agreement = Agreement.current)
 
   def hasKeyboardMove = keyboardMove == KeyboardMove.YES
@@ -119,9 +112,7 @@ case class Pref(
     board.hue == 0 && board.brightness == 100 && board.contrast == 100 && board.opacity == 100
 
   def currentTheme = Theme(theme)
-  def currentTheme3d = Theme3d(theme3d)
   def currentPieceSet = PieceSet.get(pieceSet)
-  def currentPieceSet3d = PieceSet3d.get(pieceSet3d)
   def currentSoundSet = SoundSet(soundSet)
   def currentThemeData: String =
     if bg == Bg.DARK_TRANSP then "transp dark"
@@ -489,11 +480,8 @@ object Pref:
     id = UserId(""),
     bg = Bg.SYSTEM,
     bgImg = none,
-    is3d = false,
     theme = Theme.default.name,
     pieceSet = PieceSet.default.name,
-    theme3d = Theme3d.default.name,
-    pieceSet3d = PieceSet3d.default.name,
     soundSet = SoundSet.default.key,
     autoQueen = AutoQueen.PREMOVE,
     autoThreefold = AutoThreefold.ALWAYS,

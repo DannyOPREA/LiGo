@@ -51,6 +51,12 @@ _none yet_
 - Worked: the 8 analysis screenshot pairs still match pixel for pixel, so the moved styles changed nothing.
 - Lessons: before deleting a "chess" stylesheet, list its selectors and grep the page's views for them:
   `_control.scss` styled the Go page's own step buttons.
+### 2026-10-04 · unit 9.7 part two · chess-only sounds and the 3D board preference deleted
+- Did: deleted the sounds only chess uses (check-mate, berserk, explosion, out of bound, tournament places, new PM) and every `.ogg`/`.m3u` (lila plays only `.mp3`) from the four sound sets; `Error.mp3`, a link into the deleted `standard` set, now points at the set's `Check.mp3`. `sound.ts` no longer plays check/checkmate, the notify bell plays the generic notify sound, the game page no longer plays berserk. Removed lila's 3D board preference end to end (`Theme3d`, `PieceSet3d`, `is3d`/`theme3d`/`pieceSet3d` in prefs, forms, JSON and page attributes, the 3D board CSS and the Staunton pictures). ADR 0026 §2 and COPYING.md updated.
+- Worked: ui build, verify, page browser tests (playground 47, game page 13, analysis board 15) all pass on main with #100 in.
+- Didn't work / dead ends: chess piece and board pictures, blind mode and nvui stay: the chess puzzle page still uses them until unit 8.7 replaces it.
+- Lessons: grep `Error.mp3`-style symlinks before deleting a sound set; they point across sets.
+- Decisions: deletions per Danny's "yes, you can delete the chess leftovers" (2026-10-04).
 
 ### 2026-10-04 · unit 9.7 part two · lila's button blue reaches 4.5:1 under white text
 - Did: added `--c-primary-button` (hsl(209 79% 44%), 4.84:1 under white) in `ui/lib/css/theme/_theme.default.scss`, used by `.button`, `%active-primary`, the rematch button's glow and hover, and every rule that filled a box with `$c-primary` (19 files). Links keep the lighter `--c-primary`, which needs that lightness to read on the dark background. The axe helper's let-off for white on #3692e7 and the game page's `.rematch` exclusion are gone; re-recorded the two account-page screenshots whose button changed.

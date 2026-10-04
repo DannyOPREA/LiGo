@@ -21,11 +21,6 @@ object page:
   private def metaThemeColor(using ctx: Context): Frag =
     raw(s"""<meta name="theme-color" content="${ctx.pref.themeColor}">""")
 
-  // LiGo: the 2D board themes are goban's, drawn from code (ADR 0026 §3), so there is no picture to
-  // preload and no chess piece images to load.
-  private def boardPreload(using ctx: Context) = ctx.pref.is3d.option:
-    imagePreload(assetUrl(s"images/staunton/board/${ctx.pref.currentTheme3d.file}"))
-
   def boardStyle(zoomable: Boolean)(using ctx: Context) =
     s"---board-opacity:${ctx.pref.board.opacity};" +
       s"---board-brightness:${ctx.pref.board.brightness};" +
@@ -64,7 +59,6 @@ object page:
           ,
           cssTag("lib.theme.all"),
           cssTag("site"),
-          pref.is3d.option(cssTag("lib.board-3d")),
           ctx.data.inquiry.isDefined.option(cssTag("mod.inquiry")),
           ctx.impersonatedBy.isDefined.option(cssTag("mod.impersonate")),
           ctx.blind.option(cssTag("bits.blind")),
@@ -89,7 +83,6 @@ object page:
                 s"""<style id="bg-data">html.transp::before{background-image:url("$url");opacity:calc(var(---bg-opacity)/100);}</style>"""
           ,
           fontsPreload,
-          boardPreload,
           manifests,
           p.withHrefLangs.map(hrefLangs),
           sitePreload(p.i18nModules, ctx.data.inquiry.isDefined.option(Esm("mod.inquiry")) :: allModules),
@@ -127,8 +120,6 @@ object page:
           dataTheme := pref.currentThemeData,
           dataBoard := pref.currentTheme.name,
           dataPieceSet := pref.currentPieceSet.name,
-          dataBoard3d := pref.is3d.option(pref.currentTheme3d.name),
-          dataPieceSet3d := pref.is3d.option(pref.currentPieceSet3d.name),
           dataAnnounce := lila.web.AnnounceApi.get.map(a => safeJsonValue(a.json)),
           attr("data-i18n-catalog") := assetHelper.manifest
             .js(s"i18n/${ctx.lang.code}")
@@ -156,8 +147,8 @@ object page:
             id := "main-wrap",
             cls := List(
               "full-screen-force" -> p.flags(PageFlags.fullScreen),
-              "is2d" -> pref.is2d,
-              "is3d" -> pref.is3d
+              // LiGo: there is no 3D board (ADR 0026 §3); `is2d` stays for the 2D-only styles.
+              "is2d" -> true
             )
           )(p.transform(p.body)),
           bottomHtml,
