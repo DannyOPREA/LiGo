@@ -33,10 +33,7 @@ function wireMarkdownTextarea(markdown: HTMLElement) {
         body: textarea.value,
       }),
     );
-    await Promise.all([
-      rendered.querySelector('.lpv--autostart') && site.asset.loadEsm('bits.lpv', { init: { el: rendered } }),
-      rendered.querySelector('a') && site.asset.loadEsm('bits.expandText', { init: rendered }),
-    ]);
+    if (rendered.querySelector('a')) await site.asset.loadEsm('bits.expandText', { init: rendered });
     preview.replaceChildren(rendered);
     if (markdownPicfitRegex().test(textarea.value) && !localStorage.getItem('markdown.rtfm')) {
       await info('Drag a side or bottom edge to resize an image.');

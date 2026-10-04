@@ -33,11 +33,9 @@ jobs:
         env:
           BASE: ${{ github.event_name == 'pull_request' && 'HEAD^1' || '' }}
       # No chess rules or formats back in lila/lila-ws, no strategygames outside libs/go-rules
-      # (unit 3.17 part 3). It runs on every PR, here because this job always runs. While 3.17
-      # removes the chess code, --report-only fails only on files missing from
-      # dev/ci/chess-guard-baseline.txt; the last 3.17 PR deletes the flag and the baseline.
+      # (unit 3.17 part 3). It runs on every PR, here because this job always runs.
       - name: Chess guard
-        run: dev/ci/chess_guard.py --report-only
+        run: dev/ci/chess_guard.py
 
   lila:
     needs: lila-paths

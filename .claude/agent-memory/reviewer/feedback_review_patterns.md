@@ -45,6 +45,11 @@ Patterns seen in LiGo unit reviews; check these every time.
   shipped without rows. Check `grep -o "unit X" docs/UPSTREAM.md` for the unit AND its earlier parts.
   New files under lila/ whose header says "MIT (COPYING.md §2)" need a COPYING.md row like
   GoRating.scala's, since COPYING §1 makes lila/ AGPL by default. (2026-09-30, unit 5.4 part 2.)
+- New `<string name="goX">` in translation/source/site.xml: grep the name first. Units 3.19 and
+  4.10 both added `goKomi`; key.scala then has a duplicate val and lila compile fails (2026-10-04).
+- verify's rules gate can fail in cloud for env reasons (strategygames 10.2.1-s3-ps14 unresolvable
+  through the proxy); check the log before blaming the unit.
+- Round UI byo-yomi: the clock JSON has no "in main time" flag; client guesses break with 1 period.
 - lila "game started" rules: games are `.start`ed at pairing (status 20) and aborted (25) before
   2 plies; `NoStart` (37) only for mandatory/noAbort games, and PerfsUpdater skips < 2 plies, so a
   "has a started rated game" query that only excludes Aborted locks players out on NoStart.

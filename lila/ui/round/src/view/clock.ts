@@ -28,13 +28,30 @@ const onTheSide = (round: RoundController) => (color: Color, position: TopOrBott
   const ranks = round.data.tournament?.ranks || round.data.swiss?.ranks;
   return [
     renderBerserk(round, color, position) || (isPlayer ? goBerserk(round, color) : moretime(round)),
+    byoyomiPeriods(round, color),
     clockSide(round, color, position, ranks),
   ];
 };
 
+/** A byo-yomi clock's periods beside its time (unit 4.10): "+5×30s" in main time, "3×30s" after. */
+const byoyomiPeriods = (round: RoundController, color: Color): LooseVNode => {
+  const b = round.byoyomi;
+  if (!b) return null;
+  const n = b.periods[color];
+  return hl(
+    'div.byoyomi',
+    {
+      class: { 'byoyomi--in': b.inByoyomi[color], 'byoyomi--last': b.inByoyomi[color] && n <= 1 },
+      attrs: { title: `${i18n.site.goByoyomiPeriods}: ${n} × ${b.byo}s` },
+    },
+    b.label(color),
+  );
+};
+
 function whosTurn(ctrl: RoundController, color: Color, position: TopOrBottom) {
   const d = ctrl.data;
-  if (finished(d) || aborted(d)) return undefined;
+  // nobody's turn while the dead stones are agreed (ADR 0020 §3)
+  if (finished(d) || aborted(d) || ctrl.inScoring()) return undefined;
   return hl(
     'div.rclock.rclock-turn.rclock-' + position,
     d.game.player === color &&

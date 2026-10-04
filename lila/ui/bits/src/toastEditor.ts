@@ -133,10 +133,7 @@ function setupTabListeners(el: HTMLElement) {
         body: content.value,
       }),
     );
-    await Promise.all([
-      rendered.querySelector('.lpv--autostart') && site.asset.loadEsm('bits.lpv', { init: { el: rendered } }),
-      rendered.querySelector('a') && site.asset.loadEsm('bits.expandText', { init: rendered }),
-    ]);
+    if (rendered.querySelector('a')) await site.asset.loadEsm('bits.expandText', { init: rendered });
     preview.replaceChildren(rendered);
   });
 

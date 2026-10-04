@@ -583,4 +583,49 @@ describe("keyboard and screen readers", () => {
     await keys(t.page, "Tab", "ArrowUp");
     assert.deepEqual(await check(), []);
   });
+
+  // The scoring phase (unit 4.10): the server's marks are drawn, a tap on a stone is reported and
+  // changes nothing on its own, and play takes over again when the marks go.
+  describe("scoring marks", () => {
+    const passed = { ...game9, moves: ["ee", "cc", "pass", "pass"] };
+    const owner = (cells) => cells.padEnd(81, ".");
+
+    test("a tap on a stone is reported, not marked; a tap on an empty point is not", async () => {
+      await mount(t.page, { ...passed, movable: "black", scoring: { dead: ["cc"], owner: owner("bbb"), seal: ["ff"], tappable: true } });
+      await click(t.page, "ee");
+      await click(t.page, "aa");
+      assert.deepEqual(await events(t.page), ["score ee"]);
+      assert.deepEqual(await played(t.page), [], "no stone played");
+      assert.equal((await state(t.page)).board[4][4], "X", "the stone stays");
+    });
+
+    test("not tappable (a spectator, or a recount on its way): taps do nothing", async () => {
+      await mount(t.page, { ...passed, movable: "none", scoring: { dead: [], tappable: false } });
+      await click(t.page, "ee");
+      await call(t.page, "pass");
+      assert.deepEqual(await events(t.page), []);
+    });
+
+    test("Enter on a stone asks to mark it; P never passes during scoring", async () => {
+      await mount(t.page, { ...passed, movable: "black", scoring: { dead: [], tappable: true } });
+      await keys(t.page, "Tab", "Enter", "p", "ArrowUp", "Enter");
+      assert.deepEqual(await events(t.page), ["score ee"]);
+      assert.match(await said(t.page), /no stone to mark/);
+    });
+
+    test("the cursor reads out dead stones and territory", async () => {
+      await mount(t.page, { ...passed, movable: "none", scoring: { dead: ["cc"], owner: owner("b"), tappable: false } });
+      await keys(t.page, "Tab", "Home", "PageUp");
+      assert.match(await said(t.page), /^A9 empty, Black's territory/);
+      await keys(t.page, "ArrowRight", "ArrowRight", "ArrowDown", "ArrowDown");
+      assert.match(await said(t.page), /marked dead$/);
+    });
+
+    test("when the marks go, the board takes moves again", async () => {
+      await mount(t.page, { ...passed, movable: "black", scoring: { dead: ["cc"], tappable: true } });
+      await call(t.page, "set", { scoring: undefined, movable: "black" });
+      await click(t.page, "gg");
+      assert.deepEqual(await events(t.page), ["move gg"]);
+    });
+  });
 });

@@ -46,6 +46,15 @@ case class PoolMember(
     rankKnown: Boolean = false
 )
 
+/* LiGo (ADR 0022 §4, unit 6.6): how many players wait in a pool, published by the pool whenever it changes;
+ * the lobby passes it on to its viewers at most every 2 s. */
+case class PoolSize(id: PoolConfigId, members: Int)
+
+/* LiGo (ADR 0022 §4, unit 6.6): who a waiting player can meet now, for their tile: the unbroken run of ranks
+ * around their own (names like "3k", "1d") and, with Handicap OK, the most stones among the ranks they can
+ * reach (0 for even games only). */
+case class PoolRange(sri: Sri, id: PoolConfigId, weakest: String, strongest: String, stones: Int)
+
 case class Pairing(players: ByColor[(Sri, GameFullId)])
 case class Pairings(pairings: List[Pairing])
 
