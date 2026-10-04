@@ -1,8 +1,10 @@
 package lila.pool
 
 import chess.Clock
+import ligo.gorules.{ BoardSize, ByoyomiConfig, Setup as GoSetup }
 import play.api.libs.json.Json
 
+import lila.core.game.ClockSettings
 import lila.core.pool.IsPoolCompatible
 
 object PoolList:
@@ -10,33 +12,33 @@ object PoolList:
   import PoolConfig.{ *, given }
 
   extension (i: Int)
-    def ++(increment: Int) = Clock.Config(Clock.LimitSeconds(i * 60), Clock.IncrementSeconds(increment))
+    // `3 ++ 2`: 3 minutes and 2 seconds a move (Fischer)
+    def ++(increment: Int) = ClockSettings.Fischer(
+      Clock.Config(Clock.LimitSeconds(i * 60), Clock.IncrementSeconds(increment))
+    )
+    // `1.byo(5, 10)`: 1 minute, then 5 periods of 10 seconds
+    def byo(periods: Int, seconds: Int) = ClockSettings.Byoyomi(ByoyomiConfig(i * 60, periods, seconds))
     def players = NbPlayers(i)
 
-  /* LiGo: every pool runs a wave every 5 s (ADR 0022 §1); lila's full-wave sizes stay. The clocks and
-   * ids are still lila's, all on 19×19, because the lobby page lists them itself (ui/lobby/src/lobby.ts)
-   * and 5 of ADR 0022's 7 pools need the byo-yomi clock (unit 4.7): ADR 0022's list replaces this one
-   * in the rest of unit 6.4. */
+  /* LiGo: ADR 0022 §1's seven pools, ADR 0005's real-time tiles, every one running a wave every 5 s. The
+   * full-wave sizes are lila's for its clocks of the same length; at the POC's size they are never reached. */
   private val wave = 5.seconds
+  import BoardSize.{ Nine, Nineteen }
 
   val all: List[PoolConfig] = List(
-    PoolConfig(1 ++ 0, Wave(wave, 40.players)),
-    PoolConfig(2 ++ 1, Wave(wave, 30.players)),
-    PoolConfig(3 ++ 0, Wave(wave, 40.players)),
-    PoolConfig(3 ++ 2, Wave(wave, 30.players)),
-    PoolConfig(5 ++ 0, Wave(wave, 40.players)),
-    PoolConfig(5 ++ 3, Wave(wave, 26.players)),
-    PoolConfig(10 ++ 0, Wave(wave, 30.players)),
-    PoolConfig(10 ++ 5, Wave(wave, 30.players)),
-    PoolConfig(15 ++ 10, Wave(wave, 20.players)),
-    PoolConfig(30 ++ 0, Wave(wave, 20.players)),
-    PoolConfig(30 ++ 20, Wave(wave, 20.players))
+    PoolConfig(1.byo(5, 10), Wave(wave, 40.players), Nine),
+    PoolConfig(3.byo(3, 20), Wave(wave, 40.players), Nine),
+    PoolConfig(3 ++ 2, Wave(wave, 30.players), Nine),
+    PoolConfig(5.byo(5, 10), Wave(wave, 30.players), Nineteen),
+    PoolConfig(10.byo(5, 30), Wave(wave, 30.players), Nineteen),
+    PoolConfig(20.byo(5, 30), Wave(wave, 20.players), Nineteen),
+    PoolConfig(10 ++ 10, Wave(wave, 20.players), Nineteen)
   )
 
-  def find(clock: Clock.Config, go: ligo.gorules.Setup): Option[PoolConfig] =
+  def find(clock: ClockSettings, go: GoSetup): Option[PoolConfig] =
     all.find(p => p.clock == clock && p.go == go)
 
   given isPoolCompatible: IsPoolCompatible = IsPoolCompatible: (clock, go) =>
     find(clock, go).isDefined
 
-  def json(using lila.core.i18n.Translator) = Json.toJson(all)
+  lazy val json = Json.toJson(all)

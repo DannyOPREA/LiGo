@@ -1,7 +1,6 @@
 package lila.analyse
 package ui
 
-import chess.format.{ Uci, Fen }
 import play.api.libs.json.*
 
 import lila.ui.*
@@ -9,9 +8,6 @@ import lila.ui.ScalatagsTemplate.*
 
 final class AnalyseUi(helpers: Helpers):
   import helpers.{ *, given }
-
-  def miniSpan(fen: Fen.Board, color: Color = chess.White, lastMove: Option[Uci] = None) =
-    chessgroundMini(fen, color, lastMove)(span)
 
   // The explorer and tablebase settings went with the explorer (unit 3.4), and the external
   // engine and WebAssembly (browser engine) permissions with the engines (unit 3.5).

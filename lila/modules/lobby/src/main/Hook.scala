@@ -1,7 +1,7 @@
 package lila.lobby
 
 import chess.IntRating
-import chess.{ Rated, Speed }
+import chess.Rated
 import play.api.libs.json.*
 import scalalib.ThreadLocalRandom
 
@@ -91,18 +91,18 @@ case class Hook(
       Json.obj("limit" -> c.mainSeconds, "periods" -> c.periods, "period" -> c.periodSeconds))
 
   /* A pool game would have been rated, random colour, even, Japanese rules and the spec's komi
-   * (ADR 0022 §6); the pool's board size and clock are checked against each pool below. Pools have
-   * Fischer clocks until unit 6.4's second part brings byo-yomi ones. */
+   * (ADR 0022 §6); the pool's board size and clock, Fischer or byo-yomi, are checked against each pool
+   * below. */
   def seemsCompatibleWithPools =
     rated.yes && color == TriColor.Random &&
       go.handicap == 0 && go.position.isEmpty && go.ruleset == ligo.gorules.Ruleset.Japanese &&
       GoSetups.hasStandardKomi(go)
 
   def compatibleWithPools(using isPoolCompatible: IsPoolCompatible) =
-    seemsCompatibleWithPools && clock.fischer.exists(isPoolCompatible.exec(_, go))
+    seemsCompatibleWithPools && isPoolCompatible.exec(clock, go)
 
-  def compatibleWithPool(poolClock: chess.Clock.Config, poolGo: GoSetup) =
-    clock.fischer.contains(poolClock) && go == poolGo && seemsCompatibleWithPools
+  def compatibleWithPool(poolClock: ClockSettings, poolGo: GoSetup) =
+    clock == poolClock && go == poolGo && seemsCompatibleWithPools
 
   private lazy val speed = clock.speed
 
@@ -127,7 +127,8 @@ object Hook:
       sri = sri,
       go = go,
       clock = clock,
-      rated = rated,
+      // a guest's game is casual whatever the request says (ADR 0021 §5, unit 5.7)
+      rated = Rated(rated.yes && user.isDefined),
       color = color,
       user = user.map(LobbyUser.make(_, blocking)),
       sid = sid,
