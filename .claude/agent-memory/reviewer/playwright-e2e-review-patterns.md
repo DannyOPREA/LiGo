@@ -36,5 +36,15 @@ Real-stack e2e (lila/tests/e2e-demo, unit 8.8 part two, PR #126, 2026-10-04):
 - /api/puzzle/many costs 1 credit per id against 300/hour/IP (puzzle.fetch.ip): 240 ids per run
   means a CI retry or a 2nd local run in an hour gets 429. /api/puzzle/:id (apiShow) is unlimited.
 
+
+Unit 7.8 (phase7 demo, 2026-10-04):
+- Accounts reused across projects/retries (temp file keyed by port) make persistent lists (bell entries,
+  lobby now-playing) carry earlier runs' items: `toContainText` on the whole list is vacuous on the 2nd
+  project, and `.filter({hasText: opponent}).first()` picks a stale game. Scope by the game id href.
+- lila's crawler regex (modules/web HttpFilter) includes `HeadlessChrome`; `/login` POST is NoCrawlers
+  (404), Round.watcher serves the crawler view. Desktop projects with no UA need a real Chrome UA.
+- corres clock text is hour-granular ("1 day 23 hours"): "clock didn't move" text compares over seconds
+  are vacuous; the `.running` class is the real check.
+
 **Why:** these pass locally and only surface on CI failure or on the wrong PR.
 **How to apply:** any unit adding Playwright tests or CI browser steps. See [[ci-review-patterns]].

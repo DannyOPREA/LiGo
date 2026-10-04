@@ -32,3 +32,12 @@ Found in unit 4.11 review (lila SGF export, 2026-10-04):
 - Map every lila Status that sets a winner (Resign, Outoftime, Timeout, Cheat, NoStart via Finisher) to an RE; NoStart was missed.
 - Explicit format on a game that can't produce it (non-Go + format=sgf) returned 200 empty body; bulk path fell back to PGN. Check single vs bulk parity.
 - testQuick logs show Total 0; rerun with `sbt --server --batch "<proj>/testOnly <Class>"` in lila/.
+
+Found in unit 7.5 review (SGF import + /<id>/analysis, 2026-10-04):
+- "Regenerated" key.scala was hand-edited (missing one site.xml key). Prove it: copy bin/i18n-file-gen.ts,
+  translation/source, key.scala into scratch, symlink fast-xml-parser from node_modules/.pnpm, run with
+  `node --experimental-strip-types`, diff. Also grep site.xml for leftover chess strings (importPgn).
+- ADR text vs code drift: ADR said body capped at 200 KB "(Play's default is 512 KiB)", code raised it to
+  600 KB; ADR's "unknown RU noted in import info" computed (`rulesetUnknown`) but never stored.
+- Per-request re-parse of a stored 200 KB SGF inside JsonView.base (round page, API streams) to get RE.
+- The analyse e2e uses a fake page (page.ts html()), so the Scala page, route, redirect and move delay are untested.
