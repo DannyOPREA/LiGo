@@ -281,7 +281,9 @@ final class ChallengeUi(helpers: Helpers):
                     a(
                       cls := "button",
                       href := s"${routes.Auth.login}?referrer=${routes.Round.watcher(c.gameId, Color.white)}"
-                    )(trans.site.signIn())
+                    )(trans.site.signIn()),
+                    // LiGo: guests play casual games only (ADR 0021 §5, unit 5.7)
+                    a(cls := "button", href := routes.Auth.signup)(trans.site.goSignUpToPlayRated())
                   )
                 )
             )
