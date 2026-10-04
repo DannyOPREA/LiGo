@@ -21,16 +21,16 @@ class GoHistoryTest extends munit.FunSuite:
 
   test("a rated Go game gives a history point to the go perf only, not chess's standard and speed"):
     assertEquals(
-      HistoryApi.perfKeysOf(isGo = true, chess.variant.Standard, chess.Speed.Blitz),
+      HistoryApi.perfKeysOf(isGo = true, PerfKey.blitz),
       List(PerfKey.go)
     )
 
   test("a chess game keeps lila's points: standard and its speed, or its variant"):
     assertEquals(
-      HistoryApi.perfKeysOf(isGo = false, chess.variant.Standard, chess.Speed.Blitz),
+      HistoryApi.perfKeysOf(isGo = false, PerfKey.blitz),
       List(PerfKey.standard, PerfKey.blitz)
     )
     assertEquals(
-      HistoryApi.perfKeysOf(isGo = false, chess.variant.Chess960, chess.Speed.Blitz),
+      HistoryApi.perfKeysOf(isGo = false, PerfKey.chess960),
       List(PerfKey.chess960)
     )

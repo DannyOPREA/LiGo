@@ -34,7 +34,7 @@ final class HistoryApi(
 
   def add(user: User, game: Game, perfs: UserPerfs): Funit = withColl: coll =>
     val changes = HistoryApi
-      .perfKeysOf(game.isGo, game.ratingVariant, game.speed)
+      .perfKeysOf(game.isGo, PerfKey(game.ratingVariant, game.speed))
       .map(pk => pk.value -> perfs(pk).intRating)
     val days = daysBetween(user.createdAt, game.movedAt)
     coll.update
@@ -116,15 +116,7 @@ object HistoryApi:
 
   /* The perfs a rated game gives a history point to. LiGo (unit 5.6): a Go game moves only the go
    * perf (ADR 0021 §1), so only its history gets a point, not chess's standard and speed perfs. */
-  def perfKeysOf(isGo: Boolean, variant: chess.variant.Variant, speed: Speed): List[PerfKey] =
+  def perfKeysOf(isGo: Boolean, chessKey: PerfKey): List[PerfKey] =
     if isGo then List(PerfKey.go)
-    else
-      val speedKey = speed match
-        case Speed.UltraBullet => PerfKey.ultraBullet
-        case Speed.Bullet => PerfKey.bullet
-        case Speed.Blitz => PerfKey.blitz
-        case Speed.Rapid => PerfKey.rapid
-        case Speed.Classical => PerfKey.classical
-        case Speed.Correspondence => PerfKey.correspondence
-      if variant.standard then List(PerfKey.standard, speedKey)
-      else PerfKey.byVariant(variant).toList
+    else if Speed.all.exists(PerfKey.standardBySpeed(_) == chessKey) then List(PerfKey.standard, chessKey)
+    else List(chessKey)
