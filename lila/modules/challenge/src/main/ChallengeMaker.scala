@@ -62,15 +62,14 @@ final class ChallengeMaker(
         case (_, Some(clock), _) => TimeControl.Clock(clock.config)
         case (_, _, Some(days)) => TimeControl.Correspondence(days)
         case _ => TimeControl.Unlimited
-      // a handicap game's rematch keeps the colours, so the same player gets the stones again (unit 4.9)
-      val alternateColor =
-        pov.game.go.setup.handicap == 0 &&
-          rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
+      // a handicap game's rematch keeps the colours (rematchAlternatesColor, units 4.9 and 5.7)
+      val alternateColor = rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
       Challenge.make(
         // a rematch replays the game's board size, ruleset and komi (unit 3.15)
         go = pov.game.go.setup.copy(position = None),
         timeControl = timeControl,
-        rated = chess.Rated.No, // casual until unit 5.7
+        // a rated game's rematch is rated, with the same stones and colours (ADR 0021 §4, unit 5.7)
+        rated = pov.game.rated,
         color = (if alternateColor then !pov.color else pov.color).name,
         // for anon, we don't know the secret, but this challenge is only serialized to json and sent to a listening bot anyway,
         // which doesn't use the secret, so we just use an empty string

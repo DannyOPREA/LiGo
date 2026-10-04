@@ -59,9 +59,9 @@ final private class GameStarter(
         onStart(game.id)
         Pairing(ByColor(whiteMember.sri -> game.fullIds.white, blackMember.sri -> game.fullIds.black))
 
-  /** A Go game on the pool's board size and clock with Japanese rules and the spec's komi (ADR 0022 §1), with
-    * the pair's handicap stones (0.5 komi with any handicap, R-KOMI-2); casual until unit 5.7 rates pool
-    * games.
+  /** A rated Go game (pools are rated only, ADR 0022 §2) on the pool's board size and clock with Japanese
+    * rules and the spec's komi (ADR 0022 §1), with the pair's handicap stones (0.5 komi with any handicap,
+    * R-KOMI-2); unit 5.3 rates it with the handicap.
     */
   private def makeGame(
       id: GameId,
@@ -75,7 +75,7 @@ final private class GameStarter(
         GameStarter.setupFor(pool, stones),
         pool.clock.fischer.map(_.toClock),
         players = ByColor(whiteUser, blackUser).mapWithColor((u, p) => newPlayer(u, p)),
-        rated = chess.Rated.No,
+        rated = chess.Rated.Yes,
         source = Source.Pool,
         byoyomi = pool.clock.byoyomi
       )

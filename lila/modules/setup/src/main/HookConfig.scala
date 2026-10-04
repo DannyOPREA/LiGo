@@ -89,8 +89,9 @@ case class HookConfig(
       time = game.byoyomi.map(_.config.mainSeconds / 60d).orElse(game.clock.map(_.limitInMinutes)) | time,
       increment = game.clock.map(_.incrementSeconds) | increment,
       days = game.daysPerTurn | days,
-      rated = Rated.No, // casual until unit 5.7, even after an older rated game
-      go = GoOptions.of(game.go.setup.copy(handicap = 0, position = None)),
+      rated = game.rated,
+      // lobby games are even, so a handicap game's 0.5 komi goes back to the ruleset's standard komi
+      go = GoOptions.of(HookConfig.evenSetup(game.go.setup)),
       byoyomi = game.byoyomi.fold(byoyomi)(b => ByoyomiPeriods(b.config.periods, b.config.periodSeconds))
     )
     val h2 = if h1.isRatedUnlimited then h1.copy(rated = Rated.No) else h1
@@ -102,6 +103,10 @@ case class HookConfig(
     copy(ratingRange = lila.rating.RatingRange.orDefault(rating, deltaMin, deltaMax))
 
 object HookConfig extends BaseConfig:
+
+  def evenSetup(s: ligo.gorules.Setup): ligo.gorules.Setup =
+    if s.handicap == 0 then s.copy(position = None)
+    else s.copy(handicap = 0, position = None, komi = ligo.gorules.Komi.standard(s.ruleset, 0))
 
   def from(
       @annotation.unused v: Option[String], // a chess variant, refused by the form (unit 3.17)
@@ -130,8 +135,8 @@ object HookConfig extends BaseConfig:
       byoyomi = ByoyomiPeriods(periods, periodTime)
     )
 
-  // Go games are casual until Phase 5 (PLAN §5, unit 3.15)
-  def default(auth: Boolean): HookConfig = default.copy(rated = Rated.No)
+  // lila's default: rated for a signed-in player, casual for a guest (ADR 0021 §5, unit 5.7)
+  def default(auth: Boolean): HookConfig = default.copy(rated = Rated(auth))
 
   private val default = HookConfig(
     timeMode = TimeMode.RealTime,

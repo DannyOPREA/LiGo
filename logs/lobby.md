@@ -10,6 +10,14 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.4 part 2 (addendum) · Pool games are rated
+- Did: 5.7's server part (#109) merged while #112 was open, so `GameStarter` now starts rated pool
+  games (pools are rated only, ADR 0022 §2); handicap pool games are rated with the handicap as 5.3
+  does. This closes 6.4.
+- Verified by Claude: whole-server `compile`; `pool/testOnly` 38 passed, `lobby/testOnly` 21 passed.
+- Follow-ups: `lib/poolRangeStorage` shifts a player's stored range after a rated pool game by lila's
+  clock-only id, which no pool has now, so it does nothing (6.6 replaces the range with ranks).
+
 ### 2026-10-04 · unit 6.4 part 2 · ADR 0022's seven pools, Handicap OK and handicap pool games
 - Did: `PoolList` is now ADR 0022 §1's seven pools (9×9 1+5×10s, 3+3×20s, 3+2; 19×19 5+5×10s,
   10+5×30s, 20+5×30s, 10+10), each with a `ClockSettings` clock (Fischer or byo-yomi, unit 4.9) and
