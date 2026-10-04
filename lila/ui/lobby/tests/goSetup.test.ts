@@ -290,7 +290,7 @@ describe('the create-game form', () => {
     setup.setHandicap(6);
     assert.equal(setup.lockedColor(), 'black');
     assert.equal(
-      mount(colorButtons(setup)!).querySelector('.setup-locked-color')!.textContent,
+      mount(colorButtons(setup)).querySelector('.setup-locked-color')!.textContent,
       'site.goYouPlayX(site.black)',
     );
     const picker = mount(goOptions(setup));
@@ -333,10 +333,10 @@ describe('the create-game form', () => {
     const flush = () => new Promise(resolve => setTimeout(resolve, 0));
     beforeEach(() => {
       asked.length = 0;
-      globalThis.fetch = (async (url: string) => {
-        asked.push(url);
+      globalThis.fetch = async (url: string | URL | Request) => {
+        asked.push(String(url));
         return new Response(JSON.stringify(advice), { status: 200 });
-      }) as typeof fetch;
+      };
     });
     const restore = () => (globalThis.fetch = realFetch);
 
