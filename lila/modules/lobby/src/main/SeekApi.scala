@@ -6,7 +6,6 @@ import lila.memo.CacheApi.*
 final class SeekApi(
     userApi: lila.core.user.UserApi,
     config: SeekApi.Config,
-    biter: Biter,
     relationApi: lila.core.relation.RelationApi,
     cacheApi: lila.memo.CacheApi
 )(using Executor):
@@ -44,21 +43,15 @@ final class SeekApi(
 
   def forUser(user: LobbyUser): Fu[List[Seek]] =
     cache.get(ForUser).map { seeks =>
+      // every seek they may see, joinable or not (ADR 0022 §5); joining checks `Biter.canJoin`
       val filtered = seeks.filter: seek =>
-        seek.user.is(user) || biter.canJoin(seek, user)
-      noDupsFor(user, filtered).take(maxPerPage.value)
+        seek.user.is(user) || Biter.visible(seek, user)
+      SeekApi.noDupsFor(user, filtered).take(maxPerPage.value)
     }
 
-  private def noDupsFor(user: LobbyUser, seeks: List[Seek]) =
-    seeks
-      .foldLeft(List.empty[Seek] -> Set.empty[String]):
-        case ((res, h), seek) if seek.user.id == user.id => (seek :: res, h)
-        case ((res, h), seek) =>
-          val seekH = List(seek.variant, seek.daysPerTurn, seek.rated.name, seek.user.id).mkString(",")
-          if h contains seekH then (res, h)
-          else (seek :: res, h + seekH)
-      ._1
-      .reverse
+  // the seeks a player can join, uncapped: what a new seek of theirs may match at once
+  def joinableBy(user: LobbyUser): Fu[List[Seek]] =
+    cache.get(ForUser).map(_.filter(Biter.canJoin(_, user)))
 
   def find(id: String): Fu[Option[Seek]] =
     coll.find(bid(id)).one[Seek]
@@ -102,6 +95,20 @@ final class SeekApi(
     for _ <- coll.delete.one(bdoc("user.id" -> user.id)) yield cacheClear()
 
 private object SeekApi:
+
+  /* Shows once each game another player is seeking several times. LiGo: the Go setup (board size, ruleset,
+   * komi) is part of what makes two seeks the same game, so seeks that differ only in it all show. */
+  private[lobby] def noDupsFor(user: LobbyUser, seeks: List[Seek]): List[Seek] =
+    seeks
+      .foldLeft(List.empty[Seek] -> Set.empty[String]):
+        case ((res, h), seek) if seek.user.id == user.id => (seek :: res, h)
+        case ((res, h), seek) =>
+          val seekH =
+            List(seek.goSetup, seek.daysPerTurn, seek.rated.name, seek.user.id).mkString(",")
+          if h contains seekH then (res, h)
+          else (seek :: res, h + seekH)
+      ._1
+      .reverse
 
   final class Config(
       val coll: Coll,

@@ -102,9 +102,6 @@ GET   /$gameId<\w{8}>/mini                       controllers.Round.mini(gameId: 
 GET   /$gameId<\w{8}>/$color<white|black>/mini   controllers.Round.mini(gameId: GameId, color: Color)
 GET   /$fullId<\w{12}>/mini                      controllers.Round.miniFullId(fullId: GameFullId)
 GET   /$gameId<\w{8}>/$color<white|black>/analysis controllers.UserAnalysis.game(gameId: GameId, color: Color)
-GET   /$fullId<\w{12}>/forecasts                 controllers.UserAnalysis.forecastsGet(fullId: GameFullId)
-POST  /$fullId<\w{12}>/forecasts                 controllers.UserAnalysis.forecastsPost(fullId: GameFullId)
-POST  /$fullId<\w{12}>/forecasts/:uci            controllers.UserAnalysis.forecastsOnMyTurn(fullId: GameFullId, uci)
 POST  /$fullId<\w{12}>/resign                    controllers.Round.resign(fullId: GameFullId)
 
 GET   /embed/$gameId<\w{8}>                      controllers.Analyse.embed(gameId: GameId, color: Color = Color.white)
@@ -123,12 +120,6 @@ GET   /round/minis                               controllers.Round.minis(ids: St
 # Analyse
 
 GET   /game/export/$gameId<\w{8}>                             controllers.Game.exportOne(gameId: GameId)
-GET   /game/export/$gameId<\w{8}>.pgn                         controllers.Game.exportOne(gameId: GameId)
-GET   /game/export/png/$gameId<\w{8}>.png                     controllers.Export.legacyGameThumbnail(gameId: GameId, theme: Option[String], piece: Option[String])
-GET   /game/export/gif/thumbnail/$gameId<\w{8}>.gif           controllers.Export.gameThumbnail(gameId: GameId, theme: Option[String], piece: Option[String])
-GET   /game/export/gif/$gameId<\w{8}>.gif                     controllers.Export.gif(gameId: GameId, color: Color = Color.white, theme: Option[String], piece: Option[String])
-GET   /game/export/gif/:color/$gameId<\w{8}>.gif              controllers.Export.gif(gameId: GameId, color: Color, theme: Option[String], piece: Option[String])
-GET   /export/fen.gif                                         controllers.Export.fenThumbnail(fen, color: Option[Color], lastMove: Option[Uci], variant: Option[chess.variant.Variant.LilaKey], theme: Option[String], piece: Option[String])
 
 # Pref
 POST  /pref/:name                             controllers.Pref.set(name)
@@ -143,7 +134,6 @@ POST  /setup/friend                    controllers.Setup.friend(user: Option[Use
 POST  /setup/hook/:sri/like/:gameId    controllers.Setup.like(sri: Sri, gameId: GameId)
 POST  /setup/hook/:sri                 controllers.Setup.hook(sri: Sri)
 GET   /setup/filter                    controllers.Setup.filterForm
-GET   /setup/validate-fen              controllers.Setup.validateFen
 
 # Challenge
 GET   /challenge                       controllers.Challenge.all
@@ -396,7 +386,6 @@ POST  /markdown/preview/:realm         controllers.Main.markdownPreview(realm: M
 GET   /image-url/:realm/:id            controllers.Main.imageUrl(realm: MarkdownRealm, id: ImageId, width: Int)
 POST  /github/secret-scanning          controllers.Github.secretScanning
 # Technical
-GET   /run/captcha/$id<\w{8}>          controllers.Main.captchaCheck(id: GameId)
 GET   /run/temporarily-disabled        controllers.Main.temporarilyDisabled(path = "")
 GET   /run/temporarily-disabled/*path  controllers.Main.temporarilyDisabled(path)
 POST  /run/toggle-blind-mode           controllers.Main.toggleBlindMode
@@ -428,10 +417,6 @@ GET   /source                          controllers.Cms.source
 GET   /survey                          controllers.Main.survey
 GET   /qa/:id/:slug                    controllers.Main.legacyQaQuestion(id: Int, slug)
 GET   /page/:key                       controllers.Cms.lonePage(key: CmsPageKey)
-
-# Variants
-GET   /variant                         controllers.Cms.variantHome
-GET   /variant/:key                    controllers.Cms.variant(key: chess.variant.Variant.LilaKey)
 
 # Help
 GET   /help/contribute                 controllers.Cms.help

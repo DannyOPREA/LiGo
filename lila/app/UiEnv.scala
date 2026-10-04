@@ -43,7 +43,6 @@ object UiEnv
   def manifest = env.web.manifest
   val translator = lila.i18n.Translator
   val langList = lila.i18n.LangList
-  lazy val gameOpening = env.game.gameOpening.of
   protected val namer = lila.game.Namer
 
   protected def isProd = env.mode.isProd

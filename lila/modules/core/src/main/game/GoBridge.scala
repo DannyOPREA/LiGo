@@ -34,7 +34,7 @@ object GoBridge:
   def plies(g: GoGame): Int = g.actions.count(_ != Action.Resume)
 
   /** The most plies a Go game may play (ADR 0019 §7): far beyond any real 19x19 game; reaching it ends play
-    * as two passes do. lila's chess cap (`Game.maxPlies`, 600) forces a draw, which Go doesn't have.
+    * as two passes do (lila's chess cap of 600 plies forced a draw, which Go doesn't have).
     */
   val maxPlies: Int = 1000
 
@@ -88,6 +88,20 @@ object GoBridge:
         if empty > 0 then sb.append(empty)
         sb.toString
       .mkString("/")
+
+  /** A Go mini game's `data-state` (unit 3.19, read by ui/lib's miniBoard.ts): the board, the player to move,
+    * the last stone or pass (empty before the first one) and the plies played, which tell the page whether
+    * the clocks run yet. `blind` shows an empty board, as chess mini games do for a blindfold player.
+    */
+  def miniState(g: GoGame, blind: Boolean): String =
+    s"${miniBoard(g, blind)},${color(g.toMove).name},${lastMove(g)},${plies(g)}"
+
+  /** The mini board: the position, or an empty board of the same size for a blindfold player. */
+  def miniBoard(g: GoGame, blind: Boolean): String =
+    if blind then List.fill(g.size.lines)(g.size.lines.toString).mkString("/") else board(g)
+
+  /** The last stone (an SGF point) or `pass`, empty before the first; a resume isn't a move. */
+  def lastMove(g: GoGame): String = g.actions.filterNot(_ == Action.Resume).lastOption.fold("")(token)
 
   /** The points whose stones `after` removed from `before`: what one placement captured. */
   def captured(before: GoGame, after: GoGame): List[Point] =

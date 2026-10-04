@@ -1,18 +1,15 @@
 package lila.round
 
 import org.apache.pekko.stream.scaladsl.*
-import chess.format.{ UciDump, Fen }
-import chess.{ ByColor, Centis, Color, Position }
+import chess.{ ByColor, Centis, Color }
 import play.api.libs.json.*
 
 import lila.common.Bus
 import lila.common.Json.given
 import lila.core.game.{ FinishGame, GoBridge }
-import lila.game.GameRepo
 import lila.game.actorApi.MoveGameEvent
 
 final class ApiMoveStream(
-    gameRepo: GameRepo,
     gameJsonView: lila.game.JsonView,
     lightUserApi: lila.user.LightUserApi
 )(using Executor):
@@ -22,14 +19,12 @@ final class ApiMoveStream(
   def apply(game: Game, delayMoves: Boolean): Source[JsObject, ?] =
     val delayingMoves = delayMoves && game.hasClock && game.playable
     Source.futureSource:
-      for
-        initialFen <- gameRepo.initialFen(game)
-        lightUsers <- lightUserApi.asyncManyOptions(game.players.mapList(_.userId))
+      for lightUsers <- lightUserApi.asyncManyOptions(game.players.mapList(_.userId))
       yield
         def makeGameJson(g: Game, full: Boolean) =
           val base =
-            if full then gameJsonView.base(g, initialFen)
-            else gameJsonView.immutable(g, initialFen)
+            if full then gameJsonView.base(g)
+            else gameJsonView.immutable(g)
           base ++ Json.obj(
             "players" -> JsObject(g.players.all.zip(lightUsers).map { (p, user) =>
               p.color.name -> gameJsonView.player(p, user)
@@ -54,27 +49,12 @@ final class ApiMoveStream(
                   white <- c.white.lift((index + 1 - clockOffset) >> 1)
                   black <- c.black.lift((index + clockOffset) >> 1)
                 yield ByColor(white, black)
-              game.go match
-                // A Go game: its board from the start and after each move (unit 3.16).
-                case Some(go) =>
-                  ApiMoveStream
-                    .goFrames(go)
-                    .foreach:
-                      _.foreach: f =>
-                        queue.offer(goJson(f.board, f.turn, f.lastMove, clockAt(f.plyIndex)))
-                case None =>
-                  Position(game.variant, initialFen)
-                    .playPositions(game.sans)
-                    .foreach {
-                      _.zipWithIndex.foreach: (s, index) =>
-                        queue.offer(
-                          toJson(
-                            Fen.write(s, (game.startedAtPly + index).fullMoveNumber).value,
-                            s.history.lastMove.map(UciDump.lastMove(_, s)),
-                            clockAt(index)
-                          )
-                        )
-                    }
+              // the game's board from the start and after each move (unit 3.16)
+              ApiMoveStream
+                .goFrames(game.go)
+                .foreach:
+                  _.foreach: f =>
+                    queue.offer(goJson(f.board, f.turn, f.lastMove, clockAt(f.plyIndex)))
               if game.finished then
                 queue.offer(makeGameJson(game, full = true))
                 queue.complete()
@@ -83,9 +63,7 @@ final class ApiMoveStream(
                 val subEvent = Bus.subscribeFunDyn(chan):
                   case MoveGameEvent(g, position, lastMove) =>
                     val clock = g.clock.map(clk => ByColor(clk.remainingTime))
-                    queue.offer:
-                      if g.isGo then goJson(position, g.turnColor, lastMove.some, clock)
-                      else toJson(position, lastMove.some, clock)
+                    queue.offer(goJson(position, g.turnColor, lastMove.some, clock))
                 val subFinish = Bus.sub[FinishGame]:
                   case FinishGame(g, _) if g.id == game.id =>
                     queue.offer(makeGameJson(g, full = true))
@@ -106,9 +84,6 @@ final class ApiMoveStream(
   private def withClock(js: JsObject, clock: Option[ByColor[Centis]]): JsObject =
     clock.fold(js): clk =>
       js ++ Json.obj("wc" -> clk.white.roundSeconds, "bc" -> clk.black.roundSeconds)
-
-  private def toJson(fen: String, lastMove: Option[String], clock: Option[ByColor[Centis]]): JsObject =
-    withClock(Json.obj("fen" -> fen).add("lm" -> lastMove), clock)
 
   /** A Go position as live mini boards receive it (ADR 0019 §6): the compact board, the player to move, the
     * last move's SGF point or `pass`, and the clocks.

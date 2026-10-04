@@ -16,7 +16,8 @@ export interface Hook {
   clock: string;
   t: number; // time
   s: number; // speed
-  i: number; // increment
+  i: number; // increment (0 for byo-yomi)
+  byo?: { limit: number; periods: number; period: number }; // byo-yomi hooks (unit 4.9)
   variant: VariantKey;
   perf: Exclude<Perf, 'fromPosition'>;
   prov?: true; // is rating provisional
@@ -25,8 +26,18 @@ export interface Hook {
   goRank?: string; // LiGo: the kyu/dan label for `rating` (ADR 0021 §3)
   ra?: 1; // rated
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
+  auth?: boolean; // made by a signed-in player (unit 6.5)
+  rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'cancel' | 'join';
   disabled?: boolean;
+}
+
+// An open game's rating range, with the ranks of its bounds; a bound at lila's limit has none (unit 6.5)
+export interface RatingRangeJson {
+  min: number;
+  max: number;
+  low?: string;
+  high?: string;
 }
 
 export interface Seek {
@@ -42,6 +53,7 @@ export interface Seek {
   provisional?: boolean;
   variant?: { key: VariantKey };
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
+  rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'joinSeek' | 'cancelSeek';
 }
 
@@ -81,7 +93,10 @@ type RatingWithProvisional = number;
 export interface NowPlaying {
   fullId: string;
   gameId: string;
-  fen: FEN;
+  /** A chess game's position (none for Go). */
+  fen?: FEN;
+  /** A Go game's position, as a compact board string (ADR 0019 §6). */
+  board?: string;
   color: Color;
   orientation?: Color;
   lastMove: string;
@@ -124,6 +139,9 @@ export interface SetupStore {
   time: number;
   increment: number;
   days: number;
+  periods: number; // byo-yomi (unit 4.9)
+  periodTime: number; // seconds
+  handicap: number; // friend window only
 }
 
 export interface ForceSetupOptions {
@@ -134,6 +152,9 @@ export interface ForceSetupOptions {
   time?: number;
   increment?: number;
   days?: number;
+  periods?: number;
+  periodTime?: number;
+  handicap?: number;
   mode?: GameMode;
   color?: ColorChoice;
 }

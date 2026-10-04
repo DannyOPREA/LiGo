@@ -74,7 +74,7 @@ const goBerserk = (ctrl: RoundController, color: Color) =>
   berserkableBy(ctrl.data) &&
   !ctrl.hasGoneBerserk(color) &&
   hl('button.fbt.go-berserk', {
-    attrs: { title: 'GO BERSERK! Half the time, no increment, bonus point', ...dataIcon(licon.Berserk) },
+    attrs: { title: i18n.site.goBerserkTitle, ...dataIcon(licon.Berserk) },
     hook: bind('click', ctrl.goBerserk),
   });
 
@@ -86,4 +86,8 @@ const clockSide = (
 ) =>
   ranks &&
   !showBerserk(ctrl, color) &&
-  hl('div.tour-rank.' + position, { attrs: { title: 'Current tournament rank' } }, '#' + ranks[color]);
+  hl(
+    'div.tour-rank.' + position,
+    { attrs: { title: i18n.site.goCurrentTournamentRank } },
+    '#' + ranks[color],
+  );

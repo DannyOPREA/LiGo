@@ -40,7 +40,7 @@ def watcher(
     .flag(_.zen):
       main(cls := "round")(
         st.aside(cls := "round__side")(
-          side(pov, data, userTv, bookmarked),
+          side(pov, userTv, bookmarked),
           chatOption.map(_ => views.chat.frag)
         ),
         ui.roundAppPreload(pov),
@@ -55,11 +55,12 @@ def crawler(pov: Pov)(using Context) =
     .graph(ui.povOpenGraph(pov)):
       main(cls := "round")(
         st.aside(cls := "round__side")(
-          views.game.side.meta(pov, none, bookmarked = false),
+          views.game.side.meta(pov, bookmarked = false),
           div(
             h1(titleGame(pov.game)),
             p(ui.describePov(pov))
           )
         ),
-        div(cls := "round__board main-board")(ui.povChessground(pov))
+        // crawlers get the game's description; its board is drawn by the page's script (unit 3.18)
+        div(cls := "round__board main-board")
       )

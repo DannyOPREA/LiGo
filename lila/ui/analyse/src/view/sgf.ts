@@ -33,10 +33,10 @@ export function renderSgf(ctrl: AnalyseCtrl): VNode {
           attrs: dataIcon(licon.PlayTriangle),
           hook: bind('click', () => ctrl.loadSgf(ctrl.sgfInput ?? ctrl.sgf())),
         },
-        'Load SGF',
+        i18n.site.goLoadSgf,
       ),
       hl('label.button.button-thin.button-empty.text', { attrs: dataIcon(licon.UploadCloud) }, [
-        'Open SGF file',
+        i18n.site.goOpenSgfFile,
         hl('input.analyse__sgf-file', {
           attrs: { type: 'file', accept: '.sgf,application/x-go-sgf,text/plain' },
           hook: bind('change', e => {
@@ -50,7 +50,7 @@ export function renderSgf(ctrl: AnalyseCtrl): VNode {
       hl(
         'button.button.button-thin.button-empty.text',
         { attrs: dataIcon(licon.Download), hook: bind('click', ctrl.downloadSgf) },
-        'Download SGF',
+        i18n.site.goDownloadSgf,
       ),
     ]),
     ctrl.sgfError &&

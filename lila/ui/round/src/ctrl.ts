@@ -431,16 +431,16 @@ export default class RoundController {
 
   showYourMoveNotification = (): void => {
     const d = this.data;
-    const opponent = $('body').hasClass('zen') ? 'Your opponent' : userTxt(d.opponent);
-    const joined = `${opponent}\njoined the game.`;
+    const opponent = $('body').hasClass('zen') ? i18n.site.goYourOpponent : userTxt(d.opponent);
+    const joined = i18n.site.goXJoinedTheGame(opponent);
     const played = game.playedTurns(d);
     if (game.isPlayerTurn(d))
       notify(() => {
         let txt = i18n.site.yourTurn;
         if (played < 1) txt = `${joined}\n${txt}`;
         else {
-          const move = util.lastStep(this.data).san;
-          txt = `${opponent}\n${move === 'Pass' ? 'passed' : `played ${move}`}.\n${txt}`;
+          const step = util.lastStep(this.data);
+          txt = `${step.uci === 'pass' ? i18n.site.goXPassed(opponent) : i18n.site.goXPlayedY(opponent, step.san)}\n${txt}`;
         }
         return txt;
       });
@@ -506,7 +506,7 @@ export default class RoundController {
     }
     this.autoScroll();
     this.onChange();
-    site.sound.say(`${playedColor === 'black' ? 'Black' : 'White'} ${step.san}`);
+    site.sound.say(`${playedColor === 'black' ? i18n.site.black : i18n.site.white} ${step.san}`);
     this.server.alive();
     return true; // prevents default socket pubsub
   };

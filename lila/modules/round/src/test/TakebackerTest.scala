@@ -62,13 +62,13 @@ class GoMoveReaderTest extends munit.FunSuite:
   private def read(move: String) =
     RoundSocket.Protocol.In.reader(RawMsg("r/move", s"abcdefgh1234 $move + 10 20 0"))
 
-  test("reads a Go point, a pass, and still a chess move"):
+  test("reads a Go point and a pass, and refuses a chess move"):
     assertEquals(
       read("pd").collect { case m: PlayerGoMove => m.action },
       Some(ligo.gorules.Action.Place(ligo.gorules.Point(15, 3)))
     )
     assertEquals(read("pass").collect { case m: PlayerGoMove => m.action }, Some(ligo.gorules.Action.Pass))
-    assert(read("e2e4").exists(_.isInstanceOf[PlayerMove]))
+    assertEquals(read("e2e4"), None)
     assertEquals(read("zz"), None)
 
 // Unit 3.13: a Go game can't be drawn, but a player who left it can still be claimed against.
@@ -89,7 +89,7 @@ class GoGoneTest extends munit.FunSuite:
       source = Source.Lobby
     ).fold(e => fail(e.message), _.start.sloppy)
     List("ee", "cc", "gg").foldLeft(g0): (g, sgf) =>
-      g.withGo(g.go.get(Action.Place(Point.fromSgf(sgf).get)).fold(r => fail(r.key), identity))
+      g.withGo(g.go(Action.Place(Point.fromSgf(sgf).get)).fold(r => fail(r.key), identity))
 
   test("a started Go game offers the gone claim but no forced draw"):
     val g = played

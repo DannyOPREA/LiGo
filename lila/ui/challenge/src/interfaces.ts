@@ -20,7 +20,7 @@ export interface ChallengeUser extends LightUser {
 }
 
 export interface TimeControl {
-  type: 'clock' | 'correspondence' | 'unlimited';
+  type: 'clock' | 'byoyomi' | 'correspondence' | 'unlimited';
   show?: string;
   daysPerTurn?: number;
   limit: number;

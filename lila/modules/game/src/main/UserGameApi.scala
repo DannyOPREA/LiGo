@@ -25,7 +25,6 @@ final class UserGameApi(
       .obj(
         "id" -> g.id,
         "rated" -> g.rated,
-        "variant" -> g.variant,
         "speed" -> g.speed.key,
         "perf" -> g.perfKey,
         "timestamp" -> g.createdAt,
@@ -49,9 +48,7 @@ final class UserGameApi(
       )
       .add("analysed" -> g.metadata.analysed)
       // A Go game has no FEN or chess last move: its Go block instead (ADR 0019 §3).
-      .add("fen" -> (!g.isGo).option(chess.format.Fen.writeBoard(g.position)))
-      .add("lastMove" -> (!g.isGo).so(g.lastMoveKeys))
-      .add("go" -> g.go.map(JsonView.go))
+      .add("go" -> JsonView.go(g.go).some)
       .add("clock" -> g.clock)
       .add("correspondence" -> g.daysPerTurn.map { d =>
         Json.obj("daysPerTurn" -> d)

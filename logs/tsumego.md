@@ -5,6 +5,28 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · Unit 8.7 · The Go puzzle trainer page
+- Did: `ui/puzzle` is a Go trainer on 8.5's `mountPuzzle`; goban's right and wrong events drive
+  lila's flow (result, rating change, next puzzle, votes, session strip, replay). The source line
+  sits under the board; "View the solution" replays the first right line through 7.2's
+  `readTree`/`playFrom` into a move list and a stepper. Touch-confirm and the board theme come from
+  the preferences. The controller's HTML actions are back (trainer, themes, daily, embed,
+  dashboard, history, replay), replacing 3.16's placeholder. 12 unit tests (one replays the right
+  line of all 240 puzzles), 12 behaviour tests and 10 screenshot tests at desktop and phone size,
+  in `dev/ligo test pages` and the `ui` CI job.
+- Worked: the board box follows the puzzle's `bounds`, so a corner puzzle fills a phone screen.
+- Didn't work / dead ends: lila doesn't compile in the cloud, so CI is the Scala compile.
+- Lessons: lila's `san` element sets moves in a chess font, so columns B, K, N, Q and R showed as
+  chess pieces (the analysis board has the same issue). Playwright's `request.postData()` of an
+  `xhr.form` body is multipart, not urlencoded.
+- Decisions: hints dropped (goban marks no hint), a Confirm move button as on the game page, theme
+  names sent by the server (logs/decisions.md, ADR 0025 amendment).
+- Verified by Claude: UI build, lint, format, 255 unit tests, 22 Playwright tests, CI.
+  · Needs owner verification: `/training`, `/training/themes`, `/training/dashboard/30`,
+  `/training/history` on a computer and a phone; solve one, fail one, view a solution.
+- Follow-ups: 8.8 (the demo); keyboard and screen-reader play for puzzles is not wired
+  (`mountPuzzle` has no `access.ts`).
+
 ### 2026-10-03 · Unit 8.6 · Puzzles on the server
 - Did: `lila/modules/puzzle` now stores and serves ADR 0025's Go puzzle (size, bounds, setup stones,
   player, goban's move tree kept as BSON, goal, provenance, glicko, plays, votes, Go themes). The

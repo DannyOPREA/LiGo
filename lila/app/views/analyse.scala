@@ -1,94 +1,10 @@
 package views.analyse
 
-import chess.format.pgn.PgnStr
-import play.api.libs.json.{ Json, JsObject }
-
-import lila.app.UiEnv.{ *, given }
-import lila.round.RoundGame.secondsSinceCreation
+import lila.app.UiEnv.*
 
 val ui = lila.analyse.ui.AnalyseUi(helpers)
 
-object replay:
-
-  private val replayUi = lila.analyse.ui.ReplayUi(helpers)(ui)
-
-  def forCrawler(
-      pov: Pov,
-      initialFen: Option[chess.format.Fen.Full],
-      pgn: PgnStr,
-      cross: Option[lila.game.Crosstable.WithMatchup]
-  )(using Context) =
-    replayUi.forCrawler(
-      pov,
-      pgn,
-      views.round.ui.povOpenGraph(pov),
-      chessground = views.round.ui.povChessground(pov),
-      gameSide = views.game.side(pov, initialFen, bookmarked = false),
-      crosstable = cross.map: c =>
-        views.game.ui.crosstable(pov.player.userId.fold(c)(c.fromPov), pov.gameId.some)
-    )
-
-  def forBrowser(
-      pov: Pov,
-      data: play.api.libs.json.JsObject,
-      initialFen: Option[chess.format.Fen.Full],
-      pgn: PgnStr,
-      analysis: Option[lila.analyse.Analysis],
-      analysisStarted: Boolean,
-      cross: Option[lila.game.Crosstable.WithMatchup],
-      userTv: Option[User],
-      chatOption: Option[lila.chat.UserChat.Mine],
-      bookmarked: Boolean
-  )(using ctx: Context) =
-
-    val chatOpt = chatOption.map: c =>
-      views.chat.json(
-        c.chat,
-        c.lines,
-        name = trans.site.spectatorRoom.txt(),
-        timeout = c.timeout,
-        withNoteAge = ctx.isAuth.option(pov.game.secondsSinceCreation),
-        public = true,
-        resource = lila.core.chat.PublicSource.Watcher(pov.gameId)
-      ) -> views.chat.frag
-
-    val side = views.game.side(pov, initialFen, userTv = userTv, bookmarked = bookmarked)
-
-    replayUi.forBrowser(
-      pov,
-      data,
-      pgn,
-      analysable = lila.game.GameExt.analysable(pov.game),
-      hasAnalysis = analysis.isDefined || analysisStarted,
-      graph = views.round.ui.povOpenGraph(pov),
-      gameSide = side,
-      crosstable = cross.map: c =>
-        views.game.ui.crosstable(pov.player.userId.fold(c)(c.fromPov), pov.gameId.some),
-      chatOption = chatOpt
-    )
-
 object embed:
-
-  def lpv(pgn: PgnStr, getPgn: Boolean, title: String, args: JsObject)(using
-      ctx: EmbedContext
-  ) =
-    val opts = Json.obj(
-      "menu" -> Json.obj("getPgn" -> Json.obj("enabled" -> getPgn)),
-      "i18n" -> Json.obj(
-        "flipTheBoard" -> trans.site.flipBoard.txt(),
-        "analysisBoard" -> trans.site.analysis.txt(),
-        "practiceWithComputer" -> trans.site.practiceWithComputer.txt(),
-        "getPgn" -> trans.study.copyChapterPgn.txt(),
-        "download" -> trans.site.download.txt()
-      )
-    ) ++ args
-    views.base.embed.minimal(
-      title = title,
-      cssKeys = List("bits.lpv.embed"),
-      modules = esmInitObj("site.lpvEmbed", opts)
-    )(
-      div(cls := "is2d")(div(pgn))
-    )
 
   def notFound(using EmbedContext) =
     views.base.embed.minimal(

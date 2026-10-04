@@ -1,7 +1,7 @@
 package lila.puzzle
 package ui
 
-import play.api.libs.json.Json
+import play.api.libs.json.{ JsObject, Json }
 
 import lila.ui.*
 import lila.common.Json.given
@@ -23,6 +23,13 @@ final class PuzzleBits(helpers: Helpers):
         "dynamic" -> dynamic.sorted(using stringOrdering).mkString(" "),
         "static" -> static.mkString(" ")
       )
+
+  // LiGo (ADR 0025 section 1): the Go themes have no i18n keys, so the page gets each theme's name and
+  // description translated here, in one object keyed by the theme's key.
+  def themeNames(using Translate): JsObject =
+    JsObject:
+      PuzzleTheme.visible.map: t =>
+        t.key.value -> Json.obj("name" -> t.name.txt(), "desc" -> t.description.txt())
 
   def pageMenu(active: String, user: Option[User], days: Days = Days(30))(using ctx: Context) =
     val u = user.filterNot(ctx.is).map(_.username)

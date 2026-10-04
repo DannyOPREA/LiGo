@@ -51,9 +51,8 @@ final private class Finisher(
     else if game.player(!game.player.color).isOfferingDraw then
       apply(game, _.Draw, None, Messenger.SystemMessage.Persistent(trans.site.drawOfferAccepted.txt()).some)
     else
-      // a Go game always has a winner on time (its chess position is only a placeholder until 3.17)
-      val winner =
-        Some(!game.player.color).ifFalse(!game.isGo && game.position.opponentHasInsufficientMaterial)
+      // a Go game always has a winner on time
+      val winner = Some(!game.player.color)
       for
         events <- apply(game, _.Outoftime, winner)
         _ = winner.foreach: w =>
@@ -126,7 +125,7 @@ final private class Finisher(
     import prog.game
     if game.nonAi && game.isCorrespondence then Color.all.foreach(notifier.gameEnd(prog.game))
     lila.mon.game
-      .finish(game.variant, game.speed, game.source, game.rated, status)
+      .finish(game.speed, game.source, game.rated, status)
       .increment()
     recordLagStats(game)
     for

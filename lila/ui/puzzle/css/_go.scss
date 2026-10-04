@@ -1,0 +1,101 @@
+// The Go trainer (unit 8.7): the puzzle board and what goes with it.
+
+// libs/board draws goban's puzzle board in this element, which fills the board's box and is sized from
+// the box's width; centred, since goban's board is a whole number of points wide. The box is as tall
+// as the part of the board the puzzle shows (`---ratio`, rows over columns), so a corner problem
+// doesn't leave a square of empty space on a phone.
+.puzzle__board.main-board {
+  padding-bottom: calc(100% * var(---ratio, 1));
+}
+
+.puzzle__go-board {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  // the solution on show is a picture of a position, not a puzzle to play
+  &--static {
+    pointer-events: none;
+  }
+}
+
+.puzzle__go-board-failed {
+  position: absolute;
+  inset: 0;
+  padding: 2em 1em;
+  text-align: center;
+  color: $c-font-dim;
+}
+
+// where the puzzle comes from, under the board
+.puzzle__source {
+  margin: 0;
+  padding: 0 0.3em;
+  font-size: 0.85em;
+  color: $c-font-dim;
+}
+
+// a stone, where lila shows the king of the side to move
+.puzzle__stone {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid $c-font-dim;
+
+  &.black {
+    background: #111;
+  }
+
+  &.white {
+    background: #f4f4f4;
+  }
+}
+
+.puzzle__goal {
+  color: $c-font-dim;
+}
+
+.puzzle__confirm-row {
+  padding: 0.3em 0;
+}
+
+.puzzle__confirm {
+  flex: 1 1 auto;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.puzzle__retry,
+.puzzle__view-solution {
+  min-height: 44px;
+}
+
+.puzzle__controls .fbt {
+  min-height: 44px;
+}
+
+.puzzle__feedback.after {
+  // on a phone: the result and "View the solution" in a row, Continue under them
+  .continue {
+    flex: 1 1 100%;
+    padding: 1em 2em;
+
+    @include mq-at-least-col2 {
+      flex: 0 0 auto;
+      padding: 2em;
+    }
+  }
+
+  .puzzle__view-solution {
+    flex: 0 0 auto;
+    margin: 0.5em 1em;
+  }
+}
+
+// lila sets a move's name in a chess font (K, Q, R, B and N become pieces): a Go point's column is a letter
+.puzzle__moves san {
+  @extend %base-font;
+}

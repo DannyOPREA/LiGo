@@ -33,25 +33,9 @@ final class HistoryApi(
         .void
 
   def add(user: User, game: Game, perfs: UserPerfs): Funit = withColl: coll =>
-    val isStd = game.ratingVariant.standard
-    val changes = List(
-      isStd.option("standard" -> perfs.standard),
-      game.ratingVariant.chess960.option("chess960" -> perfs.chess960),
-      game.ratingVariant.kingOfTheHill.option("kingOfTheHill" -> perfs.kingOfTheHill),
-      game.ratingVariant.threeCheck.option("threeCheck" -> perfs.threeCheck),
-      game.ratingVariant.antichess.option("antichess" -> perfs.antichess),
-      game.ratingVariant.atomic.option("atomic" -> perfs.atomic),
-      game.ratingVariant.horde.option("horde" -> perfs.horde),
-      game.ratingVariant.racingKings.option("racingKings" -> perfs.racingKings),
-      game.ratingVariant.crazyhouse.option("crazyhouse" -> perfs.crazyhouse),
-      (isStd && game.speed == Speed.UltraBullet).option("ultraBullet" -> perfs.ultraBullet),
-      (isStd && game.speed == Speed.Bullet).option("bullet" -> perfs.bullet),
-      (isStd && game.speed == Speed.Blitz).option("blitz" -> perfs.blitz),
-      (isStd && game.speed == Speed.Rapid).option("rapid" -> perfs.rapid),
-      (isStd && game.speed == Speed.Classical).option("classical" -> perfs.classical),
-      (isStd && game.speed == Speed.Correspondence).option("correspondence" -> perfs.correspondence)
-    ).flatten.map: (k, p) =>
-      k -> p.intRating
+    val changes = HistoryApi
+      .perfKeysOf(isGo = true, PerfKey.standardBySpeed(game.speed)) // every game is Go (unit 3.17)
+      .map(pk => pk.value -> perfs(pk).intRating)
     val days = daysBetween(user.createdAt, game.movedAt)
     coll.update
       .one(
@@ -127,3 +111,12 @@ final class HistoryApi(
                   case (max, _) => max
               }
           }).dmap(_ | currentRating)
+
+object HistoryApi:
+
+  /* The perfs a rated game gives a history point to. LiGo (unit 5.6): a Go game moves only the go
+   * perf (ADR 0021 §1), so only its history gets a point, not chess's standard and speed perfs. */
+  def perfKeysOf(isGo: Boolean, chessKey: PerfKey): List[PerfKey] =
+    if isGo then List(PerfKey.go)
+    else if Speed.all.exists(PerfKey.standardBySpeed(_) == chessKey) then List(PerfKey.standard, chessKey)
+    else List(chessKey)

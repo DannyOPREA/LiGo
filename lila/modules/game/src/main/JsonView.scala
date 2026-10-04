@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.format.Fen
 import chess.{ Centis, Clock, Color }
 import play.api.libs.json.*
 
@@ -13,11 +12,11 @@ final class JsonView(rematches: Rematches):
 
   import JsonView.given
 
-  def immutable(game: Game, initialFen: Option[Fen.Full]) =
+  def immutable(game: Game) =
     Json
       .obj(
         "id" -> game.id,
-        "variant" -> game.variant,
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> game.speed.key,
         "perf" -> game.perfKey,
         "rated" -> game.rated,
@@ -25,35 +24,29 @@ final class JsonView(rematches: Rematches):
         "createdAt" -> game.createdAt
       )
       .add("startedAtTurn" -> game.startedAtPly.some.filter(_ > 0))
-      .add("initialFen" -> initialFen)
       .add("tournamentId" -> game.tournamentId)
       .add("swissId" -> game.swissId)
       .add("rules" -> game.metadata.nonEmptyRules)
 
-  def base(game: Game, initialFen: Option[Fen.Full]) =
-    immutable(game, initialFen) ++ Json
+  def base(game: Game) =
+    immutable(game) ++ Json
       .obj(
         "turns" -> game.ply,
         "status" -> game.status
       )
       // A Go game has no FEN: its setup, moves and position facts instead (ADR 0019 §3).
-      .add("fen" -> (!game.isGo).option(Fen.write(game.chessState)))
-      .add("go" -> game.go.map(JsonView.go))
+      .add("go" -> JsonView.go(game.go).some)
       // the scoring phase under way, or the count that ended the game (ADR 0020 §6)
-      .add("scoring" -> game.go.zip(game.goScoring).map((go, sc) => JsonView.goScoring(sc, go, nowInstant)))
+      .add("scoring" -> game.goScoring.map(JsonView.goScoring(_, game.go, nowInstant)))
       .add("result" -> JsonView.goResult(game))
-      .add("threefold" -> game.history.threefoldRepetition)
       .add("winner" -> game.winnerColor)
       .add("abortedBy" -> game.abortedBy)
       .add("rematch" -> rematches.getAcceptedId(game.id))
       .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
 
-  // adds fields that should be computed by the client instead
-  def baseWithChessDenorm(game: Game, initialFen: Option[Fen.Full]) =
-    base(game, initialFen) ++ Json
-      .obj("player" -> game.turnColor)
-      .add("check" -> game.position.checkSquare.map(_.key))
-      .add("lastMove" -> game.lastMoveKeys)
+  // adds the player to move, which the client could compute
+  def baseWithPlayer(game: Game) =
+    base(game) ++ Json.obj("player" -> game.turnColor)
 
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json
@@ -61,13 +54,10 @@ final class JsonView(rematches: Rematches):
         "fullId" -> pov.fullId,
         "gameId" -> pov.gameId,
         "color" -> pov.color,
-        "lastMove" -> (if pov.game.isGo then "" else pov.game.lastMoveKeys | ""),
+        "lastMove" -> GoBridge.lastMove(pov.game.go),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
-        "variant" -> Json.obj(
-          "key" -> pov.game.variant.key,
-          "name" -> pov.game.variant.name
-        ),
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> pov.game.speed.key,
         "perf" -> pov.game.perfKey,
         "rated" -> pov.game.rated,
@@ -84,19 +74,15 @@ final class JsonView(rematches: Rematches):
           .add("ai" -> pov.opponent.aiLevel),
         "isMyTurn" -> pov.isMyTurn
       )
-      .add("fen" -> (!pov.game.isGo).option(maybeFen(pov)))
-      .add("go" -> pov.game.go.map(JsonView.go))
+      .add("board" -> GoBridge.miniBoard(pov.game.go, pov.player.blindfold).some)
+      .add("go" -> JsonView.go(pov.game.go).some)
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)
       .add("swissId" -> pov.game.swissId)
-      // .add("orientation" -> pov.game.variant.racingKings.option(chess.White))
       .add("winner" -> pov.game.winnerColor)
       .add("rating" -> pov.player.rating)
       .add("goRank" -> Namer.ratingString(pov.player))
       .add("ratingDiff" -> pov.player.ratingDiff)
-
-  def maybeFen(pov: Pov): Fen.Full =
-    if pov.player.blindfold then Fen.Full("8/8/8/8/8/8/8/8") else Fen.write(pov.game.chessState)
 
   def player(p: Player, user: Option[LightUser]) =
     Json
@@ -251,13 +237,6 @@ object JsonView:
     Json.obj(
       "nb" -> blurs.nb,
       "bits" -> blurs.binaryString
-    )
-
-  given OWrites[chess.variant.Variant] = OWrites: v =>
-    Json.obj(
-      "key" -> v.key,
-      "name" -> v.name,
-      "short" -> v.shortName
     )
 
   given OWrites[Clock] = OWrites: c =>

@@ -2,7 +2,7 @@
 // correspondence seeks, the filter chips, and the one place that decides which rows you can join and
 // in what order they are listed. Pure functions, so tests/openChallenges.test.ts can check them.
 import { goSizes, type GoRuleset, type GoSize } from './goSetup';
-import type { Hook, Mode, Seek } from './interfaces';
+import type { Hook, Mode, RatingRangeJson, Seek } from './interfaces';
 
 export type LiveSpeed = 'bullet' | 'blitz' | 'rapid' | 'classical';
 export const liveSpeeds: LiveSpeed[] = ['bullet', 'blitz', 'rapid', 'classical'];
@@ -15,6 +15,8 @@ export interface OpenRow {
   kind: Mode; // 'live' for a hook, 'correspondence' for a seek
   id: string;
   user?: string; // undefined for a guest
+  auth: boolean; // made by a signed-in player
+  range?: RatingRangeJson; // the rating range its creator asked for; none is any rank
   rating?: number;
   provisional: boolean;
   goRank?: string; // the server's kyu/dan label for `rating`
@@ -51,6 +53,8 @@ export const hookRow = (hook: Hook): OpenRow => ({
   kind: 'live',
   id: hook.id,
   user: hook.u,
+  auth: hook.auth ?? !!hook.u,
+  range: hook.rr,
   rating: hook.rating,
   provisional: !!hook.prov,
   goRank: hook.goRank,
@@ -70,6 +74,8 @@ export const seekRow = (seek: Seek): OpenRow => ({
   kind: 'correspondence',
   id: seek.id,
   user: seek.rating ? seek.username : undefined,
+  auth: true, // only signed-in players make correspondence seeks
+  range: seek.rr,
   rating: seek.rating || undefined,
   provisional: !!seek.provisional,
   goRank: seek.goRank,
@@ -156,27 +162,50 @@ export interface Viewer {
   rating?: number;
 }
 
-// `ratingMap` is by perf key; Go's is `go`.
-export const viewerOf = (me?: { username: string }, ratingMap?: Record<string, number> | null): Viewer => ({
-  username: me?.username,
-  rating: ratingMap?.['go'],
-});
+// `ratingMap` is by perf key; Go's is `go`. lila marks a provisional rating with a minus sign.
+export const viewerOf = (me?: { username: string }, ratingMap?: Record<string, number> | null): Viewer => {
+  const go = ratingMap?.['go'];
+  return { username: me?.username, rating: go === undefined ? undefined : Math.abs(go) };
+};
 
-export type Unjoinable = 'own' | 'kind';
+// Why you can't join a row (ADR 0022 §5): your own; rated while you are a guest; your rating outside its
+// range; made by a signed-in player while you are a guest, or by a guest while you are signed in.
+export type Unjoinable = 'own' | 'rated' | 'range' | 'members' | 'guests';
 export interface Fit {
   joinable: boolean;
   reason?: Unjoinable;
   suits: boolean;
 }
 
-// Today's rules, the ones the server still enforces by hiding rows: you can't join your own challenge,
-// and guests and signed-in players are kept apart. Unit 6.5 adds the rated / range / members / guests
-// reasons here, from the new fields the server sends, and greys the rows that return `joinable: false`.
+// The server's own join rules (`Biter.canJoin`), from the fields it sends since unit 6.5: it sends the
+// rows you can't join too, and the table greys them with the reason.
 export const fit = (row: OpenRow, viewer: Viewer, chips: Chips = noChips()): Fit => {
-  if (row.own) return { joinable: false, reason: 'own', suits: false };
-  if (!!row.user !== !!viewer.username) return { joinable: false, reason: 'kind', suits: false };
+  const no = (reason: Unjoinable): Fit => ({ joinable: false, reason, suits: false });
+  // yours, from this tab or another one (the server refuses a hook of your own whichever tab made it)
+  if (row.own || (!!viewer.username && row.user === viewer.username)) return no('own');
+  if (!viewer.username) {
+    if (row.rated) return no('rated');
+    if (row.auth) return no('members');
+  } else if (!row.auth) return no('guests');
+  if (viewer.username && row.range && outOfRange(viewer.rating, row.range)) return no('range');
   return { joinable: !row.disabled, suits: !row.disabled && matches(row, chips) };
 };
+
+// lila's `RatingRange.contains`: a bound at lila's limit (400 or 2900) is open
+const outOfRange = (rating: number | undefined, r: RatingRangeJson): boolean =>
+  rating !== undefined && ((r.min > 400 && rating < r.min) || (r.max < 2900 && rating > r.max));
+
+// a range in ranks: "2k–1d", "2k+" or "≤ 1d" (a bound at lila's limit is open)
+export const rangeLabel = (r: RatingRangeJson): string =>
+  r.low && r.high
+    ? r.low === r.high
+      ? r.low
+      : `${r.low}–${r.high}`
+    : r.low
+      ? `${r.low}+`
+      : r.high
+        ? `≤ ${r.high}`
+        : '';
 
 // Your own challenge first, then what suits you, then the other joinable rows, then the rest; inside
 // each group the closest rating to yours first (ADR 0022 §5), and the shortest game first when you

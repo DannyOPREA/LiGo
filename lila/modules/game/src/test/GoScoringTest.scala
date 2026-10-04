@@ -36,7 +36,7 @@ class GoScoringTest extends munit.FunSuite:
     ).fold(e => fail(e.message), _.start.sloppy)
 
   private def play(g: Game, action: Action): Game =
-    val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
+    val next = g.go(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
     g.applyGoMove(next, g.stepGoClock(MoveMetrics(), gameActive = g.goClockActiveAfter(next)).map(_.value))
       .game
 
@@ -107,7 +107,7 @@ class GoScoringTest extends munit.FunSuite:
     assertEquals((req \ "komi").as[Double], 6.5)
     assertEquals((req \ "handicap").as[Int], 0)
     assertEquals((req \ "toMove").as[String], "b")
-    assertEquals((req \ "board").as[String], lila.core.game.GoBridge.board(g.go.get))
+    assertEquals((req \ "board").as[String], lila.core.game.GoBridge.board(g.go))
     assertEquals((req \ "prisoners").as[JsObject], Json.obj("b" -> 0, "w" -> 0))
     assertEquals(scoringEvent(step) \ "counting", JsDefined(JsBoolean(true)))
     assertEquals(GoScoringPlay.request(step.game), Some(req), "the same request is re-sent until answered")
@@ -226,7 +226,7 @@ class GoScoringTest extends munit.FunSuite:
     val step = resume(g, at(30)).ok
     val r = step.game
     assertEquals(r.goScoring, None)
-    assertEquals(r.go.get.actions.last, Action.Resume)
+    assertEquals(r.go.actions.last, Action.Resume)
     assertEquals(r.turnColor, Color.Black)
     assert(r.clock.exists(_.isRunning), "the clock runs again")
     assertEquals(r.clock.map(_.color), Some(Color.Black))
@@ -322,10 +322,10 @@ class GoScoringTest extends munit.FunSuite:
     val g = playAll(newGo(Some(fischer)), "aa", "ee")
     val capped = g.copy(ply = g.startedAtPly + lila.core.game.GoBridge.maxPlies)
     assert(capped.goPlayEnds)
-    assertEquals(capped.go.get.phase, ligo.gorules.Phase.Play)
+    assertEquals(capped.go.phase, ligo.gorules.Phase.Play)
     val step = opened(capped)
-    assert(step.game.go.get.playClosed)
-    assertEquals(step.game.go.get.phase, ligo.gorules.Phase.Scoring)
+    assert(step.game.go.playClosed)
+    assertEquals(step.game.go.phase, ligo.gorules.Phase.Scoring)
     assert(resume(step.game, at(1)).isLeft)
 
   test("the service's messages are read as ADR 0020 §1 writes them"):

@@ -2,21 +2,17 @@ package lila.web
 
 import play.api.mvc.RequestHeader
 import scalalib.net.Bearer
-import chess.format.pgn.PgnStr
 
 import lila.core.net.IpAddress
 import lila.core.socket.Sri
 import lila.core.security.IsProxy
 import lila.memo.RateLimit
-import lila.common.{ HTTPRequest, ClientName }
+import lila.common.HTTPRequest
 import lila.ui.Context
-import lila.core.perm.Granter
 
 final class Limiters(using Executor, lila.core.config.RateLimit):
 
   import RateLimit.*
-
-  private given (using ctx: Context): RequestHeader = ctx.req
 
   val setupPost = RateLimit[IpAddress](5, 1.minute, key = "setup.post", log = false)
 
@@ -63,18 +59,6 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
   )(
     ("fast", 5 * 5, 1.minute),
     ("slow", 40 * 5, 1.day)
-  )
-
-  val exportImage: RateLimiter[(Unit, IpAddress)] = combine(
-    RateLimit[Unit](credits = 600, duration = 1.minute, key = "export.image.global"),
-    RateLimit[IpAddress](credits = 15, duration = 1.minute, key = "export.image.ip")
-  )
-
-  val gameImport = RateLimit.composite[IpAddress](
-    key = "import.game.ip"
-  )(
-    ("fast", 10, 1.minute),
-    ("slow", 150, 1.hour)
   )
 
   private val imageUploadLimiter: RateLimiter[(IpAddress, UserId)] = combine(
@@ -132,62 +116,6 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
     RateLimit[UserId](1, 1.minute, "streamer.checkOnline.user"),
     RateLimit[IpAddress](1, 1.minute, "streamer.checkOnline.ip")
   )
-
-  val studyPgnImport = RateLimit[UserId](credits = 1000, duration = 24.hour, key = "study.import-pgn.user")
-
-  val studyClone: RateLimiter[(UserId, IpAddress)] = combine(
-    RateLimit[UserId](credits = 10 * 3, duration = 24.hour, key = "study.clone.user"),
-    RateLimit[IpAddress](credits = 20 * 3, duration = 24.hour, key = "study.clone.ip")
-  )
-
-  val studyCreate: RateLimiter[(UserId, IpAddress)] = combine(
-    RateLimit[UserId](credits = 30 * 2, duration = 24.hour, key = "study.create.user"),
-    RateLimit[IpAddress](credits = 50 * 2, duration = 24.hour, key = "study.create.ip")
-  )
-
-  object studyDownload:
-    private val auth = ConcurrencyLimit[UserId](3, "study.download.auth")
-    private val anon = ConcurrencyLimit[IpAddress](1, "study.download.anon")
-    def perSecond(using ctx: Context) = if ctx.isAuth then 30 else 10
-    def apply[T]()(using ctx: Context): ConcurrencyLimit.Limiter[PgnStr] =
-      ctx.userId.fold(anon(ctx.ip))(auth(_))
-
-  object relay:
-
-    val roundCreate: RateLimiter[(UserId, IpAddress)] = combine(
-      RateLimit[UserId](120 * 10, 24.hour, "broadcast.round.user"),
-      RateLimit[IpAddress](120 * 10, 24.hour, "broadcast.round.ip")
-    )
-
-    val tourCreate: RateLimiter[(UserId, IpAddress)] = combine(
-      RateLimit[UserId](20 * 10, 24.hour, "broadcast.tournament.user"),
-      RateLimit[IpAddress](20 * 10, 24.hour, "broadcast.tournament.ip")
-    )
-
-    object stream:
-      private val auth = ConcurrencyLimit[UserId](8, "broadcast.stream.auth")
-      private val verified = ConcurrencyLimit[UserId](32, "broadcast.stream.verified")
-      private val anon = ConcurrencyLimit[IpAddress](2, "broadcast.stream.anon")
-      def apply[T]()(using ctx: Context): ConcurrencyLimit.Limiter[PgnStr] = ctx.me match
-        case None => anon(ctx.ip)
-        case Some(me) if me.isVerified => verified(me.userId)
-        case Some(me) => auth(me.userId)
-
-    object apiGet:
-      private val authLimit = 120
-      private val auth = RateLimit[UserId]((authLimit * 10 * 3), 3.minutes, "broadcast.api.get.auth")
-      private val mobile = RateLimit[IpAddress](20 * 3, 3.minutes, "broadcast.api.get.mobile")
-      private val anon = RateLimit[IpAddress](10 * 3, 3.minutes, "broadcast.api.get.anon")
-      def apply[A](limited: String => Fu[A])(using ctx: Context, client: ClientName)(res: => Fu[A]): Fu[A] =
-        ctx.me match
-          case Some(me) =>
-            val cost = if Granter.of(_.ApiHog)(me) then 2 else if me.isVerified then 5 else 10
-            auth(me.userId, limited(limitMessage), cost)(res)
-          case None if client.isMobile => mobile(ctx.ip, limited(limitMessage))(res)
-          case None => anon(ctx.ip, limited(limitMessage))(res)
-      private def limitMessage(using ctx: Context) =
-        if ctx.isAuth then "Too many requests from your account"
-        else s"Use an oauth token to get $authLimit requests per minute. Contact us for more."
 
   object enumeration:
 

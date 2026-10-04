@@ -48,5 +48,25 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   failure; rerun alone. `pgrep -f verify.sh` in an until-loop matches its own bash line.
   Unit-scoped rerun: `cd lila && ./lila.sh --batch "game/testFull"` (one project per call).
 
+- 3.17 part 1 (chess storage gone, `Query.go` = `sz` exists): the reader now throws on a chess doc,
+  so EVERY Game-reading selector needs the guard, not just `Query.user`/by-id. Missed ones:
+  `Query.nowPlaying`/`nowPlayingVs`/`opponents`/`imported` (GameFilter profile tabs, urgentGames on
+  login/home, `allPlaying` in account closure, API exports), `byIdsCursor`, `cursor(inIds)`,
+  `exportByIds`, `lastGameBetween`. Grep `cursor[Game]`, `list[Game]`, `one[Game]`, `Query.` users in
+  app/mashup and PaginatorBuilder. Also check for code copied from an open sibling PR (3.17 pulled
+  #88's `GoBridge.miniState` + GameUi go-mini markup without its TS): merge-tree against that branch.
+
+- 3.17 part 2b (variants/openings/FEN fields out): removals of `variant` branches are no-ops for Go
+  only because every Go game was `Standard`; verify each reduces to its standard branch. Grep for
+  helpers orphaned by the removal (`lila.common.Form.fen` lost its last users and still calls chess
+  `playable`). Check decisions.md for earlier answers the part contradicts (3.15/3.19 said 3.17 drops
+  the form `variant` field; 2b kept it). Inserting a scaladoc above an existing one orphans it.
+  Chess `DeclineReason.Standard/Variant` and variant perfs on profiles survive variant removal.
+- 3.17 part 2a (PGN/FEN/UCI gone): server code was clean; the misses were user-facing text that
+  still promised the removed format: UserGamesDownload ("download imported games as PGN", include
+  toggles `opening`/`literate`/"PGN tags" now ignored), mod games "Download PGN" button, browser
+  download filenames `.json` for NDJSON. Also dead TS/CSS left behind (site.lpvEmbed, bits.lpv,
+  pgn-viewer dep) and dead prefs (autoThreefold radio). Grep views + ui for the format name.
+
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

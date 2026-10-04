@@ -88,7 +88,7 @@ check "changed.sh: services/scoring triggers the scoring and puzzles builds (too
 ci_commit puzzles tools/puzzles/src/cli.ts logs/tsumego.md
 check "changed.sh: tools/puzzles triggers only the puzzles build" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit puzzle-data tools/puzzles/data/generated-001.json logs/tsumego.md
-check "changed.sh: the puzzle set triggers the puzzles and rules builds (libs/board plays every puzzle)" output_is $'lila=false\nws=false\nui=false\nrules=true\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
+check "changed.sh: the puzzle set triggers the puzzles, rules and ui builds (libs/board and ui/puzzle play the puzzles)" output_is $'lila=false\nws=false\nui=true\nrules=true\nscoring=false\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit katagosh dev/katago.sh logs/scoring.md
 check "changed.sh: dev/katago.sh triggers the scoring and puzzles builds" output_is $'lila=false\nws=false\nui=false\nrules=false\nscoring=true\npuzzles=true' in_ci_repo "$CHANGED" main
 ci_commit dep-copying lila-ws/build.sbt COPYING.md
@@ -104,10 +104,40 @@ check "licences: GPL-2.0-only fails" fails bash -c "echo '{\"GPL-2.0-only\":[{\"
 check "licences: empty input fails" fails bash -c "echo '{}' | '$META' js-licences"
 check "licences: (MIT AND SSPL-1.0) fails" fails bash -c "echo '{\"(MIT AND SSPL-1.0)\":[{\"name\":\"x\"}]}' | '$META' js-licences"
 
+# The chess guard (unit 3.17 part 3): chess code in lila/lila-ws, strategygames outside libs/go-rules.
+GUARD="$ROOT/dev/ci/chess_guard.py"
+guard_repo=$(mktemp -d)
+trap 'rm -rf "$ci_repo" "$guard_repo"' EXIT
+guard_file() { mkdir -p "$guard_repo/$(dirname "$1")" && printf '%s\n' "$2" > "$guard_repo/$1" && (cd "$guard_repo" && git add -A); }
+guard() { "$GUARD" --root "$guard_repo" --baseline "$guard_repo/baseline.txt" "$@"; }
+(cd "$guard_repo" && git init -q -b main) >/dev/null 2>&1
+guard_file lila/modules/a/Go.scala $'package a\n// chess.Board in a comment does not count\nimport strategygames.go.Board'
+check "chess guard: strategygames outside libs/go-rules fails" fails guard
+guard_file lila/modules/a/Go.scala $'package a\n// import chess.format.Fen and chess.Board in a comment\n/* chess.Move\n chess.Game */\nval s = "go"'
+guard_file libs/go-rules/src/Rules.scala 'import strategygames.go.Board'
+guard_file lila/modules/b/Old.scala $'package b\nimport chess.format.Fen\nval b: chess.Board = ???'
+guard_file docs/x.scala 'import chess.format.Fen'
+printf 'lila/modules/b/Old.scala\nlila/modules/gone/Clean.scala\n' > "$guard_repo/baseline.txt"
+check "chess guard: comments, libs/go-rules' strategygames and files outside lila don't count" bash -c "out=\$(\"\$0\" --root '$guard_repo' --baseline /dev/null); grep -q '^chess guard, full' <<<\"\$out\" && grep -q 'Old.scala' <<<\"\$out\" && ! grep -qE 'Go.scala|Rules.scala|docs/x' <<<\"\$out\"" "$GUARD"
+check "chess guard: full mode fails on chess code, even in the baseline" fails guard
+check "chess guard: report-only passes on baseline files" guard --report-only
+check "chess guard: report-only lists baseline files that are clean now" bash -c "\"\$0\" --root '$guard_repo' --baseline '$guard_repo/baseline.txt' --report-only | grep -q 'drop from.*lila/modules/gone/Clean.scala'" "$GUARD"
+guard_file lila-ws/src/New.scala 'import chess.variant.Variant'
+check "chess guard: report-only fails on a new file with a chess import" fails guard --report-only
+guard_file lila-ws/src/New.scala 'import chess.{ Color, Square }'
+check "chess guard: report-only fails on a new file naming chess.Square in an import" fails guard --report-only
+guard_file lila-ws/src/New.scala 'val v = chess.variant.Standard'
+check "chess guard: report-only fails on a new file writing out chess.variant" fails guard --report-only
+guard_file lila-ws/src/New.scala 'import chess.{ Speed, variant }'
+check "chess guard: report-only fails on a new file importing chess's variant package in braces" fails guard --report-only
+guard_file lila-ws/src/New.scala $'import chess.{ Color, Ply }\nval c: chess.Color = chess.White'
+check "chess guard: chess colours and plies are still allowed" guard --report-only
+check "chess guard: the repository passes in report-only mode" "$GUARD" --report-only
+
 # `up` rebuilds the browser code when a source is newer than the build (a git pull that brought a
 # new page), not only when there is no build. A fake tree, with a space in its path like the owner's.
 ui_tree=$(mktemp -d)
-trap 'rm -rf "$ci_repo" "$ui_tree"' EXIT
+trap 'rm -rf "$ci_repo" "$guard_repo" "$ui_tree"' EXIT
 fake="$ui_tree/My LiGo"
 mkdir -p "$fake/dev" "$fake/lila/ui/playground/src" "$fake/lila/ui/node_modules" "$fake/lila/public/compiled" "$fake/libs/board/src"
 cp "$LIGO" "$fake/dev/ligo"

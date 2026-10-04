@@ -7,7 +7,7 @@ import bloomfilter.mutable.BloomFilter
 import scalalib.net.UserAgent
 
 import lila.common.{ Bus, HTTPRequest }
-import lila.core.game.{ FinishGame, Game, StartGame, WithInitialFen }
+import lila.core.game.{ FinishGame, Game, StartGame }
 import lila.core.net.Origin
 import lila.oauth.AccessToken
 
@@ -135,17 +135,15 @@ final class GameStreamByOauthOrigin(
     pastGamesSource(recentlySeenUsers, since)
       .concat(if client.startEvents then currentGamesSource(recentlySeenUsers) else Source.empty)
       .concat(startStream)
-      .mapAsync(1)(gameRepo.withInitialFen)
-      .map: wif =>
-        client.mon.event(if wif.game.finished then "finish" else "start").increment()
+      .map: game =>
+        client.mon.event(if game.finished then "finish" else "start").increment()
         nbGames = nbGames + 1
-        toJson(wif)
+        toJson(game)
 
-  private def toJson(wif: WithInitialFen): JsObject =
-    lila.game.GameStream.toJson(lightUserGet.some)(wif) ++
-      wif.game.finished.so:
-        Json.obj("moves" -> wif.game.go.fold(wif.game.sans.mkString(" ")):
-          lila.game.JsonView.goMoves(_).mkString(" "))
+  private def toJson(game: Game): JsObject =
+    lila.game.GameStream.toJson(lightUserGet.some)(game) ++
+      game.finished.so:
+        Json.obj("moves" -> lila.game.JsonView.goMoves(game.go).mkString(" "))
 
   private def pastGamesSource(userIds: Iterable[UserId], since: Option[Instant]): Source[Game, ?] =
     since.fold(Source.empty): since =>

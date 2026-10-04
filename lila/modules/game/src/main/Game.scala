@@ -1,12 +1,9 @@
 package lila.game
 
-import chess.format.Uci
-import chess.variant.Variant
-import chess.{ Castles, Centis, Clock, Color, Game as ChessGame, MoveOrDrop, Ply, Speed, Status }
+import chess.{ Centis, Clock, Color, Ply, Speed, Status }
 import scalalib.model.Days
 
 import lila.core.game.{ ClockHistory, Game, GameClock, Player, Pov, Source }
-import lila.db.ByteArray
 import lila.game.Blurs.addAtMoveIndex
 import lila.rating.PerfType
 
@@ -48,9 +45,7 @@ object GameExt:
     everyOther(mts.toList))
 
   def analysable(g: Game) =
-    g.replayable && g.playedPlies > 4 &&
-      Game.analysableVariants(g.variant) &&
-      !Game.isOldHorde(g)
+    g.replayable && g.playedPlies > 4
 
   extension (clockHistory: ClockHistory)
 
@@ -122,68 +117,6 @@ object GameExt:
       b <- GameExt.computeMoveTimes(g, !g.startColor)
     yield lila.core.game.interleave(a, b)
 
-    // apply a move
-    def applyMove(
-        game: ChessGame, // new chess.Position
-        moveOrDrop: MoveOrDrop,
-        blur: Boolean = false
-    ): Progress =
-
-      def copyPlayer(player: Player) =
-        if blur && moveOrDrop.color == player.color then
-          player.copy(blurs = player.blurs.addAtMoveIndex(g.playerMoves(player.color)))
-        else player
-
-      // This must be computed eagerly
-      // because it depends on the current time
-      val newClockHistory = for
-        clk <- game.clock
-        ch <- g.clockHistory
-      yield ch.recordNewClock(g.turnColor, clk)
-
-      val updated = g
-        .withChess(game)
-        .copy(
-          players = g.players.map(copyPlayer),
-          binaryMoveTimes = (!g.sourceIs(_.Import) && g.clock.isEmpty).option {
-            BinaryFormat.moveTime.write {
-              g.binaryMoveTimes.so { t =>
-                BinaryFormat.moveTime.read(t, g.playedPlies)
-              } :+ Centis.ofLong(nowCentis - g.movedAt.toCentis).nonNeg
-            }
-          },
-          loadClockHistory = _ => newClockHistory,
-          status = game.position.status | g.status,
-          movedAt = nowInstant
-        )
-
-      val state = Event.State(
-        turns = game.ply,
-        status = (g.status != updated.status).option(updated.status),
-        winner = game.position.winner,
-        whiteOffersDraw = g.whitePlayer.isOfferingDraw,
-        blackOffersDraw = g.blackPlayer.isOfferingDraw
-      )
-
-      val clockEvent = updated.clock
-        .map(Event.Clock.apply)
-        .orElse:
-          updated.playableCorrespondenceClock.map(Event.CorrespondenceClock.apply)
-
-      val events = moveOrDrop.fold(
-        Event.Move(_, game.position, state, clockEvent, updated.position.crazyData),
-        Event.Drop(_, game.position, state, clockEvent, updated.position.crazyData)
-      ) :: {
-        (updated.position.variant.threeCheck && game.position.check.yes).so(List:
-          Event.CheckCount(
-            white = updated.history.checkCount.white,
-            black = updated.history.checkCount.black
-          ))
-      }
-
-      Progress(g, updated, events)
-    end applyMove
-
     /** The clock after a Go move (ADR 0019 §5, ADR 0020 §7), started once each side has played. A Fischer
       * clock is stepped as scalachess' `Game.applyClock` steps it after a chess move: the frame lag, then a
       * step (which switches the running side and adds the increment). A byo-yomi clock is stepped by go-rules
@@ -212,7 +145,7 @@ object GameExt:
       * scoring phase opens then.
       */
     def goPlayEnds: Boolean =
-      g.go.exists(_.phase == ligo.gorules.Phase.Scoring) ||
+      g.go.phase == ligo.gorules.Phase.Scoring ||
         g.playedPlies.value >= lila.core.game.GoBridge.maxPlies
 
     /** Whether the clock keeps running after the Go action that leads to `next`: always, except at the ply
@@ -262,7 +195,7 @@ object GameExt:
         .orElse(updated.playableCorrespondenceClock.map(Event.CorrespondenceClock.apply))
       val state = Event.State(updated.ply, None, None, whiteOffersDraw = false, blackOffersDraw = false)
       val action = next.actions.lastOption.getOrElse(ligo.gorules.Action.Pass)
-      val captured = before.so(lila.core.game.GoBridge.captured(_, next))
+      val captured = lila.core.game.GoBridge.captured(before, next)
       Progress(g, updated, List(Event.GoMove(action, mover, captured, next, state, clockEvent)))
 
     def finish(status: Status, winner: Option[Color]): Game =
@@ -291,13 +224,6 @@ object GameExt:
       then (g.player(color).blurs.nb * 100) / g.playerMoves(color)
       else 0
 
-    def drawReason =
-      if g.variant.isInsufficientMaterial(g.position) then DrawReason.InsufficientMaterial.some
-      else if g.variant.fiftyMoves(g.history) then DrawReason.FiftyMoves.some
-      else if g.history.threefoldRepetition then DrawReason.ThreefoldRepetition.some
-      else if g.drawOffers.normalizedPlies.exists(g.ply <= _) then DrawReason.MutualAgreement.some
-      else None
-
     def perfType: PerfType = PerfType(g.perfKey)
 
     def timeForFirstMove: Centis =
@@ -318,8 +244,7 @@ object GameExt:
               case Blitz => 25
               case Rapid => 30
               case _ => 35
-        if g.variant.chess960 then base * 3 / 2
-        else base
+        base
 
     def expirable =
       !g.bothPlayersHaveMoved &&
@@ -340,27 +265,6 @@ end GameExt
 object Game:
 
   val syntheticId = GameId("synthetic")
-
-  val maxPlies = Ply(600) // unlimited would be a DoS target
-
-  val analysableVariants: Set[Variant] = Set(
-    chess.variant.Standard,
-    chess.variant.Crazyhouse,
-    chess.variant.Chess960,
-    chess.variant.KingOfTheHill,
-    chess.variant.ThreeCheck,
-    chess.variant.Antichess,
-    chess.variant.FromPosition,
-    chess.variant.Horde,
-    chess.variant.Atomic,
-    chess.variant.RacingKings
-  )
-
-  val unanalysableVariants: Set[Variant] = Variant.list.all.toSet -- analysableVariants
-
-  private val hordeWhitePawnsSince = instantOf(2015, 4, 11, 10, 0)
-  def isOldHorde(game: Game) =
-    game.variant == chess.variant.Horde && game.createdAt.isBefore(Game.hordeWhitePawnsSince)
 
   val abandonedDays = Days(21)
   def abandonedDate = nowInstant.minusDays(abandonedDays.value)
@@ -384,24 +288,15 @@ object Game:
     val whitePlayer = "p0"
     val blackPlayer = "p1"
     val playerIds = "is"
-    val binaryPieces = "ps"
-    val oldPgn = "pg"
-    val huffmanPgn = "hp"
     val status = "s"
     val startedAtTurn = "st"
     val clock = "c"
     val byoyomi = "cy" // ADR 0020 §7
-    val positionHashes = "ph"
-    val checkCount = "cc"
-    val castleLastMove = "cl"
-    val unmovedRooks = "ur"
     val daysPerTurn = "cd"
     val moveTimes = "mt"
     val whiteClockHistory = "cw"
     val blackClockHistory = "cb"
     val rated = "ra"
-    val variant = "v"
-    val crazyData = "chd"
     val bookmarks = "bm"
     val source = "so"
     val tournamentId = "tid"
@@ -414,23 +309,3 @@ object Game:
     val drawOffers = "do"
     val rules = "rules"
     val abortedBy = "ab"
-
-case class CastleLastMove(castles: Castles, lastMove: Option[Uci])
-
-object CastleLastMove:
-
-  def init = CastleLastMove(Castles.init, None)
-
-  import reactivemongo.api.bson.*
-  import lila.db.dsl.*
-  import lila.db.ByteArray.byteArrayHandler
-
-  private[game] given castleLastMoveHandler: BSONHandler[CastleLastMove] = tryHandler[CastleLastMove](
-    { case bin: BSONBinary =>
-      byteArrayHandler.readTry(bin).map(BinaryFormat.castleLastMove.read)
-    },
-    clmt => byteArrayHandler.writeTry(BinaryFormat.castleLastMove.write(clmt)).get
-  )
-
-enum DrawReason:
-  case MutualAgreement, FiftyMoves, ThreefoldRepetition, InsufficientMaterial

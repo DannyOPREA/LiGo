@@ -3391,6 +3391,8 @@ interface I18n {
     by: I18nFormat;
     /** By CPL */
     byCPL: string;
+    /** Byo-yomi */
+    byoyomi: string;
     /** By registering, you agree to the %s. */
     byRegisteringYouAgreeToBeBoundByOur: I18nFormat;
     /** Calculating moves... */
@@ -3803,14 +3805,30 @@ interface I18n {
     glicko2Rating: string;
     /** Accept score */
     goAcceptScore: string;
+    /** GO BERSERK! Half the time, no increment, bonus point */
+    goBerserkTitle: string;
+    /** Black stones */
+    goBlackStones: string;
+    /** Black: %s */
+    goBlackX: I18nFormat;
+    /** The board could not be loaded. Reload the page to try again. */
+    goBoardFailedToLoad: string;
     /** Board size */
     goBoardSize: string;
     /** Byo-yomi periods */
     goByoyomiPeriods: string;
+    /** Connecting to the game */
+    goConnectingToTheGame: string;
     /** Counting the score… */
     goCountingTheScore: string;
+    /** Current tournament rank */
+    goCurrentTournamentRank: string;
     /** Go deeper */
     goDeeper: string;
+    /** Delete %s? */
+    goDeleteX: I18nFormat;
+    /** Download SGF */
+    goDownloadSgf: string;
     /** Even */
     goEven: string;
     /** First move */
@@ -3821,30 +3839,74 @@ interface I18n {
     goHandicapCompensation: string;
     /** Jigo: the score is even */
     goJigo: string;
+    /** Joined the game */
+    goJoinedTheGame: string;
     /** Komi */
     goKomi: string;
+    /** That move would repeat an earlier position (ko). */
+    goKoRefused: string;
     /** Last move */
     goLastMove: string;
+    /** Left the game */
+    goLeftTheGame: string;
+    /** Load SGF */
+    goLoadSgf: string;
+    /** %s comments */
+    goNbComments: I18nPlural;
+    /** %s handicap stones */
+    goNbHandicapStones: I18nPlural;
+    /** %s moves */
+    goNbMoves: I18nPlural;
+    /** %s prisoners */
+    goNbPrisoners: I18nPlural;
+    /** New position */
+    goNewPosition: string;
     /** Next move */
     goNextMove: string;
     /** No open challenges match. Try other filters, or create a game. */
     goNoOpenChallenges: string;
     /** No result */
     goNoResult: string;
+    /** No stones, Black first */
+    goNoStonesBlackFirst: string;
+    /** Games cannot be played through a web proxy. Please use %s instead. */
+    goNoWebProxy: I18nFormat;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
+    /** Ok, got it */
+    goOkGotIt: string;
+    /** Open SGF file */
+    goOpenSgfFile: string;
     /** Your opponent accepted this score. */
     goOpponentAcceptedScore: string;
+    /** Your opponent left the game. You can claim victory, or wait for them. */
+    goOpponentLeftChoices: string;
+    /** Pass */
+    goPass: string;
+    /** Pass: play no stone this turn */
+    goPassTitle: string;
+    /** Periods */
+    goPeriods: string;
+    /** Place */
+    goPlace: string;
     /** Previous move */
     goPreviousMove: string;
     /** Prisoners */
     goPrisoners: string;
+    /** Prisoners: */
+    goPrisonersLabel: string;
     /** Your Go rating starts there. You can change it until your first rated game starts. */
     goRankChangeHelp: string;
     /** Your Go rank now changes only through rated games. */
     goRankLocked: string;
     /** Recounting… */
     goRecounting: string;
+    /** Your opponent is offline, but they can accept this challenge later! */
+    goRematchOfflineText: string;
+    /** Challenged to a rematch */
+    goRematchOfflineTitle: string;
+    /** Result: %s */
+    goResultX: I18nFormat;
     /** Resume play */
     goResumePlay: string;
     /** Rules */
@@ -3853,6 +3915,8 @@ interface I18n {
     goRulesChinese: string;
     /** Japanese */
     goRulesJapanese: string;
+    /** The file's rules are not ones LiGo plays: Japanese rules are used instead. */
+    goRulesUnknown: string;
     /** The score could not be counted */
     goScoreNotCounted: string;
     /** No dead stones were proposed: mark them yourselves. */
@@ -3861,20 +3925,72 @@ interface I18n {
     goScoringSealHint: string;
     /** Tap a group to mark it dead, or alive again. */
     goScoringTapHint: string;
+    /** Seconds per period */
+    goSecondsPerPeriod: string;
+    /** Tap a point to put a stone there. Tap a stone of the same colour to remove it. */
+    goSetupHint: string;
+    /** That file is too big to be an SGF record. */
+    goSgfTooBig: string;
+    /** That record could not be read. */
+    goSgfUnreadable: string;
+    /** Show clock on left */
+    goShowClockOnLeft: string;
+    /** Start */
+    goStart: string;
+    /** Start analysis */
+    goStartAnalysis: string;
     /** Stones */
     goStones: string;
+    /** Stones Black has taken */
+    goStonesBlackHasTaken: string;
+    /** Stones White has taken */
+    goStonesWhiteHasTaken: string;
+    /** There is a stone there already. */
+    goStoneThereAlready: string;
+    /** Streamer mode */
+    goStreamerMode: string;
+    /** That move would take the last liberty of its own stones (suicide). */
+    goSuicideRefused: string;
     /** Territory */
     goTerritory: string;
     /** %s left to agree. Then the marks stand as they are. */
     goTimeLeftToAgree: I18nFormat;
+    /** To play */
+    goToPlay: string;
     /** Total */
     goTotal: string;
+    /** For guests */
+    goUnjoinableGuests: string;
+    /** For signed-in players */
+    goUnjoinableMembers: string;
+    /** Your rank is outside this game's range */
+    goUnjoinableRange: string;
+    /** Rated games need an account */
+    goUnjoinableRated: string;
+    /** Vibration feedback */
+    goVibrationFeedback: string;
+    /** White stones */
+    goWhiteStones: string;
+    /** White: %s */
+    goWhiteX: I18nFormat;
     /** %s accepted this score. */
     goXAcceptedScore: I18nFormat;
+    /** %1$s and %2$s */
+    goXAndY: I18nFormat;
+    /** %s joined the game. */
+    goXJoinedTheGame: I18nFormat;
+    /** %s passed. */
+    goXPassed: I18nFormat;
+    /** %1$s played %2$s. */
+    goXPlayedY: I18nFormat;
     /** %2$s wins by %1$s points */
     goXWinsByNbPoints: I18nPlural;
     /** You accepted this score. Waiting for your opponent. */
     goYouAcceptedWaiting: string;
+    /** You play %s. */
+    goYouPlayX: I18nFormat;
+    /** Your opponent */
+    goYourOpponent: string;
     /** Graph */
     graph: string;
     /** Hang on! */
@@ -4475,6 +4591,10 @@ interface I18n {
     rating: string;
     /** Rating filter */
     ratingFilter: string;
+    /** End of the period the rating graph shows */
+    ratingGraphEnd: string;
+    /** Start of the period the rating graph shows */
+    ratingGraphStart: string;
     /** Rating stats */
     ratingStats: string;
     /** %1$s rating over %2$s games */

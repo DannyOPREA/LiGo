@@ -38,7 +38,7 @@ function renderBoard(ctrl: AnalyseCtrl): VNode {
         );
   return hl('div.analyse__board.main-board', { hook: scroll }, [
     ctrl.board.loadFailed
-      ? hl('div.analyse__go-board-failed', 'The board could not be loaded. Reload the page to try again.')
+      ? hl('div.analyse__go-board-failed', i18n.site.goBoardFailedToLoad)
       : hl('div.analyse__go-board', {
           // A fresh element for setup mode and back, so snabbdom mounts the right one.
           key: ctrl.setup ? 'editor' : 'board',
@@ -56,13 +56,16 @@ function renderStatus(ctrl: AnalyseCtrl): VNode {
   const stone = (color: 'black' | 'white') =>
     hl(`span.go-prisoners__stone.${color}`, { attrs: { 'aria-hidden': 'true' } });
   return hl('div.analyse__go-status', [
-    hl('div.analyse__go-turn', [stone(n.toMove), n.toMove === 'black' ? 'Black to play' : 'White to play']),
+    hl('div.analyse__go-turn', [
+      stone(n.toMove),
+      n.toMove === 'black' ? i18n.site.blackPlays : i18n.site.whitePlays,
+    ]),
     hl('div.go-prisoners', [
-      'Prisoners:',
+      i18n.site.goPrisonersLabel,
       stone('black'),
-      hl('span', { attrs: { title: 'Stones Black has taken' } }, String(n.captures.black)),
+      hl('span', { attrs: { title: i18n.site.goStonesBlackHasTaken } }, String(n.captures.black)),
       stone('white'),
-      hl('span', { attrs: { title: 'Stones White has taken' } }, String(n.captures.white)),
+      hl('span', { attrs: { title: i18n.site.goStonesWhiteHasTaken } }, String(n.captures.white)),
     ]),
   ]);
 }
@@ -76,10 +79,10 @@ function renderTools(ctrl: AnalyseCtrl): VNode {
       hl(
         'button.button.button-empty.text',
         {
-          attrs: { 'data-icon': licon.Forward, title: 'Pass: play no stone this turn' },
+          attrs: { 'data-icon': licon.Forward, title: i18n.site.goPassTitle },
           hook: bind('click', ctrl.pass),
         },
-        'Pass',
+        i18n.site.goPass,
       ),
       ctrl.notice && hl('p.analyse__go-notice', { attrs: { role: 'status' } }, ctrl.notice),
     ]),
@@ -104,14 +107,13 @@ function renderSide(ctrl: AnalyseCtrl): LooseVNodes {
   return [
     hl('div.analyse__go-settings', [
       hl('strong', settingsText(s)),
-      s.rulesetUnknown &&
-        hl('p', "The file's rules are not ones LiGo plays: Japanese rules are used instead."),
+      s.rulesetUnknown && hl('p', i18n.site.goRulesUnknown),
       (black || white) &&
         hl('p.analyse__go-players', [
-          hl('span', `Black: ${black ?? '?'}`),
-          hl('span', `White: ${white ?? '?'}`),
+          hl('span', i18n.site.goBlackX(black ?? '?')),
+          hl('span', i18n.site.goWhiteX(white ?? '?')),
         ]),
-      one('RE') && hl('p', `Result: ${one('RE')}`),
+      one('RE') && hl('p', i18n.site.goResultX(one('RE'))),
     ]),
     !ctrl.setup &&
       hl(
@@ -120,7 +122,7 @@ function renderSide(ctrl: AnalyseCtrl): LooseVNodes {
           attrs: { 'data-icon': licon.Pencil },
           hook: onInsert(el => el.addEventListener('click', ctrl.startSetup)),
         },
-        'New position',
+        i18n.site.goNewPosition,
       ),
   ];
 }

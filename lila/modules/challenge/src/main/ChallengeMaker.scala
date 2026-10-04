@@ -1,6 +1,5 @@
 package lila.challenge
 
-import lila.core.game.GoSetups
 import lila.core.game.Player
 import lila.core.user.{ GameUser, WithPerf }
 import lila.game.{ GameRepo, Rematches, rematchAlternatesColor }
@@ -57,27 +56,27 @@ final class ChallengeMaker(
       dest: WithPerf,
       nextId: GameId
   ): Fu[Challenge] =
-    gameRepo
-      .initialFen(pov.game)
-      .map: initialFen =>
-        val timeControl = (pov.game.clock, pov.game.daysPerTurn) match
-          case (Some(clock), _) => TimeControl.Clock(clock.config)
-          case (_, Some(days)) => TimeControl.Correspondence(days)
-          case _ => TimeControl.Unlimited
-        val alternateColor = rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
-        Challenge.make(
-          variant = pov.game.variant,
-          initialFen = none, // a Go game never starts from a chess position
-          // a rematch replays the game's board size, ruleset and komi (unit 3.15)
-          go = pov.game.go.fold(GoSetups.default)(g => g.setup.copy(position = None)),
-          timeControl = timeControl,
-          rated = chess.Rated.No, // casual until unit 5.7
-          color = (if alternateColor then !pov.color else pov.color).name,
-          // for anon, we don't know the secret, but this challenge is only serialized to json and sent to a listening bot anyway,
-          // which doesn't use the secret, so we just use an empty string
-          challenger = challenger
-            .fold(Challenge.Challenger.Anonymous(""))(Challenge.toRegistered),
-          destUser = dest.some,
-          rematchOf = pov.gameId.some,
-          id = nextId.some
-        )
+    fuccess:
+      val timeControl = (pov.game.byoyomi, pov.game.clock, pov.game.daysPerTurn) match
+        case (Some(byoyomi), _, _) => TimeControl.Byoyomi(byoyomi.config)
+        case (_, Some(clock), _) => TimeControl.Clock(clock.config)
+        case (_, _, Some(days)) => TimeControl.Correspondence(days)
+        case _ => TimeControl.Unlimited
+      // a handicap game's rematch keeps the colours, so the same player gets the stones again (unit 4.9)
+      val alternateColor =
+        pov.game.go.setup.handicap == 0 &&
+          rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
+      Challenge.make(
+        // a rematch replays the game's board size, ruleset and komi (unit 3.15)
+        go = pov.game.go.setup.copy(position = None),
+        timeControl = timeControl,
+        rated = chess.Rated.No, // casual until unit 5.7
+        color = (if alternateColor then !pov.color else pov.color).name,
+        // for anon, we don't know the secret, but this challenge is only serialized to json and sent to a listening bot anyway,
+        // which doesn't use the secret, so we just use an empty string
+        challenger = challenger
+          .fold(Challenge.Challenger.Anonymous(""))(Challenge.toRegistered),
+        destUser = dest.some,
+        rematchOf = pov.gameId.some,
+        id = nextId.some
+      )

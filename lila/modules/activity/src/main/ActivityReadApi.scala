@@ -43,9 +43,9 @@ final class ActivityReadApi(
         getLightPovs(a.id.userId, corres.end).dmap:
           _.map:
             _.groupBy: pov =>
-              // a Go game's perf is `go` (unit 3.16); its `variant` is the unused chess default
+              // a Go game's perf is `go` (unit 3.16)
               if pov.game.isGo then lila.core.game.GoBridge.perfKey
-              else PerfKey(pov.game.variant, Correspondence)
+              else PerfKey.standardBySpeed(Correspondence)
             .view
               .mapValues: groupedPovs =>
                 (Score.make(groupedPovs) -> groupedPovs)

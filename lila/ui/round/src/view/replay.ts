@@ -182,9 +182,13 @@ function initMessage(ctrl: RoundController) {
     !d.player.spectator &&
     hl('div.message', { attrs: dataIcon(licon.InfoCircle) }, [
       hl('div', [
-        `You play ${d.player.color === 'black' ? 'Black' : 'White'}.`,
+        i18n.site.goYouPlayX(d.player.color === 'black' ? i18n.site.black : i18n.site.white),
         hl('br'),
-        `${go.size}×${go.size}, ${go.rules === 'japanese' ? 'Japanese' : 'Chinese'} rules, komi ${go.komi}.`,
+        [
+          `${go.size}×${go.size}`,
+          go.rules === 'japanese' ? i18n.site.goRulesJapanese : i18n.site.goRulesChinese,
+          `${i18n.site.goKomi} ${go.komi}`,
+        ].join(' · '),
         d.game.player === d.player.color && [hl('br'), hl('strong', i18n.site.itsYourTurn)],
       ]),
     ])

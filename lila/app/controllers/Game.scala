@@ -36,8 +36,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
     Found(env.round.proxyRepo.gameIfPresentOrFetch(gameId)): game =>
       val config = GameApiV2.OneConfig(
         format = GameApiV2.Format.byRequest,
-        imported = getBool("imported"),
-        flags = requestPgnFlags(extended = true)
+        flags = requestExportFlags(extended = true)
       )
       for
         content <- env.api.gameApiV2.exportOne(game, config)
@@ -75,7 +74,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
                   perfKey = get("perfType").orZero.split(",").flatMap { PerfKey(_) }.toSet,
                   color = getColor(),
                   analysed = getBoolOpt("analysed"),
-                  flags = requestPgnFlags(extended = false),
+                  flags = requestExportFlags(extended = false),
                   sort =
                     if get("sort").has("dateAsc") then GameApiV2.GameSort.DateAsc
                     else GameApiV2.GameSort.DateDesc,
@@ -94,25 +93,22 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
                     ): source =>
                       Ok.chunked(source)
                         .asAttachmentStream:
-                          s"lichess_${user.username}_${fileDate}.${format.toString.toLowerCase}"
+                          s"ligo_${user.username}_${fileDate}.ndjson"
                         .as(gameContentType(config))
 
   private def fileDate = DateTimeFormatter.ofPattern("yyyy-MM-dd").print(nowInstant)
 
   def apiExportByUserImportedGames() = AuthOrScoped() { ctx ?=> me ?=>
-    val annotated = getBool("annotated")
     val config = GameApiV2.ImportedConfig(
       user = me.userId,
-      annotated = annotated,
-      flags = requestPgnFlags(extended = annotated)
-        .copy(literate = getBoolOpt("literate") | annotated)
+      flags = requestExportFlags(extended = getBool("annotated"))
     )
     apiC.GlobalConcurrencyLimitPerIpAndUserOption(me.some)(
       env.api.gameApiV2.exportUserImportedGames(config)
     ): source =>
       Ok.chunked(source)
-        .asAttachmentStream(s"lichess_${me.username}_$fileDate.imported.pgn")
-        .as(pgnContentType)
+        .asAttachmentStream(s"ligo_${me.username}_$fileDate.imported.ndjson")
+        .as(ndJson.contentType)
   }
 
   def apiExportByUserBookmarks() = Scoped() { ctx ?=> me ?=>
@@ -122,7 +118,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
       since = getTimestamp("since"),
       until = getTimestamp("until"),
       max = getIntAs[Max]("max").map(_.atLeast(1)),
-      flags = requestPgnFlags(extended = false),
+      flags = requestExportFlags(extended = false),
       sort =
         if get("sort").has("dateAsc") then GameApiV2.GameSort.DateAsc
         else GameApiV2.GameSort.DateDesc,
@@ -133,7 +129,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
     ): source =>
       Ok.chunked(source)
         .asAttachmentStream:
-          s"lichess_${me.username}_$fileDate.bookmarks.${config.format.toString.toLowerCase}"
+          s"ligo_${me.username}_$fileDate.bookmarks.ndjson"
         .as(gameContentType(config))
   }
 
@@ -142,7 +138,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
     val config = GameApiV2.ByIdsConfig(
       ids = GameId.from(ctx.body.body.split(',').view.take(limit).toSeq),
       format = GameApiV2.Format.byRequest,
-      flags = requestPgnFlags(extended = false),
+      flags = requestExportFlags(extended = false),
       perSecond = MaxPerSecond(perSec),
       playerFile = get("players")
     )
@@ -156,18 +152,12 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
         _.fold[Fu[Result]](notFoundJson(s"No such opponent: $name")): user =>
           f(user.some)
 
-  private[controllers] def requestPgnFlags(extended: Boolean)(using RequestHeader, Option[Me]) =
-    lila.game.PgnDump.WithFlags(
+  private[controllers] def requestExportFlags(extended: Boolean)(using RequestHeader, Option[Me]) =
+    lila.game.GameExport.WithFlags(
       moves = getBoolOpt("moves") | true,
       tags = getBoolOpt("tags") | true,
       clocks = getBoolOpt("clocks") | extended,
       evals = getBoolOpt("evals") | extended,
-      opening = (getBoolOpt("opening"), extended) match
-        case (None, extended) => extended.option(true)
-        case (Some(false), _) => none
-        case (Some(true), extended) => extended.some,
-      literate = getBool("literate"),
-      pgnInJson = getBool("pgnInJson"),
       delayMoves = delayMovesFromReq,
       lastFen = getBool("lastFen"),
       accuracy = getBool("accuracy"),
@@ -182,7 +172,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
 
   private[controllers] def gameContentType(config: GameApiV2.Config) =
     config.format match
-      case GameApiV2.Format.PGN => pgnContentType
+      case GameApiV2.Format.SGF => lila.game.SgfDump.contentType
       case GameApiV2.Format.JSON =>
         config match
           case _: GameApiV2.OneConfig => JSON

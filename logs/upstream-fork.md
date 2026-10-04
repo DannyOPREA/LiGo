@@ -16,6 +16,160 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · 3.17 part 2b · Chess variants, openings and "from position" FENs leave lila
+- Did: removed `Variant` from lila's types and every reader: setup configs and forms (hook, friend,
+  board API, challenge API, open challenges), challenges and bulk pairings, lobby hooks and seeks,
+  `core` (`Game.variant`, `ratingVariant`, `allowRated`, `PerfKey.byVariant`), game queries, light
+  games and JSON, `PerfType` variant lists, `Glicko.rankable`, history, activity, monitoring, push,
+  the db and form handlers, the `/variant` pages, `variantLink` (now `perfLink`) and the variant
+  CSS. Removed chess openings from game export (`opening`, `with_opening`), `gameOpening` and the
+  opening families. Removed the "from position" FEN fields (setup, `Challenge.initialFen`, bulk
+  `fen`), `ValidFen` and `GET /setup/validate-fen`. Tests: `GoSetupFormTest` gains a case for the
+  standard variant being accepted and other variants and any FEN refused on every form.
+  `dev/ci/chess-guard-baseline.txt` (unit 3.17 part 3) drops the 50 files 2b left clean on top of
+  part 2a's trims; 11 remain (analysis, tree, eval and a few helpers).
+- Worked: Go games were all `Standard`, so every removed variant branch reduced to its standard
+  case (no behaviour change for Go games). Old stored hooks, seeks, challenges and settings still
+  read: the BSON readers ignore the extra keys.
+- Didn't work: `String.isShouting` used chess's FEN parser; dropping it failed `StringTest`, so a
+  plain pattern keeps the check. sbt 2's `test` is `testQuick` and ran nothing; `testFull` runs the
+  suites. The cloud's `~/.sbt/repositories` needed the lila-maven line for strategygames.
+- Lessons: when deleting a type, grep for helpers left with no callers (`Form.fen`, the opening
+  families) and delete them in the same unit.
+- Decisions: logs/decisions.md 2026-10-04 (3.17 part 2b).
+- Verified by Claude: `./lila.sh compile` clean (no new warnings), `testFull` across lila (19
+  suites) green, scalafmt; reviewer pass (findings fixed: paperwork, `Form.fen`, scaladoc, decline
+  menu, a test per form).
+- Needs owner verification: create a lobby game and a friend challenge, open the challenge and
+  game pages, and check the profile ratings list.
+- Follow-ups: 3.19 part 2 drops the browser's `variant` reads and the constant; Phase 5 removes the
+  chess variant ratings on the profile side and the variant perf fields; Phase 3 keeps
+  `chess.opening` in PgnDump and Annotator (part 2a); the lobby's seek de-duplication ignores the Go
+  setup (from 3.15), noted for Phase 6.
+### 2026-10-04 · 3.17 part 2a · FEN, PGN and UCI gone from lila
+- Did: lila no longer writes or reads PGN, FEN or UCI. Removed: both `PgnDump`s (game and api) and
+  the `core` `PgnDump` trait (its export flags are now `lila.core.game.GameExport.WithFlags`, the
+  move delay `lila.game.GameExport.applyDelay`); `GameRepo.initialFen` and friends; `TextLpvExpand`
+  and the PGN embeds in Markdown (`MarkdownRender.PgnSourceExpand`, the `pgnCache`; forum and blog
+  game links are plain links); `Annotator`; the chess move events (`Event.Move`, `Drop`,
+  `PossibleMoves`, `Enpassant`, `Castling`, `Promotion`) and with them the auto threefold claim
+  (`Threefold`, `Drawer.autoThreefold`); the `Uci` route binders; the FEN and castling branch of
+  the shouting check; `fenAnalysisLink`; the chess960 start-position line on the game page; the
+  `.pgn` export route, the PGN content type and the `.pgn` and study-export path checks; the unused
+  study and relay rate limiters. The download page and the mod games page say NDJSON and lose the
+  PGN tags, opening and textual-annotation options; export file names start with `ligo_`. Game exports (`/game/export`, the user, by-ids,
+  bookmark, imported and mod exports, `GameApiV2`) are JSON or NDJSON only until SGF export
+  (4.11); `PgnImport` keeps the imported text as a plain string until SGF import (7.5).
+- Tests: the chess event tests (`Move`, `PossibleMoves`, `Enpassant`, `Castling`), the PGN embed
+  Markdown tests, `LpvGameRegexTest` and `AnnotatorTest` deleted with their code; `EventTest`
+  keeps the `RedirectOwner` property (its cookie no longer borrowed a castling event);
+  `StringTest`'s "not shouting" cases are Go chat lines instead of FENs; `GoExportTest` follows the
+  new `GameStream.toJson`.
+- Left for others: setup, challenge and lobby FEN fields, `Form.fen`, `ChessHelper.chessgroundMini`
+  and `AnalyseUi.miniSpan` go with variants and openings (part 2b); `chess.eval` and the chess
+  analysis tree (`modules/tree`) are a later slice; `/analysis/pgn/*` stays the 7.4 redirect.
+  The browser's PGN viewer embed (`site.lpvEmbed.ts`, `bits.lpv.ts`, the `.lpv--autostart` hooks,
+  the `bits.lpv` CSS and the `@lichess-org/pgn-viewer` dependency) is now unreachable; removing the
+  dependency is a dependency change, so it goes with 3.19 part 2's package clean-up. The "claim
+  draw on threefold repetition" preference does nothing now; it goes with Phase 9's preferences
+  work (9.7).
+- Worked: compiling with tests after each wave and clearing the unused-import and unused-parameter
+  warnings the removal left (macwire's `wire[...]` needs no change when a parameter goes).
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Review (reviewer agent): 2 blocking findings, both fixed: the download page still offered PGN
+  options and said "PGN", and the mod games button said "Download PGN". From the optional list:
+  `.ndjson` file names, one `ligo_` prefix, the `.pgn` path checks, the limiters disclosure. Not
+  changed: chat made mostly of Go coordinates ("Q16 R4") was already lowercased as shouting before
+  this PR (the removed exemption was for FEN and castling only).
+- Chess guard (#98): the files part 1 and 2a cleaned (67) are dropped from
+  dev/ci/chess-guard-baseline.txt.
+- Decisions: logs/decisions.md (3.17 part 2a row); ADR 0019 §8 amended.
+- Verified by Claude: see the PR.
+
+### 2026-10-03 · 3.17 part 1 · lila's game holds only the Go game
+- Did: `Game.go` is required and the chess game is gone from lila's `Game` (`core`), with chess
+  game storage (the BSON reader and writer read and write the Go block only; `PgnStorage`, the
+  chess binary formats and their keys removed), chess moves over the socket (`HumanPlay`,
+  `PlayerMove`), server-side forecasts, draws by chess rules (threefold, fifty moves, insufficient
+  material), `Divider`, `GameOpening`, `TreeBuilder` and `ParseImport`, the chess captcha, GIF
+  export (game, position and puzzle thumbnails) and the analysis replay page. Stored chess games
+  are not read: lookups by id and the per-user game queries add `Query.go` (`sz` exists). PGN
+  import is an "arrives in a later update" page (SGF import is 7.5); its API answers 501. Game
+  embeds in forum text stay plain links. `PerfsUpdater`, `Rematcher`, `Takebacker`, `Finisher`,
+  `RoundApi`, the game and API JSON and the mobile round JSON are Go only. Tests ported to Go
+  games: `ComputeMoveTimesTest`, `GameStateTest`, `AnnotatorTest`, `GoSetupFormTest`,
+  `TakebackerTest` (a chess move is now refused); a new `GoStorageTest` case checks a chess
+  document is not read. Tests of deleted chess code deleted with it (`RematcherTest`,
+  `BinaryCLMTest`, `BinaryPieceTest`, `BinaryUnmovedRooksTest`, `PgnDumpTest`).
+- Review (reviewer agent): 2 blocking findings, both handled. (1) Only some game queries skipped
+  stored chess games, and one chess document would have broken login's game list, profile tabs
+  and exports: every query helper that reads games (`nowPlaying*`, `opponents`, `imported`,
+  `user(s)`) and every `GameRepo` reader, the paginators, the bookmark export and the
+  correspondence email now skip documents without `sz` (tested). `sz` has no index, so these
+  queries filter one more field after the index. (2) The mini-board Scala (`GoBridge.miniState`,
+  `miniBoard`, `lastMove`, GameUi, `ownerPreview`) is copied from PR #88 (3.19 mini-board slice)
+  so part 1 compiles without the chess board; #88 brings the browser side, so part 1 merges only
+  after #88. From the optional list: removed `TooManyPlies` and `Drawer.force` (they could still
+  declare a Go game drawn), `maxPlies`, `forecastable`, `StepBuilder`, the GIF and import rate
+  limiters, an unused game `ws`; the import API answers 501 whatever the Accept header.
+  Disclosed: the puzzle JSON APIs fail for their chess games until 8.6 replaces them; the analysis
+  page's GIF and forecast code in ui/analyse is Phase 7's; the placeholder text is English only.
+- Worked: fixing compile errors module by module with a script that prints only `file:line: msg`;
+  touching the changed files and recompiling to list their unused-import warnings.
+- Didn't work / dead ends: none.
+- Lessons: a lila-wide change surfaces compile errors in waves (one module's errors hide the
+  modules that depend on it); budget several rounds.
+- Decisions: see logs/decisions.md (3.17 part 1 row); ADR 0019 §8 amended.
+- Verified by Claude: see the PR.
+- Follow-ups: part 2 (FEN, PGN, UCI, variants and openings in the remaining signatures, `tree`,
+  `PgnDump`, `TextLpvExpand`, `Annotator`, setup and lobby variants); part 3 (the CI check,
+  scalachess-tiebreak, -test-kit and maybe -play-json, COPYING). Phase 7 removes the browser's
+  forecast and GIF code in ui/analyse (7.4/7.6).
+### 2026-10-03 · 3.19 (mini-board slice) review · Reviewer findings fixed
+- Did: the reviewer's two blocking findings: `lib/tests/goMiniGame.test.ts` (7 tests) now covers the Go
+  mini game's clocks (paused before two plies, then the player to move; a pass counts; a re-sent position
+  doesn't), a chess message on a Go board, a non-board `data-state`, and profile rows; ADR 0019 and the
+  decisions row now name the public "now playing" API change (`board`, Go `lastMove`). Also typed
+  `socket.in.fen` for Go messages.
+- Worked: the tests fail when the two-ply rule or the repeat check is broken (checked by breaking each).
+  Mocked timers (`mock.timers`) instead of `process.exit` keep the clock widgets from holding node open
+  without hiding results.
+- Didn't work / dead ends: a chess-shaped message on a Go node threw (`getChessground(null)`): now ignored.
+- Lessons: `ownerPreview` is public API, not only the lobby's. lila-ws's `fen` message has no ply, so a
+  page that misses two moves before it starts watching keeps the clocks paused until the next move (rare;
+  forwarding lila's `ply` would fix it, a protocol change left for later).
+- Decisions: none new.
+- Verified by Claude: `bash .claude/skills/verify/verify.sh`. · Needs owner verification: as the entry below.
+- Follow-ups: the fast-start clock case above; the board's `aria-label` is English (9.7's translations);
+  `ui/analyse/src/socket.ts` reads `e.fen` (unreachable for Go until Phase 7).
+
+### 2026-10-03 · 3.19 (mini-board slice) · Go mini boards in game lists, on TV, in the lobby and profiles
+- Did: a Go game's mini board is now a small SVG drawn from the compact board string (ADR 0019 §6) by
+  `lila/ui/lib/src/view/goMini.ts`: grid, star points, stones, a ring on the last stone. lila renders a
+  `.go-mini` span (GameUi `mini.boardWrap`, the round page's "current games", profile game rows via
+  `widgets.miniBoard`) with `data-state` = `board,player to move,last move,plies` (`GoBridge.miniState`);
+  the lobby's "now playing" JSON (`ownerPreview`) gains `board` and a Go `lastMove`. `updateMiniGame`
+  reads lila-ws's `{board, turn, lm, wc, bc}` and redraws; its clocks run for the player to move once
+  each side has played (as lila's `stepGoClock`), counting plies and ignoring lila-ws's re-sent position.
+  Chess mini boards keep chessground until 3.19 part 2. Tests: `lib/tests/goMini.test.ts` (5),
+  GoBridgeTest's mini-game state (1).
+- Worked: a scratch page bundling `miniBoard.ts` with esbuild and lila's built `site.css`, checked in
+  Chromium: 9×9, 13×13 and 19×19 boards at 200 px, last-move rings, a live update, clocks paused until two
+  plies and not advanced by a repeated position, no page errors.
+- Didn't work / dead ends: `%square` is `height: 0; padding-bottom: 100%`, so a child at `height: 100%`
+  draws nothing: the SVG is positioned absolutely inside. Playwright 1.63's own headless shell isn't in the
+  cloud image: launch with `executablePath: '/opt/pw-browsers/chromium'`.
+- Lessons: a mini board needs no rules engine or goban; one goban per thumbnail on a page of twenty would
+  cost far more than the picture is worth.
+- Decisions: own SVG thumbnails instead of a goban per mini board (Claude, under the owner's delegation;
+  logs/decisions.md, ADR 0019 §8 amendment). Mini boards don't flip for White (Go boards don't).
+- Verified by Claude: `bash .claude/skills/verify/verify.sh`, the Chromium check above. · Needs owner
+  verification: on the real stack, a live game's mini board in game lists, the lobby's current games and a
+  profile's game list (`dev/ligo up`).
+- Follow-ups: 3.19 part 2 removes chessground and the chess mini-board path; the mini board could follow
+  the player's board theme (9.3) later.
+
 ### 2026-10-03 · register backfill · docs/UPSTREAM.md lists every merged change to lila/ and lila-ws/
 - Did: added 30 rows to docs/UPSTREAM.md's modification register (AGPL §5(a)), one per merged PR
   on main that changed a file under `lila/` or `lila-ws/` and had no row: units 0.4, 0.6, 0.7,

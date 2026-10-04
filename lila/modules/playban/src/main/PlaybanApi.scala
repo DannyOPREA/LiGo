@@ -66,7 +66,7 @@ final class PlaybanApi(
         .player(quitterColor)
         .userId
         .so: userId =>
-          for _ <- save(Outcome.RageQuit, userId, RageSit.imbalanceInc(game, quitterColor), game.source)
+          for _ <- save(Outcome.RageQuit, userId, RageSit.imbalanceInc, game.source)
           yield feedback.rageQuit(Pov(game, quitterColor))
 
   def flag(game: Game, flaggerColor: Color): Funit =
@@ -82,7 +82,7 @@ final class PlaybanApi(
         seconds = Seconds(nowSeconds - game.movedAt.toSeconds)
         if unreasonableTime.exists(seconds >= _)
       yield
-        val rageSitUpdate = RageSit.imbalanceInc(game, flaggerColor)
+        val rageSitUpdate = RageSit.imbalanceInc
         for
           _ <- save(Outcome.Sitting, userId, rageSitUpdate, game.source)
           _ <- propagateSitting(game, userId)
@@ -102,7 +102,7 @@ final class PlaybanApi(
             limit <- unreasonableTime
           yield lastMovetime.roundSeconds >= limit)
         .map: userId =>
-          val inc = RageSit.imbalanceInc(game, flaggerColor)
+          val inc = RageSit.imbalanceInc
           for
             _ <- save(Outcome.SitMoving, userId, inc, game.source)
             _ <- propagateSitting(game, userId)
@@ -145,7 +145,7 @@ final class PlaybanApi(
                 (c.estimateTotalSeconds / 10).atLeast(30).atMost(3 * 60)
               .exists(_ < nowSeconds - game.movedAt.toSeconds)
               .option:
-                val rageSitUpdate = RageSit.imbalanceInc(game, loser.color)
+                val rageSitUpdate = RageSit.imbalanceInc
                 for
                   _ <- save(Outcome.SitResign, loserId, rageSitUpdate, game.source)
                   _ <- propagateSitting(game, loserId)

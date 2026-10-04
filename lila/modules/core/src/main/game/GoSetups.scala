@@ -8,8 +8,8 @@ import reactivemongo.api.bson.*
 import lila.core.lilaism.Lilaism.toTry
 
 /** The Go options a new game is created with (unit 3.15, ADR 0019 §8 amendment): board size, ruleset and
-  * komi, carried by lobby hooks and seeks, challenges and bulk pairings as go-rules' own `Setup`. Handicap is
-  * always 0 until unit 4.9 and a custom position is never set here.
+  * komi, carried by lobby hooks and seeks, challenges and bulk pairings as go-rules' own `Setup`, plus the
+  * handicap a casual challenge asks for (unit 4.9). A custom position is never set here.
   */
 object GoSetups:
 
@@ -26,19 +26,29 @@ object GoSetups:
     */
   val default: GoSetup = GoSetup(BoardSize.Nineteen, Ruleset.Japanese, Komi.standard(Ruleset.Japanese, 0))
 
-  /** A setup from form or API values; komi defaults to the ruleset's standard komi. */
-  def make(size: Int, ruleset: String, komi: Option[Double]): Either[String, GoSetup] =
+  /** A setup from form or API values; komi defaults to the ruleset's standard komi for the handicap (0.5 with
+    * any handicap, R-KOMI-2). The handicap is 0 (even), 1 (no stone, Black first) or 2 to 9 stones (R-HCP-1),
+    * checked by starting a game from it.
+    */
+  def make(size: Int, ruleset: String, komi: Option[Double], handicap: Int = 0): Either[String, GoSetup] =
     for
       sz <- BoardSize(size).toRight(s"board size must be one of ${sizes.mkString(", ")}")
       ru <- rulesets
         .get(ruleset)
         .toRight(s"ruleset must be one of ${rulesets.keys.toList.sorted.mkString(", ")}")
-      km = komi.getOrElse(Komi.standard(ru, 0))
+      km = komi.getOrElse(Komi.standard(ru, handicap))
       _ <- Either.cond(Komi.isValid(km, sz), (), s"komi must be a multiple of 0.5 no bigger than the board")
-    yield GoSetup(sz, ru, km)
+      setup = GoSetup(sz, ru, km, handicap)
+      _ <- ligo.gorules.GoGame.start(setup).left.map(_.message)
+    yield setup
 
   /** Rated games use the standard komi (ADR 0021 §4). */
   def hasStandardKomi(s: GoSetup): Boolean = s.komi == Komi.standard(s.ruleset, s.handicap)
+
+  /** The `variant` the browser still reads from game and challenge JSON (as lichess's standard chess) until
+    * 3.19 part 2 takes chess out of it; lila itself has no chess variants since unit 3.17.
+    */
+  val legacyVariantJson: JsObject = Json.obj("key" -> "standard", "name" -> "Standard", "short" -> "Std")
 
   /** `{ size, rules, komi, handicap? }`, the keys of a game's own `go` block (unit 3.12). */
   def json(s: GoSetup): JsObject =

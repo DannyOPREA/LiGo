@@ -108,17 +108,16 @@ object GoScoringPlay:
   final case class Step(progress: Progress, request: Option[JsObject] = None, ending: Option[Ending] = None):
     def game = progress.game
 
-  private def phaseOf(g: Game) = g.go.fold(1)(GoScoring.phaseOf)
+  private def phaseOf(g: Game) = GoScoring.phaseOf(g.go)
 
   /** The request lila is waiting on, if any: the proposal, or the recount of the current marks. lila re-sends
     * it until it is answered (ADR 0020 §1, §4).
     */
   def request(g: Game): Option[JsObject] =
     for
-      go <- g.go
       sc <- g.goScoring
       if g.playable && sc.outstanding
-    yield requestJson(g.id, go, sc)
+    yield requestJson(g.id, g.go, sc)
 
   private def requestJson(id: GameId, go: GoGame, sc: GoScoring): JsObject =
     val s = go.setup
@@ -141,16 +140,14 @@ object GoScoringPlay:
 
   private def update(g: Game, sc: GoScoring): Step =
     val next = g.copy(goScoring = Some(sc))
-    Step(Progress(g, next, g.go.map(Event.GoScoring(sc, _)).toList))
+    Step(Progress(g, next, List(Event.GoScoring(sc, g.go))))
 
   /** Play stopped (two passes, or the move cap): the phase opens, the clocks stop and the proposal is asked
     * for (ADR 0020 §3.1). At the cap, play is closed so nobody can resume. None if play goes on.
     */
   def open(g: Game, now: Instant): Option[Step] =
-    for
-      go <- g.go
-      if g.goPlayEnds && g.goScoring.isEmpty && g.playable
-    yield
+    Option.when(g.goPlayEnds && g.goScoring.isEmpty && g.playable):
+      val go = g.go
       val closed = if go.phase == ligo.gorules.Phase.Play then go.closePlay else go
       val sc = GoScoring.waiting(now, now.plusMillis(waitLimit(g).toMillis))
       val stopped = g
@@ -162,8 +159,8 @@ object GoScoringPlay:
     * answer from before a resume or an older toggle, a duplicate) is refused with the reason.
     */
   def counted(g: Game, reply: Reply.Counted, now: Instant): Either[String, Step] =
+    val go = g.go
     for
-      go <- g.go.toRight("not a Go game")
       sc <- g.goScoring.filter(_ => g.playable).toRight("not in the scoring phase")
       _ <- Either.cond(
         reply.ref == Ref(g.id, GoScoring.phaseOf(go), sc.request),
@@ -214,8 +211,8 @@ object GoScoringPlay:
     * §3.3). `seen` is the count the player was looking at.
     */
   def toggle(g: Game, at: Point, seen: CountVersion): Either[String, Step] =
+    val go = g.go
     for
-      go <- g.go.toRight("not a Go game")
       sc <- g.goScoring.filter(_ => g.playable).toRight("not in the scoring phase")
       rules <- sc.rules(go)
       toggled <- rules.toggle(at, seen).left.map(_.key)
@@ -225,8 +222,8 @@ object GoScoringPlay:
 
   /** A player accepts the count on show (ADR 0020 §3.4, R-SP-4); once both have, the game ends with it. */
   def accept(g: Game, color: Color, seen: CountVersion): Either[String, Step] =
+    val go = g.go
     for
-      go <- g.go.toRight("not a Go game")
       sc <- g.goScoring.filter(_ => g.playable).toRight("not in the scoring phase")
       rules <- sc.rules(go)
       accepted <- rules.accept(GoBridge.goColor(color), seen).left.map(_.key)
@@ -240,8 +237,8 @@ object GoScoringPlay:
     * restarts from now: the time spent in the phase is charged to nobody.
     */
   def resume(g: Game, now: Instant): Either[String, Step] =
+    val go = g.go
     for
-      go <- g.go.toRight("not a Go game")
       _ <- g.goScoring.filter(_ => g.playable).toRight("not in the scoring phase")
       resumed <- go.resume.left.map(_.key)
     yield

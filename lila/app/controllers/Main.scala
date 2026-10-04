@@ -24,11 +24,6 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
     makeContext.flatMap:
       keyPages.notFound(msg)(using _)
 
-  def captchaCheck(id: GameId) = Anon:
-    env.game.captcha.validate(id, ~get("solution")).map { valid =>
-      Ok(if valid then 1 else 0)
-    }
-
   def webmasters = Open:
     Ok.page(views.site.page.webmasters)
 

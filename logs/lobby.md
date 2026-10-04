@@ -5,8 +5,55 @@
 - lila hides open games you can't join on the server (`Biter.canJoin` in `showHookTo` and `SeekApi.forUser`), not in the browser (2026-09-29, 6.1).
 - lila's pool score uses the smaller miss bonus of the pair, the cap at the lower rating, and a 400-point miss ceiling for good sit counters (2026-09-29, 6.1–6.2).
 - On 9×9 one handicap stone covers six ranks, so the ranks a player can meet come in separate runs (2026-09-29, 6.2).
+- Since 6.5 players are sent open games they can't join: anything that acts on a client's pick (a bite, a
+  seek join) must check `Biter.canJoin` before changing state (`biteHook` used to remove the hook first)
+  (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.5 · Open challenges and correspondence tiles on the server
+- Did: the lobby now sends each player every open game except those from or to players they block or
+  who block them, and those of the other "lame" kind (`Biter.visible`); games they can't join (out of
+  their rating range, a member's game seen by a guest or the other way round, rated for a guest) come
+  too and are checked on joining (`Biter.canJoin`, unchanged rules). Hooks gain `auth` (made by a
+  signed-in player) and, with seeks, `rr` (`{min, max, low?, high?}`, the ranks of the bounds; the
+  browser writes "2k–1d", "2k+" or "≤ 1d"). A hook with no range of its own takes any rank: the lobby
+  no longer uses lila's chess default range (`RatingRange.defaultFor`, left unused in `rating`).
+  The two correspondence tiles (1 and 3 days per move, 19×19 Japanese even) are defined in
+  `CorresPresets` and sent as the lobby JSON's `corres`; a click is an ordinary seek, which joins a
+  matching seek at once. The open-challenges table's `fit` now applies the server's join rules from
+  those fields, greys the rows with a translated reason ("Rated games need an account", "Your rank
+  is outside this game's range", "For signed-in players", "For guests") and lists them last; a
+  click on one does nothing for a member and offers a guest the sign-up page.
+- Worked: hook and seek compatibility already compared the whole Go setup (size, ruleset, komi,
+  handicap) since 3.15 and 4.9, so only tests were needed there.
+- Didn't work / dead ends: none.
+- Lessons: see Lessons.
+- Decisions: logs/decisions.md 2026-10-04 row for 6.5 (Claude, under the owner's 2026-09-28
+  delegation).
+- Verified by Claude: see the PR. · Needs owner verification: the PR's list.
+- Review (reviewer agent): fixed its blocking finding (the browser read a provisional rating, which
+  lila sends with a minus sign, as negative, so new players saw every ranged game greyed and could
+  not join) and five small ones (your own hook from another tab counted as joinable; a new seek now
+  matches against every seek you can join, not the 13 shown; rank labels built in the browser, not
+  English from the server; a test that couldn't fail; greyed rows get `aria-disabled`). Not done:
+  a test of the actor's bite path (needs an actor harness), and hooks still carry their creator's
+  socket id to every viewer, as lila's did to every viewer who could join.
+- Follow-ups: 6.6 draws the correspondence tiles; 6.7 part two uses the chip row for "suits you"; on a
+  phone the greyed row's reason is only in its hover title (6.7 part two's cards could show it).
+
+### 2026-10-04 · fix · Correspondence seeks that differ only in Go setup all show
+- Did: lila's `SeekApi.noDupsFor` shows another player's seeks once per game, keyed on variant, days,
+  rated and player; since 3.15 two seeks differing only in board size, ruleset or komi showed as one. The
+  key now includes the seek's Go setup (an older seek without one counts as the default). The function
+  moved to `SeekApi`'s companion so a test can call it; 5 tests in `GoHookTest` (a new test file using the chess variant id would trip the chess guard).
+- Worked: found by the 3.17 part 2b thread.
+- Didn't work / dead ends: none.
+- Lessons: when a setup joins a game's identity, grep for every key lila builds from game properties
+  (hook and seek compatibility, de-duplication, pool lookup).
+- Decisions: none.
+- Verified by Claude: `lobby/testOnly lila.lobby.GoHookTest` 11/11, scalafmt,
+  verify.sh. · Needs owner verification: none (seen on the lobby once correspondence games run).
+- Follow-ups: none.
 
 ### 2026-09-30 · unit 6.7 (part one) · The open-challenges table
 - Did: lila's Lobby and Correspondence tabs are one "Open challenges" tab (tabs: Quick pairing · Open

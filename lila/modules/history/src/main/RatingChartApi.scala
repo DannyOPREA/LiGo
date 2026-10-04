@@ -48,21 +48,5 @@ final class RatingChartApi(
 
 object RatingChartApi:
 
-  import lila.rating.PerfType.*
-  private val perfTypes = List(
-    UltraBullet,
-    Bullet,
-    Blitz,
-    Rapid,
-    Classical,
-    Correspondence,
-    Crazyhouse,
-    Chess960,
-    KingOfTheHill,
-    ThreeCheck,
-    Antichess,
-    Atomic,
-    Horde,
-    RacingKings,
-    Puzzle
-  )
+  // LiGo (unit 5.6): the one Go rating (ADR 0021 §1); puzzle ratings stay off the kyu/dan graph
+  private val perfTypes = List(lila.rating.PerfType.Go)

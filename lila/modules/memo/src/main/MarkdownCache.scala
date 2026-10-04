@@ -1,12 +1,7 @@
 package lila.memo
 
-import scalalib.future.TimeoutException
-
-import lila.common.Bus
 import lila.markdown.{ MarkdownRender, MarkdownToastUi }
-import lila.mon.extensions.*
 import lila.core.config
-import lila.core.misc.lpv.{ LpvEmbed, Lpv as LpvBus }
 
 case class MarkdownOptions(
     autoLink: Boolean = false,
@@ -18,7 +13,6 @@ case class MarkdownOptions(
     blockQuote: Boolean = false,
     code: Boolean = false,
     timestamp: Boolean = false,
-    maxPgns: Max = Max(0),
     toastUi: Boolean = false,
     sourceMap: Boolean = false,
     removeHtmlEntities: Boolean = false,
@@ -27,9 +21,8 @@ case class MarkdownOptions(
 
 final class MarkdownCache(
     cacheApi: CacheApi,
-    netDomain: config.NetDomain,
     assetDomain: config.AssetDomain
-)(using Executor, Scheduler)(using mode: play.api.Mode):
+)(using mode: play.api.Mode):
 
   private val renderMap = scala.collection.concurrent.TrieMap[MarkdownOptions, MarkdownRender]()
 
@@ -39,13 +32,12 @@ final class MarkdownCache(
     _.maximumSize(16_384)
       .expireAfterWrite(if mode.isProd then 20.minutes else 1.second)
       .buildAsyncFuture: (key, markdown, opts) =>
-        for _ <- pgnCache.preload(key, markdown, opts.maxPgns)
-        yield bodyProcessor(key, opts)(markdown)
+        fuccess(bodyProcessor(key, opts)(markdown))
 
   def toHtml(key: RenderKey, markdown: Markdown, opts: MarkdownOptions) =
     cache.get((key, markdown, opts))
 
-  def toHtmlSyncWithoutPgnEmbeds(key: RenderKey, markdown: Markdown, opts: MarkdownOptions): Html =
+  def toHtmlSync(key: RenderKey, markdown: Markdown, opts: MarkdownOptions): Html =
     cache
       .getIfPresent((key, markdown, opts))
       .flatMap(_.value.collect { case scala.util.Success(html) => html })
@@ -53,31 +45,6 @@ final class MarkdownCache(
         val html = bodyProcessor(key, opts)(markdown)
         cache.put((key, markdown, opts), fuccess(html))
         html
-
-  /* Temporarily preloads PGNs associated to IDs found in the text.
-   * The markdown renderer will shortly after hit the cache to get the PGN.
-   */
-  private object pgnCache:
-
-    private val cache =
-      cacheApi.notLoadingSync[RenderKey, LpvEmbed](32, "memo.markdown.pgn"):
-        _.expireAfterWrite(2.second).build()
-
-    def preload(key: RenderKey, markdown: Markdown, max: Max): Funit = (max > 0).so:
-      Bus
-        .ask(LpvBus.AllPgnsFromText(markdown.value, max, _), 3.seconds)
-        .chronometer
-        .logIfSlow(300, logger): result =>
-          s"AllPgnsFromText for markdown $key - found ${result.size} embeds"
-        .result
-        .monSuccess(lila.mon.markdown.pgnsFromText)
-        .andThen:
-          case scala.util.Success(pgns) => cache.putAll(pgns)
-        .recoverWith:
-          case TimeoutException(msg) => Future.failed(TimeoutException(msg.take(100)))
-        .void
-
-    def expand = MarkdownRender.PgnSourceExpand(netDomain, cache.getIfPresent)
 
   private def getRenderer(opts: MarkdownOptions): MarkdownRender =
     renderMap.getOrElseUpdate(
@@ -95,7 +62,6 @@ final class MarkdownCache(
         sourceMap = opts.sourceMap,
         removeHtmlEntities = opts.removeHtmlEntities,
         allowedTags = opts.allowedTags,
-        pgnExpand = pgnCache.expand.some,
         assetDomain = assetDomain.some
       )
     )

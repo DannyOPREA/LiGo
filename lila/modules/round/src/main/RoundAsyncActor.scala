@@ -7,7 +7,7 @@ import scalalib.actor.AsyncActor
 import lila.core.round.*
 import lila.core.socket.{ GetVersion, SocketSend, SocketVersion, makeMessage, userLag }
 import lila.game.GameExt.*
-import lila.game.{ Event, GameRepo, Player as GamePlayer, Progress }
+import lila.game.{ Event, GameRepo, Player as GamePlayer }
 import lila.room.RoomSocket.{ Protocol as RP, * }
 import lila.round.RoundGame.*
 import lila.mon.extensions.*
@@ -144,24 +144,6 @@ final private class RoundAsyncActor(
 
     // round stuff
 
-    case p: HumanPlay =>
-      handle(p.playerId): pov =>
-        if pov.player.isAi then fufail(s"player $pov can't play AI")
-        else if pov.game.outoftime(withGrace = true) then finisher.outOfTime(pov.game)
-        else
-          recordLag(pov)
-          player.human(p, this)(pov)
-      .chronometer.lap.addEffects(
-        err =>
-          p.promise.foreach(_.failure(err))
-          socketSend.exec(Protocol.Out.resyncPlayer(GameFullId(gameId, p.playerId)))
-        ,
-        lap =>
-          p.promise.foreach(_.success {})
-          lila.mon.round.move.time.record(lap.nanos)
-          MoveLatMonitor.recordMicros(lap.micros)
-      )
-
     case p: HumanGoPlay =>
       handle(p.playerId): pov =>
         if pov.player.isAi then fufail(s"player $pov can't play AI")
@@ -212,10 +194,7 @@ final private class RoundAsyncActor(
 
     case RoundBus.Resign(playerId) =>
       handle(playerId): pov =>
-        pov.game.resignable.so(
-          if RoundGame.cannotLose(pov) then finisher.other(pov.game, _.InsufficientMaterialClaim, None)
-          else finisher.other(pov.game, _.Resign, Some(!pov.color))
-        )
+        pov.game.resignable.so(finisher.other(pov.game, _.Resign, Some(!pov.color)))
 
     case GoBerserk(color, promise) =>
       handle(color): pov =>
@@ -238,11 +217,7 @@ final private class RoundAsyncActor(
       handle(playerId): pov =>
         pov.mightClaimWin.so:
           players(!pov.color).isLongGone.flatMap:
-            if _ then
-              finisher.rageQuit(
-                pov.game,
-                Some(pov.color).ifFalse(!pov.game.isGo && pov.game.position.opponentHasInsufficientMaterial)
-              )
+            if _ then finisher.rageQuit(pov.game, Some(pov.color))
             else fuccess(List(Event.Reload))
 
     case RoundBus.DrawForce(playerId) =>
@@ -289,15 +264,6 @@ final private class RoundAsyncActor(
       handle: game =>
         (game.playable && !game.sourceIs(_.Import)).so:
           finisher.other(game, _.Cheat, Some(!color))
-    case TooManyPlies => handle(drawer.force(_))
-
-    case Threefold =>
-      proxy.withGame: game =>
-        drawer
-          .autoThreefold(game)
-          .map:
-            _.foreach: pov =>
-              this ! DrawClaim(pov.player.id)
 
     case RoundBus.Rematch(playerId, rematch) => handle(playerId)(rematcher(_, rematch))
 
@@ -317,15 +283,6 @@ final private class RoundAsyncActor(
         moretimer(pov, duration, force).flatMapz: progress =>
           for _ <- proxy.save(progress)
           yield progress.events
-
-    case ForecastPlay(lastMove) =>
-      handle: game =>
-        forecastApi
-          .nextMove(game, lastMove)
-          .map: mOpt =>
-            mOpt.foreach: move =>
-              this ! HumanPlay(game.player.id, move, blur = false)
-            Nil
 
     case LilaStop(promise) =>
       proxy
@@ -423,10 +380,6 @@ final private class RoundAsyncActor(
         version = version.map(_ + 1)
         socketSend.exec:
           Protocol.Out.tellVersion(roomId, version, e)
-      if events.exists:
-          case e: Event.Move => e.threefold
-          case _ => false
-      then this ! Threefold
 
   private def errorHandler(name: String): PartialFunction[Throwable, Unit] =
     case e: BenignError =>
@@ -460,6 +413,5 @@ object RoundAsyncActor:
       val player: MovePlayer,
       val goScorer: GoScorer,
       val drawer: Drawer,
-      val forecastApi: ForecastApi,
       val jsonView: JsonView
   )

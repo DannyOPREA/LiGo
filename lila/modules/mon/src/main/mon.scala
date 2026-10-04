@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache as CaffeineCache
 import kamon.metric.Timer
 import kamon.tag.TagSet
 import kamon.Kamon.{ timer, gauge, counter, histogram }
-import chess.variant.Variant
 import scalalib.net.UserAgent
 
 import lila.core.id.*
@@ -582,10 +581,9 @@ object streak:
 object game:
   import chess.{ Speed, Rated, Status }
   import lila.core.game.Source
-  def finish(variant: Variant, speed: Speed, source: Option[Source], mode: Rated, status: Status) =
+  def finish(speed: Speed, source: Option[Source], mode: Rated, status: Status) =
     counter("game.finish").withTags:
       tags(
-        "variant" -> variant.key,
         "speed" -> speed.key,
         "source" -> source.fold("unknown")(_.name),
         "mode" -> mode.name,
@@ -686,9 +684,6 @@ object fishnet:
   object http:
     def request(hit: Boolean) = counter("fishnet.http.acquire").withTag("hit", hit)
   def move(level: Int) = counter("fishnet.move.time").withTag("level", level)
-  def openingBook(variant: Variant, hit: Boolean) =
-    timer("fishnet.opening.hit").withTags:
-      tags("variant" -> variant.key, "hit" -> hitTag(hit))
 object opening:
   def searchTime = timer("opening.search.time").withoutTags()
   object explorer:

@@ -7,13 +7,7 @@ import lila.ui.*
 
 import ScalatagsTemplate.*
 
-object ChessHelper:
-
-  def underscoreFen(fen: chess.format.Fen.Full) = fen.value.replace(" ", "_")
-
 trait ChessHelper:
-
-  export ChessHelper.*
 
   private val cgWrap = div(cls := "cg-wrap")
   private val cgContainer = tag("cg-container")

@@ -55,7 +55,7 @@
       color: $c-primary;
 
       &:hover {
-        background: $c-primary;
+        background: $c-primary-button;
         color: $c-over;
       }
     }
@@ -92,7 +92,7 @@
 
       .owner:hover .view {
         display: block;
-        background: $c-primary;
+        background: $c-primary-button;
         color: $c-over;
 
         &::before {
