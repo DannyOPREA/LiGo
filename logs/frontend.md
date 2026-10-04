@@ -36,6 +36,8 @@ _none yet_
   the second pass; the board's cursor reads out "marked dead" and territory.
 - Asked of Phase 4 and added to 4.8 (a141596): `inByo: {b, w}` in the byo-yomi clock JSON and clock
   events, so the page knows whether a side is still in main time; it guesses only if it's missing.
+- Merged main after 4.8 landed: dropped `goBothPlayersPassed` and `goMoveLimitReached` (two passes now
+  open the scoring phase; a game the server could not count says "Score not counted").
 - Decisions: one line in logs/decisions.md.
 
 ### 2026-10-04 · unit 9.7 part two · lila's button blue reaches 4.5:1 under white text
