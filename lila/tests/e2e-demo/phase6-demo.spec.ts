@@ -12,7 +12,6 @@
 // Licence: AGPL-3.0-or-later, like the rest of lila.
 
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
-import { randomUUID } from 'node:crypto';
 
 import { dismissAlert } from './lobby';
 import {
@@ -22,7 +21,7 @@ import {
   playAndResign,
   playStone,
   sameGame,
-  signUp,
+  rankedAccount,
   stones,
   type Color,
 } from './players';
@@ -114,15 +113,13 @@ test('a 5k and a 1d meet in a rated handicap pool, from the open challenges tabl
 }, info) => {
   const phone = !!info.project.use.isMobile;
   const contexts: BrowserContext[] = [];
-  // fresh accounts each run (usernames are 2 to 20 characters)
-  const tail = randomUUID().replace(/-/g, '').slice(0, 9);
-  const [kyuName, danName] = [`p6k${tail}${phone ? 'p' : 'd'}`, `p6d${tail}${phone ? 'p' : 'd'}`];
   try {
     const K = await newPlayer(browser, info, contexts, '5k');
     const D = await newPlayer(browser, info, contexts, '1d');
     const [k, d] = [K.page, D.page];
-    await signUp(k, kyuName, '5k');
-    await signUp(d, danName, '1d');
+    // one 5k and one 1d per run, shared by desktop and phone (rankedAccount explains why)
+    await rankedAccount(k, info, '5k');
+    const danName = await rankedAccount(d, info, '1d');
 
     // 1. The rated pool. A signed-in player's chips start at Rated and Handicap OK (ADR 0022 §2); both
     // click the 19×19 5 min + 5×10 s tile and the next wave pairs them.

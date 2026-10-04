@@ -30,6 +30,9 @@
   timed retry now covers only the click, and the checklist's labels match the page.
 - Lessons: target the element type, not just a data attribute a child may share. A full e2e run now
   makes all 10 of lila's sign-ups per 10 minutes from one address (Phases 5, 6 and 8).
+- After merging main with the Phase 7 demo: CI failed with `signup: 429` in the Phase 8 demo, because
+  the run now made 13 sign-ups. The 5k and 1d are now signed up once per server and reused by the other
+  screen size (remembered in a temp file, as Phase 7 does), so a run makes 9.
 
 ### 2026-10-04 · unit 6.7 (part two) · What suits you, the even/handicap chips, phone reasons
 - Did: the Open challenges list now marks and lists first the games that suit you, by the Quick

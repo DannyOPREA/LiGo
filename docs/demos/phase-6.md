@@ -87,7 +87,8 @@ dev/ligo e2e demo phase6-demo
 
 It should end with "4 passed" (two tests, desktop and phone) and print the one-click time for
 each size. `dev/ligo e2e demo` alone runs every phase's demo. lila allows 10 sign-ups per 10
-minutes from one address and the full run uses all 10, so wait 10 minutes between full runs.
+minutes from one address and a full run uses 9 of them, so wait 10 minutes between full runs
+(the Phase 6 demo signs its 5k and 1d up once and signs in as them after that).
 
 ## 6. Then: the player test
 

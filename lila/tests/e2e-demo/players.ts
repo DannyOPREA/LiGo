@@ -5,6 +5,9 @@
 
 import { expect, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import { dismissAlert } from './lobby';
 
@@ -45,7 +48,7 @@ export async function newPlayer(
 export async function signUp(page: Page, username: string, rank: string): Promise<void> {
   await page.goto('/signup');
   await page.locator('#form3-username').fill(username);
-  await page.locator('#form3-password').fill(randomUUID());
+  await page.locator('#form3-password').fill(password(username));
   // a domain on lila's allowlist skips its MX check; dev lila never sends mail
   await page.locator('#form3-email').fill(`${username}@gmail.com`);
   await page.locator('#form3-goRank').selectOption(rank);
@@ -56,6 +59,44 @@ export async function signUp(page: Page, username: string, rank: string): Promis
   await page.locator('form button.submit').click();
   await expect(page).not.toHaveURL(/\/signup/);
   await expect(page.locator('#user_tag')).toHaveText(username);
+}
+
+const password = (username: string) => `demo-pass-${username}`;
+
+/** Signs in through the login form; false when the server doesn't know the account (a new database). */
+async function signIn(page: Page, username: string): Promise<boolean> {
+  await page.goto('/login');
+  await page.locator('form input[name="username"]').fill(username);
+  await page.locator('form input[name="password"]').fill(password(username));
+  await page.getByTestId('login-submit').click();
+  await page.waitForURL(url => url.pathname !== '/login', { timeout: 15_000 }).catch(() => undefined);
+  return new URL(page.url()).pathname !== '/login';
+}
+
+/**
+ * A signed-in player with a declared rank, signed up once per server. lila allows 10 sign-ups per 10 minutes
+ * from one address and the demos together need more than that, so the first run signs up and remembers the
+ * name in a file keyed by the server's port, and later runs (the other screen size, a retry) sign in as it,
+ * as the Phase 7 demo does. The short demo games don't move these ratings: lila's anti-boosting check leaves
+ * a quick game between two new accounts from one address unrated in effect.
+ */
+export async function rankedAccount(page: Page, info: TestInfo, rank: string): Promise<string> {
+  const file = join(
+    tmpdir(),
+    `ligo-phase6-demo-accounts-${new URL(info.project.use.baseURL!).port || '80'}.json`,
+  );
+  let known: Record<string, string> = {};
+  try {
+    known = JSON.parse(readFileSync(file, 'utf8'));
+  } catch {
+    // none yet
+  }
+  if (known[rank] && (await signIn(page, known[rank]))) return known[rank];
+  // usernames are 2 to 20 characters
+  const username = `p6${rank}${randomUUID().replace(/-/g, '').slice(0, 10)}`;
+  await signUp(page, username, rank);
+  writeFileSync(file, JSON.stringify({ ...known, [rank]: username }));
+  return username;
 }
 
 /** The stones of a colour on a page's goban board: goban draws each as a <use> of a colour-named symbol. */
