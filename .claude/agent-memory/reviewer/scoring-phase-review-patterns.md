@@ -44,3 +44,17 @@ Unit 4.6 (autoscore bench, 2026-09-29):
 - Owner steps that call a native-only `dev/ligo` command on the owner's docker-mode box die; check
   STATUS/README "on your box" steps against `MODE` guards (LIGO_MODE=native needs host node/pnpm).
 - KataGo analysis engine's NN cache makes `--runs` repeats fast and correlated (run 2 ~5x faster).
+
+Unit 4.8 (scoring phase in lila, 2026-10-04):
+- The move that OPENS the phase is not game-ending any more: `stepGoClock(gameActive=false)` on the
+  second pass skips Fischer's increment and the byo-yomi period reset (probed: a 30 s period, pass at
+  20 s → 10 s left after resume). gameActive=true then `stop` is right. Check every "ends the game"
+  clock flag once an end becomes resumable.
+- Probe strategygames/go-rules without editing the repo: put a munit file in the scratchpad and run
+  `cd libs/go-rules && sbt --batch 'set Test / unmanagedSourceDirectories += file("<dir>"); testOnly X'`
+  (one string, `;`-joined; two args get merged). Then delete `target/**/ScratchProbe*` classes.
+- Round-side timers: a `Resend` that reloads a terminated round triggers RoundSocket's load-`Wake`,
+  which schedules another expiry timer each time (1-day timers in correspondence). Look for dedupe.
+- lila restart: only rounds someone is watching reload (lila-ws `r/ons`); a correspondence round
+  nobody opens gets no Wake until Titivate's `ck` deadline → reply lost = NoCount.
+- verify's "lila tests" gate ran 3 tests (sbt 2 cache); always `testOnly` the unit's suites yourself.

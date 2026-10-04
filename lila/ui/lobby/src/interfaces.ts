@@ -26,8 +26,18 @@ export interface Hook {
   goRank?: string; // LiGo: the kyu/dan label for `rating` (ADR 0021 §3)
   ra?: 1; // rated
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
+  auth?: boolean; // made by a signed-in player (unit 6.5)
+  rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'cancel' | 'join';
   disabled?: boolean;
+}
+
+// An open game's rating range, with the ranks of its bounds; a bound at lila's limit has none (unit 6.5)
+export interface RatingRangeJson {
+  min: number;
+  max: number;
+  low?: string;
+  high?: string;
 }
 
 export interface Seek {
@@ -43,6 +53,7 @@ export interface Seek {
   provisional?: boolean;
   variant?: { key: VariantKey };
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
+  rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'joinSeek' | 'cancelSeek';
 }
 

@@ -14,6 +14,7 @@ import type { Hook, Seek } from '../src/interfaces';
 import {
   applyChips,
   fit,
+  rangeLabel,
   hookRow,
   liveSpeedOf,
   noChips,
@@ -235,9 +236,57 @@ describe('who can join, and the order', () => {
       reason: 'own',
       suits: false,
     });
-    assert.equal(fit(hookRow(hook({ u: undefined, rating: undefined })), alice).reason, 'kind');
-    assert.equal(fit(hookRow(hook()), { rating: 1500 }).reason, 'kind');
+    assert.equal(fit(hookRow(hook({ u: undefined, rating: undefined })), alice).reason, 'guests');
+    assert.equal(fit(hookRow(hook()), { rating: 1500 }).reason, 'members');
     assert.equal(fit(hookRow(hook({ u: undefined, rating: undefined })), {}).joinable, true);
+  });
+
+  // unit 6.5: the server sends these rows too, with what decides them
+  test('a guest cannot join a rated game, and says so before "members"', () => {
+    assert.equal(fit(hookRow(hook({ ra: 1 })), {}).reason, 'rated');
+  });
+
+  test("a member's rating outside the range asked for greys the row; lila's limits are open", () => {
+    const rr = { min: 1700, max: 1900, low: '2k', high: '1d' };
+    assert.equal(fit(hookRow(hook({ rr })), alice).reason, 'range');
+    assert.equal(fit(hookRow(hook({ rr })), { username: 'carol', rating: 1800 }).joinable, true);
+    assert.equal(
+      fit(hookRow(hook({ rr: { min: 400, max: 1400, high: '9k' } })), { username: 'low', rating: 300 })
+        .joinable,
+      true,
+    );
+    assert.equal(fit(hookRow(hook({ rr })), { username: 'new' }).joinable, true, 'no rating to check');
+  });
+
+  test('a provisional rating (sent with a minus sign) is checked by its value', () => {
+    const viewer = viewerOf({ username: 'newbie' }, { go: -1800 });
+    assert.equal(viewer.rating, 1800);
+    const rr = { min: 1700, max: 1900, low: '2k', high: '1d' };
+    assert.equal(fit(hookRow(hook({ rr })), viewer).joinable, true);
+  });
+
+  test('your own hook from another tab is yours, not one to join', () => {
+    assert.equal(fit(hookRow(hook({ u: 'alice' })), alice).reason, 'own');
+  });
+
+  test('a range reads in ranks, open at either end', () => {
+    assert.equal(rangeLabel({ min: 1700, max: 1900, low: '2k', high: '1d' }), '2k–1d');
+    assert.equal(rangeLabel({ min: 1700, max: 2900, low: '2k' }), '2k+');
+    assert.equal(rangeLabel({ min: 400, max: 1900, high: '1d' }), '≤ 1d');
+    assert.equal(rangeLabel({ min: 400, max: 2900 }), '');
+  });
+
+  test("a hook's `auth` says who made it, even with no name shown", () => {
+    assert.equal(fit(hookRow(hook({ u: undefined, rating: undefined, auth: true })), {}).reason, 'members');
+  });
+
+  test('the rows you cannot join come last', () => {
+    const rr = { min: 1700, max: 1900, low: '2k', high: '1d' };
+    const rows = [hookRow(hook({ id: 'far', rr })), hookRow(hook({ id: 'ok' }))];
+    assert.deepEqual(
+      sortRows(rows, alice).map(r => r.id),
+      ['ok', 'far'],
+    );
   });
 
   test('a row already taken cannot be joined', () => {

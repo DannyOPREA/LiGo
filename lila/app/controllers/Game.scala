@@ -169,6 +169,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
 
   private[controllers] def gameContentType(config: GameApiV2.Config) =
     config.format match
+      case GameApiV2.Format.SGF => lila.game.SgfDump.contentType
       case GameApiV2.Format.JSON =>
         config match
           case _: GameApiV2.OneConfig => JSON
