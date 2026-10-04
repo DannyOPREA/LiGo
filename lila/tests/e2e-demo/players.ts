@@ -3,7 +3,14 @@
 // The Phase 3, 4 and 5 specs keep their own copies of some of these.
 // Licence: AGPL-3.0-or-later, like the rest of lila.
 
-import { expect, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
+import {
+  expect,
+  type Browser,
+  type BrowserContext,
+  type BrowserContextOptions,
+  type Page,
+  type TestInfo,
+} from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -20,12 +27,16 @@ export interface Player {
   errors: string[];
 }
 
-/** A player in a browser context of their own, at the project's size and with its user agent. */
+/**
+ * A player in a browser context of their own, at the project's size and with its user agent. `options` adds
+ * to the context's settings, e.g. `recordVideo` for the handoff video (unit 9.9).
+ */
 export async function newPlayer(
   browser: Browser,
   info: TestInfo,
   contexts: BrowserContext[],
   name: string,
+  options: BrowserContextOptions = {},
 ): Promise<Player> {
   // browser.newContext() doesn't inherit the project's `use`: pass what matters here.
   const { baseURL, viewport, isMobile, hasTouch, deviceScaleFactor, userAgent } = info.project.use;
@@ -36,6 +47,7 @@ export async function newPlayer(
     hasTouch,
     deviceScaleFactor,
     userAgent,
+    ...options,
   });
   contexts.push(ctx);
   const page = await ctx.newPage();

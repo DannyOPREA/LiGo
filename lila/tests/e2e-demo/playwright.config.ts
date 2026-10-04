@@ -17,6 +17,8 @@ const executablePath = process.env.LIGO_CHROMIUM || (existsSync(cloudChromium) ?
 export default defineConfig({
   testDir: '.',
   testMatch: '*.spec.ts',
+  // the handoff video (unit 9.9) runs with its own config, video.config.ts
+  testIgnore: 'handoff-video.spec.ts',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   workers: 1, // one game at a time: a player can only be in one live game
