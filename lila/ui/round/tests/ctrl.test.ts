@@ -11,7 +11,12 @@ import type { GoMoveEvent, RoundData, RoundOpts, ScoringData } from '../src/inte
 const played: string[] = [];
 const chainable: any = new Proxy(() => chainable, { get: () => chainable });
 Object.assign(globalThis.site, {
-  sound: { play: (name: string) => played.push(name), say: () => false },
+  sound: {
+    play: (name: string) => played.push(name),
+    say: () => false,
+    byoyomi: (periods: number, seconds: number) => played.push(`byoyomi ${periods} ${seconds}`),
+    byoyomiReset: () => played.push('byoyomiReset'),
+  },
   mousetrap: chainable,
   unload: { expected: false },
   powertip: {},
@@ -419,6 +424,22 @@ describe('the scoring phase', () => {
     assert.equal(boards[0].scoring, undefined);
   });
 
+  test("it is the player's turn until they accept: lila's Pov.isMyTurn, for the lists and the next game", () => {
+    const { ctrl } = scoring();
+    assert.equal(ctrl.isMyTurn(), true, 'Black has not accepted');
+    assert.match(document.title, /^site\.scoringPhaseStarted/, 'the tab says so too');
+    ctrl.apiScoring(proposal({ accepted: { b: true, w: false } }));
+    assert.equal(ctrl.isMyTurn(), false, 'Black accepted: the game waits for White');
+    assert.match(document.title, /^site\.waitingForOpponent/);
+    ctrl.apiScoring(proposal({ v: '1:2', accepted: { b: false, w: true } }));
+    assert.equal(ctrl.isMyTurn(), true, 'a toggle clears the accepts');
+  });
+
+  test("a spectator's game is nobody's turn in the scoring phase", () => {
+    const { ctrl } = scoring({ spectator: true });
+    assert.equal(ctrl.isMyTurn(), false);
+  });
+
   test('a game loaded in its scoring phase shows the marks at once', () => {
     const d = data('ee cc pass pass');
     d.game.go.phase = 'scoring';
@@ -428,5 +449,60 @@ describe('the scoring phase', () => {
     assert.equal(boards[0].config.movable, 'none');
     ctrl.userJump(3);
     assert.equal(boards.at(-1)!.config.scoring, undefined, 'an earlier position has no marks');
+  });
+});
+
+describe('byo-yomi sounds', () => {
+  /**
+   * A new 9×9 game on a 10 s + 3×30 s clock, the player White (so no "your turn" ticker in the
+   * title). Its clock isn't running (no move yet), so the tests feed the ticks themselves.
+   */
+  function byoyomiGame(o: { inByo?: boolean; spectator?: boolean; clockSound?: boolean } = {}) {
+    const d = data('', { spectator: o.spectator, color: 'white' });
+    d.clock = {
+      running: false,
+      initial: 10,
+      increment: 0,
+      moretime: 0,
+      white: o.inByo ? 30 : 10,
+      black: 30,
+      byo: 30,
+      periods: { b: 3, w: 3 },
+      inByo: { b: true, w: !!o.inByo },
+      emerg: 10,
+    };
+    d.pref = { ...d.pref, clockSound: o.clockSound ?? true, clockTenths: 1, clockBar: false };
+    return round(d).ctrl;
+  }
+  const tick = (ctrl: RoundController, color: Color, millis: number) =>
+    (ctrl.clock as any).opts.onTick(color, millis);
+
+  beforeEach(() => void (played.length = 0));
+  afterEach(() => made.splice(0).forEach(c => c.transientMove.clear()));
+
+  test("the player's own clock in byo-yomi sends the periods left and the seconds shown", () => {
+    const ctrl = byoyomiGame({ inByo: true });
+    tick(ctrl, 'white', 9_400);
+    assert.deepEqual(played, ['byoyomi 3 9']);
+  });
+
+  test("nothing for the opponent's clock, in main time, for a spectator or with clock sounds off", () => {
+    tick(byoyomiGame({ inByo: true }), 'black', 9_400);
+    tick(byoyomiGame({ inByo: false }), 'white', 9_400);
+    tick(byoyomiGame({ inByo: true, spectator: true }), 'white', 9_400);
+    tick(byoyomiGame({ inByo: true, clockSound: false }), 'white', 9_400);
+    assert.deepEqual(played, []);
+  });
+
+  test("lila's own low-time sound is off: byo-yomi warns in its own way", () => {
+    const ctrl = byoyomiGame({ inByo: true });
+    ctrl.clock!.emergSound.play();
+    assert.deepEqual(played, []);
+  });
+
+  test('the game ending forgets the clock, so the next game starts its warnings afresh', () => {
+    const ctrl = byoyomiGame({ inByo: true });
+    ctrl.endWithData({ status: { id: 35, name: 'outoftime' }, winner: 'white' } as any);
+    assert.ok(played.includes('byoyomiReset'));
   });
 });

@@ -2119,7 +2119,7 @@ interface I18n {
     exploreTheSiteAndHaveFun: string;
     /** Follow your friends on LiGo. */
     followYourFriendsOnLichess: string;
-    /** Improve with chess tactics puzzles. */
+    /** Improve with Go puzzles (tsumego). */
     improveWithChessTacticsPuzzles: string;
     /** Learn the rules of chess. */
     learnChessRules: string;
@@ -3525,12 +3525,8 @@ interface I18n {
     contrast: string;
     /** Contribute */
     contribute: string;
-    /** Copy main line PGN */
-    copyMainLinePgn: string;
     /** Copy to clipboard */
     copyToClipboard: string;
-    /** Copy variation PGN */
-    copyVariationPgn: string;
     /** Correspondence */
     correspondence: string;
     /** Correspondence games: one or several days per move */
@@ -3807,6 +3803,8 @@ interface I18n {
     glicko2Rating: string;
     /** Accept score */
     goAcceptScore: string;
+    /** Back to the game */
+    goBackToTheGame: string;
     /** GO BERSERK! Half the time, no increment, bonus point */
     goBerserkTitle: string;
     /** Black stones */
@@ -3827,14 +3825,20 @@ interface I18n {
     goConnectingToTheGame: string;
     /** Correspondence games need an account */
     goCorrespondenceNeedsAccount: string;
+    /** The game could not be imported: %s */
+    goCouldNotImportX: I18nFormat;
     /** Counting the score… */
     goCountingTheScore: string;
+    /** Create challenge link */
+    goCreateChallengeLink: string;
     /** Current tournament rank */
     goCurrentTournamentRank: string;
     /** Go deeper */
     goDeeper: string;
     /** Delete %s? */
     goDeleteX: I18nFormat;
+    /** Download the game as SGF */
+    goDownloadGameSgf: string;
     /** Download SGF */
     goDownloadSgf: string;
     /** Even */
@@ -3859,6 +3863,8 @@ interface I18n {
     goKoRefused: string;
     /** Last move */
     goLastMove: string;
+    /** Last settings */
+    goLastSettings: string;
     /** Left the game */
     goLeftTheGame: string;
     /** Load SGF */
@@ -3893,18 +3899,28 @@ interface I18n {
     goOpenSgfFile: string;
     /** Your opponent accepted this score. */
     goOpponentAcceptedScore: string;
+    /** Anyone */
+    goOpponentAnyone: string;
     /** Your opponent left the game. You can claim victory, or wait for them. */
     goOpponentLeftChoices: string;
+    /** Link for a friend */
+    goOpponentLink: string;
+    /** Or upload an SGF file */
+    goOrUploadSgfFile: string;
     /** or with up to %s handicap stones */
     goOrUpToNbStones: I18nPlural;
     /** Pass */
     goPass: string;
     /** Pass: play no stone this turn */
     goPassTitle: string;
+    /** Paste the SGF text here */
+    goPasteSgfHere: string;
     /** Periods */
     goPeriods: string;
     /** Place */
     goPlace: string;
+    /** Presets */
+    goPresets: string;
     /** Previous move */
     goPreviousMove: string;
     /** Prisoners */
@@ -3939,6 +3955,8 @@ interface I18n {
     goRulesChinese: string;
     /** Japanese */
     goRulesJapanese: string;
+    /** Ruleset not recognised: %s. Imported as Japanese. */
+    goRulesNotRecognisedX: I18nFormat;
     /** The file's rules are not ones LiGo plays: Japanese rules are used instead. */
     goRulesUnknown: string;
     /** The score could not be counted */
@@ -3951,6 +3969,8 @@ interface I18n {
     goScoringTapHint: string;
     /** Seconds per period */
     goSecondsPerPeriod: string;
+    /** Send challenge */
+    goSendChallenge: string;
     /** Tap a point to put a stone there. Tap a stone of the same colour to remove it. */
     goSetupHint: string;
     /** That file is too big to be an SGF record. */
@@ -4063,12 +4083,10 @@ interface I18n {
     importedByX: I18nFormat;
     /** Import game */
     importGame: string;
-    /** This PGN can be accessed by the public. To import a game privately, use a study. */
+    /** This SGF can be accessed by the public. To study a game privately, open it on the analysis board instead: nothing is stored there. */
     importGameDataPrivacyWarning: string;
-    /** Paste a game PGN to get a browsable replay, computer analysis, game chat, and a shareable link. */
+    /** Paste a game as SGF to get a browsable replay, an analysis board with its variations and comments, and a shareable link. */
     importGameExplanation: string;
-    /** Import PGN */
-    importPgn: string;
     /** Inaccuracy */
     inaccuracy: string;
     /** Anything even slightly inappropriate could get your account closed. */
@@ -4101,8 +4119,6 @@ interface I18n {
     invalidAuthenticationCode: string;
     /** Invalid FEN */
     invalidFen: string;
-    /** Invalid PGN */
-    invalidPgn: string;
     /** Invalid username or password */
     invalidUsernameOrPassword: string;
     /** invited you to "%1$s". */
@@ -4477,8 +4493,6 @@ interface I18n {
     orLetYourOpponentScanQrCode: string;
     /** Or */
     orSeparator: string;
-    /** Or upload a PGN file */
-    orUploadPgnFile: string;
     /** Other */
     other: string;
     /** other players */
@@ -4495,8 +4509,6 @@ interface I18n {
     passwordSuggestion: string;
     /** Paste the FEN text here */
     pasteTheFenStringHere: string;
-    /** Paste the PGN text here */
-    pasteThePgnStringHere: string;
     /** Pause */
     pause: string;
     /** Pawn move */
@@ -4585,7 +4597,7 @@ interface I18n {
     promoteVariation: string;
     /** Propose a takeback */
     proposeATakeback: string;
-    /** Chess tactics trainer */
+    /** Go puzzles (tsumego) trainer */
     puzzleDesc: string;
     /** Puzzles */
     puzzles: string;

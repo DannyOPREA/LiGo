@@ -6,6 +6,8 @@
 
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
+import { dismissAlert } from './lobby';
+
 const size = 9;
 type Color = 'black' | 'white';
 
@@ -86,18 +88,19 @@ test('two players play a casual 9x9 Fischer game from the lobby to a resignation
     await expect(setup.getByText('Sign up to play rated games')).toBeVisible(); // guests only play casual
     // lila allows 5 new games a minute from one address (upstream's rate limit), which the Phase 4 demo's
     // games share: create again until the server takes it (unit 4.12).
+    // A refused game puts up lila's alert ("ratelimit: …"), which covers the page until its OK is clicked.
     await expect(async () => {
+      await dismissAlert(a);
       if (!(await setup.isVisible()))
-        await a.locator('.lobby__start button.lobby__start__button--hook').click();
-      await setup.locator('label[for=sf_size_9]').click();
-      const created = a.waitForResponse(
-        r => r.url().includes('/setup/hook/') && r.request().method() === 'POST',
-        {
+        await a.locator('.lobby__start button.lobby__start__button--hook').click({ timeout: 5000 });
+      await setup.locator('label[for=sf_size_9]').click({ timeout: 5000 });
+      const [created] = await Promise.all([
+        a.waitForResponse(r => r.url().includes('/setup/hook/') && r.request().method() === 'POST', {
           timeout: 5000,
-        },
-      );
-      await setup.locator('button.lobby__start__button--hook').click();
-      expect((await created).ok()).toBe(true);
+        }),
+        setup.locator('button.lobby__start__button--hook').click({ timeout: 5000 }),
+      ]);
+      expect(created.ok()).toBe(true);
     }).toPass({ intervals: [5_000, 10_000, 15_000], timeout: 120_000 });
 
     // Player B: lobby, Open challenges, A's game, join.

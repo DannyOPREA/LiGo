@@ -15,7 +15,7 @@ trait TheftPrevention:
     else ok
 
   protected def isTheft(pov: Pov)(using ctx: Context) =
-    pov.game.isPgnImport || pov.player.isAi || {
+    pov.game.isSgfImport || pov.player.isAi || {
       (pov.player.userId, ctx.userId) match
         case (Some(_), None) => true
         case (Some(playerUserId), Some(userId)) => playerUserId != userId
@@ -27,7 +27,7 @@ trait TheftPrevention:
   protected def isMyPov(pov: Pov)(using Context) = !isTheft(pov)
 
   protected def playablePovForReq(game: lila.core.game.Game)(using ctx: Context) =
-    (!game.isPgnImport && game.playable).so:
+    (!game.isSgfImport && game.playable).so:
       ctx.userId
         .flatMap(game.player)
         .orElse:

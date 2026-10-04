@@ -86,7 +86,7 @@ $c-slider: $c-setup;
   .lobby__start__button {
     @extend %metal-with-border;
 
-    height: 3rem;
+    height: max(3rem, 44px);
     padding-inline: 1rem 1.2rem;
     gap: 0.8rem;
     color: $c-font;
@@ -100,6 +100,97 @@ $c-slider: $c-setup;
     position: absolute;
     width: 56px;
     height: 56px;
+  }
+
+  // LiGo, unit 6.8: the one custom-game window: opponent choice, presets and the folded advanced options
+  // two by two on a phone, one row on a desktop
+  .setup-presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.5rem;
+  }
+
+  .setup-opponent group.radio label {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-wrap: anywhere;
+  }
+
+  .setup-preset {
+    @extend %box-radius;
+
+    min-height: 44px;
+    padding: 0.4rem 1rem;
+    border: 1px solid $c-border;
+    background: $c-bg-low;
+    color: $c-font;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: $outline;
+    }
+
+    &.active {
+      background: $c-setup;
+      border-color: $c-setup;
+      color: $c-over;
+    }
+
+    @media (hover: hover) {
+      &:hover:not(.active) {
+        background: $c-bg-zebra2;
+      }
+    }
+  }
+
+  .setup-preset {
+    @extend %flex-column;
+
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    line-height: 1.2;
+
+    small {
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+  }
+
+  .setup-advanced {
+    border-top: $border;
+    padding-top: 1rem;
+
+    summary {
+      @extend %flex-column;
+
+      min-height: 44px;
+      justify-content: center;
+      gap: 0.2rem;
+      cursor: pointer;
+    }
+
+    summary:focus-visible {
+      outline: $outline;
+    }
+
+    &__title {
+      font-weight: 600;
+    }
+
+    &__digest {
+      color: $c-font-dim;
+      font-size: 0.9em;
+    }
+
+    &__body {
+      @extend %flex-column;
+
+      gap: 1.8rem;
+      padding-top: 1rem;
+    }
   }
 
   .rating-range {

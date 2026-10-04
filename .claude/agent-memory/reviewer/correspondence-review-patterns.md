@@ -16,4 +16,7 @@ metadata:
   proposal comes, but the ring check drops it as stale.
 - CorresAlarm's ring deletes by `_id` after reading the game, so a concurrent upsert (toggle
   re-sync) can be wiped. lila has the same pattern; call it a nit unless new code makes it worse.
+- 7.7: e2e "never sends X" asserts must use the real socket `t` (round's flag is `'flag'`, socket.ts,
+  not `'outoftime'`) and wait past the 1 s ticker; otherwise vacuous. Also check what a frozen
+  clock does once `playable` turns false (corresClock resumes ticking after a counted end).
 Related: [[scoring-phase-review-patterns]]

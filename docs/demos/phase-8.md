@@ -7,8 +7,10 @@ CI already checks this on the built page on every pull request that touches lila
 set (the `ui` job's "Puzzle trainer" step, `lila/ui/puzzle/e2e/demo.spec.ts`). That test plays at
 phone size, solves one puzzle and fails the next, and the rating goes up and then down. It also
 opens all 240 committed puzzles and checks their stones, goal and source line. Its server is a
-stand-in, though, so the rating change it shows isn't lila's own. This checklist runs the same walk on
-the real site. It takes about 15 minutes.
+stand-in, though, so the rating change it shows isn't lila's own. `lila/tests/e2e-demo/phase8-demo.spec.ts`
+plays the same walk on the real stack (sign up, solve, fail, the real rating change, all 240 puzzles
+from the server) in the `e2e` workflow: nightly, on demand, and on pull requests labelled `e2e`. On your
+box, `dev/ligo e2e demo` runs it after `dev/ligo up`. This checklist is the same walk by hand. It takes about 15 minutes.
 
 ## 1. Start the site (Fedora box)
 

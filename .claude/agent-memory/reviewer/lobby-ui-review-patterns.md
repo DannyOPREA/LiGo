@@ -1,6 +1,6 @@
 ---
 name: lobby-ui-review-patterns
-description: Recurring problems in lila/ui/lobby unit reviews (6.7 open-challenges table): row-click delegation dead zones, guest display regressions, raw reason tokens in titles
+description: Recurring problems in lila/ui/lobby unit reviews (6.5-6.8: tables, quick pairing, custom window): row-click delegation dead zones, guest display regressions, raw reason tokens in titles
 metadata:
   type: feedback
 ---
@@ -27,6 +27,13 @@ Things to check in lobby table/card changes (seen in unit 6.7 part one, 2026-09-
   (Rated->Casual left the user in the rated pool), socket 'cancel' (by sri, via lila-ws/Redis) racing an
   HTTP hook POST (AddHook already removes the sri's old hook, so the explicit cancel can kill the new one),
   role=button tiles with aria-label hiding live counts and nesting a Cancel button (axe nested-interactive).
+
+- (6.8 custom window) Guests' hook timeModes are ['realTime'] only, yet every Go pool is byo-yomi: anything
+  built from pools (presets) must be filtered by `timeControl.modes.includes(mode)`, not just "no corres";
+  probe guest + preset. Shared stores: check what auto-filled values (suggested stones) get persisted on
+  mere open (loadPropsFromStore saves) and leak into the next opponent kind. Scratch probe: copy the
+  test harness to scratchpad, absolute imports with `.ts` and an absolute snabbdom path, run node with
+  ui/test's flags from lila/ui.
 
 **Why:** these slipped past 43 passing tests and all verify gates.
 **How to apply:** on any lobby view change, trace a tap on each element of the card and a guest viewer.

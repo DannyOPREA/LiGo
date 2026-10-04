@@ -4,7 +4,7 @@
 // compared with the baselines in __screenshots__/ (see snapshots.spec.ts).
 import { expect, test, type Page } from '@playwright/test';
 
-import { ConfirmMoves, type FakeServer, moveList, openRound, play, position } from './page';
+import { ConfirmMoves, type FakeServer, moveList, openRound, play, position, sounds } from './page';
 
 // A 9×9 game where Black holds the left and White the right; White's G7 stone is inside Black's area.
 const moves = ['cc', 'gg', 'cg', 'gc', 'dd', 'fe'];
@@ -150,6 +150,8 @@ test.describe('byo-yomi', () => {
     await expect(bottom).toHaveText('2×3s', { timeout: 6000 });
     await expect(bottom).toHaveClass(/byoyomi--in/);
     await expect(page.locator('.rclock-bottom .time')).not.toHaveText('00:00');
+    // The player's own clock feeds the byo-yomi sounds (Phase 9) its periods left and seconds shown.
+    expect(await sounds(page)).toContain('byoyomi 2 2');
     expect(problems).toEqual({ requests: [], errors: [] });
   });
 });
