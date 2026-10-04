@@ -42,7 +42,8 @@ case class Pov(game: Game, color: Color):
 
   def win = game.wonBy(color)
 
-  def mightClaimWin = game.forceResignable && !isMyTurn
+  // In the scoring phase either player may claim the win when the other has left (ADR 0020 §3.7).
+  def mightClaimWin = game.forceResignable && (!isMyTurn || game.inGoScoring)
 
   def sideAndStart = SideAndStart(color, game.startedAtPly)
 

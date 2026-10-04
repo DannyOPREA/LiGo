@@ -65,6 +65,19 @@ class ScoringTest extends munit.FunSuite:
     assertEquals(s.toggle(p("ee"), v(1)), Left(ScoringRefusal.StaleCount))
     assert(s.accept(Color.White, v(2)).isRight)
 
+  test("a stored scoring comes back as it was: marks, pending recount and acceptances"):
+    val s = opened("ee").toggle(p("gg"), v(1)).ok
+    val back = Scoring.restore(ended, 1, s.dead, shown = 1, requested = 2, accepted = Set.empty).ok
+    assertEquals(back, s)
+    val accepted = Scoring.restore(ended, 2, Set(p("ee")), 3, 3, Set(Color.White)).ok
+    assertEquals((accepted.version, accepted.pending, accepted.accepted), (v(3, 2), false, Set(Color.White)))
+    assertEquals(Scoring.restore(ended, 1, Set(p("gg")), 1, 1, Set.empty), Left(ScoringRefusal.PartialChain))
+    assertEquals(Scoring.restore(ended, 1, Set.empty, 2, 1, Set.empty), Left(ScoringRefusal.NotLatest))
+    assertEquals(
+      Scoring.restore(play("aa"), 1, Set.empty, 1, 1, Set.empty),
+      Left(ScoringRefusal.NotInScoring)
+    )
+
   test("only the latest request's count is taken"):
     val s = opened().toggle(p("ee"), v(1)).ok
     assertEquals(s.counted(1, s.dead), Left(ScoringRefusal.NotLatest))

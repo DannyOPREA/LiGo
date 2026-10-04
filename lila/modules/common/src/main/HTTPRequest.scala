@@ -116,6 +116,7 @@ object HTTPRequest:
   def acceptsNdJson(req: RequestHeader) = accepts(req) contains "application/x-ndjson"
   def acceptsJson(req: RequestHeader) = accepts(req).exists: a =>
     a == webXhrAccepts || a.startsWith("application/json") || startsWithLichobileAccepts(a)
+  def acceptsSgf(req: RequestHeader) = accepts(req).exists(_.contains("application/x-go-sgf"))
   def acceptsCsv(req: RequestHeader) = accepts(req) contains "text/csv"
   def acceptsMarkdown(using req: RequestHeader) =
     accepts(req).contains("text/markdown") ||
