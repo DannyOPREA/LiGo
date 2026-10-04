@@ -59,3 +59,14 @@ Patterns seen in LiGo unit reviews; check these every time.
 - `Challenge.toFriend` (POST /challenge/:id/to-friend) re-targets ANY of the caller's challenges via
   `setDestUser`, even one that already has a destUser. Any rule computed from the opponent at send
   time (rated handicap stones/colour, unit 5.7) can be bypassed there. (2026-10-04, unit 5.7 review.)
+- Vacuous UI tests: the lobby test stub has `pools: []`, so any `hookToPoolMember(...) === null` assert
+  passes whatever the code does. Ask "would this fail if the change were reverted?" (unit 5.7 part 2.)
+- GoRating.rankTable's first entry (25k, 652) is open-ended but lila's rating floor is 400; browser
+  rank->rating code must map the lowest rank to 400 (RatingRange.min) or 25k players at 400-651 fall
+  outside their own range and can't meet each other (unit 5.7 part 2, rankRange.ts).
+- Async setup-window fetches that "reset to suggestion" can overwrite a choice the server accepts
+  (an even rated challenge is always allowed, ADR 0021 §4 amendment). Check reset conditions vs server.
+- verify's ui tests can fail on a test file deleted by a main merge (lib/tests/nodePGN.test.ts,
+  2026-10-04); rerun `node ui/test <pkg>` to tell it apart from the unit's own failures.
+- Never overwrite MEMORY.md or a memory file with Write without reading it first: the system prompt's
+  "MEMORY.md is empty" can be stale. Append with Edit/`>>`.

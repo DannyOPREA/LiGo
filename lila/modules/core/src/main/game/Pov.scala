@@ -28,7 +28,13 @@ case class Pov(game: Game, color: Color):
   def withGame(g: Game) = copy(game = g)
   def withColor(c: Color) = copy(color = c)
 
-  lazy val isMyTurn = game.started && game.playable && game.turnColor == color
+  /** Whose move it is, or in the scoring phase (ADR 0023 §4) whether this player has yet to accept the count:
+    * both players are "to move" until each has accepted, so the game shows in their "your turn" lists.
+    * `GameRepo.countWhereUserTurn` (Query.userTurn) must agree.
+    */
+  lazy val isMyTurn =
+    game.started && game.playable && game.goScoring.fold(game.turnColor == color): sc =>
+      !sc.accepted(GoBridge.goColor(color))
 
   lazy val remainingSeconds: Option[Seconds] =
     game.gameClock
