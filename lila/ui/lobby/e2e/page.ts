@@ -93,6 +93,9 @@ export const corres = [
   { id: '19x19-3d', days: 3, go: { size: 19, rules: 'japanese', komi: 6.5 } },
 ];
 
+/** GoRating.rankTable, as the lobby's data carries it (unit 5.7): 1650 is 4k. */
+const rankTable = JSON.parse(readFileSync(join(publicDir, '../ui/playground/e2e/rank-table.json'), 'utf8'));
+
 export interface LobbyOptions {
   /** A signed-in member (rated Go 1650), or a guest. */
   member?: boolean;
@@ -107,6 +110,7 @@ function initOptions(o: LobbyOptions) {
       nowPlaying: [],
       ratingMap: o.member ? { go: 1650 } : null,
       counters: { members: 120, rounds: 4 },
+      rankTable,
     },
     showRatings: true,
     pools,
@@ -203,6 +207,9 @@ export class FakeLobby {
 
   /** LobbySocket's `poolSizes`: how many wait in each pool. */
   poolSizes = (sizes: Record<string, number>) => this.push('poolSizes', sizes);
+
+  /** LobbySocket's `hooks`: every open real-time game, as lila sends them when the Live list opens. */
+  hooks = (list: unknown[]) => this.push('hooks', list);
 
   /** LobbySocket's `poolRange`: who the waiting player can meet. */
   poolRange = (range: { id: string; weakest: string; strongest: string; stones: number }) =>

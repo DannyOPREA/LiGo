@@ -22,6 +22,7 @@ import {
   playerRatingLabel,
   seekRow,
   sortRows,
+  toggleHandicap,
   toggleRated,
   toggleSize,
   toggleSpeed,
@@ -99,6 +100,7 @@ const lobby = (over: Record<string, unknown> = {}) => {
     mode: 'live',
     tab: 'open',
     chips: noChips(),
+    quickChips: { rated: true, handicap: true },
     redraw: () => {},
     setChips(chips: any) {
       ctrl.chips = chips;
@@ -208,6 +210,32 @@ describe('the filter chips', () => {
     assert.deepEqual(ids(applyChips(rows, chips)), ['c', 'mine', 'x']);
   });
 
+  test('even and handicap', () => {
+    const list = [
+      hookRow(hook({ id: 'even' })),
+      hookRow(hook({ id: 'h2', go: { ...go, handicap: 2 } })),
+      hookRow(hook({ id: 'mine', go: { ...go, handicap: 4 }, action: 'cancel' })),
+    ];
+    assert.deepEqual(ids(applyChips(list, toggleHandicap(noChips(), 'even'))), ['even', 'mine']);
+    assert.deepEqual(ids(applyChips(list, toggleHandicap(noChips(), 'handicap'))), ['h2', 'mine']);
+    assert.deepEqual(ids(applyChips(list, toggleHandicap(toggleHandicap(noChips(), 'handicap'), 'even'))), [
+      'even',
+      'h2',
+      'mine',
+    ]);
+  });
+
+  test('chips stored before the even/handicap group read back with none pressed there', () => {
+    assert.deepEqual(parseChips(JSON.stringify({ sizes: [9], speeds: [], rated: ['rated'] })), {
+      sizes: [9],
+      speeds: [],
+      rated: ['rated'],
+      handicap: [],
+    });
+    const chips = toggleHandicap(noChips(), 'handicap');
+    assert.deepEqual(parseChips(JSON.stringify(chips)), chips);
+  });
+
   test('pressing a pressed chip releases it', () => {
     assert.deepEqual(toggleSize(toggleSize(noChips(), 9), 9), noChips());
   });
@@ -219,6 +247,7 @@ describe('the filter chips', () => {
       sizes: [9],
       speeds: [],
       rated: [],
+      handicap: [],
     });
     for (const bad of [null, '', 'nope', '{"variant":["1"],"speed":["1","2"]}', '[]'])
       assert.deepEqual(parseChips(bad), noChips(), String(bad));
@@ -292,10 +321,70 @@ describe('who can join, and the order', () => {
     assert.equal(fit(hookRow(hook({ disabled: true })), alice).joinable, false);
   });
 
-  test('a row suits you when it is joinable and matches your chips', () => {
-    const chips = toggleRated(noChips(), 'rated');
-    assert.equal(fit(hookRow(hook()), alice, chips).suits, false);
-    assert.equal(fit(hookRow(hook({ ra: 1 })), alice, chips).suits, true);
+  test('a row suits you when it is joinable and rated or casual as you play', () => {
+    const rated = { rated: true, handicap: true };
+    assert.equal(fit(hookRow(hook()), alice, rated).suits, false);
+    assert.equal(fit(hookRow(hook({ ra: 1 })), alice, rated).suits, true);
+    const casual = { rated: false, handicap: false };
+    assert.equal(fit(hookRow(hook()), alice, casual).suits, true);
+    assert.equal(fit(hookRow(hook({ ra: 1 })), alice, casual).suits, false);
+    assert.equal(fit(hookRow(hook({ ra: 1, disabled: true })), alice, rated).suits, false);
+  });
+
+  test('an even game always suits; a handicap game only with Handicap OK', () => {
+    const handicap = hookRow(hook({ ra: 1, go: { ...go, handicap: 3 } }));
+    assert.equal(fit(handicap, alice, { rated: true, handicap: true }).suits, true);
+    assert.equal(fit(handicap, alice, { rated: true, handicap: false }).suits, false);
+    assert.equal(fit(handicap, alice, { rated: true, handicap: false }).joinable, true, 'still joinable');
+    assert.equal(fit(hookRow(hook({ ra: 1 })), alice, { rated: true, handicap: false }).suits, true);
+  });
+
+  test('without what you play, every joinable row suits (the tile counts)', () => {
+    assert.equal(fit(hookRow(hook({ go: { ...go, handicap: 3 } })), alice).suits, true);
+  });
+
+  test('suiting rows come before the other joinable rows', () => {
+    const rows = [
+      hookRow(hook({ id: 'casual', rating: 1500 })),
+      hookRow(hook({ id: 'rated', ra: 1, rating: 2300 })),
+      hookRow(hook({ id: 'h3', ra: 1, rating: 1500, go: { ...go, handicap: 3 } })),
+    ];
+    assert.deepEqual(
+      sortRows(rows, alice, { rated: true, handicap: false }).map(r => r.id),
+      ['rated', 'casual', 'h3'],
+    );
+    assert.deepEqual(
+      sortRows(rows, alice, { rated: true, handicap: true }).map(r => r.id),
+      ['h3', 'rated', 'casual'],
+    );
+  });
+
+  // 3k at 1500-1599, 2k at 1600-1699, 1k at 1700-1799, 1d from 1800
+  const ranks: [string, number][] = [
+    ['4k', 1400],
+    ['3k', 1500],
+    ['2k', 1600],
+    ['1k', 1700],
+    ['1d', 1800],
+  ];
+
+  test('the closest rank comes first, then the closest rating', () => {
+    const viewer = { username: 'alice', rating: 1590 }; // 3k, near 2k
+    const rows = [
+      hookRow(hook({ id: '2k-near', rating: 1600 })), // one rank away, 10 points
+      hookRow(hook({ id: '3k-far', rating: 1500 })), // same rank, 90 points
+      hookRow(hook({ id: '3k-near', rating: 1560 })), // same rank, 30 points
+      hookRow(hook({ id: '1d', rating: 1850 })),
+    ];
+    assert.deepEqual(
+      sortRows(rows, viewer, undefined, ranks).map(r => r.id),
+      ['3k-near', '3k-far', '2k-near', '1d'],
+    );
+    assert.deepEqual(
+      sortRows(rows, viewer).map(r => r.id),
+      ['2k-near', '3k-near', '3k-far', '1d'],
+      'without a rank table, ratings alone',
+    );
   });
 
   test('your own challenge first, then the closest rating', () => {
@@ -339,6 +428,8 @@ describe('who can join, and the order', () => {
 describe('the table', () => {
   test('a live game shows player and rating, board, time, rules and komi, even, and rated or casual', () => {
     const ctrl = lobby({
+      // casual first: the casual row suits a viewer who plays casual
+      quickChips: { rated: false, handicap: false },
       stepHooks: [
         hook(),
         hook({ id: 'h2', ra: 1, clock: '10+0', go: { size: 9, rules: 'japanese', komi: 6.5 } }),
@@ -385,6 +476,7 @@ describe('the table', () => {
   test('the Correspondence chip shows seeks in days, with no speed chips', () => {
     const ctrl = lobby({
       mode: 'correspondence',
+      quickChips: { rated: false, handicap: false },
       data: { ratingMap: { go: 1500 }, seeks: [seek(), seek({ id: 's2', days: undefined, mode: 1 })] },
     });
     const el = mount(renderOpen(ctrl));
@@ -450,6 +542,97 @@ describe('the table', () => {
     );
     ctrl.stepHooks = [];
     assert.ok(mount(renderOpen(ctrl)).querySelector('.open__empty'));
+  });
+});
+
+describe('what suits you (unit 6.7 part two)', () => {
+  const rows = () => [
+    hook({ id: 'casual', rating: 1500 }),
+    hook({ id: 'rated', ra: 1, rating: 1900 }),
+    hook({ id: 'h2', ra: 1, rating: 1500, go: { ...go, handicap: 2 } }),
+  ];
+  const ids = (ctrl: LobbyController) => visibleRows(ctrl).map(r => r.id);
+  const suiting = (ctrl: LobbyController) =>
+    [...mount(renderOpen(ctrl)).querySelectorAll<HTMLElement>('tbody tr.suits')].map(tr => tr.dataset['id']);
+
+  test("the order follows the Quick tab's chip row, and suiting rows carry the accent", () => {
+    const ctrl = lobby({ stepHooks: rows() });
+    assert.deepEqual(ids(ctrl), ['h2', 'rated', 'casual']);
+    assert.deepEqual(suiting(ctrl), ['h2', 'rated']);
+    ctrl.quickChips = { rated: true, handicap: false };
+    assert.deepEqual(ids(ctrl), ['rated', 'casual', 'h2']);
+    assert.deepEqual(suiting(ctrl), ['rated']);
+    // Casual: casual quick games are even, so the stored Handicap OK no longer counts
+    ctrl.quickChips = { rated: false, handicap: true };
+    assert.deepEqual(ids(ctrl), ['casual', 'h2', 'rated']);
+    assert.deepEqual(suiting(ctrl), ['casual']);
+  });
+
+  test('a guest plays casual whatever the stored chips say', () => {
+    const guests = rows().map(h => ({ ...h, u: undefined }));
+    const ctrl = lobby({
+      me: undefined,
+      data: { ratingMap: undefined, seeks: [], hooks: [] },
+      stepHooks: guests,
+    });
+    assert.deepEqual(suiting(ctrl), ['casual']);
+  });
+
+  test('your own challenge has no accent', () => {
+    const ctrl = lobby({ stepHooks: [hook({ ra: 1, action: 'cancel' })] });
+    assert.deepEqual(suiting(ctrl), []);
+  });
+
+  test('chips pressed one after another on the same table all count', () => {
+    const ctrl = lobby({ stepHooks: rows() });
+    const el = mount(renderOpen(ctrl));
+    const press = (label: string) =>
+      [...el.querySelectorAll<HTMLButtonElement>('.chip')].find(c => c.textContent === label)!.click();
+    press('site.goHandicap');
+    press('site.goEven');
+    press('site.rated');
+    assert.deepEqual(ctrl.chips.handicap, ['handicap', 'even']);
+    assert.deepEqual(ctrl.chips.rated, ['rated']);
+  });
+
+  test('the even/handicap chips filter the table', () => {
+    const ctrl = lobby({ stepHooks: rows() });
+    const group = mount(renderOpen(ctrl)).querySelector('.open__chips [aria-label="site.goHandicap"]')!;
+    const chips = [...group.querySelectorAll<HTMLButtonElement>('.chip')];
+    assert.deepEqual(
+      chips.map(c => c.textContent),
+      ['site.goEven', 'site.goHandicap'],
+    );
+    chips[1].click();
+    assert.deepEqual(ids(ctrl), ['h2']);
+    assert.deepEqual(ctrl.chips.handicap, ['handicap']);
+  });
+
+  test('a greyed row says why on a line of its own, with the range it asks for', () => {
+    const rr = { min: 1700, max: 1900, low: '2k', high: '1d' };
+    const ctrl = lobby({ stepHooks: [hook({ id: 'far', rr }), hook({ id: 'ok' })] });
+    const el = mount(renderOpen(ctrl));
+    const far = el.querySelector<HTMLElement>('tbody tr[data-id="far"]')!;
+    assert.ok(far.classList.contains('unjoinable'));
+    assert.equal(far.querySelector('td.reason')!.textContent, 'site.goUnjoinableRange (2k–1d)');
+    assert.equal(far.getAttribute('title'), 'site.goUnjoinableRange (2k–1d)');
+    assert.equal(el.querySelector('tbody tr[data-id="ok"] td.reason'), null);
+  });
+
+  test('the rank table orders rows by rank before rating', () => {
+    const ctrl = lobby({
+      data: {
+        ratingMap: { go: 1590 },
+        seeks: [],
+        hooks: [],
+        rankTable: [
+          ['3k', 1500],
+          ['2k', 1600],
+        ],
+      },
+      stepHooks: [hook({ id: '2k', rating: 1600 }), hook({ id: '3k', rating: 1520 })],
+    });
+    assert.deepEqual(ids(ctrl), ['3k', '2k']);
   });
 });
 
