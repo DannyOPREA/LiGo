@@ -12,6 +12,27 @@
 - CI's ui Lint runs `oxlint --type-aware`; verify.sh's plain oxlint misses its type rules (e.g. no-unnecessary-type-assertion). Run `pnpm exec oxlint --type-aware ui/<pkg>` before pushing UI tests (2026-10-04, unit 5.7).
 ## Entries (newest first)
 
+### 2026-10-04 · unit 5.5 (part 2) · The one Go leaderboard
+- Did: `PerfType.leaderboardable` is just `go`, so rated Go games reach lila's ranking collection
+  (players with 2+ games; "stable" = deviation at most 75, ADR 0021 §3) and /player shows one Go board
+  (top 10, linking to the paged /player/top/go) beside "active players". Entries show the kyu/dan rank
+  with the rating in the title; the leaderboard JSON gains `goRank` inside `perfs.go`. Chess perf
+  leaderboard URLs are not found. The online list sorts on the Go rating; "Rating stats" and FAQ link to
+  the Go rating distribution, which gains part 1's kyu/dan axis and ranks in its text.
+- Worked: lila's ranking machinery (weekly ranks, perf trophies, distribution) needed no change beyond
+  the leaderboardable list; a Plan agent mapped every consumer first.
+- Didn't work / dead ends: none.
+- Lessons: the reviewer noted that a link retarget makes a dormant lila page reachable (the rating
+  distribution), so check what that page renders; and a hard-coded "no ?" on `LightPerf` is only safe
+  while RankingApi (stable entries only) is its one producer, now pinned by a test (75 < 110).
+  The online players list had been silently empty since 3.17 (it sorted on the chess standard perf).
+- Decisions: one Go leaderboard replaces the chess ones; `goRank` beside `rating`; chess keys 404
+  (logs/decisions.md).
+- Verified by Claude: GoRatingTest 24/24, GoLeaderboardJsonTest 3/3, `node ui/test chart`, lila
+  compile, `dev/ligo compile ui`, verify.sh. · Needs owner verification: /player, /player/top/go and
+  the rating distribution page after two players pass deviation 75 (or a seeded deviation).
+- Follow-ups: 5.8 (the Phase 5 demo).
+
 ### 2026-10-04 · unit 5.7 (part 2) · Rated games in the setup windows
 - Did: the create-game windows follow part 1's server rules. Guests see a sign-up link instead of the
   casual/rated choice; a signed-in player sees why settings can't be rated (board, komi, stones without

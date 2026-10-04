@@ -16,7 +16,6 @@ final class JsonView(rematches: Rematches):
     Json
       .obj(
         "id" -> game.id,
-        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> game.speed.key,
         "perf" -> game.perfKey,
         "rated" -> game.rated,
@@ -57,7 +56,6 @@ final class JsonView(rematches: Rematches):
         "lastMove" -> GoBridge.lastMove(pov.game.go),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
-        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> pov.game.speed.key,
         "perf" -> pov.game.perfKey,
         "rated" -> pov.game.rated,

@@ -10,6 +10,43 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.6 (addendum) · Review fixes
+- What: the reviewer found two real bugs. Switching Rated to Casual while waiting kept you in the rated
+  pool: a Rated/Casual change now stops the wait. Moving between Casual tiles sent a socket `cancel`
+  that could land after the new tile's POST and remove the new open game: no cancel then, since lila's
+  AddHook already drops the sri's old hook. Also: the waiting tile is no longer a button (its Cancel
+  is), tiles read their own text, key repeat is ignored, Esc stops any wait, a tab that wakes from idle
+  gets the pool counts at once.
+- Tests: 6 new Playwright tests (Casual switch while waiting, Casual Cancel, Casual tile to tile,
+  correspondence Cancel, the waiting tile's role, a guest's correspondence sign-up dialog). 33 pass.
+- Lesson: lila's dialogs wait for `pubsub.after('polyfill.dialog')`, which the site bundle completes;
+  a trimmed e2e page has to complete it itself (ui/lobby/e2e/page.ts finds the pubsub chunk).
+
+### 2026-10-04 · unit 6.6 · The quick-pairing landing view
+- Did: the Quick pairing tab is now a chip row (Rated / Casual, Handicap OK / Even only; a guest sees
+  "Sign up to play rated games" in place of Rated, and with Casual the handicap chips are off with
+  "Casual quick games are even") over ADR 0005's tiles in three columns (9×9, 19×19,
+  correspondence) and the Custom button. Each tile shows how many wait: the pool's members with Rated
+  (the pool publishes `PoolSize`; the lobby socket sends `poolSizes` to its viewers at most every 2 s
+  and to each new connection), the casual open games you could join with Casual. One click waits on
+  the tile: Rated joins the pool with the Handicap OK flag, Casual (and every guest click) makes a
+  casual open game with the tile's settings, a correspondence tile makes a seek. The waiting tile
+  shows the ranks you can meet ("Can meet 3k–1d", "or with up to 5 handicap stones", from
+  `GoPairing.waitingRange`, sent to your page as `poolRange` after each wave), the time since the
+  click and Cancel. The chips are remembered per player in the browser (`lobby.quick:<name>`).
+  Playwright tests of the built page (ui/lobby/e2e: 19 behaviour tests, 8 desktop and phone
+  screenshots) run in the `ui` CI job and `dev/ligo test pages`.
+- Worked: the round page's test harness (a trimmed page, a stand-in socket) carried over to the lobby
+  almost unchanged.
+- Didn't work / dead ends: a tile's "0 waiting" line was hidden by lila's global `.none` class; the
+  lobby's logo watermark showed between columns of different lengths (now off on this tab).
+- Lessons: lila has a global `.none { display: none }`; don't use `none` as a state class.
+- Decisions: logs/decisions.md 2026-10-04 row for 6.6 (Claude, under the owner's 2026-09-28
+  delegation).
+- Verified by Claude: see the PR. · Needs owner verification: the PR's list.
+- Follow-ups: the chips as a lila preference once Phase 9's `pref` changes land; correspondence tiles
+  have no count.
+
 ### 2026-10-04 · unit 6.4 part 2 (addendum) · Pool games are rated
 - Did: 5.7's server part (#109) merged while #112 was open, so `GameStarter` now starts rated pool
   games (pools are rated only, ADR 0022 §2); handicap pool games are rated with the handicap as 5.3

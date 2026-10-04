@@ -5,6 +5,23 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · Unit 8.8 · The Phase 8 demo (part one: on the built page)
+- Did: `lila/ui/puzzle/e2e/demo.spec.ts` at phone size: a signed-in player taps and confirms, solves
+  one puzzle and fails the next, and the rating goes up, then down; then all 240 committed puzzles open on
+  the trainer page with their stones, goal and source line, in 8 tests of 30. It runs in the `ui` CI job's
+  "Puzzle trainer" step. The owner's checklist is docs/demos/phase-8.md.
+- Worked: the 240-puzzle walk takes about 15 s per 30 puzzles, so it fits in CI.
+- Didn't work / dead ends: the stand-in server worked each rating change out from the starting rating, so
+  a second result showed the wrong "before" rating (lila shows the new rating minus the change). It now
+  carries the rating over from one result to the next, as the server does.
+- Lessons: lila's puzzle side box shows `user.rating - ratingDiff` with the change, and takes the new rating
+  from the `next` puzzle that comes with the result.
+- Decisions: the demo runs now on the built page; the same walk against the real server waits for 3.20's
+  full-stack browser tests (logs/decisions.md).
+- Verified by Claude: UI build, tsc, lint, format, all 32 puzzle browser tests pass.
+  · Needs owner verification: docs/demos/phase-8.md.
+- Follow-ups: 8.8 part two, the walk on the real stack, after 3.20.
+
 ### 2026-10-04 · Unit 8.7 · The Go puzzle trainer page
 - Did: `ui/puzzle` is a Go trainer on 8.5's `mountPuzzle`; goban's right and wrong events drive
   lila's flow (result, rating change, next puzzle, votes, session strip, replay). The source line

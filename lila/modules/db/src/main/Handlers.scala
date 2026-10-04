@@ -32,7 +32,6 @@ trait Handlers:
     def readTry(bson: BSONValue) = reader.readTry(bson).map(sr.apply)
 
   given NoDbHandler[lila.core.game.Blurs] with {}
-  given NoDbHandler[chess.eval.WinPercent] with {}
 
   given NoBSONWriter[UserId] with {}
   given userIdHandler: BSONHandler[UserId] = stringIsoHandler
@@ -156,14 +155,7 @@ trait Handlers:
   given [T: BSONHandler]: BSONHandler[chess.ByColor[T]] =
     pairHandler[T].as[chess.ByColor[T]](c => chess.ByColor.fromPair(c), _.toPair)
 
-  given NoDbHandler[chess.Square] with {} // no default opaque handler for chess.Square
-
   given NoDbHandler[lila.core.user.Me] with {}
-
-  def chessPosKeyHandler: BSONHandler[chess.Square] = tryHandler(
-    { case BSONString(str) => chess.Square.fromKey(str).toTry(s"No such key $str") },
-    pos => BSONString(pos.key)
-  )
 
   val minutesHandler = BSONIntegerHandler.as[FiniteDuration](_.minutes, _.toMinutes.toInt)
 

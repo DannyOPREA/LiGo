@@ -50,7 +50,7 @@ table rows ([ADR 0007](docs/decisions/0007-licensing-corrections-after-import.md
 
 What stays in `lila/public/` is free under upstream's own table (fonts, flags, the free piece sets,
 the futuristic, nes, piano and sfx sound sets, `public/images/board`, `puzzle-themes`,
-the `staunton` boards, `trophy`, the neovim and helix flairs), the Noto emoji flairs
+`trophy`, the neovim and helix flairs), the Noto emoji flairs
 (Google, Apache-2.0; `lila/bin/flair` generates them from emojipedia's Google set), or LiGo's own
 (below). A few directories upstream's table doesn't name stay under upstream's default AGPL grant:
 `public/cursors`, `public/data`, `public/video` and `public/javascripts`; most go with their chess
@@ -59,6 +59,13 @@ racer-car and storm fonts). `lila/COPYING.md` is
 upstream's file and still names the deleted sets; LiGo leaves it unchanged. Removing the files
 doesn't erase them from git history, which only ever contains upstream's own publicly distributed
 copies.
+
+Unit 9.7 (ADR 0026 §2) deleted the chess- and tournament-only files from the four sound sets
+(Checkmate, Berserk, Explosion, OutOfBound, Tournament1st/2nd/3rd/Other, NewPM) and every `.ogg` and
+`.m3u` copy, which nothing plays. `Error` in each set, a link to the deleted `standard` set since
+unit 3.1, now links to that set's own `Check` sound.
+Unit 9.7 also deleted `public/images/staunton` (the 3D boards and pieces), with the 3D board
+preference (ADR 0026 §3).
 
 **LiGo's own artwork** (MIT, like the rest of LiGo's own work): the LiGo logo and icons
 (`lila/public/logo/ligo*.svg`, `ligo*.png`, `public/favicon.ico`, `public/apple-touch-icon.png`),
@@ -136,6 +143,11 @@ dropped `@lichess-org/chessground` 10.2.0, `chessops` 0.15.1 and `@lichess-org/p
 (all GPL-3.0-or-later), and `ui/lib` stopped copying `chessground.min.js` to `public/npm`. With them
 went the chess screen-reader code (`ui/lib/src/nvui`), the pgn-viewer embeds and lila's chess piece
 and board stylesheets. No third-party package was added.
+
+Unit 3.17 part 3 dropped three scalachess artifacts from lila's sbt build: `scalachess-tiebreak`,
+`scalachess-test-kit` and `scalachess-play-json` (`com.github.lichess-org.scalachess`, 17.17.1, all
+MIT). lila keeps `scalachess` and `scalachess-rating` (MIT) for game-neutral types and Glicko-2
+(ADR 0019 §1), lila-ws keeps `scalachess` and drops `scalachess-play-json`, which it no longer used. No package was added.
 
 ## 2. LiGo's own code — MIT
 

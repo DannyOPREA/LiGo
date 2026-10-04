@@ -19,7 +19,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
   docs/PLAN.md §5. 5.1 (ADR 0021, PR #37), 5.2 (rating maths, PR #39), 5.4's signup half (PR #70)
   and 5.3 (rated Go games move ratings with handicap, PR #76) merged; 5.4's account page (PR #85) merged;
-  5.5 part 1 (PR #90) and 5.6 (the profile in Go ranks, PR #93) merged, 5.5's leaderboard part after 3.17 part 2b; 5.7 part 1 (rated games in the server, PR #109) merged, part 2 (the forms) in review; 5.8 after all of them. Log: logs/ratings.md.
+  5.5 part 1 (PR #90) and 5.6 (the profile in Go ranks, PR #93) merged, 5.5 part 2 (the one Go leaderboard) in review; 5.7 (rated games: server PR #109, setup windows PR #115) merged; 5.8 after all of them. Log: logs/ratings.md.
 
 - Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
   docs/PLAN.md §5. 6.1 (ADR 0022, PR #41) and 6.2 (auto-handicap pairing in `lila/modules/pool`,
@@ -38,7 +38,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
   and 8.2 (design ADR 0025: goban's own puzzle format and puzzle mode, PR #53) merged; 8.3 (the `tools/puzzles`
   generator and pipeline, PR #59) and 8.4 (the first 240 puzzles, PR #62) merged; 8.5 (goban's puzzle mode in
   `libs/board`, PR #64) merged; 8.6 (puzzles on the server, `dev/ligo puzzles load`, PR #89) merged;
-  8.7 (the trainer page) in review; 8.8 (the demo) follows. Log: logs/tsumego.md.
+  8.7 (the trainer page, PR #95) merged; 8.8 part one (the demo on the built page, docs/demos/phase-8.md) in review; part two (the same walk on the real stack) after 3.20. Log: logs/tsumego.md.
 
 - Phase 9 (under the owner's "work until I tell you to stop" delegation): units 9.1–9.10 in
   docs/PLAN.md §5. 9.1 (ADR 0026, PR #57), 9.2 (sounds, PR #58), 9.3 (board themes, PR #60) and
@@ -152,5 +152,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 merged (ADR 0022), 6.4 part one in review, the rest wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
-| 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.6 merged, 8.7 in review, 8.8 next |
+| 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.7 merged, 8.8 part one in review, part two after 3.20 |
 | 9. PWA, polish & handoff | split into units 9.1–9.10 (PLAN §5); 9.1–9.6 merged, 9.8 in review; 9.7, 9.9, 9.10 wait for Phases 3–8 |

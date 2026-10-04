@@ -163,6 +163,10 @@ id and per user add `sz` exists). Server-side forecasts go here rather than in 7
 captcha, GIF export, PGN import (a placeholder until 7.5) and the analysis replay page. Part 2
 removes FEN, PGN, UCI, variants and openings from the remaining signatures; part 3 adds the CI check
 and drops the scalachess pieces. logs/decisions.md, 3.17 row.)
+(Amended in unit 3.17, part 3: lila's build keeps `scalachess` and `scalachess-rating`; the
+tiebreak, test-kit and play-json artifacts go, play-json's three neutral writers moving into
+`lila.common.Json`. The chess guard (`dev/ci/chess_guard.py`) fails CI on any finding, with no
+baseline; lila-ws drops `scalachess-play-json` too. logs/decisions.md, 3.17 part 3 row.)
 (Amended in unit 3.19's mini-board slice: game lists, TV, the lobby's current games and profile rows
 draw a Go game's mini board as a small SVG from the compact board (`ui/lib`'s goMini.ts), not a goban;
 lila's mini-game `data-state` for Go is `board,turn,lastMove,plies`. Protocol (§6): the "now playing" JSON

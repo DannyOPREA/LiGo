@@ -66,7 +66,7 @@ export default new (class implements SoundI {
     if (!this.enabled()) return undefined;
     let dir = this.theme;
     if (this.theme === 'music' || this.speech()) {
-      if (['move', 'capture', 'check', 'checkmate'].includes(name)) return undefined;
+      if (['move', 'capture'].includes(name)) return undefined;
       dir = 'sfx';
     }
     return this.url(`${dir}/${name[0].toUpperCase() + name.slice(1)}.mp3`);
@@ -91,11 +91,6 @@ export default new (class implements SoundI {
       else {
         if (o?.san?.includes('x')) this.throttled('capture', volume);
         else this.throttled('move', volume);
-        if (o?.san?.includes('#')) {
-          this.throttled('checkmate', volume);
-        } else if (o?.san?.includes('+')) {
-          this.throttled('check', volume);
-        }
       }
     }
     if (o?.filter === 'game' || this.theme !== 'music') return;
@@ -219,7 +214,7 @@ export default new (class implements SoundI {
   };
 
   preloadBoardSounds() {
-    for (const name of ['move', 'capture', 'check', 'checkmate', 'genericNotify']) this.load(name);
+    for (const name of ['move', 'capture', 'genericNotify']) this.load(name);
   }
 
   async resumeWithTest(): Promise<boolean> {

@@ -10,7 +10,7 @@ function tab(ctrl: LobbyController, key: Tab, active: Tab, content: MaybeVNodes)
     'button',
     {
       attrs: { role: 'tab' },
-      class: { active: key === active, glowing: key !== active && key === 'pools' && !!ctrl.poolMember },
+      class: { active: key === active, glowing: key !== active && key === 'pools' && !!ctrl.waiting },
       hook: bind('click', _ => ctrl.setTab(key)),
     },
     content,
