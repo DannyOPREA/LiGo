@@ -358,8 +358,9 @@ object Event:
 
   sealed trait ClockEvent extends Event
 
-  /** Both clocks after a move. A byo-yomi clock (ADR 0020 §7) adds each side's periods left and the period
-    * length in seconds; `white` and `black` are then the main time, or the time left in the current period.
+  /** Both clocks after a move. A byo-yomi clock (ADR 0020 §7) adds each side's periods left, whether each
+    * side is in byo-yomi (`inByo`, unit 4.8) and the period length in seconds; `white` and `black` are then
+    * the main time, or the time left in the current period.
     */
   case class Clock(
       white: Centis,
@@ -376,9 +377,10 @@ object Event:
         )
         .add("lag" -> nextLagComp.filter(_ > Centis(1)))
         .add("periods" -> byoyomi.map(b => Json.obj("b" -> b.periods.black, "w" -> b.periods.white)))
+        .add("inByo" -> byoyomi.map(b => Json.obj("b" -> b.inByoyomi.black, "w" -> b.inByoyomi.white)))
         .add("byo" -> byoyomi.map(_.periodSeconds))
   object Clock:
-    case class Byoyomi(periods: ByColor[Int], periodSeconds: Int)
+    case class Byoyomi(periods: ByColor[Int], periodSeconds: Int, inByoyomi: ByColor[Boolean])
 
     def apply(clock: ChessClock): Clock =
       Clock(
@@ -399,7 +401,8 @@ object Event:
         clock.lagCompEstimate(clock.toMove).map(Centis(_)),
         Byoyomi(
           ByColor(reading(Color.White).periodsLeft, reading(Color.Black).periodsLeft),
-          clock.config.periodSeconds
+          clock.config.periodSeconds,
+          ByColor(reading(Color.White).inByoyomi, reading(Color.Black).inByoyomi)
         ).some
       )
 

@@ -89,7 +89,10 @@ final private class Titivate(
         case game if game.inGoScoring =>
           game.goScoring.so: sc =>
             if sc.expired(nowInstant) then fuccess(roundApi.tell(game.id, GoScorer.Expiry))
-            else gameRepo.setCheckAt(game, sc.expiresAt).void
+            else
+              // still waiting on the scoring service: the round re-sends its request
+              if sc.outstanding then roundApi.tell(game.id, GoScorer.Wake)
+              gameRepo.setCheckAt(game, GoScorer.checkAt(sc, nowInstant)).void
 
         case game if game.outoftime(withGrace = true) =>
           fuccess:

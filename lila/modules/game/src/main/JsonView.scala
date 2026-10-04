@@ -284,6 +284,8 @@ object JsonView:
       "black" -> Centis(reading(Color.Black).centis).toSeconds,
       "emerg" -> (c.config.periodSeconds / 3).atLeast(3).atMost(10),
       "periods" -> Json.obj("b" -> reading(Color.Black).periodsLeft, "w" -> reading(Color.White).periodsLeft),
+      // whether each side's time is main time or a period (unit 4.8): equal readings can mean either
+      "inByo" -> Json.obj("b" -> reading(Color.Black).inByoyomi, "w" -> reading(Color.White).inByoyomi),
       "byo" -> c.config.periodSeconds
     )
 

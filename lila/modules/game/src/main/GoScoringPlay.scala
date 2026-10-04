@@ -170,6 +170,9 @@ object GoScoringPlay:
         (),
         s"stale ref ${reply.ref}"
       )
+      // the service is trusted, but a malformed answer is refused rather than stored and broadcast
+      _ <- Either.cond(reply.owner.length == go.size.points, (), s"owner of ${reply.owner.length} points")
+      _ <- Either.cond(reply.seal.forall(go.size.contains), (), "a point to seal off the board")
       step <- (sc.proposal, reply.source) match
         case (None, Some(source)) =>
           ligo.gorules.Scoring

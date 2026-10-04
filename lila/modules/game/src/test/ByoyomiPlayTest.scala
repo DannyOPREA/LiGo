@@ -77,7 +77,7 @@ class ByoyomiPlayTest extends munit.FunSuite:
   // What the round does for a move the rules accepted: step the clock, then apply.
   private def play(g: Game, action: Action, metrics: MoveMetrics = MoveMetrics()): Progress =
     val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
-    g.applyGoMove(next, g.stepGoClock(metrics, gameActive = !g.withGo(next).goPlayEnds).map(_.value))
+    g.applyGoMove(next, g.stepGoClock(metrics, gameActive = g.goClockActiveAfter(next)).map(_.value))
 
   // Black thinks `s` seconds, then White answers at once.
   private def round(g: Game, black: String, white: String, s: Double)(using w: Wall): Game =
@@ -128,6 +128,7 @@ class ByoyomiPlayTest extends munit.FunSuite:
     assertEquals((js \ "periods" \ "b").as[Int], 3)
     assertEquals((js \ "periods" \ "w").as[Int], 3)
     assertEquals((js \ "byo").as[Int], 30)
+    assertEquals((js \ "inByo").as[JsObject], Json.obj("b" -> true, "w" -> false))
 
   test("a period that runs out is used up; the last one running out is out of time"):
     given w: Wall = Wall()
@@ -142,11 +143,12 @@ class ByoyomiPlayTest extends munit.FunSuite:
     val stepped = g4.stepGoClock(MoveMetrics(), gameActive = true)
     assert(stepped.exists(_.value.outOfTime(Color.Black, withGrace = false)))
 
-  test("a game-ending move stops the clock; finishing stops it too"):
+  test("the scoring phase stops the clock; finishing stops it too"):
     given w: Wall = Wall()
     val g2 = playAll(newGo(), "ee", "cc")
-    val ended = play(play(g2, Action.Pass).game, Action.Pass).game
-    assert(!ended.byoyomi.get.isRunning)
+    val passed = play(play(g2, Action.Pass).game, Action.Pass).game
+    val scoring = GoScoringPlay.open(passed, java.time.Instant.EPOCH).getOrElse(fail("no phase")).game
+    assert(!scoring.byoyomi.get.isRunning)
     val g3 = play(g2, Action.Place(p("gg"))).game
     assert(g3.byoyomi.get.isRunning)
     val finished = g3.finish(Status.Resign, Some(Color.Black))
@@ -210,6 +212,7 @@ class ByoyomiPlayTest extends munit.FunSuite:
     assertEquals((js \ "periods" \ "b").as[Int], 3)
     assertEquals((js \ "byo").as[Int], 30)
     assertEquals((js \ "emerg").as[Int], 10)
+    assertEquals((js \ "inByo").as[JsObject], Json.obj("b" -> false, "w" -> false))
 
   private def playAll(g: Game, moves: String*): Game =
     moves.foldLeft(g)((g, m) => play(g, Action.Place(p(m))).game)

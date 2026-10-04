@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit
 
 import lila.common.Bus
 import lila.core.round.*
-import lila.game.GameExt.{ applyGoMove, applyMove, goPlayEnds, stepGoClock }
+import lila.game.GameExt.{ applyGoMove, applyMove, goClockActiveAfter, stepGoClock }
 import lila.game.actorApi.MoveGameEvent
 import lila.game.Progress
 import lila.round.RoundGame.*
@@ -60,8 +60,8 @@ final private class MovePlayer(
         go(play.action) match
           case Left(refusal) => fufail(ClientError(s"$pov ${refusal.key}"))
           case Right(next) =>
-            // as for chess, the move that ends the game earns no increment
-            val stepped = game.stepGoClock(play.moveMetrics, gameActive = !game.withGo(next).goPlayEnds)
+            // only the move reaching the ply cap ends play for good and earns no increment
+            val stepped = game.stepGoClock(play.moveMetrics, gameActive = game.goClockActiveAfter(next))
             if stepped.exists(_.value.outOfTime(color, withGrace = false)) then finisher.outOfTime(game)
             else
               stepped

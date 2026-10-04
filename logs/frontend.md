@@ -34,10 +34,8 @@ _none yet_
   key.scala), so the count table reuses it; a toggle or accept the server ignores no longer locks
   the panel (taps come back after 5 s); no Resume at the 1,000-ply limit; no "your turn" notice on
   the second pass; the board's cursor reads out "marked dead" and territory.
-- Open: the wire doesn't say whether a byo-yomi side is still in main time. The page guesses (a
-  clock at or under one period is byo-yomi), which in main time's last seconds shows one period too
-  few and can flag a clock the server then refuses. Asked Phase 4 to add `inByo: {b, w}` to the
-  clock JSON and clock events in 4.8; the page already uses it when present.
+- Asked of Phase 4 and added to 4.8 (a141596): `inByo: {b, w}` in the byo-yomi clock JSON and clock
+  events, so the page knows whether a side is still in main time; it guesses only if it's missing.
 - Decisions: one line in logs/decisions.md.
 
 ### 2026-10-03 · unit 9.7 part one review · Reviewer findings fixed (PR #84)

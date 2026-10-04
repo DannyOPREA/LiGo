@@ -208,7 +208,9 @@ periods. Nobody can lose on time while agreeing on dead stones; the phase's time
   length), each player's time used and periods used up, whose clock it is and since when it has
   run; `cw`/`cb` keep the per-move clock history for both kinds.
 - The clock in move events and the round's JSON gains `"periods":{"b":n,"w":n}` and `"byo"`
-  (the period length); a Fischer clock's JSON is unchanged.
+  (the period length), and (amended in unit 4.8, for the round UI of 4.10) `"inByo":{"b":bool,"w":bool}`,
+  whether each side is in byo-yomi, since a reading alone can't tell main time from a period; a
+  Fischer clock's JSON is unchanged.
 - Correspondence keeps lila's days-per-move clock.
 
 ## Consequences

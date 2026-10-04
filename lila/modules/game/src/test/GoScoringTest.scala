@@ -37,7 +37,7 @@ class GoScoringTest extends munit.FunSuite:
 
   private def play(g: Game, action: Action): Game =
     val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
-    g.applyGoMove(next, g.stepGoClock(MoveMetrics(), gameActive = !g.withGo(next).goPlayEnds).map(_.value))
+    g.applyGoMove(next, g.stepGoClock(MoveMetrics(), gameActive = g.goClockActiveAfter(next)).map(_.value))
       .game
 
   private def playAll(g: Game, tokens: String*): Game =
@@ -160,6 +160,14 @@ class GoScoringTest extends munit.FunSuite:
     assert(counted(g, reply(g, 1, geDead, phase = 2), t0).isLeft, "another phase")
     assert(counted(g, reply(g, 1, Set(p("gg"))), t0).isLeft, "half a chain")
     assert(counted(g, reply(g, 1, geDead, proposal = false), t0).isLeft, "a recount before the proposal")
+    assert(
+      counted(g, reply(g, 1, geDead).copy(owner = "b" * 80), t0).isLeft,
+      "an owner string of the wrong size"
+    )
+    assert(
+      counted(g, reply(g, 1, geDead).copy(seal = Set(p("pd"))), t0).isLeft,
+      "a point to seal off a 9×9 board"
+    )
     val g2 = proposed()
     assert(counted(g2, reply(g2, 1, geDead), t0).isLeft, "a second proposal")
 
@@ -233,6 +241,30 @@ class GoScoringTest extends munit.FunSuite:
     // no stone since the last resume: resuming again is refused (R-SP-9)
     assert(resume(again.game, at(40)).isLeft)
 
+  test("the second pass earns its byo-yomi period back, so a resume gives the full period"):
+    var ms = 1_000_000L
+    val config = ligo.gorules.ByoyomiConfig(mainSeconds = 0, periods = 3, periodSeconds = 30)
+    val g0 =
+      newGo().copy(byoyomi = ligo.gorules.ByoyomiClock(config, ligo.gorules.Color.Black, () => ms).toOption)
+    val g1 = playAll(g0, "aa", "ee", "ba", "gg", "pass", "gh", "pass")
+    ms += 20_000 // White thinks 20 s of a 30 s period, then passes second
+    val g = opened(play(g1, Action.Pass)).game
+    assertEquals(g.byoyomi.get.reading(ligo.gorules.Color.White).centis, 3000)
+    val r = resume(g, at(30)).ok.game
+    val r2 = play(r, Action.Place(p("cc")))
+    assertEquals(
+      r2.byoyomi.get.reading(ligo.gorules.Color.White).centis,
+      3000,
+      "White's next period is whole"
+    )
+    assertEquals(r2.byoyomi.get.reading(ligo.gorules.Color.White).periodsLeft, 3)
+
+  test("the second pass earns its Fischer increment"):
+    val g1 = playAll(newGo(Some(fischer)), "aa", "ee", "ba", "gg", "pass", "gh", "pass")
+    val before = g1.clock.get.remainingTime(Color.White)
+    val g = play(g1, Action.Pass)
+    assert(g.clock.get.remainingTime(Color.White) > before, "the increment was added")
+
   test("the deadline: no proposal ends with no result; marks on show stand"):
     val waiting = opened().game
     assertEquals(expire(waiting, at(599)), None)
@@ -285,12 +317,15 @@ class GoScoringTest extends munit.FunSuite:
     val doc = gameHandler.write(proposed()) ++ BSONDocument("sc" -> BSONDocument("q" -> 1))
     assertEquals(gameHandler.read(doc).goScoring, None)
 
-  test("the move cap opens the phase without passes, and nobody can resume"):
-    // the cap is 1,000 plies; replaying the stored game closes play again (unit 4.3)
-    val g = ended()
-    val capped = g.withGo(g.go.get.closePlay)
-    assert(capped.go.get.playClosed)
+  test("the move cap opens the phase without passes, closes play, and nobody can resume"):
+    // a game still in play at the 1,000-ply cap (built by hand: playing 1,000 moves isn't needed)
+    val g = playAll(newGo(Some(fischer)), "aa", "ee")
+    val capped = g.copy(ply = g.startedAtPly + lila.core.game.GoBridge.maxPlies)
+    assert(capped.goPlayEnds)
+    assertEquals(capped.go.get.phase, ligo.gorules.Phase.Play)
     val step = opened(capped)
+    assert(step.game.go.get.playClosed)
+    assertEquals(step.game.go.get.phase, ligo.gorules.Phase.Scoring)
     assert(resume(step.game, at(1)).isLeft)
 
   test("the service's messages are read as ADR 0020 §1 writes them"):

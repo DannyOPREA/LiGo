@@ -97,7 +97,11 @@ final class Env(
       // the service (re)started: every game still waiting on it re-sends its request (ADR 0020 §1)
       import lila.db.dsl.{ *, given }
       gameRepo.coll
-        .primitive[GameId](bdoc("sc".exists(true)) ++ lila.game.Query.status(chess.Status.Started), "_id")
+        .primitive[GameId](
+          bdoc("sc".exists(true), lila.game.Game.BSONFields.checkAt.exists(true)) ++ lila.game.Query
+            .status(chess.Status.Started),
+          "_id"
+        )
         .foreach(_.foreach(roundApi.tell(_, GoScorer.Wake)))
 
   private lazy val goScorer: GoScorer = GoScorer(
