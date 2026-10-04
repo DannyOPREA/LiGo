@@ -2,6 +2,7 @@ import type { ColorChoice } from 'lib/setup/color';
 import type { TimeMode } from 'lib/setup/timeControl';
 
 import type { GoRuleset, GoSetupJson, GoSize } from './goSetup';
+import type { CorresTile } from './quickPair';
 
 // Open challenges come in two kinds: real-time hooks ('live') and correspondence seeks.
 export type Mode = 'live' | 'correspondence';
@@ -72,6 +73,7 @@ export interface LobbyOpts {
   tableElement: HTMLElement;
   socketSend: SocketSend;
   pools: Pool[];
+  corres?: CorresTile[]; // the correspondence tiles (unit 6.6)
   playban: boolean;
   showRatings: boolean;
   data: LobbyData;
@@ -131,6 +133,7 @@ export interface PoolMember {
   id: PoolId;
   range?: PoolRange;
   blocking?: string;
+  handicap?: boolean; // the Handicap OK chip (ADR 0022 §2, unit 6.6)
 }
 
 export type PoolId = string;

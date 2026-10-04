@@ -13,6 +13,7 @@ import {
 } from 'chart.js';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
+import { type RankTable, rankAt, rankTicks } from './goRank';
 import { fontFamily, gridColor, hoverBorderColor } from './index';
 import type { DistributionData } from './interface';
 
@@ -40,6 +41,9 @@ export async function initModule(data: DistributionData): Promise<void> {
       pointBackgroundColor: color,
     });
     const maxRating = Math.max(...ratings);
+    // LiGo: a Go rating shows as its kyu/dan rank, the rating beside it (ADR 0021 §3, unit 5.5)
+    const rankTable: RankTable | undefined = data.rankTable;
+    const shown = (rating: number) => (rankTable ? `${rankAt(rankTable, rating)}, ${rating}` : `${rating}`);
 
     const datasets: ChartDataset<'line'>[] = [
       {
@@ -85,9 +89,13 @@ export async function initModule(data: DistributionData): Promise<void> {
         },
       });
     if (data.myRating && data.myRating <= maxRating)
-      pushLine('#55bf3b', data.myRating, `${i18n.site.yourRating} (${data.myRating})`);
+      pushLine('#55bf3b', data.myRating, `${i18n.site.yourRating} (${shown(data.myRating)})`);
     if (data.otherRating && data.otherPlayer)
-      pushLine('#eeaaee', Math.min(data.otherRating, maxRating), `${data.otherPlayer} (${data.otherRating})`);
+      pushLine(
+        '#eeaaee',
+        Math.min(data.otherRating, maxRating),
+        `${data.otherPlayer} (${shown(data.otherRating)})`,
+      );
     const chartData: ChartData<'line'> = {
       labels: ratings,
       datasets,
@@ -105,11 +113,17 @@ export async function initModule(data: DistributionData): Promise<void> {
             grid: {
               color: gridColor,
             },
+            afterBuildTicks: rankTable
+              ? axis => {
+                  axis.ticks = rankTicks(rankTable, axis.min, axis.max, 12).map(value => ({ value }));
+                }
+              : undefined,
             ticks: {
               stepSize: 100,
               format: {
                 useGrouping: false,
               },
+              callback: rankTable ? value => rankAt(rankTable, Number(value)) : undefined,
             },
             title: {
               display: true,
