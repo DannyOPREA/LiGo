@@ -1,23 +1,15 @@
 package lila.api
 
-import chess.format.pgn.PgnStr
 import scalatags.Text.all.*
 
-import lila.analyse.AnalysisRepo
 import lila.core.config.NetDomain
 import lila.core.misc.lpv.*
-import lila.memo.CacheApi
 
-final class TextLpvExpand(
-    gameRepo: lila.core.game.GameRepo,
-    analysisRepo: AnalysisRepo,
-    pgnDump: PgnDump,
-    gameOpening: lila.game.GameOpening,
-    cacheApi: CacheApi,
-    net: lila.core.config.NetConfig
-)(using Executor):
+final class TextLpvExpand(net: lila.core.config.NetConfig)(using Executor):
 
-  def getPgn(id: GameId) = if notGames.contains(id.value) then fuccess(none) else gamePgnCache.get(id)
+  // Every game is a Go game, which has no PGN to show in the (chess) game viewer: game links stay plain
+  // links (units 3.16, 3.17).
+  def getPgn(@annotation.unused id: GameId): Fu[Option[LpvEmbed]] = fuccess(none)
   // getChapterPgn and getStudyPgn (study/relay PGN embeds) removed with the study and relay
   // modules (unit 3.3).
 
@@ -69,30 +61,6 @@ final class TextLpvExpand(
 
   private val regex = LpvGameRegex(net.domain)
   private val plyRe = raw"#(\d+)\z".r
-
-  private val notGames =
-    Set("training", "analysis", "insights", "practice", "features", "password", "streamer", "timeline")
-
-  private val pgnFlags =
-    lila.game.PgnDump.WithFlags(clocks = true, evals = true, opening = none, literate = true)
-
-  private val gamePgnCache = cacheApi[GameId, Option[LpvEmbed]](512, "textLpvExpand.pgn.game"):
-    _.expireAfterWrite(10.minutes).buildAsyncFuture(gameIdToPgn)
-
-  private def gameIdToPgn(id: GameId): Fu[Option[LpvEmbed]] =
-    gameRepo
-      .gameWithInitialFen(id)
-      // A Go game has no PGN to show in the (chess) game viewer: its link stays a plain link (unit 3.16).
-      .map(_.filterNot(_.game.isGo))
-      .flatMapz: g =>
-        analysisRepo
-          .byGame(g.game)
-          .flatMap: analysis =>
-            pgnDump(g.game, g.fen, analysis, gameOpening.atPly(g.game, true), pgnFlags).map: pgn =>
-              val gameUrl = net.routeUrl(routes.Round.watcher(id, Color.White)).value
-              val siteTag = chess.format.pgn.Tag(_.Site, gameUrl)
-              val fixedSiteTag = pgn.copy(tags = pgn.tags + siteTag)
-              LpvEmbed.PublicPgn(fixedSiteTag.render).some
 
 private final class LpvGameRegex(domain: NetDomain):
 

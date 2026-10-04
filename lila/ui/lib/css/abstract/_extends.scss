@@ -148,7 +148,7 @@
 %active-primary {
   @extend %active-inset-shadow;
 
-  background: $c-primary;
+  background: $c-primary-button;
   color: #fff;
   text-shadow: 0 1px 1px black !important;
 }

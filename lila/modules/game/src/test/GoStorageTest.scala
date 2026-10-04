@@ -38,7 +38,7 @@ class GoStorageTest extends munit.FunSuite:
 
   private def act(g: Game, actions: Action*): Game =
     actions.foldLeft(g): (g, a) =>
-      g.withGo(g.go.get(a).fold(r => fail(s"refused $a: ${r.key}"), identity))
+      g.withGo(g.go(a).fold(r => fail(s"refused $a: ${r.key}"), identity))
 
   private def roundTrip(g: Game): Game = gameHandler.read(gameHandler.write(g))
 
@@ -65,7 +65,7 @@ class GoStorageTest extends munit.FunSuite:
   test("the ply counts placements and passes, not resumes"):
     val g = played
     assertEquals(g.playedPlies, Ply(7))
-    assertEquals(g.go.get.actions.size, 8)
+    assertEquals(g.go.actions.size, 8)
     // lila still reads ply parity (startColor, playerMoves, clock history): it must agree with go-rules
     assertEquals(g.ply.turn, g.turnColor)
     assertEquals(g.turnColor, Color.White)
@@ -73,7 +73,7 @@ class GoStorageTest extends munit.FunSuite:
   test("a 1-stone handicap: no stone, Black first at ply 1, and parity holds after moves"):
     val g = newGo(setup(handicap = 1))
     assertEquals((g.startedAtPly, g.turnColor), (Ply(1), Color.Black))
-    assertEquals(g.go.get.stones, Map.empty)
+    assertEquals(g.go.stones, Map.empty)
     val moved = act(g, Action.Place(p("ee")), Action.Pass)
     assertEquals((moved.ply.turn, moved.turnColor), (Color.Black, Color.Black))
     val back = roundTrip(moved)
@@ -95,7 +95,7 @@ class GoStorageTest extends munit.FunSuite:
     val g = act(newGo(setup(), clock), Action.Place(p("ee")), Action.Place(p("cc")))
     for original <- List(played, g, newGo(setup(BoardSize.Nineteen, handicap = 4), clock)) do
       val back = roundTrip(original)
-      val (a, b) = (original.go.get, back.go.get)
+      val (a, b) = (original.go, back.go)
       assertEquals(b.setup, a.setup)
       assertEquals(b.actions, a.actions)
       assertEquals(b.stones, a.stones)
@@ -110,7 +110,7 @@ class GoStorageTest extends munit.FunSuite:
       assertEquals(back.clock.map(_.config), original.clock.map(_.config))
       assertEquals(back.clock.map(_.color), original.clock.map(_.color))
       assertEquals(back.perfKey, GoBridge.perfKey)
-    assertEquals(roundTrip(played).go.get.captures.black, 1)
+    assertEquals(roundTrip(played).go.captures.black, 1)
 
   test("BSON round trip: a custom starting position and a handicap"):
     val position = Position(Map(p("cc") -> GoColor.Black, p("gg") -> GoColor.White), GoColor.White)
@@ -123,8 +123,8 @@ class GoStorageTest extends munit.FunSuite:
       Some((Some("cc"), Some("gg"), Some("w")))
     )
     val back = roundTrip(custom)
-    assertEquals(back.go.get.setup.position, Some(position))
-    assertEquals(back.go.get.stones, custom.go.get.stones)
+    assertEquals(back.go.setup.position, Some(position))
+    assertEquals(back.go.stones, custom.go.stones)
     assertEquals((back.startedAtPly, back.turnColor), (Ply(0), Color.Black))
     val hc = gameHandler.write(newGo(setup(BoardSize.Nineteen, handicap = 4)))
     assertEquals(hc.getAsOpt[Int]("hc"), Some(4))
@@ -137,13 +137,30 @@ class GoStorageTest extends munit.FunSuite:
     val bad = good.clone()
     bad(6) = good(0); bad(7) = good(1)
     val back = gameHandler.read(doc ++ bdoc("ac" -> (bad :+ 1.toByte)))
-    assertEquals(back.go.get.actions, played.go.get.actions.take(3))
+    assertEquals(back.go.actions, played.go.actions.take(3))
     assertEquals(back.ply, Ply(1 + 3))
     // a point off the board is refused too
     val offBoard = gameHandler.read(doc ++ bdoc("ac" -> Array[Byte](0, 81.toByte)))
-    assertEquals(offBoard.go.get.actions, Vector.empty)
+    assertEquals(offBoard.go.actions, Vector.empty)
     // a setup that can't be read is an error, not a chess game
     assert(gameHandler.readDocument(doc ++ bdoc("sz" -> 10)).isFailure)
+
+  test("a chess game stored before unit 3.17 is not read, and lookups skip it"):
+    val chessDoc = gameHandler.write(played) -- GoStorage.F.size
+    assert(gameHandler.readDocument(chessDoc).isFailure)
+    assertEquals(Query.go, bdoc(GoStorage.F.size -> bdoc("$exists" -> true)))
+    val (alice, bob) = (UserId("alice"), UserId("bob"))
+    List(
+      Query.user(alice),
+      Query.users(List(alice, bob)),
+      Query.nowPlaying(alice),
+      Query.recentlyPlaying(alice),
+      Query.nowPlayingVs(alice, bob),
+      Query.nowPlayingVs(List(alice, bob)),
+      Query.opponents(List(alice, bob)),
+      Query.imported(alice)
+    ).foreach: selector =>
+      assert(selector.contains(GoStorage.F.size), selector)
 
   test("GameDiff writes the actions and the ply, and no chess key"):
     val before = act(newGo(setup()), Action.Place(p("ee")))
@@ -152,13 +169,13 @@ class GoStorageTest extends munit.FunSuite:
     assertEquals(sets.map(_._1).toSet, Set("ac", "t"))
     assertEquals(unsets, Nil)
     val stored = gameHandler.write(before) ++ BSONDocument(sets)
-    assertEquals(gameHandler.read(stored).go.get.actions, after.go.get.actions)
+    assertEquals(gameHandler.read(stored).go.actions, after.go.actions)
     // a takeback shortens the actions
-    val undone = after.withGo(after.go.get.undo.fold(r => fail(r.key), identity))
+    val undone = after.withGo(after.go.undo.fold(r => fail(r.key), identity))
     val (undoSets, _) = GameDiff(after, undone)
     assertEquals(undoSets.map(_._1).toSet, Set("ac", "t"))
     val back = gameHandler.read(gameHandler.write(after) ++ BSONDocument(undoSets))
-    assertEquals((back.go.get.actions, back.ply), (before.go.get.actions, before.ply))
+    assertEquals((back.go.actions, back.ply), (before.go.actions, before.ply))
 
   test("the starting ply comes from the setup, not a stored st that disagrees"):
     val doc = gameHandler.write(played)
@@ -168,13 +185,13 @@ class GoStorageTest extends munit.FunSuite:
   test("the game JSON's Go block has the setup, custom position, moves and prisoners"):
     val position = Position(Map(p("cc") -> GoColor.Black, p("gg") -> GoColor.White), GoColor.White)
     val custom = act(newGo(setup(position = Some(position))), Action.Place(p("ee")))
-    val js = JsonView.go(custom.go.get)
+    val js = JsonView.go(custom.go)
     assertEquals((js \ "size").as[Int], 9)
     assertEquals((js \ "rules").as[String], "japanese")
     assertEquals((js \ "moves").as[String], "ee")
     assertEquals((js \ "position" \ "black").as[List[String]], List("cc"))
     assertEquals((js \ "position" \ "toMove").as[String], "white")
-    val playedJs = JsonView.go(played.go.get)
+    val playedJs = JsonView.go(played.go)
     assertEquals((playedJs \ "moves").as[String], "ab aa ba ee pass pass resume cc")
     assertEquals((playedJs \ "prisoners" \ "b").as[Int], 1)
     assert((playedJs \ "position").toOption.isEmpty)

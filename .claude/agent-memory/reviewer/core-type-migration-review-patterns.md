@@ -48,5 +48,13 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   failure; rerun alone. `pgrep -f verify.sh` in an until-loop matches its own bash line.
   Unit-scoped rerun: `cd lila && ./lila.sh --batch "game/testFull"` (one project per call).
 
+- 3.17 part 1 (chess storage gone, `Query.go` = `sz` exists): the reader now throws on a chess doc,
+  so EVERY Game-reading selector needs the guard, not just `Query.user`/by-id. Missed ones:
+  `Query.nowPlaying`/`nowPlayingVs`/`opponents`/`imported` (GameFilter profile tabs, urgentGames on
+  login/home, `allPlaying` in account closure, API exports), `byIdsCursor`, `cursor(inIds)`,
+  `exportByIds`, `lastGameBetween`. Grep `cursor[Game]`, `list[Game]`, `one[Game]`, `Query.` users in
+  app/mashup and PaginatorBuilder. Also check for code copied from an open sibling PR (3.17 pulled
+  #88's `GoBridge.miniState` + GameUi go-mini markup without its TS): merge-tree against that branch.
+
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

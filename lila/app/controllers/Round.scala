@@ -16,7 +16,6 @@ final class Round(
     env: Env,
     gameC: => Game,
     challengeC: => Challenge,
-    analyseC: => Analyse,
     userC: => User
 ) extends LilaController(env)
     with lila.web.TheftPrevention:
@@ -122,39 +121,33 @@ final class Round(
     val details = ctx.isAuth || pov.game.isStrongOrRecent
     playablePovForReq(pov.game) match
       case Some(player) if userTv.isEmpty => renderPlayer(pov.withColor(player.color))
-      case _ if pov.game.variant == chess.variant.RacingKings && pov.color.black =>
-        if userTv.isDefined then watch(!pov, userTv)
-        else Redirect(routes.Round.watcher(pov.gameId, Color.white))
       case _ =>
         isBlockedByPlayer(pov.game).flatMap:
           if _ then notFound
           else
             negotiateApi(
               html =
-                // A finished Go game stays on the round page, which shows it with its move list (unit
-                // 3.18): the analysis page is a placeholder until Phase 7 (unit 3.16).
-                if pov.game.replayable && !pov.game.isGo then analyseC.replay(pov, userTv = userTv)
-                else
-                  for
-                    users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
-                    _ = gameC.preloadUsers(users)
-                    chat <- getWatcherChat(pov.game)
-                    crosstable <- (ctx.noBlind && details).so:
-                      env.game.crosstableApi.withMatchup(pov.game)
-                    bookmarked <- env.bookmark.api.exists(pov.game, ctx.me)
-                    tv = userTv.map(u => lila.round.OnTv.User(u.id))
-                    data <- env.api.roundApi.watcher(pov, users, tv, details = details)
-                    page <- renderPage:
-                      views.round.watcher(
-                        pov,
-                        data,
-                        crosstable,
-                        userTv = userTv,
-                        chatOption = chat,
-                        bookmarked = bookmarked
-                      )
-                  yield Ok(page)
-              ,
+                // A finished game stays on the round page, which shows it with its move list (unit 3.18):
+                // the analysis page is a placeholder until Phase 7 (unit 3.16).
+                for
+                  users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
+                  _ = gameC.preloadUsers(users)
+                  chat <- getWatcherChat(pov.game)
+                  crosstable <- (ctx.noBlind && details).so:
+                    env.game.crosstableApi.withMatchup(pov.game)
+                  bookmarked <- env.bookmark.api.exists(pov.game, ctx.me)
+                  tv = userTv.map(u => lila.round.OnTv.User(u.id))
+                  data <- env.api.roundApi.watcher(pov, users, tv, details = details)
+                  page <- renderPage:
+                    views.round.watcher(
+                      pov,
+                      data,
+                      crosstable,
+                      userTv = userTv,
+                      chatOption = chat,
+                      bookmarked = bookmarked
+                    )
+                yield Ok(page),
               api = _ =>
                 for
                   users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
@@ -214,16 +207,9 @@ final class Round(
   }
 
   def continue(id: GameId, mode: String) = Open:
-    Found(env.game.gameRepo.game(id)): game =>
+    Found(env.game.gameRepo.game(id)): _ =>
       // A Go position can't be carried into the create-game form as a FEN (unit 3.16).
-      if game.isGo then Redirect(s"${routes.Lobby.home}#$mode")
-      else
-        Redirect:
-          "%s?fen=%s#%s".format(
-            routes.Lobby.home,
-            get("fen") | (chess.format.Fen.write(game.chessState)).value,
-            mode
-          )
+      Redirect(s"${routes.Lobby.home}#$mode")
 
   def resign(fullId: GameFullId) = Open:
     Found(env.round.proxyRepo.pov(fullId)): pov =>

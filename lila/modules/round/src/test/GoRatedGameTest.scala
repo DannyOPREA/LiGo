@@ -33,7 +33,7 @@ class GoRatedGameTest extends munit.FunSuite:
       source = Source.Lobby
     ).fold(e => fail(e.message), _.start.sloppy.copy(rated = Rated.Yes)) // newGoGame is casual until 5.7
     val played = List("ab", "ba", "ac", "ca").foldLeft(g0): (g, sgf) =>
-      g.withGo(g.go.get(Action.Place(Point.fromSgf(sgf).get)).fold(r => fail(r.key), identity))
+      g.withGo(g.go(Action.Place(Point.fromSgf(sgf).get)).fold(r => fail(r.key), identity))
     played.finish(status, winner.some)
 
   // what PerfsUpdater stores: the new `go` perfs and the rating changes it writes on the game

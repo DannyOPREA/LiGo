@@ -37,23 +37,18 @@ final class JsonView(rematches: Rematches):
         "status" -> game.status
       )
       // A Go game has no FEN: its setup, moves and position facts instead (ADR 0019 §3).
-      .add("fen" -> (!game.isGo).option(Fen.write(game.chessState)))
-      .add("go" -> game.go.map(JsonView.go))
+      .add("go" -> JsonView.go(game.go).some)
       // the scoring phase under way, or the count that ended the game (ADR 0020 §6)
-      .add("scoring" -> game.go.zip(game.goScoring).map((go, sc) => JsonView.goScoring(sc, go, nowInstant)))
+      .add("scoring" -> game.goScoring.map(JsonView.goScoring(_, game.go, nowInstant)))
       .add("result" -> JsonView.goResult(game))
-      .add("threefold" -> game.history.threefoldRepetition)
       .add("winner" -> game.winnerColor)
       .add("abortedBy" -> game.abortedBy)
       .add("rematch" -> rematches.getAcceptedId(game.id))
       .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
 
-  // adds fields that should be computed by the client instead
-  def baseWithChessDenorm(game: Game, initialFen: Option[Fen.Full]) =
-    base(game, initialFen) ++ Json
-      .obj("player" -> game.turnColor)
-      .add("check" -> game.position.checkSquare.map(_.key))
-      .add("lastMove" -> game.lastMoveKeys)
+  // adds the player to move, which the client could compute
+  def baseWithPlayer(game: Game, initialFen: Option[Fen.Full]) =
+    base(game, initialFen) ++ Json.obj("player" -> game.turnColor)
 
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json
@@ -61,7 +56,7 @@ final class JsonView(rematches: Rematches):
         "fullId" -> pov.fullId,
         "gameId" -> pov.gameId,
         "color" -> pov.color,
-        "lastMove" -> pov.game.go.fold(pov.game.lastMoveKeys | "")(GoBridge.lastMove),
+        "lastMove" -> GoBridge.lastMove(pov.game.go),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
         "variant" -> Json.obj(
@@ -84,10 +79,8 @@ final class JsonView(rematches: Rematches):
           .add("ai" -> pov.opponent.aiLevel),
         "isMyTurn" -> pov.isMyTurn
       )
-      .add("fen" -> (!pov.game.isGo).option(maybeFen(pov)))
-      // A Go game's mini board (unit 3.19), empty for a blindfold player as a chess one is
-      .add("board" -> pov.game.go.map(GoBridge.miniBoard(_, pov.player.blindfold)))
-      .add("go" -> pov.game.go.map(JsonView.go))
+      .add("board" -> GoBridge.miniBoard(pov.game.go, pov.player.blindfold).some)
+      .add("go" -> JsonView.go(pov.game.go).some)
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)
       .add("swissId" -> pov.game.swissId)
@@ -96,9 +89,6 @@ final class JsonView(rematches: Rematches):
       .add("rating" -> pov.player.rating)
       .add("goRank" -> Namer.ratingString(pov.player))
       .add("ratingDiff" -> pov.player.ratingDiff)
-
-  def maybeFen(pov: Pov): Fen.Full =
-    if pov.player.blindfold then Fen.Full("8/8/8/8/8/8/8/8") else Fen.write(pov.game.chessState)
 
   def player(p: Player, user: Option[LightUser]) =
     Json

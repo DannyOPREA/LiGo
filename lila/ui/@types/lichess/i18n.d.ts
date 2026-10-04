@@ -4537,6 +4537,10 @@ interface I18n {
     rating: string;
     /** Rating filter */
     ratingFilter: string;
+    /** End of the period the rating graph shows */
+    ratingGraphEnd: string;
+    /** Start of the period the rating graph shows */
+    ratingGraphStart: string;
     /** Rating stats */
     ratingStats: string;
     /** %1$s rating over %2$s games */

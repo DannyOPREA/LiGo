@@ -1,6 +1,7 @@
 package lila.lobby
 
 import chess.{ Clock, Rated }
+import scalalib.model.Days
 import ligo.gorules.{ BoardSize, Ruleset, Setup as GoSetup }
 
 import lila.core.game.GoSetups
@@ -108,3 +109,45 @@ class GoHookTest extends munit.FunSuite:
       LobbyUser(UserId("u"), UserName("U"), false, false, perfMap, lila.core.pool.Blocking(Set.empty))
     val h = hook(nine, "d").copy(user = user.some)
     assertEquals((h.render \ "goRank").as[String], "5k?")
+
+  // The lobby shows another player's seek once per game they seek (lila's de-duplication), and with Go the
+  // board size, ruleset and komi are part of the game.
+  private def seekUser(id: String) = LobbyUser(
+    UserId(id),
+    UserName(id),
+    lame = false,
+    bot = false,
+    perfMap = Map.empty,
+    blocking = lila.core.pool.Blocking(Set.empty)
+  )
+
+  private val bob = seekUser("bob")
+  private val alice = seekUser("alice")
+
+  private def dupSeek(id: String, go: Option[GoSetup], by: LobbyUser = bob) =
+    Seek(id, chess.variant.Standard.id, go, Some(Days(3)), Rated.No, by, RatingRange.default, nowInstant)
+
+  private def shown(seeks: List[Seek]) = SeekApi.noDupsFor(alice, seeks).map(_.id)
+
+  test("seek list: two seeks from one player that differ only in board size both show"):
+    assertEquals(shown(List(dupSeek("a", GoSetups.default.some), dupSeek("b", nine.some))), List("a", "b"))
+
+  test("seek list: two seeks that differ only in ruleset or komi both show"):
+    val chinese = GoSetups.default.copy(ruleset = Ruleset.Chinese, komi = 7.5)
+    val komi = GoSetups.default.copy(komi = 0.5)
+    assertEquals(
+      shown(List(dupSeek("a", GoSetups.default.some), dupSeek("b", chinese.some), dupSeek("c", komi.some))),
+      List("a", "b", "c")
+    )
+
+  test("seek list: the same game sought twice by one player still shows once"):
+    assertEquals(shown(List(dupSeek("a", nine.some), dupSeek("b", nine.some))), List("a"))
+
+  test("seek list: an older seek without a setup counts as the default setup"):
+    assertEquals(shown(List(dupSeek("a", None), dupSeek("b", GoSetups.default.some))), List("a"))
+
+  test("seek list: your own seeks always all show"):
+    assertEquals(
+      SeekApi.noDupsFor(bob, List(dupSeek("a", nine.some), dupSeek("b", nine.some))).map(_.id),
+      List("a", "b")
+    )

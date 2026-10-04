@@ -1,8 +1,6 @@
 package lila.round
 package ui
 
-import chess.Square
-
 import lila.ui.*
 import lila.ui.ScalatagsTemplate.{ *, given }
 
@@ -18,7 +16,6 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
 
   def povOpenGraph(pov: Pov)(using Translate) =
     OpenGraph(
-      image = cdnUrl(routes.Export.gameThumbnail(pov.gameId, None, None).url).some,
       title = titleGame(pov.game),
       url = routeUrl(routes.Round.watcher(pov.gameId, pov.color)),
       description = describePov(pov)
@@ -43,7 +40,7 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
               span(
                 cls := s"mini-game mini-game--init ${pov.game.variant.key} is2d",
                 gameUi.mini.renderState(pov)
-              )(gameUi.mini.boardWrap(pov.game)),
+              )(gameUi.mini.boardWrap),
               span(cls := "meta")(
                 playerUsername(
                   pov.opponent.light,
@@ -92,37 +89,9 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
     val moves = (game.ply.value - game.startedAtPly.value + 1) / 2
     s"$p1 $plays $p2 in a $rated $speedAndClock game of $variant. $result after ${pluralize("move", moves)}. Click to replay, analyse, and discuss the game!"
 
-  def povChessground(pov: Pov)(using ctx: Context): Frag =
-    val orient = pov.color
-    val lastMove = pov.game.history.lastMove
-      .map(_.origDest)
-      .so: (orig, dest) =>
-        List(orig, dest)
-    chessgroundWrap:
-      cgBoard:
-        raw:
-          if ctx.pref.is3d then ""
-          else
-            def top(p: Square) = orient.fold(7 - p.rank.value, p.rank.value) * 12.5
-            def left(p: Square) = orient.fold(p.file.value, 7 - p.file.value) * 12.5
-            val highlights = ctx.pref.highlight
-              .so(lastMove.distinct.map { pos =>
-                s"""<square class="last-move" style="top:${top(pos)}%;left:${left(pos)}%"></square>"""
-              })
-              .mkString("")
-            val pieces =
-              if pov.player.blindfold then ""
-              else
-                pov.game.position.pieces
-                  .map: (pos, piece) =>
-                    val klass = s"${piece.color.name} ${piece.role.name}"
-                    s"""<piece class="$klass" style="top:${top(pos)}%;left:${left(pos)}%"></piece>"""
-                  .mkString("")
-            s"$highlights$pieces"
-
   def roundAppPreload(pov: Pov)(using Context): Tag =
     div(cls := "round__app")(
-      // A Go game's board is drawn by the page's script (unit 3.18): an empty square until then.
-      div(cls := "round__app__board main-board")((!pov.game.isGo).option(povChessground(pov))),
+      // The board is drawn by the page's script (unit 3.18): an empty square until then.
+      div(cls := "round__app__board main-board"),
       div(cls := "col1-rmoves-preload")
     )

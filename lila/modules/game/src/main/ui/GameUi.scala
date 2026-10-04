@@ -1,9 +1,6 @@
 package lila.game
 package ui
 
-import chess.format.Fen
-import chess.format.pgn.PgnStr
-
 import lila.core.game.{ Game, GoBridge, Player }
 import lila.core.i18n.I18nKey
 import lila.game.GameExt.*
@@ -19,11 +16,8 @@ final class GameUi(helpers: Helpers):
     private val dataLive = attr("data-live")
     private val dataTime = attr("data-time")
     private val dataTimeControl = attr("data-tc")
-    val cgWrap = span(cls := "cg-wrap")(cgWrapContent)
     // LiGo (unit 3.19, mini-board slice): a Go game's mini board is drawn by ui/lib's goMini.ts.
-    private val goMini = span(cls := "go-mini")
-
-    def boardWrap(game: Game): Tag = if game.isGo then goMini else cgWrap
+    val boardWrap: Tag = span(cls := "go-mini")
 
     def apply(
         pov: Pov,
@@ -42,15 +36,7 @@ final class GameUi(helpers: Helpers):
 
     def renderState(pov: Pov)(using me: Option[Me]) =
       val blind = me.flatMap(pov.game.player).exists(_.blindfold) && pov.game.playable
-      pov.game.go.fold(renderChessState(pov, blind)): go =>
-        dataState := GoBridge.miniState(go, blind)
-
-    private def renderChessState(pov: Pov, blind: Boolean) =
-      val fen =
-        if blind
-        then chess.format.BoardAndColorFen("8/8/8/8/8/8/8/8 w")
-        else Fen.writeBoardAndColor(pov.game.position)
-      dataState := s"${fen},${pov.color.name},${~pov.game.lastMoveKeys}"
+      dataState := GoBridge.miniState(pov.game.go, blind)
 
     private def showTimeControl(c: chess.Clock.Config) = s"${c.limitSeconds}+${c.incrementSeconds}"
 
@@ -68,7 +54,7 @@ final class GameUi(helpers: Helpers):
         renderState(pov)
       )(
         renderPlayer(!pov, withRating = showRatings),
-        boardWrap(game),
+        boardWrap,
         renderPlayer(pov, withRating = showRatings)
       )
 
@@ -112,7 +98,6 @@ final class GameUi(helpers: Helpers):
 
   def gameEndStatus(game: Game)(using Translate): String =
     import chess.{ White, Black, Status as S }
-    import lila.game.GameExt.drawReason
     game.status match
       case S.Aborted => abortReason(game).txt()
       case S.Mate => trans.site.checkmate.txt()
@@ -127,16 +112,7 @@ final class GameUi(helpers: Helpers):
           case (Some(_), _) => trans.site.blackLeftTheGame.txt()
           case (None, White) => trans.site.whiteLeftTheGame.txt() + " • " + trans.site.draw.txt()
           case (None, Black) => trans.site.blackLeftTheGame.txt() + " • " + trans.site.draw.txt()
-      case S.Draw =>
-        import lila.game.DrawReason.*
-        game.drawReason match
-          case Some(MutualAgreement) => trans.site.drawByMutualAgreement.txt()
-          case Some(FiftyMoves) => trans.site.fiftyMovesWithoutProgress.txt() + " • " + trans.site.draw.txt()
-          case Some(ThreefoldRepetition) =>
-            trans.site.threefoldRepetition.txt() + " • " + trans.site.draw.txt()
-          case Some(InsufficientMaterial) =>
-            trans.site.insufficientMaterial.txt() + " • " + trans.site.draw.txt()
-          case _ => trans.site.draw.txt()
+      case S.Draw => trans.site.draw.txt()
       case S.InsufficientMaterialClaim =>
         trans.site.drawClaimed.txt() + " • " + trans.site.insufficientMaterial.txt()
       case S.Outoftime =>
@@ -207,44 +183,6 @@ final class GameUi(helpers: Helpers):
             span(cls := ct.users.winnerId.map(w => if w == u.id then "win" else "loss"))(ct.showScore(u.id))
       )
 
-  object importer:
-
-    def apply(form: play.api.data.Form[?])(using ctx: Context) =
-      Page(trans.site.importGame.txt())
-        .css("bits.importer")
-        .js(esmInitBit("importer"))
-        .graph(
-          title = "Paste PGN chess game",
-          url = routeUrl(routes.Importer.importGame),
-          description = trans.site.importGameExplanation.txt()
-        ):
-          main(cls := "importer page-small box box-pad")(
-            h1(cls := "box__top")(trans.site.importGame()),
-            p(cls := "explanation")(
-              trans.site.importGameExplanation(),
-              br,
-              // link to the study list (privacy context) removed with the study module (unit 3.3).
-              span(cls := "text", dataIcon := Icon.InfoCircle):
-                trans.site.importGameDataPrivacyWarning()
-            ),
-            standardFlash,
-            postForm(cls := "form3 import", action := routes.Importer.sendGame)(
-              form3.group(form("pgn"), trans.site.pasteThePgnStringHere())(form3.textarea(_)()),
-              form("pgn").value.flatMap { pgn =>
-                lila.game.importer
-                  .parseImport(PgnStr(pgn), ctx.userId)
-                  .fold(
-                    err => frag(pre(cls := "error")(err), br, br).some,
-                    _ => none
-                  )
-              },
-              form3.group(form("pgnFile"), trans.site.orUploadPgnFile(), klass = "upload"): f =>
-                form3.file.pgn(f.name),
-              // "Request a computer analysis" went with fishnet (unit 3.5).
-              form3.action(form3.submit(trans.site.importGame(), Icon.UploadCloud.some))
-            )
-          )
-
   object widgets:
 
     val separator = span(" • ")(cls := "separator")
@@ -271,7 +209,7 @@ final class GameUi(helpers: Helpers):
             gamePlayer(g.blackPlayer)
           ),
           result(g, fromPlayer),
-          if g.playedPlies > 0 && ctx.isAuth then opening(g) else frag(br, br),
+          frag(br, br),
           g.metadata.analysed.option(
             div(cls := "metadata text", dataIcon := Icon.BarChart)(trans.site.computerAnalysisAvailable())
           ),
@@ -283,18 +221,8 @@ final class GameUi(helpers: Helpers):
 
     def miniBoard(pov: Pov)(using ctx: Context): Tag => Tag =
       val blind = ctx.me.flatMap(pov.game.player).exists(_.blindfold) && pov.game.playable
-      pov.game.go.fold(chessMiniBoard(pov, blind)): go =>
-        // LiGo (unit 3.19, mini-board slice): drawn by ui/lib's goMini.ts
-        _(cls := "go-mini go-mini--init", attr("data-state") := GoBridge.miniState(go, blind))
-
-    private def chessMiniBoard(pov: Pov, blind: Boolean): Tag => Tag =
-      chessgroundMini(
-        if blind
-        then Fen.Board("8/8/8/8/8/8/8/8")
-        else Fen.writeBoard(pov.game.position),
-        if pov.game.variant == chess.variant.RacingKings then chess.White else pov.player.color,
-        pov.game.history.lastMove
-      )
+      // LiGo (unit 3.19, mini-board slice): drawn by ui/lib's goMini.ts
+      _(cls := "go-mini go-mini--init", attr("data-state") := GoBridge.miniState(pov.game.go, blind))
 
     def source(g: Game)(using Context) =
       strong(
@@ -346,23 +274,6 @@ final class GameUi(helpers: Helpers):
                     rating.map:
                       frag(br, _)
                   )
-
-    private def opening(g: Game) =
-      div(cls := "opening")(
-        gameOpening(g, false).map(o => strong(o.name)),
-        div(cls := "pgn")(
-          g.sans
-            .take(6)
-            .grouped(2)
-            .zipWithIndex
-            .map:
-              case (Vector(w, b), i) => s"${i + 1}. $w $b"
-              case (Vector(w), i) => s"${i + 1}. $w"
-              case _ => ""
-            .mkString(" "),
-          (g.ply > 6).option(s" ... ${1 + (g.ply.value - 1) / 2} moves ")
-        )
-      )
 
     private def result(g: Game, as: Option[Player])(using Context) = div(cls := "result")(
       if g.isBeingPlayed then trans.site.playingRightNow()

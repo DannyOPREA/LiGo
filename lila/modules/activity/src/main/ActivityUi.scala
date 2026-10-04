@@ -52,7 +52,9 @@ final class ActivityUi(helpers: Helpers):
       iconTag(Icon.ArcheryTarget),
       div(
         trans.activity.solvedNbPuzzles.pluralSame(p.value.size),
-        p.value.rp.filterNot(_.isEmpty || (u.perfs.dubiousPuzzle && ctx.isnt(u))).map(ratingProgFrag)
+        p.value.rp
+          .filterNot(_.isEmpty || (u.perfs.dubiousPuzzle && ctx.isnt(u)))
+          .map(ratingProgFrag(_, go = false))
       ),
       scoreFrag(p.value)
     )
@@ -94,7 +96,7 @@ final class ActivityUi(helpers: Helpers):
         iconTag(pt.icon),
         div(
           trans.activity.playedNbGames.plural(score.size, score.size, pt.trans),
-          score.rp.filterNot(_.isEmpty).map(ratingProgFrag)
+          score.rp.filterNot(_.isEmpty).map(ratingProgFrag(_, pk == PerfKey.go))
         ),
         scoreFrag(score)
       )
@@ -137,7 +139,7 @@ final class ActivityUi(helpers: Helpers):
         iconTag(if pk == PerfKey.correspondence then Icon.PaperAirplane else pt.icon),
         div(
           text,
-          score.rp.filterNot(_.isEmpty).map(ratingProgFrag),
+          score.rp.filterNot(_.isEmpty).map(ratingProgFrag(_, pk == PerfKey.go)),
           scoreFrag(score),
           subTag(
             povs.map: pov =>
@@ -202,8 +204,17 @@ final class ActivityUi(helpers: Helpers):
         trans.site.nbLosses
       )}</score>"""
 
-  private def ratingProgFrag(r: RatingProg)(using ctx: Context) =
-    ctx.pref.showRatings.option(ratingTag(r.after.value, ratingProgress(r.diff)))
+  /* LiGo (unit 5.6): Go games show the rank they ended on, and "5k → 4k" when it changed, with the
+   * ratings in the hover title (ADR 0021 §3); the rating's change stays beside it. */
+  private def ratingProgFrag(r: RatingProg, go: Boolean)(using ctx: Context) =
+    ctx.pref.showRatings.option:
+      if go then
+        val (before, after) = lila.rating.GoRating.rankChange(r.before, r.after)
+        ratingTag(
+          span(title := s"${r.before} → ${r.after}")(before.fold(after)(b => s"$b → $after")),
+          ratingProgress(r.diff)
+        )
+      else ratingTag(r.after.value, ratingProgress(r.diff))
 
   private def scoreStr(tag: String, p: Int, name: lila.core.i18n.I18nKey)(using Translate) =
     if p == 0 then ""

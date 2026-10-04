@@ -15,7 +15,6 @@ import lila.round.RoundGame.*
 @Module
 private class RoundConfig(
     @ConfigName("collection.note") val noteColl: CollName,
-    @ConfigName("collection.forecast") val forecastColl: CollName,
     @ConfigName("collection.alarm") val alarmColl: CollName
 )
 
@@ -37,7 +36,6 @@ final class Env(
     rankingApi: lila.user.RankingApi,
     notifyApi: lila.core.notify.NotifyApi,
     rematches: lila.game.Rematches,
-    divider: lila.game.Divider,
     prefApi: lila.pref.PrefApi,
     socketKit: lila.core.socket.ParallelSocketKit,
     userLagPut: lila.core.socket.userLag.Put,
@@ -157,8 +155,6 @@ final class Env(
   private lazy val farmBoostDetection = wire[FarmBoostDetection]
 
   lazy val perfsUpdater: PerfsUpdater = wire[PerfsUpdater]
-
-  lazy val forecastApi: ForecastApi = ForecastApi(coll = db(config.forecastColl), roundApi = roundApi)
 
   private lazy val notifier = RoundNotifier(isUserPresent, notifyApi)
 

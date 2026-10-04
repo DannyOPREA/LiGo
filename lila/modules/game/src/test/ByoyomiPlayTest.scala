@@ -76,7 +76,7 @@ class ByoyomiPlayTest extends munit.FunSuite:
 
   // What the round does for a move the rules accepted: step the clock, then apply.
   private def play(g: Game, action: Action, metrics: MoveMetrics = MoveMetrics()): Progress =
-    val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
+    val next = g.go(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
     g.applyGoMove(next, g.stepGoClock(metrics, gameActive = g.goClockActiveAfter(next)).map(_.value))
 
   // Black thinks `s` seconds, then White answers at once.

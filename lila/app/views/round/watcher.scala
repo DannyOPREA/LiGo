@@ -61,5 +61,6 @@ def crawler(pov: Pov)(using Context) =
             p(ui.describePov(pov))
           )
         ),
-        div(cls := "round__board main-board")(ui.povChessground(pov))
+        // crawlers get the game's description; its board is drawn by the page's script (unit 3.18)
+        div(cls := "round__board main-board")
       )

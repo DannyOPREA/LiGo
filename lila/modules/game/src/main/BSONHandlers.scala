@@ -1,21 +1,7 @@
 package lila.game
 
-import chess.format.Fen
-import chess.variant.{ Crazyhouse, Standard, Variant }
-import chess.{
-  Board,
-  ByColor,
-  CheckCount,
-  Clock,
-  Color,
-  Game as ChessGame,
-  HalfMoveClock,
-  History as ChessHistory,
-  Rated,
-  Ply,
-  Status,
-  UnmovedRooks
-}
+import chess.variant.Variant
+import chess.{ ByColor, Clock, Color, Ply, Status }
 import reactivemongo.api.bson.*
 import scalalib.model.Days
 
@@ -43,19 +29,10 @@ import lila.db.dsl.{ *, given }
 object BSONHandlers:
 
   import lila.db.ByteArray.byteArrayHandler
-  import lila.game.Game.maxPlies
-
-  private[game] given checkCountWriter: BSONWriter[CheckCount] with
-    def writeTry(cc: CheckCount) = Success(BSONArray(cc.white, cc.black))
 
   given statusHandler: BSONHandler[Status] = tryHandler[Status](
     { case BSONInteger(v) => Status(v).toTry(s"No such status: $v") },
     x => BSONInteger(x.id)
-  )
-
-  private[game] given BSONHandler[UnmovedRooks] = tryHandler[UnmovedRooks](
-    { case bin: BSONBinary => byteArrayHandler.readTry(bin).map(BinaryFormat.unmovedRooks.read) },
-    x => byteArrayHandler.writeTry(BinaryFormat.unmovedRooks.write(x)).get
   )
 
   given BSONHandler[GameRule] = valueMapHandler[String, GameRule](GameRule.byKey)(_.toString)
@@ -98,24 +75,6 @@ object BSONHandlers:
 
   given sourceHandler: BSONHandler[Source] = valueMapHandler[Int, Source](Source.byId)(_.id)
 
-  private[game] given crazyhouseDataHandler: BSON[Crazyhouse.Data] with
-    import Crazyhouse.*
-    def reads(r: BSON.Reader) =
-      val (white, black) = r.str("p").view.flatMap(chess.Piece.fromChar).to(List).partition(_.is(chess.White))
-      Crazyhouse.Data(
-        pockets = ByColor(white, black).map(pieces => Pocket(pieces.map(_.role))),
-        promoted = chess.Bitboard(r.str("t").view.flatMap(chess.Square.fromChar(_)))
-      )
-
-    def writes(w: BSON.Writer, o: Crazyhouse.Data) =
-      def roles = o.pockets.mapWithColor: (color, pocket) =>
-        pocket.flatMap((role, nb) => List.fill(nb)(role.forsythBy(color))).mkString
-
-      BSONDocument(
-        "p" -> roles.reduce(_ + _),
-        "t" -> o.promoted.map(_.asChar).mkString
-      )
-
   private[game] given gameDrawOffersHandler: BSONHandler[GameDrawOffers] = tryHandler[GameDrawOffers](
     { case arr: BSONArray =>
       Success(arr.values.foldLeft(emptyDrawOffers) {
@@ -146,102 +105,37 @@ object BSONHandlers:
       val storedStartedAtPly = Ply(r.intD(F.startedAtTurn))
       val storedPly = r.get[Ply](F.turns)
 
-      // A Go document (ADR 0019 §4) has the Go block instead of the chess keys; its game is replayed.
-      val go = GoStorage
-        .isGo(r)
-        .option:
-          GoStorage.read(r, light.id).fold(e => sys.error(s"Go game ${light.id}: $e"), identity)
+      // A game is its Go block (ADR 0019 §4), replayed. Chess documents from before unit 3.17 are not read:
+      // game queries skip them (`Query.go`), and one read by id anyway is an error.
+      val go = GoStorage.read(r, light.id).fold(e => sys.error(s"Go game ${light.id}: $e"), identity)
 
-      // A Go game's starting ply follows from its setup; `st` is only cross-checked.
-      val startedAtPly = go
-        .flatMap(g => ligo.gorules.GoGame.start(g.setup).toOption)
-        .fold(storedStartedAtPly): start =>
-          val fromSetup = GoBridge.startedAtPly(start)
-          if fromSetup != storedStartedAtPly then
-            lila
-              .log("game")
-              .warn(s"Go game ${light.id}: stored starting ply $storedStartedAtPly, setup gives $fromSetup")
-          fromSetup
+      // The starting ply follows from the setup; `st` is only cross-checked.
+      val startedAtPly =
+        val fromSetup =
+          ligo.gorules.GoGame.start(go.setup).fold(_ => storedStartedAtPly, GoBridge.startedAtPly)
+        if fromSetup != storedStartedAtPly then
+          lila
+            .log("game")
+            .warn(s"Go game ${light.id}: stored starting ply $storedStartedAtPly, setup gives $fromSetup")
+        fromSetup
 
-      val ply = go match
-        case None => storedPly.atMost(maxPlies) // unlimited can cause StackOverflowError
-        case Some(g) =>
-          // The replay decides; `t` is only cross-checked (`ac` also holds resumes, so its length is not it).
-          val replayed = startedAtPly + GoBridge.plies(g)
-          if replayed != storedPly then
-            lila.log("game").warn(s"Go game ${light.id}: stored ply $storedPly, replayed $replayed")
-          replayed
-      val turnColor = go.fold(ply.turn)(g => GoBridge.color(g.toMove))
+      // The replay decides; `t` is only cross-checked (`ac` also holds resumes, so its length is not it).
+      val ply =
+        val replayed = startedAtPly + GoBridge.plies(go)
+        if replayed != storedPly then
+          lila.log("game").warn(s"Go game ${light.id}: stored ply $storedPly, replayed $replayed")
+        replayed
+      val turnColor = GoBridge.color(go.toMove)
       val createdAt = r.date(F.createdAt)
-
-      val playedPlies = ply - startedAtPly
 
       val whitePlayer = Player.from(light, Color.white, playerIds, r.getD[Bdoc](F.whitePlayer))
       val blackPlayer = Player.from(light, Color.black, playerIds, r.getD[Bdoc](F.blackPlayer))
 
-      def decodedChess = r.bytesO(F.huffmanPgn) match
-        case Some(huffPgn) => PgnStorage.Huffman.decode(huffPgn, playedPlies, light.id)
-        case None =>
-          val clm = r.get[CastleLastMove](F.castleLastMove)
-          val sans = PgnStorage.OldBin.decode(r.bytesD(F.oldPgn), playedPlies)
-          val halfMoveClock = HalfMoveClock
-            .from:
-              sans.reverse
-                .indexWhere(san => san.value.contains("x") || san.value.headOption.exists(_.isLower))
-                .some
-            .filter(HalfMoveClock.initial <= _)
-          PgnStorage.Decoded(
-            sans = sans,
-            board = Board.fromMap(BinaryFormat.piece.read(r.bytes(F.binaryPieces), light.variant)),
-            positionHashes =
-              r.getO[Array[Byte]](F.positionHashes).map(chess.PositionHash.apply) | chess.PositionHash.empty,
-            unmovedRooks = r.getO[UnmovedRooks](F.unmovedRooks) | UnmovedRooks.default,
-            lastMove = clm.lastMove,
-            castles = clm.castles,
-            halfMoveClock = halfMoveClock
-              .orElse(r.getO[Fen.Full](F.initialFen).flatMap { fen =>
-                Fen.readHalfMoveClockAndFullMoveNumber(fen)._1
-              })
-              .getOrElse(playedPlies.into(HalfMoveClock))
-          )
-
-      def chessPosition(decoded: PgnStorage.Decoded) =
-        chess.Position(
-          board = decoded.board,
-          history = ChessHistory(
-            lastMove = decoded.lastMove,
-            castles = decoded.castles,
-            halfMoveClock = decoded.halfMoveClock,
-            positionHashes = decoded.positionHashes,
-            unmovedRooks = decoded.unmovedRooks,
-            checkCount = if light.variant.threeCheck then
-              val counts = r.intsD(F.checkCount)
-              CheckCount(~counts.headOption, ~counts.lastOption)
-            else emptyCheckCount,
-            crazyData = light.variant.crazyhouse.option(r.get[Crazyhouse.Data](F.crazyData))
-          ),
-          variant = light.variant,
-          color = turnColor
+      val clock = r
+        .getO[Color => Clock](F.clock)(using
+          clockBSONReader(createdAt, whitePlayer.berserk, blackPlayer.berserk)
         )
-
-      // A Go game carries an unused standard-start chess game until unit 3.17 (ADR 0019 §3).
-      val (position, sans) =
-        if go.isDefined then (Standard.initialPosition, Vector.empty)
-        else
-          val decoded = decodedChess
-          (chessPosition(decoded), decoded.sans)
-
-      val chessGame = ChessGame(
-        position = position,
-        sans = sans,
-        clock = r
-          .getO[Color => Clock](F.clock)(using
-            clockBSONReader(createdAt, whitePlayer.berserk, blackPlayer.berserk)
-          )
-          .map(_(turnColor)),
-        ply = ply,
-        startedAtPly = startedAtPly
-      )
+        .map(_(turnColor))
 
       val whiteClockHistory = r.bytesO(F.whiteClockHistory)
       val blackClockHistory = r.bytesO(F.blackClockHistory)
@@ -249,11 +143,10 @@ object BSONHandlers:
       Game(
         id = light.id,
         players = ByColor(whitePlayer, blackPlayer),
-        chess = chessGame,
         go = go,
-        ply = chessGame.ply,
-        startedAtPly = chessGame.startedAtPly,
-        clock = chessGame.clock,
+        ply = ply,
+        startedAtPly = startedAtPly,
+        clock = clock,
         loadClockHistory = clk =>
           for
             bw <- whiteClockHistory
@@ -332,7 +225,6 @@ object BSONHandlers:
         F.whiteClockHistory -> clockHistory(Color.White, o.clockHistory, o.gameClock, o.flagged),
         F.blackClockHistory -> clockHistory(Color.Black, o.clockHistory, o.gameClock, o.flagged),
         F.rated -> w.yesnoO(o.rated),
-        F.variant -> (o.position.variant.exotic && !o.isGo).option(w(o.position.variant.id)),
         F.bookmarks -> w.intO(o.bookmarks),
         F.createdAt -> w.date(o.createdAt),
         F.movedAt -> w.date(o.movedAt),
@@ -344,27 +236,8 @@ object BSONHandlers:
         F.analysed -> w.boolO(o.metadata.analysed),
         F.rules -> o.metadata.nonEmptyRules,
         F.abortedBy -> o.abortedBy
-      ) ++ {
-        o.go match
-          // A Go game writes its Go block and none of the chess keys (ADR 0019 §4).
-          case Some(go) =>
-            GoStorage.write(go) ++
-              bdoc(GoStorage.F.scoring -> o.goScoring.map(GoStorage.scoring.write(_, go.size)))
-          case None if o.variant.standard =>
-            bdoc(F.huffmanPgn -> PgnStorage.Huffman.encode(o.sans.take(maxPlies.value)))
-          case None =>
-            val f = PgnStorage.OldBin
-            bdoc(
-              F.oldPgn -> f.encode(o.sans.take(maxPlies.value)),
-              F.binaryPieces -> BinaryFormat.piece.write(o.position.pieces),
-              F.positionHashes -> o.history.positionHashes.value,
-              F.unmovedRooks -> o.history.unmovedRooks,
-              F.castleLastMove -> CastleLastMove(castles = o.history.castles, lastMove = o.history.lastMove),
-              F.checkCount -> o.history.checkCount.nonEmpty.option(o.history.checkCount),
-              F.crazyData -> o.position.crazyData
-            )
-      }
-    val emptyCheckCount = CheckCount(0, 0)
+      ) ++ GoStorage.write(o.go) ++ // a game writes its Go block and none of the chess keys (ADR 0019 §4)
+        bdoc(GoStorage.F.scoring -> o.goScoring.map(GoStorage.scoring.write(_, o.go.size)))
 
   given lightGameReader: lila.db.BSONReadOnly[LightGame] with
 

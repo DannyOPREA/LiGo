@@ -23,7 +23,7 @@ final class PaginatorBuilder(gameRepo: GameRepo)(using Executor):
 
   private def noCacheAdapter(selector: Bdoc, sort: Bdoc) = Adapter[Game](
     collection = gameRepo.coll,
-    selector = selector,
+    selector = selector ++ Query.go,
     projection = none,
     sort = sort,
     _.sec

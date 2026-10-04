@@ -34,7 +34,7 @@ object GoBridge:
   def plies(g: GoGame): Int = g.actions.count(_ != Action.Resume)
 
   /** The most plies a Go game may play (ADR 0019 §7): far beyond any real 19x19 game; reaching it ends play
-    * as two passes do. lila's chess cap (`Game.maxPlies`, 600) forces a draw, which Go doesn't have.
+    * as two passes do (lila's chess cap of 600 plies forced a draw, which Go doesn't have).
     */
   val maxPlies: Int = 1000
 
