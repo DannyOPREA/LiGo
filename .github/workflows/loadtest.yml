@@ -1,0 +1,97 @@
+# The lobby load test (unit 6.9, ADR 0022 §10): the whole stack started by `dev/ligo up` in native
+# mode with lila's rate limits off (one address signs up every player and starts every game), then
+# pinned k6 (dev/loadtest.sh) plays PAIRS pairs of 9x9 pool games over lila's API and websockets.
+# The numbers go into the run's summary and a notice. Run by hand: from the Actions tab, or on a
+# pull request while it carries the `loadtest` label. Not a required check.
+name: loadtest
+
+on:
+  workflow_dispatch:
+    inputs:
+      pairs:
+        description: Pairs of players (each pair plays one game)
+        default: '10'
+      moves:
+        description: Stones each player plays before Black resigns (at most 18)
+        default: '10'
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  loadtest:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'loadtest')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      LIGO_MODE: native
+      PAIRS: ${{ inputs.pairs || '10' }}
+      MOVES: ${{ inputs.moves || '10' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: sbt
+          cache-dependency-path: |
+            lila/build.sbt
+            lila/project/**
+            lila-ws/build.sbt
+            lila-ws/project/**
+            libs/go-rules/build.sbt
+            libs/go-rules/project/**
+      - name: Setup sbt
+        uses: sbt/setup-sbt@c7d2d6258b4bd0d3ec5129e6b3453199d3c79729 # v1.5.8
+      - name: Install pnpm
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          package_json_file: lila/package.json
+      - name: Setup node and restore pnpm cache
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: lila/.node-version
+          cache: pnpm
+          cache-dependency-path: lila/pnpm-lock.yaml
+      # Frozen pnpm install and sbt update for lila, lila-ws and libs/go-rules.
+      - name: Dependencies
+        run: dev/ligo deps
+      # The strategygames jar is checked after it is downloaded and before anything runs it, as the
+      # lila and rules jobs do.
+      - name: strategygames jar matches the pinned SHA-256
+        run: libs/go-rules/check-pin.sh
+      # lila's own limits (sign-ups, new games, pool joins per address) would stop the test after a
+      # few players: a load-test stack only, never a public server.
+      - name: Rate limits off for this stack
+        run: |
+          cp lila/conf/application.conf.default lila/conf/application.conf
+          echo 'net.ratelimit = false' >> lila/conf/application.conf
+      - name: Start the stack
+        run: dev/ligo up
+      - name: Load test
+        run: |
+          status=0
+          dev/ligo loadtest run 2>&1 | tee loadtest.log || status=$?
+          line=$(grep '^LOADTEST' loadtest.log | tail -1 || true)
+          echo "::notice title=loadtest::${line:-no summary line}"
+          { echo '### Load test'; echo; echo "${line:-no summary line}"; } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Stop the stack
+        if: always()
+        run: dev/ligo down || true
+      - name: Upload the summary and the server logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: loadtest
+          path: |
+            loadtest.log
+            loadtest-summary.json
+            .ligo/logs/
+          retention-days: 7

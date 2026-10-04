@@ -10,6 +10,18 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.9 · The lobby load test
+- What: `dev/ligo loadtest` (dev/loadtest.sh) downloads pinned k6 v1.3.0 into `.ligo/k6/` and runs
+  `dev/loadtest/pools.js`: setup signs up 2 × PAIRS players at 5k; each player opens the lobby
+  websocket, sends `poolIn` for 9×9 3+2, follows the `redirect` to its game, reads its colour from the
+  game JSON, plays MOVES stones over the round websocket, and Black resigns. It measures the pool wait,
+  each stone's round trip (sent to the server's move event), game length and how many games end, and
+  prints one LOADTEST line. The `loadtest` workflow (by hand, or a `loadtest` label on a PR) starts
+  the stack with lila's rate limits off and runs it.
+- Tests: k6 parses the scenario (`k6 inspect`); shellcheck and dev/tests pass; verify passes. The
+  cloud session can't start the stack (no Docker for Mongo), so the run itself is the PR's
+  `loadtest` job.
+
 ### 2026-10-04 · unit 6.10 · The Phase 6 demo
 - What: `lila/tests/e2e-demo/phase6-demo.spec.ts`, run by the `e2e` workflow at desktop and phone
   sizes. A guest clicks the 9×9 3+2 tile another guest waits on, and the game's first stone is timed
