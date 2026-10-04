@@ -62,10 +62,8 @@ final class ChallengeMaker(
         case (_, Some(clock), _) => TimeControl.Clock(clock.config)
         case (_, _, Some(days)) => TimeControl.Correspondence(days)
         case _ => TimeControl.Unlimited
-      // a handicap game's rematch keeps the colours, so the same player gets the stones again (unit 4.9)
-      val alternateColor =
-        pov.game.go.setup.handicap == 0 &&
-          rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
+      // a handicap game's rematch keeps the colours (rematchAlternatesColor, units 4.9 and 5.7)
+      val alternateColor = rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
       Challenge.make(
         variant = pov.game.variant,
         initialFen = none, // a Go game never starts from a chess position

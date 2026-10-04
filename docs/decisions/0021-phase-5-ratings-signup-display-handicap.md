@@ -112,8 +112,11 @@ Numbers below use the curve `rank = ln(rating / 525) × 23.15`, where rank 30 is
   pools add auto-handicap at pairing time, with the same stone function.
 - _Amended by unit 5.7 (2026-10-04):_ the server sets the colours of a rated handicap challenge (the
   colour asked for is ignored), and refuses stones outside the suggestion ±1 or without a named
-  opponent. A rated game's rematch is rated, with the same stones and colours as the game (they were
-  fixed when the first challenge was sent). "New opponent" after a handicap game makes an even lobby
+  opponent. An **even** rated challenge is always allowed, whatever the suggestion, as a rated lobby
+  game is. A rated handicap challenge can't be sent to another player afterwards (lila's "to friend").
+  A rated game's rematch is rated, with the same stones and colours as the game (they were fixed when
+  the first challenge was sent); both of lila's rematch paths keep a handicap game's colours. A guest's
+  open challenge is casual. "New opponent" after a handicap game makes an even lobby
   game with the ruleset's standard komi. Bulk pairings may be rated, even only. A game the forms let
   through that this section doesn't cover (a guest in it, another komi, too many stones) is created
   casual.

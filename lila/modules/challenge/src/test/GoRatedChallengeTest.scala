@@ -27,6 +27,12 @@ final class GoRatedChallengeTest extends munit.FunSuite:
   test("a rated handicap challenge needs a named opponent"):
     assert(GoRatedChallenge.color(stones(5), Rated.Yes, "black", k5.some, none).isLeft)
 
+  test("a rated handicap challenge can't be sent to another player instead; others can"):
+    assert(GoRatedChallenge.retargetRefusal(Rated.Yes, stones(5)).isDefined)
+    assertEquals(GoRatedChallenge.retargetRefusal(Rated.Yes, stones(0)), None)
+    assertEquals(GoRatedChallenge.retargetRefusal(Rated.No, stones(5)), None)
+
+  // ADR 0021 §4 amendment (unit 5.7): an even rated game is always allowed, as in the lobby
   test("an even rated challenge and a casual one keep the colour asked for"):
     assertEquals(GoRatedChallenge.color(stones(0), Rated.Yes, "white", k5.some, d1.some), Right("white"))
     assertEquals(GoRatedChallenge.color(stones(0), Rated.Yes, "random", k5.some, none), Right("random"))

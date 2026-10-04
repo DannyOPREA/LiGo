@@ -194,11 +194,14 @@ object SetupForm:
         .verifying(goError, _.go.valid)
         .verifying(byoyomiError, c => c.byoyomi.isEmpty || (c.clock.isEmpty && c.days.isEmpty))
 
-    def open(isAdmin: Boolean) = Form:
-      openMapping.verifying(
-        "The `noAbort` rule is now restricted to challenge administrators",
-        d => !d.rules.contains(lila.core.game.GameRule.noAbort) || isAdmin
-      )
+    // a guest's open challenge is casual (ADR 0021 §5, unit 5.7)
+    def open(isAdmin: Boolean, guest: Boolean = false) = Form:
+      openMapping
+        .verifying(
+          "The `noAbort` rule is now restricted to challenge administrators",
+          d => !d.rules.contains(lila.core.game.GameRule.noAbort) || isAdmin
+        )
+        .verifying("Sign up to play rated games", d => !guest || d.rated.no)
 
     private lazy val openMapping = mapping(
       "name" -> optional(LilaForm.cleanNonEmptyText(maxLength = 200)),

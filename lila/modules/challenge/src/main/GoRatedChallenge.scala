@@ -34,3 +34,8 @@ object GoRatedChallenge:
               if choices.sizeIs == 1 then s"A rated game between you two has ${choices.head} handicap stones"
               else s"A rated game between you two has ${choices.head} to ${choices.last} handicap stones"
         case _ => Left("A rated game with handicap stones needs a named opponent")
+
+  /* Why this challenge can't be sent to another player instead, if it can't: a rated handicap
+   * challenge's stones and colours were checked against the player it named. */
+  def retargetRefusal(rated: chess.Rated, setup: GoSetup): Option[String] =
+    (rated.yes && setup.handicap > 0).option("A rated challenge with handicap stones can't change opponent")

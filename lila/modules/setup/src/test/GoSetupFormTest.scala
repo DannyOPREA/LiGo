@@ -88,6 +88,11 @@ class GoSetupFormTest extends munit.FunSuite:
     assert(open.bind(Map("rated" -> "true", "handicap" -> "2")).hasErrors, "rated with stones")
     assert(!open.bind(Map("rated" -> "false", "handicap" -> "2")).hasErrors, "casual with stones")
 
+  test("a guest's open challenge is casual only"):
+    val open = SetupForm.api.open(isAdmin = false, guest = true)
+    assert(open.bind(Map("rated" -> "true")).hasErrors, "rated")
+    assert(!open.bind(Map("rated" -> "false")).hasErrors, "casual")
+
   test("a friend game can't start from a chess position"):
     val friend = lobbyGame + ("color" -> "random")
     assert(!SetupForm.friend.bind(friend).hasErrors, SetupForm.friend.bind(friend).errors)
