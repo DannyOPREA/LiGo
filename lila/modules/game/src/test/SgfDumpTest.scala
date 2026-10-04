@@ -110,4 +110,3 @@ class SgfDumpTest extends munit.FunSuite:
     val sgf = SgfDump(played, ByColor(white = "a]b", black = "c\\d"), "x").get
     assert(sgf.contains("PW[a\\]b]"), sgf)
     assert(sgf.contains("PB[c\\\\d]"), sgf)
-
