@@ -22,7 +22,6 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
         for
           _ <- env.bookmark.api.removeByGameId(game.id)
           _ <- env.game.gameRepo.remove(game.id)
-          _ <- env.analyse.repo.remove(game.id)
           _ <- env.game.cached.clearNbImportedByCache(me)
         yield Redirect(routes.User.show(me.username))
       else Redirect(routes.Round.watcher(game.id, game.naturalOrientation))
@@ -157,10 +156,8 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
       moves = getBoolOpt("moves") | true,
       tags = getBoolOpt("tags") | true,
       clocks = getBoolOpt("clocks") | extended,
-      evals = getBoolOpt("evals") | extended,
       delayMoves = delayMovesFromReq,
       lastFen = getBool("lastFen"),
-      accuracy = getBool("accuracy"),
       division = getBoolOpt("division") | extended,
       bookmark = getBool("withBookmarked")
     )

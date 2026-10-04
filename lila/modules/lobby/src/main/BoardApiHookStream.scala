@@ -41,8 +41,7 @@ final class BoardApiHookStream(
       lobby ! SetupBus.AddHook(hook)
 
   private def asPool(hook: Hook): Option[Source[Option[JsObject], ?]] = for
-    fischer <- hook.clock.fischer
-    poolId <- poolApi.poolOf(fischer, hook.go)
+    poolId <- poolApi.poolOf(hook.clock, hook.go)
     if hook.seemsCompatibleWithPools
     member <- Hook.asPoolMember(hook, PoolFrom.Api)
   yield

@@ -25,4 +25,12 @@ From unit 6.4 part one (2026-09-30):
 - "X reaches the score" tests that assert equal output for both inputs can't fail if X is ignored.
 - Pool hook-stealing needs rated hooks, which 3.15 forbids until 5.7: that path is dead code, so ask for it to be said.
 
+From unit 6.4 part two (2026-10-04):
+
+- Pool id format changes strand callers outside the unit's files: ui/round "New opponent" (`poolUrl`) and
+  lib/poolRangeStorage still built `lim+inc`; byo-yomi pools map to no pool. grep `'/#pool/'` repo-wide.
+- verify's ui gate does not typecheck lobby: run `node_modules/.bin/tsc -p tsconfig.json --noEmit` in ui/<pkg>.
+- The implementer edited files mid-review (Main.scala broke then got fixed): re-read the diff before reporting.
+- GameStarter colour choice (`b != p1.userId`) had no test; only MatchMaking's `black` was tested.
+
 **How to apply:** 6.4 (MatchMaking wiring), 6.6 (tile range display), any later pairing change.

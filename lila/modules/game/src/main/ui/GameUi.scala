@@ -38,8 +38,6 @@ final class GameUi(helpers: Helpers):
       val blind = me.flatMap(pov.game.player).exists(_.blindfold) && pov.game.playable
       dataState := GoBridge.miniState(pov.game.go, blind)
 
-    private def showTimeControl(c: chess.Clock.Config) = s"${c.limitSeconds}+${c.incrementSeconds}"
-
     private def renderMini(
         pov: Pov,
         link: String,
@@ -50,7 +48,7 @@ final class GameUi(helpers: Helpers):
         href := link,
         cls := s"mini-game mini-game-${game.id} mini-game--init is2d",
         dataLive := game.isBeingPlayed.option(game.id),
-        dataTimeControl := game.clock.map(_.config).fold("correspondence")(showTimeControl),
+        dataTimeControl := game.gameClock.fold("correspondence")(_.show),
         renderState(pov)
       )(
         renderPlayer(!pov, withRating = showRatings),
@@ -285,9 +283,9 @@ final class GameUi(helpers: Helpers):
     )
 
     def showClock(game: Game)(using Context) =
-      game.clock
+      game.gameClock
         .map: clock =>
-          frag(clock.config.show)
+          frag(clock.show)
         .getOrElse:
           game.daysPerTurn
             .map: days =>

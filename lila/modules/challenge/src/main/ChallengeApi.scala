@@ -140,6 +140,9 @@ final class ChallengeApi(
       then "Game incompatible with a BOT account".raise
       else if c.open.exists(!_.canJoin)
       then "The challenge is not for you to accept.".raise
+      // guests play casual games only, whatever the challenge says (ADR 0021 §5, unit 5.7)
+      else if c.rated.yes && me.isEmpty
+      then "Sign up to play rated games".raise
       else
         val openFixedColor = for
           me <- me

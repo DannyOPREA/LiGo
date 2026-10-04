@@ -1,4 +1,3 @@
-import { clockToSpeed } from 'lib/game';
 import { spinnerVdom, onInsert, div, makeExoticTag } from 'lib/view';
 
 import type LobbyController from '../ctrl';
@@ -41,12 +40,12 @@ export function render({ pools, poolMember, opts }: LobbyController) {
           'data-id': pool.id,
         },
         [
-          div('.clock', `${pool.lim}+${pool.inc}`),
+          div('.clock', pool.clock),
           active
             ? poolMember.range && opts.showRatings
               ? div('.range', poolMember.range.replace('-', '–'))
               : spinnerVdom()
-            : div('.perf', i18n.site[clockToSpeed(pool.lim * 60, pool.inc)]),
+            : div('.perf', `${pool.size}×${pool.size} ${i18n.site[pool.speed]}`),
         ],
       );
     })

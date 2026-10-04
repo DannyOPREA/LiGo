@@ -5,7 +5,6 @@ import chess.ByColor
 import play.api.libs.json.*
 import reactivemongo.pekkostream.cursorProducer
 
-import lila.analyse.{ AccuracyPercent, Analysis, JsonView as analysisJson }
 import lila.common.HTTPRequest
 import lila.common.Json.given
 import lila.core.LightUser
@@ -20,7 +19,6 @@ final class GameApiV2(
     gameRepo: lila.game.GameRepo,
     gameCache: lila.game.Cached,
     gameJsonView: lila.game.JsonView,
-    analysisRepo: lila.analyse.AnalysisRepo,
     getLightUser: LightUser.Getter,
     gameProxy: GameProxyRepo,
     baseUrl: lila.core.config.BaseUrl,
@@ -33,11 +31,7 @@ final class GameApiV2(
   def exportOne(game: Game, config: OneConfig): Fu[String] =
     config.format match
       case Format.SGF => sgfOf(game, config.flags).map(_ | "")
-      case Format.JSON =>
-        for
-          (game, analysis) <- enrich(config.flags)(game)
-          json <- toJson(game, analysis, config)
-        yield Json.stringify(json)
+      case Format.JSON => toJson(game, config).map(Json.stringify)
 
   private val fileR = """[\s,]""".r
 
@@ -95,9 +89,7 @@ final class GameApiV2(
   def mobileRecent(user: User)(using Option[Me]): Fu[JsArray] = for
     games <- gameRepo.recentFinishedGamesFromSecondary(user, Max(10))
     config = MobileRecentConfig(user)
-    enriched <- games.sequentially(enrich(config.flags))
-    jsons <- enriched.sequentially: (game, analysis) =>
-      toJson(game, analysis, config)
+    jsons <- games.sequentially(toJson(_, config))
   yield JsArray(jsons)
 
   def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
@@ -106,8 +98,7 @@ final class GameApiV2(
       .flatMapz(gameProxy.gameIfPresentOrFetch)
       .flatMapz: game =>
         val config = OneConfig(GameApiV2.Format.JSON, WithFlags())
-        enrich(config.flags)(game).flatMap: (game, analysis) =>
-          toJson(game, analysis, config).dmap(some)
+        toJson(game, config).dmap(some)
 
   def exportByIds(config: ByIdsConfig): Source[String, ?] =
     gameRepo
@@ -157,10 +148,9 @@ final class GameApiV2(
   private def preparationFlow(config: Config) =
     Flow[Game]
       .throttle(config.perSecond.value, 1.second)
-      .mapAsync(4)(enrich(config.flags))
-      .mapAsync(4): (game, analysis) =>
-        // a Go game has no chess opening (unit 3.16)
-        def json = toJson(game, analysis, config).map: json =>
+      .mapAsync(4): game =>
+        // a Go game has no chess opening (unit 3.16); no engine analysis (unit 3.17, slice b)
+        def json = toJson(game, config).map: json =>
           s"${Json.stringify(json)}\n"
         config.format match
           case Format.SGF =>
@@ -175,23 +165,15 @@ final class GameApiV2(
       val names = users.map((p, u) => SgfDump.playerName(p, u))
       SgfDump(game, names, s"LiGo $baseUrl/${game.id}", flags)
 
-  private def enrich(flags: WithFlags)(game: Game): Fu[(Game, Option[Analysis])] =
-    flags.requiresAnalysis.so(analysisRepo.byGame(game)).dmap(game -> _)
-
   private def toJson(
       g: Game,
-      analysisOption: Option[Analysis],
       config: Config
   ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
     flags = config.flags
     bookmarked <- config.flags.bookmark.so(bookmarkApi.exists(g, config.by.map(_.userId)))
-    // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
-    // exists any more to name it, so "arenaTour" is never populated for new games.
-    // a Go game has no chess phases to divide (unit 3.16), so no accuracy per phase
-    accuracy = analysisOption
-      .ifTrue(flags.accuracy)
-      .flatMap(AccuracyPercent.gameAccuracy(g.startedAtPly.turn, _))
+  // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
+  // exists any more to name it, so "arenaTour" is never populated for new games.
   yield Json
     .obj(
       "id" -> g.id,
@@ -203,11 +185,7 @@ final class GameApiV2(
       "status" -> g.status.name,
       "source" -> g.source,
       "players" -> JsObject(lightUsers.mapList: (p, user) =>
-        p.color.name -> gameJsonView
-          .player(p, user)
-          .add:
-            "analysis" -> analysisOption.flatMap:
-              analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy))
+        p.color.name -> gameJsonView.player(p, user))
     )
     // A Go game carries its setup (size, rules, komi, handicap, position) instead of a chess variant and
     // initial FEN, and its moves as SGF points and `pass` (unit 3.16).
@@ -222,7 +200,6 @@ final class GameApiV2(
       applyDelay(clocks, flags.keepDelayIf(g.playable))
     })
     .add("daysPerTurn" -> g.daysPerTurn)
-    .add("analysis" -> analysisOption.ifTrue(flags.evals).map(analysisJson.moves(_, withGlyph = false)))
     .add("arenaTour" -> g.tournamentId.map(id => Json.obj("id" -> id)))
     .add("swissTour" -> g.swissId.map(id => Json.obj("id" -> id)))
     .add("clock" -> g.clock.map: clock =>
@@ -332,8 +309,6 @@ object GameApiV2:
       WithFlags(
         clocks = false,
         moves = false,
-        evals = false,
-        lastFen = true,
-        accuracy = true
+        lastFen = true
       )
     val perSecond = MaxPerSecond(20) // unused

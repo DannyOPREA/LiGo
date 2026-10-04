@@ -1,6 +1,6 @@
 package lila.round
 
-import chess.{ Rated, ByColor, Color as ChessColor }
+import chess.{ ByColor, Color as ChessColor }
 import scalalib.cache.ExpireSetMemo
 
 import lila.common.Bus
@@ -102,7 +102,7 @@ final private class Rematcher(
           go.setup.copy(position = None),
           pov.game.clock.map(c => chess.Clock(c.config)),
           players = ByColor(returnPlayer(pov.game, _, users)),
-          rated = Rated.No, // casual until unit 5.7
+          rated = pov.game.rated, // a rated game's rematch is rated too (unit 5.7)
           source = pov.game.source | lila.core.game.Source.Lobby,
           daysPerTurn = pov.game.daysPerTurn,
           byoyomi = pov.game.byoyomi.map(_.config)

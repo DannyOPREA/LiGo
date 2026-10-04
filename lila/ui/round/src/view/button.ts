@@ -23,8 +23,11 @@ export interface ButtonState {
   overrideHint?: string;
 }
 
-function poolUrl(clock: ClockData, blocking?: PlayerUser) {
-  return '/#pool/' + clock.initial / 60 + '+' + clock.increment + (blocking ? '/' + blocking.id : '');
+// LiGo: the pool's id (ADR 0022 §1, unit 6.4), "19x19-10m-10s"; a byo-yomi clock shows the periods left,
+// not how many it started with, so they are written `*` and the lobby finds the pool by its period length.
+function poolUrl(clock: ClockData & { byo?: number }, size: number, blocking?: PlayerUser) {
+  const extra = clock.byo ? `*x${clock.byo}s` : `${clock.increment}s`;
+  return `/#pool/${size}x${size}-${clock.initial / 60}m-${extra}` + (blocking ? '/' + blocking.id : '');
 }
 
 function analysisButton(ctrl: RoundController): VNode | false {
@@ -265,7 +268,7 @@ export function followUp(ctrl: RoundController): VNode {
         'button.fbt.new-opponent',
         {
           hook: bind('click', () => {
-            if (d.game.source === 'pool') location.href = poolUrl(d.clock!, d.opponent.user);
+            if (d.game.source === 'pool') location.href = poolUrl(d.clock!, d.game.go.size, d.opponent.user);
             else location.href = '/?hook_like=' + d.game.id;
           }),
         },

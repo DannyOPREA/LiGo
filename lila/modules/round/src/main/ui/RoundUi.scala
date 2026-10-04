@@ -66,8 +66,8 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
     val speedAndClock =
       if game.sourceIs(_.Import) then "imported"
       else
-        game.clock.fold(chess.Speed.Correspondence.name): c =>
-          s"${chess.Speed(c.config).name} (${c.config.show})"
+        game.gameClock.fold(chess.Speed.Correspondence.name): c =>
+          s"${c.speed.name} (${c.show})"
 
     val rated = game.rated.name
     import chess.Status.*

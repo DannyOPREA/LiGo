@@ -1,5 +1,4 @@
 import type { ColorChoice } from 'lib/setup/color';
-import type { ClockConfig } from 'lib/setup/interfaces';
 import type { TimeMode } from 'lib/setup/timeControl';
 
 import type { GoRuleset, GoSetupJson, GoSize } from './goSetup';
@@ -57,8 +56,15 @@ export interface Seek {
   action: 'joinSeek' | 'cancelSeek';
 }
 
-export interface Pool extends ClockConfig {
-  id: PoolId;
+// A pool tile, as the server sends it (modules/pool/src/main/PoolConfig.scala, unit 6.4)
+export interface Pool {
+  id: PoolId; // "9x9-3m-2s", "19x19-10m-5x30s" (ADR 0022 §1)
+  size: number;
+  clock: string; // "3+2", "10+5×30s"
+  speed: 'bullet' | 'blitz' | 'rapid' | 'classical';
+  lim?: number; // Fischer: minutes and seconds per move
+  inc?: number;
+  byo?: { limit: number; periods: number; period: number }; // byo-yomi: seconds
 }
 
 export interface LobbyOpts {
