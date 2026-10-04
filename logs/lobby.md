@@ -32,6 +32,16 @@
   counter, now `moves_acked`), and the step's default shell has no `pipefail`, so `| tee` hid k6's
   exit code. Both fixed.
 - Lessons: a GitHub Actions `run:` step is `bash -e` without `pipefail` unless `shell: bash` is set.
+- Correction: the first two runs' games never got going. A new Go game's JSON says `turns=1`, so
+  the script took ply parity as White's turn; lila refused White's stone and aborted every game at its
+  first-move limit (25 s, hence the 25.8 s "game"). A trace (`TRACE=1`, on in the workflow) showed it.
+  Turns now follow the JSON's colour to move, and only players who play all their stones count.
+  Random letters also spelled a word lila's username check refuses (HTTP 400): names are digits now.
+- Real run (db302da, 10 pairs, 10 stones each): 10/10 games played out and resigned, 100% of
+  players; pool wait 3.8 s (p50 and p95, one 5 s wave); stone ack 3 ms p50, 9 ms p95, 24 ms max;
+  opponent's reply 25 ms p50, 84 ms p95; a 20-stone game 0.5 s.
+- Lessons: a load test that "passes" needs a check that the work happened (games played out), not
+  just that something ended. Read `game.player` for whose turn it is, never ply parity.
 
 ### 2026-10-04 · unit 6.10 · The Phase 6 demo
 - What: `lila/tests/e2e-demo/phase6-demo.spec.ts`, run by the `e2e` workflow at desktop and phone
