@@ -1,6 +1,5 @@
 package lila.ui
 
-import chess.format.Uci
 import play.api.mvc.{ PathBindable, QueryStringBindable }
 import scalalib.newtypes.SameRuntime
 
@@ -38,7 +37,6 @@ object LilaRouter:
   given PathBindable[GameId] = summon[PathBindable[GameAnyId]].transform(_.gameId, _.into(GameAnyId))
   given PathBindable[Color] =
     strPath[Color](Color.fromName, "Invalid chess color, should be white or black", _.name)
-  given PathBindable[Uci] = strPath[Uci](Uci.apply, "Invalid UCI move", _.uci)
 
   given PathBindable[StudyOrder] = strPath(
     StudyOrder.byKey.get,
@@ -71,4 +69,3 @@ object LilaRouter:
 
   given QueryStringBindable[Color] =
     strQueryString[Color](Color.fromName, "Invalid chess color, should be white or black", _.name)
-  given QueryStringBindable[Uci] = strQueryString[Uci](Uci.apply, "Invalid UCI move", _.uci)

@@ -7,7 +7,7 @@ import scalalib.actor.AsyncActor
 import lila.core.round.*
 import lila.core.socket.{ GetVersion, SocketSend, SocketVersion, makeMessage, userLag }
 import lila.game.GameExt.*
-import lila.game.{ Event, GameRepo, Player as GamePlayer, Progress }
+import lila.game.{ Event, GameRepo, Player as GamePlayer }
 import lila.room.RoomSocket.{ Protocol as RP, * }
 import lila.round.RoundGame.*
 import lila.mon.extensions.*
@@ -265,14 +265,6 @@ final private class RoundAsyncActor(
         (game.playable && !game.sourceIs(_.Import)).so:
           finisher.other(game, _.Cheat, Some(!color))
 
-    case Threefold =>
-      proxy.withGame: game =>
-        drawer
-          .autoThreefold(game)
-          .map:
-            _.foreach: pov =>
-              this ! DrawClaim(pov.player.id)
-
     case RoundBus.Rematch(playerId, rematch) => handle(playerId)(rematcher(_, rematch))
 
     case RoundBus.Takeback(playerId, takeback) =>
@@ -388,10 +380,6 @@ final private class RoundAsyncActor(
         version = version.map(_ + 1)
         socketSend.exec:
           Protocol.Out.tellVersion(roomId, version, e)
-      if events.exists:
-          case e: Event.Move => e.threefold
-          case _ => false
-      then this ! Threefold
 
   private def errorHandler(name: String): PartialFunction[Throwable, Unit] =
     case e: BenignError =>

@@ -97,7 +97,7 @@ private object HttpFilter:
 
   def apiAgent(req: RequestHeader, client: ClientName): Option[String] =
     val isApiAgent = !client.isMobile && !client.isLichobile && {
-      HTTPRequest.isApi(req) || req.path.endsWith(".pgn")
+      HTTPRequest.isApi(req)
     }
     isApiAgent.option(apiAgent(HTTPRequest.userAgent(req)))
 

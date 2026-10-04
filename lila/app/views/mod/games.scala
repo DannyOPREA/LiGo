@@ -35,7 +35,7 @@ def games(
           // "Analyse selected" (fishnet analysis) and the engine assessment columns went with the
           // fishnet and evaluation modules (unit 3.5).
           submitButton(cls := "button button-empty button-thin", name := "action", value := "pgn")(
-            "Download PGN"
+            "Download games (NDJSON)"
           ),
           table(cls := "mod-games game-list slist")(
             thead(
