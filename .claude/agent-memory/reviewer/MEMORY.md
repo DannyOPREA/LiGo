@@ -15,7 +15,7 @@
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, deleted-TS DOM effects, privacy deletes, stand-ins keeping dead code (3.3–3.19p2)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
-- [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, lowercase ids, quadratic merges, two-reader parity probes (7.3)
+- [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, two-reader probes (7.3), export move delay + NoStart RE (4.11)
 - [Puzzle solver review patterns](puzzle-solver-review-patterns.md) — settled() pass bug, tree-depth histogram, duplicate shapes, frame port rerun, indep L&D checker, symmetry dedupe
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick
 - [Perf budget review patterns](perf-budget-review-patterns.md) — undefined limit passes, harness overhead in timings, goban shadow DOM, scratch probes (9.5)
@@ -28,7 +28,7 @@
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, Setup.like/rematch bypass, kept chess rematch, vacuous me=None tests (3.15)
 - [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, PLAN-row scope gaps, gated-predicate side readers (isGone), empty sans, Resume index drift, empty steps (3.11–3.16)
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, rematch bypass, vacuous me=None; 4.9: TS TimeControl switches, handicap rematch swap, sg speed formula
-- [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding tap dead zones, guest "Anonymous" seeks, raw reason tokens, vacuous suits (6.7)
+- [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding dead zones, guest seeks, raw reasons (6.7); negative provisional ratingMap, own-by-sri, capped lists (6.5)
 - [Mini board review patterns](mini-board-review-patterns.md) — ownerPreview is public API, fen-message ply undercount, DOM-testable miniBoard.ts (3.19)
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)

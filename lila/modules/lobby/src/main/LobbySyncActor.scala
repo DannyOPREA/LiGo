@@ -140,8 +140,9 @@ final private class LobbySyncActor(
       .foreach:
         if _ then () else f
 
+  // players are now sent hooks they can't join (unit 6.5), so a bite that can't join leaves the hook be
   private def biteHook(hookId: String, sri: Sri, user: Option[LobbyUser]) =
-    hookRepo.byId(hookId).foreach { hook =>
+    hookRepo.byId(hookId).filter(biter.canJoin(_, user)).foreach { hook =>
       remove(hook)
       hookRepo.bySri(sri).foreach(remove)
       biter(hook, sri, user).foreach(this.!)
@@ -172,7 +173,7 @@ final private class LobbySyncActor(
 
   private def findCompatible(seek: Seek): Fu[Option[Seek]] =
     seekApi
-      .forUser(seek.user)
+      .joinableBy(seek.user)
       .map:
         _.find(_.compatibleWith(seek))
 

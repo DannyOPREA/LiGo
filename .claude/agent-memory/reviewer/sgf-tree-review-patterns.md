@@ -26,3 +26,9 @@ libs/board/src/sgf.mjs + a temporary munit test reading the same JSON list; fast
 - Char classes: Scala isLetter/isWhitespace/isDigit are Unicode, JS regexes ASCII (`Bé[ee]`, U+001C,
   U+00A0, `HA[２]`); JS Number vs Scala BigDecimal for komi precision.
 - Value-less properties (`;B;`, `TE`) make readTree throw a TypeError, not SgfError.
+
+Found in unit 4.11 review (lila SGF export, 2026-10-04):
+- A new export format must keep lila's anti-cheat move delay: PGN/JSON call `applyDelay(..., flags.keepDelayIf(game.playable))`; a new SGF path writing `go.actions` in full leaks a live game's last moves. Grep every new formatter for applyDelay.
+- Map every lila Status that sets a winner (Resign, Outoftime, Timeout, Cheat, NoStart via Finisher) to an RE; NoStart was missed.
+- Explicit format on a game that can't produce it (non-Go + format=sgf) returned 200 empty body; bulk path fell back to PGN. Check single vs bulk parity.
+- testQuick logs show Total 0; rerun with `sbt --server --batch "<proj>/testOnly <Class>"` in lila/.
