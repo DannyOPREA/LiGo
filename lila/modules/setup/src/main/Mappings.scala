@@ -1,6 +1,5 @@
 package lila.setup
 
-import chess.format.Fen
 import chess.{ Clock, Rated }
 import play.api.data.Forms.*
 import play.api.data.format.Formats.doubleFormat
@@ -33,6 +32,5 @@ private object Mappings:
   val goSize = optional(number.verifying("Board size must be 9, 13 or 19", GoSetups.sizes.contains))
   val goRuleset = optional(text.verifying("Ruleset must be japanese or chinese", GoSetups.rulesets.contains))
   val goKomi = optional(of[Double])
-  val fenField = optional:
-    import lila.common.Form.fen.{ mapping, truncateMoveNumber }
-    mapping.transform[Fen.Full](truncateMoveNumber, identity)
+  // Go games start from their setup, never from a chess position (units 3.15, 3.17): any `fen` is refused
+  val noFen = optional(text).verifying("Go games can't start from a chess position", _.isEmpty)

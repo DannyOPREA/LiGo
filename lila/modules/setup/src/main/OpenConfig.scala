@@ -1,7 +1,6 @@
 package lila.setup
 
 import chess.{ Clock, Rated }
-import chess.format.Fen
 import scalalib.model.Days
 
 import lila.core.game.GameRule
@@ -12,7 +11,6 @@ final case class OpenConfig(
     clock: Option[Clock.Config],
     days: Option[Days],
     rated: Rated,
-    position: Option[Fen.Full],
     userIds: Option[(UserId, UserId)],
     rules: Set[GameRule] = Set.empty,
     expiresAt: Option[Instant],
@@ -24,9 +22,6 @@ final case class OpenConfig(
 
   def goSetup = go.orDefault
 
-  // Go games start from their setup, never from a chess position (unit 3.15)
-  def validFen = position.isEmpty
-
 object OpenConfig:
 
   def from(
@@ -35,7 +30,7 @@ object OpenConfig:
       cl: Option[Clock.Config],
       days: Option[Days],
       rated: Rated,
-      pos: Option[Fen.Full],
+      @annotation.unused pos: Option[String], // a chess position, refused by the form (unit 3.17)
       usernames: Option[List[UserStr]],
       rules: Option[Set[GameRule]],
       expiresAt: Option[Instant],
@@ -48,7 +43,6 @@ object OpenConfig:
       clock = cl,
       days = days,
       rated = rated,
-      position = pos,
       userIds = usernames.map(_.map(_.id)).collect { case List(w, b) =>
         (w, b)
       },

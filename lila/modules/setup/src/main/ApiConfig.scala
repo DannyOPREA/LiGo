@@ -1,6 +1,5 @@
 package lila.setup
 
-import chess.format.Fen
 import chess.{ Rated, Clock, Speed }
 import scalalib.model.Days
 
@@ -15,7 +14,6 @@ final case class ApiConfig(
     days: Option[Days],
     rated: Rated,
     color: TriColor,
-    position: Option[Fen.Full] = None,
     message: Option[Template],
     keepAliveStream: Boolean,
     rules: Set[GameRule] = Set.empty,
@@ -28,9 +26,6 @@ final case class ApiConfig(
   def perfKey = perfType.key
 
   def goSetup = go.orDefault
-
-  // Go games start from their setup, never from a chess position (unit 3.15)
-  def validFen = position.isEmpty
 
   def validSpeed(isBot: Boolean) =
     !isBot || clock.forall: c =>
@@ -50,7 +45,7 @@ object ApiConfig extends BaseConfig:
       d: Option[Days],
       r: Rated,
       c: Option[String],
-      pos: Option[Fen.Full],
+      @annotation.unused pos: Option[String], // a chess position, refused by the form (unit 3.17)
       msg: Option[String],
       keepAliveStream: Option[Boolean],
       rules: Option[Set[GameRule]],
@@ -64,7 +59,6 @@ object ApiConfig extends BaseConfig:
       days = d,
       rated = r,
       color = TriColor.orDefault(~c),
-      position = pos,
       message = msg.map(Template.apply),
       keepAliveStream = ~keepAliveStream,
       rules = ~rules,

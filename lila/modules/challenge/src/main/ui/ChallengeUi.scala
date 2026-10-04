@@ -60,7 +60,7 @@ final class ChallengeUi(helpers: Helpers):
       div(cls := "content")(
         div(
           cls := "variant",
-          dataIcon := (if c.initialFen.isDefined then Icon.Feather else c.perfType.icon)
+          dataIcon := c.perfType.icon
         )(
           div(
             perfLink(c.perfType),
@@ -189,11 +189,6 @@ final class ChallengeUi(helpers: Helpers):
                         )
                     )
                 },
-              c.notableInitialFen.map: fen =>
-                frag(
-                  br,
-                  div(cls := "board-preview", chessgroundMini(fen.board, c.finalColor)(div))
-                ),
               (!c.isOpen).option(cancelForm)
             )
           case Status.Declined =>
@@ -249,8 +244,6 @@ final class ChallengeUi(helpers: Helpers):
                       )
               ,
               details(c, color),
-              c.notableInitialFen.map: fen =>
-                div(cls := "board-preview", chessgroundMini(fen.board, !c.finalColor)(div)),
               if relation.has(Relation.Block) then badTag("You have blocked this player.")
               else if c.open.exists(!_.canJoin) then
                 div(

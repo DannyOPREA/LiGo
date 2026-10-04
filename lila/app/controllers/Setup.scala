@@ -1,6 +1,5 @@
 package controllers
 
-import chess.format.Fen
 import play.api.libs.json.Json
 import play.api.mvc.{ EssentialAction, Result }
 
@@ -10,7 +9,6 @@ import lila.core.socket.Sri
 import lila.core.id.SessionId
 import lila.game.AnonCookie
 import lila.setup.Processor.HookResult
-import lila.setup.ValidFen
 
 final class Setup(
     env: Env,
@@ -51,7 +49,6 @@ final class Setup(
                     .so: challenger =>
                       val timeControl = makeTimeControl(config.makeClock, config.makeDaysPerTurn)
                       val challenge = lila.challenge.Challenge.make(
-                        initialFen = config.fen,
                         go = config.goSetup,
                         timeControl = timeControl,
                         rated = config.rated,
@@ -196,11 +193,6 @@ final class Setup(
 
   def filterForm = Open:
     Ok.snip(views.setup.filter(forms.filter))
-
-  def validateFen = Open:
-    (get("fen").map(Fen.Full.clean): Option[Fen.Full]).flatMap(ValidFen(getBool("strict"))) match
-      case None => BadRequest
-      case Some(v) => Ok.snip(views.analyse.ui.miniSpan(v.fen.board, v.color))
 
   private[controllers] def redirectPov(pov: Pov)(using ctx: Context) =
     val redir = Redirect(routes.Round.watcher(pov.gameId, Color.white))

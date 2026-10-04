@@ -12,7 +12,6 @@ final class JoinerTest extends munit.FunSuite:
     Challenge.TimeControl.Clock(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(0)))
 
   private def challenge(go: GoSetup) = Challenge.make(
-    initialFen = None,
     go = go,
     timeControl = timeControl,
     rated = chess.Rated.No,

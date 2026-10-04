@@ -1,7 +1,6 @@
 package lila.challenge
 
 import cats.derived.*
-import chess.format.Fen
 import chess.{ Color, Rated, Speed }
 import ligo.gorules.Setup as GoSetup
 import reactivemongo.api.bson.Macros.Annotations.Key
@@ -18,7 +17,6 @@ import lila.rating.PerfType
 case class Challenge(
     @Key("_id") id: ChallengeId,
     status: Challenge.Status,
-    initialFen: Option[Fen.Full],
     timeControl: Challenge.TimeControl,
     rated: Rated,
     colorChoice: Challenge.ColorChoice,
@@ -68,8 +66,6 @@ case class Challenge(
   def setDestUser(u: WithPerf) = copy(destUser = toRegistered(u).some)
 
   def speed = speedOf(timeControl)
-
-  def notableInitialFen: Option[Fen.Full] = none // a Go game never starts from a chess position
 
   def isOpen = open.isDefined
 
@@ -174,7 +170,6 @@ object Challenge:
       .getOrElse(TimeControl.Unlimited)
 
   def make(
-      @annotation.unused initialFen: Option[Fen.Full], // a Go game never starts from a chess position
       go: GoSetup,
       timeControl: TimeControl,
       rated: Rated,
@@ -196,7 +191,6 @@ object Challenge:
     new Challenge(
       id = id.fold(randomId)(_.into(ChallengeId)),
       status = Status.Created,
-      initialFen = none,
       timeControl = timeControl,
       rated = rated,
       colorChoice = colorChoice,

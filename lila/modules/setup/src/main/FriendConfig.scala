@@ -1,6 +1,5 @@
 package lila.setup
 
-import chess.format.Fen
 import chess.{ Clock, Rated }
 import scalalib.model.Days
 
@@ -14,10 +13,8 @@ case class FriendConfig(
     days: Days,
     rated: Rated,
     color: TriColor,
-    fen: Option[Fen.Full] = None,
     go: GoOptions = GoOptions.default
 ) extends HumanConfig
-    with Positional
     with WithColor:
 
   def >> =
@@ -29,7 +26,7 @@ case class FriendConfig(
       days,
       rated.id.some,
       color.name,
-      fen,
+      none[String],
       go.size,
       go.ruleset,
       go.komi
@@ -47,7 +44,7 @@ object FriendConfig extends BaseConfig:
       d: Days,
       m: Option[Int],
       c: String,
-      fen: Option[Fen.Full],
+      @annotation.unused fen: Option[String], // refused by the form (unit 3.17)
       size: Option[Int] = None,
       ruleset: Option[String] = None,
       komi: Option[Double] = None
@@ -59,7 +56,6 @@ object FriendConfig extends BaseConfig:
       days = d,
       rated = m.fold(Rated.default)(Rated.orDefault),
       color = TriColor(c).err("Invalid color " + c),
-      fen = fen,
       go = GoOptions(size, ruleset, komi)
     )
 
@@ -84,8 +80,7 @@ object FriendConfig extends BaseConfig:
         increment = r.get("i"),
         days = r.get("d"),
         rated = Rated.orDefault(r.int("m")),
-        color = TriColor.White,
-        fen = r.getO[Fen.Full]("f").filter(_.value.nonEmpty)
+        color = TriColor.White
       )
 
     def writes(w: BSON.Writer, o: FriendConfig) =
@@ -94,6 +89,5 @@ object FriendConfig extends BaseConfig:
         "t" -> o.time,
         "i" -> o.increment,
         "d" -> o.days,
-        "m" -> o.rated.id,
-        "f" -> o.fen
+        "m" -> o.rated.id
       )

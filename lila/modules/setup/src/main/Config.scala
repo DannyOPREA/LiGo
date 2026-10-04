@@ -1,6 +1,5 @@
 package lila.setup
 
-import chess.format.Fen
 import chess.{ Clock, Speed }
 import scalalib.model.Days
 
@@ -60,14 +59,6 @@ trait WithColor:
   def color: TriColor
 
   lazy val creatorColor: Color = color.resolve()
-
-trait Positional:
-  self: Config =>
-
-  def fen: Option[Fen.Full]
-
-  // Go games start from their setup, never from a chess position (unit 3.15)
-  def validFen = fen.isEmpty
 
 object Config extends BaseConfig
 

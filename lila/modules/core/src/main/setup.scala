@@ -1,7 +1,7 @@
 package lila.core
 package setup
 
-import _root_.chess.{ Rated, Clock, format }
+import _root_.chess.{ Rated, Clock }
 import scalalib.model.Days
 
 import lila.core.game.{ GameRule, GoSetups }
@@ -32,7 +32,6 @@ trait OpenConfig:
   val clock: Option[Clock.Config]
   val days: Option[Days]
   val rated: Rated
-  val position: Option[format.Fen.Full]
   val userIds: Option[PairOf[UserId]]
   val rules: Set[game.GameRule]
   val expiresAt: Option[Instant]
@@ -43,6 +42,8 @@ trait SetupForm:
   private type Named[T] = (String, Mapping[T])
   // Refuses a chess `variant` field: only Go games are created (unit 3.17).
   def variant: Named[Option[String]]
+  // Refuses a `fen` field: a Go game never starts from a chess position (unit 3.17).
+  def noFen: Mapping[Option[String]]
   def message: Named[Option[String]]
   def clock: Named[Option[Clock.Config]]
   def optionalDays: Named[Option[Days]]
