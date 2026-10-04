@@ -78,6 +78,9 @@ final class Env(
   Bus.sub[lila.core.game.CorresAlarmEvent]: e =>
     logUnit { pushApi.corresAlarm(e.pov) }
 
+  Bus.sub[lila.core.game.ScoringPhaseEvent]: e =>
+    logUnit { pushApi.scoringPhase(e.pov) }
+
   Bus.sub[lila.core.notify.PushNotification]: n =>
     logUnit { pushApi.notifyPush(n.to, n.content) }
 

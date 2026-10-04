@@ -72,7 +72,8 @@ Also `lila/modules/round/src/main/GoRatedGame.scala` and its test
 (`lila/modules/round/src/test/GoRatedGameTest.scala`), which apply that maths to rated Go games,
 and `lila/modules/challenge/src/main/GoRatedChallenge.scala` and its test
 (`lila/modules/challenge/src/test/GoRatedChallengeTest.scala`), its handicap rule for rated
-challenges (unit 5.7).
+challenges (unit 5.7), and `lila/ui/lobby/src/rankRange.ts` and its test
+(`lila/ui/lobby/tests/rankRange.test.ts`), the setup window's rank filter (unit 5.7).
 
 ### 1.2 npm packages removed with Phase 3 features
 
