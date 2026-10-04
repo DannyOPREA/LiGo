@@ -62,7 +62,7 @@ final private class HookRepo:
   // O(n)
   // invoked regularly when stealing hooks for pools
   def poolCandidates(
-      clock: chess.Clock.Config,
+      clock: lila.core.game.ClockSettings,
       go: ligo.gorules.Setup
   ): Vector[lila.core.pool.HookThieve.PoolHook] =
     hooks.values.withFilter(_.compatibleWithPool(clock, go)).flatMap(Hook.asPoolHook).toVector

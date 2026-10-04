@@ -18,7 +18,8 @@ object home:
           Json
             .obj(
               "data" -> data,
-              "showRatings" -> ctx.pref.showRatings
+              "showRatings" -> ctx.pref.showRatings,
+              "pools" -> lila.pool.PoolList.json // the pool tiles (unit 6.4)
             )
             .add("playban", playban.map(lila.playban.TempBan.lobbyJson))
         )
