@@ -122,7 +122,7 @@ function play(cookie, fullId) {
   if (!check(res, { 'game JSON': r => r.status === 200 })) return false;
   const data = res.json();
   const color = data.player.color;
-  trace('game', `${fullId} ${color} turns=${data.game.turns} v=${data.player.version}`);
+  trace('game', `${fullId} ${color} turns=${data.game.turns} toMove=${data.game.player} v=${data.player.version}`);
   const mine = points(color);
   let played = 0;
   let sentAt = 0;
@@ -132,8 +132,10 @@ function play(cookie, fullId) {
   const start = Date.now();
   const url = `${WS}/play/${fullId}/v6?sri=${sri()}&v=${data.player.version}`;
   ws.connect(url, { headers: headers(cookie) }, socket => {
-    // Black moves at even plies of an even game
-    const myTurn = ply => (ply % 2 === 0) === (color === 'black');
+    // turns alternate from the colour to move when the JSON was read (a new Go game's ply count
+    // doesn't start at 0, so the ply's parity alone doesn't say whose turn it is)
+    const startPly = data.game.turns ?? 0;
+    const myTurn = ply => ((ply - startPly) % 2 === 0) === (data.game.player === color);
     const move = ply => {
       if (!myTurn(ply)) return;
       if (played < MOVES) {
