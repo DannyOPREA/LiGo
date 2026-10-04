@@ -44,6 +44,8 @@ enum NotificationContent(val key: String):
   case PlanStart(userId: UserId) extends NotificationContent("planStart") // BC
   case PlanExpire(userId: UserId) extends NotificationContent("planExpire") // BC
   case CorresAlarm(gameId: GameId, opponent: String) extends NotificationContent("corresAlarm")
+  // a correspondence Go game's scoring phase opened: no "your turn" there, and a day is short (ADR 0023 §4)
+  case ScoringPhase(gameId: GameId, opponent: String) extends NotificationContent("scoringPhase")
   case Recap(year: Int) extends NotificationContent("recap")
 
 case class NotifyAllows(userId: UserId, allows: Allows)

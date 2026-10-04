@@ -18,6 +18,7 @@ private object BSONHandlers:
   private given BSONDocumentHandler[PlanExpire] = Macros.handler
   private given BSONDocumentHandler[RatingRefund] = Macros.handler
   private given BSONDocumentHandler[CorresAlarm] = Macros.handler
+  private given BSONDocumentHandler[ScoringPhase] = Macros.handler
   private given BSONDocumentHandler[IrwinDone] = Macros.handler
   private given BSONDocumentHandler[KaladinDone] = Macros.handler
   private given BSONDocumentHandler[GenericLink] = Macros.handler
@@ -43,6 +44,7 @@ private object BSONHandlers:
         case x: RatingRefund => summon[BSONHandler[RatingRefund]].writeTry(x).get
         case ReportedBanned => emptyBdoc
         case x: CorresAlarm => summon[BSONHandler[CorresAlarm]].writeTry(x).get
+        case x: ScoringPhase => summon[BSONHandler[ScoringPhase]].writeTry(x).get
         case x: IrwinDone => summon[BSONHandler[IrwinDone]].writeTry(x).get
         case x: KaladinDone => summon[BSONHandler[KaladinDone]].writeTry(x).get
         case x: GenericLink => summon[BSONHandler[GenericLink]].writeTry(x).get
@@ -64,6 +66,7 @@ private object BSONHandlers:
         case "ratingRefund" => reader.as[RatingRefund]
         case "reportedBanned" => ReportedBanned
         case "corresAlarm" => reader.as[CorresAlarm]
+        case "scoringPhase" => reader.as[ScoringPhase]
         case "irwinDone" => reader.as[IrwinDone]
         case "kaladinDone" => reader.as[KaladinDone]
         case "genericLink" => reader.as[GenericLink]

@@ -31,6 +31,9 @@ object GoStorage:
     val actions = "ac"
     val scoring = "sc"
 
+  /** The scoring block's key for who has accepted the count (bitmask: 1 Black, 2 White). */
+  val scoringAccepted = "acc"
+
   /** A game has no more actions than this: each resume needs a placement since the previous one (R-SP-9), so
     * there are at most as many resumes as plies. It bounds the replay of a corrupt document.
     */
@@ -105,7 +108,7 @@ object GoStorage:
         "ow" -> sc.owner,
         "sb" -> sc.count.map(c => sideWrite(c.black, white = false)),
         "sw" -> sc.count.map(c => sideWrite(c.white, white = true)),
-        "acc" -> acceptedKey(sc.accepted),
+        scoringAccepted -> acceptedKey(sc.accepted),
         "ex" -> sc.expiresAt,
         "pn" -> sc.pending.option(true),
         "tx" -> sc.overtime.option(true)
@@ -136,7 +139,7 @@ object GoStorage:
               .map(Some(_))
           case _ => Left("half a count")
       yield
-        val acc = r.intD("acc")
+        val acc = r.intD(scoringAccepted)
         GoScoring(
           opened,
           request,

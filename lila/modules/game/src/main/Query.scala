@@ -87,6 +87,26 @@ object Query:
 
   def nowPlaying[U: UserIdOf](u: U) = bdoc(F.playingUids -> u.id) ++ go
 
+  /** The playing games where it is this user's turn: the side to move by the ply's parity, or in the scoring
+    * phase (ADR 0023 §4) the sides that haven't accepted the count (`sc.acc` is a bitmask: 1 Black, 2 White).
+    * `Pov.isMyTurn` must agree; GoUserTurnTest checks it.
+    */
+  def userTurn(userId: UserId): Bdoc =
+    val scoring = GoStorage.F.scoring
+    val accepted = s"$scoring.${GoStorage.scoringAccepted}"
+    val bySide = List(0, 1).map: rem =>
+      bdoc(
+        s"${F.playingUids}.$rem" -> userId,
+        scoring -> bdoc("$exists" -> false),
+        F.turns -> bdoc("$mod" -> barr(2, rem))
+      )
+    // playingUids is [white, black]: White hasn't accepted when bit 2 is unset, Black when bit 1 is
+    val byAcceptance = List(
+      bdoc(s"${F.playingUids}.0" -> userId, accepted -> bdoc("$in" -> barr(0, 1))),
+      bdoc(s"${F.playingUids}.1" -> userId, accepted -> bdoc("$in" -> barr(0, 2)))
+    )
+    nowPlaying(userId) ++ bdoc("$or" -> (bySide ::: byAcceptance))
+
   def recentlyPlaying(u: UserId) =
     nowPlaying(u) ++ bdoc(F.movedAt.gt(nowInstant.minusMinutes(5)))
 
