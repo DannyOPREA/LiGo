@@ -8,11 +8,6 @@ export const formatMs = (msTime: number): string => {
   return hours > 0 ? hours + ':' + pad(minutes) + ':' + pad(seconds) : minutes + ':' + pad(seconds);
 };
 
-export const otbClockIsRunning = (fen: string): boolean => !fen.includes('PPPPPPPP/RNBQKBNR');
-
-export const lichessClockIsRunning = (fen: string, color: Color): boolean =>
-  color === 'white' ? !fen.includes('PPPPPPPP/RNBQKBNR') : !fen.startsWith('rnbqkbnr/pppppppp');
-
 export function setClockWidget(el: HTMLElement, opts: Opts): void {
   const instance = data.get(el, 'clock') as ClockWidget;
   if (instance) instance.set(opts);

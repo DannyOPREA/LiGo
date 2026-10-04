@@ -5,6 +5,41 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 4.10 · the scoring phase and byo-yomi on the game page
+- Did: libs/board's `mountBoard` takes `scoring` marks (dead stones, owner string, seal points,
+  tappable) and reports taps on stones (`onScoreTap`); goban draws them in its "stone removal" phase,
+  which libs/board sets directly. The round page handles 4.8's `scoring` and `resume` events, sends
+  `score-toggle {p, v}`, `score-accept {v}` and `score-resume`, stops the clocks in the phase, and
+  shows a panel in Pass's place: "Counting the score…", the tap hint, a "no proposal" note, the seal
+  warning, the count table, who accepted, Accept score, Resume play and the time left to agree. A
+  counted game shows `B+2.5` / Jigo with "Black wins by 2.5 points" and keeps its marks and count; a
+  game never counted shows "No result". Byo-yomi periods sit beside each clock ("+5×30s" in main
+  time, "5×30s" after), and the page starts the next period itself when one runs out.
+- Worked: goban's own stone-removal drawing (translucent stone with a cross, territory squares,
+  triangles) needed no drawing code; replacing `engine.toggleSingleGroupRemoval` on the instance
+  turns its tap into a report without touching goban's tap handling, keyboard Enter included.
+  The round e2e harness (unit 3.18) took scoring and byo-yomi games with two new options.
+- Didn't work: the first browser run showed "Counting…" forever: the new controller methods were
+  never registered as socket handlers (`socket.ts`). A unit test now sends both events through
+  `socket.receive`.
+- Tests: 4 libs/board browser tests (taps reported not marked, not tappable, Enter/P, marks
+  removed), 12 controller tests, 4 byo-yomi tests, result/status tests, 7 round page browser tests
+  (desktop and phone: proposal, toggle, accept, result; resume; reload mid-phase; periods rolling
+  over) and two scoring-board screenshot baselines.
+- Lessons: goban's stone removal needs only `engine.phase = 'stone removal'`, `engine.removal`,
+  marks (`score`, `triangle`) and a `player_id` it counts as a player; never send its
+  `game/removed_stones/set` path through a stand-in socket. The ADR 0020 wire doesn't say whether a
+  byo-yomi side is still in main time.
+- Review fixes: `goKomi` already existed in site.xml (lila wouldn't compile: duplicate val in
+  key.scala), so the count table reuses it; a toggle or accept the server ignores no longer locks
+  the panel (taps come back after 5 s); no Resume at the 1,000-ply limit; no "your turn" notice on
+  the second pass; the board's cursor reads out "marked dead" and territory.
+- Asked of Phase 4 and added to 4.8 (a141596): `inByo: {b, w}` in the byo-yomi clock JSON and clock
+  events, so the page knows whether a side is still in main time; it guesses only if it's missing.
+- Merged main after 4.8 landed: dropped `goBothPlayersPassed` and `goMoveLimitReached` (two passes now
+  open the scoring phase; a game the server could not count says "Score not counted").
+- Decisions: one line in logs/decisions.md.
+
 ### 2026-10-04 · unit 7.4 clean-up · The analysis board drops its last chess styles
 - Did: for 3.19 part 2 (chessground and chessops gone), `ui/analyse` no longer imports `lib/css/chess/{promotion,
   variant-style,zh-pocket}` or `lib/css/component/material`. The crazyhouse build (`analyse.zh`) and the chess
@@ -68,7 +103,6 @@ _none yet_
 - Didn't work / dead ends: a template literal to make `san` a string in tests trips oxlint; the tests convert with `String()` instead.
 - Lessons: the unit tests' i18n stand-in returns a function named after the key, so tests compare `String(...)` with `site.<key>`.
 - Decisions: none. Still open: Danny's yes/no on deleting the chess leftovers.
-
 
 ### 2026-10-03 · unit 9.7 part one review · Reviewer findings fixed (PR #84)
 - Did: an independent review found nothing blocking; fixed its 5 should-fix and 4 of its 6 nits. 3D now always reads off on the server (`PrefHandlers`, `RequestPref`), since the menu lost its switch and a stored `is3d=true` would have kept lila's 3D board stylesheet squashing the Go board. A test keeps the three copies of the theme names in step (lila's lists, `libs/board`'s, the menu's swatch styles), and the menu's two panes are tested (list, `aria-pressed`, the `/pref/theme` and `/pref/pieceSet` posts, `<body>` and `board.change`). The stones pane reads "Stones" (English text of the `pieceSet` key). The public preferences JSON gives the Go name for a stored chess one. Night's swatch uses goban's own stone colours; the round controller test restores `<body>` in a `finally`; the test page escapes its attributes. Added the PR's row to docs/UPSTREAM.md (new project rule).

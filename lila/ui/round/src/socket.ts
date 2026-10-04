@@ -98,6 +98,9 @@ export function make(send: RoundSocketSend, ctrl: RoundController): RoundSocket 
       ctrl.redraw();
     },
     endData: ctrl.endWithData,
+    // a Go game's scoring phase (ADR 0020 §6, unit 4.10)
+    scoring: ctrl.apiScoring,
+    resume: ctrl.apiResume,
     rematchOffer(by: Color) {
       ctrl.data.player.offeringRematch = by === ctrl.data.player.color;
       if ((ctrl.data.opponent.offeringRematch = by === ctrl.data.opponent.color))

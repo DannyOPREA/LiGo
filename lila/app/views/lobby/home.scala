@@ -19,7 +19,8 @@ object home:
             .obj(
               "data" -> data,
               "showRatings" -> ctx.pref.showRatings,
-              "pools" -> lila.pool.PoolList.json // the pool tiles (unit 6.4)
+              "pools" -> lila.pool.PoolList.json, // the pool tiles (unit 6.4)
+              "corres" -> lila.lobby.CorresPresets.json // the correspondence tiles (unit 6.6)
             )
             .add("playban", playban.map(lila.playban.TempBan.lobbyJson))
         )

@@ -81,35 +81,7 @@ final class RankingApi(
                 .dmap(_.flatten)
 
   private[user] def fetchLeaderboard(nb: Int): Fu[lila.rating.UserPerfs.Leaderboards] =
-    for
-      ultraBullet <- topPerf.fetchLightPerfs(PerfKey.ultraBullet, nb)
-      bullet <- topPerf.fetchLightPerfs(PerfKey.bullet, nb)
-      blitz <- topPerf.fetchLightPerfs(PerfKey.blitz, nb)
-      rapid <- topPerf.fetchLightPerfs(PerfKey.rapid, nb)
-      classical <- topPerf.fetchLightPerfs(PerfKey.classical, nb)
-      chess960 <- topPerf.fetchLightPerfs(PerfKey.chess960, nb)
-      kingOfTheHill <- topPerf.fetchLightPerfs(PerfKey.kingOfTheHill, nb)
-      threeCheck <- topPerf.fetchLightPerfs(PerfKey.threeCheck, nb)
-      antichess <- topPerf.fetchLightPerfs(PerfKey.antichess, nb)
-      atomic <- topPerf.fetchLightPerfs(PerfKey.atomic, nb)
-      horde <- topPerf.fetchLightPerfs(PerfKey.horde, nb)
-      racingKings <- topPerf.fetchLightPerfs(PerfKey.racingKings, nb)
-      crazyhouse <- topPerf.fetchLightPerfs(PerfKey.crazyhouse, nb)
-    yield lila.rating.UserPerfs.Leaderboards(
-      ultraBullet = ultraBullet,
-      bullet = bullet,
-      blitz = blitz,
-      rapid = rapid,
-      classical = classical,
-      crazyhouse = crazyhouse,
-      chess960 = chess960,
-      kingOfTheHill = kingOfTheHill,
-      threeCheck = threeCheck,
-      antichess = antichess,
-      atomic = atomic,
-      horde = horde,
-      racingKings = racingKings
-    )
+    topPerf.fetchLightPerfs(PerfKey.go, nb).map(lila.rating.UserPerfs.Leaderboards(_))
 
   private[user] object weeklyStableRanking:
 

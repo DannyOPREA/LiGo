@@ -1,12 +1,15 @@
-import { opposite } from '@lichess-org/chessground/util';
 import { h, type VNode } from 'snabbdom';
 
+import { opposite } from 'lib/game/chess';
 import { licon } from 'lib/licon';
-import { spinnerVdom, initMiniBoard, dataIcon, onInsert, icon } from 'lib/view';
+import { spinnerVdom, dataIcon, onInsert, icon } from 'lib/view';
 import { userLink } from 'lib/view/userLink';
 
 import type ChallengeCtrl from './ctrl';
 import type { Challenge, ChallengeData, ChallengeDirection, ChallengeUser, TimeControl } from './interfaces';
+
+const goName = (go: { size: number; rules: string }): string =>
+  `${go.size}×${go.size} · ${go.rules === 'chinese' ? i18n.site.goRulesChinese : i18n.site.goRulesJapanese}`;
 
 export const loaded = (ctrl: ChallengeCtrl): VNode =>
   ctrl.redirecting
@@ -36,8 +39,7 @@ const allChallenges = (ctrl: ChallengeCtrl, d: ChallengeData, nb: number): VNode
 
 function challenge(ctrl: ChallengeCtrl, dir: ChallengeDirection) {
   return (c: Challenge) => {
-    const fromPosition = c.variant.key === 'fromPosition';
-    const origColor = c.color === 'random' ? (fromPosition ? c.finalColor : 'random') : c.finalColor;
+    const origColor = c.color === 'random' ? 'random' : c.finalColor;
     const myColor = dir === 'out' ? origColor : origColor === 'random' ? 'random' : opposite(origColor);
     const opponent = dir === 'in' ? c.challenger : c.destUser;
     return h(
@@ -52,19 +54,15 @@ function challenge(ctrl: ChallengeCtrl, dir: ChallengeDirection) {
             h('span.desc', [
               h('span.is.color-icon.' + myColor),
               ' • ',
-              [i18n.site[c.rated ? 'rated' : 'casual'], timeControl(c.timeControl), c.variant.name].join(
-                ' • ',
-              ),
+              [
+                i18n.site[c.rated ? 'rated' : 'casual'],
+                timeControl(c.timeControl),
+                ...(c.go ? [goName(c.go)] : []),
+              ].join(' • '),
             ]),
           ]),
           icon(c.perf.icon)('.perf'),
         ]),
-        fromPosition
-          ? h('div.position.mini-board.cg-wrap.is2d', {
-              attrs: { 'data-state': `${c.initialFen},${myColor}` },
-              hook: onInsert(initMiniBoard),
-            })
-          : null,
         h('div.buttons', (dir === 'in' ? inButtons : outButtons)(ctrl, c)),
       ],
     );
@@ -87,7 +85,11 @@ function inButtons(ctrl: ChallengeCtrl, c: Challenge): VNode[] {
     ]);
   const viewElement = () =>
     h('a.view', {
-      attrs: { 'data-icon': licon.Eye, href: '/' + c.id, title: i18n.site.viewInFullSize },
+      attrs: {
+        'data-icon': licon.Eye,
+        href: '/' + c.id,
+        title: i18n.site.viewInFullSize,
+      },
     });
 
   return [
@@ -114,7 +116,11 @@ const outButtons = (ctrl: ChallengeCtrl, c: Challenge) => [
   h('div.owner', [
     h('span.waiting', i18n.site.waiting),
     h('a.view', {
-      attrs: { 'data-icon': licon.Eye, href: '/' + c.id, title: i18n.site.viewInFullSize },
+      attrs: {
+        'data-icon': licon.Eye,
+        href: '/' + c.id,
+        title: i18n.site.viewInFullSize,
+      },
     }),
   ]),
   h('button.button.decline', {

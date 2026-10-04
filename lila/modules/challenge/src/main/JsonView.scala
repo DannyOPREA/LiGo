@@ -66,7 +66,6 @@ final class JsonView(
         "status" -> c.status.name,
         "challenger" -> c.challengerUser,
         "destUser" -> c.destUser,
-        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "rated" -> c.rated,
         "speed" -> c.speed.key,
         "timeControl" -> c.timeControl.match

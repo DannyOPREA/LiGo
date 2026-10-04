@@ -1,24 +1,8 @@
-import { uciToMove } from '@lichess-org/chessground/util';
-
-import { embedChessground } from './asset';
-
-// https://lichess.org/training/frame
-window.onload = async () => {
+// The daily puzzle embed (https://lichess.org/training/frame in lichess): the server draws the Go board as an
+// SVG, so this only keeps the frame no taller than the window (chessground left in unit 3.19 part 2).
+window.onload = () => {
   const el = document.querySelector<HTMLElement>('#daily-puzzle');
-  const board = el?.querySelector<HTMLAnchorElement>('.mini-board');
-
-  if (!el || !board) return;
-
-  const [fen, orientation, lm] = board.getAttribute('data-state')?.split(',') ?? [];
-
-  (await embedChessground()).Chessground(board.firstChild, {
-    coordinates: false,
-    drawable: { enabled: false, visible: false },
-    viewOnly: true,
-    fen,
-    lastMove: uciToMove(lm),
-    orientation: orientation as 'white' | 'black',
-  });
+  if (!el) return;
 
   const resize = () => {
     const windowHeight = window.innerHeight;

@@ -203,21 +203,8 @@ object PerfType:
     List(PerfKey.bullet, PerfKey.blitz, PerfKey.rapid, PerfKey.classical, PerfKey.correspondence)
   val standardSet: Set[PerfKey] = standard.toSet
   val standardWithUltra: List[PerfKey] = PerfKey.ultraBullet :: standard
-  val leaderboardable: List[PerfKey] = List(
-    PerfKey.bullet,
-    PerfKey.blitz,
-    PerfKey.rapid,
-    PerfKey.classical,
-    PerfKey.ultraBullet,
-    PerfKey.crazyhouse,
-    PerfKey.chess960,
-    PerfKey.kingOfTheHill,
-    PerfKey.threeCheck,
-    PerfKey.antichess,
-    PerfKey.atomic,
-    PerfKey.horde,
-    PerfKey.racingKings
-  )
+  // LiGo: the one Go leaderboard (ADR 0021 §3, unit 5.5); no game rates a chess perf any more (unit 3.17)
+  val leaderboardable: List[PerfKey] = List(PerfKey.go)
   val isLeaderboardable: Set[PerfKey] = leaderboardable.toSet
 
   lazy val totalTimeRoughEstimation: Map[PerfType, Centis] =

@@ -120,12 +120,6 @@ importers:
       '@axe-core/playwright':
         specifier: 4.13.0
         version: 4.13.0(playwright-core@1.63.0)
-      '@lichess-org/chessground':
-        specifier: ^10.2.0
-        version: 10.2.0
-      '@lichess-org/pgn-viewer':
-        specifier: ^2.6.4
-        version: 2.6.4
       '@playwright/test':
         specifier: ^1.63.0
         version: 1.63.0
@@ -138,9 +132,6 @@ importers:
       ab:
         specifier: github:lichess-org/ab-stub
         version: https://codeload.github.com/lichess-org/ab-stub/tar.gz/e391b56a82b7c71e7663082a797f6fc21b18776d
-      chessops:
-        specifier: ^0.15.1
-        version: 0.15.1
       jsdom:
         specifier: ^30.0.1
         version: 30.0.1
@@ -843,13 +834,6 @@ packages:
   '@kurkle/color@0.3.4':
     resolution: {integrity: sha512-M5UknZPHRu3DEDWoipU6sE8PdkZ6Z/S+v4dD+Ke8IaNlpdSQah50lz1KtcFBa2vsdOnwbbnxJwVM4wty6udA5w==}
 
-  '@lichess-org/chessground@10.2.0':
-    resolution: {integrity: sha512-XScWn76u2A+5uNHUfyf9P1DAImGcVs0WjjkGz3tJPXnzsoNVriRXuxm6hpN02DY5LNk/jkCXKeW0raEOXGxPig==}
-    engines: {node: '>=24', pnpm: '>=12'}
-
-  '@lichess-org/pgn-viewer@2.6.4':
-    resolution: {integrity: sha512-fP/Kppo8tshABNI4WH1YnNQQsWZb7Lm5Qug8/Mpg1qCQIHeXM8AluctrTpjZHPg7sIFIc6J6pf+aAkYunUWrJQ==}
-
   '@mongodb-js/saslprep@1.4.11':
     resolution: {integrity: sha512-o9rAHc0IpIjuPSxRutWpE1F62x7n+4mVS4rCNHkzhIUMQcc18bb6xEq5wd2NdN0WjepIyXIppRshYI2kQDOZVA==}
 
@@ -1271,9 +1255,6 @@ packages:
   cheerio@1.2.0:
     resolution: {integrity: sha512-WDrybc/gKFpTYQutKIK6UvfcuxijIZfMfXaYm8NMsPQxSYvf+13fXUJ4rztGGbJcBQ/GF55gvrZ0Bc0bj/mqvg==}
     engines: {node: '>=20.18.1'}
-
-  chessops@0.15.1:
-    resolution: {integrity: sha512-hQDwv90AFkrPEsRJBebh3ZE+xDga25TCCv4lavNT2plZmd33UKNFYaZsE+7rafMbnBRrDEWUVsSYFqY3qCIGZw==}
 
   cliui@6.0.0:
     resolution: {integrity: sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==}
@@ -2470,14 +2451,6 @@ snapshots:
 
   '@kurkle/color@0.3.4': {}
 
-  '@lichess-org/chessground@10.2.0': {}
-
-  '@lichess-org/pgn-viewer@2.6.4':
-    dependencies:
-      '@lichess-org/chessground': 10.2.0
-      chessops: 0.15.1
-      snabbdom: 3.5.1
-
   '@mongodb-js/saslprep@1.4.11':
     dependencies:
       sparse-bitfield: 3.0.3
@@ -2777,10 +2750,6 @@ snapshots:
       parse5-parser-stream: 7.1.2
       undici: 8.10.2
       whatwg-mimetype: 4.0.0
-
-  chessops@0.15.1:
-    dependencies:
-      '@badrap/result': 0.3.1
 
   cliui@6.0.0:
     dependencies:
