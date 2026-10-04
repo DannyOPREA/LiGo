@@ -57,11 +57,15 @@ final class ChallengeMaker(
       nextId: GameId
   ): Fu[Challenge] =
     fuccess:
-      val timeControl = (pov.game.clock, pov.game.daysPerTurn) match
-        case (Some(clock), _) => TimeControl.Clock(clock.config)
-        case (_, Some(days)) => TimeControl.Correspondence(days)
+      val timeControl = (pov.game.byoyomi, pov.game.clock, pov.game.daysPerTurn) match
+        case (Some(byoyomi), _, _) => TimeControl.Byoyomi(byoyomi.config)
+        case (_, Some(clock), _) => TimeControl.Clock(clock.config)
+        case (_, _, Some(days)) => TimeControl.Correspondence(days)
         case _ => TimeControl.Unlimited
-      val alternateColor = rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
+      // a handicap game's rematch keeps the colours, so the same player gets the stones again (unit 4.9)
+      val alternateColor =
+        pov.game.go.setup.handicap == 0 &&
+          rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
       Challenge.make(
         variant = pov.game.variant,
         initialFen = none, // a Go game never starts from a chess position

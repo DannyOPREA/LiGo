@@ -156,9 +156,8 @@ object Challenge:
           else if m.is(u2) then ColorChoice.Black.some
           else none
 
-  private def speedOf(timeControl: TimeControl) = timeControl match
-    case TimeControl.Clock(config) => Speed(config)
-    case _ => Speed.Correspondence
+  private def speedOf(timeControl: TimeControl) =
+    timeControl.clockSettings.fold(Speed.Correspondence)(_.speed)
 
   // Go's one perf (ADR 0021 §1)
   private def perfTypeOf(variant: Variant, timeControl: TimeControl): PerfType = PerfType.Go
@@ -171,9 +170,14 @@ object Challenge:
 
   def randomColor = Color.fromWhite(ThreadLocalRandom.nextBoolean())
 
-  def makeTimeControl(clock: Option[chess.Clock.Config], days: Option[Days]): TimeControl =
-    clock
-      .map(TimeControl.Clock.apply)
+  def makeTimeControl(
+      clock: Option[chess.Clock.Config],
+      days: Option[Days],
+      byoyomi: Option[ligo.gorules.ByoyomiConfig] = None
+  ): TimeControl =
+    byoyomi
+      .map(TimeControl.Byoyomi.apply)
+      .orElse(clock.map(TimeControl.Clock.apply))
       .orElse(days.map(TimeControl.Correspondence.apply))
       .getOrElse(TimeControl.Unlimited)
 

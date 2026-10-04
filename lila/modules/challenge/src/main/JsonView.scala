@@ -77,6 +77,14 @@ final class JsonView(
               "increment" -> clock.incrementSeconds,
               "show" -> clock.show
             )
+          case b: TimeControl.Byoyomi =>
+            Json.obj(
+              "type" -> "byoyomi",
+              "limit" -> b.config.mainSeconds,
+              "periods" -> b.config.periods,
+              "period" -> b.config.periodSeconds,
+              "show" -> b.show
+            )
           case TimeControl.Correspondence(d) =>
             Json.obj(
               "type" -> "correspondence",

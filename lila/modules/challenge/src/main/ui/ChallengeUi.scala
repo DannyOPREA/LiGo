@@ -43,8 +43,8 @@ final class ChallengeUi(helpers: Helpers):
       .css("challenge.page")
 
   private def challengeTitle(c: Challenge)(using ctx: Context) =
-    val speed = c.clock.map(_.config).fold(chess.Speed.Correspondence.name) { clock =>
-      s"${chess.Speed(clock).name} (${clock.show})"
+    val speed = c.timeControl.clockSettings.fold(chess.Speed.Correspondence.name) { clock =>
+      s"${clock.speed.name} (${clock.show})"
     }
     val variant = c.variant.exotic.so(s" ${c.variant.name}")
     val challenger = c.challengerUser.fold(trans.site.anonymous.txt()): reg =>
@@ -68,7 +68,9 @@ final class ChallengeUi(helpers: Helpers):
             br,
             span(cls := "clock"):
               c.daysPerTurn
-                .fold(shortClockName(c.clock.map(_.config))): days =>
+                .fold(c.timeControl match
+                  case b: Challenge.TimeControl.Byoyomi => frag(b.show) // e.g. 10+5×30s (unit 4.9)
+                  case _ => shortClockName(c.clock.map(_.config))): days =>
                   if days.value == 1 then trans.site.oneDay()
                   else trans.site.nbDays.pluralSame(days.value)
           )
@@ -77,7 +79,12 @@ final class ChallengeUi(helpers: Helpers):
           c.open.fold(c.colorChoice.some)(_.colorFor(requestedColor)).map { colorChoice =>
             frag(colorChoice.trans(), br)
           },
-          ratedName(c.rated)
+          ratedName(c.rated),
+          // a handicap game (unit 4.9): Black's stones, or none with Black first for one (R-HCP-2)
+          c.goSetup.handicap match
+            case 0 => emptyFrag
+            case 1 => frag(br, trans.site.goNoStonesBlackFirst())
+            case n => frag(br, trans.site.goNbHandicapStones.pluralSame(n))
         )
       ),
       c.rules.nonEmpty.option(
@@ -129,7 +136,7 @@ final class ChallengeUi(helpers: Helpers):
                 .map { destId =>
                   div(cls := "waiting")(
                     userIdLink(destId.some, cssClass = "target".some),
-                    if c.clock.isEmpty then
+                    if c.timeControl.clockSettings.isEmpty then
                       div(cls := "correspondence-waiting text", dataIcon := Icon.Checkmark):
                         "Challenge sent"
                     else spinner,
@@ -324,11 +331,19 @@ final class ChallengeUi(helpers: Helpers):
           "ruleset" -> GoSetups.rulesetKey(go.ruleset),
           "komi" -> go.komi.toString
         ),
+        Option.when(go.handicap > 0)("handicap" -> go.handicap.toString).toList,
         timeControl.match
           case Challenge.TimeControl.Clock(config) =>
             List(
               "minutesPerSide" -> config.limitInMinutes.toString,
               "increment" -> config.increment.roundSeconds.toString
+            )
+          case b: Challenge.TimeControl.Byoyomi =>
+            List(
+              "timeMode" -> "byoyomi",
+              "minutesPerSide" -> (b.config.mainSeconds / 60d).toString,
+              "periods" -> b.config.periods.toString,
+              "periodTime" -> b.config.periodSeconds.toString
             )
           case Challenge.TimeControl.Correspondence(days) => List("days" -> days.value.toString)
           case Challenge.TimeControl.Unlimited => List("time" -> "unlimited"),

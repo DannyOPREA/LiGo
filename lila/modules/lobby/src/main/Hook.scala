@@ -2,13 +2,13 @@ package lila.lobby
 
 import chess.variant.Variant
 import chess.IntRating
-import chess.{ Clock, Rated, Speed }
+import chess.{ Rated, Speed }
 import play.api.libs.json.*
 import scalalib.ThreadLocalRandom
 
 import ligo.gorules.Setup as GoSetup
 
-import lila.core.game.GoSetups
+import lila.core.game.{ ClockSettings, GoSetups }
 import lila.core.perf.UserWithPerfs
 import lila.core.rating.RatingRange
 import lila.core.socket.Sri
@@ -23,7 +23,7 @@ case class Hook(
     sid: Option[SessionId], // owner cookie (used to prevent multiple hooks)
     variant: Variant.Id, // always standard chess, carried unused until unit 3.17
     go: GoSetup, // board size, ruleset and komi (unit 3.15)
-    clock: Clock.Config,
+    clock: ClockSettings, // Fischer or byo-yomi (unit 4.9)
     rated: Rated,
     color: TriColor,
     user: Option[LobbyUser],
@@ -79,7 +79,7 @@ case class Hook(
       "perf" -> perfType.key,
       "t" -> clock.estimateTotalSeconds,
       "s" -> speed.id,
-      "i" -> (if clock.incrementSeconds > 0 then 1 else 0)
+      "i" -> (if clock.fischer.exists(_.incrementSeconds > 0) then 1 else 0)
     )
     .add("prov" -> perf.map(_.provisional))
     .add("u" -> user.map(_.username))
@@ -88,21 +88,24 @@ case class Hook(
     .add("variant" -> realVariant.exotic.option(realVariant.key))
     .add("go" -> GoSetups.json(go).some)
     .add("ra" -> rated.yes.option(1))
+    .add("byo" -> clock.byoyomi.map: c =>
+      Json.obj("limit" -> c.mainSeconds, "periods" -> c.periods, "period" -> c.periodSeconds))
 
   /* A pool game would have been rated, random colour, even, Japanese rules and the spec's komi
-   * (ADR 0022 §6); the pool's board size and clock are checked against each pool below. */
+   * (ADR 0022 §6); the pool's board size and clock are checked against each pool below. Pools have
+   * Fischer clocks until unit 6.4's second part brings byo-yomi ones. */
   def seemsCompatibleWithPools =
     rated.yes && realVariant.standard && color == TriColor.Random &&
       go.handicap == 0 && go.position.isEmpty && go.ruleset == ligo.gorules.Ruleset.Japanese &&
       GoSetups.hasStandardKomi(go)
 
   def compatibleWithPools(using isPoolCompatible: IsPoolCompatible) =
-    seemsCompatibleWithPools && isPoolCompatible.exec(clock, go)
+    seemsCompatibleWithPools && clock.fischer.exists(isPoolCompatible.exec(_, go))
 
   def compatibleWithPool(poolClock: chess.Clock.Config, poolGo: GoSetup) =
-    clock == poolClock && go == poolGo && seemsCompatibleWithPools
+    clock.fischer.contains(poolClock) && go == poolGo && seemsCompatibleWithPools
 
-  private lazy val speed = Speed(clock)
+  private lazy val speed = clock.speed
 
 object Hook:
 
@@ -112,7 +115,7 @@ object Hook:
       sri: Sri,
       variant: chess.variant.Variant,
       go: GoSetup,
-      clock: Clock.Config,
+      clock: ClockSettings,
       rated: Rated,
       color: TriColor,
       user: Option[UserWithPerfs],

@@ -49,7 +49,8 @@ final class Setup(
                       case _ if HTTPRequest.isLichobile(ctx.req) => Challenger.Open.some
                       case _ => none
                     .so: challenger =>
-                      val timeControl = makeTimeControl(config.makeClock, config.makeDaysPerTurn)
+                      val timeControl =
+                        makeTimeControl(config.makeClock, config.makeDaysPerTurn, config.makeByoyomi)
                       val challenge = lila.challenge.Challenge.make(
                         variant = config.variant,
                         initialFen = config.fen,
