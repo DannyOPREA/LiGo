@@ -5,6 +5,24 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · Unit 8.8 part two · The Phase 8 demo on the real stack
+- Did: `lila/tests/e2e-demo/phase8-demo.spec.ts` at phone size on 3.20's real-stack harness. A new
+  player signs up (a form POST, since email confirmation is off in development), solves a one-move
+  puzzle opened by its id, and fails the next puzzle /training gives them. The rating goes up, then down
+  from where the win left it. Then all 240 committed puzzles come back from `/api/puzzle/many` with
+  their tree and the source line `Puzzle.sourceLine` writes, and every 24th opens on the trainer page.
+  It runs in the `e2e` workflow (nightly, on demand, on PRs labelled `e2e`) and in `dev/ligo e2e demo`.
+- Worked: reading the shown puzzle's id from the page and its tree from the API, so the test plays
+  whatever lila's selector picks.
+- Didn't work / dead ends: lila doesn't run in the cloud session, so the e2e workflow is the only run.
+- Lessons: lila's CSRF check lets a POST without an Origin through, so `page.request.post('/signup')`
+  signs a test player up and leaves the session cookie in the browser context.
+- Decisions: solve a one-move puzzle by id rather than whatever /training picks, so the test doesn't
+  follow a multi-move line through goban's automatic replies.
+- Verified by Claude: tsc, oxlint (type-aware), format; the e2e workflow on the PR (see the PR).
+  · Needs owner verification: `dev/ligo e2e demo` on your box after `dev/ligo up`.
+- Follow-ups: none for Phase 8.
+
 ### 2026-10-04 · Unit 8.8 · The Phase 8 demo (part one: on the built page)
 - Did: `lila/ui/puzzle/e2e/demo.spec.ts` at phone size: a signed-in player taps and confirms, solves
   one puzzle and fails the next, and the rating goes up, then down; then all 240 committed puzzles open on
