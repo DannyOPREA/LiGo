@@ -17,7 +17,8 @@ final private class RoundNotifier(
               fullId = game.fullIdOf(color),
               opponent = game.player(!color).userId,
               win = game.winnerColor.map(color ==),
-              perf = game.perfKey
+              perf = game.perfKey,
+              noResult = game.endedWithNoResult.option(true)
             )
           ).toUser(userId)
         isUserPresent(game, userId).foreach:

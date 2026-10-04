@@ -27,8 +27,14 @@ case class UblogPost(userId: UserId, id: UblogPostId, slug: String, title: Strin
   def userIds = List(userId)
 case class TourJoin(userId: UserId, tourId: TourId, tourName: String) extends Atom("tournament", true):
   def userIds = List(userId)
-case class GameEnd(fullId: GameFullId, opponent: Option[UserId], win: Option[Boolean], perf: PerfKey)
-    extends Atom("gameEnd", true):
+case class GameEnd(
+    fullId: GameFullId,
+    opponent: Option[UserId],
+    win: Option[Boolean],
+    perf: PerfKey,
+    // a Go game that ended without a count (ADR 0020 §4): no result, not a draw; absent in older entries
+    noResult: Option[Boolean] = None
+) extends Atom("gameEnd", true):
   def userIds = opponent.toList
 case class SimulCreate(userId: UserId, simulId: SimulId, simulName: String) extends Atom("simulCreate", true):
   def userIds = List(userId)

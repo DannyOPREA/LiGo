@@ -297,6 +297,7 @@ export default class RoundController {
   apiScoring = (o: ScoringData): void => {
     const d = this.data;
     d.game.go.phase = 'scoring';
+    const acceptedBefore = this.hasAccepted();
     const before = d.game.scoring;
     d.game.scoring = o;
     this.scoringSent = false;
@@ -310,8 +311,9 @@ export default class RoundController {
     this.setTitle();
     this.redraw();
     this.onChange();
-    // having answered the count, the player has nothing more to do here: lila's "play next game"
-    if (this.isPlaying() && this.hasAccepted()) this.moveOn.next();
+    // having answered the count, the player has nothing more to do here: lila's "play next game", asked
+    // once when the accept arrives, not again on each later recount event the opponent causes
+    if (this.isPlaying() && this.hasAccepted() && !acceptedBefore) this.moveOn.next();
   };
 
   /** The server's `resume` event: a player took the game back from the scoring phase to play. */

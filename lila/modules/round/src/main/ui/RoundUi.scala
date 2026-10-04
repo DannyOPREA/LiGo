@@ -77,7 +77,8 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
       case (_, Some(l), Resign | Timeout | Cheat | NoStart) => s"${playerText(l)} resigned"
       case (_, Some(l), Outoftime) => s"${playerText(l)} ran out of time"
       case (Some(w), _, UnknownFinish | VariantEnd) => s"${playerText(w)} won"
-      case (_, _, Draw | Stalemate | UnknownFinish) => "Game is a draw"
+      case (_, _, UnknownFinish) => "The game ended with no result" // no count, not a draw (ADR 0020 §4)
+      case (_, _, Draw | Stalemate) => "Game is a draw"
       case _ if game.finished => "Game ended"
       case _ => "Game is still ongoing"
     val moves = (game.ply.value - game.startedAtPly.value + 1) / 2
