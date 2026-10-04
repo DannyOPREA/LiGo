@@ -3783,6 +3783,8 @@ interface I18n {
     gameAborted: string;
     /** Game as GIF */
     gameAsGIF: string;
+    /** Your game ended with no result */
+    gameEndedWithNoResult: string;
     /** You have a game in progress with %s. */
     gameInProgress: I18nFormat;
     /** Game mode */
@@ -4673,6 +4675,8 @@ interface I18n {
     safeTournamentName: string;
     /** Save */
     save: string;
+    /** Time to count the game */
+    scoringPhaseStarted: string;
     /** Scroll over computer variations to preview them. */
     scrollOverComputerVariationsToPreviewThem: string;
     /** Search */
