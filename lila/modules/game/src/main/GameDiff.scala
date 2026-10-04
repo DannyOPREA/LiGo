@@ -69,6 +69,15 @@ object GameDiff:
             bytes <- byteArrayHandler.writeOpt(ByteArray(GoStorage.actions.write(actions, go.size)))
           yield bytes
       )
+      dOpt(
+        GoStorage.F.scoring,
+        _.goScoring,
+        (o: Option[lila.core.game.GoScoring]) =>
+          for
+            sc <- o
+            go <- b.go
+          yield GoStorage.scoring.write(sc, go.size)
+      )
     else if a.variant.standard then dTry(huffmanPgn, _.sans, writeBytes.compose(PgnStorage.Huffman.encode))
     else
       val f = PgnStorage.OldBin

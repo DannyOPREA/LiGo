@@ -293,7 +293,17 @@ object BSONHandlers:
               .flatMap(ByoyomiClock.restore(_))
               .left
               .map(e => lila.log("game").warn(s"Go game ${light.id}: unreadable byo-yomi clock: $e"))
-              .toOption
+              .toOption,
+        goScoring = for
+          g <- go
+          doc <- r.getO[BSONDocument](GoStorage.F.scoring)
+          // an unreadable scoring phase loads the game without it, logged, rather than failing the whole game
+          sc <- GoStorage.scoring
+            .read(doc, g.size)
+            .left
+            .map(e => lila.log("game").warn(s"Go game ${light.id}: unreadable scoring phase: $e"))
+            .toOption
+        yield sc
       )
 
     def writes(w: BSON.Writer, o: Game) =
@@ -337,7 +347,9 @@ object BSONHandlers:
       ) ++ {
         o.go match
           // A Go game writes its Go block and none of the chess keys (ADR 0019 §4).
-          case Some(go) => GoStorage.write(go)
+          case Some(go) =>
+            GoStorage.write(go) ++
+              bdoc(GoStorage.F.scoring -> o.goScoring.map(GoStorage.scoring.write(_, go.size)))
           case None if o.variant.standard =>
             bdoc(F.huffmanPgn -> PgnStorage.Huffman.encode(o.sans.take(maxPlies.value)))
           case None =>

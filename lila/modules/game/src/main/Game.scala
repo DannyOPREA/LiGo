@@ -208,7 +208,8 @@ object GameExt:
           )
           Clock.WithCompensatedLag(GameClock.Byoyomi(if firstMoves then c2.start else c2), None)
 
-    /** A Phase 3 Go game is over once play stops (ADR 0019 §7): the second consecutive pass, or the ply cap.
+    /** Play has stopped (ADR 0019 §7, ADR 0020 §3.1): the second consecutive pass, or the ply cap. The
+      * scoring phase opens then.
       */
     def goPlayEnds: Boolean =
       g.go.exists(_.phase == ligo.gorules.Phase.Scoring) ||

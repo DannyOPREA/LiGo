@@ -56,7 +56,10 @@ case class Game(
     abortedBy: Option[Color] = None,
     // A byo-yomi clock (ADR 0020 §7, unit 4.7), stored under `cy`. A game has at most one of `clock` (Fischer)
     // and `byoyomi`; code that only knows Fischer clocks reads `clock` and sees none in a byo-yomi game.
-    byoyomi: Option[ByoyomiClock] = None
+    byoyomi: Option[ByoyomiClock] = None,
+    // A Go game's scoring phase (ADR 0020 §2, unit 4.8), stored under `sc`: there while the players agree on
+    // dead stones, and kept on a game that ended by counting.
+    goScoring: Option[GoScoring] = None
 ):
 
   export chess.{ position, sans, history, variant }
@@ -76,6 +79,9 @@ case class Game(
   def turnColor: Color = go.fold(ply.turn)(g => GoBridge.color(g.toMove))
 
   def isGo: Boolean = go.isDefined
+
+  /** In the scoring phase (ADR 0020 §3): the clocks are stopped and nobody moves. */
+  def inGoScoring: Boolean = goScoring.isDefined && playable
 
   /** Replace the Go game after an action or a takeback, taking its new ply (placements and passes, not
     * resumes, ADR 0019 §3).
@@ -235,8 +241,12 @@ case class Game(
 
   def drawn = finished && winner.isEmpty
 
+  // Nobody runs out of time while the players agree on dead stones (ADR 0020 §3): the clocks are stopped,
+  // and a stopped clock with time used would otherwise read as flagged.
   def outoftime(withGrace: Boolean): Boolean =
-    if isCorrespondence then outoftimeCorrespondence else outoftimeClock(withGrace)
+    if inGoScoring then false
+    else if isCorrespondence then outoftimeCorrespondence
+    else outoftimeClock(withGrace)
 
   private def outoftimeClock(withGrace: Boolean): Boolean =
     gameClock.exists: c =>

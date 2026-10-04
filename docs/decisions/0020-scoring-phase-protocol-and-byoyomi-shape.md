@@ -104,10 +104,11 @@ when the phase opens and on each change:
 | `d` | the current dead stones (after toggles), same encoding |
 | `sl` | points that still need sealing, same encoding |
 | `ow` | the current `owner` string |
-| `sb`, `sw` | the current count per colour as integers: territory, stones, prisoners; `sw` also komi × 2 and compensation; totals follow from them |
+| `sb`, `sw` | the current count per colour as integers: territory, stones, prisoners; `sw` also komi × 2 and compensation; then the service's total × 2 (amended in unit 4.8: lila stores the total it was given rather than adding it up, since lila never counts) |
 | `acc` | who accepted: 1 Black, 2 White, 3 both |
 | `ex` | when the phase times out (§3.6), or, before a proposal, when lila gives up waiting (§4) |
 | `pn` | a recount is pending (no count yet for the current `d`) |
+| `tx` | the timeout passed while a recount was pending: the recount, when it comes, ends the game (§4; added in unit 4.8) |
 
 The phase number is not stored: it comes from `ac` (§1). The proposal first shown (`pd`, `src`) is
 never recomputed, only superseded by a resume. When play resumes, `sc` is removed. When the game

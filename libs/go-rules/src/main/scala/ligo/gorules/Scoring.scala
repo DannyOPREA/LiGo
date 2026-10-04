@@ -122,6 +122,24 @@ object Scoring:
       )
     yield Scoring(game, phase, proposedDead, request, request, Set.empty)
 
+  /** A scoring phase as lila stored it (ADR 0020 §2), after any number of toggles, recounts and acceptances:
+    * the current dead stones, the request number of the count on show (`shown`) and of the latest request
+    * (`requested`, greater while a recount is pending), and who accepted. The same checks as [[open]] apply
+    * to the dead stones, so a corrupt document is refused rather than trusted.
+    */
+  def restore(
+      game: GoGame,
+      phase: Int,
+      dead: Set[Point],
+      shown: Int,
+      requested: Int,
+      accepted: Set[Color]
+  ): Either[ScoringRefusal, Scoring] =
+    for
+      opened <- open(game, phase, dead, shown)
+      _ <- Either.cond(requested >= shown, (), ScoringRefusal.NotLatest)
+    yield opened.copy(requested = requested, accepted = accepted)
+
 /** How a finished game ended (R-END-2 to R-END-4, R-RES-1 to R-RES-3), with its SGF `RE` value (R-RES-2). */
 enum GameResult:
   /** Counted: each side's total, komi and handicap compensation included (R-SCORE-4). The winner and margin

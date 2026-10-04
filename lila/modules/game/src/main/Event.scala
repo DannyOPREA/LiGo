@@ -161,6 +161,27 @@ object Event:
         .add("winner" -> state.winner)
     override def moveBy = Some(by)
 
+  /** The scoring phase changed (ADR 0020 §6): it opened, the proposal or a recount arrived, a chain was
+    * toggled or a player accepted.
+    */
+  case class GoScoring(sc: lila.core.game.GoScoring, go: ligo.gorules.GoGame) extends Event:
+    def typ = "scoring"
+    def data = JsonView.goScoring(sc, go, nowInstant)
+
+  /** A player took the game back from the scoring phase to play (ADR 0020 §6): who moves now, and the clock,
+    * running again for them.
+    */
+  case class GoResume(go: ligo.gorules.GoGame, state: State, clock: Option[ClockEvent]) extends Event:
+    def typ = "resume"
+    def data = Json
+      .obj(
+        "ply" -> state.turns,
+        "turn" -> GoBridge.color(go.toMove).name,
+        "phase" -> "play",
+        "board" -> GoBridge.board(go)
+      )
+      .add("clock" -> clock.map(_.data))
+
   case class Drop(
       role: chess.Role,
       pos: Square,
@@ -300,6 +321,8 @@ object Event:
             Color.Black.name -> rds.black
           ))
         .add("boosted" -> game.boosted)
+        // a Go game ended by counting: its result as SGF writes it, `B+3.5`, `W+0.5` or `0` (ADR 0020 §5)
+        .add("result" -> JsonView.goResult(game))
 
   case object Reload extends Empty:
     def typ = "reload"

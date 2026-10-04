@@ -14,6 +14,7 @@ import lila.round.RoundGame.*
 
 final private class MovePlayer(
     finisher: Finisher,
+    goScorer: GoScorer,
     scheduleExpiration: ScheduleExpiration
 )(using Executor):
 
@@ -46,9 +47,8 @@ final private class MovePlayer(
     else if !game.turnOf(color) then fufail(ClientError(s"$pov not your turn"))
     else fufail(ClientError(s"$pov move refused for some reason"))
 
-  /** A Go stone or pass (ADR 0019 §5–7): checked by go-rules, the clock stepped as scalachess steps it for a
-    * chess move, and the game ended with no winner on the second consecutive pass or at the ply cap (Phase 3
-    * has no scoring phase).
+  /** A Go stone or pass (ADR 0019 §5–7): checked by go-rules, and the clock stepped as scalachess steps it
+    * for a chess move. The second consecutive pass, or the ply cap, opens the scoring phase (ADR 0020 §3).
     */
   private[round] def goHuman(play: HumanGoPlay, round: RoundAsyncActor)(pov: Pov)(using
       proxy: GameProxy
@@ -85,11 +85,12 @@ final private class MovePlayer(
     val game = progress.game
     val action = game.go.flatMap(_.actions.lastOption).fold("pass")(lila.core.game.GoBridge.token)
     notifyGoMove(game, action, pov.color)
-    if game.goPlayEnds then finisher.other(game, _.UnknownFinish, None).dmap(progress.events ::: _)
-    else
-      if pov.opponent.isProposingTakeback then round ! RoundBus.Takeback(pov.player.id, false)
-      scheduleExpiration.exec(game)
-      fuccess(progress.events)
+    if pov.opponent.isProposingTakeback then round ! RoundBus.Takeback(pov.player.id, false)
+    goScorer.afterMove(game) match
+      case Some(opened) => opened.dmap(progress.events ::: _)
+      case None =>
+        scheduleExpiration.exec(game)
+        fuccess(progress.events)
 
   private def postHumanPlay(
       round: RoundAsyncActor,

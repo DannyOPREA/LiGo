@@ -85,6 +85,12 @@ final private class Titivate(
         case game if game.finished || game.isPgnImport || (game.aborted && game.bothPlayersHaveMoved) =>
           gameRepo.unsetCheckAt(game.id)
 
+        // the scoring phase's deadline (ADR 0020 §2): `ck` follows it, so it survives a lila restart
+        case game if game.inGoScoring =>
+          game.goScoring.so: sc =>
+            if sc.expired(nowInstant) then fuccess(roundApi.tell(game.id, GoScorer.Expiry))
+            else gameRepo.setCheckAt(game, sc.expiresAt).void
+
         case game if game.outoftime(withGrace = true) =>
           fuccess:
             roundApi.tell(game.id, RoundBus.QuietFlagCheck)

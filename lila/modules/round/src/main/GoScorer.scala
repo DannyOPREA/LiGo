@@ -1,0 +1,128 @@
+package lila.round
+
+import ligo.gorules.{ CountVersion, Point }
+import play.api.libs.json.JsObject
+
+import lila.core.round.ClientError
+import lila.game.GameRepo
+import lila.game.GoScoringPlay
+import lila.game.GoScoringPlay.{ Ending, Reply, Step }
+
+/** The round's side of a Go game's scoring phase (ADR 0020 §3–4, unit 4.8): it applies `GoScoringPlay`'s
+  * steps to the game in play, sends their requests to the scoring service, keeps the phase's deadlines and
+  * re-sends unanswered requests, and ends the game through the `Finisher`.
+  */
+final private class GoScorer(
+    finisher: Finisher,
+    gameRepo: GameRepo,
+    // publish a request on `scoring-in`
+    send: JsObject => Unit,
+    // tell a round something later
+    schedule: (GameId, FiniteDuration, Matchable) => Unit
+)(using Executor):
+
+  import GoScorer.*
+
+  // the refs with a re-send already scheduled, so each unanswered request has one timer at a time
+  private val resending = scala.collection.concurrent.TrieMap.empty[String, Unit]
+
+  /** After a Go move: the second pass, or the move cap, opens the phase. */
+  def afterMove(game: Game)(using GameProxy): Option[Fu[Events]] =
+    GoScoringPlay.open(game, nowInstant).map(apply)
+
+  def toggle(pov: Pov, at: Point, seen: CountVersion)(using GameProxy): Fu[Events] =
+    orRefuse(pov, GoScoringPlay.toggle(pov.game, at, seen))
+
+  def accept(pov: Pov, seen: CountVersion)(using GameProxy): Fu[Events] =
+    orRefuse(pov, GoScoringPlay.accept(pov.game, pov.color, seen))
+
+  def resume(pov: Pov)(using GameProxy): Fu[Events] =
+    orRefuse(pov, GoScoringPlay.resume(pov.game, nowInstant))
+
+  def reply(game: Game, reply: Reply)(using GameProxy): Fu[Events] = reply match
+    case r: Reply.Counted =>
+      GoScoringPlay.counted(game, r, nowInstant) match
+        case Right(step) => apply(step)
+        case Left(why) =>
+          logger.info(s"Scoring reply ${r.ref} dropped: $why")
+          fuccess(Nil)
+    case Reply.Failed(ref, message) =>
+      // a request the service couldn't read: a bug on one side or the other. The phase's deadline still
+      // ends the game if no answer ever comes (ADR 0020 §4).
+      logger.warn(s"Scoring service error for ${ref.fold("?")(_.toString)}: $message")
+      fuccess(Nil)
+    case Reply.Start => fuccess(Nil)
+
+  /** The phase's deadline may have passed. */
+  def expire(game: Game)(using GameProxy): Fu[Events] =
+    GoScoringPlay.expire(game, nowInstant).fold(fuccess(Nil))(apply)
+
+  /** The round was loaded, the service restarted, or a re-send is due: send the request still unanswered, if
+    * any, and keep the deadline's timer.
+    */
+  def wake(game: Game, ref: Option[String] = None): Unit =
+    ref.foreach(resending.remove)
+    for
+      request <- GoScoringPlay.request(game)
+      r <- requestRef(request)
+      if ref.forall(_ == r)
+    do
+      send(request)
+      scheduleResend(game.id, r)
+    if ref.isEmpty then scheduleExpiry(game)
+
+  private def orRefuse(pov: Pov, step: Either[String, Step])(using GameProxy): Fu[Events] =
+    step.fold(why => fufail(ClientError(s"$pov scoring: $why")), apply)
+
+  private def apply(step: Step)(using proxy: GameProxy): Fu[Events] =
+    val game = step.game
+    for
+      _ <- proxy.save(step.progress)
+      _ = step.request.foreach: request =>
+        send(request)
+        requestRef(request).foreach(scheduleResend(game.id, _))
+      ended <- step.ending match
+        case Some(ending @ Ending.Scored(_)) => finisher.other(game, _.VariantEnd, ending.winner)
+        case Some(Ending.NoCount) => finisher.other(game, _.UnknownFinish, None)
+        case None =>
+          scheduleExpiry(game)
+          game.goScoring
+            .filter(_ => game.playable)
+            .so(sc => gameRepo.setCheckAt(game, sc.expiresAt))
+            .inject(Nil)
+    yield step.progress.events ::: ended
+
+  private def requestRef(request: JsObject): Option[String] = (request \ "ref").asOpt[String]
+
+  private def scheduleResend(gameId: GameId, ref: String): Unit =
+    if resending.putIfAbsent(ref, ()).isEmpty then schedule(gameId, resendDelay, Resend(ref))
+
+  private def scheduleExpiry(game: Game): Unit =
+    game.goScoring
+      .filter(_ => game.playable)
+      .foreach: sc =>
+        val millis = sc.expiresAt.toMillis - nowMillis
+        schedule(game.id, (millis.max(0) + 1000).millis, Expiry)
+
+object GoScorer:
+
+  /** lila re-sends an unanswered request this often (ADR 0020 §1, §4). */
+  val resendDelay = 30.seconds
+
+  // the round's messages (RoundAsyncActor)
+  case class Toggle(playerId: GamePlayerId, at: Point, seen: CountVersion)
+  case class Accept(playerId: GamePlayerId, seen: CountVersion)
+  case class Resume(playerId: GamePlayerId)
+  case class ServiceReply(reply: Reply)
+  case object Wake
+  case class Resend(ref: String)
+  case object Expiry
+
+  /** A toggle's or accept's count version as players send it: `<phase>:<request>`. */
+  def readVersion(s: String): Option[CountVersion] = s.split(':') match
+    case Array(phase, request) =>
+      for
+        p <- phase.toIntOption
+        r <- request.toIntOption
+      yield CountVersion(p, r)
+    case _ => None

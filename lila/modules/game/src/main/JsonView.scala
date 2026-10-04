@@ -39,6 +39,9 @@ final class JsonView(rematches: Rematches):
       // A Go game has no FEN: its setup, moves and position facts instead (ADR 0019 §3).
       .add("fen" -> (!game.isGo).option(Fen.write(game.chessState)))
       .add("go" -> game.go.map(JsonView.go))
+      // the scoring phase under way, or the count that ended the game (ADR 0020 §6)
+      .add("scoring" -> game.go.zip(game.goScoring).map((go, sc) => JsonView.goScoring(sc, go, nowInstant)))
+      .add("result" -> JsonView.goResult(game))
       .add("threefold" -> game.history.threefoldRepetition)
       .add("winner" -> game.winnerColor)
       .add("abortedBy" -> game.abortedBy)
@@ -123,6 +126,51 @@ object JsonView:
           case Phase.Scoring => "scoring")
       )
       .add("ko" -> g.koPoint.map(_.sgf))
+
+  /** A Go game's scoring phase as players see it (ADR 0020 §6): `counting` while the proposal is awaited;
+    * then the count version `v` toggles and accepts must name, where the proposal came from, the dead stones,
+    * the points that may need sealing, each point's owner, the count, who accepted, whether a recount is
+    * under way, and the seconds left before the phase times out.
+    */
+  def goScoring(sc: lila.core.game.GoScoring, go: ligo.gorules.GoGame, now: Instant): JsObject =
+    import lila.core.game.GoScoring.{ Side, Source }
+    val phase = lila.core.game.GoScoring.phaseOf(go)
+    val left = Json.obj("phase" -> phase, "expiresIn" -> sc.expiresAt.toSeconds.-(now.toSeconds).max(0))
+    def points(ps: Set[ligo.gorules.Point]) = ps.toList.sortBy(p => (p.row, p.col)).map(_.sgf)
+    def side(s: Side) = Json.obj(
+      "territory" -> s.territory,
+      "stones" -> s.stones,
+      "prisoners" -> s.prisoners,
+      "total" -> s.total
+    )
+    (sc.proposal, sc.count) match
+      case (Some(proposal), Some(count)) =>
+        left ++ Json.obj(
+          "v" -> sc.version(phase).toString,
+          "src" -> (proposal.source match
+            case Source.KataGo => "katago"
+            case Source.Fallback => "none"),
+          "dead" -> points(sc.dead),
+          "seal" -> points(sc.seal),
+          "owner" -> sc.owner,
+          "score" -> Json.obj(
+            "b" -> side(count.black),
+            "w" -> (side(count.white) ++ Json.obj(
+              "komi" -> count.white.komi,
+              "compensation" -> count.white.compensation
+            ))
+          ),
+          "accepted" -> Json.obj(
+            "b" -> sc.accepted(ligo.gorules.Color.Black),
+            "w" -> sc.accepted(ligo.gorules.Color.White)
+          ),
+          "pending" -> sc.pending
+        )
+      case _ => left ++ Json.obj("counting" -> true)
+
+  /** A Go game that ended by counting: its result as SGF writes it, `B+3.5`, `W+0.5` or `0` (ADR 0020 §5). */
+  def goResult(g: Game): Option[String] =
+    g.goScoring.filter(_ => g.status == chess.Status.VariantEnd).flatMap(_.result).map(_.sgf)
 
   /** A Go game's setup alone: size, rules, komi, handicap and custom starting position. The API's game
     * exports carry it in place of chess's variant and initial FEN (unit 3.16).
