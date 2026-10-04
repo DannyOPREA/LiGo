@@ -1,61 +1,42 @@
 package lila.puzzle
 
-import chess.format.*
-import chess.IntRating
 import chess.rating.IntRatingDiff
 import scalalib.model.Days
 import play.api.libs.json.*
 
 import lila.common.Json.given
 import lila.core.i18n.Translate
-import lila.tree.{ Branch, Node }
-import lila.core.net.ApiVersion
 
-final class JsonView(
-    gameJson: GameJson,
-    gameRepo: lila.core.game.GameRepo
-)(using Executor):
+final class JsonView:
 
   import JsonView.{ *, given }
 
+  // LiGo (ADR 0025 section 1): the browser gets the puzzle in goban's own puzzle format, under "puzzle".
+  // There is no "game": a generated puzzle comes from no game.
   def apply(
       puzzle: Puzzle,
       angle: Option[PuzzleAngle],
-      replay: Option[PuzzleReplay],
-      withInitialPos: Boolean = false
-  )(using Translate)(using Option[Me], Perf): Fu[JsObject] =
-    gameJson(
-      gameId = puzzle.gameId,
-      plies = puzzle.initialPly,
-      bc = false
-    ).map: gameJson =>
-      puzzleAndGamejson(puzzle, gameJson, withInitialPos = withInitialPos)
-        .add("user" -> userJson)
-        .add("replay" -> replay.map(replayJson))
-        .add(
-          "angle",
-          angle.map: a =>
-            Json
-              .toJsObject(a)
-              .add("chapter" -> a.asTheme.flatMap(PuzzleTheme.studyChapterIds.get))
-              .add("opening" -> a.opening.map: op =>
-                Json.obj("key" -> op.key, "name" -> op.name))
-              .add("openingAbstract" -> a.match
-                case op: PuzzleAngle.Opening => op.isAbstract
-                case _ => false)
-        )
+      replay: Option[PuzzleReplay]
+  )(using Translate)(using Option[Me], Perf): Fu[JsObject] = fuccess:
+    Json
+      .obj("puzzle" -> puzzleJson(puzzle))
+      .add("user" -> userJson)
+      .add("replay" -> replay.map(replayJson))
+      .add("angle" -> angle.map(Json.toJsObject(_)))
 
+  // /api/puzzle/many: lichess's {puzzles: [{game, puzzle}]} without the games
+  def many(puzzles: Seq[Puzzle]): JsObject =
+    Json.obj("puzzles" -> puzzles.map(p => Json.obj("puzzle" -> puzzleJson(p))))
+
+  // LiGo: lichess's `apiVersion` parameter chose its mobile app's old format; LiGo has no mobile app.
   def analysis(
       puzzle: Puzzle,
       angle: PuzzleAngle,
       replay: Option[lila.puzzle.PuzzleReplay] = None,
-      newMe: Option[Me] = None,
-      apiVersion: Option[ApiVersion] = None
+      newMe: Option[Me] = None
   )(using oldMe: Option[Me])(using Perf, Translate): Fu[JsObject] =
     given me: Option[Me] = newMe.orElse(oldMe)
-    if apiVersion.exists(v => !ApiVersion.puzzleV2(v))
-    then bc(puzzle)
-    else apply(puzzle, angle.some, replay)
+    apply(puzzle, angle.some, replay)
 
   def userJson(using perf: Perf, me: Option[Me]) = me.isDefined.option:
     Json
@@ -81,19 +62,6 @@ final class JsonView(
       "ratingDiff" -> ratingDiff
     )
 
-  def pref(p: lila.core.pref.Pref) =
-    Json.obj(
-      "coords" -> p.coords,
-      "keyboardMove" -> p.keyboardMove,
-      "voiceMove" -> p.voice,
-      "rookCastle" -> p.rookCastle,
-      "animation" -> Json.obj("duration" -> p.animationMillis),
-      "destination" -> p.destination,
-      "moveEvent" -> p.moveEvent,
-      "highlight" -> p.highlight,
-      "is3d" -> p.is3d
-    )
-
   def dashboardJson(dash: PuzzleDashboard, days: Days)(using Translate) = Json.obj(
     "days" -> days,
     "global" -> dashboardResults(dash.global),
@@ -113,69 +81,6 @@ final class JsonView(
     "performance" -> res.performance
   )
 
-  def batch(puzzles: Seq[Puzzle])(using me: Option[Me], perf: Perf): Fu[JsObject] = for
-    games <- gameRepo.gameOptionsFromSecondary(puzzles.map(_.gameId))
-    jsons <- Future.sequence:
-      puzzles
-        .zip(games)
-        .collect { case (puzzle, Some(game)) =>
-          gameJson
-            .noCache(game, puzzle.initialPly)
-            .map:
-              puzzleAndGamejson(puzzle, _, withInitialPos = false)
-        }
-  yield
-    import lila.rating.Glicko.glickoWrites
-    Json.obj("puzzles" -> jsons).add("glicko" -> me.map(_ => perf.glicko))
-
-  object bc:
-
-    def apply(puzzle: Puzzle)(using me: Option[Me], perf: Perf): Fu[JsObject] =
-      gameJson(gameId = puzzle.gameId, plies = puzzle.initialPly, bc = true).map: gameJson =>
-        Json
-          .obj(
-            "game" -> gameJson,
-            "puzzle" -> puzzleJson(puzzle)
-          )
-          .add("user" -> me.map(_ => perf.intRating).map(userJson))
-
-    def batch(puzzles: Seq[Puzzle])(using me: Option[Me], perf: Perf): Fu[JsObject] = for
-      games <- gameRepo.gameOptionsFromSecondary(puzzles.map(_.gameId))
-      jsons <- Future.sequence:
-        puzzles
-          .zip(games)
-          .collect { case (puzzle, Some(game)) =>
-            gameJson.noCacheBc(game, puzzle.initialPly).map { gameJson =>
-              Json.obj(
-                "game" -> gameJson,
-                "puzzle" -> puzzleJson(puzzle)
-              )
-            }
-          }
-    yield Json
-      .obj("puzzles" -> jsons)
-      .add("user" -> me.map(_ => perf.intRating).map(userJson))
-
-    def userJson(rating: IntRating) = Json.obj(
-      "rating" -> rating,
-      "recent" -> Json.arr()
-    )
-
-    private def puzzleJson(puzzle: Puzzle) = Json.obj(
-      "id" -> Puzzle.numericalId(puzzle.id),
-      "realId" -> puzzle.id,
-      "rating" -> puzzle.glicko.intRating,
-      "attempts" -> puzzle.plays,
-      "fen" -> puzzle.fen,
-      "color" -> puzzle.color.name,
-      "initialPly" -> (puzzle.initialPly + 1),
-      "gameId" -> puzzle.gameId,
-      "lines" -> puzzle.line.tail.reverse.foldLeft[JsValue](JsString("win")): (acc, move) =>
-        Json.obj(move.uci -> acc),
-      "vote" -> 0,
-      "branch" -> makeBranch(puzzle).map(Node.defaultNodeJsonWriter.writes)
-    )
-
 object JsonView:
 
   given (using Translate): OWrites[PuzzleAngle] = a =>
@@ -192,46 +97,37 @@ object JsonView:
 
   given OWrites[PuzzleReplay] = Json.writes[PuzzleReplay]
 
-  private def makeBranch(puzzle: Puzzle): Option[Branch] =
-    val (_, branches) = puzzle.line.tail.foldLeft[(chess.Game, List[Branch])]((puzzle.initialGame, Nil)):
-      case ((previous, branches), uci) =>
-        val (game, move) = previous(uci.orig, uci.dest, uci.promotion)
-          .fold(err => sys.error(s"puzzle ${puzzle.id} $err"), identity)
-        val branch = Branch(
-          ply = game.ply,
-          move = Uci.WithSan(move.toUci, game.sans.last),
-          fen = Fen.write(game),
-          crazyData = none
-        )
-        game -> (branch :: branches)
-    branches.reduceOption((child, branch) => branch.addChild(child))
-
-  def puzzleAndGamejson(puzzle: Puzzle, game: JsObject, withInitialPos: Boolean) = Json.obj(
-    "game" -> game,
-    "puzzle" -> {
-      puzzleJsonBase(puzzle) ++
-        withInitialPos.so(puzzleJsonInitialPos(puzzle)) ++
-        Json.obj("initialPly" -> puzzle.initialPly)
-    }
-  )
-
-  def puzzleJsonStandalone(puzzle: Puzzle): JsObject =
-    puzzleJsonBase(puzzle) ++ puzzleJsonInitialPos(puzzle)
-
-  private def puzzleJsonBase(puzzle: Puzzle): JsObject = Json.obj(
+  /** The fields of every puzzle JSON: lila's own, and LiGo's `goal` and `source`. */
+  def puzzleJsonBase(puzzle: Puzzle): JsObject = Json.obj(
     "id" -> puzzle.id,
     "rating" -> puzzle.glicko.intRating,
     "plays" -> puzzle.plays,
-    "solution" -> puzzle.line.tail.map(_.uci),
-    "themes" -> simplifyThemes(puzzle.themes)
+    "themes" -> puzzle.themes,
+    "goal" -> puzzle.goal,
+    "source" -> puzzle.source
   )
-  private def simplifyThemes(themes: Set[PuzzleTheme.Key]) =
-    themes.filterNot(_ == PuzzleTheme.mate.key)
 
-  private def puzzleJsonInitialPos(puzzle: Puzzle): JsObject = Json.obj(
-    "fen" -> puzzle.fenAfterInitialMove,
-    "lastMove" -> puzzle.line.head.uci
-  )
+  /** goban's puzzle config (ADR 0025 section 1, `Puzzle` in libs/board/src/puzzle.ts): the names are goban's,
+    * and `move_tree` is the stored tree as it is.
+    */
+  def puzzleJson(puzzle: Puzzle): JsObject =
+    puzzleJsonBase(puzzle) ++ Json
+      .obj(
+        "width" -> puzzle.size,
+        "height" -> puzzle.size,
+        "initial_state" -> Json.obj("black" -> puzzle.setup.black, "white" -> puzzle.setup.white),
+        "initial_player" -> puzzle.color.name,
+        "move_tree" -> lila.db.JSON.jval(puzzle.tree),
+        "puzzle_player_move_mode" -> "free",
+        "puzzle_opponent_move_mode" -> "automatic"
+      )
+      .add(
+        "bounds" -> puzzle.bounds
+          .map(b => Json.obj("top" -> b.top, "left" -> b.left, "bottom" -> b.bottom, "right" -> b.right))
+      )
+
+  // the activity stream: the puzzle's facts, without its board or tree
+  def puzzleJsonStandalone(puzzle: Puzzle): JsObject = puzzleJsonBase(puzzle)
 
   def angles(all: PuzzleAngle.All)(using Translate) = Json.obj(
     "themes" -> JsObject:
@@ -246,24 +142,3 @@ object JsonView:
                 "count" -> count
               )
   )
-
-  def openings(all: PuzzleOpeningCollection): JsObject =
-    Json.obj(
-      "openings" ->
-        all
-          .treeList(lila.puzzle.PuzzleOpening.Order.Popular)
-          .map: (fam, ops) =>
-            Json.obj(
-              "family" -> Json.obj(
-                "key" -> fam.family.key,
-                "name" -> fam.family.name,
-                "count" -> fam.count
-              ),
-              "openings" -> ops.map: op =>
-                Json.obj(
-                  "key" -> op.opening.key,
-                  "name" -> op.opening.variation,
-                  "count" -> op.count
-                )
-            )
-    )

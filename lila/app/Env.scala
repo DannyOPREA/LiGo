@@ -78,8 +78,4 @@ final class Env(
   val gamePaginator = wire[mashup.GameFilterMenu.PaginatorBuilder]
   val pageCache = wire[http.PageCache]
 
-  lila.common.Bus.sub[lila.puzzle.DailyPuzzle.Render]:
-    case lila.puzzle.DailyPuzzle.Render(puzzle, fen, lastMove, promise) =>
-      promise.success(Html(views.puzzle.bits.daily(puzzle, fen, lastMove)))
-
 end Env

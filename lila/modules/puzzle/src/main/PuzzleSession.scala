@@ -22,18 +22,15 @@ private case class PuzzleSession(
 
   def similarTo(other: PuzzleSession) =
     path.angle == other.path.angle &&
-      settings.difficulty == other.settings.difficulty &&
-      settings.color == other.settings.color
+      settings.difficulty == other.settings.difficulty
 
   override def toString = s"$path:$positionInPath($settings)"
 
-case class PuzzleSettings(
-    difficulty: PuzzleDifficulty,
-    color: Option[Color]
-)
+// LiGo (ADR 0025 section 3): lichess let a session also pick a colour, in opening angles only. A Go
+// puzzle's colour is part of the puzzle, so a session only has a difficulty.
+case class PuzzleSettings(difficulty: PuzzleDifficulty)
 object PuzzleSettings:
-  val default = PuzzleSettings(PuzzleDifficulty.default, none)
-  def default(color: Option[Color]) = PuzzleSettings(PuzzleDifficulty.default, color)
+  val default = PuzzleSettings(PuzzleDifficulty.default)
 
 final class PuzzleSessionApi(pathApi: PuzzlePathApi, cacheApi: CacheApi)(using Executor):
 
@@ -58,18 +55,7 @@ final class PuzzleSessionApi(pathApi: PuzzlePathApi, cacheApi: CacheApi)(using E
         .option(
           createSessionFor("difficulty")(
             prev.map(_.path.angle) | PuzzleAngle.mix,
-            PuzzleSettings(difficulty, prev.flatMap(_.settings.color))
-          )
-        )
-
-  private[puzzle] def setAngleAndColor(angle: PuzzleAngle, color: Option[Color])(using Me, Perf): Funit =
-    updateSession: prev =>
-      prev
-        .forall(p => p.settings.color != color || p.path.angle != angle)
-        .option(
-          createSessionFor("angle")(
-            angle,
-            PuzzleSettings(prev.fold(PuzzleDifficulty.default)(_.settings.difficulty), color)
+            PuzzleSettings(difficulty)
           )
         )
 
@@ -112,10 +98,7 @@ final class PuzzleSessionApi(pathApi: PuzzlePathApi, cacheApi: CacheApi)(using E
       me: Me,
       perf: Perf
   ): Fu[PuzzleSession] =
-    val validSettings =
-      if angle.opening.isDefined then settings
-      else settings.copy(color = none) // only opening sessions can have a color choice
     pathApi
-      .nextFor(s"session.$reason")(angle, PuzzleTier.top, validSettings.difficulty, Set.empty)
+      .nextFor(s"session.$reason")(angle, PuzzleTier.top, settings.difficulty, Set.empty)
       .orFail(s"No puzzle path found for ${me.username}, angle: $angle")
-      .map(pathId => PuzzleSession(validSettings, pathId, 0, perf.intRating))
+      .map(pathId => PuzzleSession(settings, pathId, 0, perf.intRating))
