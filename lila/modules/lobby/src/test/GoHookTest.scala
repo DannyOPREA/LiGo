@@ -62,17 +62,33 @@ class GoHookTest extends munit.FunSuite:
     assertEquals((seek.render \ "go" \ "size").as[Int], 9)
 
   // Unit 6.4 (first part): which hooks the pools may take (ADR 0022 §6)
-  private def rated(go: GoSetup, color: TriColor = TriColor.Random) = Hook.make(
-    sri = lila.core.socket.Sri("r"),
-    go = go,
-    clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
-    rated = Rated.Yes,
-    color = color,
-    user = none,
-    sid = none,
-    ratingRange = RatingRange.default,
-    blocking = lila.core.pool.Blocking(Set.empty)
-  )
+  private def rated(go: GoSetup, color: TriColor = TriColor.Random) = Hook
+    .make(
+      sri = lila.core.socket.Sri("r"),
+      go = go,
+      clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
+      rated = Rated.Yes,
+      color = color,
+      user = none,
+      sid = none,
+      ratingRange = RatingRange.default,
+      blocking = lila.core.pool.Blocking(Set.empty)
+    )
+    .copy(rated = Rated.Yes, user = seekUser("r").some) // a signed-in player's hook (unit 5.7)
+
+  test("a guest's hook is casual, whatever the request says (unit 5.7)"):
+    val guest = Hook.make(
+      sri = lila.core.socket.Sri("g"),
+      go = GoSetups.default,
+      clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
+      rated = Rated.Yes,
+      color = TriColor.Random,
+      user = none,
+      sid = none,
+      ratingRange = RatingRange.default,
+      blocking = lila.core.pool.Blocking(Set.empty)
+    )
+    assertEquals(guest.rated, Rated.No)
 
   test("only a rated, random-colour, even, Japanese, standard-komi hook would be a pool game"):
     assert(rated(GoSetups.default).seemsCompatibleWithPools)

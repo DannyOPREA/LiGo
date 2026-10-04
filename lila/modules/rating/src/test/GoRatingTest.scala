@@ -233,3 +233,36 @@ class GoRatingTest extends munit.FunSuite:
     val file = java.nio.file.Paths.get("ui/playground/e2e/rank-table.json")
     assume(java.nio.file.Files.exists(file), s"run from lila/: ${file.toAbsolutePath}")
     assertEquals(Json.parse(java.nio.file.Files.readString(file)), Json.parse(rankTableJson))
+
+  // Unit 5.7: stones for a rated direct challenge
+  private def perf(rating: Double, nb: Int = 10, deviation: Double = 80) =
+    lila.core.perf.Perf(Glicko(rating, deviation, 0.06), nb, Nil, None)
+  private val newAccount = lila.core.perf.Perf(lila.rating.Glicko.default, 0, Nil, None)
+
+  test("an account that never declared a rank nor finished a rated game has no known rank"):
+    assert(!rankKnown(newAccount))
+    assert(rankKnown(newAccount.copy(nb = 1)))
+    assert(rankKnown(lila.core.perf.Perf(startingGlicko(Rank.ofRating(1580)), 0, Nil, None)))
+
+  test("a 5k challenging a 1d is suggested five stones on 19x19, an unknown rank an even game"):
+    val k5 = perf(Rank.fromName("5k").get.middleRating)
+    val d1 = perf(Rank.fromName("1d").get.middleRating)
+    assertEquals(suggestedStones(k5, d1, 19), 5)
+    assertEquals(suggestedStones(d1, k5, 19), 5)
+    assertEquals(suggestedStones(newAccount, d1, 19), 0)
+    assertEquals(suggestedStones(k5, newAccount, 9), 0)
+
+  test("a rated challenge may move the suggested stones by one either way, within the cap"):
+    val k5 = perf(Rank.fromName("5k").get.middleRating)
+    val d1 = perf(Rank.fromName("1d").get.middleRating)
+    assertEquals(ratedStoneChoices(k5, d1, 19), 4 to 6)
+    assertEquals(ratedStoneChoices(k5, k5, 19), 0 to 1)
+    assertEquals(ratedStoneChoices(perf(800), perf(2400), 19), 8 to 9)
+    assertEquals(ratedStoneChoices(perf(800), perf(2400), 9), 3 to 4)
+    assertEquals(ratedStoneChoices(k5, d1, 13), 0 to 0)
+    assertEquals(ratedStoneChoices(newAccount, d1, 19), 0 to 1)
+
+  test("in a handicap challenge the lower-rated player takes Black, the challenged one on a tie"):
+    assertEquals(handicapColor(perf(1500), perf(1700)), Color.Black)
+    assertEquals(handicapColor(perf(1700), perf(1500)), Color.White)
+    assertEquals(handicapColor(perf(1600), perf(1600)), Color.White)
