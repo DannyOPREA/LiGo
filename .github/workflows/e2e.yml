@@ -2,10 +2,11 @@
 # Redis, the scoring worker) started by `dev/ligo up` in native mode, then two browsers play a
 # casual 9x9 Fischer game from the lobby to a resignation (unit 3.20) and two 19x19 byo-yomi games
 # through the scoring phase, one with a resume (unit 4.12), at desktop and phone sizes
-# (lila/tests/e2e-demo). Since unit 5.8 it also plays the Phase 5 demo: a 5k and a 1d sign up
-# and play a rated handicap game whose rating changes must match goratings; a guest plays casual.
-# It takes a cold lila build, so it runs nightly, on demand, and on a pull request only while it
-# carries the `e2e` label. Not a required check.
+# (lila/tests/e2e-demo), and at phone size a new player solves a puzzle and fails one while the rating
+# moves, and every committed puzzle comes back from the server (unit 8.8). Since unit 5.8 it also
+# plays the Phase 5 demo: a 5k and a 1d sign up and play a rated handicap game whose rating changes
+# must match goratings; a guest plays casual. It takes a cold lila build, so it runs nightly, on
+# demand, and on a pull request only while it carries the `e2e` label. Not a required check.
 name: e2e
 
 on:
