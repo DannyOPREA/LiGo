@@ -60,6 +60,11 @@ upstream's file and still names the deleted sets; LiGo leaves it unchanged. Remo
 doesn't erase them from git history, which only ever contains upstream's own publicly distributed
 copies.
 
+Unit 9.7 (ADR 0026 §2) deleted the chess- and tournament-only files from the four sound sets
+(Checkmate, Berserk, Explosion, OutOfBound, Tournament1st/2nd/3rd/Other, NewPM) and every `.ogg` and
+`.m3u` copy, which nothing plays. `Error` in each set, a link to the deleted `standard` set since
+unit 3.1, now links to that set's own `Check` sound.
+
 **LiGo's own artwork** (MIT, like the rest of LiGo's own work): the LiGo logo and icons
 (`lila/public/logo/ligo*.svg`, `ligo*.png`, `public/favicon.ico`, `public/apple-touch-icon.png`),
 the small UI images in `lila/public/images/ligo/`, and their generator `lila/bin/gen/ligo-logo.mjs`.

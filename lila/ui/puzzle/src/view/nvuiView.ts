@@ -23,7 +23,7 @@ import type { ChessNode } from '../chessNode';
 
 const throttled = (sound: string) => throttle(100, () => site.sound.play(sound));
 const selectSound = throttled('select');
-const borderSound = throttled('outOfBound');
+const borderSound = throttled('error');
 const errorSound = throttled('error');
 
 export function renderNvui(ctx: PuzzleNvuiContext): VNode {
