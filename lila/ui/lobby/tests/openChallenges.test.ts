@@ -96,6 +96,7 @@ const lobby = (over: Record<string, unknown> = {}) => {
     data: { ratingMap: { go: 1500 }, seeks: [] as Seek[], hooks: [] as Hook[] },
     opts: { showRatings: true },
     stepHooks: [] as Hook[],
+    hasOngoingRealTimeGame: () => false,
     stepping: false,
     mode: 'live',
     tab: 'open',
@@ -503,5 +504,40 @@ describe('taps and names (review of unit 6.7 part one)', () => {
     const stores = make('alice');
     assert.equal(stores.tab.get(), 'open');
     assert.equal(stores.mode.get(), 'correspondence');
+  });
+});
+
+describe('the Create a game button (unit 6.8)', () => {
+  const opened: unknown[][] = [];
+  const withSetup = (over: Record<string, unknown> = {}) =>
+    lobby({
+      opts: { showRatings: true, playban: false },
+      setupCtrl: { openModal: (...args: unknown[]) => opened.push(args) },
+      ...over,
+    });
+  const create = (ctrl: LobbyController) =>
+    mount(renderOpen(ctrl)).querySelector<HTMLElement>('.create .button');
+  beforeEach(() => (opened.length = 0));
+
+  test('opens the one custom-game window on a real-time clock in the live list, for a guest too', () => {
+    for (const me of [{ username: 'alice', isBot: false }, undefined]) {
+      opened.length = 0;
+      const ctrl = withSetup({ me });
+      create(ctrl)!.click();
+      assert.deepEqual(opened, [['hook', undefined, undefined, { timeMode: 'realTime' }]]);
+    }
+  });
+
+  test('opens it on a correspondence clock in the correspondence list, for a member only', () => {
+    const ctrl = withSetup({ mode: 'correspondence' });
+    create(ctrl)!.click();
+    assert.deepEqual(opened, [['hook', undefined, undefined, { timeMode: 'correspondence' }]]);
+    assert.equal(create(withSetup({ mode: 'correspondence', me: undefined })), null);
+  });
+
+  test('is not offered to a player who can’t start a live game', () => {
+    assert.equal(create(withSetup({ me: { username: 'bot', isBot: true } })), null);
+    assert.equal(create(withSetup({ opts: { showRatings: true, playban: true } })), null);
+    assert.equal(create(withSetup({ hasOngoingRealTimeGame: () => true })), null);
   });
 });

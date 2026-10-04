@@ -3829,6 +3829,8 @@ interface I18n {
     goCorrespondenceNeedsAccount: string;
     /** Counting the score… */
     goCountingTheScore: string;
+    /** Create challenge link */
+    goCreateChallengeLink: string;
     /** Current tournament rank */
     goCurrentTournamentRank: string;
     /** Go deeper */
@@ -3859,6 +3861,8 @@ interface I18n {
     goKoRefused: string;
     /** Last move */
     goLastMove: string;
+    /** Last settings */
+    goLastSettings: string;
     /** Left the game */
     goLeftTheGame: string;
     /** Load SGF */
@@ -3893,8 +3897,12 @@ interface I18n {
     goOpenSgfFile: string;
     /** Your opponent accepted this score. */
     goOpponentAcceptedScore: string;
+    /** Anyone */
+    goOpponentAnyone: string;
     /** Your opponent left the game. You can claim victory, or wait for them. */
     goOpponentLeftChoices: string;
+    /** Link for a friend */
+    goOpponentLink: string;
     /** or with up to %s handicap stones */
     goOrUpToNbStones: I18nPlural;
     /** Pass */
@@ -3905,6 +3913,8 @@ interface I18n {
     goPeriods: string;
     /** Place */
     goPlace: string;
+    /** Presets */
+    goPresets: string;
     /** Previous move */
     goPreviousMove: string;
     /** Prisoners */
@@ -3951,6 +3961,8 @@ interface I18n {
     goScoringTapHint: string;
     /** Seconds per period */
     goSecondsPerPeriod: string;
+    /** Send challenge */
+    goSendChallenge: string;
     /** Tap a point to put a stone there. Tap a stone of the same colour to remove it. */
     goSetupHint: string;
     /** That file is too big to be an SGF record. */
