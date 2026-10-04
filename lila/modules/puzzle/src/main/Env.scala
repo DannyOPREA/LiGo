@@ -19,11 +19,9 @@ private class PuzzleConfig(
 final class Env(
     appConfig: Configuration,
     historyApi: lila.core.history.HistoryApi,
-    lightUserApi: lila.core.user.LightUserApi,
     userApi: lila.core.user.UserApi,
     cacheApi: lila.memo.CacheApi,
     mongoCacheApi: lila.memo.MongoCache.Api,
-    gameRepo: lila.core.game.GameRepo,
     mongo: lila.db.Env
 )(using
     Executor,
@@ -32,8 +30,7 @@ final class Env(
     lila.core.i18n.Translator,
     lila.core.config.RateLimit
 )(using
-    scheduler: Scheduler,
-    mode: play.api.Mode
+    scheduler: Scheduler
 ):
 
   private val config = appConfig.get[PuzzleConfig]("puzzle")(using AutoConfig.loader)
@@ -46,15 +43,11 @@ final class Env(
     path = db(config.pathColl)
   )
 
-  private val gameJson: GameJson = wire[GameJson]
-
-  val jsonView = wire[JsonView]
+  val jsonView = JsonView()
 
   private val pathApi = wire[PuzzlePathApi]
 
   private val trustApi = wire[PuzzleTrustApi]
-
-  val opening = wire[PuzzleOpeningApi]
 
   private val countApi = wire[PuzzleCountApi]
 
@@ -65,8 +58,6 @@ final class Env(
   val anon: PuzzleAnon = wire[PuzzleAnon]
 
   val selector: PuzzleSelector = wire[PuzzleSelector]
-
-  val batch: PuzzleBatch = wire[PuzzleBatch]
 
   val finisher = wire[PuzzleFinisher]
 
@@ -84,8 +75,6 @@ final class Env(
 
   val complete = wire[PuzzleComplete]
 
-  private val tagger = wire[PuzzleTagger]
-
   val tryDailyPuzzle: lila.puzzle.DailyPuzzle.Try = () =>
     Future {
       daily.get
@@ -97,19 +86,16 @@ final class Env(
       }
 
   lila.common.Cli.handle():
-    case "puzzle" :: "opening" :: "recompute" :: "all" :: Nil =>
-      opening.recomputeAll
-      fuccess("started in background")
     case "puzzle" :: "issue" :: id :: issue :: Nil =>
       api.puzzle.setIssue(PuzzleId(id), issue).map(if _ then "done" else "not found")
+    case "puzzle" :: "paths" :: "regenerate" :: Nil =>
+      pathApi.refresh(force = true).map(nb => s"$nb paths written")
 
-  scheduler.scheduleAtFixedRate(10.minutes, 1.day): () =>
-    tagger.addAllMissing
-
-  if mode.isProd then
-    scheduler.scheduleAtFixedRate(10.minutes, 10.minutes): () =>
-      pathApi.isStale.foreach: stale =>
-        if stale then logger.error("Puzzle paths appear to be stale! check that the regen cron is up")
+  // LiGo (ADR 0025 section 3): lichess builds the puzzle paths with a cron script outside lila; here
+  // lila does. It checks soon after boot and then every 5 minutes, and builds new paths when there
+  // are none, they are over a day old, or the puzzle count changed (`dev/ligo puzzles load`).
+  scheduler.scheduleAtFixedRate(10.seconds, 5.minutes): () =>
+    pathApi.refresh()
 
 final class PuzzleColls(
     val puzzle: AsyncColl,
