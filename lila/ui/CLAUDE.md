@@ -23,7 +23,8 @@ snabbdom, styled with SCSS, bundled by the custom esbuild-based `ui/.build/` (`u
   game against the _built_ page (`dev/ligo compile ui`, then `dev/ligo test pages`), served from
   `public/` without a lila server. After a deliberate visual change, re-record with
   `--update-snapshots` and look at every changed picture before committing it. `ui/round/e2e/`
-  (the game page, unit 3.18) and `ui/analyse/e2e/` (the analysis board, unit 7.4) follow the same
+  (the game page, unit 3.18), `ui/analyse/e2e/` (the analysis board, unit 7.4) and `ui/puzzle/e2e/`
+  (the puzzle trainer, unit 8.7) follow the same
   pattern. Build the whole UI first: a partial `ui/build <package>` leaves `public/compiled/manifest.json`
   pointing at older bundles.
 - `ui/analyse` (unit 7.4) is the Go analysis board: lila's move tree (`ui/lib/src/tree`, generic

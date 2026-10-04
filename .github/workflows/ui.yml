@@ -89,10 +89,16 @@ jobs:
         run: |
           pnpm exec tsc -p ui/analyse/e2e/tsconfig.json
           pnpm exec playwright test -c ui/analyse/e2e/playwright.config.ts
+      # The puzzle trainer (unit 8.7): solving, a wrong line, retry, the solution and touch-confirm,
+      # and its screenshots (against ui/puzzle/e2e/__screenshots__).
+      - name: Puzzle trainer
+        run: |
+          pnpm exec tsc -p ui/puzzle/e2e/tsconfig.json
+          pnpm exec playwright test -c ui/puzzle/e2e/playwright.config.ts
       # Where CI's pictures differ from the baselines, as a coarse grid, readable from the log.
       - name: Map the screenshot differences
         if: failure()
-        run: node ui/playground/e2e/diffmap.mjs $(find ui/playground/e2e/test-results ui/analyse/e2e/test-results -name '*-diff.png' 2>/dev/null | sort)
+        run: node ui/playground/e2e/diffmap.mjs $(find ui/playground/e2e/test-results ui/analyse/e2e/test-results ui/puzzle/e2e/test-results -name '*-diff.png' 2>/dev/null | sort)
       # On a failure: the actual, expected and diff pictures, to look at or to become new baselines.
       # Same pin as upstream lila's assets.yml.
       - name: Upload the Playwright report
@@ -107,6 +113,8 @@ jobs:
             lila/ui/round/e2e/test-results/
             lila/ui/analyse/e2e/playwright-report/
             lila/ui/analyse/e2e/test-results/
+            lila/ui/puzzle/e2e/playwright-report/
+            lila/ui/puzzle/e2e/test-results/
           retention-days: 7
 
   codeql:
