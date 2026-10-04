@@ -233,6 +233,9 @@ export class FakeLobby {
   /** LobbySocket's `poolSizes`: how many wait in each pool. */
   poolSizes = (sizes: Record<string, number>) => this.push('poolSizes', sizes);
 
+  /** LobbySocket's `hooks`: every open real-time game, as lila sends them when the Live list opens. */
+  hooks = (list: unknown[]) => this.push('hooks', list);
+
   /** LobbySocket's `poolRange`: who the waiting player can meet. */
   poolRange = (range: { id: string; weakest: string; strongest: string; stones: number }) =>
     this.push('poolRange', range);
