@@ -14,6 +14,9 @@ rule IDs it checks (like `R-KO-2`).
 - `check.mjs`: checks that every fixture file is well formed (no engine needed). Run by
   `fast-check.sh`, by `/verify`, and in CI (the `meta` workflow).
 - `check.test.mjs`: tests for the checker itself.
+- `demo/phase-4/`: the Phase 4 demo as a script (unit 4.12): two games lila plays through the
+  scoring phase, with the messages to and from the scoring service and the SGFs, replayed by all
+  three. Not fixtures: see its README.
 
 Licences: the checker, its tests and `fixtures/ligo.json` are MIT (ADR 0006). Each imported
 fixture file keeps its source's licence (`source.license` in the file: goban's Apache-2.0,
