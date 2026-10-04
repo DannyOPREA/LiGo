@@ -26,6 +26,8 @@
   opening families. Removed the "from position" FEN fields (setup, `Challenge.initialFen`, bulk
   `fen`), `ValidFen` and `GET /setup/validate-fen`. Tests: `GoSetupFormTest` gains a case for the
   standard variant being accepted and other variants and any FEN refused on every form.
+  `dev/ci/chess-guard-baseline.txt` (unit 3.17 part 3) drops the 88 files parts 1 and 2b left
+  clean; 40 remain for part 2a and the rest of 3.17.
 - Worked: Go games were all `Standard`, so every removed variant branch reduced to its standard
   case (no behaviour change for Go games). Old stored hooks, seeks, challenges and settings still
   read: the BSON readers ignore the extra keys.
