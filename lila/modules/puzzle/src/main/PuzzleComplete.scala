@@ -16,7 +16,7 @@ final class PuzzleComplete(
 
   def onComplete[A](
       data: PuzzleForm.RoundData
-  )(id: PuzzleId, angle: PuzzleAngle, mobileBc: Boolean)(using
+  )(id: PuzzleId, angle: PuzzleAngle)(using
       ctx: Context
   )(using Perf, Translate): Fu[JsObject] =
     given Option[Me] = ctx.me
@@ -29,54 +29,38 @@ final class PuzzleComplete(
           for
             _ <- session.onComplete(me.userId, angle)
             json <-
-              if mobileBc then
-                fuccess:
-                  jsonView.bc.userJson(perf.intRating) ++ Json.obj(
-                    "round" -> Json.obj(
-                      "ratingDiff" -> 0,
-                      "win" -> data.win
-                    ),
-                    "voted" -> round.vote
+              (data.replayDays, angle.asTheme) match
+                case (Some(replayDays), Some(theme)) =>
+                  for
+                    _ <- replayApi.onComplete(round, replayDays, angle)
+                    next <- replayApi(replayDays.some, theme)
+                    json <- next match
+                      case None => fuccess(Json.obj("replayComplete" -> true))
+                      case Some(puzzle, replay) =>
+                        jsonView.analysis(puzzle, angle, replay.some).map { nextJson =>
+                          Json.obj(
+                            "round" -> jsonView.roundJson.web(round, perf),
+                            "next" -> nextJson
+                          )
+                        }
+                  yield json
+                case _ =>
+                  for
+                    next <- selector.nextPuzzleFor(angle, PuzzleDifficulty.fromReqSession(ctx.req))
+                    nextJson <- next.traverse:
+                      given Perf = perf
+                      jsonView.analysis(_, angle, none, Me.from(newMe.user.some))
+                  yield Json.obj(
+                    "round" -> jsonView.roundJson.web(round, perf),
+                    "next" -> nextJson
                   )
-              else
-                (data.replayDays, angle.asTheme) match
-                  case (Some(replayDays), Some(theme)) =>
-                    for
-                      _ <- replayApi.onComplete(round, replayDays, angle)
-                      next <- replayApi(replayDays.some, theme)
-                      json <- next match
-                        case None => fuccess(Json.obj("replayComplete" -> true))
-                        case Some(puzzle, replay) =>
-                          jsonView.analysis(puzzle, angle, replay.some).map { nextJson =>
-                            Json.obj(
-                              "round" -> jsonView.roundJson.web(round, perf),
-                              "next" -> nextJson
-                            )
-                          }
-                    yield json
-                  case _ =>
-                    for
-                      next <- selector.nextPuzzleFor(
-                        angle,
-                        none,
-                        PuzzleDifficulty.fromReqSession(ctx.req)
-                      )
-                      nextJson <- next.traverse:
-                        given Perf = perf
-                        jsonView.analysis(_, angle, none, Me.from(newMe.user.some))
-                    yield Json.obj(
-                      "round" -> jsonView.roundJson.web(round, perf),
-                      "next" -> nextJson
-                    )
           yield json
         }
       case None =>
         finisher.incPuzzlePlays(id)
-        if mobileBc then fuccess(Json.obj("user" -> false))
-        else
-          selector
-            .nextPuzzleFor(angle, data.color.map(some), PuzzleDifficulty.fromReqSession(ctx.req))
-            .flatMap:
-              _.so(jsonView.analysis(_, angle))
-            .map: json =>
-              Json.obj("next" -> json)
+        selector
+          .nextPuzzleFor(angle, PuzzleDifficulty.fromReqSession(ctx.req))
+          .flatMap:
+            _.so(jsonView.analysis(_, angle))
+          .map: json =>
+            Json.obj("next" -> json)
