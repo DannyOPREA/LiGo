@@ -21,11 +21,7 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits):
   )(using ctx: Context) =
     Page(trans.site.puzzles.txt())
       .css("puzzle")
-      .css(ctx.blind.option("round.nvui"))
       .i18n(_.puzzle, _.puzzleTheme)
-      .i18nOpt(ctx.speechSynthesis, _.nvui)
-      .i18nOpt(ctx.blind, _.keyboardMove)
-      .js(ctx.blind.option(Esm("puzzle.nvui")))
       .js(
         PageModule(
           "puzzle",
@@ -34,7 +30,9 @@ final class PuzzleUi(helpers: Helpers, val bits: PuzzleBits):
               "data" -> data,
               "pref" -> pref,
               "showRatings" -> ctx.pref.showRatings,
-              "settings" -> Json.obj("difficulty" -> settings.difficulty.key)
+              "settings" -> Json.obj("difficulty" -> settings.difficulty.key),
+              // LiGo: the Go themes have no i18n keys, so the server sends their names and descriptions
+              "themeNames" -> bits.themeNames
             )
             .add("themes" -> ctx.isAuth.option(bits.jsonThemes))
         )
