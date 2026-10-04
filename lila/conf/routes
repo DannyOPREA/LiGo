@@ -101,6 +101,7 @@ POST  /$gameId<\w{8}>/note                       controllers.Round.writeNote(gam
 GET   /$gameId<\w{8}>/mini                       controllers.Round.mini(gameId: GameId, color: Color = Color.white)
 GET   /$gameId<\w{8}>/$color<white|black>/mini   controllers.Round.mini(gameId: GameId, color: Color)
 GET   /$fullId<\w{12}>/mini                      controllers.Round.miniFullId(fullId: GameFullId)
+GET   /$gameId<\w{8}>/analysis                   controllers.UserAnalysis.game(gameId: GameId, color: Color = Color.white)
 GET   /$gameId<\w{8}>/$color<white|black>/analysis controllers.UserAnalysis.game(gameId: GameId, color: Color)
 POST  /$fullId<\w{12}>/resign                    controllers.Round.resign(fullId: GameFullId)
 

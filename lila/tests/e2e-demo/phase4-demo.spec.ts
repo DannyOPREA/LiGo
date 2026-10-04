@@ -12,6 +12,8 @@ import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
+import { dismissAlert } from './lobby';
+
 const size = 19;
 
 // A game takes seconds, but waiting out lila's new-game rate limit can take most of a minute.
@@ -177,15 +179,16 @@ async function newGame(browser: Browser, info: TestInfo, contexts: BrowserContex
   // the other demo games share), so each player clicks until the server takes the game.
   for (const p of [a, b]) {
     await p.goto('/');
+    // A refused game puts up lila's alert ("ratelimit: …"), which covers the page until its OK is clicked.
     await expect(async () => {
-      const created = p.waitForResponse(
-        r => r.url().includes('/setup/hook/') && r.request().method() === 'POST',
-        {
+      await dismissAlert(p);
+      const [created] = await Promise.all([
+        p.waitForResponse(r => r.url().includes('/setup/hook/') && r.request().method() === 'POST', {
           timeout: 5000,
-        },
-      );
-      await p.getByRole('button', { name: /^5\+5×10s / }).click();
-      expect((await created).ok()).toBe(true);
+        }),
+        p.getByRole('button', { name: /^5\+5×10s / }).click({ timeout: 5000 }),
+      ]);
+      expect(created.ok()).toBe(true);
     }).toPass({ intervals: [5_000, 10_000, 15_000], timeout: 120_000 });
   }
 

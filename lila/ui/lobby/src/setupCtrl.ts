@@ -457,18 +457,23 @@ export default class SetupController {
     const { ok, redirected, url } = response;
 
     if (!ok) {
-      // LiGo: a rate-limited post (429) answers in plain text, not JSON; say that rather than throw (unit 5.8)
-      const body = await response.text();
-      const errs = parseErrors(body);
+      // LiGo: a refused game (e.g. the rate limit) leaves the button usable again, not stuck on its spinner.
       this.loading = false;
       this.root.redraw();
-      await alert(
-        errs
+      // Form errors come as JSON; the rate limit answers in plain text ("Too many requests…").
+      const body = await response.text();
+      let message: string;
+      try {
+        const errs: Record<string, string> | null = JSON.parse(body);
+        message = errs
           ? Object.keys(errs)
               .map(k => `${k}: ${errs[k]}`)
               .join('\n')
-          : body || 'Invalid setup',
-      );
+          : 'Invalid setup';
+      } catch (_) {
+        message = body || 'Invalid setup';
+      }
+      await alert(message);
       if (response.status === 403) {
         // 403 FORBIDDEN closes this modal because challenges to the recipient
         // will not be accepted.  see friend() in controllers/Setup.scala
@@ -481,12 +486,4 @@ export default class SetupController {
       this.closeModal?.();
     }
   };
-}
-
-function parseErrors(body: string): Record<string, string> | undefined {
-  try {
-    return JSON.parse(body);
-  } catch (_) {
-    return undefined;
-  }
 }

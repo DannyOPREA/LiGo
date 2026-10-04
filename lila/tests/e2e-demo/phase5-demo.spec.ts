@@ -7,6 +7,8 @@
 
 import { expect, test, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
 
+import { dismissAlert } from './lobby';
+
 // up to two waits for lila's game-creation limit on top of the game itself (unit 4.12 does the same)
 test.describe.configure({ timeout: 240_000 });
 import { randomUUID } from 'node:crypto';
@@ -69,18 +71,22 @@ async function playStone(page: Page, color: Color, size: number, [col, row]: num
 
 /** Sends a create-game window's form and checks lila took it. lila takes 5 game-creation posts a minute
  * from one address (Limiters.setupPost), and the whole e2e run (Phases 3, 4 and 5, desktop then phone)
- * makes more than that. If lila answers 429 Too Many
- * Requests, the window is left stuck, so wait for the limit to clear and set the game up again. */
+ * makes more than that. If lila answers 429 Too Many Requests, close its alert, wait for the limit to
+ * clear and set the game up again, as the Phase 3 and 4 demos do. */
 async function createGame(page: Page, path: string, setUp: () => Promise<void>, create: () => Promise<void>) {
   let again = false;
   await expect(async () => {
+    await dismissAlert(page); // a refused game leaves lila's alert over the page
     if (again) await setUp();
     again = true;
-    const sent = page.waitForResponse(
-      r => r.request().method() === 'POST' && new URL(r.url()).pathname.startsWith(path),
-    );
-    await create();
-    expect((await sent).status()).toBeLessThan(400);
+    const [sent] = await Promise.all([
+      page.waitForResponse(
+        r => r.request().method() === 'POST' && new URL(r.url()).pathname.startsWith(path),
+        { timeout: 5000 },
+      ),
+      create(),
+    ]);
+    expect(sent.status()).toBeLessThan(400);
   }).toPass({ intervals: [5_000, 10_000, 15_000], timeout: 120_000 }); // as the Phase 3 and 4 demos wait
 }
 
@@ -186,7 +192,7 @@ test('a 5k and a 1d sign up, play a rated 19x19 handicap game, and their ratings
         await expect(setup.locator('.setup-suggested-stones')).toContainText('5');
         await setup.locator('#sf_handicap').selectOption('5');
       },
-      () => setup.locator('button.lobby__start__button--friend-user').click(),
+      () => setup.locator('button.lobby__start__button--friend-user').click({ timeout: 5000 }),
     );
 
     // The challenge page: the 5k opens it and accepts.
@@ -277,7 +283,7 @@ test("a guest can't choose rated: their game is casual", async ({ browser }, inf
     };
     await setUpGuestGame();
     await createGame(a, '/setup/hook', setUpGuestGame, () =>
-      a.getByRole('dialog').locator('button.lobby__start__button--hook').click(),
+      a.getByRole('dialog').locator('button.lobby__start__button--hook').click({ timeout: 5000 }),
     );
 
     // Another guest joins it from Open challenges: it says Casual.

@@ -126,6 +126,14 @@ class SgfDumpTest extends munit.FunSuite:
     val over = finished(nine, Status.Resign, Some(Color.White))
     assertEquals(moveCount(SgfDump(over, names, "x", WithFlags(delayMoves = true)).get), 9)
 
+  // /<id>/analysis asks for exactly this: delayMoves = true for any viewer
+  test("the analysis page's SGF holds back a game in play's last moves and nothing of a finished one"):
+    val flags = WithFlags(delayMoves = true)
+    val inPlay = SgfDump(nine, names, "x", flags).get
+    assertEquals(moveCount(inPlay), 6)
+    val over = finished(nine, Status.Mate, Some(Color.Black))
+    assertEquals(moveCount(SgfDump(over, names, "x", flags).get), 9)
+
   test("moves=false leaves the moves out and keeps the game information"):
     val sgf = SgfDump(nine, names, "x", WithFlags(moves = false)).get
     assertEquals(moveCount(sgf), 0, sgf)
