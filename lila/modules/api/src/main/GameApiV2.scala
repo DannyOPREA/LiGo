@@ -119,7 +119,7 @@ final class GameApiV2(
     val games = gameRepo
       .sortedCursor(Query.imported(config.user), Query.importedSort, batchSize = config.perSecond.value)
       .documentSource()
-    // PGN import went with chess games (unit 3.17): there is no imported text to return as it was sent.
+    // an import's SGF export is the text as it was sent (`sgfOf`)
     games.via(preparationFlow(config))
 
   def exportUserBookmarks(config: BookmarkConfig): Source[String, ?] =
@@ -161,6 +161,9 @@ final class GameApiV2(
 
   // Unit 4.11: a Go game as SGF, with the same move delay and `moves` flag as the JSON export.
   private def sgfOf(game: Game, flags: WithFlags): Fu[Option[String]] =
+    storedSgf(game).fold(replayedSgf(game, flags))(sgf => fuccess(sgf.some))
+
+  private def replayedSgf(game: Game, flags: WithFlags): Fu[Option[String]] =
     gameLightUsers(game).map: users =>
       val names = users.map((p, u) => SgfDump.playerName(p, u))
       SgfDump(game, names, s"LiGo $baseUrl/${game.id}", flags)
@@ -219,6 +222,11 @@ final class GameApiV2(
     game.players.traverse(_.userId.so(getLightUser)).dmap(game.players.zip(_))
 
 object GameApiV2:
+
+  /** An imported game exports as the SGF text it was stored with, verbatim (unit 7.5, ADR 0023 §2): the
+    * original, with its variations and comments. Other games are written from their moves.
+    */
+  def storedSgf(game: Game): Option[String] = game.sgfImport.map(_.sgf)
 
   // Game exports are JSON (or NDJSON) since PGN went with chess games (unit 3.17), or SGF (unit 4.11).
   enum Format:

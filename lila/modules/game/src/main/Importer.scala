@@ -94,7 +94,15 @@ object Importer:
             .withGo(imported.game)
             .copy(metadata =
               sloppy.metadata.copy(sgfImport =
-                SgfImport.make(user = user, date = info.date.map(clean(_, 40)), sgf = sgf).some
+                SgfImport
+                  .make(
+                    user = user,
+                    date = info.date.map(clean(_, 40)),
+                    sgf = sgf,
+                    re = countedResult(info.result),
+                    ru = Option.when(imported.settings.rulesetUnknown)(unknownRuleset(sgf))
+                  )
+                  .some
               )
             )
           val (status, winner) = ending(info.result)
@@ -112,9 +120,34 @@ object Importer:
       case (None, Some(r)) => PlayerName(s"? ($r)").some
       case _ => none
 
-  /** Text from a file we don't trust: no control characters, at most `max` characters. */
-  private def clean(text: String, max: Int): String =
-    text.filterNot(Character.isISOControl).trim.take(max)
+  /** Text from a file we don't trust: no control, bidirectional-override or zero-width characters (they could
+    * reorder or hide what a name says), at most `max` characters.
+    */
+  def clean(text: String, max: Int): String =
+    text.filterNot(c => Character.isISOControl(c) || hidden(c)).trim.take(max)
+
+  private def hidden(c: Char) =
+    (c >= '\u200b' && c <= '\u200f') || (c >= '\u202a' && c <= '\u202e') ||
+      (c >= '\u2066' && c <= '\u2069') || c == '\ufeff'
+
+  /** The result for a game that ended by counting, as SGF writes it (`B+3.5`, `W+`, `0`), as the page shows
+    * it.
+    */
+  def countedResult(result: Option[SgfResult]): Option[String] =
+    def letter(w: ligo.gorules.Color) = if w == ligo.gorules.Color.Black then "B" else "W"
+    result.flatMap:
+      case SgfResult.Points(w, m) => s"${letter(w)}+${m.bigDecimal.stripTrailingZeros.toPlainString}".some
+      case SgfResult.Won(w) => s"${letter(w)}+".some
+      case SgfResult.Jigo => "0".some
+      case _ => none
+
+  private val ruleName = """RU\s{0,8}\[([^\]]{0,40})\]""".r
+
+  /** What `RU` said when it named a ruleset LiGo doesn't know: found by a bounded search of the head of the
+    * text (the root comes first), not a second parse.
+    */
+  def unknownRuleset(sgf: String): String =
+    ruleName.findFirstMatchIn(sgf.take(4096)).fold("?")(m => clean(m.group(1), 40))
 
   /** How the record says the game ended (`RE`), as lila's statuses say it. A count or a bare win is the end
     * by counting (`VariantEnd`), as Go games here end (unit 4.8); jigo has no winner; a result that is

@@ -53,7 +53,12 @@ case class SgfImport(
     date: Option[String],
     sgf: String,
     // hash of the whole SGF text for DB unicity
-    h: Option[Array[Byte]]
+    h: Option[Array[Byte]],
+    // the file's result (`RE`) as SGF writes it (`B+3.5`, `W+`, `0`) for a game that ended by counting,
+    // so the page needs no parse of the text; absent for older documents and other endings
+    re: Option[String] = None,
+    // the `RU` text when it named a ruleset LiGo doesn't know (Japanese was used), shown on the game page
+    ru: Option[String] = None
 )
 
 type ClockHistory = ByColor[Vector[Centis]]

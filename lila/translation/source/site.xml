@@ -81,8 +81,6 @@
   <string name="collapseVariations">Collapse variations</string>
   <string name="expandVariations">Expand variations</string>
   <string name="forceVariation">Convert to variation</string>
-  <string name="copyVariationPgn">Copy variation PGN</string>
-  <string name="copyMainLinePgn">Copy main line PGN</string>
   <string name="move">Move</string>
   <string name="variantLoss">Variant loss</string>
   <string name="variantWin">Variant win</string>
@@ -121,7 +119,6 @@
   <string name="lossOr50MovesByPriorMistake">Loss or 50 moves by prior mistake</string>
   <string name="unknownDueToRounding">Due to possible rounding of DTZ values in Syzygy tablebases, a win/loss is only guaranteed if the recommended tablebase line has been followed since the last capture or pawn move.</string>
   <string name="allSet">All set!</string>
-  <string name="importPgn">Import PGN</string>
   <string name="delete">Delete</string>
   <string name="deleteThisImportedGame">Delete this imported game?</string>
   <string name="replayMode">Replay mode</string>
@@ -352,6 +349,7 @@
   <string name="goPasteSgfHere">Paste the SGF text here</string>
   <string name="goOrUploadSgfFile">Or upload an SGF file</string>
   <string name="goCouldNotImportX">The game could not be imported: %s</string>
+  <string name="goRulesNotRecognisedX">Ruleset not recognised: %s. Imported as Japanese.</string>
   <string name="goBackToTheGame">Back to the game</string>
   <string name="goDownloadGameSgf">Download the game as SGF</string>
   <plurals name="goNbHandicapStones">

@@ -3525,12 +3525,8 @@ interface I18n {
     contrast: string;
     /** Contribute */
     contribute: string;
-    /** Copy main line PGN */
-    copyMainLinePgn: string;
     /** Copy to clipboard */
     copyToClipboard: string;
-    /** Copy variation PGN */
-    copyVariationPgn: string;
     /** Correspondence */
     correspondence: string;
     /** Correspondence games: one or several days per move */
@@ -3939,6 +3935,8 @@ interface I18n {
     goRulesChinese: string;
     /** Japanese */
     goRulesJapanese: string;
+    /** Ruleset not recognised: %s. Imported as Japanese. */
+    goRulesNotRecognisedX: I18nFormat;
     /** The file's rules are not ones LiGo plays: Japanese rules are used instead. */
     goRulesUnknown: string;
     /** The score could not be counted */
@@ -4067,8 +4065,6 @@ interface I18n {
     importGameDataPrivacyWarning: string;
     /** Paste a game PGN to get a browsable replay, computer analysis, game chat, and a shareable link. */
     importGameExplanation: string;
-    /** Import PGN */
-    importPgn: string;
     /** Inaccuracy */
     inaccuracy: string;
     /** Anything even slightly inappropriate could get your account closed. */

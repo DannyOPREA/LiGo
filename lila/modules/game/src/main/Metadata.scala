@@ -21,10 +21,18 @@ object SgfImport:
           .getBytes(UTF_8)
       .take(12)
 
-  def make(user: Option[UserId], date: Option[String], sgf: String) =
+  def make(
+      user: Option[UserId],
+      date: Option[String],
+      sgf: String,
+      re: Option[String] = none,
+      ru: Option[String] = none
+  ) =
     lila.core.game.SgfImport(
       user = user,
       date = date,
       sgf = sgf,
-      h = hash(sgf).some
+      h = hash(sgf).some,
+      re = re,
+      ru = ru
     )

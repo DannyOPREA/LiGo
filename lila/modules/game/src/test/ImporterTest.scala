@@ -98,9 +98,7 @@ class ImporterTest extends munit.FunSuite:
 
   test("not an SGF, an unreadable one and another game are refused"):
     assert(refused("hello").nonEmpty)
-    assert(
-      refused("(;GM[1]FF[4]SZ[9];B[ee]").nonEmpty || Importer.parse("(;GM[1]FF[4]SZ[9];B[ee]", none).isRight
-    )
+    assert(refused("(;GM[1]FF[4]SZ[9];B[ee]").nonEmpty) // truncated record
     assert(refused("(;GM[2]FF[4];B[ee])").contains("not a game of Go"))
 
   test("the same file twice has one hash; spaces and blank lines don't matter, other notes do"):
@@ -118,8 +116,11 @@ class ImporterTest extends munit.FunSuite:
     assertEquals(setupOf("(;GM[1]SZ[9]RU[Korean];B[ee])").ruleset, Ruleset.Japanese)
     assertEquals(setupOf("(;GM[1]SZ[9]RU[Chinese];B[ee])").ruleset, Ruleset.Chinese)
     assertEquals(setupOf("(;GM[1]SZ[9]RU[AGA];B[ee])").ruleset, Ruleset.Chinese)
-    // an unknown ruleset is Japanese, noted by the game's import info
+    // an unknown ruleset is Japanese, and the game remembers what the file said (shown on the game page)
     assertEquals(setupOf("(;GM[1]SZ[9]RU[Foo];B[ee])").ruleset, Ruleset.Japanese)
+    assertEquals(imported("(;GM[1]SZ[9]RU[Foo Bar];B[ee])").sgfImport.flatMap(_.ru), Some("Foo Bar"))
+    assertEquals(imported("(;GM[1]SZ[9]RU[Chinese];B[ee])").sgfImport.flatMap(_.ru), None)
+    assertEquals(imported("(;GM[1]SZ[9];B[ee])").sgfImport.flatMap(_.ru), None)
     assertEquals(setupOf("(;GM[1]SZ[19]KM[6.5];B[pd])").komi, 6.5)
     // komi in stones from a Chinese server: 3.75 is 7.5; a Japanese file keeps 3.75's refusal
     assertEquals(setupOf("(;GM[1]SZ[19]RU[Chinese]KM[3.75];B[pd])").komi, 7.5)
@@ -195,3 +196,23 @@ class ImporterTest extends munit.FunSuite:
     assertEquals(JsonView.goResult(imported("(;GM[1]SZ[9]RE[0];B[ee])")), Some("0"))
     assertEquals(JsonView.goResult(imported("(;GM[1]SZ[9]RE[B+R];B[ee])")), None)
     assertEquals(JsonView.goResult(imported("(;GM[1]SZ[9];B[ee])")), None)
+
+  test("the result text is kept at import time, and a document without it still loads"):
+    assertEquals(imported(nine).sgfImport.flatMap(_.re), Some("W+3.5"))
+    assertEquals(imported("(;GM[1]SZ[9]RE[B+R];B[ee])").sgfImport.flatMap(_.re), None)
+    val g = imported("(;GM[1]SZ[9]RU[Foo]RE[B+2];B[ee])")
+    val back = gameHandler.read(gameHandler.write(g))
+    assertEquals(back.sgfImport.map(i => (i.re, i.ru)), Some((Some("B+2"), Some("Foo"))))
+    // an older sgfi document has neither key
+    val doc = gameHandler.write(g)
+    val sgfi = doc.getAsOpt[reactivemongo.api.bson.BSONDocument]("sgfi").get
+    val old = doc ++ reactivemongo.api.bson.BSONDocument("sgfi" -> (sgfi -- "re" -- "ru"))
+    val loaded = gameHandler.read(old)
+    assertEquals(loaded.sgfImport.map(i => (i.re, i.ru)), Some((None, None)))
+    assertEquals(loaded.sgfImport.map(_.sgf), g.sgfImport.map(_.sgf))
+
+  test("names lose bidirectional overrides, isolates and zero-width characters"):
+    assertEquals(Importer.clean("Lee\u202eSedol\u200b\u2066x\u2069\ufeff", 60), "LeeSedolx")
+    val g = imported("(;GM[1]SZ[9]PB[Ev\u202eil]PW[W\u200bhite];B[ee])")
+    assertEquals(g.blackPlayer.name.map(_.value), Some("Evil"))
+    assertEquals(g.whitePlayer.name.map(_.value), Some("White"))

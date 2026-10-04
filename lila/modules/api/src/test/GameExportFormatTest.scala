@@ -50,3 +50,10 @@ class GameExportFormatTest extends munit.FunSuite:
   test("JSON and NDJSON asked for are JSON"):
     assertEquals(formatOf(request("/game/export/abcd1234", Some("application/json"))), Format.JSON)
     assertEquals(formatOf(request("/api/games/user/x", Some("application/x-ndjson"))), Format.JSON)
+
+  // Unit 7.5: an imported game's SGF export is the stored text, as it was sent.
+  test("an imported game exports its stored SGF verbatim; other games are written from their moves"):
+    val text = "(;GM[1]FF[4]SZ[9]C[note \\] with escapes];B[ee]\n(;W[cc])(;W[gg]))"
+    val game = lila.game.importer.Importer.parse(text, none).fold(e => fail(e), identity)
+    assertEquals(GameApiV2.storedSgf(game), Some(text))
+    assertEquals(GameApiV2.storedSgf(game.copy(metadata = game.metadata.copy(sgfImport = none))), None)

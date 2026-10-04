@@ -13,6 +13,23 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 7.5 review · Result text and ruleset note stored at import; verbatim SGF download
+- Did: `sgfi` gains optional `re` (result text for a counted game) and `ru` (raw unknown `RU`), set in
+  `Importer.parse`; `JsonView.goResult` reads `re` (no parse of up to 200 KB per round event); the game
+  page's side panel shows the unknown-ruleset note (new key `goRulesNotRecognisedX`). An import's SGF
+  export returns the stored text verbatim (`GameApiV2.storedSgf`). `Importer.clean` also drops
+  bidirectional and zero-width characters. Removed the unused `importPgn`, `copyVariationPgn` and
+  `copyMainLinePgn` strings; regenerated `key.scala` (it lacked `goDownloadGameSgf`). ADR 0023 amendment
+  for the body limit and the two fields.
+- Worked: the BSON macro handler reads a document without the new keys as `None`, tested with a
+  hand-made old `sgfi`.
+- Didn't work / dead ends: nothing new. The delay test for `/<id>/analysis` already existed as an SGF
+  dump test; one more pins the exact flags the page uses.
+- Lessons: regenerate `key.scala` after every `site.xml` edit, not once.
+- Decisions: one row in logs/decisions.md.
+- Needs real-stack check: `/paste` and `/api/import` end to end, `/<id>/analysis` through Play, the game
+  page's ruleset note, and the verbatim download's headers.
+
 ### 2026-10-04 · unit 7.5 · SGF import and game analysis
 - Did: `/paste` (the form, a file picker that fills the box) and `/api/import` (`sgf=` urlencoded) take an
   SGF record; `Importer` (`modules/game`) checks the 200 KB size, looks for the same file by hash, reads it
