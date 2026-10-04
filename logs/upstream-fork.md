@@ -48,6 +48,30 @@
   removed assets (`chessgroundTag`, `ChessHelper.chessground*`, `AnalyseUi.miniSpan`) and dead
   `cg-board`/`.mini-board` CSS; `saySan`/`speakable` go after #102.
 
+### 2026-10-04 · 3.17 slice (b) · Chess engine analysis and the chess analysis tree removed
+- Did: deleted `modules/tree`'s chess tree (Root/Branch/Node over Uci/Fen/Glyphs), `Eval`, `Info`,
+  `Advice`, `Analysis` and `StatusText` (kept `ExportOptions`, which round and the API still use), and
+  `modules/analyse`'s evals: `AccuracyCP`, `AccuracyPercent`, `Analyser`, `AnalysisRepo` and its BSON,
+  `Annotator`, `JsonView`, `RequesterApi` (fishnet's per-user request counter), `actorApi` and the module
+  Env (only `AnalyseUi`, Phase 7's page, stays). The watcher and lichobile round JSON, `/api/games/user`
+  style exports (`GameApi`, `GameApiV2`) and PGN no longer fetch or send an `analysis`; the export
+  flags `evals` and `accuracy` are gone from `GameExport.WithFlags`, the `evals`/`accuracy` query
+  parameters and the download page's "Evaluation" box with them (after 2a removed PGN). Round no longer relays `analysisProgress`. Fishnet's metrics and the `/fishnet`
+  redirect went too. Chess guard baseline regenerated after merging 2a and 2b.
+- Worked: `./lila.sh "compile; Test/compile; api/test; round/test; game/test"` (see PR).
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Decisions: `analysis` leaves the JSON rather than staying as an empty field: nothing ever produced
+  one for a Go game, and Phase 7's KataGo analysis (ADR 0023's stubbed engine hook) will define its
+  own shape. The `analysis2` and `analysis_requester` collections are no longer read or cleaned on
+  account deletion; LiGo never wrote to them.
+- Follow-ups: `game.metadata.analysed` and the `analysed` query filters stay (they read a stored flag);
+  `lila.tree` now holds only `ExportOptions`, and its `chess.playJson` dependency can go with the last
+  3.17 PR. Left as harmless: HttpFilter's `/fishnet/` client
+  name and the dead `bin/mongodb/{game-analysed,analysis-requester-cleanup}.js` scripts.
+- Review: no blocking code findings; `bin/mongodb/indexes.js` no longer creates the analysis indexes, and
+  the UPSTREAM row names `analyse/package.scala`. Lesson: verify's lila test gate ran `testQuick`
+  with 0 tests; for a removal, run each touched project's full `test`.
 ### 2026-10-04 · 3.17 part 2b · Chess variants, openings and "from position" FENs leave lila
 - Did: removed `Variant` from lila's types and every reader: setup configs and forms (hook, friend,
   board API, challenge API, open challenges), challenges and bulk pairings, lobby hooks and seeks,
