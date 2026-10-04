@@ -3819,8 +3819,14 @@ interface I18n {
     goBoardSize: string;
     /** Byo-yomi periods */
     goByoyomiPeriods: string;
+    /** Can meet %s */
+    goCanMeetX: I18nFormat;
+    /** Casual quick games are even */
+    goCasualQuickGamesEven: string;
     /** Connecting to the game */
     goConnectingToTheGame: string;
+    /** Correspondence games need an account */
+    goCorrespondenceNeedsAccount: string;
     /** Counting the score… */
     goCountingTheScore: string;
     /** Current tournament rank */
@@ -3833,12 +3839,16 @@ interface I18n {
     goDownloadSgf: string;
     /** Even */
     goEven: string;
+    /** Even only */
+    goEvenOnly: string;
     /** First move */
     goFirstMove: string;
     /** Handicap */
     goHandicap: string;
     /** Handicap */
     goHandicapCompensation: string;
+    /** Handicap OK */
+    goHandicapOk: string;
     /** Jigo: the score is even */
     goJigo: string;
     /** Joined the game */
@@ -3861,6 +3871,8 @@ interface I18n {
     goNbMoves: I18nPlural;
     /** %s prisoners */
     goNbPrisoners: I18nPlural;
+    /** %s waiting */
+    goNbWaiting: I18nPlural;
     /** New position */
     goNewPosition: string;
     /** Next move */
@@ -3883,6 +3895,8 @@ interface I18n {
     goOpponentAcceptedScore: string;
     /** Your opponent left the game. You can claim victory, or wait for them. */
     goOpponentLeftChoices: string;
+    /** or with up to %s handicap stones */
+    goOrUpToNbStones: I18nPlural;
     /** Pass */
     goPass: string;
     /** Pass: play no stone this turn */
@@ -3946,6 +3960,8 @@ interface I18n {
     /** Show clock on left */
     goShowClockOnLeft: string;
     /** Sign up to play rated games */
+    goSignUpForRated: string;
+    /** Sign up to play rated games */
     goSignUpToPlayRated: string;
     /** Start */
     goStart: string;
@@ -3983,6 +3999,8 @@ interface I18n {
     goUnjoinableRated: string;
     /** Vibration feedback */
     goVibrationFeedback: string;
+    /** An estimate of who the pairing would accept now; it widens while you wait */
+    goWaitingRangeHint: string;
     /** White stones */
     goWhiteStones: string;
     /** White: %s */

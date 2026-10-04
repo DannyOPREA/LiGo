@@ -1,0 +1,8 @@
+/* Applied only while a screenshot is taken, as on the round page (ui/round/e2e/screenshot.css): the
+   page's glyphs are hidden, since Chromium builds rasterise text a little differently, and everything
+   else (the layout, the tiles, the chips) is compared. The text is checked with locators in the tests. */
+main.lobby,
+main.lobby * {
+  color: transparent !important;
+  text-shadow: none !important;
+}

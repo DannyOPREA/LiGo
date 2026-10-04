@@ -3,6 +3,7 @@ import { idleTimer } from 'lib/event';
 import type LobbyController from './ctrl';
 import * as hookRepo from './hookRepo';
 import type { PoolMember, Hook } from './interfaces';
+import type { PoolRange } from './quickPair';
 
 type Handlers = Record<string, (data: any) => void>;
 
@@ -35,7 +36,14 @@ export default class LobbySocket {
         ctrl.redraw();
       },
       reload_seeks() {
-        if (ctrl.showsCorrespondence()) ctrl.fetchSeeks();
+        if (ctrl.showsCorrespondence() || ctrl.waiting?.kind === 'seek') ctrl.fetchSeeks();
+      },
+      // the quick-pairing tiles (unit 6.6): each pool's waiting count, and who you can meet where you wait
+      poolSizes(sizes: Record<string, number>) {
+        ctrl.setPoolSizes(sizes);
+      },
+      poolRange(range: PoolRange) {
+        ctrl.setPoolRange(range);
       },
     };
 
