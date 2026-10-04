@@ -1,7 +1,6 @@
 package lila.game
 
 import chess.*
-import chess.CoreArbitraries.given
 import org.scalacheck.{ Arbitrary, Gen }
 import play.api.libs.json.Json
 
@@ -10,6 +9,8 @@ object Arbitraries:
   // TODO move somewhere
   given [S, T](using SameRuntime[S, T], Arbitrary[S]): Arbitrary[T] = Arbitrary:
     Arbitrary.arbitrary[S].map(summon[SameRuntime[S, T]].apply)
+
+  given Arbitrary[Color] = Arbitrary(Gen.oneOf(Color.all))
 
   given Arbitrary[Event.RedirectOwner] = Arbitrary:
     for

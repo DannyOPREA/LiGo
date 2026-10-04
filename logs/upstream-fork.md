@@ -16,6 +16,26 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · 3.17 part 3 · The chess guard bites; unused scalachess pieces dropped
+- Did: the last chess code the guard found is gone (an unused `chess.Square` JSON blocker in
+  `common/Json.scala`; the `chess.eval.WinPercent` and `chess.Square` BSON blockers and the unused
+  `chessPosKeyHandler` in `db/Handlers.scala`; `ui/helper/ChessHelper.scala`, chessground's mini
+  board and wrap helpers, which nothing called). The chess guard now runs in full mode in CI
+  (`lila.yml`'s lila-paths job): `--report-only` and `dev/ci/chess-guard-baseline.txt` are gone,
+  so any chess format, variant, opening, eval or Board/Position/Square/Move/Game in lila or lila-ws,
+  and any strategygames import outside libs/go-rules, fails the build. lila's sbt build drops
+  `scalachess-tiebreak` (unused), `scalachess-test-kit` (the game tests now make their own colour
+  arbitrary) and `scalachess-play-json` (the three game-neutral writers lila used, colour, centis
+  and the correspondence clock, now live in `lila.common.Json` with the same output);
+  `scalachess` and `scalachess-rating` stay for the neutral types and Glicko-2 (ADR 0019 §1).
+  lila-ws drops its unused `scalachess-play-json` too.
+- Tests: the guard's self-tests in `dev/tests/run.sh` cover the one mode (72 pass); new
+  `ChessNeutralJsonTest` pins the three writers' output; `common`, `db` and `game` tests run for
+  real (`testFull`, not sbt's cache) and pass; lila-ws compiles and its tests pass.
+- Left for others: the browser's chessground and chess UI packages (3.19 part 2).
+- Lessons: none new.
+- Decisions: logs/decisions.md 3.17 part 3 row; ADR 0019 §8 amendment.
+
 ### 2026-10-04 · 3.17 slice (b) · Chess engine analysis and the chess analysis tree removed
 - Did: deleted `modules/tree`'s chess tree (Root/Branch/Node over Uci/Fen/Glyphs), `Eval`, `Info`,
   `Advice`, `Analysis` and `StatusText` (kept `ExportOptions`, which round and the API still use), and

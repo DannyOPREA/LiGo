@@ -130,6 +130,11 @@ workspace package (MIT, §2) in place of `@badrap/result` (MIT), which only its 
 which stays in the lockfile for `ui/analyse` and `ui/lib`. `ui/puzzle` no longer imports chessground,
 chessops or the chess nvui code. No third-party package was added.
 
+Unit 3.17 part 3 dropped three scalachess artifacts from lila's sbt build: `scalachess-tiebreak`,
+`scalachess-test-kit` and `scalachess-play-json` (`com.github.lichess-org.scalachess`, 17.17.1, all
+MIT). lila keeps `scalachess` and `scalachess-rating` (MIT) for game-neutral types and Glicko-2
+(ADR 0019 §1), lila-ws keeps `scalachess` and drops `scalachess-play-json`, which it no longer used. No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file
