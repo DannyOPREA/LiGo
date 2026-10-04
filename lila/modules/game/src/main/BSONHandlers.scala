@@ -188,11 +188,10 @@ object BSONHandlers:
               .map(e => lila.log("game").warn(s"Go game ${light.id}: unreadable byo-yomi clock: $e"))
               .toOption,
         goScoring = for
-          g <- go
           doc <- r.getO[BSONDocument](GoStorage.F.scoring)
           // an unreadable scoring phase loads the game without it, logged, rather than failing the whole game
           sc <- GoStorage.scoring
-            .read(doc, g.size)
+            .read(doc, go.size)
             .left
             .map(e => lila.log("game").warn(s"Go game ${light.id}: unreadable scoring phase: $e"))
             .toOption
