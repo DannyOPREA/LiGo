@@ -1,0 +1,24 @@
+{
+  "t": "proposal",
+  "ref": "demo0002:2:1",
+  "src": "none",
+  "dead": [],
+  "seal": [],
+  "owner": "bbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbb..bbbbb..wwwwwwwwbb.b.bbbb..wwwwwwwwbbb.bbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwww",
+  "score": {
+    "b": {
+      "territory": 166,
+      "stones": 0,
+      "prisoners": 1,
+      "total": 167
+    },
+    "w": {
+      "territory": 152,
+      "stones": 0,
+      "prisoners": 0,
+      "komi": 6.5,
+      "compensation": 0,
+      "total": 158.5
+    }
+  }
+}

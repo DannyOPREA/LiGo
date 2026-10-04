@@ -1,6 +1,7 @@
 import { defined, requestIdleCallbackSafe, memoize } from 'lib';
 import { throttle } from 'lib/async';
 import { isIos } from 'lib/device';
+import { makeByoyomiSounds } from 'lib/game/clock/byoyomiSound';
 import { speakable } from 'lib/game/sanWriter';
 import { log } from 'lib/permalog';
 import { storage } from 'lib/storage';
@@ -22,6 +23,7 @@ export default new (class implements SoundI {
   primerEvents = ['touchend', 'pointerup', 'pointerdown', 'mousedown', 'keydown'];
   voiceRateRange = { min: 0.3, max: 1.7 };
   nvuiReady = memoize(() => site.asset.loadI18n('nvui'));
+  byoyomiSounds = makeByoyomiSounds();
 
   constructor() {
     this.primerEvents.forEach(e => window.addEventListener(e, this.primer, { capture: true }));
@@ -116,6 +118,16 @@ export default new (class implements SoundI {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  // LiGo: call on every tick of the player's own clock while it is in byo-yomi (ADR 0026 section 2).
+  byoyomi(periodsLeft: number, secondsLeft: number): void {
+    const name = this.byoyomiSounds.tick(periodsLeft, secondsLeft);
+    if (name) this.play(name);
+  }
+
+  byoyomiReset(): void {
+    this.byoyomiSounds.reset();
   }
 
   playOnce(name: string): void {

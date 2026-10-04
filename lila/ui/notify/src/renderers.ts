@@ -103,7 +103,8 @@ export default function makeRenderers(): Renderers {
             result = i18n.site.defeat;
             break;
           default:
-            result = i18n.site.draw;
+            // a game that ended without a count has no result, which is not a draw (unit 7.7)
+            result = n.content.noResult ? i18n.site.gameEndedWithNoResult : i18n.site.draw;
         }
         return generic(n, '/' + n.content.id, licon.PaperAirplane, [
           h('span', [h('strong', i18n.site.gameVsX(userFullName(n.content.opponent))), drawTime(n)]),
@@ -120,7 +121,7 @@ export default function makeRenderers(): Renderers {
             result = i18n.site.defeat;
             break;
           default:
-            result = i18n.site.draw;
+            result = n.content.noResult ? i18n.site.gameEndedWithNoResult : i18n.site.draw;
         }
         return i18n.site.resVsX(result, userFullName(n.content.opponent));
       },
@@ -153,6 +154,15 @@ export default function makeRenderers(): Renderers {
           h('span', i18n.site.gameVsX(n.content.op)),
         ]),
       text: _ => i18n.site.timeAlmostUp,
+    },
+    // a correspondence game's scoring phase opened: the count is waiting for an answer (unit 7.7)
+    scoringPhase: {
+      html: n =>
+        generic(n, '/' + n.content.id, licon.PaperAirplane, [
+          h('span', [h('strong', i18n.site.scoringPhaseStarted), drawTime(n)]),
+          h('span', i18n.site.gameVsX(n.content.op)),
+        ]),
+      text: _ => i18n.site.scoringPhaseStarted,
     },
     irwinDone: jobDone('Irwin'),
     kaladinDone: jobDone('Kaladin'),

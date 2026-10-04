@@ -37,7 +37,8 @@ export default function (
   ctrl: CorresClockController,
   color: Color,
   position: TopOrBottom,
-  runningColor: Color,
+  /** Whose clock runs: nobody's while the dead stones are agreed (unit 7.7). */
+  runningColor: Color | undefined,
 ): VNode {
   const millis = ctrl.millisOf(color),
     update = (el: HTMLElement) => {
@@ -47,7 +48,7 @@ export default function (
     direction = document.dir === 'rtl' && millis < 86400 * 1000 ? 'ltr' : undefined;
   return hl(
     'div.rclock.rclock-correspondence.rclock-' + position,
-    { class: { outoftime: millis <= 0, running: runningColor === color } },
+    { class: { outoftime: millis <= 0 && !ctrl.root.inScoring(), running: runningColor === color } },
     [
       ctrl.data.showBar &&
         hl('div.bar', [hl('span', { attrs: { style: `width: ${ctrl.timePercent(color)}%` } })]),
