@@ -78,3 +78,7 @@ final class JoinerTest extends munit.FunSuite:
       summon[BSONDocumentHandler[Challenge]].readTry(doc).toOption.map(_.timeControl),
       Some(byoyomi)
     )
+
+  // Unit 5.7: a guest's game is casual whatever the challenge says (ADR 0021 §5)
+  test("a rated challenge accepted without signed-in players makes a casual game"):
+    assertEquals(created(challenge(GoSetups.default).copy(rated = chess.Rated.Yes)).rated, chess.Rated.No)

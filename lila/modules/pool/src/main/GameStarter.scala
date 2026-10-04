@@ -58,7 +58,7 @@ final private class GameStarter(
         Pairing(ByColor(whiteMember.sri -> game.fullIds.white, blackMember.sri -> game.fullIds.black))
 
   /** A Go game on the pool's board size with Japanese rules and standard komi (ADR 0022 §1), casual until
-    * unit 5.7 rates pool games; even until unit 4.9 lets a game start with handicap stones.
+    * unit 6.4's second part rates pool games; even until then too.
     */
   private def makeGame(
       id: GameId,
