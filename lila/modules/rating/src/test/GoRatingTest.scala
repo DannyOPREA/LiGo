@@ -266,3 +266,11 @@ class GoRatingTest extends munit.FunSuite:
     assertEquals(handicapColor(perf(1500), perf(1700)), Color.Black)
     assertEquals(handicapColor(perf(1700), perf(1500)), Color.White)
     assertEquals(handicapColor(perf(1600), perf(1600)), Color.White)
+
+  test("the one Go leaderboard lists Go players whose deviation is at most 75 (ADR 0021 §3, unit 5.5)"):
+    import GlickoExt.rankable
+    assertEquals(PerfType.leaderboardable, List(PerfKey.go))
+    assert(PerfType.isLeaderboardable(PerfKey.go))
+    assert(!PerfType.isLeaderboardable(PerfKey.blitz))
+    assert(Glicko(1800, 75, 0.06).rankable)
+    assert(!Glicko(1800, 75.01, 0.06).rankable)

@@ -266,13 +266,7 @@ final class User(
           )
 
   def topNbApi(nb: Int, perfKey: PerfKey) = Anon:
-    if nb == 1 && perfKey == PerfKey.standard then
-      env.user.cached.top10.get {}.map { leaderboards =>
-        import env.user.jsonView.lightPerfIsOnlineWrites
-        import lila.user.JsonView.leaderboardStandardTopOneWrites
-        JsonOk(leaderboards)
-      }
-    else env.user.cached.firstPageOf(perfKey).dmap(_.take(nb)).map(topNbJson)
+    env.user.cached.firstPageOf(perfKey).dmap(_.take(nb)).map(topNbJson)
 
   private def topNbJson(users: Seq[LightPerf]) =
     given OWrites[LightPerf] = OWrites(env.user.jsonView.lightPerfIsOnline)
