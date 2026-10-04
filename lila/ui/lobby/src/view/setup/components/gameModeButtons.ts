@@ -19,7 +19,8 @@ export const gameModeButtons = (ctrl: LobbyController): MaybeVNode => {
   const problem = ctrl.setupCtrl.ratedProblem();
   return h('div.setup-game-mode', [
     modeChoice(ctrl),
-    problem && h('p.setup-rated-problem', { attrs: { role: 'status' } }, problem),
+    // always there, so a screen reader announces a problem when it appears
+    h('p.setup-rated-problem', { attrs: { role: 'status' } }, problem || ''),
   ]);
 };
 

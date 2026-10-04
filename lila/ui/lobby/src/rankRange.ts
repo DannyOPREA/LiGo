@@ -36,7 +36,8 @@ export const rankRange = (table: RankTable, rating: number, below: number, above
   const mine = rankIndex(table, rating);
   const lo = clampIndex(table, mine + below);
   const hi = clampIndex(table, mine + above);
-  const min = Math.max(ratingRangeMin, table[lo][1]);
+  // the lowest rank (25k) is open downwards: ratings under its edge still count as 25k
+  const min = lo === 0 ? ratingRangeMin : Math.max(ratingRangeMin, table[lo][1]);
   const max = hi + 1 < table.length ? Math.min(ratingRangeMax, table[hi + 1][1] - 1) : ratingRangeMax;
   return { min, max: Math.max(max, min + 1), from: table[lo][0], to: table[hi][0] };
 };

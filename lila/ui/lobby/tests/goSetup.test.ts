@@ -63,12 +63,16 @@ const rankTable: [string, number][] = JSON.parse(
 );
 const edge = (name: string) => rankTable.find(([n]) => n === name)![1];
 
-const lobby = (ratingMap: Record<string, number> | null = null, signedIn = true) => {
+const lobby = (
+  ratingMap: Record<string, number> | null = null,
+  signedIn = true,
+  pools: { id: string }[] = [],
+) => {
   const ctrl = {
     me: signedIn ? { username: 'alice', isBot: false } : undefined,
     data: { ratingMap, seeks: [], rankTable },
     opts: { showRatings: true },
-    pools: [],
+    pools,
     sort: 'time',
     redraw: () => {},
     leavePool: () => {},
@@ -302,10 +306,87 @@ describe('the create-game form', () => {
     assert.ok(setup.valid());
   });
 
-  test('a rated lobby game stays in the lobby: pools make casual games until unit 6.4', () => {
-    const { setup } = lobby({ go: 1580 });
-    setup.openModal('hook', { mode: 'rated' });
+  test('a rated lobby game stays in the lobby, a casual one that fits a pool joins it: pools make casual games until unit 6.4', () => {
+    const { setup } = lobby({ go: 1580 }, true, [{ id: '10+0' }]);
+    setup.openModal('hook', { mode: 'rated', timeMode: 'realTime', time: 10, increment: 0 });
+    assert.equal(setup.timeControl.clockStr(), '10+0');
     assert.equal(setup.hookToPoolMember('random'), null);
+    setup.gameMode('casual');
+    assert.equal(setup.hookToPoolMember('random')?.id, '10+0');
+    assert.equal(setup.hookToPoolMember('black'), null);
+    setup.setGoSize(9);
+    assert.equal(setup.hookToPoolMember('random'), null);
+    // a guest's game is a lobby game: guests join pools from the pool buttons
+    const guest = lobby(null, false, [{ id: '10+0' }]).setup;
+    guest.openModal('hook', { timeMode: 'realTime', time: 10, increment: 0 });
+    assert.equal(guest.hookToPoolMember('random'), null);
+  });
+
+  describe('the suggestion fetched for a named opponent', () => {
+    const advice: HandicapAdvice = {
+      19: { suggested: 5, min: 4, max: 6 },
+      9: { suggested: 1, min: 0, max: 2 },
+      black: false,
+    };
+    const realFetch = globalThis.fetch;
+    const asked: string[] = [];
+    const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+    beforeEach(() => {
+      asked.length = 0;
+      globalThis.fetch = (async (url: string) => {
+        asked.push(url);
+        return new Response(JSON.stringify(advice), { status: 200 });
+      }) as typeof fetch;
+    });
+    const restore = () => (globalThis.fetch = realFetch);
+
+    test('moves stones outside the allowed range to the suggestion, and shows the colours', async () => {
+      const { setup } = lobby({ go: 1580 });
+      setup.openModal('friend', { mode: 'rated' }, 'bob');
+      setup.setHandicap(9);
+      await flush();
+      restore();
+      assert.deepEqual(asked, ['/setup/go-handicap/bob']);
+      assert.equal(setup.handicap(), 5);
+      assert.equal(setup.lockedColor(), 'white');
+      assert.ok(setup.valid());
+    });
+
+    test('keeps an even rated challenge, which is always allowed', async () => {
+      const { setup } = lobby({ go: 1580 });
+      setup.openModal('friend', { mode: 'rated' }, 'bob');
+      setup.setHandicap(0);
+      await flush();
+      restore();
+      assert.equal(setup.handicap(), 0);
+      assert.equal(setup.ratedProblem(), undefined);
+    });
+
+    test('keeps the stones a challenge link fixed, and says why they cannot be rated', async () => {
+      const { setup } = lobby({ go: 1580 });
+      setup.openModal('friend', { mode: 'rated', handicap: 2, goKomi: 0.5 }, 'bob');
+      await flush();
+      restore();
+      assert.equal(setup.handicap(), 2);
+      assert.equal(setup.ratedProblem(), 'site.goRatedStonesXToY(4,6)');
+    });
+
+    test('a reply for an opponent the window no longer challenges is dropped', async () => {
+      const { setup } = lobby({ go: 1580 });
+      setup.openModal('friend', { mode: 'rated' }, 'bob');
+      setup.openModal('hook', { mode: 'rated' });
+      await flush();
+      restore();
+      assert.equal(setup.handicapAdvice, undefined);
+    });
+
+    test('a guest asks for no suggestion', async () => {
+      const { setup } = lobby(null, false);
+      setup.openModal('friend', {}, 'bob');
+      await flush();
+      restore();
+      assert.deepEqual(asked, []);
+    });
   });
 
   test('a reusable challenge link opens the form with its size, ruleset and komi', () => {

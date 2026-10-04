@@ -249,11 +249,14 @@ export default class SetupController {
       const advice: HandicapAdvice = await xhr.json(`/setup/go-handicap/${encodeURIComponent(username)}`);
       if (this.friendUser !== username) return;
       this.handicapAdvice = advice;
-      // a rated challenge starts from the suggestion when its stones are outside the allowed range
       const stones = this.stoneAdvice();
+      // a rated challenge with stones starts from the suggestion when they are outside the allowed range;
+      // an even game is always allowed, and stones a challenge link fixed stay as they are
       if (
         this.gameMode() === 'rated' &&
         stones &&
+        this.forced?.handicap === undefined &&
+        this.handicap() > 0 &&
         (this.handicap() < stones.min || this.handicap() > stones.max)
       )
         this.setHandicap(stones.suggested);
@@ -337,25 +340,20 @@ export default class SetupController {
   };
 
   hookToPoolMember = (color: ColorChoice): PoolMember | null => {
-    // pools create casual games until unit 6.4's second part rates them, so a rated game from this window
-    // stays a lobby game rather than turning casual in a pool (unit 5.7)
-    if (this.gameMode() === 'rated') return null;
+    // Pools make casual games until unit 6.4's second part rates them, so a signed-in player's casual game
+    // that fits a pool joins it, and a rated one stays a lobby game rather than turning casual (unit 5.7).
     const valid =
       color === 'random' &&
       this.gameType === 'hook' &&
+      !!this.root.me &&
+      this.gameMode() === 'casual' &&
       // pools play 19×19 Japanese games with standard komi (ADR 0022 §1), as the server checks
       this.goSize() === defaultGoSize &&
       this.goRuleset() === defaultGoRuleset &&
       this.goKomi() === standardKomi(defaultGoRuleset) &&
-      this.gameMode() === 'rated' &&
       this.timeControl.isRealTime();
     const id = this.timeControl.clockStr();
-    return valid && this.root.pools.some(p => p.id === id)
-      ? {
-          id,
-          range: this.ratingRange(),
-        }
-      : null;
+    return valid && this.root.pools.some(p => p.id === id) ? { id, range: this.ratingRange() } : null;
   };
 
   propsToFormData = (color: ColorChoice) =>

@@ -268,7 +268,7 @@
   <string name="goSignUpToPlayRated">Sign up to play rated games</string>
   <string name="goRatedSetupRule">Rated games are played on 9×9 or 19×19 with the standard komi.</string>
   <string name="goRatedHandicapNeedsOpponent">A rated game with handicap stones needs a named opponent.</string>
-  <string name="goRatedStonesXToY">A rated game between you two has %1$s to %2$s handicap stones.</string>
+  <string name="goRatedStonesXToY">A rated game between you two has %1$s to %2$s handicap stones, or none.</string>
   <string name="goSuggestedHandicapX">Suggested for your ranks: %s</string>
   <string name="goRankRangeXToY">Opponents from %1$s to %2$s</string>
   <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>

@@ -3893,7 +3893,7 @@ interface I18n {
     goRatedHandicapNeedsOpponent: string;
     /** Rated games are played on 9×9 or 19×19 with the standard komi. */
     goRatedSetupRule: string;
-    /** A rated game between you two has %1$s to %2$s handicap stones. */
+    /** A rated game between you two has %1$s to %2$s handicap stones, or none. */
     goRatedStonesXToY: I18nFormat;
     /** Your opponent is offline, but they can accept this challenge later! */
     goRematchOfflineText: string;

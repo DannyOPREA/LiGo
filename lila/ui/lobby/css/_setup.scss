@@ -132,6 +132,10 @@ $c-slider: $c-setup;
 
   .setup-rated-problem {
     color: $c-bad;
+
+    &:empty {
+      margin: 0;
+    }
   }
 
   .setup-locked-color {

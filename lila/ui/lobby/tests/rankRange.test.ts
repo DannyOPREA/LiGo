@@ -41,3 +41,12 @@ test('old rating-point slider values become the widest rank range', () => {
   assert.equal(clampSteps(3, 1), 3);
   assert.equal(clampSteps(0.5, 1), 9);
 });
+
+test('a player under the 25k edge is inside their own range: the lowest rank is open downwards', () => {
+  const r = rankRange(table, 600, -9, 9);
+  assert.equal(r.from, '25k');
+  assert.equal(r.min, 400);
+  assert.ok(r.min <= 600 && 600 <= r.max);
+  // a 5k's range reaching down to 25k is open downwards too
+  assert.equal(rankRange(table, edge('5k'), -20, 0).min, 400);
+});
