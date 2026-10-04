@@ -33,3 +33,4 @@
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, scratch PW probes (8.7)
+- [Review patterns (5.7)](feedback_review_patterns.md) — verify.sh sbt cache (use testFull), two rematch paths, toFriend retarget, licences
