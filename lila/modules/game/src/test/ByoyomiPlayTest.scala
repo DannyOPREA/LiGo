@@ -103,6 +103,14 @@ class ByoyomiPlayTest extends munit.FunSuite:
     assertNotEquals(g.speed, Speed.Correspondence)
     assert(!g.isCorrespondence)
 
+  test("game lists and page titles read a byo-yomi game's time control; real-time filters include it"):
+    given Wall = Wall()
+    val g = newGo()
+    assertEquals(g.gameClock.map(_.show), Some("1+3×30s"))
+    val realTime = reactivemongo.api.bson.BSONDocument.pretty(Query.clock(true))
+    assert(realTime.contains("'cy'") && realTime.contains("'c'"), realTime)
+    assert(reactivemongo.api.bson.BSONDocument.pretty(Query.clock(false)).contains("'cy'"))
+
   test("the clock starts once both sides have played, then charges main time to the mover"):
     given w: Wall = Wall()
     val g1 = play(newGo(), Action.Place(p("ee"))).game

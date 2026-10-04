@@ -6,7 +6,6 @@ import reactivemongo.api.bson.*
 import scalalib.Json.given
 import scalalib.paginator.Paginator
 
-import lila.analyse.{ Analysis, JsonView as analysisJson }
 import lila.common.Json.given
 import lila.core.config.*
 import lila.db.dsl.{ *, given }
@@ -19,7 +18,6 @@ final private[api] class GameApi(
     apiToken: Secret,
     gameRepo: lila.game.GameRepo,
     gameCache: lila.game.Cached,
-    analysisRepo: lila.analyse.AnalysisRepo,
     crosstableApi: lila.game.CrosstableApi
 )(using Executor):
 
@@ -119,20 +117,12 @@ final private[api] class GameApi(
   private def makeUrl(game: Game) = s"${net.baseUrl}/${game.id}/${game.naturalOrientation.name}"
 
   private def gamesJson(withFlags: WithFlags)(games: Seq[Game]): Fu[Seq[JsObject]] =
-    val allAnalysis =
-      if withFlags.analysis then analysisRepo.byIds(games.map(g => Analysis.Id(g.id)))
-      else fuccess(List.fill(games.size)(none[Analysis]))
-    allAnalysis.map { analysisOptions =>
-      games.zip(analysisOptions).map { (g, analysisOption) =>
-        gameToJson(g, analysisOption, checkToken(withFlags))
-      }
-    }
+    fuccess(games.map(gameToJson(_, checkToken(withFlags))))
 
   private def checkToken(withFlags: WithFlags) = withFlags.applyToken(apiToken.value)
 
   private def gameToJson(
       g: Game,
-      analysisOption: Option[Analysis],
       withFlags: WithFlags
   ) =
     Json
@@ -169,10 +159,6 @@ final private[api] class GameApi(
             .add("moveCentis" -> withFlags.moveTimes.so:
               lila.game.GameExt.computeMoveTimes(g, p.color).map(_.map(_.centis)))
             .add("blurs" -> withFlags.blurs.option(p.blurs.nb))
-            .add(
-              "analysis" -> analysisOption
-                .flatMap(analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy = none))
-            )
         }),
         "moves" -> withFlags.moves.option(lila.game.JsonView.goMoves(g.go).mkString(" ")),
         // the game's positions as live mini boards receive them (ADR 0019 §6), from the start
@@ -182,13 +168,12 @@ final private[api] class GameApi(
         "winner" -> g.winnerColor.map(_.name),
         "url" -> makeUrl(g)
       )
-      .add("analysis", analysisOption.ifTrue(withFlags.analysis).map(analysisJson.moves(_)))
       .noNull
 
 object GameApi:
 
+  // `with_analysis` went with chess engine analysis (unit 3.17, slice b).
   case class WithFlags(
-      analysis: Boolean = false,
       moves: Boolean = false,
       fens: Boolean = false,
       moveTimes: Boolean = false,
@@ -200,7 +185,6 @@ object GameApi:
   def requestFlags(using RequestHeader) =
     import lila.common.HTTPRequest.*
     WithFlags(
-      analysis = queryStringBool("with_analysis"),
       moves = queryStringBool("with_moves"),
       fens = queryStringBool("with_fens"),
       moveTimes = queryStringBool("with_movetimes"),
