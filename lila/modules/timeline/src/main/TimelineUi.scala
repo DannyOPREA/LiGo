@@ -58,11 +58,11 @@ final class TimelineUi(helpers: Helpers):
           trans.site.xHostsY(userLink(userId), simulName)
         case SimulJoin(userId, _, simulName) =>
           trans.site.xJoinsY(userLink(userId), simulName)
-        case GameEnd(playerId, opponent, win, perfKey) =>
+        case GameEnd(playerId, opponent, win, perfKey, noResult) =>
           (win match
-            case Some(true) => trans.site.victoryVsYInZ
-            case Some(false) => trans.site.defeatVsYInZ
-            case None => trans.site.drawVsYInZ
+              case Some(true) => trans.site.victoryVsYInZ
+              case Some(false) => trans.site.defeatVsYInZ
+              case None => trans.site.drawVsYInZ // "%1$s vs %2$s in %3$s", for no result too
           )(
             a(
               href := routes.Round.player(playerId),
@@ -71,7 +71,7 @@ final class TimelineUi(helpers: Helpers):
             )(win match
               case Some(true) => trans.site.victory()
               case Some(false) => trans.site.defeat()
-              case None => trans.site.draw()),
+              case None => if noResult.has(true) then trans.site.goNoResult() else trans.site.draw()),
             userIdLink(opponent),
             perfKey.perfTrans
           )

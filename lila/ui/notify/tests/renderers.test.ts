@@ -67,6 +67,7 @@ describe('the game-end entry', () => {
     const n = end({ noResult: true });
     assert.match(html(n), /site\.gameEndedWithNoResult/);
     assert.doesNotMatch(html(n), /site\.draw/);
-    assert.match(String(renderers.gameEnd.text(n)), /site\.gameEndedWithNoResult/);
+    // the bell's one-line text reads "No result vs Shiro", like "Draw vs Shiro"
+    assert.equal(String(renderers.gameEnd.text(n)), 'site.resVsX(site.goNoResult, Shiro)');
   });
 });

@@ -4,6 +4,24 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.7 follow-ups · No result is not a draw; "play the next game" asked once
+- Did: the four follow-ups 7.7 logged. (1) The bell's one-line text for a no-result game read "The game
+  ended with no result vs X"; it now reads "No result vs X" (`goNoResult` where "Draw" goes). (2) The
+  timeline said "Draw vs X" and the game's link-preview summary "Game is a draw" for a no-result game:
+  lila's timeline `GameEnd` gains an optional `noResult` (set by `RoundNotifier`), shown as "No result vs X
+  in <perf>", and `RoundUi` says "The game ended with no result". (3) `apiScoring` asked lila's
+  "/whats-next" on every scoring event after the player had accepted; it now asks once, when the accept
+  arrives (and again only after a re-accept). (4) A `MoveOn` unit test: next game named by the server,
+  staying on your turn, spectators, real-time games, the setting off, and the toggle.
+- Worked: writing the MoveOn test found that node's type transform (the unit test runner) runs a field
+  initializer before parameter properties are assigned, so `storage.boolean(this.key)` read the key
+  "undefined" there (esbuild, the real build, assigns them first). MoveOn now sets its storage in the
+  constructor body, and takes its redirect as a parameter (jsdom's `window.location` cannot be stubbed).
+- Verified: `node ui/test round` 64/64, `node ui/test notify` 5/5, a timeline BSON test (old entries
+  read back), verify.sh.
+- Lessons: in classes the unit tests load, don't initialize fields from constructor parameter
+  properties; set them in the constructor body.
+
 ### 2026-10-04 · unit 7.8 CI fix · The demo's sign-up and challenge on a fresh database
 - Did: the `e2e` job failed on #135 at sign-up, desktop and phone: lila looks up the mail server of an
   email's domain, and `example.com` has none, so the CI runner's sign-up was refused (locally it went
