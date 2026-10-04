@@ -15,14 +15,12 @@ final class PuzzleSelector(
   private enum NextPuzzleResult(val name: String):
     case PathMissing extends NextPuzzleResult("pathMissing")
     case PathEnded extends NextPuzzleResult("pathEnded")
-    case WrongColor(puzzle: Puzzle) extends NextPuzzleResult("wrongColor")
     case PuzzleMissing(id: PuzzleId) extends NextPuzzleResult("puzzleMissing")
     case PuzzleAlreadyPlayed(puzzle: Puzzle) extends NextPuzzleResult("puzzlePlayed")
     case PuzzleFound(puzzle: Puzzle) extends NextPuzzleResult("puzzleFound")
 
   def nextPuzzleFor(
       angle: PuzzleAngle,
-      color: Option[Option[Color]],
       difficulty: Option[PuzzleDifficulty]
   )(using me: Option[Me], perf: Perf): Fu[Option[Puzzle]] =
     me match
@@ -30,10 +28,9 @@ final class PuzzleSelector(
         given Me = me
         for
           _ <- difficulty.so(sessionApi.setDifficulty)
-          _ <- color.so(sessionApi.setAngleAndColor(angle, _))
           puz <- nextPuzzleFor(angle)
         yield puz
-      case None => anon.getOneFor(angle, difficulty | PuzzleDifficulty.Normal, ~color)
+      case None => anon.getOneFor(angle, difficulty | PuzzleDifficulty.Normal)
 
   def nextPuzzleFor(angle: PuzzleAngle)(using Me, Perf): Fu[Option[Puzzle]] =
     findNextPuzzleFor(angle, 0)
@@ -83,12 +80,6 @@ final class PuzzleSelector(
             findNextPuzzleFor(angle, retries = retries + 1)
           case PuzzleAlreadyPlayed(puzzle) =>
             session.path.tier.stepDown.fold(fuccess(serveAndMonitor(puzzle)))(switchPath("played")(retries))
-          case WrongColor(_) if retries < 10 =>
-            sessionApi.set(session.next)
-            findNextPuzzleFor(angle, retries = retries + 1)
-          case WrongColor(puzzle) =>
-            session.path.tier.stepDown
-              .fold(fuccess(serveAndMonitor(puzzle)))(switchPath("wrongColor")(retries - 5))
           case PuzzleFound(puzzle) => fuccess(serveAndMonitor(puzzle))
       }
 
@@ -136,9 +127,7 @@ final class PuzzleSelector(
                 .getAsOpt[List[Puzzle]]("puzzle")
                 .flatMap(_.headOption)
                 .fold[NextPuzzleResult](PuzzleMissing(puzzleId)): puzzle =>
-                  if session.settings.color.exists(puzzle.color !=) then WrongColor(puzzle)
-                  else if doc.getAsOpt[List[Bdoc]]("round").exists(_.nonEmpty) then
-                    PuzzleAlreadyPlayed(puzzle)
+                  if doc.getAsOpt[List[Bdoc]]("round").exists(_.nonEmpty) then PuzzleAlreadyPlayed(puzzle)
                   else PuzzleFound(puzzle)
       .monValue: result =>
         lila.mon.puzzle.selector.nextPuzzleResult(result.name)

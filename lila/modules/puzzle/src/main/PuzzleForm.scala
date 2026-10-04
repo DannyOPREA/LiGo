@@ -2,11 +2,9 @@ package lila.puzzle
 
 import play.api.data.*
 import play.api.data.Forms.*
-import play.api.libs.json.*
 import chess.Rated
 
-import lila.common.Form.{ into, numberIn, stringIn, typeIn, given }
-import lila.common.Json.given
+import lila.common.Form.{ into, stringIn, typeIn, given }
 import scalalib.model.Days
 
 object PuzzleForm:
@@ -14,8 +12,7 @@ object PuzzleForm:
   case class RoundData(
       win: PuzzleWin,
       rated: Rated,
-      replayDays: Option[Days],
-      color: Option[Color]
+      replayDays: Option[Days]
   )
 
   case class ThemeVote(
@@ -34,8 +31,7 @@ object PuzzleForm:
     mapping(
       "win" -> of[PuzzleWin],
       "rated" -> boolean.into[Rated],
-      "replayDays" -> optional(typeIn[Days](PuzzleDashboard.dayChoices.toSet)),
-      "color" -> optional(lila.common.Form.color.mapping)
+      "replayDays" -> optional(typeIn[Days](PuzzleDashboard.dayChoices.toSet))
     )(RoundData.apply)(unapply)
   )
 
@@ -70,25 +66,3 @@ object PuzzleForm:
   val difficulty = Form(
     single("difficulty" -> stringIn(PuzzleDifficulty.all.map(_.key).toSet))
   )
-
-  object batch:
-    case class Solution(id: PuzzleId, win: PuzzleWin, rated: Rated = Rated.Yes)
-    case class SolveData(solutions: List[Solution])
-    given Reads[Solution] = Json.reads
-    given Reads[SolveData] = Json.reads
-    def isValid(js: JsValue): Boolean = js.arr("solutions").forall(_.value.sizeIs < 100)
-
-  object bc:
-
-    val round = Form(
-      mapping(
-        "win" -> text
-      )(w => RoundData(win = PuzzleWin(w == "1" || w == "true"), rated = Rated.Yes, none, none))(_ => none)
-    )
-
-    val vote = Form(single("vote" -> numberIn(Set(0, 1))))
-
-    case class SolutionBc(id: Long, win: PuzzleWin)
-    case class SolveDataBc(solutions: List[SolutionBc])
-    given Reads[SolutionBc] = Json.reads
-    given Reads[SolveDataBc] = Json.reads
