@@ -10,7 +10,41 @@
 - lila starts games at pairing and aborts them before 2 plies; `NoStart` (37) is a third "never played" status. "Has played a rated game" must exclude Aborted and NoStart (`Query.gotGoing`) (2026-10-03, unit 5.4).
 
 - CI's ui Lint runs `oxlint --type-aware`; verify.sh's plain oxlint misses its type rules (e.g. no-unnecessary-type-assertion). Run `pnpm exec oxlint --type-aware ui/<pkg>` before pushing UI tests (2026-10-04, unit 5.7).
+- lila treats a `HeadlessChrome` user agent as a crawler: challenge pages 404 and pages render the crawler view. Browser tests against the real site must send a normal Chrome user agent (2026-10-04, unit 5.8).
+- A rated game between two accounts made today from one address moves no ratings unless it has 10+ moves and either 40+ moves or 90+ seconds (lila's FarmBoostDetection). Demos and manual checks must play long enough (2026-10-04, unit 5.8).
+- lila allows 10 signups per address per 10 minutes and 5 game posts a minute; a whole e2e run nears both (2026-10-04, unit 5.8).
+- A declared rank (deviation 250) is still lila's `clueless` (deviation cut-off below 250): test `GoRating.rankKnown`, never `clueless`, for "has a Go rank" (2026-10-04, unit 5.8).
 ## Entries (newest first)
+
+### 2026-10-04 · unit 5.8 · The Phase 5 demo
+- Did: `lila/tests/e2e-demo/phase5-demo.spec.ts` (desktop and phone, run by the `e2e` workflow and
+  `dev/ligo e2e demo`): a 5k and a 1d sign up with those ranks, the 1d challenges the 5k to a rated
+  19×19 Chinese game with the suggested 5 stones, they play 21 stones each, the 1d resigns, and both
+  ratings must be goratings' own numbers for that game (1579→1695, 1960→1842, from
+  `goRatingCases.json`), in the API and on the game page. A guest sees no Rated choice and plays a casual
+  9×9 game. Demo checklist: docs/demos/phase-5.md.
+- Fixed on the way: the setup windows offered Rated with an unlimited clock, which the server
+  refuses ("Can't create rated unlimited game"); `ratedModeDisabled` now covers it. A declared rank
+  was hidden until a first game in the user JSON, the profile header and side panel, the link preview
+  title and the hover card: they tested lila's `clueless`, which a signup deviation of 250 still is;
+  they now use `GoRating.rankKnown` (the hover card, in `modules/ui`, spells out the same rule). A 429
+  reply to a game post made the setup window throw on non-JSON; it now shows lila's message.
+- Worked: goratings' handicap case for a 5k vs 1d at deviation 250 is exactly what signup gives, so
+  the expected numbers come from the same file the Scala tests check.
+- Didn't work / dead ends: first runs got 404 on the challenge page (lila files HeadlessChrome under
+  crawlers, and Round.watcher 404s challenge ids for crawlers); a 4-move game moved no ratings
+  (FarmBoostDetection.newAccountBoosting: two new accounts from one address, under 10 moves, or under
+  40 moves in under 90 s); repeated local runs hit the signup limit (10 per address per 10 minutes);
+  a whole e2e run makes 6 game posts in a minute against lila's limit of 5, so `createGame` sets the
+  game up again until lila takes it. The reviewer found no blocking issues; its six optional points
+  (checklist steps, the unranked player's JSON, comments) were taken.
+- Lessons: see the Lessons section (crawler user agent, anti-boosting minimum, signup limit).
+- Decisions: logs/decisions.md 2026-10-04 (5.8).
+- Verified by Claude: `dev/ligo e2e demo` on the running stack (Phase 3 and 5, desktop and phone:
+  6 passed), lobby tests 95/95, GoRatingTest 24/24, GoLeaderboardJsonTest 5/5, lila compile, a scripted
+  429 (the window says "Too many requests. Try again later.", no page error), verify.sh.
+  · Needs owner verification: docs/demos/phase-5.md.
+- Follow-ups: none in Phase 5; this closes it.
 
 ### 2026-10-04 · unit 5.5 (part 2) · The one Go leaderboard
 - Did: `PerfType.leaderboardable` is just `go`, so rated Go games reach lila's ranking collection

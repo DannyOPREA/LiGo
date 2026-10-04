@@ -325,8 +325,9 @@ export default class SetupController {
     if (validKomi(komi, this.goSize())) this.goKomi(komi);
   };
 
-  // Guests play casual games only (ADR 0021 §5): they see a sign-up line instead (gameModeButtons).
-  ratedModeDisabled = () => !this.root.me;
+  // Guests play casual games only (ADR 0021 §5): they see a sign-up line instead (gameModeButtons). A game
+  // with no clock can't be rated either: the server refuses it, as lila does (found by the unit 5.8 demo).
+  ratedModeDisabled = () => !this.root.me || this.timeControl.mode() === 'unlimited';
 
   // the ranks the sliders cover, as ratings (ADR 0021 §3, unit 5.7)
   rankRange = (): RankRange | undefined => {
@@ -456,13 +457,17 @@ export default class SetupController {
     const { ok, redirected, url } = response;
 
     if (!ok) {
-      const errs: Record<string, string> = await response.json();
+      // LiGo: a rate-limited post (429) answers in plain text, not JSON; say that rather than throw (unit 5.8)
+      const body = await response.text();
+      const errs = parseErrors(body);
+      this.loading = false;
+      this.root.redraw();
       await alert(
         errs
           ? Object.keys(errs)
               .map(k => `${k}: ${errs[k]}`)
               .join('\n')
-          : 'Invalid setup',
+          : body || 'Invalid setup',
       );
       if (response.status === 403) {
         // 403 FORBIDDEN closes this modal because challenges to the recipient
@@ -476,4 +481,12 @@ export default class SetupController {
       this.closeModal?.();
     }
   };
+}
+
+function parseErrors(body: string): Record<string, string> | undefined {
+  try {
+    return JSON.parse(body);
+  } catch (_) {
+    return undefined;
+  }
 }

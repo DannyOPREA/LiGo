@@ -75,3 +75,8 @@ Patterns seen in LiGo unit reviews; check these every time.
   distribution page shows bare ratings on a 600-2800 chess axis, against "kyu/dan wherever a rating
   shows"). Also: `LightPerf` carries no deviation, so a hard-coded `RatingProvisional.No` label is only
   safe while its sole producer is RankingApi's `stable -> true` query; grep `LightPerf(` producers.
+- Demo checklists (docs/demos/*.md): walk each step against enforce-rules code. Unit 5.8's said
+  "put the clock back, check Rated is on", but `enforcePropRules` flips rated to casual on Unlimited
+  and never flips back; and "join, then resign" ignores lila's abort-before-2-plies (no Resign button).
+- User JSON vs HTML guards: the profile hides the Go rank when `glicko.clueless` (no declared rank);
+  JSON changes that always emit `perfs.go` should use the same guard or say why (unit 5.8).
