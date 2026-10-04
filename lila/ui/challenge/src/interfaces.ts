@@ -34,7 +34,7 @@ export interface Challenge {
   challenger?: ChallengeUser;
   destUser?: ChallengeUser;
   rules?: unknown[];
-  variant: Variant;
+  go?: { size: number; rules: string }; // board size and ruleset (unit 3.12)
   initialFen: FEN;
   rated: boolean;
   timeControl: TimeControl;

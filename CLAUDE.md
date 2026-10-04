@@ -56,10 +56,10 @@ Every question to the owner and its answer gets one line in logs/decisions.md.
 
 ## Commands
 `dev/ligo up | down | status | logs [lila|ws|db] | compile [lila|ws|ui|rules|all] | test [lila|ws|ui|pages|budget|rules|board|scoring|puzzles|all]`
-`dev/ligo e2e | deps | doctor | mode | katago [install|smoke|bench] | scoring bench | puzzles [build|check|gate|sgf|import|load]`. Docker mode on the owner's
+`dev/ligo e2e [demo] | deps | doctor | mode | katago [install|smoke|bench] | scoring bench | puzzles [build|check|gate|sgf|import|load]`. Docker mode on the owner's
 machine, native mode in cloud sessions (ADR 0010). Fresh cloud container: `dev/cloud-setup.sh` then `dev/ligo deps`.
 Tooling self-tests: `dev/tests/run.sh`, `bats .claude/hooks/tests`. CI: `.github/workflows/` (lila, ui,
-meta, rules, scoring, puzzles); its checks live in `dev/ci/`.
+meta, rules, scoring, puzzles, e2e); its checks live in `dev/ci/`.
 Never `sbt clean` in the cloud, never non-frozen `pnpm install`, never `lila/bin/deploy`.
 
 ## Environment gotchas

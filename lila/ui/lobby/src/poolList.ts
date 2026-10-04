@@ -4,7 +4,6 @@ import type { Pool, PoolId } from './interfaces';
 
 // What a guest's click on a tile sends: a casual hook with the tile's board size and clock (ADR 0022 §2).
 export const anonPoolSeekForm = (pool: Pool): Record<string, string | number> => ({
-  variant: 1,
   days: 1,
   color: 'random',
   size: pool.size,
