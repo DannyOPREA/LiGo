@@ -1,7 +1,7 @@
 package lila.game
 
 import chess.format.Fen
-import chess.{ Clock, Color }
+import chess.{ Centis, Clock, Color }
 import play.api.libs.json.*
 
 import lila.common.Json.{ *, given }
@@ -223,6 +223,27 @@ object JsonView:
       "black" -> c.remainingTime(Color.Black).toSeconds,
       "emerg" -> c.config.emergSeconds
     )
+
+  /** A byo-yomi clock (ADR 0020 §7): Fischer's keys, with `initial` the main time, no increment, `white` and
+    * `black` the main time or the time left in the current period, plus each side's periods left and `byo`,
+    * the period length in seconds. It turns red in the last third of a period, between 3 and 10 seconds.
+    */
+  def byoyomiClockJson(c: ligo.gorules.ByoyomiClock): JsObject =
+    def reading(color: Color) = c.reading(lila.core.game.GoBridge.goColor(color))
+    Json.obj(
+      "running" -> c.isRunning,
+      "initial" -> c.config.mainSeconds,
+      "increment" -> 0,
+      "white" -> Centis(reading(Color.White).centis).toSeconds,
+      "black" -> Centis(reading(Color.Black).centis).toSeconds,
+      "emerg" -> (c.config.periodSeconds / 3).atLeast(3).atMost(10),
+      "periods" -> Json.obj("b" -> reading(Color.Black).periodsLeft, "w" -> reading(Color.White).periodsLeft),
+      "byo" -> c.config.periodSeconds
+    )
+
+  def gameClockJson(c: lila.core.game.GameClock): JsObject = c match
+    case lila.core.game.GameClock.Fischer(f) => Json.toJsObject(f)
+    case lila.core.game.GameClock.Byoyomi(b) => byoyomiClockJson(b)
 
   given Writes[Source] = writeAs(_.name)
   given Writes[lila.core.game.GameRule] = writeAs(_.toString)

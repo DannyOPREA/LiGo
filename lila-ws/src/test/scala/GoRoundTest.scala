@@ -72,6 +72,16 @@ class GoRoundTest extends munit.FunSuite:
       Some(("ba", "1b7/b8/9/9/9/9/9/9/9", Some(Clock(58, 59))))
     )
 
+  test("a byo-yomi clock adds each side's periods left to the mini board (unit 4.7)"):
+    val js =
+      """{"p":"ee","ply":2,"cap":[],"prisoners":{"b":0,"w":0},"phase":"play","board":"9/9/9/9/4b4/9/9/9/9","clock":{"white":25.3,"black":600,"periods":{"b":5,"w":2},"byo":30}}"""
+    val board = Fens.readMove(JsonString(js), Some(Color.Black)).get
+    assertEquals(board.clock, Some(Clock(25, 600, Some((2, 5)))))
+    assertEquals(
+      ClientIn.Fen(Game.Id("abcdefgh"), board).write,
+      """{"t":"fen","d":{"id":"abcdefgh","lm":"ee","board":"9/9/9/9/4b4/9/9/9/9","turn":"white","wc":25,"bc":600,"wp":2,"bp":5}}"""
+    )
+
   test("a watcher sees a game without clocks, and Black to move when lila names no mover"):
     val js =
       """{"p":"dd","ply":1,"cap":[],"prisoners":{"b":0,"w":0},"phase":"play","board":"9/9/9/3w5/9/9/9/9/9"}"""

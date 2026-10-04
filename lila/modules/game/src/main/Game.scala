@@ -5,7 +5,7 @@ import chess.variant.Variant
 import chess.{ Castles, Centis, Clock, Color, Game as ChessGame, MoveOrDrop, Ply, Speed, Status }
 import scalalib.model.Days
 
-import lila.core.game.{ ClockHistory, Game, Player, Pov, Source }
+import lila.core.game.{ ClockHistory, Game, GameClock, Player, Pov, Source }
 import lila.db.ByteArray
 import lila.game.Blurs.addAtMoveIndex
 import lila.rating.PerfType
@@ -54,7 +54,10 @@ object GameExt:
 
   extension (clockHistory: ClockHistory)
 
-    def recordNewClock(color: Color, clock: Clock) =
+    def recordNewClock(color: Color, clock: Clock): ClockHistory =
+      recordNewClock(color, GameClock.Fischer(clock))
+
+    def recordNewClock(color: Color, clock: GameClock): ClockHistory =
       clockHistory.update(color, _ :+ clock.remainingTime(color))
 
     def resetClockHistory(color: Color) = clockHistory.update(color, _ => Vector.empty)
@@ -65,9 +68,18 @@ object GameExt:
 
     def withClock(c: Clock) = Progress(g, g.copy(clock = Some(c)))
 
+    def withByoyomi(c: ligo.gorules.ByoyomiClock) = Progress(g, g.copy(byoyomi = Some(c)))
+
+    /** Replace the game's clock with one of the same kind. */
+    def withGameClock(c: GameClock): Game = c match
+      case GameClock.Fischer(f) => g.copy(clock = Some(f))
+      case GameClock.Byoyomi(b) => g.copy(byoyomi = Some(b))
+
     def startClock: Option[Progress] =
-      g.clock.map: c =>
-        g.start.withClock(c.start)
+      g.clock
+        .map: c =>
+          g.start.withClock(c.start)
+        .orElse(g.byoyomi.map(c => g.start.withByoyomi(c.start)))
 
     def playerHasOfferedDrawRecently(color: Color) =
       g.drawOffers.lastBy(color).exists(_ >= g.ply - 20)
@@ -172,18 +184,29 @@ object GameExt:
       Progress(g, updated, events)
     end applyMove
 
-    /** The Fischer clock after a Go move (ADR 0019 §5), as scalachess' `Game.applyClock` steps it after a
-      * chess move: the frame lag, a step (which switches the running side), and the clock started once each
-      * side has played.
+    /** The clock after a Go move (ADR 0019 §5, ADR 0020 §7), started once each side has played. A Fischer
+      * clock is stepped as scalachess' `Game.applyClock` steps it after a chess move: the frame lag, then a
+      * step (which switches the running side and adds the increment). A byo-yomi clock is stepped by go-rules
+      * with the same reported lag and move time: it charges main time or the current period and switches.
+      * Only the Fischer step reports how much lag it compensated.
       */
     def stepGoClock(
         metrics: chess.MoveMetrics,
         gameActive: Boolean
-    ): Option[Clock.WithCompensatedLag[Clock]] =
-      g.clock.map: prev =>
-        val c1 = metrics.frameLag.fold(prev)(prev.withFrameLag)
-        val c2 = c1.step(metrics, gameActive)
-        if g.playedPlies == Ply(1) then c2.map(_.start) else c2
+    ): Option[Clock.WithCompensatedLag[GameClock]] =
+      val firstMoves = g.playedPlies == Ply(1)
+      g.gameClock.map:
+        case GameClock.Fischer(prev) =>
+          val c1 = metrics.frameLag.fold(prev)(prev.withFrameLag)
+          val c2 = c1.step(metrics, gameActive)
+          (if firstMoves then c2.map(_.start) else c2).map(GameClock.Fischer(_))
+        case GameClock.Byoyomi(prev) =>
+          val c2 = prev.move(
+            clientLagCentis = metrics.clientLag.map(_.centis),
+            clientMoveCentis = metrics.clientMoveTime.map(_.centis),
+            gameActive = gameActive
+          )
+          Clock.WithCompensatedLag(GameClock.Byoyomi(if firstMoves then c2.start else c2), None)
 
     /** A Phase 3 Go game is over once play stops (ADR 0019 §7): the second consecutive pass, or the ply cap.
       */
@@ -196,7 +219,7 @@ object GameExt:
       */
     def applyGoMove(
         next: ligo.gorules.GoGame,
-        clock: Option[Clock],
+        clock: Option[GameClock],
         blur: Boolean = false
     ): Progress =
       val before = g.go
@@ -210,10 +233,10 @@ object GameExt:
         clk <- clock
         ch <- g.clockHistory
       yield ch.recordNewClock(mover, clk)
-      val updated = g
+      val updated = clock
+        .fold(g)(g.withGameClock)
         .withGo(next)
         .copy(
-          clock = clock,
           players = g.players.map(copyPlayer),
           binaryMoveTimes = (!g.sourceIs(_.Import) && g.clock.isEmpty).option {
             BinaryFormat.moveTime.write {
@@ -225,7 +248,7 @@ object GameExt:
           loadClockHistory = _ => newClockHistory,
           movedAt = nowInstant
         )
-      val clockEvent = updated.clock
+      val clockEvent = updated.gameClock
         .map(Event.Clock.apply)
         .orElse(updated.playableCorrespondenceClock.map(Event.CorrespondenceClock.apply))
       val state = Event.State(updated.ply, None, None, whiteOffersDraw = false, blackOffersDraw = false)
@@ -239,6 +262,7 @@ object GameExt:
         players = winner.fold(g.players): c =>
           g.players.update(c, _.copy(isWinner = true.some)),
         clock = g.clock.map(_.stop),
+        byoyomi = g.byoyomi.map(_.stop),
         loadClockHistory = clk =>
           g.clockHistory.map: history =>
             // If not already finished, we're ending due to an event
@@ -293,7 +317,7 @@ object GameExt:
         g.source.exists(Source.expirable.contains) &&
         g.playable &&
         g.nonAi &&
-        g.clock.exists(!_.isRunning)
+        g.gameClock.exists(!_.isRunning)
 
   end extension
 
@@ -357,6 +381,7 @@ object Game:
     val status = "s"
     val startedAtTurn = "st"
     val clock = "c"
+    val byoyomi = "cy" // ADR 0020 §7
     val positionHashes = "ph"
     val checkCount = "cc"
     val castleLastMove = "cl"

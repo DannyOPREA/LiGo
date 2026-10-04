@@ -104,7 +104,7 @@ final private class Rematcher(
   private def returnGame(pov: Pov, withId: Option[GameId]): Fu[Game] =
     pov.game.go.fold(fufail(s"${pov.gameId} is not a Go game"))(returnGo(pov, withId, _))
 
-  // A Go rematch replays the game's board size, ruleset, komi and handicap (unit 3.15)
+  // A Go rematch replays the game's board size, ruleset, komi, handicap (unit 3.15) and clock (unit 4.7)
   private def returnGo(pov: Pov, withId: Option[GameId], go: ligo.gorules.GoGame): Fu[Game] =
     for
       users <- userApi.gamePlayersAny(pov.game.userIdPair, pov.game.perfKey)
@@ -115,7 +115,8 @@ final private class Rematcher(
           players = ByColor(returnPlayer(pov.game, _, users)),
           rated = Rated.No, // casual until unit 5.7
           source = pov.game.source | lila.core.game.Source.Lobby,
-          daysPerTurn = pov.game.daysPerTurn
+          daysPerTurn = pov.game.daysPerTurn,
+          byoyomi = pov.game.byoyomi.map(_.config)
         )
         .fold(e => fufail(s"Go rematch of ${pov.gameId}: ${e.message}"), fuccess)
       game <- withId.fold(idGenerator.withUniqueId(sloppy))(id => fuccess(sloppy.withId(id)))
