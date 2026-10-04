@@ -19,7 +19,7 @@ dev/ligo up
 ```
 
 `dev/ligo up` loads the puzzles into an empty database by itself. If it printed
-"puzzles: Mongo not ready, skipped", run `dev/ligo puzzles load`; it prints how many puzzles it wrote (240 the first time).
+"puzzles: Mongo not ready, skipped", run `dev/ligo puzzles load`; it prints how many puzzles it wrote (240 the first time). /training gets its puzzles when lila next builds its rating bands, at most 5 minutes later (or restart lila).
 
 - [ ] http://localhost:8080/api/puzzle/daily returns a puzzle with a `move_tree` and a `source`.
 
@@ -33,8 +33,8 @@ with `dev/ligo logs lila`). Open http://localhost:8080/training.
 - [ ] Your puzzle rating shows on the left.
 - [ ] Solve it: the page says "Success!", your rating goes up (a green "+N"), and the puzzle's own
       rating appears. Press Continue to get the next puzzle.
-- [ ] Fail one: play a wrong move. White's answer appears on the board, the page says "That's not
-      the move!", and your rating goes down (a red "−N"). The session strip above shows a win and a
+- [ ] Fail one: play a wrong move. the opponent's answer appears on the board, the page says "That's not
+      the move!", and your rating goes down (a red "−N"). The session strip below the board shows a win and a
       loss.
 - [ ] Press "View the solution" and step through the moves with the arrows or the arrow keys.
 - [ ] http://localhost:8080/training/themes lists the Go themes; pick "Corner" and get a corner

@@ -51,12 +51,17 @@ const asLila = (found: any): PuzzleJson => ({
   puzzle_opponent_move_mode: 'automatic',
 });
 
-/** Every puzzle of the committed set, in file order. */
-export const allPuzzles = (): PuzzleJson[] =>
-  readdirSync(dataDir)
+let committed: any[] | undefined;
+
+/** Every puzzle of the committed set as tools/puzzles writes it, in file order (read once). */
+export const rawPuzzles = (): any[] =>
+  (committed ??= readdirSync(dataDir)
     .filter(f => /^generated-.*\.json$/.test(f))
     .sort()
-    .flatMap(file => JSON.parse(readFileSync(join(dataDir, file), 'utf8')).map(asLila));
+    .flatMap(file => JSON.parse(readFileSync(join(dataDir, file), 'utf8'))));
+
+/** Every puzzle of the committed set, as lila's JSON has it. */
+export const allPuzzles = (): PuzzleJson[] => rawPuzzles().map(asLila);
 
 /** A puzzle of the committed set. */
 function fromSet(id: string): PuzzleJson {
