@@ -2,11 +2,21 @@ package lila.game
 
 import chess.{ ByColor, Color, IntRating, Rated, Status }
 import chess.rating.RatingProvisional
-import ligo.gorules.{ Action, BoardSize, GameResult, Point, Ruleset, SgfTime, Setup as GoSetup }
+import ligo.gorules.{
+  Action,
+  BoardSize,
+  ByoyomiClock,
+  ByoyomiConfig,
+  GameResult,
+  Point,
+  Ruleset,
+  SgfTime,
+  Setup as GoSetup
+}
 import scalalib.model.Days
 
 import lila.core.game.GameExport.WithFlags
-import lila.core.game.{ Game, Player, Source, newGoGame }
+import lila.core.game.{ Game, GoScoring, Player, Source, newGoGame }
 import lila.core.id.GamePlayerId
 
 // Unit 4.11: a stored Go game as an SGF record.
@@ -60,7 +70,7 @@ class SgfDumpTest extends munit.FunSuite:
     assert(SgfDump(finished(played, Status.Timeout, b), names, "x").get.contains("RE[B+F]"))
     assert(SgfDump(finished(played, Status.NoStart, b), names, "x").get.contains("RE[B+F]"))
     assert(SgfDump(finished(played, Status.Cheat, b), names, "x").get.contains("RE[B+F]"))
-    // two passes without a count, aborted, no winner recorded: no RE until the scoring phase stores results
+    // no stored count, aborted, no winner recorded: no RE
     assertEquals(SgfDump.result(finished(played, Status.UnknownFinish, None)), None)
     assertEquals(SgfDump.result(finished(played, Status.Aborted, None)), None)
     assertEquals(SgfDump.result(finished(played, Status.Resign, None)), None)
@@ -88,6 +98,21 @@ class SgfDumpTest extends munit.FunSuite:
     assertEquals(SgfDump.time(corres), Some(SgfTime.Correspondence(3)))
     assert(SgfDump(corres, names, "x").get.contains("OT[3 days per move]"))
 
+  test("time: a byo-yomi clock is written as main time and periods (unit 4.12)"):
+    val config = ByoyomiConfig(mainSeconds = 60, periods = 3, periodSeconds = 30)
+    val byo = played.copy(byoyomi = ByoyomiClock(config, ligo.gorules.Color.Black).toOption)
+    assertEquals(SgfDump.time(byo), Some(SgfTime.Byoyomi(config)))
+    assert(SgfDump(byo, names, "x").get.contains("TM[60]OT[3x30 byo-yomi]"))
+
+  test("a scoring phase that ended with no count is Void; one with no stored count has no result"):
+    val now = java.time.Instant.parse("2026-10-04T12:00:00Z")
+    val counting = played.copy(goScoring = Some(GoScoring.waiting(now, now)))
+    assertEquals(SgfDump.result(finished(counting, Status.UnknownFinish, None)), Some(GameResult.NoResult))
+    assert(SgfDump(finished(counting, Status.UnknownFinish, None), names, "x").get.contains("RE[Void]"))
+    // the counted results (`B+12.5`, `B+8.5`) are checked end to end by Phase4DemoTest
+    assertEquals(SgfDump.result(finished(counting, Status.VariantEnd, Some(Color.Black))), None)
+    assertEquals(SgfDump.result(finished(played, Status.VariantEnd, Some(Color.Black))), None)
+
   private val nine = act(newGo(), List("ee", "cc", "gc", "cg", "gg", "eg", "ec", "ce", "dc").map(place)*)
   private def moveCount(sgf: String) = ";[BW]\\[".r.findAllIn(sgf).size
 
@@ -100,6 +125,14 @@ class SgfDumpTest extends munit.FunSuite:
     // a finished game shows every move
     val over = finished(nine, Status.Resign, Some(Color.White))
     assertEquals(moveCount(SgfDump(over, names, "x", WithFlags(delayMoves = true)).get), 9)
+
+  // /<id>/analysis asks for exactly this: delayMoves = true for any viewer
+  test("the analysis page's SGF holds back a game in play's last moves and nothing of a finished one"):
+    val flags = WithFlags(delayMoves = true)
+    val inPlay = SgfDump(nine, names, "x", flags).get
+    assertEquals(moveCount(inPlay), 6)
+    val over = finished(nine, Status.Mate, Some(Color.Black))
+    assertEquals(moveCount(SgfDump(over, names, "x", flags).get), 9)
 
   test("moves=false leaves the moves out and keeps the game information"):
     val sgf = SgfDump(nine, names, "x", WithFlags(moves = false)).get

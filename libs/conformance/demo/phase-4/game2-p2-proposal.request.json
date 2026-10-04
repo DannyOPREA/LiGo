@@ -1,0 +1,14 @@
+{
+  "t" : "propose",
+  "ref" : "demo0002:2:1",
+  "size" : 19,
+  "rules" : "j",
+  "komi" : 6.5,
+  "handicap" : 0,
+  "board" : "9bw8/9bw8/2bb5bw8/2b1b4bw8/3b5bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8",
+  "toMove" : "w",
+  "prisoners" : {
+    "b" : 1,
+    "w" : 0
+  }
+}

@@ -51,8 +51,8 @@ object Query:
 
   val frozen: Bdoc = F.status.gte(Status.Mate.id)
 
-  def imported(u: UserId): Bdoc = bdoc(s"${F.pgnImport}.user" -> u) ++ go
-  def importedSort: Bdoc = sort.desc(s"${F.pgnImport}.ca")
+  def imported(u: UserId): Bdoc = bdoc(s"${F.sgfImport}.user" -> u) ++ go
+  def importedSort: Bdoc = sort.desc(s"${F.sgfImport}.ca")
 
   val friend: Bdoc = bdoc(F.source -> Source.Friend.id)
   val notAi: Bdoc = F.source.neq(Source.Ai.id)

@@ -30,7 +30,7 @@ const i18nFile = (prefix: string) => {
   return `/assets/compiled/i18n/${name}`;
 };
 
-function html(coords: number): string {
+function html(cfg: Record<string, unknown>): string {
   const m = manifest();
   const css = (name: string) => `<link rel="stylesheet" href="/assets/css/${name}.${m.css[name]}.css">`;
   const js = `/assets/compiled/analyse.user.${m.js['analyse.user'].hash}.js`;
@@ -72,7 +72,7 @@ window.site = {
 await import(${JSON.stringify(i18nFile('en-GB'))});
 await import(${JSON.stringify(i18nFile('site.en-GB'))});
 const mod = await import(${JSON.stringify(js)});
-window.analyse = mod.initModule({ cfg: { coords: ${coords} } });
+window.analyse = mod.initModule({ cfg: ${JSON.stringify(cfg).replace(/</g, '\\u003c')} });
 </script>
 </body>
 </html>`;
@@ -92,15 +92,23 @@ export interface Opened {
   problems: { requests: string[]; errors: string[] };
 }
 
-/** Opens `/analysis` and waits for its board. `coords`: lila's preference, 0 for none. */
-export async function openAnalysis(page: Page, coords = 1): Promise<Opened> {
+/**
+ * Opens `/analysis` and waits for its board. `coords`: lila's preference, 0 for none. `extra` is more of
+ * the page's init data: a stored game's page (unit 7.5) adds `sgf` and `game`, and opens at `hash`.
+ */
+export async function openAnalysis(
+  page: Page,
+  coords = 1,
+  extra: { sgf?: string; game?: { url: string; sgfUrl: string }; hash?: string } = {},
+): Promise<Opened> {
+  const { hash, ...more } = extra;
   const problems = { requests: [] as string[], errors: [] as string[] };
   page.on('pageerror', e => problems.errors.push(String(e)));
   page.on('console', msg => msg.type() === 'error' && problems.errors.push(msg.text()));
   await page.route('**/*', route => {
     const url = new URL(route.request().url());
     if (url.origin === origin && url.pathname === '/analysis')
-      return route.fulfill({ contentType: 'text/html', body: html(coords) });
+      return route.fulfill({ contentType: 'text/html', body: html({ coords, ...more }) });
     if (url.origin === origin && url.pathname.startsWith('/assets/')) {
       const file = join(publicDir, decodeURIComponent(url.pathname.slice('/assets/'.length)));
       if (!file.startsWith(publicDir + '/')) return route.fulfill({ status: 403 });
@@ -117,7 +125,7 @@ export async function openAnalysis(page: Page, coords = 1): Promise<Opened> {
     problems.requests.push(url.href);
     return route.abort();
   });
-  await page.goto(`${origin}/analysis`);
+  await page.goto(`${origin}/analysis${hash ?? ''}`);
   await boardSvg(page).waitFor();
   await page.evaluate(() => document.fonts.ready);
   return { problems };

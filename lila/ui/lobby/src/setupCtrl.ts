@@ -655,14 +655,23 @@ export default class SetupController {
     const { ok, redirected, url } = response;
 
     if (!ok) {
-      const errs: Record<string, string> = await response.json();
-      await alert(
-        errs
+      // LiGo: a refused game (e.g. the rate limit) leaves the button usable again, not stuck on its spinner.
+      this.loading = false;
+      this.root.redraw();
+      // Form errors come as JSON; the rate limit answers in plain text ("Too many requests…").
+      const body = await response.text();
+      let message: string;
+      try {
+        const errs: Record<string, string> | null = JSON.parse(body);
+        message = errs
           ? Object.keys(errs)
               .map(k => `${k}: ${errs[k]}`)
               .join('\n')
-          : 'Invalid setup',
-      );
+          : 'Invalid setup';
+      } catch (_) {
+        message = body || 'Invalid setup';
+      }
+      await alert(message);
       if (response.status === 403) {
         // 403 FORBIDDEN closes this modal because challenges to the recipient
         // will not be accepted.  see friend() in controllers/Setup.scala

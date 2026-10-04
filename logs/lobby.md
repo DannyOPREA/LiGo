@@ -30,6 +30,18 @@
   viewer. lila's root font is about 12–14px, so `rem` sizes fall short of 44px touch targets on a
   phone: use px. A trimmed e2e page must load dialog CSS itself (`site.asset.loadCssPath`).
 
+### 2026-10-04 · unit 7.5 (ride-along) · Retrying a rate-limited new game
+- What: the e2e demos failed on CI's phone run once #122 and 3.20 both created games: lila allows 5 new
+  games a minute per IP, and after a refused one the setup window kept its Create button disabled
+  (`loading` was only reset on success) and threw on the rate limit's plain-text body instead of
+  showing it. `setupCtrl.submit` now resets `loading` on a refusal and shows a text body as is. The
+  demos' retry loops dismiss the alert and no longer leave a dangling `waitForResponse` (its 5 s
+  rejection failed the test even while the loop was still retrying).
+- Tests: reproduced by exhausting the limit with curl first: the phone demo failed as on CI; after the
+  fix all 6 demo tests pass starting rate-limited (the 9x9 game waits ~50 s, then plays).
+- Lesson: in a Playwright `toPass` loop, start a `waitForResponse` together with its click
+  (`Promise.all`), or a failed click leaves the wait to reject on its own and fail the test.
+
 ### 2026-10-04 · unit 6.6 (addendum) · Review fixes
 - What: the reviewer found two real bugs. Switching Rated to Casual while waiting kept you in the rated
   pool: a Rated/Casual change now stops the wait. Moving between Casual tiles sent a socket `cancel`

@@ -5,6 +5,47 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · Unit 8.8 part two · The Phase 8 demo on the real stack
+- Did: `lila/tests/e2e-demo/phase8-demo.spec.ts` at phone size on 3.20's real-stack harness. A new
+  player signs up (a POST to /signup, since email confirmation is off in development), then plays the
+  puzzles /training gives them: it solves one that ends in one move and fails the others, until there is
+  one of each. Each result's rating change shows, and the rating carries on from the last result. Then
+  all 240 committed puzzles come back from `/api/puzzle/:id` exactly as committed (size, bounds, stones,
+  player, tree) with the source line `Puzzle.sourceLine` writes, and every 24th opens on the trainer
+  page. It runs in the `e2e` workflow (nightly, on demand, on PRs labelled `e2e`) and in `dev/ligo e2e demo`.
+- Worked: reading the shown puzzle's id from the page and its tree from the API, so the test plays
+  whatever lila's selector picks.
+- Didn't work / dead ends: the first version's review found four faults before CI ran it: `import.meta`
+  in a CommonJS spec (Playwright then lists 0 tests and the Phase 3 demo fails with it), a signup POST
+  without an Origin (lila answers 403), a puzzle opened by id (casual, so the rating doesn't move), and
+  `/api/puzzle/many` for 240 ids (rate-limited to 300 credits an hour per IP).
+- Lessons: lila's CSRF check wants `X-Requested-With: XMLHttpRequest` or the site's own Origin on a
+  POST. A puzzle opened at /training/:id that the player hasn't played is casual. Playwright loads
+  lila/tests specs as CommonJS: use `__dirname`, not `import.meta`.
+- Decisions: play what /training serves rather than a puzzle by id, so the result is rated; fetch the
+  240 puzzles one by one from `/api/puzzle/:id`, which has no rate limit.
+- Verified by Claude: tsc, oxlint (type-aware), format, `playwright test --list` (both demos listed);
+  the real-stack run is the PR's `e2e` job (lila doesn't run in the cloud session).
+  · Needs owner verification: `dev/ligo e2e demo` on your box after `dev/ligo up`.
+- Follow-ups: none for Phase 8.
+
+### 2026-10-04 · Unit 8.8 · The Phase 8 demo (part one: on the built page)
+- Did: `lila/ui/puzzle/e2e/demo.spec.ts` at phone size: a signed-in player taps and confirms, solves
+  one puzzle and fails the next, and the rating goes up, then down; then all 240 committed puzzles open on
+  the trainer page with their stones, goal and source line, in 8 tests of 30. It runs in the `ui` CI job's
+  "Puzzle trainer" step. The owner's checklist is docs/demos/phase-8.md.
+- Worked: the 240-puzzle walk takes about 15 s per 30 puzzles, so it fits in CI.
+- Didn't work / dead ends: the stand-in server worked each rating change out from the starting rating, so
+  a second result showed the wrong "before" rating (lila shows the new rating minus the change). It now
+  carries the rating over from one result to the next, as the server does.
+- Lessons: lila's puzzle side box shows `user.rating - ratingDiff` with the change, and takes the new rating
+  from the `next` puzzle that comes with the result.
+- Decisions: the demo runs now on the built page; the same walk against the real server waits for 3.20's
+  full-stack browser tests (logs/decisions.md).
+- Verified by Claude: UI build, tsc, lint, format, all 32 puzzle browser tests pass.
+  · Needs owner verification: docs/demos/phase-8.md.
+- Follow-ups: 8.8 part two, the walk on the real stack, after 3.20.
+
 ### 2026-10-04 · Unit 8.7 · The Go puzzle trainer page
 - Did: `ui/puzzle` is a Go trainer on 8.5's `mountPuzzle`; goban's right and wrong events drive
   lila's flow (result, rating change, next puzzle, votes, session strip, replay). The source line

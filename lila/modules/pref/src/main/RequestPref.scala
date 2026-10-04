@@ -19,11 +19,8 @@ object RequestPref:
       default.copy(
         bg = paramOrSession("bg").flatMap(Pref.Bg.fromString.get) | default.bg,
         theme = paramOrSession("theme") | default.theme,
-        theme3d = paramOrSession("theme3d") | default.theme3d,
         pieceSet = paramOrSession("pieceSet") | default.pieceSet,
-        pieceSet3d = paramOrSession("pieceSet3d") | default.pieceSet3d,
         soundSet = paramOrSession("soundSet") | default.soundSet,
-        is3d = false, // LiGo: no 3D Go board (ADR 0026 §3)
         uiRoundness = paramOrSession("uiRoundness").flatMap(_.toIntOption) | default.uiRoundness,
         board = default.board.copy(
           opacity = paramOrSession("boardOpacity").flatMap(_.toIntOption) | default.board.opacity,

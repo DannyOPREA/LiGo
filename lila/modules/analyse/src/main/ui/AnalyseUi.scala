@@ -31,6 +31,32 @@ final class AnalyseUi(helpers: Helpers):
           div(cls := "analyse__controls")
         )
 
+  /** A stored game in the analysis board (unit 7.5, ADR 0023 §2): the same page, loaded with the game's SGF.
+    * An import's is the text it was stored with, so its variations and comments show; a live game's is the
+    * server's record, with the move delay for a game in play. The browser reads it with `ui/analyse`'s
+    * `readTree`, like a file the player opens.
+    */
+  def gameAnalysis(pov: Pov, sgf: String, coords: Int)(using ctx: Context): Page =
+    val game = Json.obj(
+      "url" -> routes.Round.watcher(pov.gameId, pov.color).url,
+      "sgfUrl" -> s"${routes.Game.exportOne(pov.gameId).url}?format=sgf"
+    )
+    Page(titleFull(pov))
+      .css("analyse.free")
+      .js(bits.analyseModule("userAnalysis", Json.obj("coords" -> coords, "sgf" -> sgf, "game" -> game)))
+      .graph(
+        title = titleFull(pov),
+        url = routeUrl(routes.UserAnalysis.game(pov.gameId, pov.color)),
+        description = "Study a Go game: its moves, variations and comments"
+      )
+      .flag(_.zoom)
+      .flag(_.noRobots):
+        main(cls := "analyse analyse--go")(
+          div(cls := "analyse__board main-board")(div(cls := "analyse__go-board")),
+          div(cls := "analyse__tools"),
+          div(cls := "analyse__controls")
+        )
+
   def titleFull(pov: Pov)(using ctx: Context) =
     s"${titlePlayerVs(pov.game)} - ${trans.site.analysis.txt()}"
 

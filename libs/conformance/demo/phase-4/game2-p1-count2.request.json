@@ -1,0 +1,15 @@
+{
+  "t" : "count",
+  "ref" : "demo0002:1:2",
+  "size" : 19,
+  "rules" : "j",
+  "komi" : 6.5,
+  "handicap" : 0,
+  "board" : "9bw8/9bw8/2b6bw8/3w5bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8/9bw8",
+  "toMove" : "b",
+  "prisoners" : {
+    "b" : 0,
+    "w" : 0
+  },
+  "dead" : [ "dd" ]
+}

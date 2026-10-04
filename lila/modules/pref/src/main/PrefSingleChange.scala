@@ -14,12 +14,6 @@ object PrefSingleChange:
       _.copy(theme = v),
     changing(_.pieceSet): v =>
       _.copy(pieceSet = v),
-    changing(_.theme3d): v =>
-      _.copy(theme3d = v),
-    changing(_.pieceSet3d): v =>
-      _.copy(pieceSet3d = v),
-    changing(_.is3d): v =>
-      _.copy(is3d = v),
     changing(_.soundSet): v =>
       _.copy(soundSet = v),
     changing(_.zen): v =>

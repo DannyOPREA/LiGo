@@ -300,10 +300,10 @@ db.team_member.createIndex({ team: 1, perms: 1 }, { partialFilterExpression: { p
 db.email_domains.createIndex({ nb: -1 });
 db.game5.createIndex({ ca: -1 });
 db.game5.createIndex({ us: 1, ca: -1 });
-db.game5.createIndex({ 'pgni.user': 1, 'pgni.ca': -1 }, { sparse: 1 });
+db.game5.createIndex({ 'sgfi.user': 1, 'sgfi.ca': -1 }, { sparse: 1 });
 db.game5.createIndex({ ck: 1 }, { sparse: 1 });
 db.game5.createIndex({ pl: 1 }, { sparse: true });
-db.game5.createIndex({ 'pgni.h': 1 }, { sparse: true });
+db.game5.createIndex({ 'sgfi.h': 1 }, { sparse: true });
 db.security.createIndex({ user: 1 });
 db.security.createIndex({ ip: 1 });
 db.security.createIndex({ fp: 1 }, { sparse: 1 });

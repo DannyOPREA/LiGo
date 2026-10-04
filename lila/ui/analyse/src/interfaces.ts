@@ -7,6 +7,8 @@ export interface AnalyseOpts {
   sgf?: string;
   /** Letters and numbers round the board (lila's `coords` preference; 0 is none). */
   coords?: number;
+  /** Set when the record is a stored game's (unit 7.5): where its page and its SGF download are. */
+  game?: { url: string; sgfUrl: string };
 }
 
 export interface AnalyseApi {

@@ -52,7 +52,7 @@ case class Game(
     goScoring: Option[GoScoring] = None
 ):
 
-  export metadata.{ tournamentId, simulId, swissId, drawOffers, source, pgnImport, hasRule }
+  export metadata.{ tournamentId, simulId, swissId, drawOffers, source, sgfImport, hasRule }
   export players.{ white as whitePlayer, black as blackPlayer, apply as player }
 
   /** The game's real-time clock, whichever kind it has. */
@@ -181,7 +181,7 @@ case class Game(
 
   def finishedOrAborted = finished || aborted
 
-  def replayable = isPgnImport || finished || (aborted && bothPlayersHaveMoved)
+  def replayable = isSgfImport || finished || (aborted && bothPlayersHaveMoved)
 
   def fromPosition = source.has(Source.Position)
 
@@ -194,6 +194,9 @@ case class Game(
 
   def winnerColor: Option[Color] = winner.map(_.color)
   def outcome: Option[Outcome] = finished.option(Outcome(winnerColor))
+
+  /** A game that ended without a count (ADR 0020 §4): no result, not a draw (a counted tie is `Draw`). */
+  def endedWithNoResult: Boolean = status == Status.UnknownFinish && winnerColor.isEmpty
 
   def winnerUserId: Option[UserId] = winner.flatMap(_.userId)
 
@@ -250,7 +253,7 @@ case class Game(
 
   def playerHasMoved(color: Color) = playerMoves(color) > 0
 
-  def isBeingPlayed = !isPgnImport && !finishedOrAborted
+  def isBeingPlayed = !isSgfImport && !finishedOrAborted
 
   def userIds: List[UserId] = players.flatMap(_.userId)
 
@@ -268,7 +271,7 @@ case class Game(
   def isStrongOrRecent = averageUsersRating.exists(_.value >= 2200) ||
     createdAt.isAfter(nowInstant.minus(10.days))
 
-  def isPgnImport = pgnImport.isDefined
+  def isSgfImport = sgfImport.isDefined
 
   def hasFewerMovesThanExpected = playedPlies <= reasonableMinimumNumberOfMoves
 

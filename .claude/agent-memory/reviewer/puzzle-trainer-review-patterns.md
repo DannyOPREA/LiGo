@@ -24,5 +24,18 @@ Checks that paid off reviewing unit 8.7 (PR #95, 2026-10-04):
 - Lockfile hand edits: `pnpm install --frozen-lockfile --offline` printing "Lockfile is up to date"
   is the validity check.
 
+Unit 8.8 part one (PR #106, 2026-10-04) added:
+- Stand-in rating truth: `PuzzleComplete.onComplete` sends `round.ratingDiff = new - old` and the
+  `next` puzzle's `user.rating` = the NEW perf; side.ts shows `user.rating - diff` then `+/-diff`.
+  A stand-in that recomputes from the starting rating shows "1500 −8" after a win then a loss.
+  Probe by copying e2e files to scratch with absolute publicDir/dataDir and reverting the line.
+- Owner-checklist wording vs data: the set is ~half White-to-move, so "White's answer appears" is
+  wrong for half the puzzles; count `initial_player`/`goal` combos before trusting such words.
+  Layout claims ("strip above"): read the grid-template-areas in ui/puzzle/css/_layout.scss.
+- After a manual `dev/ligo puzzles load`, /training waits for the path job (10 s after boot, then
+  every 5 min, lila/modules/puzzle Env.scala); checklists should say so.
+- "All puzzles load" on a stand-in = test-side port of JsonView.puzzleJson/sourceLine; the source
+  regex test is near-circular (only proves `provenance.seed` is numeric).
+
 **How to apply:** 8.8 and any page whose tests use committed data or a stand-in server.
 Related: [[puzzle-server-review-patterns]], [[round-ui-review-patterns]], [[ci-review-patterns]].
