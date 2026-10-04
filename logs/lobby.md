@@ -5,8 +5,80 @@
 - lila hides open games you can't join on the server (`Biter.canJoin` in `showHookTo` and `SeekApi.forUser`), not in the browser (2026-09-29, 6.1).
 - lila's pool score uses the smaller miss bonus of the pair, the cap at the lower rating, and a 400-point miss ceiling for good sit counters (2026-09-29, 6.1–6.2).
 - On 9×9 one handicap stone covers six ranks, so the ranks a player can meet come in separate runs (2026-09-29, 6.2).
+- Since 6.5 players are sent open games they can't join: anything that acts on a client's pick (a bite, a
+  seek join) must check `Biter.canJoin` before changing state (`biteHook` used to remove the hook first)
+  (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.4 part 2 (addendum) · Pool games are rated
+- Did: 5.7's server part (#109) merged while #112 was open, so `GameStarter` now starts rated pool
+  games (pools are rated only, ADR 0022 §2); handicap pool games are rated with the handicap as 5.3
+  does. This closes 6.4.
+- Verified by Claude: whole-server `compile`; `pool/testOnly` 38 passed, `lobby/testOnly` 21 passed.
+- Follow-ups: `lib/poolRangeStorage` shifts a player's stored range after a rated pool game by lila's
+  clock-only id, which no pool has now, so it does nothing (6.6 replaces the range with ranks).
+
+### 2026-10-04 · unit 6.4 part 2 · ADR 0022's seven pools, Handicap OK and handicap pool games
+- Did: `PoolList` is now ADR 0022 §1's seven pools (9×9 1+5×10s, 3+3×20s, 3+2; 19×19 5+5×10s,
+  10+5×30s, 20+5×30s, 10+10), each with a `ClockSettings` clock (Fischer or byo-yomi, unit 4.9) and
+  ids like `19x19-10m-5x30s`. `PoolMember` carries the Handicap OK chip (`poolIn`'s new `handicap`
+  field) and whether the player has a rank; `MatchMaking` gives a pair who both said Handicap OK
+  GoPairing's stones and colours, and `GameStarter` starts the game with them (0.5 komi) and with the
+  pool's byo-yomi or Fischer clock. Hooks reach a pool by their whole clock settings, so rated
+  byo-yomi hooks can now be pulled in. The lobby page reads the pools from the server (`pools` in the
+  page data) instead of a copied list; old `#pool/10+10` links find the Fischer pool with that clock.
+  The game page's "new opponent" button links to the pool by size, main time and increment or period
+  length (`#pool/19x19-10m-*x30s`: its clock shows the periods left, not the starting count).
+- Worked: GoPairing (6.2) already had stones, colours and the score, so the pool only had to pass the
+  flags in and the stones out.
+- Didn't work / dead ends: none.
+- Lessons: lila joins a provisional player to a pool at a random rating around their own (to spread
+  new players); for handicap that would add up to a stone of noise, so a player with a rank joins at
+  their own rating.
+- Decisions: logs/decisions.md 2026-10-04 row for 6.4 part 2 (Claude, under the owner's 2026-09-28
+  delegation).
+- Verified by Claude: `pool/testOnly lila.pool.GoPoolTest lila.pool.GoPairingTest` (38 passed; verify's
+  `testQuick` skips the pool module), `lobby/testOnly lila.lobby.GoHookTest` (20), `node ui/test lobby`
+  (70), whole-server `compile`, `./ui/build --no-install -p`, verify.sh, the chess guard.
+  · Needs owner verification: the PR's list.
+- Review (reviewer agent): fixed its blocking finding (the "new opponent" button after a byo-yomi pool
+  game linked to no pool) and three optional ones (tests for who takes Black and who has a rank; the
+  pool JSON built once). Not done: `lib/poolRangeStorage` still keys ranges by lila's clock-only ids
+  (unused while pool games are casual; 6.6 replaces the range with the rank range).
+- Follow-ups: pool games become rated after 5.7 (`GameStarter`); 6.6 sends the Handicap OK chip
+  (until then nobody gets a handicap pool game), draws the tiles in three columns and shows waiting
+  counts.
+
+### 2026-10-04 · unit 6.5 · Open challenges and correspondence tiles on the server
+- Did: the lobby now sends each player every open game except those from or to players they block or
+  who block them, and those of the other "lame" kind (`Biter.visible`); games they can't join (out of
+  their rating range, a member's game seen by a guest or the other way round, rated for a guest) come
+  too and are checked on joining (`Biter.canJoin`, unchanged rules). Hooks gain `auth` (made by a
+  signed-in player) and, with seeks, `rr` (`{min, max, low?, high?}`, the ranks of the bounds; the
+  browser writes "2k–1d", "2k+" or "≤ 1d"). A hook with no range of its own takes any rank: the lobby
+  no longer uses lila's chess default range (`RatingRange.defaultFor`, left unused in `rating`).
+  The two correspondence tiles (1 and 3 days per move, 19×19 Japanese even) are defined in
+  `CorresPresets` and sent as the lobby JSON's `corres`; a click is an ordinary seek, which joins a
+  matching seek at once. The open-challenges table's `fit` now applies the server's join rules from
+  those fields, greys the rows with a translated reason ("Rated games need an account", "Your rank
+  is outside this game's range", "For signed-in players", "For guests") and lists them last; a
+  click on one does nothing for a member and offers a guest the sign-up page.
+- Worked: hook and seek compatibility already compared the whole Go setup (size, ruleset, komi,
+  handicap) since 3.15 and 4.9, so only tests were needed there.
+- Didn't work / dead ends: none.
+- Lessons: see Lessons.
+- Decisions: logs/decisions.md 2026-10-04 row for 6.5 (Claude, under the owner's 2026-09-28
+  delegation).
+- Verified by Claude: see the PR. · Needs owner verification: the PR's list.
+- Review (reviewer agent): fixed its blocking finding (the browser read a provisional rating, which
+  lila sends with a minus sign, as negative, so new players saw every ranged game greyed and could
+  not join) and five small ones (your own hook from another tab counted as joinable; a new seek now
+  matches against every seek you can join, not the 13 shown; rank labels built in the browser, not
+  English from the server; a test that couldn't fail; greyed rows get `aria-disabled`). Not done:
+  a test of the actor's bite path (needs an actor harness), and hooks still carry their creator's
+  socket id to every viewer, as lila's did to every viewer who could join.
+- Follow-ups: 6.6 draws the correspondence tiles; 6.7 part two uses the chip row for "suits you"; on a
+  phone the greyed row's reason is only in its hover title (6.7 part two's cards could show it).
 
 ### 2026-10-04 · fix · Correspondence seeks that differ only in Go setup all show
 - Did: lila's `SeekApi.noDupsFor` shows another player's seeks once per game, keyed on variant, days,

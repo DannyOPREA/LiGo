@@ -5,6 +5,8 @@ enum TimeMode(val id: Int):
   case Unlimited extends TimeMode(0)
   case RealTime extends TimeMode(1)
   case Correspondence extends TimeMode(2)
+  // main time, then byo-yomi periods (unit 4.9)
+  case Byoyomi extends TimeMode(3)
 
 object TimeMode:
   val default = RealTime
@@ -17,6 +19,7 @@ object TimeMode:
   def orDefault(id: Int) = apply(id) | default
 
   def ofGame(game: Game) =
-    if game.hasClock then RealTime
+    if game.byoyomi.isDefined then Byoyomi
+    else if game.hasClock then RealTime
     else if game.hasCorrespondenceClock then Correspondence
     else Unlimited

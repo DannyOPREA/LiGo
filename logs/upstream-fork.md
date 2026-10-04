@@ -16,6 +16,60 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · 3.17 slice (b) · Chess engine analysis and the chess analysis tree removed
+- Did: deleted `modules/tree`'s chess tree (Root/Branch/Node over Uci/Fen/Glyphs), `Eval`, `Info`,
+  `Advice`, `Analysis` and `StatusText` (kept `ExportOptions`, which round and the API still use), and
+  `modules/analyse`'s evals: `AccuracyCP`, `AccuracyPercent`, `Analyser`, `AnalysisRepo` and its BSON,
+  `Annotator`, `JsonView`, `RequesterApi` (fishnet's per-user request counter), `actorApi` and the module
+  Env (only `AnalyseUi`, Phase 7's page, stays). The watcher and lichobile round JSON, `/api/games/user`
+  style exports (`GameApi`, `GameApiV2`) and PGN no longer fetch or send an `analysis`; the export
+  flags `evals` and `accuracy` are gone from `GameExport.WithFlags`, the `evals`/`accuracy` query
+  parameters and the download page's "Evaluation" box with them (after 2a removed PGN). Round no longer relays `analysisProgress`. Fishnet's metrics and the `/fishnet`
+  redirect went too. Chess guard baseline regenerated after merging 2a and 2b.
+- Worked: `./lila.sh "compile; Test/compile; api/test; round/test; game/test"` (see PR).
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Decisions: `analysis` leaves the JSON rather than staying as an empty field: nothing ever produced
+  one for a Go game, and Phase 7's KataGo analysis (ADR 0023's stubbed engine hook) will define its
+  own shape. The `analysis2` and `analysis_requester` collections are no longer read or cleaned on
+  account deletion; LiGo never wrote to them.
+- Follow-ups: `game.metadata.analysed` and the `analysed` query filters stay (they read a stored flag);
+  `lila.tree` now holds only `ExportOptions`, and its `chess.playJson` dependency can go with the last
+  3.17 PR. Left as harmless: HttpFilter's `/fishnet/` client
+  name and the dead `bin/mongodb/{game-analysed,analysis-requester-cleanup}.js` scripts.
+- Review: no blocking code findings; `bin/mongodb/indexes.js` no longer creates the analysis indexes, and
+  the UPSTREAM row names `analyse/package.scala`. Lesson: verify's lila test gate ran `testQuick`
+  with 0 tests; for a removal, run each touched project's full `test`.
+### 2026-10-04 · 3.17 part 2b · Chess variants, openings and "from position" FENs leave lila
+- Did: removed `Variant` from lila's types and every reader: setup configs and forms (hook, friend,
+  board API, challenge API, open challenges), challenges and bulk pairings, lobby hooks and seeks,
+  `core` (`Game.variant`, `ratingVariant`, `allowRated`, `PerfKey.byVariant`), game queries, light
+  games and JSON, `PerfType` variant lists, `Glicko.rankable`, history, activity, monitoring, push,
+  the db and form handlers, the `/variant` pages, `variantLink` (now `perfLink`) and the variant
+  CSS. Removed chess openings from game export (`opening`, `with_opening`), `gameOpening` and the
+  opening families. Removed the "from position" FEN fields (setup, `Challenge.initialFen`, bulk
+  `fen`), `ValidFen` and `GET /setup/validate-fen`. Tests: `GoSetupFormTest` gains a case for the
+  standard variant being accepted and other variants and any FEN refused on every form.
+  `dev/ci/chess-guard-baseline.txt` (unit 3.17 part 3) drops the 50 files 2b left clean on top of
+  part 2a's trims; 11 remain (analysis, tree, eval and a few helpers).
+- Worked: Go games were all `Standard`, so every removed variant branch reduced to its standard
+  case (no behaviour change for Go games). Old stored hooks, seeks, challenges and settings still
+  read: the BSON readers ignore the extra keys.
+- Didn't work: `String.isShouting` used chess's FEN parser; dropping it failed `StringTest`, so a
+  plain pattern keeps the check. sbt 2's `test` is `testQuick` and ran nothing; `testFull` runs the
+  suites. The cloud's `~/.sbt/repositories` needed the lila-maven line for strategygames.
+- Lessons: when deleting a type, grep for helpers left with no callers (`Form.fen`, the opening
+  families) and delete them in the same unit.
+- Decisions: logs/decisions.md 2026-10-04 (3.17 part 2b).
+- Verified by Claude: `./lila.sh compile` clean (no new warnings), `testFull` across lila (19
+  suites) green, scalafmt; reviewer pass (findings fixed: paperwork, `Form.fen`, scaladoc, decline
+  menu, a test per form).
+- Needs owner verification: create a lobby game and a friend challenge, open the challenge and
+  game pages, and check the profile ratings list.
+- Follow-ups: 3.19 part 2 drops the browser's `variant` reads and the constant; Phase 5 removes the
+  chess variant ratings on the profile side and the variant perf fields; Phase 3 keeps
+  `chess.opening` in PgnDump and Annotator (part 2a); the lobby's seek de-duplication ignores the Go
+  setup (from 3.15), noted for Phase 6.
 ### 2026-10-04 · 3.17 part 2a · FEN, PGN and UCI gone from lila
 - Did: lila no longer writes or reads PGN, FEN or UCI. Removed: both `PgnDump`s (game and api) and
   the `core` `PgnDump` trait (its export flags are now `lila.core.game.GameExport.WithFlags`, the

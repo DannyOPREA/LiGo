@@ -1,5 +1,4 @@
 import type { ColorChoice } from 'lib/setup/color';
-import type { ClockConfig } from 'lib/setup/interfaces';
 import type { TimeMode } from 'lib/setup/timeControl';
 
 import type { GoRuleset, GoSetupJson, GoSize } from './goSetup';
@@ -16,7 +15,8 @@ export interface Hook {
   clock: string;
   t: number; // time
   s: number; // speed
-  i: number; // increment
+  i: number; // increment (0 for byo-yomi)
+  byo?: { limit: number; periods: number; period: number }; // byo-yomi hooks (unit 4.9)
   variant: VariantKey;
   perf: Exclude<Perf, 'fromPosition'>;
   prov?: true; // is rating provisional
@@ -25,8 +25,18 @@ export interface Hook {
   goRank?: string; // LiGo: the kyu/dan label for `rating` (ADR 0021 §3)
   ra?: 1; // rated
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
+  auth?: boolean; // made by a signed-in player (unit 6.5)
+  rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'cancel' | 'join';
   disabled?: boolean;
+}
+
+// An open game's rating range, with the ranks of its bounds; a bound at lila's limit has none (unit 6.5)
+export interface RatingRangeJson {
+  min: number;
+  max: number;
+  low?: string;
+  high?: string;
 }
 
 export interface Seek {
@@ -42,11 +52,19 @@ export interface Seek {
   provisional?: boolean;
   variant?: { key: VariantKey };
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
+  rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'joinSeek' | 'cancelSeek';
 }
 
-export interface Pool extends ClockConfig {
-  id: PoolId;
+// A pool tile, as the server sends it (modules/pool/src/main/PoolConfig.scala, unit 6.4)
+export interface Pool {
+  id: PoolId; // "9x9-3m-2s", "19x19-10m-5x30s" (ADR 0022 §1)
+  size: number;
+  clock: string; // "3+2", "10+5×30s"
+  speed: 'bullet' | 'blitz' | 'rapid' | 'classical';
+  lim?: number; // Fischer: minutes and seconds per move
+  inc?: number;
+  byo?: { limit: number; periods: number; period: number }; // byo-yomi: seconds
 }
 
 export interface LobbyOpts {
@@ -127,6 +145,9 @@ export interface SetupStore {
   time: number;
   increment: number;
   days: number;
+  periods: number; // byo-yomi (unit 4.9)
+  periodTime: number; // seconds
+  handicap: number; // friend window only
 }
 
 export interface ForceSetupOptions {
@@ -137,6 +158,9 @@ export interface ForceSetupOptions {
   time?: number;
   increment?: number;
   days?: number;
+  periods?: number;
+  periodTime?: number;
+  handicap?: number;
   mode?: GameMode;
   color?: ColorChoice;
 }

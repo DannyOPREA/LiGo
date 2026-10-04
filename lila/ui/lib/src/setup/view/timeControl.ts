@@ -9,6 +9,8 @@ import {
   timeVToTime,
   incrementVToIncrement,
   daysVToDays,
+  byoyomiPeriodChoices,
+  byoyomiPeriodTimes,
   type TimeControl,
   type TimeMode,
   timeModes,
@@ -24,7 +26,7 @@ const showTime = (v: number) => {
 const blindModeTimePickers = (tc: TimeControl) => {
   return [
     renderTimeModePicker(tc),
-    tc.mode() === 'realTime' &&
+    tc.isLive() &&
       hl('div.time-choice', [
         hl('label', { attrs: { for: 'sf_time' } }, i18n.site.minutesPerSide),
         hl(
@@ -53,6 +55,28 @@ const blindModeTimePickers = (tc: TimeControl) => {
               { key: incrementV.toString(), name: incrementVToIncrement(incrementV).toString() },
               tc.incrementV().toString(),
             ),
+          ),
+        ),
+      ]),
+    tc.isByoyomi() &&
+      hl('div.periods-choice', [
+        hl('label', { attrs: { for: 'sf_periods' } }, i18n.site.goPeriods),
+        hl(
+          'select#sf_periods',
+          { on: { change: (e: Event) => tc.periodsV(parseInt((e.target as HTMLSelectElement).value)) } },
+          byoyomiPeriodChoices.map(n =>
+            option({ key: n.toString(), name: n.toString() }, tc.periodsV().toString()),
+          ),
+        ),
+      ]),
+    tc.isByoyomi() &&
+      hl('div.period-time-choice', [
+        hl('label', { attrs: { for: 'sf_periodTime' } }, i18n.site.goSecondsPerPeriod),
+        hl(
+          'select#sf_periodTime',
+          { on: { change: (e: Event) => tc.periodTimeV(parseInt((e.target as HTMLSelectElement).value)) } },
+          byoyomiPeriodTimes.map((seconds, v) =>
+            option({ key: v.toString(), name: seconds.toString() }, tc.periodTimeV().toString()),
           ),
         ),
       ]),
@@ -178,6 +202,37 @@ export const timePickerAndSliders = (tc: TimeControl, minimumTimeRequiredIfReal 
           ),
         ),
       ),
+    ]);
+  } else if (activeMode === 'byoyomi') {
+    panelContent = hl('div.time-panel', [
+      // three sliders, stacked: main time, then the periods and their length
+      hl('div.sliders-grid.byoyomi', [
+        hl('div.slider-container', [
+          hl('div.label-row', [
+            hl('label', i18n.site.minutesPerSide),
+            hl('span.val-box', showTime(tc.time())),
+          ]),
+          inputRange(0, 38, tc.timeV, { failure: !tc.byoyomiValid(minimumTimeRequiredIfReal) }),
+        ]),
+        hl('div.slider-container', [
+          hl('div.label-row', [
+            hl('label', i18n.site.goPeriods),
+            hl('span.val-box', tc.periods().toString()),
+          ]),
+          inputRange(
+            byoyomiPeriodChoices[0],
+            byoyomiPeriodChoices[byoyomiPeriodChoices.length - 1],
+            tc.periodsV,
+          ),
+        ]),
+        hl('div.slider-container', [
+          hl('div.label-row', [
+            hl('label', i18n.site.goSecondsPerPeriod),
+            hl('span.val-box', tc.periodTime().toString()),
+          ]),
+          inputRange(0, byoyomiPeriodTimes.length - 1, tc.periodTimeV),
+        ]),
+      ]),
     ]);
   } else if (activeMode === 'correspondence') {
     panelContent = hl('div.time-panel', [

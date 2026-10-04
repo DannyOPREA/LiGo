@@ -185,6 +185,12 @@ $c-slider: $c-setup;
       .sliders-grid {
         display: grid;
         grid-template-columns: 1fr 3ch 1fr;
+
+        // byo-yomi (unit 4.9): main time, periods and period length, one under the other
+        &.byoyomi {
+          grid-template-columns: 1fr;
+          gap: 1.2rem;
+        }
       }
 
       .slider-container {

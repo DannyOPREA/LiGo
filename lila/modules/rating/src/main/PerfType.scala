@@ -1,7 +1,7 @@
 package lila.rating
 
 import cats.derived.*
-import chess.{ Centis, Speed, variant }
+import chess.Centis
 
 import lila.core.i18n.{ I18nKey, Translate }
 import lila.core.perf.PerfId
@@ -220,31 +220,6 @@ object PerfType:
   )
   val isLeaderboardable: Set[PerfKey] = leaderboardable.toSet
 
-  val variants: List[PerfKey] =
-    List(
-      PerfKey.crazyhouse,
-      PerfKey.chess960,
-      PerfKey.kingOfTheHill,
-      PerfKey.threeCheck,
-      PerfKey.antichess,
-      PerfKey.atomic,
-      PerfKey.horde,
-      PerfKey.racingKings
-    )
-
-  def variantOf(pk: PerfKey): variant.Variant = pk match
-    case PerfKey.crazyhouse => variant.Crazyhouse
-    case PerfKey.chess960 => variant.Chess960
-    case PerfKey.kingOfTheHill => variant.KingOfTheHill
-    case PerfKey.threeCheck => variant.ThreeCheck
-    case PerfKey.antichess => variant.Antichess
-    case PerfKey.atomic => variant.Atomic
-    case PerfKey.horde => variant.Horde
-    case PerfKey.racingKings => variant.RacingKings
-    case _ => variant.Standard
-
-  def apply(variant: chess.variant.Variant, speed: Speed): PerfType = PerfType(PerfKey(variant, speed))
-
   lazy val totalTimeRoughEstimation: Map[PerfType, Centis] =
     nonPuzzle.view
       .map: pt =>
@@ -258,8 +233,5 @@ object PerfType:
             case Correspondence => 60 * 60 * 100
             case _ => 7 * 60 * 100
       .to(Map)
-
-  def iconByVariant(variant: chess.variant.Variant): Icon =
-    PerfKey.byVariant(variant).fold(Icon.CrownElite)(_.icon)
 
   val translated: Set[PerfType] = Set(Bullet, Blitz, Rapid, Classical, Correspondence, Puzzle)

@@ -1,7 +1,6 @@
 package lila.core
 package game
 
-import _root_.chess.variant.{ Standard, Variant }
 import _root_.chess.{
   ByColor,
   Centis,
@@ -47,11 +46,11 @@ case class Game(
     abortedBy: Option[Color] = None,
     // A byo-yomi clock (ADR 0020 §7, unit 4.7), stored under `cy`. A game has at most one of `clock` (Fischer)
     // and `byoyomi`; code that only knows Fischer clocks reads `clock` and sees none in a byo-yomi game.
-    byoyomi: Option[ByoyomiClock] = None
+    byoyomi: Option[ByoyomiClock] = None,
+    // A Go game's scoring phase (ADR 0020 §2, unit 4.8), stored under `sc`: there while the players agree on
+    // dead stones, and kept on a game that ended by counting.
+    goScoring: Option[GoScoring] = None
 ):
-
-  /** Every game is standard Go; lila's chess variants go in unit 3.17's second part, with this. */
-  def variant: Variant = Standard
 
   export metadata.{ tournamentId, simulId, swissId, drawOffers, source, pgnImport, hasRule }
   export players.{ white as whitePlayer, black as blackPlayer, apply as player }
@@ -64,6 +63,9 @@ case class Game(
 
   /** The player to move, as the Go game says (ADR 0019 §3). */
   def turnColor: Color = GoBridge.color(go.toMove)
+
+  /** In the scoring phase (ADR 0020 §3): the clocks are stopped and nobody moves. */
+  def inGoScoring: Boolean = goScoring.isDefined && playable
 
   /** Replace the Go game after an action or a takeback, taking its new ply (placements and passes, not
     * resumes, ADR 0019 §3).
@@ -140,9 +142,6 @@ case class Game(
 
   def perfKey: PerfKey = GoBridge.perfKey
 
-  def ratingVariant: Variant =
-    if isTournament && variant.fromPosition then Standard else variant
-
   def started = status >= Status.Started
 
   def aborted = status == Status.Aborted
@@ -184,7 +183,7 @@ case class Game(
 
   def replayable = isPgnImport || finished || (aborted && bothPlayersHaveMoved)
 
-  def fromPosition = variant.fromPosition || source.has(Source.Position)
+  def fromPosition = source.has(Source.Position)
 
   def sourceIs(f: Source.type => Source): Boolean = source contains f(Source)
   def lobbyOrPool = source.exists(s => s == Source.Lobby || s == Source.Pool)
@@ -204,8 +203,12 @@ case class Game(
 
   def drawn = finished && winner.isEmpty
 
+  // Nobody runs out of time while the players agree on dead stones (ADR 0020 §3): the clocks are stopped,
+  // and a stopped clock with time used would otherwise read as flagged.
   def outoftime(withGrace: Boolean): Boolean =
-    if isCorrespondence then outoftimeCorrespondence else outoftimeClock(withGrace)
+    if inGoScoring then false
+    else if isCorrespondence then outoftimeCorrespondence
+    else outoftimeClock(withGrace)
 
   private def outoftimeClock(withGrace: Boolean): Boolean =
     gameClock.exists: c =>
@@ -267,7 +270,7 @@ case class Game(
 
   def isPgnImport = pgnImport.isDefined
 
-  def hasFewerMovesThanExpected = playedPlies <= reasonableMinimumNumberOfMoves(variant)
+  def hasFewerMovesThanExpected = playedPlies <= reasonableMinimumNumberOfMoves
 
   def pov(c: Color) = Pov(this, c)
   def povs: ByColor[Pov] = ByColor(pov)

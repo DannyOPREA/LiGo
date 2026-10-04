@@ -4,7 +4,6 @@ import com.github.benmanes.caffeine.cache.Cache as CaffeineCache
 import kamon.metric.Timer
 import kamon.tag.TagSet
 import kamon.Kamon.{ timer, gauge, counter, histogram }
-import chess.variant.Variant
 import scalalib.net.UserAgent
 
 import lila.core.id.*
@@ -150,7 +149,6 @@ object round:
     val time = timer("round.move.time").withoutTags()
   object error:
     val client = counter("round.error").withTag("from", "client")
-    val fishnet = counter("round.error").withTag("from", "fishnet")
     val glicko = counter("round.error").withTag("from", "glicko")
     val other = counter("round.error").withTag("from", "other")
   object titivate:
@@ -194,7 +192,6 @@ object tutor:
   def peerMatch(hit: Boolean, perf: PerfKey) = counter("tutor.peerMatch").withTags:
     tags("hit" -> hitTag(hit), "perf" -> perf)
   val parallelism = gauge("tutor.build.parallelism").withoutTags()
-  val fishnetMissing = histogram("tutor.fishnet.missing").withoutTags()
   private def askAs(as: "mine" | "peer")(question: String, perf: PerfKey | "all") =
     future("tutor.insight.ask", tags("question" -> question, "perf" -> perf, "as" -> as))
 object search:
@@ -582,10 +579,9 @@ object streak:
 object game:
   import chess.{ Speed, Rated, Status }
   import lila.core.game.Source
-  def finish(variant: Variant, speed: Speed, source: Option[Source], mode: Rated, status: Status) =
+  def finish(speed: Speed, source: Option[Source], mode: Rated, status: Status) =
     counter("game.finish").withTags:
       tags(
-        "variant" -> variant.key,
         "speed" -> speed.key,
         "source" -> source.fold("unknown")(_.name),
         "mode" -> mode.name,
@@ -646,49 +642,6 @@ object push:
   val googleTokenTime = timer("push.send.googleToken").withoutTags()
   def firebaseStatus(project: String, typ: String, status: Int) =
     counter("push.firebase.status").withTags(tags("status" -> status, "project" -> project, "type" -> typ))
-object fishnet:
-  object client:
-    object result:
-      private val c = counter("fishnet.client.result")
-      private def apply(r: String)(client: UserId) =
-        c.withTags(tags("client" -> client, "result" -> r))
-      val success = apply("success")
-      val failure = apply("failure")
-      val timeout = apply("timeout")
-      val notFound = apply("notFound")
-      val notAcquired = apply("notAcquired")
-      val abort = apply("abort")
-    def status(enabled: Boolean) = gauge("fishnet.client.status").withTag("enabled", enabled)
-    def version(v: String) = gauge("fishnet.client.version").withTag("version", v.escape)
-  def queueTime(sender: "system" | "user") = timer("fishnet.queue.db").withTag("sender", sender)
-  val acquire = future("fishnet.acquire")
-  def work(typ: String, as: "system" | "user") =
-    gauge("fishnet.work").withTags(tags("type" -> typ, "for" -> as))
-  def oldest(as: "system" | "user") = gauge("fishnet.oldest").withTag("for", as)
-  object analysis:
-    object by:
-      def movetime(client: UserId) = histogram("fishnet.analysis.movetime").withTag("client", client)
-      def node(client: UserId) = histogram("fishnet.analysis.node").withTag("client", client)
-      def nps(client: UserId) = histogram("fishnet.analysis.nps").withTag("client", client)
-      def depth(client: UserId) = histogram("fishnet.analysis.depth").withTag("client", client)
-      def pvSize(client: UserId) = histogram("fishnet.analysis.pvSize").withTag("client", client)
-      def pv(client: UserId, isLong: Boolean) =
-        counter("fishnet.analysis.pvs").withTags(tags("client" -> client, "long" -> isLong))
-      def totalMeganode(client: UserId) =
-        counter("fishnet.analysis.total.meganode").withTag("client", client)
-      def totalSecond(client: UserId) =
-        counter("fishnet.analysis.total.second").withTag("client", client)
-    def requestCount(tpe: "game" | "study") = counter("fishnet.analysis.request").withTag("type", tpe)
-    val evalCacheHits = histogram("fishnet.analysis.evalCacheHits").withoutTags()
-    val skipPositionsGame = future("fishnet.analysis.skipPositions.game")
-    val skipPositionsStudy = future("fishnet.analysis.skipPositions.study")
-    def sameHash(tpe: "game" | "study") = counter("fishnet.analysis.sameHash").withTag("type", tpe)
-  object http:
-    def request(hit: Boolean) = counter("fishnet.http.acquire").withTag("hit", hit)
-  def move(level: Int) = counter("fishnet.move.time").withTag("level", level)
-  def openingBook(variant: Variant, hit: Boolean) =
-    timer("fishnet.opening.hit").withTags:
-      tags("variant" -> variant.key, "hit" -> hitTag(hit))
 object opening:
   def searchTime = timer("opening.search.time").withoutTags()
   object explorer:
@@ -712,9 +665,6 @@ object `export`:
   object png:
     val game = counter("export.png").withTag("type", "game")
     val puzzle = counter("export.png").withTag("type", "puzzle")
-object analyse:
-  object annotator:
-    val addEvalsTime = timer("analyse.annotator.addEvalsTime").withoutTags()
 object bus:
   val classifiers = gauge("bus.classifiers").withoutTags()
 object blocking:

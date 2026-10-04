@@ -5,6 +5,18 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 7.4 clean-up · The analysis board drops its last chess styles
+- Did: for 3.19 part 2 (chessground and chessops gone), `ui/analyse` no longer imports `lib/css/chess/{promotion,
+  variant-style,zh-pocket}` or `lib/css/component/material`. The crazyhouse build (`analyse.zh`) and the chess
+  material styles in `_player-clock.scss` are deleted. The step-button styles the Go page does use moved from
+  `lib/css/chess/_control.scss` to `lib/css/component/_analyse-controls.scss`; the old file now only forwards to it
+  for the puzzle page (Phase 8's) until that imports the new one. Scala `AnalyseUi.miniSpan` (chessgroundMini, no
+  callers) and `lib/game/nodePGN.ts` with its test (no callers left) are deleted; AnalyseUi left the chess-guard
+  baseline.
+- Worked: the 8 analysis screenshot pairs still match pixel for pixel, so the moved styles changed nothing.
+- Lessons: before deleting a "chess" stylesheet, list its selectors and grep the page's views for them:
+  `_control.scss` styled the Go page's own step buttons.
+
 ### 2026-10-04 · unit 9.7 part two · lila's button blue reaches 4.5:1 under white text
 - Did: added `--c-primary-button` (hsl(209 79% 44%), 4.84:1 under white) in `ui/lib/css/theme/_theme.default.scss`, used by `.button`, `%active-primary`, the rematch button's glow and hover, and every rule that filled a box with `$c-primary` (19 files). Links keep the lighter `--c-primary`, which needs that lightness to read on the dark background. The axe helper's let-off for white on #3692e7 and the game page's `.rematch` exclusion are gone; re-recorded the two account-page screenshots whose button changed.
 - Worked: axe passes on the playground, the game page (20 repeats of the game page's check) and the analysis board with no exceptions.

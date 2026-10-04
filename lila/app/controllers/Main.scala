@@ -98,7 +98,8 @@ final class Main(env: Env, assetsC: ExternalAssets) extends LilaController(env):
     pageHit
     if ctx.isAuth then Redirect(routes.Lobby.home)
     else
-      Redirect(s"${routes.Lobby.home}#pool/10+0").withCookies:
+      // LiGo: a pool tile (unit 6.4)
+      Redirect(s"${routes.Lobby.home}#pool/19x19-10m-5x30s").withCookies:
         env.security.lilaCookie.withSession(remember = true): s =>
           s + ("theme" -> "ic") + ("pieceSet" -> "icpieces")
 

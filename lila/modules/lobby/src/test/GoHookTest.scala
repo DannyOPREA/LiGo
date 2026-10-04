@@ -4,7 +4,7 @@ import chess.{ Clock, Rated }
 import scalalib.model.Days
 import ligo.gorules.{ BoardSize, Ruleset, Setup as GoSetup }
 
-import lila.core.game.GoSetups
+import lila.core.game.{ ClockSettings, GoSetups }
 import lila.core.rating.RatingRange
 
 // Unit 3.15: hooks and seeks carry the Go setup of the game they create.
@@ -14,9 +14,8 @@ class GoHookTest extends munit.FunSuite:
 
   private def hook(go: GoSetup, sri: String) = Hook.make(
     sri = lila.core.socket.Sri(sri),
-    variant = chess.variant.Standard,
     go = go,
-    clock = Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3)),
+    clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
     rated = Rated.No,
     color = TriColor.Random,
     user = none,
@@ -48,7 +47,6 @@ class GoHookTest extends munit.FunSuite:
     )
     val seek = Seek(
       "abcdefgh",
-      chess.variant.Standard.id,
       nine.some,
       None,
       Rated.No,
@@ -64,18 +62,33 @@ class GoHookTest extends munit.FunSuite:
     assertEquals((seek.render \ "go" \ "size").as[Int], 9)
 
   // Unit 6.4 (first part): which hooks the pools may take (ADR 0022 §6)
-  private def rated(go: GoSetup, color: TriColor = TriColor.Random) = Hook.make(
-    sri = lila.core.socket.Sri("r"),
-    variant = chess.variant.Standard,
-    go = go,
-    clock = Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3)),
-    rated = Rated.Yes,
-    color = color,
-    user = none,
-    sid = none,
-    ratingRange = RatingRange.default,
-    blocking = lila.core.pool.Blocking(Set.empty)
-  )
+  private def rated(go: GoSetup, color: TriColor = TriColor.Random) = Hook
+    .make(
+      sri = lila.core.socket.Sri("r"),
+      go = go,
+      clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
+      rated = Rated.Yes,
+      color = color,
+      user = none,
+      sid = none,
+      ratingRange = RatingRange.default,
+      blocking = lila.core.pool.Blocking(Set.empty)
+    )
+    .copy(rated = Rated.Yes, user = seekUser("r").some) // a signed-in player's hook (unit 5.7)
+
+  test("a guest's hook is casual, whatever the request says (unit 5.7)"):
+    val guest = Hook.make(
+      sri = lila.core.socket.Sri("g"),
+      go = GoSetups.default,
+      clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
+      rated = Rated.Yes,
+      color = TriColor.Random,
+      user = none,
+      sid = none,
+      ratingRange = RatingRange.default,
+      blocking = lila.core.pool.Blocking(Set.empty)
+    )
+    assertEquals(guest.rated, Rated.No)
 
   test("only a rated, random-colour, even, Japanese, standard-komi hook would be a pool game"):
     assert(rated(GoSetups.default).seemsCompatibleWithPools)
@@ -87,10 +100,10 @@ class GoHookTest extends munit.FunSuite:
     assert(!rated(GoSetups.default.copy(handicap = 2, komi = 0.5)).seemsCompatibleWithPools, "handicap")
 
   test("a hook goes to a pool only with that pool's clock and board size"):
-    val poolClock = Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))
+    val poolClock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3)))
     assert(rated(GoSetups.default).compatibleWithPool(poolClock, GoSetups.default))
     assert(!rated(nine).compatibleWithPool(poolClock, GoSetups.default))
-    val other = Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0))
+    val other = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0)))
     assert(!rated(GoSetups.default).compatibleWithPool(other, GoSetups.default))
     given lila.core.pool.IsPoolCompatible =
       lila.core.pool.IsPoolCompatible((c, go) => c == poolClock && go == GoSetups.default)
@@ -125,7 +138,7 @@ class GoHookTest extends munit.FunSuite:
   private val alice = seekUser("alice")
 
   private def dupSeek(id: String, go: Option[GoSetup], by: LobbyUser = bob) =
-    Seek(id, chess.variant.Standard.id, go, Some(Days(3)), Rated.No, by, RatingRange.default, nowInstant)
+    Seek(id, go, Some(Days(3)), Rated.No, by, RatingRange.default, nowInstant)
 
   private def shown(seeks: List[Seek]) = SeekApi.noDupsFor(alice, seeks).map(_.id)
 
@@ -151,3 +164,113 @@ class GoHookTest extends munit.FunSuite:
       SeekApi.noDupsFor(bob, List(dupSeek("a", nine.some), dupSeek("b", nine.some))).map(_.id),
       List("a", "b")
     )
+
+  // Unit 4.9: byo-yomi hooks
+  private val byo = ClockSettings.Byoyomi(ligo.gorules.ByoyomiConfig(600, 5, 30))
+
+  test("a byo-yomi hook shows its clock and periods, and matches only the same clock"):
+    val h = hook(GoSetups.default, "y").copy(clock = byo)
+    assertEquals((h.render \ "clock").as[String], "10+5×30s")
+    assertEquals((h.render \ "byo" \ "periods").as[Int], 5)
+    assertEquals((h.render \ "i").as[Int], 0)
+    assertEquals((hook(GoSetups.default, "f").render \ "byo").toOption, None)
+    assert(h.compatibleWith(hook(GoSetups.default, "z").copy(clock = byo)))
+    assert(!h.compatibleWith(hook(GoSetups.default, "f")), "Fischer")
+
+  // Unit 6.4 (second part): byo-yomi pools take byo-yomi hooks with their clock
+  test("a rated byo-yomi hook goes to the pool with the same byo-yomi clock, not a Fischer one"):
+    val h = rated(GoSetups.default).copy(clock = byo)
+    assert(h.compatibleWithPool(byo, GoSetups.default))
+    val fischer = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0)))
+    assert(!h.compatibleWithPool(fischer, GoSetups.default))
+    given lila.core.pool.IsPoolCompatible = lila.core.pool.IsPoolCompatible((c, _) => c == byo)
+    assert(h.compatibleWithPools)
+    assert(!rated(GoSetups.default).compatibleWithPools)
+
+  // Unit 6.5: open games a player can't join are sent anyway, greyed by the browser (ADR 0022 §5)
+  private def member(id: String, rating: Int, lame: Boolean = false, blocks: Set[String] = Set.empty) =
+    LobbyUser(
+      UserId(id),
+      UserName(id),
+      lame = lame,
+      bot = false,
+      perfMap = Map(PerfKey.go -> LobbyPerf(chess.IntRating(rating), chess.rating.RatingProvisional.No)),
+      blocking = lila.core.pool.Blocking(blocks.map(UserId(_)))
+    )
+  private val ranged = RatingRange(chess.IntRating(1700), chess.IntRating(1900))
+  private def memberHook(by: LobbyUser, range: RatingRange = RatingRange.default) =
+    hook(GoSetups.default, by.id.value).copy(user = by.some, ratingRange = range)
+
+  test("a hook out of your range, or a member's hook seen by a guest, is sent but can't be joined"):
+    val carol = member("carol", 1800)
+    val weak = member("weak", 1200)
+    val h = memberHook(carol, ranged)
+    assert(Biter.visible(h, weak.some) && !Biter.canJoin(h, weak.some), "out of range")
+    assert(Biter.canJoin(h, member("near", 1750).some))
+    assert(Biter.visible(h, none) && !Biter.canJoin(h, none), "guest")
+    val guestHook = hook(GoSetups.default, "g")
+    assert(Biter.visible(guestHook, weak.some) && !Biter.canJoin(guestHook, weak.some), "member")
+
+  test("blocks either way and the other lame kind still hide a hook or a seek"):
+    val carol = member("carol", 1800, blocks = Set("dave"))
+    val dave = member("dave", 1800)
+    assert(!Biter.visible(memberHook(carol), dave.some), "carol blocks dave")
+    assert(!Biter.visible(memberHook(dave), carol.some), "dave is blocked by carol")
+    val troll = member("troll", 1800, lame = true)
+    assert(!Biter.visible(memberHook(troll), dave.some) && !Biter.visible(memberHook(troll), none))
+    assert(Biter.visible(memberHook(troll), member("other", 1500, lame = true).some))
+    val seek = dupSeek("s", None, by = carol).copy(ratingRange = ranged)
+    assert(!Biter.visible(seek, dave))
+    val weak = member("weak", 1200)
+    assert(Biter.visible(seek, weak) && !Biter.canJoin(seek, weak), "a seek out of range is sent")
+
+  test("a hook with no range of its own takes any rank: lila's chess default range is gone"):
+    val h = memberHook(member("carol", 1800))
+    assert(Biter.canJoin(h, member("beginner", 600).some))
+    assert(Biter.canJoin(h, member("strong", 2700).some))
+
+  test("hooks and seeks tell the browser who made them and the range they asked for"):
+    val h = memberHook(member("carol", 1800), ranged)
+    assertEquals((h.render \ "auth").as[Boolean], true)
+    assertEquals((h.render \ "rr" \ "min").as[Int], 1700)
+    assertEquals((h.render \ "rr" \ "low").asOpt[String], RatingRanges.low(ranged))
+    assertEquals((hook(GoSetups.default, "g").render \ "auth").as[Boolean], false)
+    assertEquals((hook(GoSetups.default, "g").render \ "rr").toOption, None)
+    val seek = dupSeek("s", None).copy(ratingRange = ranged)
+    assertEquals((seek.render \ "rr" \ "max").as[Int], 1900)
+
+  test("a range's bounds carry their ranks, and a bound at lila's limit is open"):
+    import chess.IntRating
+    val label = (r: Int) => lila.rating.GoRating.label(IntRating(r), chess.rating.RatingProvisional.No)
+    assertEquals(
+      (RatingRanges.low(ranged), RatingRanges.high(ranged)),
+      (Some(label(1700)), Some(label(1900)))
+    )
+    val upward = RatingRange(IntRating(1700), RatingRange.max)
+    assertEquals((RatingRanges.low(upward), RatingRanges.high(upward)), (Some(label(1700)), None))
+    val any = RatingRanges.json(RatingRange.default)
+    assertEquals(((any \ "low").toOption, (any \ "high").toOption), (None, None))
+
+  test("the correspondence tiles are 1 and 3 days of 19×19 Japanese even games"):
+    assertEquals(CorresPresets.all.map(_.id), List("19x19-1d", "19x19-3d"))
+    for p <- CorresPresets.all do
+      assertEquals(
+        (p.go.size, p.go.ruleset, p.go.komi, p.go.handicap),
+        (BoardSize.Nineteen, Ruleset.Japanese, 6.5, 0)
+      )
+    assertEquals(CorresPresets.all.map(_.days.value), List(1, 3))
+    // two players clicking the same tile get seeks that match; another board size or a handicap doesn't
+    val a = dupSeek("a", CorresPresets.all.head.go.some, by = bob).copy(daysPerTurn = Some(Days(1)))
+    val b = dupSeek("b", CorresPresets.all.head.go.some, by = alice).copy(daysPerTurn = Some(Days(1)))
+    assert(a.compatibleWith(b))
+    assert(!a.compatibleWith(b.copy(go = nine.some)))
+    assert(!a.compatibleWith(b.copy(go = GoSetups.default.copy(handicap = 2, komi = 0.5).some)))
+    assert(!a.compatibleWith(b.copy(daysPerTurn = Some(Days(3)))))
+
+  // Unit 6.4 (second part): who has a rank in a pool (ADR 0021 §4, ADR 0022 §3)
+  test("an account at lila's starting 1500 / 500 has no rank; a declared or played one has"):
+    import lila.rating.{ Glicko, GoRating }
+    assert(!LobbySocket.hasRank(Glicko.default))
+    assert(LobbySocket.hasRank(GoRating.startingGlicko(GoRating.Rank.fromName("5k").get)))
+    assert(LobbySocket.hasRank(Glicko.default.copy(deviation = 480)), "one rated game played")
+    assert(LobbySocket.hasRank(Glicko.default.copy(rating = 1520)))

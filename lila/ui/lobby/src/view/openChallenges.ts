@@ -26,10 +26,12 @@ import {
   anyChip,
   applyChips,
   fit,
+  type Unjoinable,
   hookRow,
   liveSpeeds,
   noChips,
   playerRatingLabel,
+  rangeLabel,
   ratedChoices,
   seekRow,
   sortRows,
@@ -54,6 +56,17 @@ const setupOf = (row: OpenRow): string =>
 const timeOf = (row: OpenRow): string =>
   row.kind === 'live' ? (row.clock ?? '') : row.days ? i18n.site.nbDays(row.days) : '∞';
 
+const unjoinableTitle = (reason: Unjoinable): string =>
+  reason === 'rated'
+    ? i18n.site.goUnjoinableRated
+    : reason === 'range'
+      ? i18n.site.goUnjoinableRange
+      : reason === 'members'
+        ? i18n.site.goUnjoinableMembers
+        : reason === 'guests'
+          ? i18n.site.goUnjoinableGuests
+          : i18n.site.cancel;
+
 const renderRow = (ctrl: LobbyController, row: OpenRow): VNode => {
   const f = fit(row, ctrl.viewer(), ctrl.chips);
   const setup = setupOf(row);
@@ -63,12 +76,15 @@ const renderRow = (ctrl: LobbyController, row: OpenRow): VNode => {
       key: row.kind + row.id,
       class: { disabled: row.disabled, unjoinable: !row.disabled && !row.own && !f.joinable },
       role: 'button',
+      'aria-disabled': row.disabled || (!row.own && !f.joinable) ? 'true' : undefined,
       title: row.disabled
         ? ''
         : row.own
           ? i18n.site.cancel
-          : // the reason for an unjoinable row gets its translated word with unit 6.5 (ADR 0022 §5)
-            i18n.site.joinTheGame + (setup ? ` | ${setup}` : ''),
+          : !f.joinable && f.reason
+            ? unjoinableTitle(f.reason) +
+              (row.range && rangeLabel(row.range) ? ` (${rangeLabel(row.range)})` : '')
+            : i18n.site.joinTheGame + (setup ? ` | ${setup}` : ''),
       'data-id': row.id,
       'data-kind': row.kind,
     },
@@ -93,7 +109,6 @@ const renderRow = (ctrl: LobbyController, row: OpenRow): VNode => {
         { attrs: { title: row.komi !== undefined ? `${i18n.site.goKomi} ${row.komi}` : '' } },
         row.rules ? `${rulesetName(row.rules)}${row.komi !== undefined ? ` · ${row.komi}` : ''}` : '',
       ),
-      // Always even until unit 4.9 lets a game have handicap stones
       td('.handicap', row.handicap > 0 ? `${i18n.site.goHandicap} ${row.handicap}` : i18n.site.goEven),
       td('.mode', i18n.site[row.rated ? 'rated' : 'casual']),
     ],
@@ -190,7 +205,11 @@ const onRowClick = (ctrl: LobbyController) =>
       const el = (e.target as HTMLElement).closest<HTMLElement>('tbody tr');
       if (!el?.dataset['id']) return;
       const id = el.dataset['id'];
-      if (el.dataset['kind'] === 'live') return ctrl.clickHook(id);
+      // a greyed row you can't join does nothing (the server would refuse it too), except offer a
+      // guest the sign-up page, as lila does for a guest's click on a correspondence game
+      const unjoinable = el.classList.contains('unjoinable');
+      if (unjoinable && ctrl.me) return;
+      if (el.dataset['kind'] === 'live' && !unjoinable) return ctrl.clickHook(id);
       if (!ctrl.me) {
         if (await confirm(i18n.site.youNeedAnAccountToDoThat, i18n.site.signUp, i18n.site.cancel))
           location.href = '/signup';

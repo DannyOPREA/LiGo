@@ -58,7 +58,12 @@ object Query:
   val notAi: Bdoc = F.source.neq(Source.Ai.id)
   def sourceIn(sources: Iterable[Source]): Bdoc = F.source.in(sources.map(_.id))
 
-  def clock(c: Boolean): Bdoc = F.clock.exists(c)
+  /** A real-time game (true) or one with no running clock (false): the clock is lila's Fischer clock (`c`) or
+    * a byo-yomi clock (`cy`, ADR 0020 §7).
+    */
+  def clock(c: Boolean): Bdoc =
+    if c then or(F.clock.exists(true), F.byoyomi.exists(true))
+    else F.clock.exists(false) ++ F.byoyomi.exists(false)
 
   def clockHistory(c: Boolean): Bdoc = F.whiteClockHistory.exists(c)
 
@@ -129,14 +134,6 @@ object Query:
   def checkable = F.checkAt.lt(nowInstant)
 
   def checkableOld = F.checkAt.lt(nowInstant.minusHours(1))
-
-  def variant(v: chess.variant.Variant) =
-    bdoc(F.variant -> (if v.standard then exists(false) else bint(v.id)))
-
-  val variantStandard = variant(chess.variant.Standard)
-
-  val notFromPosition: Bdoc =
-    F.variant.neq(chess.variant.FromPosition.id)
 
   def createdSince(d: Instant): Bdoc = F.createdAt.gte(d)
 
