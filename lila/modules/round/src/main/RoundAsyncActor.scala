@@ -162,6 +162,32 @@ final private class RoundAsyncActor(
           MoveLatMonitor.recordMicros(lap.micros)
       )
 
+    // the scoring phase (ADR 0020 §3, unit 4.8)
+    case GoScorer.Toggle(playerId, at, seen) =>
+      handle(playerId)(goScorer.toggle(_, at, seen))
+
+    case GoScorer.Accept(playerId, seen) =>
+      handle(playerId)(goScorer.accept(_, seen))
+
+    case GoScorer.Resume(playerId) =>
+      handle(playerId)(goScorer.resume)
+
+    case GoScorer.ServiceReply(reply) =>
+      handle(goScorer.reply(_, reply))
+
+    case GoScorer.Expiry =>
+      handle(goScorer.expire)
+
+    case GoScorer.Wake =>
+      handle: g =>
+        goScorer.wake(g)
+        fuccess(Nil)
+
+    case GoScorer.Resend(ref) =>
+      handle: g =>
+        goScorer.wake(g, Some(ref))
+        fuccess(Nil)
+
     case RoundBus.Abort(playerId) =>
       handle(playerId): pov =>
         pov.game.abortableByUser.so(finisher.abort(pov))
@@ -385,6 +411,7 @@ object RoundAsyncActor:
       val finisher: Finisher,
       val rematcher: Rematcher,
       val player: MovePlayer,
+      val goScorer: GoScorer,
       val drawer: Drawer,
       val jsonView: JsonView
   )
