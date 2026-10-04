@@ -46,7 +46,6 @@ final class ChallengeUi(helpers: Helpers):
     val speed = c.timeControl.clockSettings.fold(chess.Speed.Correspondence.name) { clock =>
       s"${clock.speed.name} (${clock.show})"
     }
-    val variant = c.variant.exotic.so(s" ${c.variant.name}")
     val challenger = c.challengerUser.fold(trans.site.anonymous.txt()): reg =>
       s"${titleNameOrId(reg.id)}${ctx.pref.showRatings.so(s" (${goLabel(reg.rating)})")}"
     val players =
@@ -54,17 +53,17 @@ final class ChallengeUi(helpers: Helpers):
       else
         c.destUser.fold(s"Challenge from $challenger"): dest =>
           s"$challenger challenges ${titleNameOrId(dest.id)}${ctx.pref.showRatings.so(s" (${goLabel(dest.rating)})")}"
-    s"$speed$variant ${c.rated.name} Go • $players"
+    s"$speed ${c.rated.name} Go • $players"
 
   private def details(c: Challenge, requestedColor: Option[Color])(using ctx: Context) =
     div(cls := "details-wrapper")(
       div(cls := "content")(
         div(
           cls := "variant",
-          dataIcon := (if c.initialFen.isDefined then Icon.Feather else c.perfType.icon)
+          dataIcon := c.perfType.icon
         )(
           div(
-            variantLink(c.variant, c.perfType),
+            perfLink(c.perfType),
             br,
             span(cls := "clock"):
               c.daysPerTurn
@@ -197,11 +196,6 @@ final class ChallengeUi(helpers: Helpers):
                         )
                     )
                 },
-              c.notableInitialFen.map: fen =>
-                frag(
-                  br,
-                  div(cls := "board-preview", chessgroundMini(fen.board, c.finalColor)(div))
-                ),
               (!c.isOpen).option(cancelForm)
             )
           case Status.Declined =>
@@ -257,8 +251,6 @@ final class ChallengeUi(helpers: Helpers):
                       )
               ,
               details(c, color),
-              c.notableInitialFen.map: fen =>
-                div(cls := "board-preview", chessgroundMini(fen.board, !c.finalColor)(div)),
               if relation.has(Relation.Block) then badTag("You have blocked this player.")
               else if c.open.exists(!_.canJoin) then
                 div(

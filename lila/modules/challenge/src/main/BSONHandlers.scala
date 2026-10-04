@@ -1,6 +1,5 @@
 package lila.challenge
 
-import chess.variant.Variant
 import reactivemongo.api.bson.*
 import scalalib.model.Days
 
@@ -40,7 +39,6 @@ private object BSONHandlers:
         case TimeControl.Byoyomi(c) => bdoc("l" -> c.mainSeconds, "p" -> c.periods, "b" -> c.periodSeconds)
         case TimeControl.Correspondence(d) => bdoc("d" -> d)
         case TimeControl.Unlimited => emptyBdoc
-  given BSONHandler[Variant] = variantByIdHandler
   given BSONHandler[Status] = valueMapHandler(Status.byId)(_.id)
   given BSONHandler[DeclineReason] = valueMapHandler(DeclineReason.byKey)(_.key)
 

@@ -1,6 +1,5 @@
 package lila.setup
 
-import chess.variant.Variant
 import chess.{ Clock, Rated }
 import chess.IntRating
 import scalalib.model.Days
@@ -13,7 +12,6 @@ import lila.lobby.{ Hook, Seek, TriColor }
 import lila.rating.RatingRange.withinLimits
 
 case class HookConfig(
-    variant: chess.variant.Variant,
     timeMode: TimeMode,
     time: Double, // minutes
     increment: Clock.IncrementSeconds,
@@ -30,7 +28,7 @@ case class HookConfig(
     else copy(ratingRange = ratingRange.withinLimits(perf.intRating, 500))
 
   def >> = (
-    variant.id,
+    none[String],
     timeMode.id,
     time,
     increment,
@@ -64,11 +62,9 @@ case class HookConfig(
         Left:
           Hook.make(
             sri = sri,
-            variant = variant,
             go = goSetup,
             clock = clock,
-            rated = if clock.fischer.forall(c => lila.core.game.allowRated(variant, c.some)) then rated
-            else Rated.No,
+            rated = rated,
             color = color,
             user = user,
             blocking = blocking,
@@ -79,7 +75,6 @@ case class HookConfig(
         Right:
           user.map: u =>
             Seek.make(
-              variant = variant,
               go = goSetup,
               daysPerTurn = makeDaysPerTurn,
               rated = rated,
@@ -90,7 +85,6 @@ case class HookConfig(
 
   def updateFrom(game: Game) =
     val h1 = copy(
-      variant = HookConfig.variantDefault, // only Go games are created (unit 3.15)
       timeMode = TimeMode.ofGame(game),
       time = game.byoyomi.map(_.config.mainSeconds / 60d).orElse(game.clock.map(_.limitInMinutes)) | time,
       increment = game.clock.map(_.incrementSeconds) | increment,
@@ -110,7 +104,7 @@ case class HookConfig(
 object HookConfig extends BaseConfig:
 
   def from(
-      v: Variant.Id,
+      @annotation.unused v: Option[String], // a chess variant, refused by the form (unit 3.17)
       tm: Int,
       t: Double,
       i: Clock.IncrementSeconds,
@@ -125,7 +119,6 @@ object HookConfig extends BaseConfig:
       periodTime: Int = ByoyomiPeriods.default.seconds
   ) =
     new HookConfig(
-      variant = chess.variant.Variant.orDefault(v),
       timeMode = TimeMode(tm).err(s"Invalid time mode $tm"),
       time = t,
       increment = i,
@@ -141,7 +134,6 @@ object HookConfig extends BaseConfig:
   def default(auth: Boolean): HookConfig = default.copy(rated = Rated.No)
 
   private val default = HookConfig(
-    variant = variantDefault,
     timeMode = TimeMode.RealTime,
     time = 5d,
     increment = Clock.IncrementSeconds(3),
@@ -158,7 +150,6 @@ object HookConfig extends BaseConfig:
 
     def reads(r: BSON.Reader): HookConfig =
       HookConfig(
-        variant = Variant.idOrDefault(r.getO[Variant.Id]("v")),
         timeMode = TimeMode.orDefault(r.int("tm")),
         time = r.double("t"),
         increment = r.get("i"),
@@ -171,7 +162,6 @@ object HookConfig extends BaseConfig:
 
     def writes(w: BSON.Writer, o: HookConfig) =
       bdoc(
-        "v" -> o.variant.id,
         "tm" -> o.timeMode.id,
         "t" -> o.time,
         "i" -> o.increment,

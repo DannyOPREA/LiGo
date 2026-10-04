@@ -1,6 +1,5 @@
 package lila.lobby
 
-import chess.variant.Variant
 import chess.IntRating
 import chess.{ Rated, Speed }
 import play.api.libs.json.*
@@ -21,7 +20,6 @@ case class Hook(
     id: String,
     sri: Sri, // owner socket sri
     sid: Option[SessionId], // owner cookie (used to prevent multiple hooks)
-    variant: Variant.Id, // always standard chess, carried unused until unit 3.17
     go: GoSetup, // board size, ruleset and komi (unit 3.15)
     clock: ClockSettings, // Fischer or byo-yomi (unit 4.9)
     rated: Rated,
@@ -32,14 +30,11 @@ case class Hook(
     boardApi: Boolean
 ):
 
-  val realVariant = Variant.orDefault(variant)
-
   val isAuth = user.nonEmpty
 
   def compatibleWith(h: Hook) =
     isAuth == h.isAuth &&
       rated == h.rated &&
-      variant == h.variant &&
       go == h.go &&
       clock == h.clock &&
       color.compatibleWith(h.color) &&
@@ -85,7 +80,6 @@ case class Hook(
     .add("u" -> user.map(_.username))
     .add("rating" -> rating)
     .add("goRank" -> perf.map(p => lila.rating.GoRating.label(p.rating, p.provisional))) // LiGo (unit 5.5)
-    .add("variant" -> realVariant.exotic.option(realVariant.key))
     .add("go" -> GoSetups.json(go).some)
     .add("ra" -> rated.yes.option(1))
     .add("byo" -> clock.byoyomi.map: c =>
@@ -95,7 +89,7 @@ case class Hook(
    * (ADR 0022 §6); the pool's board size and clock are checked against each pool below. Pools have
    * Fischer clocks until unit 6.4's second part brings byo-yomi ones. */
   def seemsCompatibleWithPools =
-    rated.yes && realVariant.standard && color == TriColor.Random &&
+    rated.yes && color == TriColor.Random &&
       go.handicap == 0 && go.position.isEmpty && go.ruleset == ligo.gorules.Ruleset.Japanese &&
       GoSetups.hasStandardKomi(go)
 
@@ -113,7 +107,6 @@ object Hook:
 
   def make(
       sri: Sri,
-      variant: chess.variant.Variant,
       go: GoSetup,
       clock: ClockSettings,
       rated: Rated,
@@ -127,7 +120,6 @@ object Hook:
     new Hook(
       id = ThreadLocalRandom.nextString(idSize),
       sri = sri,
-      variant = variant.id,
       go = go,
       clock = clock,
       rated = rated,

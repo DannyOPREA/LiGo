@@ -1,10 +1,9 @@
 package lila.web
 
-import play.api.libs.json.{ JsArray, JsObject, Json }
+import play.api.libs.json.{ JsObject, Json }
 import play.api.mvc.RequestHeader
 
 import lila.common.HTTPRequest
-import lila.common.Json.given
 import lila.core.config.NetConfig
 
 object StaticContent:
@@ -82,15 +81,6 @@ Allow: /game/export/gif/thumbnail/
   def swagUrl(countryCode: Option[String]) =
     val tld = swagStoreTlds.getOrElse(~countryCode, "net")
     s"https://lichess.myspreadshop.$tld/"
-
-  val variantsJson =
-    JsArray(chess.variant.Variant.list.all.map { v =>
-      Json.obj(
-        "id" -> v.id,
-        "key" -> v.key,
-        "name" -> v.name
-      )
-    })
 
   def legacyQaQuestion(id: Int) =
     val faq = routes.Main.faq.url
