@@ -13,6 +13,7 @@
 import http from 'k6/http';
 import ws from 'k6/ws';
 import { check } from 'k6';
+import { randomBytes } from 'k6/crypto';
 import { Counter, Rate, Trend } from 'k6/metrics';
 
 const BASE = __ENV.BASE_URL || 'http://localhost:9663';
@@ -39,7 +40,7 @@ export const options = {
 };
 
 // letters a-j only, so a name can't look like a title (GM, FM, ...)
-const letters = n => Array.from({ length: n }, () => String.fromCharCode(97 + Math.floor(Math.random() * 10))).join('');
+const letters = n => Array.from(new Uint8Array(randomBytes(n)), b => String.fromCharCode(97 + (b % 10))).join('');
 
 export function setup() {
   const players = [];
