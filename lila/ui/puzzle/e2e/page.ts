@@ -178,6 +178,7 @@ export interface Opened {
 export async function openPuzzle(page: Page, options: PuzzleOptions): Promise<Opened> {
   const opened: Opened = { completed: [], votes: [], problems: { requests: [], errors: [] } };
   const signedIn = options.rating !== undefined;
+  let rating = options.rating ?? 0;
   page.on('pageerror', e => opened.problems.errors.push(String(e)));
   page.on('console', msg => msg.type() === 'error' && opened.problems.errors.push(msg.text()));
   await page.route('**/*', route => {
@@ -197,7 +198,8 @@ export async function openPuzzle(page: Page, options: PuzzleOptions): Promise<Op
           rated: formField(body, 'rated') === 'true',
         });
         const diff = win ? (options.ratingDiff ?? 8) : -(options.ratingDiff ?? 8);
-        const rating = (options.rating ?? 0) + diff;
+        // the player's rating carries over from one result to the next, as the server's does
+        rating += diff;
         return route.fulfill({
           contentType: 'application/json',
           body: JSON.stringify({

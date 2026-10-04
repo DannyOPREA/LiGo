@@ -73,8 +73,42 @@
   min-height: 44px;
 }
 
-.puzzle__controls .fbt {
-  min-height: 44px;
+// the solution's jump buttons: what the page used of lila's chess analysis controls
+// (lib/css/chess/_control, which goes with chessground in unit 3.19)
+.puzzle__controls {
+  @extend %double-tap;
+  @include backdrop-blur-if-transparent;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+
+  .fbt {
+    @extend %box-radius-bottom;
+    @include prevent-select;
+
+    -webkit-touch-callout: none;
+    text-align: center;
+    min-height: 44px;
+  }
+
+  .jumps {
+    font-size: 1.3rem;
+    display: flex;
+    flex: 1 1 auto;
+    padding: 4px;
+
+    .fbt {
+      border-radius: $box-radius-size;
+      flex: 3;
+    }
+  }
+
+  @media (hover: hover) {
+    .jumps .fbt:hover:not(.disabled, :disabled) {
+      background-color: color-mix(in oklab, $c-primary 30%, $c-bg);
+    }
+  }
 }
 
 .puzzle__feedback.after {

@@ -104,6 +104,8 @@ interface SoundI {
   playAndDelayMateResultIfNecessary(name: string, volume?: number): Promise<void>;
   playOnce(name: string): void;
   countdown(count: number, intervalMs?: number): Promise<void>;
+  byoyomi(periodsLeft: number, secondsLeft: number): void;
+  byoyomiReset(): void;
   getVolume(): number;
   setVolume(v: number): void;
   getVoice(): SpeechSynthesisVoice | undefined;
