@@ -21,8 +21,7 @@ final private[api] class GameApi(
     gameRepo: lila.game.GameRepo,
     gameCache: lila.game.Cached,
     analysisRepo: lila.analyse.AnalysisRepo,
-    crosstableApi: lila.game.CrosstableApi,
-    gameOpening: lila.game.GameOpening
+    crosstableApi: lila.game.CrosstableApi
 )(using Executor):
 
   import GameApi.WithFlags
@@ -146,8 +145,7 @@ final private[api] class GameApi(
         "initialFen" -> initialFen,
         "rated" -> g.rated,
         // a Go game has its setup instead of a chess variant (unit 3.16)
-        "variant" -> (!g.isGo).option(g.variant.key),
-        "go" -> g.go.map(lila.game.JsonView.goSetup),
+        "go" -> lila.game.JsonView.goSetup(g.go),
         "speed" -> g.speed.key,
         "perf" -> g.perfKey,
         "createdAt" -> g.createdAt,
@@ -181,25 +179,15 @@ final private[api] class GameApi(
                 .flatMap(analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy = none))
             )
         }),
-        "moves" -> withFlags.moves.option(g.go match
-          case Some(go) => lila.game.JsonView.goMoves(go).mkString(" ")
-          case None => g.sans.mkString(" ")),
-        "fens" -> ((withFlags.fens && g.finished).so {
-          g.go match
-            // a Go game's positions as live mini boards receive them (ADR 0019 §6), from the start
-            case Some(go) => lila.game.JsonView.goBoards(go).map(boards => JsArray(boards.map(JsString(_))))
-            case None =>
-              chess
-                .Position(g.variant, initialFen)
-                .playPositions(g.sans)
-                .toOption
-                .map(boards => JsArray(boards.map(chess.format.Fen.writeBoard).map(Json.toJson)))
-        }: Option[JsArray]),
+        "moves" -> withFlags.moves.option(lila.game.JsonView.goMoves(g.go).mkString(" ")),
+        // the game's positions as live mini boards receive them (ADR 0019 §6), from the start
+        "fens" -> (withFlags.fens && g.finished)
+          .so(lila.game.JsonView.goBoards(g.go))
+          .map(boards => JsArray(boards.map(JsString(_)))),
         "winner" -> g.winnerColor.map(_.name),
         "url" -> makeUrl(g)
       )
       .add("analysis", analysisOption.ifTrue(withFlags.analysis).map(analysisJson.moves(_)))
-      .add("opening", (withFlags.opening && !g.isGo).so(gameOpening.quickAtPly(g)))
       .noNull
 
 object GameApi:

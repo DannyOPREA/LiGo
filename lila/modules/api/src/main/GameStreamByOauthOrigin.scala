@@ -144,8 +144,7 @@ final class GameStreamByOauthOrigin(
   private def toJson(wif: WithInitialFen): JsObject =
     lila.game.GameStream.toJson(lightUserGet.some)(wif) ++
       wif.game.finished.so:
-        Json.obj("moves" -> wif.game.go.fold(wif.game.sans.mkString(" ")):
-          lila.game.JsonView.goMoves(_).mkString(" "))
+        Json.obj("moves" -> lila.game.JsonView.goMoves(wif.game.go).mkString(" "))
 
   private def pastGamesSource(userIds: Iterable[UserId], since: Option[Instant]): Source[Game, ?] =
     since.fold(Source.empty): since =>
