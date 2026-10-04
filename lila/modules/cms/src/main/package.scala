@@ -13,7 +13,6 @@ val markdownOptions = lila.memo.MarkdownOptions(
   blockQuote = true,
   code = true,
   timestamp = false,
-  maxPgns = lila.memo.Max(50),
   toastUi = true,
   allowedTags = Set("kbd", "video", "center", "details", "summary")
 )

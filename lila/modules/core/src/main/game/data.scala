@@ -1,7 +1,6 @@
 package lila.core
 package game
 
-import _root_.chess.format.pgn.PgnStr
 import _root_.chess.{ ByColor, Centis, Color, Ply }
 
 import lila.core.id.{ SimulId, SwissId, TourId }
@@ -52,7 +51,7 @@ case class GameDrawOffers(white: Set[Ply], black: Set[Ply]):
 case class PgnImport(
     user: Option[UserId],
     date: Option[String],
-    pgn: PgnStr,
+    pgn: String,
     // hashed PGN for DB unicity
     h: Option[Array[Byte]]
 )

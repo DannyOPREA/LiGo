@@ -5,7 +5,7 @@ import chess.rating.RatingProvisional
 import ligo.gorules.{ Action, BoardSize, GameResult, Point, Ruleset, SgfTime, Setup as GoSetup }
 import scalalib.model.Days
 
-import lila.core.game.PgnDump.WithFlags
+import lila.core.game.GameExport.WithFlags
 import lila.core.game.{ Game, Player, Source, newGoGame }
 import lila.core.id.GamePlayerId
 

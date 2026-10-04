@@ -4,12 +4,13 @@ import chess.{ ByColor, Status }
 import ligo.gorules.{ GameResult, GoGame, Sgf, SgfInfo, SgfTime }
 
 import lila.core.LightUser
-import lila.core.game.PgnDump.WithFlags
+import lila.core.game.GameExport.WithFlags
 import lila.core.game.{ Game, GoBridge, Player }
 
 /** A Go game as an SGF record (unit 4.11): the game's own state, written by `libs/go-rules`' `Sgf.write`,
-  * plus the game information lila knows (players, ranks, date, place, time, result). The Go counterpart of
-  * `PgnDump`; it is pure, so the names and the site address are passed in by the caller.
+  * plus the game information lila knows (players, ranks, date, place, time, result). It takes the place of
+  * chess's `PgnDump` (removed in unit 3.17); it is pure, so the names and the site address are passed in by
+  * the caller.
   */
 object SgfDump:
 
@@ -27,7 +28,7 @@ object SgfDump:
   ): Option[String] =
     val go = game.go
     val shown =
-      if flags.moves then PgnDump.applyDelay(go.actions, flags.keepDelayIf(game.playable)).toVector
+      if flags.moves then GameExport.applyDelay(go.actions, flags.keepDelayIf(game.playable)).toVector
       else Vector.empty
     // A prefix of a stored game's accepted actions replays; the record is the game as far as it is shown.
     val record = if shown.size == go.actions.size then Some(go) else GoGame.replay(go.setup, shown).toOption

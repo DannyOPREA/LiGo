@@ -1,6 +1,5 @@
 package lila.round
 
-import chess.Centis
 import play.api.i18n.Lang
 import monocle.syntax.all.*
 
@@ -8,34 +7,13 @@ import lila.common.Bus
 import lila.core.i18n.{ I18nKey as trans, Translator, defaultLang }
 import lila.game.GameExt.*
 import lila.game.{ Event, Progress }
-import lila.pref.{ Pref, PrefApi }
 
 final private[round] class Drawer(
     messenger: Messenger,
-    finisher: Finisher,
-    prefApi: PrefApi,
-    isBotSync: lila.core.LightUser.IsBotSync
+    finisher: Finisher
 )(using Executor, Translator):
 
   private given Lang = defaultLang
-
-  def autoThreefold(game: Game): Fu[Option[Pov]] = game.drawable.so:
-    lila.game.Pov
-      .list(game)
-      .map: pov =>
-        if game.playerHasOfferedDrawRecently(pov.color) then fuccess(pov.some)
-        else
-          pov.player.userId
-            .so { uid => prefApi.get(uid, _.autoThreefold) }
-            .map { autoThreefold =>
-              autoThreefold == Pref.AutoThreefold.ALWAYS || {
-                autoThreefold == Pref.AutoThreefold.TIME &&
-                game.clock.so { _.remainingTime(pov.color) < Centis.ofSeconds(30) }
-              } || pov.player.userId.exists(isBotSync)
-            }
-            .map(_.option(pov))
-      .parallel
-      .dmap(_.flatten.headOption)
 
   def apply(pov: Pov, confirm: Boolean)(using GameProxy): Fu[Events] =
     if confirm then yes(pov) else no(pov)

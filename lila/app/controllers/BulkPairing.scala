@@ -33,7 +33,7 @@ final class BulkPairing(gameC: => Game, apiC: => Api, env: Env) extends LilaCont
           val config = GameApiV2.ByIdsConfig(
             ids = bulk.games.map(_.id),
             format = GameApiV2.Format.byRequest,
-            flags = gameC.requestPgnFlags(extended = false).copy(delayMoves = false),
+            flags = gameC.requestExportFlags(extended = false).copy(delayMoves = false),
             perSecond = MaxPerSecond(50)
           )
           apiC.GlobalConcurrencyLimitPerIP

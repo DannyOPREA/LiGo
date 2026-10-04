@@ -7,13 +7,12 @@ export ui.mini
 
 def sides(
     pov: Pov,
-    initialFen: Option[chess.format.Fen.Full],
     cross: Option[lila.game.Crosstable.WithMatchup],
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context) =
   div(
-    side.meta(pov, initialFen, userTv, bookmarked = bookmarked),
+    side.meta(pov, userTv, bookmarked = bookmarked),
     cross.map: c =>
       div(cls := "crosstable")(ui.crosstable(ctx.userId.foldLeft(c)(_.fromPov(_)), pov.gameId.some))
   )

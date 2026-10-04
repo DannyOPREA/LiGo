@@ -38,8 +38,8 @@ class GameExportFormatTest extends munit.FunSuite:
     given RequestHeader = req
     Format.byRequest
 
-  test("no preference is PGN (the controller turns a Go game's into SGF)"):
-    assertEquals(formatOf(request("/game/export/abcd1234")), Format.PGN)
+  test("no preference is JSON"):
+    assertEquals(formatOf(request("/game/export/abcd1234")), Format.JSON)
 
   test("Accept: application/x-go-sgf asks for SGF"):
     assertEquals(formatOf(request("/game/export/abcd1234", Some("application/x-go-sgf"))), Format.SGF)
@@ -47,6 +47,6 @@ class GameExportFormatTest extends munit.FunSuite:
   test("?format=sgf asks for SGF"):
     assertEquals(formatOf(request("/game/export/abcd1234?format=sgf")), Format.SGF)
 
-  test("JSON and NDJSON still win when asked for"):
+  test("JSON and NDJSON asked for are JSON"):
     assertEquals(formatOf(request("/game/export/abcd1234", Some("application/json"))), Format.JSON)
     assertEquals(formatOf(request("/api/games/user/x", Some("application/x-ndjson"))), Format.JSON)

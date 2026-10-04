@@ -19,6 +19,14 @@
 - Grade autoscore's raw `result`/`needs_sealing` (as `src/grade.ts` does), never goscorer's `owner`, against OGS's `correct_ownership`: under Japanese rules `owner` marks territory only, so a correct answer would fail by construction (2026-09-29, unit 4.6).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 4.11 merge · SGF next to 3.17's JSON-only downloads
+- Did: merged main after 3.17 part 2a (#105), which removed PGN and made game downloads JSON. `GameApiV2.Format`
+  is now JSON or SGF: SGF with `?format=sgf` or `Accept: application/x-go-sgf`, else JSON. The single and bulk
+  exports both write SGF when asked; the record's place is `LiGo <baseUrl>/<game id>` (PgnDump's game URL went).
+- Decision: a download with no preference stays JSON, as 3.17 made it, instead of 4.11's first "SGF by default".
+- Lessons: an export format added in parallel with a format removal is easiest to keep as its own branch in
+  `exportOne` and the bulk flow, so the merge is local.
+
 ### 2026-10-04 · unit 4.11 review · SGF export holds back a live game's last moves
 - Did: an independent review of PR #99 found the SGF export skipped lila's move delay (an untrusted caller
   gets a game in play without its last 3 moves in PGN and JSON) and ignored `moves=false`. `SgfDump` now

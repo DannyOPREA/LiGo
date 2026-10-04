@@ -9,16 +9,14 @@ private val dataUserTv = attr("data-user-tv")
 
 def apply(
     pov: Pov,
-    initialFen: Option[chess.format.Fen.Full],
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =
   // the "live stream" box went with the streamer module (unit 3.7).
-  ctx.noBlind.option(meta(pov, initialFen, userTv, bookmarked))
+  ctx.noBlind.option(meta(pov, userTv, bookmarked))
 
 def meta(
     pov: Pov,
-    initialFen: Option[chess.format.Fen.Full],
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =
@@ -86,19 +84,6 @@ def meta(
             )
         )
       ),
-      game.variant.chess960.option:
-        chess.variant.Chess960
-          .positionNumber(initialFen | chess.format.Fen.initial)
-          .map: number =>
-            st.section(
-              trans.site.chess960StartPosition(
-                a(
-                  targetBlank,
-                  href := "https://chess960.net/pub/chess960-positions.pdf"
-                )(number)
-              )
-            )
-      ,
       userTv.map: u =>
         st.section(cls := "game__tv"):
           h2(cls := "top user-tv text", dataUserTv := u.id, dataIcon := Icon.AnalogTv)(u.titleUsername)

@@ -60,7 +60,7 @@ def player(
     .flag(_.playing, pov.game.playable):
       main(cls := "round")(
         st.aside(cls := "round__side")(
-          side(pov, data, bookmarked = bookmarked),
+          side(pov, bookmarked = bookmarked),
           chatOption.map(_ => views.chat.frag)
         ),
         ui.roundAppPreload(pov),
