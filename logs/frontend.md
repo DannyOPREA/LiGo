@@ -5,6 +5,16 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 4.10 follow-up · The game page drops its last chess styles
+- Did: `ui/round` no longer imports `lib/css/chess/variant-style` (chessground's variant overlays) or
+  `lib/css/component/material` (chess piece pictures); `_material.scss` keeps only the sizing of the
+  prisoners row that reuses the `.material` grid areas. Deleted `_nvui.scss` and `build/round.nvui.scss`
+  (the chess screen-reader page's styles; nothing loads `round.nvui` CSS since unit 3.18).
+- Worked: all 19 game-page browser tests pass, including all 10 screenshot baselines, unchanged.
+- Didn't work / dead ends: none.
+- Lessons: `.material` is still the class the Go prisoners row sits in (`main.ts`), so the file stays
+  with its layout rules; only the piece rules go.
+- Decisions: none.
 ### 2026-10-04 · unit 9.7 part two · byo-yomi countdown sounds (`site.sound.byoyomi`)
 - Did: added `makeByoyomiSounds()` in `ui/lib/src/game/clock/byoyomiSound.ts` (pure: which sound a byo-yomi clock tick plays) and `site.sound.byoyomi(periodsLeft, secondsLeft)` / `byoyomiReset()` over it. LowTime when byo-yomi starts or a period is used up, CountDown10 to CountDown1 over the last 10 s of each period, nothing when a new turn refills the period, per ADR 0026 section 2. The game page's call belongs to unit 4.10, which owns the period display; it has the API.
 - Worked: 5 unit tests; ui tests 260+ pass. Every kept sound set already has CountDown0-10 and LowTime, so no new files.
