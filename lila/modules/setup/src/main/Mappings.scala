@@ -33,6 +33,11 @@ private object Mappings:
   val goSize = optional(number.verifying("Board size must be 9, 13 or 19", GoSetups.sizes.contains))
   val goRuleset = optional(text.verifying("Ruleset must be japanese or chinese", GoSetups.rulesets.contains))
   val goKomi = optional(of[Double])
+  // Handicap stones for a challenge (unit 4.9): 0 even, 1 no stone with Black first, or 2 to 9 (R-HCP-1)
+  val goHandicap = optional(number(min = 0, max = 9))
+  // Byo-yomi periods and their length in seconds (unit 4.9); a form without them gets 5 × 30 s
+  val periods = default(typeIn(ByoyomiPeriods.periodChoices.toSet), ByoyomiPeriods.default.periods)
+  val periodTime = default(typeIn(ByoyomiPeriods.secondChoices.toSet), ByoyomiPeriods.default.seconds)
   val fenField = optional:
     import lila.common.Form.fen.{ mapping, truncateMoveNumber }
     mapping.transform[Fen.Full](truncateMoveNumber, identity)

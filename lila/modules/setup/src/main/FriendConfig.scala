@@ -17,7 +17,8 @@ case class FriendConfig(
     rated: Rated,
     color: TriColor,
     fen: Option[Fen.Full] = None,
-    go: GoOptions = GoOptions.default
+    go: GoOptions = GoOptions.default,
+    byoyomi: ByoyomiPeriods = ByoyomiPeriods.default
 ) extends HumanConfig
     with Positional
     with WithColor:
@@ -34,7 +35,10 @@ case class FriendConfig(
       fen,
       go.size,
       go.ruleset,
-      go.komi
+      go.komi,
+      byoyomi.periods,
+      byoyomi.seconds,
+      go.handicap
     ).some
 
   def isPersistent = timeMode == TimeMode.Unlimited || timeMode == TimeMode.Correspondence
@@ -52,7 +56,10 @@ object FriendConfig extends BaseConfig:
       fen: Option[Fen.Full],
       size: Option[Int] = None,
       ruleset: Option[String] = None,
-      komi: Option[Double] = None
+      komi: Option[Double] = None,
+      periods: Int = ByoyomiPeriods.default.periods,
+      periodTime: Int = ByoyomiPeriods.default.seconds,
+      handicap: Option[Int] = None
   ) =
     new FriendConfig(
       variant = chess.variant.Variant.orDefault(v),
@@ -63,7 +70,8 @@ object FriendConfig extends BaseConfig:
       rated = m.fold(Rated.default)(Rated.orDefault),
       color = TriColor(c).err("Invalid color " + c),
       fen = fen,
-      go = GoOptions(size, ruleset, komi)
+      go = GoOptions(size, ruleset, komi, handicap),
+      byoyomi = ByoyomiPeriods(periods, periodTime)
     )
 
   val default = FriendConfig(
@@ -90,7 +98,8 @@ object FriendConfig extends BaseConfig:
         days = r.get("d"),
         rated = Rated.orDefault(r.int("m")),
         color = TriColor.White,
-        fen = r.getO[Fen.Full]("f").filter(_.value.nonEmpty)
+        fen = r.getO[Fen.Full]("f").filter(_.value.nonEmpty),
+        byoyomi = ByoyomiPeriods.read(r.intO("bp"), r.intO("bs"))
       )
 
     def writes(w: BSON.Writer, o: FriendConfig) =
@@ -101,5 +110,7 @@ object FriendConfig extends BaseConfig:
         "i" -> o.increment,
         "d" -> o.days,
         "m" -> o.rated.id,
-        "f" -> o.fen
+        "f" -> o.fen,
+        "bp" -> o.byoyomi.periods,
+        "bs" -> o.byoyomi.seconds
       )

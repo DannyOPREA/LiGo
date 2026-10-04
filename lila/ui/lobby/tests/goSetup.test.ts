@@ -16,7 +16,14 @@ import { goOptions } from '../src/view/setup/components/goOptions';
 
 // The shared test setup's i18n strings are functions; the site's are strings, which snabbdom renders as
 // text, so this file uses plain strings.
-(globalThis as any).i18n = { site: new Proxy({}, { get: (_, key: string) => `site.${key}` }) };
+(globalThis as any).i18n = {
+  site: new Proxy(
+    {},
+    {
+      get: (_, key: string) => (key === 'goNbHandicapStones' ? (n: number) => `${n} stones` : `site.${key}`),
+    },
+  ),
+};
 
 const patch = snabInit([classModule, attributesModule, propsModule, eventListenersModule]);
 
@@ -201,6 +208,110 @@ describe('the create-game form', () => {
     const bad = lobby().setup;
     bad.openModal('friend', { goSize: 9, goKomi: 100 });
     assert.deepEqual([bad.goSize(), bad.goKomi()], [9, 6.5]);
+  });
+
+  test('byo-yomi is sent with its periods, and the hook form has no handicap', () => {
+    const { setup } = lobby();
+    setup.openModal('hook');
+    setup.timeControl.mode('byoyomi');
+    const form = formOf(setup);
+    assert.deepEqual(
+      [form.timeMode, form.time, form.periods, form.periodTime, form.handicap],
+      ['3', '5', '5', '30', undefined],
+    );
+    assert.ok(setup.valid());
+    setup.timeControl.mode('realTime');
+    assert.equal(formOf(setup).timeMode, '1');
+    assert.equal(formOf(setup).periods, undefined);
+    setup.timeControl.mode('correspondence');
+    assert.equal(formOf(setup).timeMode, '2');
+    setup.timeControl.mode('unlimited');
+    assert.equal(formOf(setup).timeMode, '0');
+  });
+
+  test('byo-yomi with no main time is valid, and a changed period is remembered', () => {
+    const { setup } = lobby();
+    setup.openModal('hook');
+    setup.timeControl.mode('byoyomi');
+    setup.timeControl.timeV(0);
+    setup.timeControl.periodsV(10);
+    setup.timeControl.periodTimeV(11);
+    assert.ok(setup.valid());
+    assert.deepEqual(
+      [formOf(setup).time, formOf(setup).periods, formOf(setup).periodTime],
+      ['0', '10', '300'],
+    );
+    const again = lobby().setup;
+    again.openModal('hook');
+    assert.deepEqual(
+      [again.timeControl.mode(), again.timeControl.periods(), again.timeControl.periodTime()],
+      ['byoyomi', 10, 300],
+    );
+  });
+
+  test('a store from before byo-yomi opens with the default periods', () => {
+    localStorage.setItem(
+      storeKey('friend'),
+      JSON.stringify({ timeMode: 'realTime', time: 5, increment: 3, days: 2 }),
+    );
+    const { setup } = lobby();
+    setup.openModal('friend');
+    assert.deepEqual(
+      [setup.timeControl.periods(), setup.timeControl.periodTime(), setup.handicap()],
+      [5, 30, 0],
+    );
+    assert.equal(formOf(setup).handicap, '0');
+  });
+
+  test('handicap is a friend-window choice: stones bring komi 0.5, even brings the standard komi back', () => {
+    const { setup } = lobby();
+    setup.openModal('friend');
+    setup.setHandicap(4);
+    assert.deepEqual([formOf(setup).handicap, setup.goKomi()], ['4', 0.5]);
+    setup.setGoRuleset('chinese');
+    assert.equal(setup.goKomi(), 0.5);
+    setup.setHandicap(0);
+    assert.equal(setup.goKomi(), 7.5);
+    setup.setHandicap(12);
+    assert.equal(setup.handicap(), 0);
+    const hook = lobby().setup;
+    hook.openModal('hook', { handicap: 3 });
+    assert.equal(hook.handicap(), 0);
+    assert.equal(formOf(hook).handicap, undefined);
+  });
+
+  test('a rematch link opens the form with its byo-yomi clock and handicap', () => {
+    const { setup } = lobby();
+    setup.openModal('friend', {
+      timeMode: 'byoyomi',
+      time: 10,
+      periods: 3,
+      periodTime: 45,
+      handicap: 2,
+      goKomi: 0.5,
+    });
+    assert.deepEqual(
+      [
+        setup.timeControl.mode(),
+        setup.timeControl.time(),
+        setup.timeControl.periods(),
+        setup.timeControl.periodTime(),
+      ],
+      ['byoyomi', 10, 3, 45],
+    );
+    assert.deepEqual([setup.handicap(), setup.goKomi()], [2, 0.5]);
+    assert.ok(setup.valid());
+    setup.setHandicap(3);
+    assert.equal(setup.valid(), false);
+  });
+
+  test('the handicap picker is in the friend window only', () => {
+    const { setup } = lobby();
+    setup.openModal('friend');
+    const picker = mount(goOptions(setup)).querySelector('#sf_handicap');
+    assert.equal(picker?.querySelectorAll('option').length, 10);
+    setup.openModal('hook');
+    assert.equal(mount(goOptions(setup)).querySelector('#sf_handicap'), null);
   });
 
   test('the rating shown and the rating range are the Go rating', () => {

@@ -6,4 +6,4 @@ private[setup] trait HumanConfig extends Config:
 
   val rated: Rated
 
-  def isRatedUnlimited = rated.yes && !hasClock && makeDaysPerTurn.isEmpty
+  def isRatedUnlimited = rated.yes && makeClockSettings.isEmpty && makeDaysPerTurn.isEmpty
