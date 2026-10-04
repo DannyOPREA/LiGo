@@ -22,7 +22,6 @@ final class Env(
     playBanApi: lila.playban.PlaybanApi,
     userEnv: lila.user.Env,
     relationEnv: lila.relation.Env,
-    analyseEnv: lila.analyse.Env,
     lobbyEnv: lila.lobby.Env,
     challengeEnv: lila.challenge.Env,
     socketEnv: lila.socket.Env,

@@ -142,9 +142,9 @@ final class UserGamesDownload(helpers: Helpers):
     ),
     td(
       div(id := "dl-includes", cls := "toggle-columns")(
-        // LiGo: PGN tags, openings and textual annotations went with PGN export (unit 3.17)
-        includeToggle("clocks", false, trans.site.moveTimes()),
-        includeToggle("evals", false, trans.search.evaluation())
+        // LiGo: PGN tags, openings and textual annotations went with PGN export, and engine
+        // evaluations with chess analysis (unit 3.17)
+        includeToggle("clocks", false, trans.site.moveTimes())
       )
     )
   )

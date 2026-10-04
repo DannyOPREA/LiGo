@@ -46,7 +46,9 @@ if ((ALL)) || [[ -n "$ui" ]] || has '^lila/(package\.json|pnpm-lock\.yaml|ui/.*/
   if [[ -n "$ui" ]] && ! ((ALL)); then
     add "ui format (oxfmt)" "cd lila && node_modules/.bin/oxfmt --check $(tr '\n' ' ' <<<"$ui")"
     ts=$(grep -E '\.(ts|mts|js|mjs)$' <<<"$ui" | tr '\n' ' ')
-    [[ -n "$ts" ]] && add "ui lint (oxlint)" "cd lila && node_modules/.bin/oxlint $ts"
+    # --type-aware as CI's `pnpm lint` (lila/package.json lint:code): plain oxlint skips the typescript/* rules
+    # that need types, e.g. no-unnecessary-type-assertion (PRs #109, #115 passed verify, then failed CI)
+    [[ -n "$ts" ]] && add "ui lint (oxlint --type-aware)" "cd lila && node_modules/.bin/oxlint --type-aware $ts"
     css=$(grep -E '\.(scss|css)$' <<<"$ui" | tr '\n' ' ')
     [[ -n "$css" ]] && add "ui lint (stylelint)" "cd lila && node_modules/.bin/stylelint $css"
   else
