@@ -9,32 +9,28 @@ import lila.mon.extensions.*
 final class PuzzleAnon(
     colls: PuzzleColls,
     cacheApi: CacheApi,
-    pathApi: PuzzlePathApi,
-    countApi: PuzzleCountApi
+    pathApi: PuzzlePathApi
 )(using Executor):
 
   import BsonHandlers.given
 
-  def getOneFor(angle: PuzzleAngle, diff: PuzzleDifficulty, color: Option[Color]): Fu[Option[Puzzle]] =
+  def getOneFor(angle: PuzzleAngle, diff: PuzzleDifficulty): Fu[Option[Puzzle]] =
     pool
       .get(angle -> diff)
-      .map(color.fold[Vector[Puzzle] => Option[Puzzle]](ThreadLocalRandom.oneOf)(selectWithColor))
+      .map(ThreadLocalRandom.oneOf(_))
       .mon(lila.mon.puzzle.selector.anon.time)
       .addEffect:
         _.foreach: puzzle =>
           lila.mon.puzzle.selector.anon.vote.record(100 + math.round(puzzle.vote * 100))
 
-  private def selectWithColor(color: Color)(puzzles: Vector[Puzzle]): Option[Puzzle] =
-    def nextTry(attempts: Int): Option[Puzzle] =
-      if attempts < 10 then
-        ThreadLocalRandom.oneOf(puzzles).filter(_.color == color).orElse(nextTry(attempts + 1))
-      else ThreadLocalRandom.oneOf(puzzles.filter(_.color == color))
-    nextTry(1)
-
-  def getBatchFor(angle: PuzzleAngle, diff: PuzzleDifficulty, nb: Int): Fu[Vector[Puzzle]] =
-    pool.get(angle -> diff).map(_.take(nb)).mon(lila.mon.puzzle.selector.anon.batch(nb))
-
   private val poolSize = 150
+
+  // LiGo: lichess scales the tier, rating range and number of paths with how many puzzles an angle has
+  // (thousands). LiGo's set is a few hundred: every angle uses the `all` tier, a window of 400 rating
+  // points around the difficulty's rating, and the whole rating range if that window has no path.
+  private val pathSampleSize = 15
+  private val centre = 1500
+  private val window = 400
 
   private val pool =
     cacheApi[(PuzzleAngle, PuzzleDifficulty), Vector[Puzzle]](
@@ -42,42 +38,32 @@ final class PuzzleAnon(
       name = "puzzle.byTheme.anon"
     ):
       _.expireAfterWrite(1.minute).buildAsyncFuture: (angle, difficulty) =>
-        countApi.byAngle(angle).flatMap { count =>
-          val tier =
-            if count > 5000 then PuzzleTier.top
-            else if count > 2000 then PuzzleTier.good
-            else PuzzleTier.all
-          def rd(rating: Int) = rating + difficulty.ratingDelta
-          val ratingRange: Range =
-            if count > 9000 then rd(1300) to rd(1600)
-            else if count > 5000 then rd(1100) to rd(1800)
-            else 0 to 9999
-          val pathSampleSize =
-            if count > 9000 then 3
-            else if count > 5000 then 5
-            else if count > 2000 then 8
-            else 15
-          colls.path:
-            _.aggregateList(poolSize): framework =>
-              import framework.*
-              Match(pathApi.select(angle, tier, ratingRange)) -> List(
-                Sample(pathSampleSize),
-                Project(bdoc("puzzleId" -> "$ids", "_id" -> false)),
-                Unwind("puzzleId"),
-                Sample(poolSize),
-                PipelineOperator:
-                  bdoc(
-                    "$lookup" -> bdoc(
-                      "from" -> colls.puzzle.name.value,
-                      "localField" -> "puzzleId",
-                      "foreignField" -> "_id",
-                      "as" -> "puzzle"
-                    )
-                  )
-                ,
-                PipelineOperator:
-                  bdoc("$replaceWith" -> bdoc("$arrayElemAt" -> barr("$puzzle", 0)))
+        val mid = centre + difficulty.ratingDelta
+        fromPaths(angle, (mid - window) to (mid + window)).flatMap: puzzles =>
+          if puzzles.nonEmpty then fuccess(puzzles)
+          else fromPaths(angle, 0 to 9999)
+
+  private def fromPaths(angle: PuzzleAngle, ratingRange: Range): Fu[Vector[Puzzle]] =
+    colls.path:
+      _.aggregateList(poolSize): framework =>
+        import framework.*
+        Match(pathApi.select(angle, PuzzleTier.all, ratingRange)) -> List(
+          Sample(pathSampleSize),
+          Project(bdoc("puzzleId" -> "$ids", "_id" -> false)),
+          Unwind("puzzleId"),
+          Sample(poolSize),
+          PipelineOperator:
+            bdoc(
+              "$lookup" -> bdoc(
+                "from" -> colls.puzzle.name.value,
+                "localField" -> "puzzleId",
+                "foreignField" -> "_id",
+                "as" -> "puzzle"
               )
-            .map:
-              _.view.flatMap(puzzleReader.readOpt).toVector
-        }
+            )
+          ,
+          PipelineOperator:
+            bdoc("$replaceWith" -> bdoc("$arrayElemAt" -> barr("$puzzle", 0)))
+        )
+      .map:
+        _.view.flatMap(puzzleReader.readOpt).toVector

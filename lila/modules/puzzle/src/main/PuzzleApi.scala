@@ -1,18 +1,15 @@
 package lila.puzzle
 
 import scalalib.actor.AsyncActorSequencers
-import scalalib.paginator.Paginator
 
 import lila.core.i18n.I18nKey
 import lila.db.dsl.{ *, given }
-import lila.db.paginator.Adapter
 import lila.mon.extensions.*
 
 final class PuzzleApi(
     colls: PuzzleColls,
     trustApi: PuzzleTrustApi,
-    countApi: PuzzleCountApi,
-    openingApi: PuzzleOpeningApi
+    countApi: PuzzleCountApi
 )(using Executor, Scheduler):
 
   import BsonHandlers.given
@@ -24,19 +21,6 @@ final class PuzzleApi(
 
     def findMany(ids: List[PuzzleId]): Fu[List[Puzzle]] =
       colls.puzzle(_.byOrderedIds[Puzzle, PuzzleId](ids)(_.id))
-
-    def of(user: User, page: Int): Fu[Paginator[Puzzle]] =
-      colls.puzzle: coll =>
-        Paginator(
-          adapter = new Adapter[Puzzle](
-            collection = coll,
-            selector = bdoc("users" -> user.id),
-            projection = none,
-            sort = sort.desc("glicko.r")
-          ),
-          page,
-          MaxPerPage(30)
-        )
 
     def setIssue(id: PuzzleId, issue: String): Fu[Boolean] =
       colls.puzzle(_.updateField(bid(id), Puzzle.BSONFields.issue, issue).map(_.n > 0))
@@ -120,10 +104,8 @@ final class PuzzleApi(
               )
               .void
 
-  def angles: Fu[PuzzleAngle.All] = for
-    themes <- theme.categorizedWithCount
-    openings <- openingApi.collection
-  yield PuzzleAngle.All(themes, openings)
+  def angles: Fu[PuzzleAngle.All] =
+    theme.categorizedWithCount.map(PuzzleAngle.All(_))
 
   object theme:
 
@@ -160,8 +142,6 @@ final class PuzzleApi(
                 if vote.isEmpty then fuccess(updateRoundThemes(id, newThemes, none).some)
                 else trustApi.theme(me).map2(t => updateRoundThemes(id, newThemes, t.some))
               _ <- update.so(up => colls.round(_.update.one(bid(puzRound.id), up)).void)
-              _ <- update.isDefined.so:
-                colls.puzzle(_.updateField(bid(puzRound.id.puzzleId), Puzzle.BSONFields.dirty, true)).void
             yield lila.mon.puzzle.vote.theme(theme.key.value, vote, puzRound.win.yes).increment()
 
     private def lichessVote(
@@ -175,7 +155,6 @@ final class PuzzleApi(
         prev <- prev.raiseIfNone(PuzzleTheme.VoteError.Fail(s"Puzzle $puzzleId not yet tagged by lichess"))
         newThemes <- PuzzleRound.themeVote(prev)(theme, vote).raiseIfNone(PuzzleTheme.VoteError.Unchanged)
         _ <- colls.round(_.update.one(bid(roundId), updateRoundThemes(puzzleId, newThemes, none)))
-        _ <- colls.puzzle(_.updateField(bid(puzzleId), Puzzle.BSONFields.dirty, true))
       yield ()
 
   object casual:

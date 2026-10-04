@@ -1,14 +1,12 @@
 package lila.puzzle
 
 import chess.{ Rated, ByColor }
-import chess.rating.IntRatingDiff
 import chess.rating.glicko.{ Glicko, GlickoCalculator }
 import scalalib.actor.AsyncActorSequencers
 
 import lila.common.Bus
 import lila.core.perf.Perf
 import lila.db.dsl.{ *, given }
-import lila.puzzle.PuzzleForm.batch.Solution
 import lila.rating.GlickoExt.{ cap, sanityCheck }
 import lila.rating.PerfExt.*
 import lila.rating.PerfType
@@ -29,21 +27,6 @@ final private[puzzle] class PuzzleFinisher(
   )
 
   private val calculator = GlickoCalculator()
-
-  def batch(
-      angle: PuzzleAngle,
-      solutions: List[Solution]
-  )(using me: Me, perf: Perf): Fu[List[(PuzzleRound, IntRatingDiff)]] =
-    solutions
-      .foldM((perf, List.empty[(PuzzleRound, IntRatingDiff)])):
-        case ((perf, rounds), sol) =>
-          apply(sol.id, angle, sol.win, sol.rated)(using me, perf).map:
-            case Some(round, newPerf) =>
-              val rDiff = IntRatingDiff(newPerf.intRating.value - perf.intRating.value)
-              (newPerf, (round, rDiff) :: rounds)
-            case None => (perf, rounds)
-      .map: (_, rounds) =>
-        rounds.reverse
 
   def apply(
       id: PuzzleId,
@@ -102,40 +85,39 @@ final private[puzzle] class PuzzleFinisher(
                           ,
                           _.toPair
                         )
-                    userApi
-                      .dubiousPuzzle(me.userId, perf)
-                      .map: dubiousPlayer =>
-                        val updatePuzzleGlicko =
-                          !dubiousPlayer && canUpdatePuzzleRating(me.userId, false)(true)
-                        val newPuzzleGlicko = updatePuzzleGlicko.so:
-                          ponder
-                            .puzzle(
-                              angle,
-                              win,
-                              puzzle.glicko -> puzzleGlicko
-                                .copy(
-                                  rating = puzzleGlicko.rating
-                                    .atMost(puzzle.glicko.rating + lila.rating.Glicko.maxRatingDelta)
-                                    .atLeast(puzzle.glicko.rating - lila.rating.Glicko.maxRatingDelta)
-                                )
-                                .cap,
-                              player = perf.glicko
+                    // LiGo (ADR 0025 section 4): lichess skips the puzzle's rating update when the player's
+                    // puzzle rating is out of line with their chess rating (`dubiousPuzzle`). There is no
+                    // second rating to compare with here, so only the rate limit applies.
+                    val updatePuzzleGlicko = canUpdatePuzzleRating(me.userId, false)(true)
+                    val newPuzzleGlicko = updatePuzzleGlicko.so:
+                      ponder
+                        .puzzle(
+                          angle,
+                          win,
+                          puzzle.glicko -> puzzleGlicko
+                            .copy(
+                              rating = puzzleGlicko.rating
+                                .atMost(puzzle.glicko.rating + lila.rating.Glicko.maxRatingDelta)
+                                .atLeast(puzzle.glicko.rating - lila.rating.Glicko.maxRatingDelta)
                             )
-                            .some
-                            .filter(puzzle.glicko !=)
-                            .filter(_.sanityCheck)
-                        val round =
-                          PuzzleRound(
-                            id = PuzzleRound.Id(me.userId, puzzle.id),
-                            win = win,
-                            fixedAt = none,
-                            date = now
-                          )
-                        val userPerf = perf
-                          .addOrReset(lila.mon.puzzle.crazyGlicko, s"puzzle ${puzzle.id}")(userGlicko, now)
-                          .pipe: p =>
-                            p.copy(glicko = ponder.player(angle, win, perf.glicko -> p.glicko, puzzle.glicko))
-                        (round, newPuzzleGlicko, userPerf)
+                            .cap,
+                          player = perf.glicko
+                        )
+                        .some
+                        .filter(puzzle.glicko !=)
+                        .filter(_.sanityCheck)
+                    val round =
+                      PuzzleRound(
+                        id = PuzzleRound.Id(me.userId, puzzle.id),
+                        win = win,
+                        fixedAt = none,
+                        date = now
+                      )
+                    val userPerf = perf
+                      .addOrReset(lila.mon.puzzle.crazyGlicko, s"puzzle ${puzzle.id}")(userGlicko, now)
+                      .pipe: p =>
+                        p.copy(glicko = ponder.player(angle, win, perf.glicko -> p.glicko, puzzle.glicko))
+                    fuccess((round, newPuzzleGlicko, userPerf))
                 .flatMap: (round, newPuzzleGlicko, userPerf) =>
                   import lila.rating.Glicko.glickoHandler
                   for
@@ -169,32 +151,22 @@ final private[puzzle] class PuzzleFinisher(
 
   private object ponder:
 
-    // themes that don't hint at the solution
+    // LiGo: lichess's lists named chess themes. Where the position is (corner, edge, centre) and what
+    // the goal is (life and death, living, killing) don't hint at the solution; the others do.
     private val nonHintingThemes: Set[PuzzleTheme.Key] = Set(
-      PuzzleTheme.opening,
-      PuzzleTheme.middlegame,
-      PuzzleTheme.endgame,
-      PuzzleTheme.rookEndgame,
-      PuzzleTheme.bishopEndgame,
-      PuzzleTheme.pawnEndgame,
-      PuzzleTheme.knightEndgame,
-      PuzzleTheme.queenEndgame,
-      PuzzleTheme.queenRookEndgame,
-      PuzzleTheme.master,
-      PuzzleTheme.masterVsMaster,
-      PuzzleTheme.superGM
+      PuzzleTheme.lifeAndDeath,
+      PuzzleTheme.living,
+      PuzzleTheme.killing,
+      PuzzleTheme.corner,
+      PuzzleTheme.edge,
+      PuzzleTheme.centre
     ).map(_.key)
 
     private def isHinting(theme: PuzzleTheme.Key) = !nonHintingThemes(theme)
 
-    // themes that make the solution very obvious
-    private val isObvious: Set[PuzzleTheme.Key] = Set(
-      PuzzleTheme.enPassant,
-      PuzzleTheme.attackingF2F7,
-      PuzzleTheme.doubleCheck,
-      PuzzleTheme.mateIn1,
-      PuzzleTheme.castling
-    ).map(_.key) ++ PuzzleTheme.allMates
+    // themes that make the solution very obvious: lichess's were one-move mates and the like. A Go
+    // theme names a technique, not the move, so none does.
+    private val isObvious: Set[PuzzleTheme.Key] = Set.empty
 
     private def weightOf(angle: PuzzleAngle, win: PuzzleWin) =
       angle.asTheme.fold(1f): theme =>

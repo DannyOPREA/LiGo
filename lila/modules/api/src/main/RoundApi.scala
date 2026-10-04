@@ -11,7 +11,6 @@ import lila.common.HTTPRequest
 import lila.core.perm.Granter
 import lila.core.user.GameUsers
 import lila.pref.Pref
-import lila.puzzle.PuzzleOpening
 import lila.round.{ Forecast, JsonView }
 import lila.tree.{ ExportOptions, Tree }
 import lila.mon.extensions.*
@@ -22,7 +21,6 @@ final private[api] class RoundApi(
     forecastApi: lila.round.ForecastApi,
     bookmarkApi: lila.bookmark.BookmarkApi,
     gameRepo: lila.game.GameRepo,
-    puzzleOpeningApi: lila.puzzle.PuzzleOpeningApi,
     userApi: lila.user.UserApi,
     prefApi: lila.pref.PrefApi,
     userLag: lila.socket.UserLagCache,
@@ -108,16 +106,14 @@ final private[api] class RoundApi(
       ),
       ctx.me.ifTrue(ctx.isMobileApi).so(noteApi.get(pov.gameId, _)),
       owner.so(forecastApi.loadForDisplay(pov)),
-      withFlags.puzzles.so(opening).so(puzzleOpeningApi.getClosestTo(_, true)),
       bookmarkApi.exists(pov.game, ctx.me)
-    ).mapN: (json, note, fco, puzzleOpening, bookmarked) =>
+    ).mapN: (json, note, fco, bookmarked) =>
       (
         withNote(note)
           .compose(withBookmark(bookmarked))
           .compose(withTree(pov, analysis, initialFen, withFlags))
           .compose(withAnalysis(pov.game, analysis, initialFen))
           .compose(withForecast(pov, fco))
-          .compose(withPuzzleOpening(puzzleOpening))
       )(json)
     .mon(lila.mon.round.api.watcher)
 
@@ -187,20 +183,6 @@ final private[api] class RoundApi(
     if pov.game.speed <= chess.Speed.Bullet then
       json.add("opponentSignal", pov.opponent.userId.flatMap(userLag.getLagRating))
     else json
-
-  private def withPuzzleOpening(
-      opening: Option[Either[PuzzleOpening.FamilyWithCount, PuzzleOpening.WithCount]]
-  )(json: JsObject) =
-    json.add(
-      "puzzle" -> opening
-        .map {
-          case Left(p) => (p.family.key.toString, p.family.name.value, p.count)
-          case Right(p) => (p.opening.key.toString, p.opening.name.value, p.count)
-        }
-        .map { case (key, name, count) =>
-          Json.obj("key" -> key, "name" -> name, "count" -> count)
-        }
-    )
 
   private def withForecast(pov: Pov, fco: Option[Forecast])(json: JsObject) =
     if pov.game.forecastable then
