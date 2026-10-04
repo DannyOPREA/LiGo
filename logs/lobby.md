@@ -10,6 +10,30 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.10 · The Phase 6 demo
+- What: `lila/tests/e2e-demo/phase6-demo.spec.ts`, run by the `e2e` workflow at desktop and phone
+  sizes. A guest clicks the 9×9 3+2 tile another guest waits on, and the game's first stone is timed
+  from the landing page (under PLAN §4's 10 s; the time is printed and kept as a test annotation). A
+  new 5k and 1d click the same rated 19×19 tile with Handicap OK and get a rated game with five
+  stones; the 1d creates a rated 9×9 game from the Custom tile's window and the 5k joins it from Open
+  challenges; the 5k challenges the 1d from the 1d's profile, where the window has the five suggested
+  stones filled in, and the 1d accepts. Shared helpers in `tests/e2e-demo/players.ts`. Your
+  checklist: docs/demos/phase-6.md, ending with the player test (6.3's kit).
+- Tests: typechecked (`tsc -p tests/e2e-demo`), oxlint and oxfmt clean here; the cloud session has no
+  Docker for Mongo and Redis, so the real run is the PR's `demo` check (the PR carries the `e2e` label).
+- Lessons: one account pair per screen size, not per test: lila allows 10 sign-ups per 10 minutes
+  from one address, and the Phase 5 demo signs up four. A timed click needs its own rate-limit retry
+  that restarts the clock, or a refused attempt's wait gets counted.
+- Review (first CI run red): the tile selector also matched the waiting tile's Cancel button (same
+  `data-id`), and a rated custom game with exactly a pool's settings joins that pool
+  (`hookToPoolMember`) instead of waiting in Open challenges; the demo now picks Chinese rules. The
+  timed retry now covers only the click, and the checklist's labels match the page.
+- Lessons: target the element type, not just a data attribute a child may share. A full e2e run now
+  makes all 10 of lila's sign-ups per 10 minutes from one address (Phases 5, 6 and 8).
+- After merging main with the Phase 7 demo: CI failed with `signup: 429` in the Phase 8 demo, because
+  the run now made 13 sign-ups. The 5k and 1d are now signed up once per server and reused by the other
+  screen size (remembered in a temp file, as Phase 7 does), so a run makes 9.
+
 ### 2026-10-04 · unit 6.7 (part two) · What suits you, the even/handicap chips, phone reasons
 - Did: the Open challenges list now marks and lists first the games that suit you, by the Quick
   tab's chip row (ADR 0022 §5): rated or casual as you play, and even or (with Handicap OK) handicap;

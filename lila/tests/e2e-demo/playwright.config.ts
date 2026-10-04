@@ -1,6 +1,7 @@
 // The Phase 3 demo (unit 3.20): two real browsers play a casual 9x9 Fischer game on the running
 // stack (lila + lila-ws + Mongo + Redis), desktop and phone. The Phase 5 demo (unit 5.8,
 // phase5-demo.spec.ts): rated handicap games between new ranked players, and a guest's casual game.
+// The Phase 6 demo (unit 6.10, phase6-demo.spec.ts): the lobby's one click, pool, table and profile.
 // Unlike the ui/*/e2e suites it needs the full server: `dev/ligo up` first. BASE_URL: native mode
 // is :9663 (default), docker mode :8080.
 // Run: `pnpm exec playwright test -c tests/e2e-demo/playwright.config.ts` from lila/.
