@@ -5,7 +5,7 @@
   @include backdrop-blur-if-transparent;
 
   font-weight: 500;
-  background: $c-primary;
+  background: $c-primary-button;
   text-transform: uppercase;
   padding: 0.8em 1em;
   border: none;
@@ -19,10 +19,10 @@
   }
 
   @include with-button-shadow(
-    hsl(from $c-primary h s calc(l + 32)),
-    hsl(from $c-primary h s calc(l - 18)),
-    hsl(from $c-primary h s calc(l + 44)),
-    hsl(from $c-primary h s calc(l - 14))
+    hsl(from $c-primary-button h s calc(l + 32)),
+    hsl(from $c-primary-button h s calc(l - 18)),
+    hsl(from $c-primary-button h s calc(l + 44)),
+    hsl(from $c-primary-button h s calc(l - 14))
   );
 
   &,

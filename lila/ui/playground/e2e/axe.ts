@@ -18,17 +18,7 @@ export async function axeProblems(page: Page, include: string, exclude: string[]
   const axe = new AxeBuilder({ page }).include(include).withTags(WCAG);
   for (const part of exclude) axe.exclude(part);
   const { violations } = await axe.analyze();
-  // lila's own buttons (white on its primary blue #3692e7, 3.3:1) fail colour contrast on every
-  // page; unit 9.7's second part fixes lila's colours site-wide (ADR 0026 §4). Only that pair of
-  // colours is let off.
-  const lilaBlue = (n: { any: { data?: unknown }[] }) =>
-    n.any.some(c => {
-      const d = c.data as { fgColor?: string; bgColor?: string } | undefined;
-      return d?.fgColor === '#ffffff' && d?.bgColor === '#3692e7';
-    });
   return violations
     .filter(v => v.impact === 'serious' || v.impact === 'critical')
-    .map(v => (v.id === 'color-contrast' ? { ...v, nodes: v.nodes.filter(n => !lilaBlue(n)) } : v))
-    .filter(v => v.nodes.length > 0)
     .map(v => `${v.id}: ${v.help} (${v.nodes.map(n => n.target.join(' ') + colours(n)).join(', ')})`);
 }
