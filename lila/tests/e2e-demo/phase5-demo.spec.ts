@@ -107,7 +107,9 @@ async function signUp(page: Page, username: string, rank: string) {
   await page.goto('/signup');
   await page.locator('#form3-username').fill(username);
   await page.locator('#form3-password').fill(randomUUID());
-  await page.locator('#form3-email').fill(`${username}@ligo-demo.org`);
+  // A domain on lila's own allowlist (DisposableEmailDomain.whitelist) skips its MX DNS check, which a
+  // made-up domain fails wherever DNS works (CI). Dev lila never sends mail (mailer.mock).
+  await page.locator('#form3-email').fill(`${username}@gmail.com`);
   await page.locator('#form3-goRank').selectOption(rank);
   // the agreement inputs are hidden behind styled toggles: click each toggle
   for (const box of ['assistance', 'nice', 'account']) {

@@ -13,6 +13,7 @@
 - lila treats a `HeadlessChrome` user agent as a crawler: challenge pages 404 and pages render the crawler view. Browser tests against the real site must send a normal Chrome user agent (2026-10-04, unit 5.8).
 - A rated game between two accounts made today from one address moves no ratings unless it has 10+ moves and either 40+ moves or 90+ seconds (lila's FarmBoostDetection). Demos and manual checks must play long enough (2026-10-04, unit 5.8).
 - lila allows 10 signups per address per 10 minutes and 5 game posts a minute; a whole e2e run nears both (2026-10-04, unit 5.8).
+- lila's signup checks the email domain's MX records over DNS and lets it through when the lookup itself fails, so a made-up domain passes in the cloud sandbox and fails in CI. Test emails use an allowlisted domain (gmail.com; dev lila sends no mail) (2026-10-04, unit 5.8).
 - A declared rank (deviation 250) is still lila's `clueless` (deviation cut-off below 250): test `GoRating.rankKnown`, never `clueless`, for "has a Go rank" (2026-10-04, unit 5.8).
 ## Entries (newest first)
 

@@ -20,7 +20,9 @@ so the site sees two players.
 ## 2. Two new players
 
 - [ ] In the first browser, open http://localhost:8080/signup. Pick a username and password, and
-      choose **5 kyu** as your rank. Tick the three boxes and sign up.
+      choose **5 kyu** as your rank. For the email, use an address at a big provider such as
+      gmail.com (the site checks the domain), a different one for each player; the local site
+      sends no mail. Tick the three boxes and sign up.
 - [ ] In the second browser, sign up the same way with **1 dan**.
 - [ ] Open each player's profile. The 5k shows "5k?" beside the name and under Go; hold the mouse
       over it to see the rating, 1579. The 1d shows "1d?" (1960). The "?" means the rating is still
