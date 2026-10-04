@@ -78,6 +78,19 @@ jobs:
         run: |
           pnpm exec tsc -p tests/e2e-demo/tsconfig.json
           ../dev/ligo e2e demo
+      # The handoff demo video (unit 9.9): one browser, recorded and slowed down, plays a 9x9 game to
+      # the count, solves a puzzle and imports an SGF, desktop and phone. Kept as an artifact, never
+      # committed (ADR 0026 §7).
+      - name: The handoff demo video
+        working-directory: lila
+        run: ../dev/ligo e2e video
+      - name: Upload the demo video
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ligo-demo-video
+          path: lila/tests/e2e-demo/video/
+          if-no-files-found: error
+          retention-days: 30
       - name: Stop the stack
         if: always()
         run: dev/ligo down || true

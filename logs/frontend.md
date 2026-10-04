@@ -4,6 +4,23 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 9.9 part two · The handoff demo video, recorded by Playwright
+- Did: `lila/tests/e2e-demo/handoff-video.spec.ts` records one player's browser on the real stack: a
+  9x9 lobby game with a capture, two passes, the count accepted by both and the result; a puzzle solved on
+  /training; the 1846 "ear-reddening" game imported on /paste and stepped through on its analysis board
+  (move 127, then the end). A caption line across the top says what the viewer is watching. The desktop
+  and phone projects each record one video (1280x800 and 390x844). Its own config (`video.config.ts`)
+  slows every action by 300 ms; the demo config skips the file. `dev/ligo e2e video` runs it; the videos
+  go to `lila/tests/e2e-demo/video/` (git-ignored, ADR 0026 §7), and the e2e workflow uploads them as
+  the `ligo-demo-video` artifact (30 days). `players.ts`'s `newPlayer` takes extra context options
+  (`recordVideo`).
+- Decisions: the video is two clips (desktop, phone) rather than one cut together: Playwright records per
+  browser context at one size, and joining them would need an ffmpeg dependency. Webm, Playwright's own
+  format. `hold()` waits a few seconds at key moments: video pacing for a viewer, not a wait for page state
+  (every step still waits on the DOM). Guests play, so the run needs no sign-ups (lila's sign-up limit).
+- Verified: tsc over tests/e2e-demo, oxfmt, oxlint; the recording itself runs in the e2e workflow (the
+  cloud session can't run lila: strategygames download 403).
+
 ### 2026-10-04 · unit 7.7 follow-ups CI fix · The build's type check
 - Did: #136's `ui` check failed at Build: moving MoveOn's storage into the constructor left `key` a
   parameter property nobody reads (TS6138, an error under the build's tsc settings). `key` is now a plain
