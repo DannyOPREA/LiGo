@@ -37,4 +37,4 @@
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, stand-in rating carry-over, checklist words vs data (8.7–8.8)
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, scratch PW probes (8.7)
 - [Correspondence review patterns](correspondence-review-patterns.md) — sorted i18n.d.ts, unrendered notify types, decision rows vs code, alarm races (7.6); flag msg name, post-end tick (7.7)
-- [Review patterns (5.7)](feedback_review_patterns.md) — verify.sh sbt cache (use testFull), two rematch paths, toFriend retarget, licences, vacuous pool test, 25k floor
+- [Review patterns (5.7, 5.8)](feedback_review_patterns.md) — verify.sh sbt cache (use testFull), two rematch paths, toFriend retarget, licences, vacuous pool test, 25k floor, demo checklists vs enforce rules, clueless JSON

@@ -31,6 +31,33 @@
 - Lessons: target the element type, not just a data attribute a child may share. A full e2e run now
   makes all 10 of lila's sign-ups per 10 minutes from one address (Phases 5, 6 and 8).
 
+### 2026-10-04 · unit 6.7 (part two) · What suits you, the even/handicap chips, phone reasons
+- Did: the Open challenges list now marks and lists first the games that suit you, by the Quick
+  tab's chip row (ADR 0022 §5): rated or casual as you play, and even or (with Handicap OK) handicap;
+  casual is even and guests play casual, as a tile click would. Suiting rows carry a green left
+  accent. Inside each group the closest rank comes first (`rankIndex` over the page's rank table),
+  then the closest rating. A new Even / Handicap filter chip group; stored chips from before read
+  back with none pressed there. On phones a greyed card has a third line with the reason (and the
+  range); desktop keeps it as the row's title. All in `lila/ui/lobby`, no Scala change.
+- Worked: `fit`'s third parameter is a structural `{rated, handicap}` (`Wants`), so quickPair.ts keeps
+  calling `fit` without it for its tile counts and nothing imports in a circle.
+- Didn't work / dead ends: a second chip press on the same table read the chips as they were at the
+  first render, because lib's `bind` attaches the handler once, on insert (a part-one bug). The
+  handlers now read `ctrl.chips` at click time; a unit test presses three chips in a row.
+- Lessons: a snabbdom `bind(...)` handler must read state from the controller when it runs, never
+  from a variable of the render that created it. Playwright won't click an `aria-disabled` row
+  without `force: true`.
+- Decisions: suits from the effective chips, not the stored Handicap OK (logs/decisions.md);
+  the browser tests and pictures in a new `e2e/openChallenges.spec.ts` rather than snapshots.spec.ts,
+  which 6.8 also changes.
+- Verified by Claude: `node ui/test lobby` (107 pass), the lobby Playwright suite (47 pass, 8 new
+  pictures looked at), verify.sh. · Needs owner verification: the list on the real site, live and
+  correspondence, desktop and phone.
+- Review (reviewer agent): no blocking findings. Fixed: the phone reason line no longer fades with
+  the greyed card; the accent rules no longer rely on source order; a test now checks the accent's
+  computed style (the screenshots' tolerance can't see a 3 px edge). Left: the chip group and one
+  chip share the word "Handicap" (no better existing key; a new one isn't worth a translation).
+- Follow-ups: 6.10 (the demo).
 ### 2026-10-04 · unit 6.8 · One window for custom games and challenges
 - What: lila's "Create a game" and "Challenge a friend" windows are one window. An Opponent choice
   (Anyone, the named player, Link for a friend) switches between them and keeps every setting. Presets

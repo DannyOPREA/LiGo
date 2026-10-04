@@ -42,3 +42,16 @@ class GoLeaderboardJsonTest extends munit.FunSuite:
 
   test("only a Go entry gets a goRank"):
     assertEquals((perfOf(Json.toJson(entry("p", 1500, PerfKey.blitz)), "blitz") \ "goRank").toOption, None)
+
+  test("a player's Go rating and rank are in the user JSON before a first game (unit 5.8)"):
+    val perfs = lila.rating.UserPerfs
+      .default(UserId("newcomer"))
+      .copy(go = lila.core.perf.Perf(GoRating.startingGlicko(GoRating.Rank.Kyu(5)), 0, Nil, None))
+    val go = (JsonView.perfsJson(perfs) \ "go").as[JsObject]
+    assertEquals((go \ "games").as[Int], 0)
+    assertEquals((go \ "rating").as[Int], 1579)
+    assertEquals((go \ "goRank").as[String], "5k?") // provisional: deviation 250
+
+  test("a player who declared no rank has no Go rating in the user JSON before a first game (unit 5.8)"):
+    val perfs = lila.rating.UserPerfs.default(UserId("unranked"))
+    assert((JsonView.perfsJson(perfs) \ "go").toOption.isEmpty)
