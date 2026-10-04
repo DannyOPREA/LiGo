@@ -1,8 +1,6 @@
 package lila.challenge
 
 import cats.derived.*
-import chess.format.Fen
-import chess.variant.{ Chess960, FromPosition, Horde, RacingKings, Variant }
 import chess.{ Color, Rated, Speed }
 import ligo.gorules.Setup as GoSetup
 import reactivemongo.api.bson.Macros.Annotations.Key
@@ -19,8 +17,6 @@ import lila.rating.PerfType
 case class Challenge(
     @Key("_id") id: ChallengeId,
     status: Challenge.Status,
-    variant: Variant,
-    initialFen: Option[Fen.Full],
     timeControl: Challenge.TimeControl,
     rated: Rated,
     colorChoice: Challenge.ColorChoice,
@@ -71,15 +67,11 @@ case class Challenge(
 
   def speed = speedOf(timeControl)
 
-  def notableInitialFen: Option[Fen.Full] = variant match
-    case FromPosition | Horde | RacingKings | Chess960 => initialFen
-    case _ => none
-
   def isOpen = open.isDefined
 
   def goSetup: GoSetup = go | GoSetups.default
 
-  lazy val perfType = perfTypeOf(variant, timeControl)
+  def perfType: PerfType = PerfType.Go // Go's one perf (ADR 0021 §1)
 
   def anyDeclineReason = declineReason | DeclineReason.default
 
@@ -135,7 +127,8 @@ object Challenge:
     val default = Generic
     val all = values.toList
     val byKey = values.mapBy(_.key)
-    val allExceptBot = all.filterNot(r => r == NoBot || r == OnlyBot)
+    // Standard and Variant are chess-only reasons: kept so stored declines still read, not offered (unit 3.17)
+    val allExceptBot = all.filterNot(r => r == NoBot || r == OnlyBot || r == Standard || r == Variant)
     def apply(key: String) = all.find { d => d.key == key.toLowerCase || d.trans.value == key } | Generic
 
   enum ColorChoice(val trans: I18nKey) derives Eq:
@@ -156,12 +149,8 @@ object Challenge:
           else if m.is(u2) then ColorChoice.Black.some
           else none
 
-  private def speedOf(timeControl: TimeControl) = timeControl match
-    case TimeControl.Clock(config) => Speed(config)
-    case _ => Speed.Correspondence
-
-  // Go's one perf (ADR 0021 §1)
-  private def perfTypeOf(variant: Variant, timeControl: TimeControl): PerfType = PerfType.Go
+  private def speedOf(timeControl: TimeControl) =
+    timeControl.clockSettings.fold(Speed.Correspondence)(_.speed)
 
   private val idSize = 8
   private def randomId = ChallengeId(ThreadLocalRandom.nextString(idSize))
@@ -171,15 +160,18 @@ object Challenge:
 
   def randomColor = Color.fromWhite(ThreadLocalRandom.nextBoolean())
 
-  def makeTimeControl(clock: Option[chess.Clock.Config], days: Option[Days]): TimeControl =
-    clock
-      .map(TimeControl.Clock.apply)
+  def makeTimeControl(
+      clock: Option[chess.Clock.Config],
+      days: Option[Days],
+      byoyomi: Option[ligo.gorules.ByoyomiConfig] = None
+  ): TimeControl =
+    byoyomi
+      .map(TimeControl.Byoyomi.apply)
+      .orElse(clock.map(TimeControl.Clock.apply))
       .orElse(days.map(TimeControl.Correspondence.apply))
       .getOrElse(TimeControl.Unlimited)
 
   def make(
-      variant: Variant,
-      initialFen: Option[Fen.Full],
       go: GoSetup,
       timeControl: TimeControl,
       rated: Rated,
@@ -197,22 +189,12 @@ object Challenge:
       case "white" => ColorChoice.White -> chess.White
       case "black" => ColorChoice.Black -> chess.Black
       case _ => ColorChoice.Random -> randomColor
-    val finalRated = timeControl match
-      case TimeControl.Clock(clock) if !lila.core.game.allowRated(variant, clock.some) => Rated.No
-      case _ => rated
     val isOpen = challenger == Challenge.Challenger.Open
     new Challenge(
       id = id.fold(randomId)(_.into(ChallengeId)),
       status = Status.Created,
-      variant = variant,
-      initialFen =
-        if variant == FromPosition then initialFen
-        else if variant == Chess960 then
-          initialFen.filter: fen =>
-            Chess960.positionNumber(fen).isDefined
-        else (!variant.standardInitialPosition).option(variant.initialFen),
       timeControl = timeControl,
-      rated = finalRated,
+      rated = rated,
       colorChoice = colorChoice,
       finalColor = finalColor,
       challenger = challenger,

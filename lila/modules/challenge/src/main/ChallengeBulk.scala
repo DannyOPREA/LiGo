@@ -21,7 +21,6 @@ final class ChallengeBulkApi(
 
   import lila.game.BSONHandlers.given
   private given BSONDocumentHandler[ScheduledGame] = Macros.handler
-  private given BSONHandler[chess.variant.Variant] = variantByKeyHandler
   private given BSONHandler[Clock.Config] = clockConfigHandler
   private given BSONHandler[Either[Clock.Config, Days]] = eitherHandler[Clock.Config, Days]
   import lila.core.game.GoSetups.given

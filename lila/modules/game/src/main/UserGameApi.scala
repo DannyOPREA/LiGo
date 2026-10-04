@@ -25,7 +25,6 @@ final class UserGameApi(
       .obj(
         "id" -> g.id,
         "rated" -> g.rated,
-        "variant" -> g.variant,
         "speed" -> g.speed.key,
         "perf" -> g.perfKey,
         "timestamp" -> g.createdAt,

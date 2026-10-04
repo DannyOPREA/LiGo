@@ -3391,6 +3391,8 @@ interface I18n {
     by: I18nFormat;
     /** By CPL */
     byCPL: string;
+    /** Byo-yomi */
+    byoyomi: string;
     /** By registering, you agree to the %s. */
     byRegisteringYouAgreeToBeBoundByOur: I18nFormat;
     /** Calculating moves... */
@@ -3857,6 +3859,8 @@ interface I18n {
     goNextMove: string;
     /** No open challenges match. Try other filters, or create a game. */
     goNoOpenChallenges: string;
+    /** No stones, Black first */
+    goNoStonesBlackFirst: string;
     /** Games cannot be played through a web proxy. Please use %s instead. */
     goNoWebProxy: I18nFormat;
     /** To that effect, we must ensure that all players follow good practice. */
@@ -3871,6 +3875,8 @@ interface I18n {
     goPass: string;
     /** Pass: play no stone this turn */
     goPassTitle: string;
+    /** Periods */
+    goPeriods: string;
     /** Place */
     goPlace: string;
     /** Previous move */
@@ -3895,6 +3901,8 @@ interface I18n {
     goRulesJapanese: string;
     /** The file's rules are not ones LiGo plays: Japanese rules are used instead. */
     goRulesUnknown: string;
+    /** Seconds per period */
+    goSecondsPerPeriod: string;
     /** Tap a point to put a stone there. Tap a stone of the same colour to remove it. */
     goSetupHint: string;
     /** That file is too big to be an SGF record. */

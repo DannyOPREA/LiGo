@@ -16,7 +16,8 @@ export interface Hook {
   clock: string;
   t: number; // time
   s: number; // speed
-  i: number; // increment
+  i: number; // increment (0 for byo-yomi)
+  byo?: { limit: number; periods: number; period: number }; // byo-yomi hooks (unit 4.9)
   variant: VariantKey;
   perf: Exclude<Perf, 'fromPosition'>;
   prov?: true; // is rating provisional
@@ -127,6 +128,9 @@ export interface SetupStore {
   time: number;
   increment: number;
   days: number;
+  periods: number; // byo-yomi (unit 4.9)
+  periodTime: number; // seconds
+  handicap: number; // friend window only
 }
 
 export interface ForceSetupOptions {
@@ -137,6 +141,9 @@ export interface ForceSetupOptions {
   time?: number;
   increment?: number;
   days?: number;
+  periods?: number;
+  periodTime?: number;
+  handicap?: number;
   mode?: GameMode;
   color?: ColorChoice;
 }

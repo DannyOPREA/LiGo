@@ -1,6 +1,5 @@
 package lila.challenge
 
-import chess.variant.Variant
 import reactivemongo.api.bson.*
 import scalalib.model.Days
 
@@ -23,19 +22,23 @@ private object BSONHandlers:
 
   given BSON[TimeControl] with
     import chess.Clock
+    // a byo-yomi clock keeps its main time in `l` like a Fischer one, so "real-time" queries find both
     def reads(r: Reader) =
-      (r.getO[Clock.LimitSeconds]("l"), r.getO[Clock.IncrementSeconds]("i"))
-        .mapN: (limit, inc) =>
-          TimeControl.Clock(chess.Clock.Config(limit, inc))
+      (r.getO[Int]("l"), r.getO[Int]("p"), r.getO[Int]("b"))
+        .mapN: (main, periods, period) =>
+          TimeControl.Byoyomi(ligo.gorules.ByoyomiConfig(main, periods, period))
+        .orElse:
+          (r.getO[Clock.LimitSeconds]("l"), r.getO[Clock.IncrementSeconds]("i")).mapN: (limit, inc) =>
+            TimeControl.Clock(chess.Clock.Config(limit, inc))
         .orElse:
           r.getO[Days]("d").map(TimeControl.Correspondence.apply)
         .getOrElse(TimeControl.Unlimited)
     def writes(w: Writer, t: TimeControl) =
       t match
         case TimeControl.Clock(chess.Clock.Config(l, i)) => bdoc("l" -> l, "i" -> i)
+        case TimeControl.Byoyomi(c) => bdoc("l" -> c.mainSeconds, "p" -> c.periods, "b" -> c.periodSeconds)
         case TimeControl.Correspondence(d) => bdoc("d" -> d)
         case TimeControl.Unlimited => emptyBdoc
-  given BSONHandler[Variant] = variantByIdHandler
   given BSONHandler[Status] = valueMapHandler(Status.byId)(_.id)
   given BSONHandler[DeclineReason] = valueMapHandler(DeclineReason.byKey)(_.key)
 
