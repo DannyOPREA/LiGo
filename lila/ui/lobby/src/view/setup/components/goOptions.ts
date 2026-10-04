@@ -21,6 +21,7 @@ export const goOptions = (setupCtrl: SetupController): VNode =>
     setupCtrl.gameType === 'friend' ? handicapPicker(setupCtrl) : null,
   ]);
 
+// With a named opponent, the stones ADR 0021 §4 suggests for the two ranks (unit 5.7).
 const handicapPicker = (setupCtrl: SetupController): VNode =>
   hl('div.config-group', [
     hl('label.label', { attrs: { for: 'sf_handicap' } }, i18n.site.goHandicap),
@@ -35,6 +36,11 @@ const handicapPicker = (setupCtrl: SetupController): VNode =>
         ),
       ),
     ),
+    setupCtrl.stoneAdvice() &&
+      hl(
+        'p.setup-suggested-stones',
+        i18n.site.goSuggestedHandicapX(handicapName(setupCtrl.stoneAdvice()!.suggested)),
+      ),
   ]);
 
 const sizePicker = (setupCtrl: SetupController): VNode =>

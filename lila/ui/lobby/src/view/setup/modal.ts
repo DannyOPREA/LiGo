@@ -4,6 +4,7 @@ import { hl, type VNode, type LooseVNodes, snabDialog, spinnerVdom } from 'lib/v
 import type LobbyController from '@/ctrl';
 
 import { colorButtons } from './components/colorButtons';
+import { gameModeButtons } from './components/gameModeButtons';
 import { goOptions } from './components/goOptions';
 import { ratingDifferenceSliders } from './components/ratingDifferenceSliders';
 import { ratingView } from './components/ratingView';
@@ -53,10 +54,10 @@ export default function setupModal(ctrl: LobbyController): VNode[] | null {
 }
 
 const views = {
-  // No casual/rated choice: every Go game is casual until unit 5.7 brings back `gameModeButtons`.
   hook: (ctrl: LobbyController): LooseVNodes => [
     goOptions(ctrl.setupCtrl),
     timePickerAndSliders(ctrl.setupCtrl.timeControl, 0),
+    gameModeButtons(ctrl),
     ratingView(ctrl),
     ratingDifferenceSliders(ctrl),
     colorButtons(ctrl.setupCtrl),
@@ -64,6 +65,7 @@ const views = {
   friend: (ctrl: LobbyController): LooseVNodes => [
     goOptions(ctrl.setupCtrl),
     timePickerAndSliders(ctrl.setupCtrl.timeControl, 0),
+    gameModeButtons(ctrl),
     colorButtons(ctrl.setupCtrl),
   ],
 };

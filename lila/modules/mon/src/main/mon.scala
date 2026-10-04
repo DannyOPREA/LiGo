@@ -133,8 +133,6 @@ object round:
   object api:
     val player = timer("round.api").withTag("endpoint", "player")
     val watcher = timer("round.api").withTag("endpoint", "watcher")
-  object forecast:
-    val create = counter("round.forecast.create").withoutTags()
   object move:
     object lag:
       val compDeviation = histogram("round.move.lag.comp_deviation").withoutTags()
@@ -627,6 +625,7 @@ object push:
     val takeback = send("takeback")
     val draw = send("draw")
     val corresAlarm = send("corresAlarm")
+    val scoringPhase = send("scoringPhase")
     val finish = send("finish")
     val message = send("message")
     val tourSoon = send("tourSoon")
