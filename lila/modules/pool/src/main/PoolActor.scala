@@ -4,7 +4,8 @@ import org.apache.pekko.actor.*
 import org.apache.pekko.pattern.pipe
 import scalalib.ThreadLocalRandom
 
-import lila.core.pool.{ HookThieve, PoolMember, PoolFrom }
+import lila.common.Bus
+import lila.core.pool.{ HookThieve, PoolMember, PoolFrom, PoolRange, PoolSize }
 import lila.core.socket.Sris
 
 final private class PoolActor(
@@ -43,17 +44,23 @@ final private class PoolActor(
           members = members :+ joiner
           // #TODO #FIXME race condition. several full waves can be sent here.
           if members.sizeIs >= config.wave.players.value then self ! FullWave
-        case Some(existing) if existing.ratingRange != joiner.ratingRange =>
+          tellRange(joiner)
+        case Some(existing)
+            if existing.ratingRange != joiner.ratingRange || existing.handicapOk != joiner.handicapOk =>
+          // LiGo: the Handicap OK chip can change while waiting too (ADR 0022 §2)
+          val updated = existing.withRange(joiner.ratingRange).copy(handicapOk = joiner.handicapOk)
           members = members.map: m =>
-            if m == existing then m.withRange(joiner.ratingRange) else m
+            if m == existing then updated else m
+          tellRange(updated)
         case _ => // no change
-      members
+      publishSize()
 
     case Leave(userId) =>
       members
         .find(_.userId == userId)
         .foreach: member =>
           members = members.filterNot(_ == member)
+      publishSize()
 
     case ScheduledWave =>
       monitor.scheduled(monId).increment()
@@ -95,6 +102,9 @@ final private class PoolActor(
 
       lastPairedUserIds = pairedMembers.view.map(_.userId).toSet
 
+      publishSize()
+      members.foreach(tellRange)
+
       scheduleWave()
 
     // lila-ws sends us the list of sris currently connected through WS
@@ -102,6 +112,23 @@ final private class PoolActor(
     case Sris(sris) =>
       members = members.filter: member =>
         member.from != PoolFrom.Socket || sris.contains(member.sri)
+      publishSize()
+
+  // LiGo (ADR 0022 §4, unit 6.6): the tile's waiting count, published when it changes
+  private var lastSize = 0
+  private def publishSize(): Unit =
+    if members.size != lastSize then
+      lastSize = members.size
+      Bus.pub(PoolSize(config.id, lastSize))
+
+  // LiGo (ADR 0022 §4, unit 6.6): the ranks a member waiting on the lobby page can meet now, sent after each
+  // wave and when they join
+  private def tellRange(member: PoolMember): Unit =
+    if member.from == PoolFrom.Socket then
+      GoPairing
+        .waitingRange(GoPairing.Member(member, member.handicapOk, member.rankKnown), config.size.lines)
+        .foreach: r =>
+          Bus.pub(PoolRange(member.sri, config.id, r.weakest.name, r.strongest.name, r.maxStones))
 
   val monitor = lila.mon.lobby.pool.wave
   val monId = config.id.value.replace('+', '_')

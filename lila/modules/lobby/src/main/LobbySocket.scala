@@ -41,6 +41,8 @@ final class LobbySocket(
     private val idleSris = collection.mutable.Set[SriStr]()
     private val hookSubscriberSris = collection.mutable.Set[SriStr]()
     private val removedHookIds = new collection.mutable.StringBuilder(1024)
+    private var poolSizes = Map.empty[String, Int]
+    private var poolSizesDue = false
 
     val process: SyncActor.Receive =
 
@@ -56,7 +58,10 @@ final class LobbySocket(
         idleSris.filterInPlace(membersMap.contains)
         hookSubscriberSris.filterInPlace(membersMap.contains)
 
-      case Join(member) => members.put(member.sri.value, member)
+      case Join(member) =>
+        members.put(member.sri.value, member)
+        // LiGo: the pools' waiting counts as they stand (ADR 0022 §4, unit 6.6)
+        send.exec(P.Out.tellSri(member.sri, makeMessage("poolSizes", poolSizes)))
 
       case LeaveBatch(sris) => sris.foreach(quit)
       case LeaveAll =>
@@ -99,12 +104,36 @@ final class LobbySocket(
 
       case lila.core.pool.Pairings(pairings) => send.exec(Out.pairings(pairings))
 
+      // LiGo (ADR 0022 §4, unit 6.6): waiting counts go to every active lobby viewer, at most every 2 s
+      case lila.core.pool.PoolSize(id, n) =>
+        poolSizes = poolSizes + (id.value -> n)
+        if !poolSizesDue then
+          poolSizesDue = true
+          scheduler.scheduleOnce(2.seconds)(this ! SendPoolSizes)
+      case SendPoolSizes =>
+        poolSizesDue = false
+        tellActive(makeMessage("poolSizes", poolSizes))
+      // and the ranks a waiting player can meet go to that player's page
+      case lila.core.pool.PoolRange(sri, id, weakest, strongest, stones) =>
+        send.exec(
+          P.Out.tellSri(
+            sri,
+            makeMessage(
+              "poolRange",
+              Json.obj("id" -> id.value, "weakest" -> weakest, "strongest" -> strongest, "stones" -> stones)
+            )
+          )
+        )
+
       case HookIds(ids) => tellActiveHookSubscribers(makeMessage("hli", ids.mkString("")))
 
       case SetupBus.AddSeek(_) | RemoveSeek(_) => tellActive(makeMessage("reload_seeks"))
 
       case SetIdle(sri, true) => idleSris += sri.value
-      case SetIdle(sri, false) => idleSris -= sri.value
+      case SetIdle(sri, false) =>
+        idleSris -= sri.value
+        // an idle tab missed the pool counts (unit 6.6): catch it up
+        send.exec(P.Out.tellSri(sri, makeMessage("poolSizes", poolSizes)))
 
       case HookSub(member, false) => hookSubscriberSris -= member.sri.value
       case AllHooksFor(member, hooks) =>
@@ -113,6 +142,8 @@ final class LobbySocket(
 
     Bus.subscribeActor[ReloadTimelines](this)
     Bus.subscribeActor[lila.core.pool.Pairings](this)
+    Bus.subscribeActor[lila.core.pool.PoolSize](this)
+    Bus.subscribeActor[lila.core.pool.PoolRange](this)
     scheduler.scheduleOnce(7.seconds)(this ! SendHookRemovals)
     scheduler.scheduleWithFixedDelay(31.seconds, 31.seconds)(() => this ! Cleanup)
 
@@ -319,4 +350,5 @@ private object LobbySocket:
   case class Join(member: Member)
   case class GetMember(sri: Sri, promise: Promise[Option[Member]])
   object SendHookRemovals
+  object SendPoolSizes
   case class SetIdle(sri: Sri, value: Boolean)

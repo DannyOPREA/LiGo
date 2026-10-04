@@ -55,19 +55,81 @@ export interface GoMoveEvent {
   phase: 'play' | 'scoring';
   /** The position for live mini boards (rows of `b`, `w` and runs of empty points). */
   board: string;
-  clock?: {
-    white: Seconds;
-    black: Seconds;
-    lag?: Centis;
-  };
+  clock?: ClockEvent;
   status?: Status;
   winner?: Color;
   volume?: number;
 }
 
+/** Each side's byo-yomi periods left, counting the one in progress, and their length (ADR 0020 §7). */
+export interface ByoyomiData {
+  periods: { b: number; w: number };
+  /** The period length in seconds. */
+  byo: number;
+  /** Whether each side's main time is over (asked of Phase 4 for unit 4.8; optional until then). */
+  inByo?: { b: boolean; w: boolean };
+}
+
+/** The clocks after a move or a resume; a byo-yomi clock adds its periods (unit 4.7). */
+export interface ClockEvent extends Partial<ByoyomiData> {
+  /** Main time, or once in byo-yomi the time left in the current period. */
+  white: Seconds;
+  black: Seconds;
+  lag?: Centis;
+}
+
+/** One side's count, as the scoring service made it (ADR 0020 §1). */
+export interface ScoreSide {
+  territory: number;
+  stones: number;
+  prisoners: number;
+  /** Komi and handicap compensation included. */
+  total: number;
+  komi?: number;
+  compensation?: number;
+}
+
+/**
+ * The scoring phase as the server shows it (ADR 0020 §6, lila/modules/game `JsonView.goScoring`):
+ * `counting` while the proposal is awaited, then the marks, the count and who accepted it.
+ */
+export interface ScoringData {
+  /** 1, then one more after each resume. */
+  phase: number;
+  /** Seconds before the phase times out (or, while counting, before lila stops waiting). */
+  expiresIn: number;
+  counting?: true;
+  /** The count version that toggles and accepts name: `<phase>:<count>`. */
+  v?: string;
+  /** Where the proposal came from: KataGo, or nothing marked dead (the service couldn't ask KataGo). */
+  src?: 'katago' | 'none';
+  dead?: string[];
+  /** Points that may still need a move. */
+  seal?: string[];
+  /** One of `b`, `w`, `.` per point, row by row. */
+  owner?: string;
+  score?: { b: ScoreSide; w: ScoreSide };
+  accepted?: { b: boolean; w: boolean };
+  /** A recount is on its way: no toggle or accept until it arrives. */
+  pending?: boolean;
+}
+
+/** The server's `resume` event: a player took the game back to play (ADR 0020 §6). */
+export interface ResumeEvent {
+  ply: number;
+  turn: Color;
+  phase: 'play';
+  board: string;
+  clock?: ClockEvent;
+}
+
 export interface EventsWithPayload {
   flag: Color;
   move: SocketMove;
+  /** Mark a chain dead or alive again: any stone of it, and the count version on show. */
+  'score-toggle': { p: string; v: string };
+  /** Accept the count on show. */
+  'score-accept': { v: string };
 }
 
 export type EventsWithoutPayload =
@@ -80,7 +142,8 @@ export type EventsWithoutPayload =
   | 'bye2'
   | 'resign-force'
   | 'resign'
-  | 'abort';
+  | 'abort'
+  | 'score-resume';
 
 export interface RoundSocketSend {
   <K extends keyof EventsWithPayload>(
@@ -98,8 +161,14 @@ export interface RoundSocketSend {
 }
 
 export interface RoundData extends GameData {
-  game: GameData['game'] & { go: GoData };
-  clock?: ClockData;
+  game: GameData['game'] & {
+    go: GoData;
+    /** The scoring phase under way, or the count that ended the game. */
+    scoring?: ScoringData;
+    /** A game ended by counting: `B+3.5`, `W+0.5`, or `0` for jigo (ADR 0020 §5). */
+    result?: string;
+  };
+  clock?: ClockData & Partial<ByoyomiData> & { emerg?: Seconds };
   pref: Pref;
   /** Built from `game.go` on arrival (`util.upgradeServerData`); the server's chess steps are ignored. */
   steps: Step[];
@@ -158,6 +227,8 @@ export interface ApiEnd {
     wc: Centis;
     bc: Centis;
   };
+  /** A game ended by counting: `B+3.5`, `W+0.5`, or `0`. */
+  result?: string;
 }
 
 export interface Pref {

@@ -18,13 +18,7 @@ export const get = (username: string | undefined, poolId: string): string | null
 export const shiftRangeAfter = (game: GameData): void => {
   const username = game.player.user?.username,
     delta = game.player.ratingDiff;
-  if (
-    game.game.variant.key === 'standard' &&
-    username &&
-    delta &&
-    defined(game.clock?.initial) &&
-    defined(game.clock?.increment)
-  ) {
+  if (username && delta && defined(game.clock?.initial) && defined(game.clock?.increment)) {
     const poolId = `${game.clock.initial / 60}+${game.clock.increment}`;
     const currRange = get(username, poolId);
     if (!currRange) return;

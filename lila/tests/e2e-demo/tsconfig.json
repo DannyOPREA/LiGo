@@ -1,0 +1,9 @@
+{
+  "extends": "../../ui/.test/tsconfig.test.json",
+  "include": ["${configDir}/**/*"],
+  "compilerOptions": {
+    "isolatedDeclarations": false,
+    "composite": false,
+    "types": ["node"]
+  }
+}

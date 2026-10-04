@@ -254,23 +254,10 @@ object UserPerfs:
         "streak" -> o.streak.nonEmpty.option(o.streak)
       )
 
-  case class Leaderboards(
-      ultraBullet: List[LightPerf],
-      bullet: List[LightPerf],
-      blitz: List[LightPerf],
-      rapid: List[LightPerf],
-      classical: List[LightPerf],
-      crazyhouse: List[LightPerf],
-      chess960: List[LightPerf],
-      kingOfTheHill: List[LightPerf],
-      threeCheck: List[LightPerf],
-      antichess: List[LightPerf],
-      atomic: List[LightPerf],
-      horde: List[LightPerf],
-      racingKings: List[LightPerf]
-  )
+  // LiGo: the one Go leaderboard (ADR 0021 §3, unit 5.5)
+  case class Leaderboards(go: List[LightPerf])
 
-  val emptyLeaderboards = Leaderboards(Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil, Nil)
+  val emptyLeaderboards = Leaderboards(Nil)
 
   private[rating] val firstRow: List[PerfKey] =
     List(PerfKey.bullet, PerfKey.blitz, PerfKey.rapid, PerfKey.classical)

@@ -61,6 +61,7 @@ const harness: Harness = {
       onRefused: reason => harness.events.push(`refused ${reason}`),
       onPlayed: ({ move, color, captured }) => harness.played.push(`${color} ${move} ${captured}`),
       onChange: () => harness.changes++,
+      onScoreTap: point => harness.events.push(`score ${point}`),
     });
   },
   mountPuzzle(config) {

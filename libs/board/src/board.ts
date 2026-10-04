@@ -51,6 +51,32 @@ export interface BoardConfig extends Game {
   onPlayed?: (played: Played) => void;
   /** Something the page may show changed: the position, a preview waiting, whose turn it is. */
   onChange?: () => void;
+  /** The scoring phase's marks (unit 4.10): leave out, or `undefined`, while the game is played. */
+  scoring?: ScoringMarks;
+  /**
+   * A player tapped (or pressed Enter on) a stone during the scoring phase, with `scoring.tappable`
+   * set: the page asks the server to toggle its chain. The board marks nothing itself; the server's
+   * answer comes back as new `scoring` marks.
+   */
+  onScoreTap?: (point: Move) => void;
+}
+
+/**
+ * What the board shows during the scoring phase (ADR 0020 §1, §6), as the server sends it: goban's
+ * stone-removal look (dead stones faded with a cross, territory as small squares).
+ */
+export interface ScoringMarks {
+  /** Stones marked dead, as SGF points (whole chains). */
+  dead: Move[];
+  /**
+   * Who each point counts for, one character per point, row by row from the top left: `b`, `w`, or
+   * `.` for nobody. Territory is drawn on empty points and dead stones only.
+   */
+  owner?: string;
+  /** Points that may still need a move to settle, drawn with a triangle. */
+  seal?: Move[];
+  /** Whether a tap on a stone is reported (`onScoreTap`): a player, while the marks may change. */
+  tappable: boolean;
 }
 
 export interface Board {
@@ -67,8 +93,8 @@ export interface Board {
   pending(): boolean;
   /** Plays the previewed stone (reported through `onMove`). */
   confirm(): void;
-  /** Changes who may move, whether taps only preview, or the board's look. */
-  set(options: Pick<BoardConfig, 'movable' | 'confirm' | 'theme'>): void;
+  /** Changes who may move, whether taps only preview, the board's look, or the scoring marks. */
+  set(options: Pick<BoardConfig, 'movable' | 'confirm' | 'theme' | 'scoring'>): void;
   /** The position after the last move played (a preview doesn't count). */
   state(): BoardState;
   destroy(): void;
@@ -128,8 +154,10 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
       config.onRefused?.(reason);
     },
     gobanThemes(config.theme),
+    point => destroyed || config.onScoreTap?.(point),
   );
   goban.setMovable(config.movable ?? 'none');
+  if (config.scoring) goban.showScoring(config.scoring);
   goban.on('update', () => config.onChange?.());
   goban.on('submit_move', () => config.onChange?.());
 
@@ -163,6 +191,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
     },
     cancel: () => goban.dropPreview(),
     pass: () => {
+      if (goban.engine.phase === 'stone removal') return;
       if (goban.pending()) goban.dropPreview();
       if (goban.mayMove()) goban.pass();
     },
@@ -173,6 +202,7 @@ export function mountBoard(el: HTMLElement, config: BoardConfig): Board {
         goban.one_click_submit = !options.confirm;
         goban.double_click_submit = options.confirm;
       }
+      if ('scoring' in options) goban.showScoring(options.scoring);
       if (options.movable !== undefined) goban.setMovable(options.movable);
       if (options.theme) goban.useThemes(gobanThemes(options.theme));
     },
@@ -275,6 +305,11 @@ function keyboardAndVoice(
 
   const playHere = () => {
     const name = pointName(size, x, y);
+    // The scoring phase (unit 4.10): Enter on a stone asks to mark its chain dead or alive.
+    if (goban.scoringTappable()) {
+      if (goban.officialState().board[y][x] === '.') return say(`${name}: no stone to mark`);
+      return goban.keyTap(x, y);
+    }
     const official = goban.officialState();
     const preview = goban.move_selected;
     if (goban.pending() && preview?.x === x && preview.y === y) return board().confirm();
@@ -316,7 +351,7 @@ function keyboardAndVoice(
   // cursor shows and says where it is.
   boardDiv.addEventListener('focus', () => {
     show(boardDiv.matches(':focus-visible'));
-    if (shown) say(pointText(goban.officialState().board, x, y));
+    if (shown) say(pointText(goban.officialState().board, x, y) + goban.scoringNote(x, y));
   });
   boardDiv.addEventListener('blur', () => show(false));
   boardDiv.addEventListener('pointerdown', () => show(false));
@@ -378,7 +413,7 @@ function keyboardAndVoice(
     if (!shown) show(true);
     if (x !== x0 || y !== y0) {
       placeCursor();
-      say(pointText(goban.officialState().board, x, y));
+      say(pointText(goban.officialState().board, x, y) + goban.scoringNote(x, y));
     }
   });
 
@@ -390,12 +425,15 @@ class LigoGoban extends SVGRenderer {
   private movable: Color | 'both' | 'none' = 'none';
   /** A move was reported and neither `play` nor `cancel` has answered it yet. */
   private awaiting = false;
+  /** The scoring phase's marks on show, if any (unit 4.10). */
+  private scoring?: ScoringMarks;
 
   constructor(
     config: GobanConfig,
     private readonly report: (move: Move) => void,
     refused: (reason: Refusal) => void,
     private selected: GobanSelectedThemes,
+    private readonly scoreTap: (point: Move) => void,
   ) {
     LigoGoban.constructing = selected;
     super(config);
@@ -442,6 +480,7 @@ class LigoGoban extends SVGRenderer {
 
   setMovable(movable: Color | 'both' | 'none'): void {
     this.movable = movable;
+    if (this.scoring) return this.scoringPlacement();
     if (this.awaiting) return; // placement stays off until the reported move is answered
     // The turn is the last played move's, not a previewed stone's.
     this.player_id = this.idFor(this.officialState().toMove);
@@ -455,6 +494,77 @@ class LigoGoban extends SVGRenderer {
 
   pending(): boolean {
     return !!this.submit_move;
+  }
+
+  /**
+   * Shows the scoring phase's marks, or takes them away (`undefined`, play goes on). goban draws
+   * dead stones and territory itself in its "stone removal" phase; LiGo sets that phase directly
+   * rather than through OGS's protocol, so goban never runs its own autoscore. A tap on a stone is
+   * reported and changes nothing here: goban's own toggle (which also refuses to mark groups it
+   * thinks alive) is replaced, since the server decides and sends the new marks back.
+   */
+  showScoring(marks: ScoringMarks | undefined): void {
+    const engine = this.engine;
+    const size = engine.width;
+    if (this.pending()) this.dropPreview();
+    for (let y = 0; y < size; y++)
+      for (let x = 0; x < size; x++) {
+        const m = this.getMarks(x, y);
+        delete m.score;
+        delete m.triangle;
+        engine.removal[y][x] = false;
+      }
+    this.scoring = marks;
+    if (!marks) {
+      engine.phase = 'play';
+      this.setMovable(this.movable);
+      this.redraw(true);
+      return;
+    }
+    engine.phase = 'stone removal';
+    engine.toggleSingleGroupRemoval = (x: number, y: number) => {
+      if (this.scoring?.tappable && engine.board[y]?.[x]) this.scoreTap(fromXY(x, y));
+      return { removed: false, group: [] };
+    };
+    for (const p of marks.dead) {
+      const { x, y } = toXY(engine, p);
+      engine.removal[y][x] = true;
+    }
+    for (const p of marks.seal ?? []) {
+      const { x, y } = toXY(engine, p);
+      this.getMarks(x, y).triangle = true;
+    }
+    const owner = marks.owner ?? '';
+    if (owner.length === size * size)
+      for (let y = 0; y < size; y++)
+        for (let x = 0; x < size; x++) {
+          const o = owner[y * size + x];
+          // Living stones count under Chinese rules too, but a mark on every stone hides the board.
+          if ((o === 'b' || o === 'w') && (!engine.board[y][x] || engine.removal[y][x]))
+            this.getMarks(x, y).score = o === 'b' ? 'black' : 'white';
+        }
+    this.scoringPlacement();
+    this.redraw(true);
+  }
+
+  /** Whether the scoring phase's taps reach `scoreTap`: goban takes taps from an active player only. */
+  private scoringPlacement(): void {
+    this.player_id = this.scoring?.tappable ? IDS.black : 0;
+    this.updateTitleAndStonePlacement();
+    if (!this.scoring?.tappable) this.disableStonePlacement();
+  }
+
+  /** What the scoring marks say about a point, for the screen reader: ", marked dead", territory. */
+  scoringNote(x: number, y: number): string {
+    if (!this.scoring) return '';
+    if (this.engine.board[y][x] && this.engine.removal[y][x]) return ', marked dead';
+    const o = this.getMarks(x, y).score;
+    return o === 'black' ? ", Black's territory" : o === 'white' ? ", White's territory" : '';
+  }
+
+  /** The scoring phase is on show and taps on stones are reported. */
+  scoringTappable(): boolean {
+    return !!this.scoring?.tappable;
   }
 
   /**
@@ -534,6 +644,11 @@ class StandInSocket {
 /** SGF points and goban's move encoding are the same letters; a pass is `..` to goban. */
 function toGoban(move: Move): string {
   return move === 'pass' ? '..' : move;
+}
+
+/** goban's coordinates (column, row from the top left) as an SGF point. */
+function fromXY(x: number, y: number): Move {
+  return String.fromCharCode(97 + x, 97 + y);
 }
 
 function fromGoban(move: string): Move {

@@ -4,6 +4,7 @@ import { pubsub } from 'lib/pubsub';
 import { colors } from 'lib/setup/color';
 import { wsPingInterval } from 'lib/socket';
 import { storage, type LichessStorage } from 'lib/storage';
+import { confirm } from 'lib/view';
 
 import { isGoRuleset, isGoSize, isHandicap } from './goSetup';
 import * as hookRepo from './hookRepo';
@@ -21,11 +22,21 @@ import type {
 } from './interfaces';
 import { noChips, viewerOf, type Chips, type Viewer } from './openChallenges';
 import { poolFromHash } from './poolList';
+import {
+  casualHookForm,
+  corresSeekForm,
+  effectiveChips,
+  ownHook,
+  ownSeek,
+  parseQuickChips,
+  type CorresTile,
+  type PoolRange,
+  type QuickChips,
+} from './quickPair';
 import * as seekRepo from './seekRepo';
 import SetupController from './setupCtrl';
 import LobbySocket from './socket';
 import { make as makeStores, readChips, writeChips, type Stores } from './store';
-import variantConfirm from './variant';
 import * as xhr from './xhr';
 
 export default class LobbyController {
@@ -43,6 +54,14 @@ export default class LobbyController {
   pools: Pool[];
   chips: Chips = noChips();
   setupCtrl: SetupController;
+  // the quick-pairing view (unit 6.6): the chip row, the correspondence tiles, each pool's waiting count,
+  // the tile you are waiting on and since when, and the ranks you can meet there
+  quickChips: QuickChips;
+  corres: CorresTile[];
+  poolSizes: Record<string, number> = {};
+  waiting?: { kind: 'pool' | 'hook' | 'seek'; id: string; since: number };
+  poolRange?: PoolRange;
+  private waitingTicker?: ReturnType<typeof setInterval>;
 
   private readonly poolInStorage: LichessStorage;
   private flushHooksTimeout?: number;
@@ -59,6 +78,7 @@ export default class LobbyController {
     };
     this.me = opts.data.me;
     this.pools = opts.pools;
+    this.corres = opts.corres ?? [];
     this.playban = opts.playban;
     this.chips = readChips();
     this.setupCtrl = new SetupController(this);
@@ -67,6 +87,7 @@ export default class LobbyController {
     this.socket = new LobbySocket(opts.socketSend, this);
 
     this.stores = makeStores(this.me?.username.toLowerCase());
+    this.quickChips = parseQuickChips(storage.get(this.quickChipsKey()));
     if (this.me?.isBot) this.tab = 'now_playing';
     else {
       if (this.stores.tab.get() === 'now_playing' && this.data.nbNowPlaying === 0)
@@ -161,16 +182,17 @@ export default class LobbyController {
     } else {
       setInterval(() => {
         if (this.poolMember) this.poolIn();
-        else if (this.showsLive() && !this.data.hooks.length) this.socket.realTimeIn();
+        else if (this.wantsHooks() && !this.data.hooks.length) this.socket.realTimeIn();
       }, 10 * 1000);
       this.joinPoolFromLocationHash();
     }
 
     pubsub.on('socket.open', () => {
-      if (this.showsLive()) {
+      if (this.wantsHooks()) {
         this.data.hooks = [];
         this.socket.realTimeIn();
-      } else if (this.tab === 'pools' && this.poolMember) this.poolIn();
+      }
+      if (this.tab === 'pools' && this.poolMember) this.poolIn();
       else if (this.showsCorrespondence()) this.fetchSeeks();
     });
 
@@ -199,7 +221,7 @@ export default class LobbyController {
 
   private doFlushHooks() {
     this.stepHooks = this.data.hooks.slice(0);
-    if (this.showsLive()) this.redraw();
+    if (this.wantsHooks()) this.redraw();
   }
 
   flushHooks = (now: boolean) => {
@@ -221,14 +243,16 @@ export default class LobbyController {
   // Open challenges shows hooks (live) or seeks (correspondence); only what is on screen is fetched.
   showsLive = () => this.tab === 'open' && this.mode === 'live';
   showsCorrespondence = () => this.tab === 'open' && this.mode === 'correspondence';
+  // The quick-pairing view needs the open games too: a Casual tile counts and joins them (unit 6.6).
+  wantsHooks = () => this.showsLive() || this.tab === 'pools';
 
   private changeView(tab: Tab, mode: Mode) {
-    const wasLive = this.showsLive(),
+    const wasLive = this.wantsHooks(),
       wasCorrespondence = this.showsCorrespondence();
     this.tab = this.stores.tab.set(tab);
     this.mode = this.stores.mode.set(mode);
-    if (this.showsLive() && !wasLive) this.socket.realTimeIn();
-    else if (!this.showsLive() && wasLive) {
+    if (this.wantsHooks() && !wasLive) this.socket.realTimeIn();
+    else if (!this.wantsHooks() && wasLive) {
       this.socket.realTimeOut();
       this.data.hooks = [];
     }
@@ -258,18 +282,16 @@ export default class LobbyController {
   // What the open-challenges table needs to know about you.
   viewer = (): Viewer => viewerOf(this.me, this.data.ratingMap);
 
-  clickHook = async (id: string) => {
+  clickHook = (id: string) => {
     const hook = hookRepo.find(this, id);
     if (!hook || hook.disabled || this.stepping || this.redirecting) return;
-    if (hook.action === 'cancel' || (await variantConfirm(hook.variant)))
-      this.socket.send(hook.action, hook.id);
+    this.socket.send(hook.action, hook.id);
   };
 
-  clickSeek = async (id: string) => {
+  clickSeek = (id: string) => {
     const seek = seekRepo.find(this, id);
     if (!seek || this.redirecting) return;
-    if (seek.action === 'cancelSeek' || (await variantConfirm(seek.variant?.key)))
-      this.socket.send(seek.action, seek.id);
+    this.socket.send(seek.action, seek.id);
   };
 
   fetchSeeks = async () => {
@@ -278,24 +300,85 @@ export default class LobbyController {
     this.redraw();
   };
 
-  clickPool = (id: string) => {
-    if (!this.me) {
-      xhr.anonPoolSeek(this.pools.find(p => p.id === id)!);
-      this.showOpen('live');
-    } else if (this.poolMember?.id === id) this.leavePool();
-    else this.enterPool({ id });
+  // ---- the quick-pairing view (unit 6.6) ----
+
+  private readonly quickChipsKey = () => `lobby.quick:${this.me?.username.toLowerCase() ?? '-'}`;
+
+  setQuickChips = (chips: QuickChips) => {
+    const wasRated = effectiveChips(this.quickChips, !!this.me).rated;
+    this.quickChips = chips;
+    storage.set(this.quickChipsKey(), JSON.stringify(chips));
+    // Rated <-> Casual changes what you wait for (a pool, or a casual open game): stop waiting
+    if (this.waiting && effectiveChips(chips, !!this.me).rated !== wasRated) this.stopWaiting();
+    // a change of Handicap OK reaches the pool you wait in (ADR 0022 §2)
+    else if (this.poolMember) {
+      this.poolMember = { ...this.poolMember, handicap: effectiveChips(chips, !!this.me).handicap };
+      this.poolIn();
+    }
     this.redraw();
   };
 
-  enterPool = (member: PoolMember) => {
-    poolRangeStorage.set(this.me?.username, member.id, member.range);
-    this.setTab('pools');
-    this.poolMember = member;
-    this.poolIn();
+  // A click on a real-time tile: the pool with Rated, a casual open game with Casual (ADR 0022 §2); a click
+  // on the tile you wait on cancels.
+  clickPool = (id: string) => {
+    const pool = this.pools.find(p => p.id === id);
+    if (!pool || this.redirecting) return;
+    const again = this.waiting?.id === id;
+    const chips = effectiveChips(this.quickChips, !!this.me);
+    // a new casual open game replaces your old one on the server (AddHook), so don't also cancel it: that
+    // socket message could land after the new game's POST and remove it
+    this.stopWaiting(!again && !chips.rated);
+    if (!again) {
+      if (chips.rated)
+        this.enterPool({
+          id,
+          handicap: chips.handicap,
+          range: poolRangeStorage.get(this.me?.username, id) ?? undefined,
+        });
+      else {
+        this.startWaiting('hook', id);
+        xhr.createHook(casualHookForm(pool)).catch(() => {
+          this.clearWaiting();
+          this.redraw();
+        });
+      }
+    }
+    this.redraw();
+  };
+
+  // A click on a correspondence tile: a seek, which needs an account as in lila (ADR 0022 §1).
+  clickCorres = async (id: string) => {
+    const tile = this.corres.find(t => t.id === id);
+    if (!tile || this.redirecting) return;
+    if (!this.me) {
+      if (await confirm(i18n.site.goCorrespondenceNeedsAccount, i18n.site.signUp, i18n.site.cancel))
+        location.href = '/signup';
+      return;
+    }
+    const again = this.waiting?.id === id;
+    this.stopWaiting();
+    if (!again) {
+      this.startWaiting('seek', id);
+      this.redraw();
+      try {
+        await xhr.createHook(corresSeekForm(tile, effectiveChips(this.quickChips, true).rated));
+        await this.fetchSeeks();
+      } catch {
+        this.clearWaiting();
+      }
+    }
+    this.redraw();
+  };
+
+  private readonly startWaiting = (kind: 'pool' | 'hook' | 'seek', id: string) => {
+    this.waiting = { kind, id, since: Date.now() };
+    this.poolRange = undefined;
+    clearInterval(this.waitingTicker);
+    this.waitingTicker = setInterval(this.redraw, 1000); // the elapsed time on the tile
     site.mousetrap.bind(
       'esc',
       () => {
-        this.leavePool();
+        this.stopWaiting();
         this.redraw();
       },
       undefined,
@@ -303,10 +386,61 @@ export default class LobbyController {
     );
   };
 
+  // Cancel whatever you wait on: leave the pool, or cancel your casual open game or seek. `replacingHook`:
+  // a new casual open game follows, which replaces the old one by itself.
+  stopWaiting = (replacingHook = false) => {
+    const w = this.waiting;
+    if (!w) return;
+    if (w.kind === 'pool') this.leavePool();
+    else if (w.kind === 'hook') {
+      if (!replacingHook) this.socket.send('cancel');
+    } else {
+      const tile = this.corres.find(t => t.id === w.id);
+      const seek = tile && ownSeek(tile, this.data.seeks);
+      if (seek) this.socket.send('cancelSeek', seek.id);
+    }
+    this.clearWaiting();
+  };
+
+  private readonly clearWaiting = () => {
+    this.waiting = undefined;
+    this.poolRange = undefined;
+    clearInterval(this.waitingTicker);
+    this.waitingTicker = undefined;
+  };
+
+  // The server's word on who you can meet in the pool you wait in.
+  setPoolRange = (range: PoolRange) => {
+    if (this.waiting?.kind === 'pool' && this.waiting.id === range.id) {
+      this.poolRange = range;
+      this.redraw();
+    }
+  };
+
+  setPoolSizes = (sizes: Record<string, number>) => {
+    this.poolSizes = sizes;
+    if (this.tab === 'pools') this.redraw();
+  };
+
+  // Your casual open game for the tile you wait on, once the server has it (for its Cancel).
+  waitingHook = () => {
+    const pool = this.waiting?.kind === 'hook' ? this.pools.find(p => p.id === this.waiting!.id) : undefined;
+    return pool && ownHook(pool, this.data.hooks);
+  };
+
+  enterPool = (member: PoolMember) => {
+    poolRangeStorage.set(this.me?.username, member.id, member.range);
+    this.setTab('pools');
+    this.poolMember = member;
+    this.startWaiting('pool', member.id);
+    this.poolIn();
+  };
+
   leavePool = () => {
     if (!this.poolMember) return;
     this.socket.poolOut(this.poolMember);
     this.poolMember = undefined;
+    if (this.waiting?.kind === 'pool') this.clearWaiting();
   };
 
   poolIn = () => {
@@ -351,7 +485,7 @@ export default class LobbyController {
   };
 
   awake = () => {
-    if (this.showsLive()) {
+    if (this.wantsHooks()) {
       this.data.hooks = [];
       this.socket.realTimeIn();
     } else if (this.showsCorrespondence()) this.fetchSeeks();
@@ -365,6 +499,7 @@ export default class LobbyController {
       if (member) {
         const range = poolRangeStorage.get(this.me?.username, member.id);
         if (range) member.range = range;
+        member.handicap = effectiveChips(this.quickChips, !!this.me).handicap;
         this.setTab('pools');
         if (this.me) this.enterPool(member);
         else setTimeout(() => this.clickPool(member.id), 1500);

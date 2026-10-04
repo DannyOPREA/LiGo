@@ -12,6 +12,8 @@
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
 - [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs by package.json, CI area gaps, headless-shell mismatch (9.6 push), SW probes
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
+- [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
+- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, deleted-TS DOM effects, privacy deletes, stand-ins keeping dead code (3.3–3.19p2)
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — testQuick Total 0, count versions, autoscore mutates, EPIPE, NaN gates, 2nd-pass gameActive, scratch sbt probe, timer dedupe (4.8)
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects, literal links, privacy deletes (3.3–3.7)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
@@ -32,6 +34,7 @@
 - [Mini board review patterns](mini-board-review-patterns.md) — ownerPreview is public API, fen-message ply undercount, DOM-testable miniBoard.ts (3.19)
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)
+- [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, stand-in rating carry-over, checklist words vs data (8.7–8.8)
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, scratch PW probes (8.7)
 - [Correspondence review patterns](correspondence-review-patterns.md) — sorted i18n.d.ts, unrendered notify types, decision rows vs code, alarm races (7.6)
 - [Review patterns (5.7)](feedback_review_patterns.md) — verify.sh sbt cache (use testFull), two rematch paths, toFriend retarget, licences, vacuous pool test, 25k floor

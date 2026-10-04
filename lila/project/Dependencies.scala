@@ -55,11 +55,8 @@ object Dependencies:
     val org = "com.github.lichess-org.scalachess"
     // val org = "org.lichess" // for publishLocal
     val core = org %% "scalachess" % version
-    val testKit = org %% "scalachess-test-kit" % version % Test
-    val playJson = org %% "scalachess-play-json" % version
     val rating = org %% "scalachess-rating" % version
-    val tiebreak = org %% "scalachess-tiebreak" % version
-    def bundle = Seq(core, testKit, playJson, rating, tiebreak)
+    def bundle = Seq(core, rating)
 
   object scalalib:
     val version = "11.10.12"
