@@ -3887,6 +3887,14 @@ interface I18n {
     goRankChangeHelp: string;
     /** Your Go rank now changes only through rated games. */
     goRankLocked: string;
+    /** Opponents from %1$s to %2$s */
+    goRankRangeXToY: I18nFormat;
+    /** A rated game with handicap stones needs a named opponent. */
+    goRatedHandicapNeedsOpponent: string;
+    /** Rated games are played on 9×9 or 19×19 with the standard komi. */
+    goRatedSetupRule: string;
+    /** A rated game between you two has %1$s to %2$s handicap stones. */
+    goRatedStonesXToY: I18nFormat;
     /** Your opponent is offline, but they can accept this challenge later! */
     goRematchOfflineText: string;
     /** Challenged to a rematch */
@@ -3911,6 +3919,8 @@ interface I18n {
     goSgfUnreadable: string;
     /** Show clock on left */
     goShowClockOnLeft: string;
+    /** Sign up to play rated games */
+    goSignUpToPlayRated: string;
     /** Start */
     goStart: string;
     /** Start analysis */
@@ -3923,6 +3933,8 @@ interface I18n {
     goStoneThereAlready: string;
     /** Streamer mode */
     goStreamerMode: string;
+    /** Suggested for your ranks: %s */
+    goSuggestedHandicapX: I18nFormat;
     /** That move would take the last liberty of its own stones (suicide). */
     goSuicideRefused: string;
     /** To play */

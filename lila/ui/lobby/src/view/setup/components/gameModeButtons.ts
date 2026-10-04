@@ -5,12 +5,26 @@ import type { MaybeVNode } from 'lib/view';
 
 import type LobbyController from '@/ctrl';
 import type { GameMode } from '@/interfaces';
-import { gameModes } from '@/options';
 
-export const gameModeButtons = ({ setupCtrl, me }: LobbyController): MaybeVNode => {
-  if (!me) return null;
+import { gameModes } from '../../../options';
 
-  return site.blindMode
+// Casual or rated for a signed-in player; a guest plays casual games and sees a sign-up link instead
+// (ADR 0021 §5, unit 5.7). Below the choice, why the settings can't be rated, if they can't.
+export const gameModeButtons = (ctrl: LobbyController): MaybeVNode => {
+  if (!ctrl.me)
+    return h(
+      'div.config-group.setup-rated-signup',
+      h('a', { attrs: { href: '/signup' } }, i18n.site.goSignUpToPlayRated),
+    );
+  const problem = ctrl.setupCtrl.ratedProblem();
+  return h('div.setup-game-mode', [
+    modeChoice(ctrl),
+    problem && h('p.setup-rated-problem', { attrs: { role: 'status' } }, problem),
+  ]);
+};
+
+const modeChoice = ({ setupCtrl }: LobbyController): MaybeVNode =>
+  site.blindMode
     ? h('div', [
         h('label', { attrs: { for: 'sf_mode' } }, i18n.site.mode),
         h(
@@ -48,4 +62,3 @@ export const gameModeButtons = ({ setupCtrl, me }: LobbyController): MaybeVNode 
           }),
         ),
       ]);
-};

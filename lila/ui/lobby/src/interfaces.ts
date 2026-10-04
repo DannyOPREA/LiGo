@@ -85,6 +85,7 @@ export interface LobbyData {
   nowPlaying: NowPlaying[];
   ratingMap: Record<string, RatingWithProvisional> | null; // by perf key; Go's is `go`
   goRank?: string; // LiGo: the viewer's kyu/dan label (ADR 0021 §3, unit 5.5)
+  rankTable?: [string, number][]; // LiGo: each rank's lower rating edge, 25k to 9d (unit 5.7)
   counters: { members: number; rounds: number };
 }
 
