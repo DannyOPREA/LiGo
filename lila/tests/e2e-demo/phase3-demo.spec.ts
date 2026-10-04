@@ -20,21 +20,28 @@ async function pointOf(page: Page, col: number, row: number) {
   return { x: box.x + (col + 1.5) * square, y: box.y + (row + 1.5) * square };
 }
 
-/** Plays a stone: a click, or on a phone a tap and Confirm move (goban ignores a confirm within 50 ms of the tap). */
+/**
+ * Plays a stone: a click, or on a phone a tap and Confirm move (goban ignores a confirm within 50 ms of
+ * the tap). The move has gone to the server once the player's own Pass button is back and disabled
+ * (it is hidden while a previewed stone waits for Confirm move); counting stones is not enough, since
+ * the preview is drawn as a stone too.
+ */
 async function playStone(page: Page, color: Color, col: number, row: number, phone: boolean) {
   const before = await stones(page, color).count();
   const p = await pointOf(page, col, row);
-  if (!phone) {
-    await page.mouse.click(p.x, p.y);
-    await expect(stones(page, color)).toHaveCount(before + 1);
-    return;
+  const pass = page.getByRole('button', { name: 'Pass' });
+  if (!phone) await page.mouse.click(p.x, p.y);
+  else {
+    await page.touchscreen.tap(p.x, p.y);
+    const confirm = page.getByRole('button', { name: 'Confirm move' });
+    await expect(confirm).toBeVisible();
+    await expect(async () => {
+      if (await confirm.isVisible()) await confirm.click();
+      await expect(pass).toBeDisabled({ timeout: 1000 });
+    }).toPass();
   }
-  await page.touchscreen.tap(p.x, p.y);
-  const confirm = page.getByRole('button', { name: 'Confirm move' });
-  await expect(async () => {
-    if (await confirm.isVisible()) await confirm.click();
-    await expect(stones(page, color)).toHaveCount(before + 1, { timeout: 500 });
-  }).toPass();
+  await expect(pass).toBeDisabled();
+  await expect(stones(page, color)).toHaveCount(before + 1);
 }
 
 const colorOf = async (page: Page): Promise<Color> =>
