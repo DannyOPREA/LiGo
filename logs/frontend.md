@@ -5,6 +5,13 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 9.7 part two · byo-yomi countdown sounds (`site.sound.byoyomi`)
+- Did: added `makeByoyomiSounds()` in `ui/lib/src/game/clock/byoyomiSound.ts` (pure: which sound a byo-yomi clock tick plays) and `site.sound.byoyomi(periodsLeft, secondsLeft)` / `byoyomiReset()` over it. LowTime when byo-yomi starts or a period is used up, CountDown10 to CountDown1 over the last 10 s of each period, nothing when a new turn refills the period, per ADR 0026 section 2. The game page's call belongs to unit 4.10, which owns the period display; it has the API.
+- Worked: 5 unit tests; ui tests 260+ pass. Every kept sound set already has CountDown0-10 and LowTime, so no new files.
+- Didn't work / dead ends: none.
+- Lessons: when another thread owns the page that will call a helper, ship the helper with its contract and let the owner add the one call; it avoids both threads editing the same view.
+- Decisions: the first tick plays LowTime even after a page reload mid byo-yomi; simpler than tracking whether the page saw main time end.
+
 ### 2026-10-04 · unit 4.10 · the scoring phase and byo-yomi on the game page
 - Did: libs/board's `mountBoard` takes `scoring` marks (dead stones, owner string, seal points,
   tappable) and reports taps on stones (`onScoreTap`); goban draws them in its "stone removal" phase,
