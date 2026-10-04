@@ -174,6 +174,8 @@ window.site = {
     say: () => false,
     speech: () => false,
     preloadBoardSounds: () => {},
+    byoyomi: (periods, seconds) => void window.sounds.push(\`byoyomi \${periods} \${seconds}\`),
+    byoyomiReset: () => void window.sounds.push('byoyomiReset'),
   },
   mousetrap: chain,
   asset: { loadCssPath: async () => {}, loadEsm: async () => ({}), flairSrc: () => '' },

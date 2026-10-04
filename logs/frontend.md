@@ -5,6 +5,20 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 4.10 follow-up · Byo-yomi warning sounds on the game page
+- Did: lila's `ClockCtrl` takes an optional `onTick(color, millis)`; the round page uses it to call
+  Phase 9's `site.sound.byoyomi(periodsLeft, secondsShown)` on the player's own clock while it is in
+  byo-yomi (never the opponent's, never in main time, never with clock sounds off, never for a
+  spectator), and `site.sound.byoyomiReset()` when the game ends. On a byo-yomi clock lila's own
+  low-time sound is silenced, since the byo-yomi sounds already warn at each period.
+- Worked: 4 controller tests, and the byo-yomi page test now checks the clock fed `byoyomi 2 2`.
+- Didn't work / dead ends: the first controller tests never finished: a game where it was the
+  player's turn starts the title's "your turn" favicon ticker, which runs forever in node. The tests
+  make the player White with Black to move.
+- Lessons: round controller tests must leave the game on the opponent's turn (or end it), or the
+  title ticker keeps node's test run alive with no error.
+- Decisions: none.
+
 ### 2026-10-04 · unit 4.10 follow-up · The game page drops its last chess styles
 - Did: `ui/round` no longer imports `lib/css/chess/variant-style` (chessground's variant overlays) or
   `lib/css/component/material` (chess piece pictures); `_material.scss` keeps only the sizing of the
