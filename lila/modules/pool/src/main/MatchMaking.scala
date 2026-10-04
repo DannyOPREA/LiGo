@@ -8,7 +8,9 @@ import lila.core.pool.PoolMember
 
 object MatchMaking:
 
-  case class Couple(p1: PoolMember, p2: PoolMember):
+  /* LiGo: `stones` is the pair's handicap (0 for an even game) and `black` who takes Black when there are
+   * stones (ADR 0022 §3); without stones, lila's random colours. */
+  case class Couple(p1: PoolMember, p2: PoolMember, stones: Int = 0, black: Option[UserId] = None):
     def members = Vector(p1, p2)
     def userIds = members.map(_.userId)
     def ratingDiff = p1.ratingDiff(p2)
@@ -92,15 +94,16 @@ object MatchMaking:
     private[pool] def provisionalBonus(a: PoolMember, b: PoolMember) =
       if a.provisional && b.provisional then 30 else 0
 
-    /* LiGo: pairs by GoPairing's score (ADR 0022 §3), lila's with the miss bonus per second of waiting.
-     * Every member counts as Even only until unit 4.9 lets a game start with handicap stones and the
-     * lobby sends the Handicap OK chip. */
+    /* LiGo: pairs by GoPairing's score (ADR 0022 §3), lila's with the miss bonus per second of waiting,
+     * and gives a pair where both said Handicap OK the stones and colours GoPairing suggests. */
     def apply(members: Vector[PoolMember], size: Int): Option[Vector[Couple]] =
-      val goMembers = members.map(GoPairing.Member(_, handicapOk = false, rankKnown = false))
+      val goMembers = members.map(m => GoPairing.Member(m, m.handicapOk, m.rankKnown))
       WMMatching(goMembers.toArray, GoPairing.pairScore(_, _, size)).fold(
         err =>
           logger.error("WMMatching", err)
           none
         ,
-        _.map((a, b) => Couple(a.pool, b.pool)).toVector.some
+        _.map((a, b) =>
+          Couple(a.pool, b.pool, GoPairing.stones(a, b, size), GoPairing.black(a, b, size))
+        ).toVector.some
       )

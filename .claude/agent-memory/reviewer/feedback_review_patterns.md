@@ -25,7 +25,8 @@ Patterns seen in LiGo unit reviews; check these every time.
   aren't a dependency change" and left COPYING.md untouched. Check the MANIFEST regex every time.
 - sbt 2 remote cache: `.claude/state/verify/lila_tests.log` can show "Passed: Total 0" for every
   module and 0 compile `[warn]` (cache hits replay nothing), so it isn't evidence tests ran or that
-  warnings are gone. Ask for a non-cached run or say it's unverified.
+  warnings are gone. Run them for real: `cd lila && ./lila.sh --server --batch "challenge/testFull"
+  "setup/testFull" ...` (sbt 2's `testFull` skips the cache; worked 2026-10-04, ~2 min for 6 modules).
 - Removal units leave orphans outside the deleted package: `ui/bits/src/bits.<feature>*.ts` and
   `ui/bits/css/build/bits.<feature>.scss` entries whose only `Esm(...)`/`.css(...)` caller was
   deleted. Grep deleted Scala (`git show HEAD:<file>`) for Esm/css names and check each still has a caller.
@@ -47,3 +48,9 @@ Patterns seen in LiGo unit reviews; check these every time.
 - lila "game started" rules: games are `.start`ed at pairing (status 20) and aborted (25) before
   2 plies; `NoStart` (37) only for mandatory/noAbort games, and PerfsUpdater skips < 2 plies, so a
   "has a started rated game" query that only excludes Aborted locks players out on NoStart.
+- lila has TWO rematch paths: round's `Rematcher.returnGame` (the in-game button, swaps colours via
+  `rematchAlternatesColor`) and challenge's `ChallengeMaker.makeRematchOf` (bots/API). Rules added to
+  one (e.g. unit 4.9's "handicap rematch keeps colours") get missed in the other. Check both.
+- `Challenge.toFriend` (POST /challenge/:id/to-friend) re-targets ANY of the caller's challenges via
+  `setDestUser`, even one that already has a destUser. Any rule computed from the opponent at send
+  time (rated handicap stones/colour, unit 5.7) can be bypassed there. (2026-10-04, unit 5.7 review.)

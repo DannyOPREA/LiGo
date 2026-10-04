@@ -42,7 +42,7 @@ final class PoolApi(
 
   def leave(poolId: PoolConfigId, userId: UserId) = sendTo(poolId, Leave(userId))
 
-  def poolOf(clock: chess.Clock.Config, go: ligo.gorules.Setup): Option[PoolConfigId] =
+  def poolOf(clock: lila.core.game.ClockSettings, go: ligo.gorules.Setup): Option[PoolConfigId] =
     PoolList.find(clock, go).map(_.id)
 
   def setOnlineSris(ids: Sris): Unit = actors.values.foreach(_ ! ids)

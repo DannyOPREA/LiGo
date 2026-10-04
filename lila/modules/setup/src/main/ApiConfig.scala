@@ -37,8 +37,8 @@ final case class ApiConfig(
       .map(lila.core.game.ClockSettings.Byoyomi(_))
       .orElse(clock.map(lila.core.game.ClockSettings.Fischer(_)))
 
-  // Go games are casual until Phase 5 (unit 3.15)
-  def validRated = rated.no
+  // a rated game needs a setup the rating maths covers (ADR 0021 §4, unit 5.7)
+  def validRated = rated.no || go.setup.exists(lila.core.game.GoSetups.canBeRated)
 
 object ApiConfig extends BaseConfig:
 
