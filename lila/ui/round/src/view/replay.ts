@@ -139,15 +139,22 @@ function renderButtons(ctrl: RoundController) {
   return hl(rbuttonsTag, [
     analysisButton(ctrl) || hl('div.noop'),
     [
-      ['JumpFirst', firstPly],
-      ['JumpPrev', ctrl.ply - 1],
-      ['JumpNext', ctrl.ply + 1],
-      ['JumpLast', lastPly],
-    ].map((b: [LiconKey, number], i) => {
+      ['JumpFirst', firstPly, i18n.site.goFirstMove],
+      ['JumpPrev', ctrl.ply - 1, i18n.site.goPreviousMove],
+      ['JumpNext', ctrl.ply + 1, i18n.site.goNextMove],
+      ['JumpLast', lastPly, i18n.site.goLastMove],
+    ].map((b: [LiconKey, number, string], i) => {
       const enabled = ctrl.ply !== b[1] && b[1] >= firstPly && b[1] <= lastPly;
       return hl('button.fbt.repeatable', {
         class: { glowing: i === 3 && ctrl.isLate() },
-        attrs: { disabled: !enabled, 'data-icon': licon[b[0]], 'data-ply': enabled ? b[1] : '-' },
+        // LiGo: icon-only buttons need a name for screen readers (unit 9.7, ADR 0026 §4).
+        attrs: {
+          disabled: !enabled,
+          'data-icon': licon[b[0]],
+          'data-ply': enabled ? b[1] : '-',
+          'aria-label': b[2],
+          title: b[2],
+        },
         hook: onInsert(el =>
           addPointerListeners(el, {
             click: e => {
@@ -184,7 +191,12 @@ function initMessage(ctrl: RoundController) {
 
 const col1Button = (ctrl: RoundController, dir: number, icon: string, disabled: boolean) =>
   hl('button.fbt', {
-    attrs: { disabled, 'data-icon': icon, 'data-ply': ctrl.ply + dir },
+    attrs: {
+      disabled,
+      'data-icon': icon,
+      'data-ply': ctrl.ply + dir,
+      'aria-label': dir < 0 ? i18n.site.goPreviousMove : i18n.site.goNextMove,
+    },
     hook: onInsert(el => addPointerListeners(el, { click: e => goThroughMoves(ctrl, e), hold: 'click' })),
   });
 

@@ -1,70 +1,70 @@
 import { defined } from '../index';
 import * as ops from './ops';
 import * as treePath from './path';
-import type { Clock, Glyph, Shape, TreeComment, TreeNode, TreePath, TreeNodeLite } from './types';
+import type { Clock, Glyph, Shape, TreeComment, TreeNode, TreeNodeOf, TreePath } from './types';
 
 export { treePath as path, ops };
 
-export type MaybeNode = TreeNode | undefined;
+export type MaybeNode<N extends TreeNodeOf<N> = TreeNode> = N | undefined;
 
-export interface TreeWrapper {
-  root: TreeNode;
+export interface TreeWrapper<N extends TreeNodeOf<N> = TreeNode> {
+  root: N;
   lastPly(): number;
-  nodeAtPath(path: TreePath): TreeNode;
-  getNodeList(path: TreePath): TreeNode[];
+  nodeAtPath(path: TreePath): N;
+  getNodeList(path: TreePath): N[];
   longestValidPath(path: string): TreePath;
-  updateAt(path: TreePath, update: (node: TreeNode) => void): MaybeNode;
-  addNode(node: TreeNode, path: TreePath): TreePath | undefined;
-  addNodes(nodes: TreeNode[], path: TreePath): TreePath | undefined;
-  setShapes(shapes: Shape[], path: TreePath): MaybeNode;
-  setCommentAt(comment: TreeComment, path: TreePath): MaybeNode;
-  deleteCommentAt(id: string, path: TreePath): MaybeNode;
-  setGlyphsAt(glyphs: Glyph[], path: TreePath): MaybeNode;
-  setClockAt(clock: Clock | undefined, path: TreePath): MaybeNode;
+  updateAt(path: TreePath, update: (node: N) => void): MaybeNode<N>;
+  addNode(node: N, path: TreePath): TreePath | undefined;
+  addNodes(nodes: N[], path: TreePath): TreePath | undefined;
+  setShapes(shapes: Shape[], path: TreePath): MaybeNode<N>;
+  setCommentAt(comment: TreeComment, path: TreePath): MaybeNode<N>;
+  deleteCommentAt(id: string, path: TreePath): MaybeNode<N>;
+  setGlyphsAt(glyphs: Glyph[], path: TreePath): MaybeNode<N>;
+  setClockAt(clock: Clock | undefined, path: TreePath): MaybeNode<N>;
   pathIsMainline(path: TreePath): boolean;
   pathIsForcedVariation(path: TreePath): boolean;
-  lastMainlineNode(path: TreePath): TreeNode;
+  lastMainlineNode(path: TreePath): N;
   pathExists(path: TreePath): boolean;
   deleteNodeAt(path: TreePath): void;
   promoteAt(path: TreePath, toMainline: boolean): void;
-  forceVariationAt(path: TreePath, force: boolean): MaybeNode;
-  getCurrentNodesAfterPly(nodeList: TreeNode[], mainline: TreeNode[], ply: number): TreeNode[];
-  merge<T extends TreeNodeLite>(tree: T): void;
-  parentNode(path: TreePath): TreeNode;
-  getParentClock(node: TreeNode, path: TreePath): Clock | undefined;
+  forceVariationAt(path: TreePath, force: boolean): MaybeNode<N>;
+  getCurrentNodesAfterPly(nodeList: N[], mainline: N[], ply: number): N[];
+  merge(tree: N): void;
+  parentNode(path: TreePath): N;
+  getParentClock(node: N, path: TreePath): Clock | undefined;
   walkUntilTrue(
-    fn: (node: TreeNode, isMainline: boolean) => boolean,
+    fn: (node: N, isMainline: boolean) => boolean,
     path?: TreePath,
     branchOnly?: boolean,
   ): boolean;
 }
 
-export function makeTree(root: TreeNode): TreeWrapper {
-  const lastNode = (): MaybeNode => ops.findInMainline(root, (node: TreeNode) => !node.children.length);
+export function makeTree<N extends TreeNodeOf<N> = TreeNode>(root: N): TreeWrapper<N> {
+  const lastNode = (): MaybeNode<N> => ops.findInMainline(root, (node: N) => !node.children.length);
 
-  const nodeAtPath = (path: TreePath): TreeNode => nodeAtPathFrom(root, path);
+  const nodeAtPath = (path: TreePath): N => nodeAtPathFrom(root, path);
 
-  function nodeAtPathFrom(node: TreeNode, path: TreePath): TreeNode {
+  function nodeAtPathFrom(node: N, path: TreePath): N {
     if (path === '') return node;
     const child = ops.childById(node, treePath.head(path));
     return child ? nodeAtPathFrom(child, treePath.tail(path)) : node;
   }
 
-  const nodeAtPathOrNull = (path: TreePath): MaybeNode => nodeAtPathOrNullFrom(root, path);
+  const nodeAtPathOrNull = (path: TreePath): MaybeNode<N> => nodeAtPathOrNullFrom(root, path);
 
-  function nodeAtPathOrNullFrom(node: TreeNode, path: TreePath): MaybeNode {
+  function nodeAtPathOrNullFrom(node: N, path: TreePath): MaybeNode<N> {
     if (path === '') return node;
     const child = ops.childById(node, treePath.head(path));
     return child ? nodeAtPathOrNullFrom(child, treePath.tail(path)) : undefined;
   }
 
-  function longestValidPathFrom(node: TreeNode, path: TreePath): TreePath {
+  function longestValidPathFrom(node: N, path: TreePath): TreePath {
     const id = treePath.head(path);
     const child = ops.childById(node, id);
     return child ? id + longestValidPathFrom(child, treePath.tail(path)) : '';
   }
 
-  function getCurrentNodesAfterPly(nodeList: TreeNode[], mainline: TreeNode[], ply: number): TreeNode[] {
+  function getCurrentNodesAfterPly(nodeList: N[], mainline: N[], ply: number): N[] {
     const nodes = [];
     for (let i = 0; i < nodeList.length; i++) {
       const node = nodeList[i];
@@ -76,7 +76,7 @@ export function makeTree(root: TreeNode): TreeWrapper {
 
   const pathIsMainline = (path: TreePath): boolean => pathIsMainlineFrom(root, path);
 
-  function pathIsMainlineFrom(node: TreeNode, path: TreePath): boolean {
+  function pathIsMainlineFrom(node: N, path: TreePath): boolean {
     if (path === '') return true;
     const child = node.children[0];
     return child?.id === treePath.head(path) && pathIsMainlineFrom(child, treePath.tail(path));
@@ -86,7 +86,7 @@ export function makeTree(root: TreeNode): TreeWrapper {
 
   const pathIsForcedVariation = (path: TreePath): boolean => getNodeList(path).some(n => n.forceVariation);
 
-  function lastMainlineNodeFrom(node: TreeNode, path: TreePath): TreeNode {
+  function lastMainlineNodeFrom(node: N, path: TreePath): N {
     if (path === '') return node;
     const pathId = treePath.head(path);
     const child = node.children[0];
@@ -94,28 +94,26 @@ export function makeTree(root: TreeNode): TreeWrapper {
     return lastMainlineNodeFrom(child, treePath.tail(path));
   }
 
-  const getNodeList = (path: TreePath): TreeNode[] =>
-    ops.collect(root, (node: TreeNode) => {
+  const getNodeList = (path: TreePath): N[] =>
+    ops.collect(root, (node: N) => {
       const id = treePath.head(path);
       if (id === '') return undefined;
       path = treePath.tail(path);
       return ops.childById(node, id);
     });
 
-  function updateAt(path: TreePath, update: (node: TreeNode) => void): MaybeNode {
+  function updateAt(path: TreePath, update: (node: N) => void): MaybeNode<N> {
     const node = nodeAtPathOrNull(path);
     if (node) update(node);
     return node;
   }
 
   // returns new path
-  function addNode(node: TreeNode, path: TreePath): TreePath | undefined {
+  function addNode(node: N, path: TreePath): TreePath | undefined {
     const newPath = path + node.id,
       existing = nodeAtPathOrNull(newPath);
     if (existing) {
-      (['dests', 'drops', 'clock'] as Array<keyof TreeNode>).forEach(key => {
-        if (defined(node[key]) && !defined(existing[key])) existing[key] = node[key] as never;
-      });
+      if (defined(node.clock) && !defined(existing.clock)) existing.clock = node.clock;
       return newPath;
     }
     return updateAt(path, n => {
@@ -125,7 +123,7 @@ export function makeTree(root: TreeNode): TreeWrapper {
       : undefined;
   }
 
-  function addNodes(nodes: TreeNode[], path: TreePath): TreePath | undefined {
+  function addNodes(nodes: N[], path: TreePath): TreePath | undefined {
     const node = nodes[0];
     if (!node) return path;
     const newPath = addNode(node, path);
@@ -173,17 +171,17 @@ export function makeTree(root: TreeNode): TreeWrapper {
       node.glyphs = glyphs;
     });
 
-  const parentNode = (path: TreePath): TreeNode => nodeAtPath(treePath.init(path));
+  const parentNode = (path: TreePath): N => nodeAtPath(treePath.init(path));
 
-  const getParentClock = (node: TreeNode, path: TreePath): Clock | undefined =>
+  const getParentClock = (node: N, path: TreePath): Clock | undefined =>
     path ? parentNode(path).clock : node.clock;
 
   function walkUntilTrue(
-    fn: (node: TreeNode, isMainline: boolean) => boolean,
+    fn: (node: N, isMainline: boolean) => boolean,
     from: TreePath = '',
     branchOnly = false,
   ) {
-    function traverse(node: TreeNode, isMainline: boolean): boolean {
+    function traverse(node: N, isMainline: boolean): boolean {
       if (fn(node, isMainline)) return true;
       let i = branchOnly ? 1 : 0;
       branchOnly = false;
@@ -208,7 +206,7 @@ export function makeTree(root: TreeNode): TreeWrapper {
     addNode,
     addNodes,
     setShapes: (shapes: Shape[], path: TreePath) =>
-      updateAt(path, (node: TreeNode) => {
+      updateAt(path, (node: N) => {
         node.shapes = shapes.slice();
       }),
     setCommentAt,
@@ -220,7 +218,7 @@ export function makeTree(root: TreeNode): TreeWrapper {
       }),
     pathIsMainline,
     pathIsForcedVariation,
-    lastMainlineNode: (path: TreePath): TreeNode => lastMainlineNodeFrom(root, path),
+    lastMainlineNode: (path: TreePath): N => lastMainlineNodeFrom(root, path),
     pathExists,
     deleteNodeAt,
     promoteAt,
@@ -229,7 +227,7 @@ export function makeTree(root: TreeNode): TreeWrapper {
       return updateAt(path, node => (node.forceVariation = force));
     },
     getCurrentNodesAfterPly,
-    merge: <T extends TreeNodeLite>(tree: T) => ops.merge(root, tree),
+    merge: (tree: N) => ops.merge(root, tree),
     parentNode,
     getParentClock,
     walkUntilTrue,

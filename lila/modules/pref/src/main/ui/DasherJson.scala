@@ -22,25 +22,13 @@ object DasherJson:
           "image" -> pref.bgImgUrl
         )
         .add("gallery", gallery),
+      // LiGo: goban's board and stone themes (ADR 0026 §3); no 3D boards or pieces.
       "board" -> Json.obj(
-        "is3d" -> pref.is3d,
-        "d2" -> Json.obj(
-          "current" -> pref.currentTheme.name,
-          "list" -> Theme.all
-        ),
-        "d3" -> Json.obj(
-          "current" -> pref.currentTheme3d.name,
-          "list" -> Theme3d.all
-        )
+        "current" -> pref.currentTheme.name,
+        "list" -> Theme.all
       ),
       "piece" -> Json.obj(
-        "d2" -> Json.obj(
-          "current" -> pref.currentPieceSet.name,
-          "list" -> PieceSet.all
-        ),
-        "d3" -> Json.obj(
-          "current" -> pref.currentPieceSet3d.name,
-          "list" -> PieceSet3d.all
-        )
+        "current" -> pref.currentPieceSet.name,
+        "list" -> PieceSet.all
       )
     )

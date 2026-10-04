@@ -1,7 +1,6 @@
 package lila.analyse
 package ui
 
-import chess.variant.*
 import chess.format.{ Uci, Fen }
 import play.api.libs.json.*
 
@@ -17,98 +16,24 @@ final class AnalyseUi(helpers: Helpers):
   // The explorer and tablebase settings went with the explorer (unit 3.4), and the external
   // engine and WebAssembly (browser engine) permissions with the engines (unit 3.5).
 
-  def userAnalysis(
-      data: JsObject,
-      pov: Pov,
-      chess960PositionNum: Option[Int] = None,
-      withForecast: Boolean = false,
-      inlinePgn: Option[String] = None
-  )(using ctx: Context): Page =
-    val hasWiki = pov.game.synthetic && pov.game.variant.standard
+  /** The Go analysis board (unit 7.4, ADR 0023 §1): the board, the move tree and the SGF box are built in the
+    * browser by `ui/analyse` on `libs/board`; the page only gives them somewhere to load. Nothing is stored.
+    */
+  def userAnalysis(coords: Int)(using ctx: Context): Page =
     Page(trans.site.analysis.txt())
       .css("analyse.free")
-      .css((pov.game.variant == Crazyhouse).option("analyse.zh"))
-      .css(withForecast.option("analyse.forecast"))
-      .css(ctx.blind.option("round.nvui"))
-      .csp(_.withWikiBooks)
-      .js(analyseNvuiTag)
-      .js:
-        bits.analyseModule(
-          "userAnalysis",
-          Json
-            .obj(
-              "data" -> data,
-              "wiki" -> hasWiki
-            )
-            .add("inlinePgn", inlinePgn)
-        )
-      .i18n(_.study)
-      .i18nOpt(ctx.speechSynthesis, _.nvui)
-      .i18nOpt(ctx.blind, _.keyboardMove)
+      .js(bits.analyseModule("userAnalysis", Json.obj("coords" -> coords)))
       .graph(
-        title = "Chess analysis board",
+        title = "Go analysis board",
         url = routeUrl(routes.UserAnalysis.index),
-        description = "Analyse chess positions and variations on an interactive chess board"
+        description = "Study Go positions and variations: play moves, try lines, open and save SGF files"
       )
       .flag(_.zoom):
-        main(
-          cls := List(
-            "analyse" -> true,
-            "analyse--wiki" -> hasWiki
-          )
-        )(
-          pov.game.synthetic.option(
-            st.aside(cls := "analyse__side")(
-              lila.ui.bits.mselect(
-                "analyse-variant",
-                span(cls := "text", dataIcon := iconByVariant(pov.game.variant))(
-                  pov.game.variant.variantTrans()
-                ),
-                Variant.list.all
-                  .filter(FromPosition != _)
-                  .map: v =>
-                    a(
-                      dataIcon := iconByVariant(v),
-                      cls := (pov.game.variant == v).option("current"),
-                      href := routes.UserAnalysis.parseArg(v.key.value)
-                    )(v.variantTrans())
-              ),
-              pov.game.variant.chess960.option(chess960selector(chess960PositionNum)),
-              hasWiki.option:
-                fieldset(cls := "analyse__wiki empty toggle-box toggle-box--toggle", id := "wikibook-field")(
-                  legend(tabindex := 0)("WikiBook"),
-                  div(cls := "analyse__wiki-text")
-                )
-            )
-          ),
-          div(cls := "analyse__board main-board")(chessgroundBoard),
+        main(cls := "analyse analyse--go")(
+          div(cls := "analyse__board main-board")(div(cls := "analyse__go-board")),
           div(cls := "analyse__tools"),
           div(cls := "analyse__controls")
         )
-
-  private def chess960selector(num: Option[Int])(using Translate) =
-    div(cls := "jump-960")(
-      num.map(pos => label(`for` := "chess960-position")(trans.site.chess960StartPosition(pos))),
-      br,
-      form(
-        cls := "control-960",
-        method := "GET",
-        action := routes.UserAnalysis.parseArg("chess960")
-      )(
-        input(
-          id := "chess960-position",
-          `type` := "number",
-          name := "position",
-          min := 0,
-          max := 959,
-          value := num
-        ),
-        form3.submit(trans.site.loadPosition(), icon = none)
-      )
-    )
-
-  private def iconByVariant(variant: Variant): Icon =
-    PerfKey.byVariant(variant).fold(Icon.CrownElite)(_.perfIcon)
 
   def titleFull(pov: Pov)(using ctx: Context) =
     val openingName = gameOpening(pov.game, ctx.isAuth).fold(trans.site.analysis.txt())(_.name)
@@ -128,11 +53,3 @@ final class AnalyseUi(helpers: Helpers):
 
     def analyseModule(mode: "userAnalysis" | "replay", json: JsObject) =
       PageModule("analyse.user", Json.obj("mode" -> mode, "cfg" -> json))
-
-    val embedUserAnalysisBody = div(id := "main-wrap", cls := "is2d")(
-      main(cls := "analyse")(
-        div(cls := "analyse__board main-board")(chessgroundBoard),
-        div(cls := "analyse__tools"),
-        div(cls := "analyse__controls")
-      )
-    )

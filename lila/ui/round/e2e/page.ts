@@ -8,7 +8,7 @@
 // Assets come from lila/public as lila serves them at /assets/; any other request fails the test.
 
 import { expect, type Page, type WebSocketRoute } from '@playwright/test';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -29,9 +29,11 @@ const manifest = () => {
 };
 
 const i18nFile = (prefix: string) => {
-  const name = readdirSync(join(publicDir, 'compiled/i18n')).find(
-    f => f.startsWith(`${prefix}.`) && /^[0-9a-f]+\.js$/.test(f.slice(prefix.length + 1)),
-  );
+  // The newest build's file: earlier builds leave theirs behind (a fresh checkout, as on CI, has one).
+  const dir = join(publicDir, 'compiled/i18n');
+  const name = readdirSync(dir)
+    .filter(f => f.startsWith(`${prefix}.`) && /^[0-9a-f]+\.js$/.test(f.slice(prefix.length + 1)))
+    .sort((a, b) => statSync(join(dir, b)).mtimeMs - statSync(join(dir, a)).mtimeMs)[0];
   if (!name) throw new Error(`no ${prefix} i18n file in lila/public/compiled/i18n: build the ui first`);
   return `/assets/compiled/i18n/${name}`;
 };
@@ -45,6 +47,9 @@ export interface GameOptions {
   confirmMoves?: number;
   /** Seconds on each clock (Fischer, 2 s increment); none for no clock. */
   clock?: number;
+  /** The board and stone preferences (`theme`, `pieceSet`) lila puts on <body>: goban's theme names. */
+  board?: string;
+  stones?: string;
 }
 
 type Color = 'black' | 'white';
@@ -119,6 +124,9 @@ function roundData(o: Required<GameOptions>) {
   };
 }
 
+/** Text safe inside a double-quoted HTML attribute ("Slate & Shell"). */
+const attr = (s: string) => s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
 function html(o: Required<GameOptions>): string {
   const m = manifest();
   const css = (name: string) => `<link rel="stylesheet" href="/assets/css/${name}.${m.css[name]}.css">`;
@@ -137,7 +145,8 @@ ${css('round')}
 <link id="favicon" rel="icon" href="/assets/logo/ligo-favicon.svg">
 </head>
 <body data-theme="dark" class="coords-in playing fixed-scroll" data-socket-domains="ligo.test"
-  data-user="${opts.userId}" data-sound-set="standard" style="---zoom:80">
+  data-user="${opts.userId}" data-sound-set="standard" data-board="${attr(o.board)}" data-piece-set="${attr(o.stones)}"
+  style="---zoom:80">
 <div id="main-wrap"><main class="round">
   <aside class="round__side"></aside>
   <div class="round__app"><div class="round__app__board main-board"></div><div class="col1-rmoves-preload"></div></div>
@@ -251,6 +260,8 @@ export async function openRound(page: Page, options: GameOptions = {}): Promise<
     color: 'black',
     confirmMoves: ConfirmMoves.NEVER,
     clock: 180,
+    board: 'Plain',
+    stones: 'Plain',
     ...options,
   };
   const server = new FakeServer((o.handicap >= 2 ? 0 : 1) + o.moves.length, o.clock || undefined);

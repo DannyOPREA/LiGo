@@ -34,7 +34,7 @@ private object PrefHandlers:
         id = r.get[UserId]("_id"),
         bg = r.getD("bg", d.bg),
         bgImg = r.strO("bgImg"),
-        is3d = r.getD("is3d", d.is3d),
+        is3d = false, // LiGo: no 3D Go board (ADR 0026 §3); a stored chess-era `true` is ignored
         theme = r.getD("theme", d.theme),
         pieceSet = r.getD("pieceSet", d.pieceSet),
         theme3d = r.getD("theme3d", d.theme3d),
