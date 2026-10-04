@@ -23,7 +23,8 @@ export const anyClockView = (ctrl: RoundController, position: TopOrBottom): Loos
       ctrl.corresClock!,
       player.color,
       position,
-      ctrl.inScoring() ? undefined : ctrl.data.game.player,
+      // nobody's clock runs while the dead stones are agreed (unit 7.7), nor once the game is over
+      ctrl.inScoring() || !playable(ctrl.data) ? undefined : ctrl.data.game.player,
     );
   else return whosTurn(ctrl, player.color, position);
 };

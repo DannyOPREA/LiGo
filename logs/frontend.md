@@ -4,6 +4,81 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.8 CI fix · The demo's sign-up and challenge on a fresh database
+- Did: the `e2e` job failed on #135 at sign-up, desktop and phone: lila looks up the mail server of an
+  email's domain, and `example.com` has none, so the CI runner's sign-up was refused (locally it went
+  through). The players now use `@gmail.com` addresses, a domain on lila's own allowlist that skips the
+  lookup (as Phase 5's #132 does). Run on a fresh database here, the demo then stopped at the challenge:
+  unit 6.8 (#127, merged meanwhile) made one setup window whose button reads "Send challenge" (the window
+  keeps the "Challenge <name>" title), so the spec checks the title and presses the new button; the
+  checklist says the same.
+- Verified: `dev/ligo up`, accounts file removed so both players sign up fresh, phase7 demo 6/6
+  (desktop and phone); oxlint and oxfmt clean.
+- Lessons: run a real-stack demo once from a fresh database before the PR; a run that signs in as
+  remembered accounts skips the sign-up path CI takes.
+
+### 2026-10-04 · unit 7.8 review · Reviewer findings fixed
+- Did: the reviewer found nothing blocking. Its three should-fix items are fixed in
+  `lila/tests/e2e-demo/phase7-demo.spec.ts`; all three were checks weakened by the demo's reused accounts.
+  The "Time to count the game" bell check and the lobby's now-playing row are now found by this game's id;
+  before, an older game or bell entry between the same two players could satisfy them. The "days clocks
+  did not move" text comparison is gone: the clock shows whole hours, so it could not fail, and the
+  `.running` count of 0 is the real check. Nits fixed: unused imports in the SGF reader script, the
+  opening point (3-4, not 4-4), the crawler comment (lila refuses HeadlessChrome's login submit), a
+  comment on the unseeded names, the fixture's README and GC (no place claimed; why a bare 1846 move
+  list is public domain whatever the copy's licence), and an unneeded non-null assertion oxlint flagged.
+- Verified: `dev/ligo up` in this cloud session, then the phase7 demo 6/6 (desktop and phone), run
+  against accounts and games left over from earlier runs (the case the fixes cover); oxlint, oxfmt and
+  tsc on the spec are clean; verify.sh.
+- Lessons: a demo that reuses accounts must identify everything it asserts by this run's game id;
+  name- or text-wide checks pass on stale data.
+
+### 2026-10-04 · unit 7.8 · The Phase 7 demo
+- Did: `lila/tests/e2e-demo/phase7-demo.spec.ts` (desktop and phone) with three tests on the real stack.
+  (1) Correspondence: two players sign up through the real /signup form (the dev server asks for no email
+  confirmation or captcha); A challenges B from the lobby's "Challenge a friend" (9x9, Correspondence tab,
+  2 days); B sees the swords' count, points at the challenge and accepts; the days clocks show from the
+  second move, the one to move runs; each plays a stone (tab titles "Your turn" / "Waiting for opponent");
+  two passes; both pages show the count, the countdown "1 day (or 23 hours 59 minutes) left to agree", no
+  running days clock, the tab "Time to count the game"; the bell has "Time to count the game" with
+  "Game vs <opponent>"; the lobby's "in play" tab counts the game as waiting and its row says "Time to
+  count the game"; both accept, the same result and final count on both pages, tab "Game Over", the bell's
+  game-end entry (Congratulations / Defeat); the game's SGF export is read back through goban-engine to the
+  same two stones and two passes. (2) Analysis: the 1846 "ear-reddening" game (Shusaku against Gennan
+  Inseki, public domain, `tests/e2e-demo/fixtures/`, 325 moves, replays legally under LiGo's rules) is
+  opened from a file on `/analysis`, stepped through with the keys, given a variation at move 10 and
+  downloaded; goban-engine reads the file back with the 325-move main line intact and the new move as
+  the second child of move 10. (3) The same walk after pasting the text at `/paste` (7.5) and opening
+  `/<id>/analysis`. The checklist is docs/demos/phase-7.md. The new spec is picked up by the e2e workflow
+  and `dev/ligo e2e demo` as they are (`testMatch: '*.spec.ts'`).
+- Worked: sign-up through the real form needs only a click on each switch's label; the accounts are kept
+  in a file in the temp folder (keyed by the server's port) so the second project signs in instead of
+  signing up again; DOM-state waits only.
+- Didn't work / dead ends: (a) lila answers 404 to some pages (a challenge, a game) for the "HeadlessChrome"
+  user agent (it takes it for a crawler; the desktop project has no user agent of its own), so the
+  players use an ordinary Chrome user agent. (b) The challenge dropdown's tick and cross show only when
+  the challenge is pointed at, and its script loads on the first click: click until it shows, then hover.
+  (c) `toPass()` has no timeout by default: three unbounded retries made a stuck step look like a
+  240 s hang. Every `toPass` has a timeout now and the spec sets `actionTimeout`. (d) lila allows 10
+  sign-ups per 10 minutes per address (429 "Too many requests"): repeated local runs hit it, hence the file of accounts.
+  (e) The days clock is not on the page before the second move (`turns > 1`), so it is checked from
+  there. (f) The bell has no entry for an ordinary move (lila rings only at 80% of the time), so the demo
+  checks the move by the board, the tab title and the clock.
+- Lessons: a Playwright step that hangs without a timeout usually has an unbounded `toPass` or `click`;
+  set `actionTimeout` in a new spec first. A demo that signs up players must stay inside lila's 10
+  sign-ups per 10 minutes.
+- A real bug found and fixed (one line, with a test): once a correspondence game ended, the days clock of the
+  side that would have moved kept the `running` class (`ui/round/src/view/clock.ts` passed the turn colour
+  whenever the phase was not the scoring one). It now passes none when the game is not playable; the new round
+  e2e test (`once the game is over no days clock is drawn as running`, desktop and phone) fails without it.
+  The demo also showed that lila rings the game-end bell only for a player who is off the game page, so
+  Black leaves for the lobby before White's accept, and the bell entry takes Black back to the game.
+- Decisions: four rows in logs/decisions.md (2026-10-04, unit 7.8).
+- Verified: see the PR description (the three demo specs on desktop and phone, `dev/ligo up` in a cloud
+  session, dockerd started by hand).
+- Needs owner verification: the checklist docs/demos/phase-7.md in two real browsers, and the SGF in Sabaki.
+- Follow-ups: none for 7.8.
+
 ### 2026-10-04 · unit 7.7 review · Reviewer findings fixed
 - Did: the reviewer found nothing blocking. Its two should-fix items are fixed. The days clock now
   also stands still once the game is over (a counted game ends while the clock stands still, and
