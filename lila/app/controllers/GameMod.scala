@@ -35,24 +35,24 @@ final class GameMod(env: Env)(using org.apache.pekko.stream.Materializer) extend
       bindForm(actionForm)(
         err => BadRequest(err.toString),
         {
-          case (gameIds, Some("pgn")) => downloadPgn(user, gameIds)
+          case (gameIds, Some("pgn")) => downloadGames(user, gameIds)
           // "analyse" (fishnet analysis of the selected games) went with fishnet (unit 3.5).
           case _ => notFound
         }
       )
   }
 
-  private def downloadPgn(user: lila.user.User, gameIds: Seq[GameId])(using Context) =
+  private def downloadGames(user: lila.user.User, gameIds: Seq[GameId])(using Context) =
     Ok.chunked:
       env.api.gameApiV2
         .exportByIds(
           GameApiV2.ByIdsConfig(
             ids = gameIds,
-            format = GameApiV2.Format.PGN,
-            flags = lila.game.PgnDump.WithFlags(),
+            format = GameApiV2.Format.JSON,
+            flags = lila.game.GameExport.WithFlags(),
             perSecond = MaxPerSecond(100),
             playerFile = none
           )
         )
-    .asAttachmentStream(s"lichess_mod_${user.username}_${gameIds.size}_games.pgn")
-      .as(pgnContentType)
+    .asAttachmentStream(s"ligo_mod_${user.username}_${gameIds.size}_games.ndjson")
+      .as(ndJson.contentType)

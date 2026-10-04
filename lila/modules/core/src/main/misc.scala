@@ -10,14 +10,7 @@ package puzzle:
   case class DailyChange(id: PuzzleId)
 
 package lpv:
-  import _root_.chess.format.pgn.PgnStr
-  enum LpvEmbed:
-    case PublicPgn(pgn: PgnStr)
-    case PrivateStudy
   type LinkRender = (String, String) => Option[scalatags.Text.Frag]
-  enum Lpv:
-    case AllPgnsFromText(text: String, max: Max, promise: Promise[Map[String, LpvEmbed]])
-    case LinkRenderFromText(text: String, promise: Promise[LinkRender])
 
 package mailer:
   case class CorrespondenceOpponent(

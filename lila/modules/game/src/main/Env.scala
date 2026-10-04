@@ -20,12 +20,10 @@ final class Env(
     appConfig: Configuration,
     db: lila.db.Db,
     yoloDb: lila.db.AsyncDb @@ lila.db.YoloDb,
-    routeUrl: RouteUrl,
     userApi: lila.core.user.UserApi,
     mongoCache: lila.memo.MongoCache.Api,
     lightUserApi: lila.core.user.LightUserApi,
-    cacheApi: lila.memo.CacheApi,
-    fideIdOf: lila.core.user.PublicFideIdOf
+    cacheApi: lila.memo.CacheApi
 )(using scheduler: Scheduler)(using Executor, Materializer):
   private val config = appConfig.get[GameConfig]("game")(using AutoConfig.loader)
 
@@ -36,8 +34,6 @@ final class Env(
   val cached: Cached = wire[Cached]
 
   lazy val paginator = wire[PaginatorBuilder]
-
-  lazy val pgnDump = wire[PgnDump]
 
   lazy val crosstableApi = new CrosstableApi(
     coll = db(config.crosstableColl),

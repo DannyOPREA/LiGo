@@ -1,6 +1,5 @@
 package lila.web
 
-import chess.format.pgn.PgnStr
 import play.api.http.*
 import play.api.mvc.Codec
 
@@ -19,10 +18,6 @@ trait ResponseWriter extends ContentTypes:
 
   given ContentTypeOf[Int] = textContentType
   given (using codec: Codec): Writeable[Int] = Writeable(i => codec.encode(i.toString))
-
-  val pgnContentType = "application/x-chess-pgn"
-  given pgnWriteable(using codec: Codec): Writeable[PgnStr] =
-    Writeable(p => codec.encode(p.toString), pgnContentType.some)
 
   @nowarn("msg=unused implicit parameter")
   given stringRuntimeContentType[A: StringRuntime]: ContentTypeOf[A] = textContentType

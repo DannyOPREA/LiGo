@@ -2,30 +2,25 @@ package lila.api
 
 import org.apache.pekko.stream.scaladsl.*
 import chess.ByColor
-import chess.format.Fen
-import chess.format.pgn.{ PgnStr, Tag }
 import chess.opening.Opening
 import play.api.libs.json.*
 import reactivemongo.pekkostream.cursorProducer
 
 import lila.analyse.{ AccuracyPercent, Analysis, JsonView as analysisJson }
-import lila.common.HTTPRequest
 import lila.common.Json.given
 import lila.core.LightUser
 import lila.core.game.GoBridge
 import lila.db.dsl.{ *, given }
 import lila.game.JsonView.given
-import lila.game.PgnDump.{ WithFlags, applyDelay }
+import lila.game.GameExport.{ WithFlags, applyDelay }
 import lila.game.Query
 import lila.round.GameProxyRepo
 
 final class GameApiV2(
-    pgnDump: PgnDump,
     gameRepo: lila.game.GameRepo,
     gameCache: lila.game.Cached,
     gameJsonView: lila.game.JsonView,
     analysisRepo: lila.analyse.AnalysisRepo,
-    annotator: lila.analyse.Annotator,
     getLightUser: LightUser.Getter,
     gameProxy: GameProxyRepo,
     bookmarkApi: lila.bookmark.BookmarkApi,
@@ -35,36 +30,20 @@ final class GameApiV2(
   import GameApiV2.*
 
   def exportOne(game: Game, config: OneConfig): Fu[String] =
-    game.pgnImport.ifTrue(config.imported) match
-      case Some(imported) => fuccess(imported.pgn.value)
-      case None =>
-        for
-          (game, initialFen, analysis) <- enrich(config.flags)(game)
-          opening = none
-          formatted <- config.format match
-            case Format.JSON =>
-              toJson(game, initialFen, analysis, opening, config).map(Json.stringify)
-            case Format.PGN =>
-              PgnStr.raw(
-                pgnDump(
-                  game,
-                  initialFen,
-                  analysis,
-                  opening,
-                  config.flags
-                ).map(annotator.toPgnString)
-              )
-        yield formatted
+    for
+      (game, analysis) <- enrich(config.flags)(game)
+      json <- toJson(game, analysis, none, config)
+    yield Json.stringify(json)
 
   private val fileR = """[\s,]""".r
 
   def filename(game: Game, format: Format): Fu[String] =
     gameLightUsers(game).map: users =>
       fileR.replaceAllIn(
-        "lichess_pgn_%s_%s_vs_%s.%s.%s".format(
-          Tag.UTCDate.format.print(game.createdAt),
-          pgnDump.dumper.player.tupled(users.white),
-          pgnDump.dumper.player.tupled(users.black),
+        "ligo_%s_%s_vs_%s.%s.%s".format(
+          dateFormat.print(game.createdAt),
+          playerName.tupled(users.white),
+          playerName.tupled(users.black),
           game.id,
           format.toString.toLowerCase
         ),
@@ -109,8 +88,8 @@ final class GameApiV2(
     games <- gameRepo.recentFinishedGamesFromSecondary(user, Max(10))
     config = MobileRecentConfig(user)
     enriched <- games.sequentially(enrich(config.flags))
-    jsons <- enriched.sequentially: (game, fen, analysis) =>
-      toJson(game, fen, analysis, none, config)
+    jsons <- enriched.sequentially: (game, analysis) =>
+      toJson(game, analysis, none, config)
   yield JsArray(jsons)
 
   def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
@@ -118,9 +97,9 @@ final class GameApiV2(
       .lastPlayedPlayingId(user.id)
       .flatMapz(gameProxy.gameIfPresentOrFetch)
       .flatMapz: game =>
-        val config = OneConfig(GameApiV2.Format.JSON, false, WithFlags())
-        enrich(config.flags)(game).flatMap: (game, fen, analysis) =>
-          toJson(game, fen, analysis, none, config).dmap(some)
+        val config = OneConfig(GameApiV2.Format.JSON, WithFlags())
+        enrich(config.flags)(game).flatMap: (game, analysis) =>
+          toJson(game, analysis, none, config).dmap(some)
 
   def exportByIds(config: ByIdsConfig): Source[String, ?] =
     gameRepo
@@ -141,11 +120,8 @@ final class GameApiV2(
     val games = gameRepo
       .sortedCursor(Query.imported(config.user), Query.importedSort, batchSize = config.perSecond.value)
       .documentSource()
-    if config.annotated then games.via(preparationFlow(config))
-    else
-      games
-        .throttle(config.perSecond.value, 1.second)
-        .mapConcat(_.pgnImport.map(_.pgn.value + "\n\n\n").toList)
+    // PGN import went with chess games (unit 3.17): there is no imported text to return as it was sent.
+    games.via(preparationFlow(config))
 
   def exportUserBookmarks(config: BookmarkConfig): Source[String, ?] =
     import lila.game.BSONHandlers.gameHandler
@@ -174,45 +150,22 @@ final class GameApiV2(
     Flow[Game]
       .throttle(config.perSecond.value, 1.second)
       .mapAsync(4)(enrich(config.flags))
-      .mapAsync(4): (game, fen, analysis) =>
+      .mapAsync(4): (game, analysis) =>
         // a Go game has no chess opening (unit 3.16)
-        formatterFor(config)(game, fen, analysis, none)
+        toJson(game, analysis, none, config).map: json =>
+          s"${Json.stringify(json)}\n"
 
-  private def enrich(flags: WithFlags)(game: Game) =
-    gameRepo
-      .initialFen(game)
-      .flatMap: initialFen =>
-        flags.requiresAnalysis
-          .so(analysisRepo.byGame(game))
-          .dmap:
-            (game, initialFen, _)
-
-  private def formatterFor(config: Config) =
-    config.format match
-      case Format.PGN => pgnDump.formatter(config.flags)
-      case Format.JSON => jsonFormatter(config)
-
-  private def jsonFormatter(config: Config) =
-    (
-        game: Game,
-        initialFen: Option[Fen.Full],
-        analysis: Option[Analysis],
-        opening: Option[Opening.AtPly]
-    ) =>
-      toJson(game, initialFen, analysis, opening, config).map: json =>
-        s"${Json.stringify(json)}\n"
+  private def enrich(flags: WithFlags)(game: Game): Fu[(Game, Option[Analysis])] =
+    flags.requiresAnalysis.so(analysisRepo.byGame(game)).dmap(game -> _)
 
   private def toJson(
       g: Game,
-      initialFen: Option[Fen.Full],
       analysisOption: Option[Analysis],
       opening: Option[Opening.AtPly],
       config: Config
   ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
     flags = config.flags
-    pgn <- config.flags.pgnInJson.optionFu:
-      pgnDump(g, initialFen, analysisOption, opening, config.flags).map(annotator.toPgnString)
     bookmarked <- config.flags.bookmark.so(bookmarkApi.exists(g, config.by.map(_.userId)))
     // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
     // exists any more to name it, so "arenaTour" is never populated for new games.
@@ -241,7 +194,6 @@ final class GameApiV2(
     // initial FEN, and its moves as SGF points and `pass` (unit 3.16).
     .add("go" -> lila.game.JsonView.goSetup(g.go).some)
     .add("fullId" -> config.by.flatMap(Pov(g, _)).map(_.fullId))
-    .add("initialFen" -> initialFen)
     .add("winner" -> g.winnerColor.map(_.name))
     .add("opening" -> opening)
     .add("moves" -> flags.moves.option {
@@ -251,7 +203,6 @@ final class GameApiV2(
     .add("clocks" -> flags.clocks.so(g.bothClockStates).map { clocks =>
       applyDelay(clocks, flags.keepDelayIf(g.playable))
     })
-    .add("pgn" -> pgn)
     .add("daysPerTurn" -> g.daysPerTurn)
     .add("analysis" -> analysisOption.ifTrue(flags.evals).map(analysisJson.moves(_, withGlyph = false)))
     .add("arenaTour" -> g.tournamentId.map(id => Json.obj("id" -> id)))
@@ -274,13 +225,18 @@ final class GameApiV2(
 
 object GameApiV2:
 
+  // Game exports are JSON (or NDJSON) only since PGN went with chess games (unit 3.17); SGF export joins
+  // in Phase 4 (unit 4.11).
   enum Format:
-    case PGN, JSON
+    case JSON
   object Format:
-    def byRequest(using req: play.api.mvc.RequestHeader) =
-      if HTTPRequest.acceptsNdJson(req) || HTTPRequest.acceptsJson(req)
-      then JSON
-      else PGN
+    def byRequest: Format = JSON
+
+  private val dateFormat =
+    java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(java.time.ZoneOffset.UTC)
+
+  private def playerName(p: lila.core.game.Player, u: Option[LightUser]): String =
+    u.fold(p.name.fold(UserName.anonymous.value)(_.value))(_.name.value)
 
   sealed trait Config:
     val format: Format
@@ -294,7 +250,6 @@ object GameApiV2:
 
   case class OneConfig(
       format: Format,
-      imported: Boolean,
       flags: WithFlags
   )(using val by: Option[Me])
       extends Config:
@@ -345,11 +300,10 @@ object GameApiV2:
 
   case class ImportedConfig(
       user: UserId,
-      annotated: Boolean,
       flags: WithFlags
   )(using val by: Option[Me])
       extends Config:
-    val format = Format.PGN
+    val format = Format.JSON
     val perSecond = MaxPerSecond(20)
 
   case class MobileRecentConfig(user: User)(using val by: Option[Me]) extends Config:

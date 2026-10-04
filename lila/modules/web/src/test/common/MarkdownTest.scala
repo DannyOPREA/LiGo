@@ -1,10 +1,7 @@
 package lila.markdown
 
-import chess.format.pgn.PgnStr
-
 import lila.core.lilaism.Lilaism.*
-import lila.core.config.{ AssetDomain, NetDomain }
-import lila.core.misc.lpv.LpvEmbed
+import lila.core.config.AssetDomain
 
 class MarkdownTest extends munit.FunSuite:
 
@@ -33,43 +30,6 @@ class MarkdownTest extends munit.FunSuite:
         """<p><a href="https://example.com" target="_blank" rel="nofollow noreferrer">Example</a></p>
 """
       )
-    )
-  val domain = NetDomain("http://l.org")
-  val gameId = GameId("gameId12")
-  val studyId = StudyId("StudyId1")
-  val chapterId = StudyChapterId("ChaptId1")
-  val gamePgn = PgnStr("e2 e4")
-  val gameUrl = s"http://l.org/$gameId"
-  val chapterPgn = PgnStr("Nf3 Nf6 d4")
-  val chapterUrl = s"http://l.org/study/$studyId/$chapterId"
-  val pgns =
-    Map(gameId.value -> LpvEmbed.PublicPgn(gamePgn), chapterId.value -> LpvEmbed.PublicPgn(chapterPgn))
-  val expander = MarkdownRender.PgnSourceExpand(domain, pgns.get)
-  val mdRender = MarkdownRender(pgnExpand = expander.some)("test")
-
-  test("markdown dont embed explicit links"):
-    val md = Markdown(s"foo [game]($gameUrl) bar")
-    assertEquals(
-      mdRender(md),
-      Html:
-        s"""<p>foo <a href="$gameUrl">game</a> bar</p>
-"""
-    )
-  test("markdown game embeds auto link"):
-    val md = Markdown(s"foo $gameUrl bar")
-    assertEquals(
-      mdRender(md),
-      Html:
-        s"""<p>foo <div data-pgn="$gamePgn" class="lpv--autostart is2d">$gameUrl</div> bar</p>
-"""
-    )
-  test("markdown game embeds auto link with ply"):
-    val md = Markdown(s"prefix $gameUrl#1 suffix")
-    assertEquals(
-      mdRender(md),
-      Html:
-        s"""<p>prefix <div data-pgn="$gamePgn" class="lpv--autostart is2d" data-ply="1">$gameUrl#1</div> suffix</p>
-"""
     )
   test("markdown image whitelist pass - exact domain match to AssetDomain conf"):
     assertEquals(
@@ -113,14 +73,6 @@ class MarkdownTest extends munit.FunSuite:
         """<p><a href="https://evil-wikimedia.org/image.png" target="_blank" rel="nofollow noreferrer">image</a></p>
 """
       )
-    )
-  test("markdown chapter embed auto link"):
-    val md = Markdown(s"foo $chapterUrl bar")
-    assertEquals(
-      mdRender(md),
-      Html:
-        s"""<p>foo <div data-pgn="$chapterPgn" class="lpv--autostart is2d">$chapterUrl</div> bar</p>
-"""
     )
   test("anchorlink added for headings"):
     assertEquals(

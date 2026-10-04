@@ -16,6 +16,47 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · 3.17 part 2a · FEN, PGN and UCI gone from lila
+- Did: lila no longer writes or reads PGN, FEN or UCI. Removed: both `PgnDump`s (game and api) and
+  the `core` `PgnDump` trait (its export flags are now `lila.core.game.GameExport.WithFlags`, the
+  move delay `lila.game.GameExport.applyDelay`); `GameRepo.initialFen` and friends; `TextLpvExpand`
+  and the PGN embeds in Markdown (`MarkdownRender.PgnSourceExpand`, the `pgnCache`; forum and blog
+  game links are plain links); `Annotator`; the chess move events (`Event.Move`, `Drop`,
+  `PossibleMoves`, `Enpassant`, `Castling`, `Promotion`) and with them the auto threefold claim
+  (`Threefold`, `Drawer.autoThreefold`); the `Uci` route binders; the FEN and castling branch of
+  the shouting check; `fenAnalysisLink`; the chess960 start-position line on the game page; the
+  `.pgn` export route, the PGN content type and the `.pgn` and study-export path checks; the unused
+  study and relay rate limiters. The download page and the mod games page say NDJSON and lose the
+  PGN tags, opening and textual-annotation options; export file names start with `ligo_`. Game exports (`/game/export`, the user, by-ids,
+  bookmark, imported and mod exports, `GameApiV2`) are JSON or NDJSON only until SGF export
+  (4.11); `PgnImport` keeps the imported text as a plain string until SGF import (7.5).
+- Tests: the chess event tests (`Move`, `PossibleMoves`, `Enpassant`, `Castling`), the PGN embed
+  Markdown tests, `LpvGameRegexTest` and `AnnotatorTest` deleted with their code; `EventTest`
+  keeps the `RedirectOwner` property (its cookie no longer borrowed a castling event);
+  `StringTest`'s "not shouting" cases are Go chat lines instead of FENs; `GoExportTest` follows the
+  new `GameStream.toJson`.
+- Left for others: setup, challenge and lobby FEN fields, `Form.fen`, `ChessHelper.chessgroundMini`
+  and `AnalyseUi.miniSpan` go with variants and openings (part 2b); `chess.eval` and the chess
+  analysis tree (`modules/tree`) are a later slice; `/analysis/pgn/*` stays the 7.4 redirect.
+  The browser's PGN viewer embed (`site.lpvEmbed.ts`, `bits.lpv.ts`, the `.lpv--autostart` hooks,
+  the `bits.lpv` CSS and the `@lichess-org/pgn-viewer` dependency) is now unreachable; removing the
+  dependency is a dependency change, so it goes with 3.19 part 2's package clean-up. The "claim
+  draw on threefold repetition" preference does nothing now; it goes with Phase 9's preferences
+  work (9.7).
+- Worked: compiling with tests after each wave and clearing the unused-import and unused-parameter
+  warnings the removal left (macwire's `wire[...]` needs no change when a parameter goes).
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Review (reviewer agent): 2 blocking findings, both fixed: the download page still offered PGN
+  options and said "PGN", and the mod games button said "Download PGN". From the optional list:
+  `.ndjson` file names, one `ligo_` prefix, the `.pgn` path checks, the limiters disclosure. Not
+  changed: chat made mostly of Go coordinates ("Q16 R4") was already lowercased as shouting before
+  this PR (the removed exemption was for FEN and castling only).
+- Chess guard (#98): the files part 1 and 2a cleaned (67) are dropped from
+  dev/ci/chess-guard-baseline.txt.
+- Decisions: logs/decisions.md (3.17 part 2a row); ADR 0019 §8 amended.
+- Verified by Claude: see the PR.
+
 ### 2026-10-03 · 3.17 part 1 · lila's game holds only the Go game
 - Did: `Game.go` is required and the chess game is gone from lila's `Game` (`core`), with chess
   game storage (the BSON reader and writer read and write the Go block only; `PgnStorage`, the

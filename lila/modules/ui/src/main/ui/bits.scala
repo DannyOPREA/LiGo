@@ -2,7 +2,6 @@ package lila.ui
 
 import play.api.i18n.Lang
 import java.time.YearMonth
-import chess.format.Fen
 import scalalib.StringOps.addQueryParams
 
 import lila.core.i18n.Translate
@@ -83,11 +82,6 @@ object bits:
         dataIcon := Icon.GreaterThan,
         cls := List("disabled" -> next.isEmpty)
       )
-    )
-
-  def fenAnalysisLink(fen: Fen.Full)(using Translate) =
-    a(href := routes.UserAnalysis.parseArg(ChessHelper.underscoreFen(fen)))(
-      lila.core.i18n.I18nKey.site.analysis()
     )
 
   def contactEmailLinkEmpty(email: String) =
