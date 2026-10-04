@@ -2,7 +2,6 @@ package lila.api
 
 import org.apache.pekko.stream.scaladsl.*
 import chess.ByColor
-import chess.opening.Opening
 import play.api.libs.json.*
 import reactivemongo.pekkostream.cursorProducer
 
@@ -28,7 +27,7 @@ final class GameApiV2(
   import GameApiV2.*
 
   def exportOne(game: Game, config: OneConfig): Fu[String] =
-    toJson(game, none, config).map(Json.stringify)
+    toJson(game, config).map(Json.stringify)
 
   private val fileR = """[\s,]""".r
 
@@ -82,7 +81,7 @@ final class GameApiV2(
   def mobileRecent(user: User)(using Option[Me]): Fu[JsArray] = for
     games <- gameRepo.recentFinishedGamesFromSecondary(user, Max(10))
     config = MobileRecentConfig(user)
-    jsons <- games.sequentially(toJson(_, none, config))
+    jsons <- games.sequentially(toJson(_, config))
   yield JsArray(jsons)
 
   def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
@@ -91,7 +90,7 @@ final class GameApiV2(
       .flatMapz(gameProxy.gameIfPresentOrFetch)
       .flatMapz: game =>
         val config = OneConfig(GameApiV2.Format.JSON, WithFlags())
-        toJson(game, none, config).dmap(some)
+        toJson(game, config).dmap(some)
 
   def exportByIds(config: ByIdsConfig): Source[String, ?] =
     gameRepo
@@ -143,12 +142,11 @@ final class GameApiV2(
       .throttle(config.perSecond.value, 1.second)
       .mapAsync(4): game =>
         // a Go game has no chess opening (unit 3.16); no engine analysis (unit 3.17, slice b)
-        toJson(game, none, config).map: json =>
+        toJson(game, config).map: json =>
           s"${Json.stringify(json)}\n"
 
   private def toJson(
       g: Game,
-      opening: Option[Opening.AtPly],
       config: Config
   ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
@@ -174,7 +172,6 @@ final class GameApiV2(
     .add("go" -> lila.game.JsonView.goSetup(g.go).some)
     .add("fullId" -> config.by.flatMap(Pov(g, _)).map(_.fullId))
     .add("winner" -> g.winnerColor.map(_.name))
-    .add("opening" -> opening)
     .add("moves" -> flags.moves.option {
       val moves = lila.game.JsonView.goMoves(g.go)
       applyDelay(moves, flags.keepDelayIf(g.playable)).mkString(" ")

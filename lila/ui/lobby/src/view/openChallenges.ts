@@ -93,7 +93,6 @@ const renderRow = (ctrl: LobbyController, row: OpenRow): VNode => {
         { attrs: { title: row.komi !== undefined ? `${i18n.site.goKomi} ${row.komi}` : '' } },
         row.rules ? `${rulesetName(row.rules)}${row.komi !== undefined ? ` · ${row.komi}` : ''}` : '',
       ),
-      // Always even until unit 4.9 lets a game have handicap stones
       td('.handicap', row.handicap > 0 ? `${i18n.site.goHandicap} ${row.handicap}` : i18n.site.goEven),
       td('.mode', i18n.site[row.rated ? 'rated' : 'casual']),
     ],

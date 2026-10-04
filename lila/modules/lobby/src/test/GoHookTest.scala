@@ -4,7 +4,7 @@ import chess.{ Clock, Rated }
 import scalalib.model.Days
 import ligo.gorules.{ BoardSize, Ruleset, Setup as GoSetup }
 
-import lila.core.game.GoSetups
+import lila.core.game.{ ClockSettings, GoSetups }
 import lila.core.rating.RatingRange
 
 // Unit 3.15: hooks and seeks carry the Go setup of the game they create.
@@ -14,9 +14,8 @@ class GoHookTest extends munit.FunSuite:
 
   private def hook(go: GoSetup, sri: String) = Hook.make(
     sri = lila.core.socket.Sri(sri),
-    variant = chess.variant.Standard,
     go = go,
-    clock = Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3)),
+    clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
     rated = Rated.No,
     color = TriColor.Random,
     user = none,
@@ -48,7 +47,6 @@ class GoHookTest extends munit.FunSuite:
     )
     val seek = Seek(
       "abcdefgh",
-      chess.variant.Standard.id,
       nine.some,
       None,
       Rated.No,
@@ -66,9 +64,8 @@ class GoHookTest extends munit.FunSuite:
   // Unit 6.4 (first part): which hooks the pools may take (ADR 0022 §6)
   private def rated(go: GoSetup, color: TriColor = TriColor.Random) = Hook.make(
     sri = lila.core.socket.Sri("r"),
-    variant = chess.variant.Standard,
     go = go,
-    clock = Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3)),
+    clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
     rated = Rated.Yes,
     color = color,
     user = none,
@@ -125,7 +122,7 @@ class GoHookTest extends munit.FunSuite:
   private val alice = seekUser("alice")
 
   private def dupSeek(id: String, go: Option[GoSetup], by: LobbyUser = bob) =
-    Seek(id, chess.variant.Standard.id, go, Some(Days(3)), Rated.No, by, RatingRange.default, nowInstant)
+    Seek(id, go, Some(Days(3)), Rated.No, by, RatingRange.default, nowInstant)
 
   private def shown(seeks: List[Seek]) = SeekApi.noDupsFor(alice, seeks).map(_.id)
 
@@ -151,3 +148,21 @@ class GoHookTest extends munit.FunSuite:
       SeekApi.noDupsFor(bob, List(dupSeek("a", nine.some), dupSeek("b", nine.some))).map(_.id),
       List("a", "b")
     )
+
+  // Unit 4.9: byo-yomi hooks
+  private val byo = ClockSettings.Byoyomi(ligo.gorules.ByoyomiConfig(600, 5, 30))
+
+  test("a byo-yomi hook shows its clock and periods, and matches only the same clock"):
+    val h = hook(GoSetups.default, "y").copy(clock = byo)
+    assertEquals((h.render \ "clock").as[String], "10+5×30s")
+    assertEquals((h.render \ "byo" \ "periods").as[Int], 5)
+    assertEquals((h.render \ "i").as[Int], 0)
+    assertEquals((hook(GoSetups.default, "f").render \ "byo").toOption, None)
+    assert(h.compatibleWith(hook(GoSetups.default, "z").copy(clock = byo)))
+    assert(!h.compatibleWith(hook(GoSetups.default, "f")), "Fischer")
+
+  test("byo-yomi hooks don't go to the pools, which are all Fischer for now"):
+    val h = rated(GoSetups.default).copy(clock = byo)
+    given lila.core.pool.IsPoolCompatible = lila.core.pool.IsPoolCompatible((_, _) => true)
+    assert(!h.compatibleWithPools)
+    assert(!h.compatibleWithPool(Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0)), h.go))

@@ -1,7 +1,6 @@
 package lila.core
 package challenge
 
-import _root_.chess.variant.Variant
 import _root_.chess.{ Color, Rated }
 import _root_.chess.rating.RatingProvisional
 import _root_.chess.IntRating
@@ -14,7 +13,6 @@ import lila.core.game.Game
 trait Challenge:
   import Challenge.*
   val id: ChallengeId
-  val variant: Variant
   val rated: Rated
   val timeControl: TimeControl
   val finalColor: Color
@@ -40,6 +38,17 @@ object Challenge:
       override def realTime = config.some
       // All durations are expressed in seconds
       export config.{ limit, increment, show }
+    // a byo-yomi clock (unit 4.9): a real-time game, but not a Fischer one
+    case class Byoyomi(config: ligo.gorules.ByoyomiConfig) extends TimeControl:
+      def settings = lila.core.game.ClockSettings.Byoyomi(config)
+      def show = settings.show
+
+  extension (tc: TimeControl)
+    /** The real-time clock settings, Fischer or byo-yomi (unit 4.9). */
+    def clockSettings: Option[lila.core.game.ClockSettings] = tc match
+      case TimeControl.Clock(c) => lila.core.game.ClockSettings.Fischer(c).some
+      case b: TimeControl.Byoyomi => b.settings.some
+      case _ => none
 
   case class Rating(int: IntRating, provisional: RatingProvisional):
     def show = s"$int${if provisional.yes then "?" else ""}"

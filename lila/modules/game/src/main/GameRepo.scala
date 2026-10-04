@@ -150,7 +150,6 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
           ++ Query.rated
           ++ Query.user(userId)
           ++ Query.turnsGt(22)
-          ++ Query.variantStandard
           ++ Query.clock(true)
       )
       .sort(sort.asc(F.createdAt))
@@ -184,12 +183,12 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
     val query = coll.find(selector ++ Query.go).sort(sort).batchSize(batchSize)
     hint.map(coll.hint).foldLeft(query)(_.hint(_)).cursor[Game](ReadPref.sec)
 
-  def sortedCursor(user: UserId, pk: PerfKey): PekkoStreamCursor[Game] =
+  // every game is in the Go perf (unit 3.17), so `pk` picks nothing out
+  def sortedCursor(user: UserId, @annotation.unused pk: PerfKey): PekkoStreamCursor[Game] =
     sortedCursor(
       Query.user(user.id) ++
         Query.finished ++
-        Query.turnsGt(2) ++
-        Query.variant(lila.rating.PerfType.variantOf(pk)),
+        Query.turnsGt(2),
       Query.sortChronological
     )
 
@@ -406,8 +405,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
 
   def insertDenormalized(g: Game): Funit =
     val g2 =
-      if g.rated.yes && (g.userIds.distinct.size != 2 ||
-          !lila.core.game.allowRated(g.variant, g.clock.map(_.config)))
+      if g.rated.yes && g.userIds.distinct.size != 2
       then g.copy(rated = chess.Rated.No)
       else g
     val userIds = g2.userIds.distinct

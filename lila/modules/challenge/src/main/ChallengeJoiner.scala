@@ -46,7 +46,8 @@ private object ChallengeJoiner:
         rated = c.rated,
         source = lila.core.game.Source.Friend,
         daysPerTurn = c.daysPerTurn,
-        rules = c.rules
+        rules = c.rules,
+        byoyomi = c.timeControl.clockSettings.flatMap(_.byoyomi)
       )
       .map(_.withId(c.gameId).start)
       .left

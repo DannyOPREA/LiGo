@@ -1,7 +1,6 @@
 package lila.core
 package game
 
-import _root_.chess.variant.Variant
 import _root_.chess.{ ByColor, Centis, Clock, Color, Ply, Speed, Status }
 import cats.derived.*
 import play.api.libs.json.*
@@ -161,11 +160,6 @@ object BSONFields:
   val pgnImport = "pgni"
   val playingUids = "pl"
 
-def allowRated(variant: Variant, clock: Option[Clock.Config]) =
-  variant.standard || clock.exists: c =>
-    c.estimateTotalTime >= Centis(3000) &&
-      c.limitSeconds > 0 || c.incrementSeconds > 1
-
 def isBoardCompatible(clock: Clock.Config): Boolean = Speed(clock) >= Speed.Rapid
 def isBotCompatible(clock: Clock.Config): Boolean = Speed(clock) >= Speed.Bullet
 
@@ -178,10 +172,5 @@ def interleave[A](a: Seq[A], b: Seq[A]): Vector[A] =
 
   builder.result()
 
-def reasonableMinimumNumberOfMoves(variant: Variant): Int =
-  import _root_.chess.variant.*
-  variant.match
-    case Standard | Chess960 | Horde => 20
-    case Antichess | Crazyhouse | KingOfTheHill => 15
-    case ThreeCheck | Atomic | RacingKings => 10
-    case _ => 15 // from position
+// Plies below which a resignation counts as an early one (lichess's figure for standard chess).
+val reasonableMinimumNumberOfMoves = 20
