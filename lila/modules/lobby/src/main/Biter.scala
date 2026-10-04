@@ -90,21 +90,36 @@ final private class Biter(
       )
       .fold(e => fufail(s"Can't start a Go game from $setup: ${e.message}"), g => fuccess(g.start))
 
+  def canJoin(hook: Hook, user: Option[LobbyUser]): Boolean = Biter.canJoin(hook, user)
+
+  def canJoin(seek: Seek, user: LobbyUser): Boolean = Biter.canJoin(seek, user)
+
+  def showHookTo(hook: Hook, member: LobbySocket.Member): Boolean =
+    hook.sri == member.sri || Biter.visible(hook, member.user)
+
+private object Biter:
+
   def canJoin(hook: Hook, user: Option[LobbyUser]): Boolean =
-    hook.isAuth == user.isDefined && user.forall: u =>
-      u.lame == hook.lame &&
+    visible(hook, user) &&
+      hook.isAuth == user.isDefined && user.forall: u =>
         !hook.userId.contains(u.id) &&
-        !hook.userId.so(u.blocking.value.contains) &&
-        !hook.user.so(_.blocking).value.contains(u.id) &&
-        hook.ratingRangeOrDefault.contains(u.ratingAt(hook.perfType))
+          hook.ratingRangeOrDefault.contains(u.ratingAt(hook.perfType))
 
   def canJoin(seek: Seek, user: LobbyUser): Boolean =
-    seek.user.id != user.id &&
-      (user.lame == seek.user.lame) &&
-      !(user.blocking.value contains seek.user.id) &&
-      !(seek.user.blocking.value contains user.id) &&
+    seek.user.id != user.id && visible(seek, user) &&
       seek.realRatingRange.forall:
         _.contains(user.ratingAt(seek.perfType))
 
-  def showHookTo(hook: Hook, member: LobbySocket.Member): Boolean =
-    hook.sri == member.sri || canJoin(hook, member.user)
+  /* Which open games a player is sent (ADR 0022 §5, unit 6.5): all but those from or to players they
+   * block or who block them, and those of the other "lame" kind (troll and banned accounts; a guest
+   * counts as not lame). Games they can't join for being a guest or a member, for their rating or for
+   * being rated when they are a guest are sent too, and greyed by the browser; joining is still
+   * checked by `canJoin`. */
+  def visible(hook: Hook, user: Option[LobbyUser]): Boolean =
+    user.so(_.lame) == hook.lame && (hook.user, user).tupled.forall(notBlocked)
+
+  def visible(seek: Seek, user: LobbyUser): Boolean =
+    user.lame == seek.user.lame && notBlocked(seek.user, user)
+
+  private def notBlocked(a: LobbyUser, b: LobbyUser) =
+    !a.blocking.value.contains(b.id) && !b.blocking.value.contains(a.id)
