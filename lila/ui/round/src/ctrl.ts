@@ -574,6 +574,7 @@ export default class RoundController {
       site.sound.play(o.winner ? (d.player.color === o.winner ? 'victory' : 'defeat') : 'draw');
     }
     this.onTimeTrouble(false);
+    site.sound.byoyomiReset();
     endGameView();
     this.setTitle();
     this.moveOn.next();
@@ -628,6 +629,8 @@ export default class RoundController {
           // bar, which measures main time, makes way for the periods.
           if (d.clock.emerg) this.clock.emergMs = d.clock.emerg * 1000;
           this.clock.showBar = false;
+          // Byo-yomi has its own warnings (ADR 0026 §2, `onClockTick`): no low-time sound in between.
+          this.clock.emergSound.play = () => {};
         }
       }
       this.clock.alarmAction = {
@@ -657,8 +660,21 @@ export default class RoundController {
     this.redraw();
   };
 
+  /**
+   * The player's own clock, ticking in byo-yomi: a low-time sound as each period starts and a spoken
+   * count over its last 10 seconds (Phase 9's `site.sound.byoyomi`). Never for the opponent's clock,
+   * in main time, or with clock sounds off.
+   */
+  private readonly onClockTick = (color: Color, millis: Millis): void => {
+    const d = this.data;
+    if (!this.byoyomi?.inByoyomi[color] || d.player.spectator || color !== d.player.color) return;
+    if (!d.pref.clockSound) return;
+    site.sound.byoyomi(this.byoyomi.periods[color], Math.floor(millis / 1000));
+  };
+
   private readonly makeClockOpts: () => ClockOpts = () => ({
     onFlag: this.onClockZero,
+    onTick: this.onClockTick,
     bothPlayersHavePlayed: () => game.bothPlayersHavePlayed(this.data),
     hasGoneBerserk: this.hasGoneBerserk,
     alarmColor: this.data.player.spectator || !this.data.pref.clockSound ? undefined : this.data.player.color,
