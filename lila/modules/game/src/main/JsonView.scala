@@ -58,7 +58,7 @@ final class JsonView(rematches: Rematches):
         "fullId" -> pov.fullId,
         "gameId" -> pov.gameId,
         "color" -> pov.color,
-        "lastMove" -> (if pov.game.isGo then "" else pov.game.lastMoveKeys | ""),
+        "lastMove" -> pov.game.go.fold(pov.game.lastMoveKeys | "")(GoBridge.lastMove),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
         "variant" -> Json.obj(
@@ -82,6 +82,8 @@ final class JsonView(rematches: Rematches):
         "isMyTurn" -> pov.isMyTurn
       )
       .add("fen" -> (!pov.game.isGo).option(maybeFen(pov)))
+      // A Go game's mini board (unit 3.19), empty for a blindfold player as a chess one is
+      .add("board" -> pov.game.go.map(GoBridge.miniBoard(_, pov.player.blindfold)))
       .add("go" -> pov.game.go.map(JsonView.go))
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)

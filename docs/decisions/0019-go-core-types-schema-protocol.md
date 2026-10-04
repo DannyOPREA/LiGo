@@ -157,6 +157,12 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
 3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
+(Amended in unit 3.19's mini-board slice: game lists, TV, the lobby's current games and profile rows
+draw a Go game's mini board as a small SVG from the compact board (`ui/lib`'s goMini.ts), not a goban;
+lila's mini-game `data-state` for Go is `board,turn,lastMove,plies`. Protocol (§6): the "now playing" JSON
+(`ownerPreview`: the lobby, `/account/now-playing`, the public `/api/account/playing`, the mobile API and
+the event stream's `gameStart`) carries `board` for a Go game and its `lastMove` is the last stone (an SGF
+point) or `pass` instead of `""`. logs/decisions.md, 2026-10-03.)
 (Amended in unit 3.16: the API move stream now streams Go games too, `{board, turn, lm, wc, bc}` per
 position; the bus `MoveGameEvent` carries strings (the FEN or compact board, the last move).
 logs/decisions.md, 3.16 row.)
