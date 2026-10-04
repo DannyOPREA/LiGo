@@ -521,8 +521,9 @@ export default class SetupController {
     if (validKomi(komi, this.goSize())) this.goKomi(komi);
   };
 
-  // Guests play casual games only (ADR 0021 §5): they see a sign-up line instead (gameModeButtons).
-  ratedModeDisabled = () => !this.root.me;
+  // Guests play casual games only (ADR 0021 §5): they see a sign-up line instead (gameModeButtons). A game
+  // with no clock can't be rated either: the server refuses it, as lila does (found by the unit 5.8 demo).
+  ratedModeDisabled = () => !this.root.me || this.timeControl.mode() === 'unlimited';
 
   // the ranks the sliders cover, as ratings (ADR 0021 §3, unit 5.7)
   rankRange = (): RankRange | undefined => {

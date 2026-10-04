@@ -40,8 +40,12 @@ final class UserShowSide(helpers: Helpers):
             st.rating(
               ctx.pref.showRatings.option(
                 frag(
-                  if perf.glicko.clueless then strong("?")
-                  else if pk == PerfKey.go then strong(goRank(perf.intRating, perf.provisional))
+                  // LiGo: a declared rank shows before a first game (unit 5.8), though its deviation is clueless
+                  if pk == PerfKey.go then
+                    if lila.rating.GoRating.rankKnown(perf) then
+                      strong(goRank(perf.intRating, perf.provisional))
+                    else strong("?")
+                  else if perf.glicko.clueless then strong("?")
                   else
                     strong(
                       perf.glicko.intRating,
