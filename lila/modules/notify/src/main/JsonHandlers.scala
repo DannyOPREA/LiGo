@@ -49,12 +49,14 @@ final class JSONHandlers(getLightUser: LightUser.GetterSync):
             "id" -> id,
             "text" -> text
           )
-        case GameEnd(gameId, opponentId, win) =>
-          Json.obj(
-            "id" -> gameId.value,
-            "opponent" -> opponentId.flatMap(getLightUser),
-            "win" -> win
-          )
+        case GameEnd(gameId, opponentId, win, noResult) =>
+          Json
+            .obj(
+              "id" -> gameId.value,
+              "opponent" -> opponentId.flatMap(getLightUser),
+              "win" -> win
+            )
+            .add("noResult" -> noResult.filter(identity))
         case _: PlanStart => Json.obj()
         case _: PlanExpire => Json.obj()
         case RatingRefund(perf, points) =>

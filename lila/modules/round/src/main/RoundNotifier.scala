@@ -27,7 +27,8 @@ final private class RoundNotifier(
               NotificationContent.GameEnd(
                 game.fullIdOf(color),
                 game.opponent(color).userId,
-                game.wonBy(color)
+                game.wonBy(color),
+                game.endedWithNoResult.option(true)
               )
             )
           case _ =>
