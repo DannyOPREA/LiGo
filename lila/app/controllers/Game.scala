@@ -22,7 +22,6 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
         for
           _ <- env.bookmark.api.removeByGameId(game.id)
           _ <- env.game.gameRepo.remove(game.id)
-          _ <- env.analyse.repo.remove(game.id)
           _ <- env.game.cached.clearNbImportedByCache(me)
         yield Redirect(routes.User.show(me.username))
       else Redirect(routes.Round.watcher(game.id, game.naturalOrientation))

@@ -16,6 +16,27 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · 3.17 slice (b) · Chess engine analysis and the chess analysis tree removed
+- Did: deleted `modules/tree`'s chess tree (Root/Branch/Node over Uci/Fen/Glyphs), `Eval`, `Info`,
+  `Advice`, `Analysis` and `StatusText` (kept `ExportOptions`, which round and the API still use), and
+  `modules/analyse`'s evals: `AccuracyCP`, `AccuracyPercent`, `Analyser`, `AnalysisRepo` and its BSON,
+  `Annotator`, `JsonView`, `RequesterApi` (fishnet's per-user request counter), `actorApi` and the module
+  Env (only `AnalyseUi`, Phase 7's page, stays). The watcher and lichobile round JSON, `/api/games/user`
+  style exports (`GameApi`, `GameApiV2`) and PGN no longer fetch or send an `analysis`; PGN's `evals`,
+  `literate` and `accuracy` flags no longer change the output (the flags stay in `WithFlags`, which
+  3.17 part 2a owns). Round no longer relays `analysisProgress`. Fishnet's metrics and the `/fishnet`
+  redirect went too. Chess guard baseline: 128 → 77 files (rows #97 cleaned trimmed as well).
+- Worked: `./lila.sh "compile; Test/compile; api/test; round/test; game/test"` (see PR).
+- Didn't work / dead ends: none.
+- Lessons: none new.
+- Decisions: `analysis` leaves the JSON rather than staying as an empty field: nothing ever produced
+  one for a Go game, and Phase 7's KataGo analysis (ADR 0023's stubbed engine hook) will define its
+  own shape. The `analysis2` and `analysis_requester` collections are no longer read or cleaned on
+  account deletion; LiGo never wrote to them.
+- Follow-ups: `game.metadata.analysed` and the `analysed` query filters stay (they read a stored flag);
+  `lila.tree` now holds only `ExportOptions`, and its `chess.playJson` dependency can go with the last
+  3.17 PR; PgnDump's `WithFlags` evals/literate/accuracy fields go with 2a.
+
 ### 2026-10-03 · 3.17 part 1 · lila's game holds only the Go game
 - Did: `Game.go` is required and the chess game is gone from lila's `Game` (`core`), with chess
   game storage (the BSON reader and writer read and write the Go block only; `PgnStorage`, the

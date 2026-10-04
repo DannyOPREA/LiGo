@@ -8,7 +8,6 @@ import chess.opening.Opening
 import play.api.libs.json.*
 import reactivemongo.pekkostream.cursorProducer
 
-import lila.analyse.{ AccuracyPercent, Analysis, JsonView as analysisJson }
 import lila.common.HTTPRequest
 import lila.common.Json.given
 import lila.core.LightUser
@@ -24,8 +23,6 @@ final class GameApiV2(
     gameRepo: lila.game.GameRepo,
     gameCache: lila.game.Cached,
     gameJsonView: lila.game.JsonView,
-    analysisRepo: lila.analyse.AnalysisRepo,
-    annotator: lila.analyse.Annotator,
     getLightUser: LightUser.Getter,
     gameProxy: GameProxyRepo,
     bookmarkApi: lila.bookmark.BookmarkApi,
@@ -39,20 +36,19 @@ final class GameApiV2(
       case Some(imported) => fuccess(imported.pgn.value)
       case None =>
         for
-          (game, initialFen, analysis) <- enrich(config.flags)(game)
+          (game, initialFen) <- enrich(game)
           opening = none
           formatted <- config.format match
             case Format.JSON =>
-              toJson(game, initialFen, analysis, opening, config).map(Json.stringify)
+              toJson(game, initialFen, opening, config).map(Json.stringify)
             case Format.PGN =>
               PgnStr.raw(
                 pgnDump(
                   game,
                   initialFen,
-                  analysis,
                   opening,
                   config.flags
-                ).map(annotator.toPgnString)
+                ).map(PgnDump.toPgnString)
               )
         yield formatted
 
@@ -108,9 +104,9 @@ final class GameApiV2(
   def mobileRecent(user: User)(using Option[Me]): Fu[JsArray] = for
     games <- gameRepo.recentFinishedGamesFromSecondary(user, Max(10))
     config = MobileRecentConfig(user)
-    enriched <- games.sequentially(enrich(config.flags))
-    jsons <- enriched.sequentially: (game, fen, analysis) =>
-      toJson(game, fen, analysis, none, config)
+    enriched <- games.sequentially(enrich)
+    jsons <- enriched.sequentially: (game, fen) =>
+      toJson(game, fen, none, config)
   yield JsArray(jsons)
 
   def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
@@ -119,8 +115,8 @@ final class GameApiV2(
       .flatMapz(gameProxy.gameIfPresentOrFetch)
       .flatMapz: game =>
         val config = OneConfig(GameApiV2.Format.JSON, false, WithFlags())
-        enrich(config.flags)(game).flatMap: (game, fen, analysis) =>
-          toJson(game, fen, analysis, none, config).dmap(some)
+        enrich(game).flatMap: (game, fen) =>
+          toJson(game, fen, none, config).dmap(some)
 
   def exportByIds(config: ByIdsConfig): Source[String, ?] =
     gameRepo
@@ -173,19 +169,14 @@ final class GameApiV2(
   private def preparationFlow(config: Config) =
     Flow[Game]
       .throttle(config.perSecond.value, 1.second)
-      .mapAsync(4)(enrich(config.flags))
-      .mapAsync(4): (game, fen, analysis) =>
+      .mapAsync(4)(enrich)
+      .mapAsync(4): (game, fen) =>
         // a Go game has no chess opening (unit 3.16)
-        formatterFor(config)(game, fen, analysis, none)
+        formatterFor(config)(game, fen, none)
 
-  private def enrich(flags: WithFlags)(game: Game) =
-    gameRepo
-      .initialFen(game)
-      .flatMap: initialFen =>
-        flags.requiresAnalysis
-          .so(analysisRepo.byGame(game))
-          .dmap:
-            (game, initialFen, _)
+  // No engine analysis to fetch any more (unit 3.17, slice b).
+  private def enrich(game: Game) =
+    gameRepo.initialFen(game).dmap((game, _))
 
   private def formatterFor(config: Config) =
     config.format match
@@ -196,30 +187,24 @@ final class GameApiV2(
     (
         game: Game,
         initialFen: Option[Fen.Full],
-        analysis: Option[Analysis],
         opening: Option[Opening.AtPly]
     ) =>
-      toJson(game, initialFen, analysis, opening, config).map: json =>
+      toJson(game, initialFen, opening, config).map: json =>
         s"${Json.stringify(json)}\n"
 
   private def toJson(
       g: Game,
       initialFen: Option[Fen.Full],
-      analysisOption: Option[Analysis],
       opening: Option[Opening.AtPly],
       config: Config
   ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
     flags = config.flags
     pgn <- config.flags.pgnInJson.optionFu:
-      pgnDump(g, initialFen, analysisOption, opening, config.flags).map(annotator.toPgnString)
+      pgnDump(g, initialFen, opening, config.flags).map(PgnDump.toPgnString)
     bookmarked <- config.flags.bookmark.so(bookmarkApi.exists(g, config.by.map(_.userId)))
-    // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
-    // exists any more to name it, so "arenaTour" is never populated for new games.
-    // a Go game has no chess phases to divide (unit 3.16), so no accuracy per phase
-    accuracy = analysisOption
-      .ifTrue(flags.accuracy)
-      .flatMap(AccuracyPercent.gameAccuracy(g.startedAtPly.turn, _))
+  // g.tournamentId is a neutral field kept in game storage (unit 3.2); no tournament feature
+  // exists any more to name it, so "arenaTour" is never populated for new games.
   yield Json
     .obj(
       "id" -> g.id,
@@ -231,11 +216,7 @@ final class GameApiV2(
       "status" -> g.status.name,
       "source" -> g.source,
       "players" -> JsObject(lightUsers.mapList: (p, user) =>
-        p.color.name -> gameJsonView
-          .player(p, user)
-          .add:
-            "analysis" -> analysisOption.flatMap:
-              analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy))
+        p.color.name -> gameJsonView.player(p, user))
     )
     // A Go game carries its setup (size, rules, komi, handicap, position) instead of a chess variant and
     // initial FEN, and its moves as SGF points and `pass` (unit 3.16).
@@ -253,7 +234,6 @@ final class GameApiV2(
     })
     .add("pgn" -> pgn)
     .add("daysPerTurn" -> g.daysPerTurn)
-    .add("analysis" -> analysisOption.ifTrue(flags.evals).map(analysisJson.moves(_, withGlyph = false)))
     .add("arenaTour" -> g.tournamentId.map(id => Json.obj("id" -> id)))
     .add("swissTour" -> g.swissId.map(id => Json.obj("id" -> id)))
     .add("clock" -> g.clock.map: clock =>

@@ -1,11 +1,10 @@
 package lila.round
 
 import chess.{ ByColor, Centis, Color }
-import play.api.libs.json.*
 import scalalib.actor.AsyncActor
 
 import lila.core.round.*
-import lila.core.socket.{ GetVersion, SocketSend, SocketVersion, makeMessage, userLag }
+import lila.core.socket.{ GetVersion, SocketSend, SocketVersion, userLag }
 import lila.game.GameExt.*
 import lila.game.{ Event, GameRepo, Player as GamePlayer, Progress }
 import lila.room.RoomSocket.{ Protocol as RP, * }
@@ -136,11 +135,6 @@ final private class RoundAsyncActor(
             lila.mon.cheat.holdAlert.increment()
             gameRepo.setHoldAlert(pov, GamePlayer.HoldAlert(ply = pov.game.ply, mean = mean, sd = sd)).void
         yield Nil
-
-    case lila.tree.AnalysisProgress(_, payload) =>
-      fuccess:
-        socketSend.exec:
-          RP.Out.tellRoom(roomId, makeMessage("analysisProgress", payload()))
 
     // round stuff
 
