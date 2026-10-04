@@ -44,7 +44,6 @@ const hook = (over: Partial<Hook> = {}): Hook => ({
   t: 260,
   s: 2,
   i: 2,
-  variant: 'standard',
   perf: 'blitz',
   go: { size: 9, rules: 'japanese', komi: 6.5 },
   auth: false,
@@ -151,7 +150,6 @@ describe('the tiles', () => {
 describe('what a click sends', () => {
   test('Casual: a casual open game with the tile settings', () => {
     assert.deepEqual(casualHookForm(nineByo), {
-      variant: 1,
       days: 1,
       color: 'random',
       size: 9,
@@ -166,7 +164,6 @@ describe('what a click sends', () => {
 
   test('a correspondence tile: a seek with its days, rated or casual from the chips', () => {
     assert.deepEqual(corresSeekForm(threeDays, true), {
-      variant: 1,
       timeMode: 2,
       days: 3,
       time: 0,
