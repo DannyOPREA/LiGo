@@ -286,8 +286,6 @@
   <string name="goJoinedTheGame">Joined the game</string>
   <string name="goLeftTheGame">Left the game</string>
   <string name="goOpponentLeftChoices">Your opponent left the game. You can claim victory, or wait for them.</string>
-  <string name="goBothPlayersPassed">Both players passed. Counting the score comes in a later version.</string>
-  <string name="goMoveLimitReached">Move limit reached</string>
   <plurals name="goNbPrisoners">
     <item quantity="one">%s prisoner</item>
     <item quantity="other">%s prisoners</item>
@@ -1160,4 +1158,29 @@ Leave empty to start games from the normal initial position.</string>
   <string name="boards">Boards</string>
   <string name="write">Write</string>
   <string name="preview">Preview</string>
+  <!-- LiGo, unit 4.10: a Go game's scoring phase and byo-yomi clock on the game page -->
+  <string name="goCountingTheScore">Counting the score…</string>
+  <string name="goRecounting">Recounting…</string>
+  <string name="goScoringTapHint">Tap a group to mark it dead, or alive again.</string>
+  <string name="goScoringNoProposal">No dead stones were proposed: mark them yourselves.</string>
+  <string name="goScoringSealHint">Points marked with a triangle may still need a move. Resume play to fill them.</string>
+  <string name="goAcceptScore">Accept score</string>
+  <string name="goResumePlay">Resume play</string>
+  <string name="goYouAcceptedWaiting">You accepted this score. Waiting for your opponent.</string>
+  <string name="goOpponentAcceptedScore">Your opponent accepted this score.</string>
+  <string name="goXAcceptedScore">%s accepted this score.</string>
+  <string name="goTimeLeftToAgree">%s left to agree. Then the marks stand as they are.</string>
+  <string name="goTerritory">Territory</string>
+  <string name="goStones">Stones</string>
+  <string name="goPrisoners">Prisoners</string>
+  <string name="goHandicapCompensation">Handicap</string>
+  <string name="goTotal">Total</string>
+  <plurals name="goXWinsByNbPoints">
+    <item quantity="one">%2$s wins by %1$s point</item>
+    <item quantity="other">%2$s wins by %1$s points</item>
+  </plurals>
+  <string name="goJigo">Jigo: the score is even</string>
+  <string name="goNoResult">No result</string>
+  <string name="goScoreNotCounted">The score could not be counted</string>
+  <string name="goByoyomiPeriods">Byo-yomi periods</string>
 </resources>

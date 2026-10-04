@@ -9,6 +9,7 @@ import * as button from './button';
 import { anyClockView } from './clock';
 import renderExpiration from './expiration';
 import { render as renderReplay, analysisButton } from './replay';
+import { renderFinalCount, renderScoring } from './scoring';
 import { userHtml } from './user';
 
 function renderPlayer(ctrl: RoundController, position: TopOrBottom) {
@@ -29,6 +30,7 @@ const renderTableWith = (ctrl: RoundController, buttons: LooseVNodes[]) => [
 
 export const renderTableEnd = (ctrl: RoundController): LooseVNodes =>
   renderTableWith(ctrl, [
+    renderFinalCount(ctrl),
     isLoading(ctrl)
       ? loader()
       : button.backToTournament(ctrl) || button.backToSwiss(ctrl) || button.followUp(ctrl),
@@ -36,6 +38,7 @@ export const renderTableEnd = (ctrl: RoundController): LooseVNodes =>
 
 export const renderTableWatch = (ctrl: RoundController): LooseVNodes =>
   renderTableWith(ctrl, [
+    renderScoring(ctrl) || renderFinalCount(ctrl),
     isLoading(ctrl) ? loader() : playable(ctrl.data) ? undefined : button.watcherFollowUp(ctrl),
   ]);
 
@@ -66,7 +69,9 @@ export const renderTablePlay = (ctrl: RoundController): LooseVNodes => {
         : [
             abortable(d)
               ? button.standard(ctrl, undefined, licon.X, i18n.site.abortGame, 'abort')
-              : button.standard(
+              : // no takebacks while the dead stones are agreed (ADR 0020 §3)
+                !ctrl.inScoring() &&
+                button.standard(
                   ctrl,
                   d => ({ enabled: takebackable(d) }),
                   licon.Back,
@@ -87,7 +92,9 @@ export const renderTablePlay = (ctrl: RoundController): LooseVNodes => {
             analysisButton(ctrl),
             boardMenuToggleButton(ctrl.menu, i18n.site.menu),
           ],
-    buttons = loading ? [loader()] : [promptVNode, button.opponentGone(ctrl), button.goMoves(ctrl)];
+    buttons = loading
+      ? [loader()]
+      : [promptVNode, button.opponentGone(ctrl), renderScoring(ctrl) || button.goMoves(ctrl)];
   return [
     renderReplay(ctrl),
     hl('div.rcontrols', [
