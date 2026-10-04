@@ -10,9 +10,6 @@
     "tablesort": "5.7.0"
   },
   "build": {
-    "sync": {
-      "/node_modules/@lichess-org/chessground/dist/chessground.min.js": "/public/npm"
-    },
     "hash": [
       "/public/font/*.woff2",
       "/public/images/**",

@@ -60,8 +60,6 @@ export async function initModule(el?: HTMLElement): Promise<void> {
     .filter(Boolean) as Candidate[];
 
   expandYoutubes(as.filter(a => a.type === 'youtube'));
-
-  if (!el && $('.lpv--autostart').length) await site.asset.loadEsm('bits.lpv');
 }
 
 site.load.then(() => initModule());
