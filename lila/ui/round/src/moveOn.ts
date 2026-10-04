@@ -12,7 +12,7 @@ export default class MoveOn {
 
   constructor(
     private readonly ctrl: RoundController,
-    private readonly key: string,
+    key: string,
     // how the page leaves for the next game (the tests record it instead)
     private readonly navigate: (href: string) => void = href => {
       window.location.href = href;

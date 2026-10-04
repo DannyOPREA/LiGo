@@ -4,6 +4,15 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.7 follow-ups CI fix · The build's type check
+- Did: #136's `ui` check failed at Build: moving MoveOn's storage into the constructor left `key` a
+  parameter property nobody reads (TS6138, an error under the build's tsc settings). `key` is now a plain
+  constructor parameter.
+- Verified: `dev/ligo compile ui` fails with TS6138 without the fix and passes with it; `node ui/test
+  round` 64/64; oxlint and oxfmt clean.
+- Lessons: verify.sh's per-file ui gates (oxfmt, oxlint, unit tests) don't run the build's tsc; after a
+  TypeScript change outside tests, run `dev/ligo compile ui` before pushing.
+
 ### 2026-10-04 · unit 7.7 follow-ups · No result is not a draw; "play the next game" asked once
 - Did: the four follow-ups 7.7 logged. (1) The bell's one-line text for a no-result game read "The game
   ended with no result vs X"; it now reads "No result vs X" (`goNoResult` where "Draw" goes). (2) The
