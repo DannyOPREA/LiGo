@@ -15,7 +15,7 @@ export default function (ctrl: RoundController): LooseVNode {
         'vibrate' in navigator &&
           cmnToggleWrap({
             id: 'haptics',
-            name: 'Vibration feedback',
+            name: i18n.site.goVibrationFeedback,
             checked: ctrl.vibration(),
             change: ctrl.vibration,
             redraw: ctrl.redraw,
@@ -23,7 +23,7 @@ export default function (ctrl: RoundController): LooseVNode {
         !portraitMobile &&
           cmnToggleWrap({
             id: 'streamer',
-            name: 'Streamer mode',
+            name: i18n.site.goStreamerMode,
             checked: ctrl.streamer(),
             change: ctrl.streamerMode,
             redraw: ctrl.redraw,
@@ -31,7 +31,7 @@ export default function (ctrl: RoundController): LooseVNode {
         portraitMobile &&
           cmnToggleWrap({
             id: 'swapClock',
-            name: 'Show clock on left',
+            name: i18n.site.goShowClockOnLeft,
             checked: swapClockStorage.get(),
             change: swapClockStorage.set,
             redraw: ctrl.redraw,
