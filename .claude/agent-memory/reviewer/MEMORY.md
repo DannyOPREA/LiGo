@@ -14,6 +14,8 @@
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, deleted-TS DOM effects, privacy deletes, stand-ins keeping dead code (3.3–3.19p2)
+- [Scoring phase review patterns](scoring-phase-review-patterns.md) — testQuick Total 0, count versions, autoscore mutates, EPIPE, NaN gates, 2nd-pass gameActive, scratch sbt probe, timer dedupe (4.8)
+- [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects, literal links, privacy deletes (3.3–3.7)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
 - [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, two-reader probes (7.3), export move delay + NoStart RE (4.11)
 - [Puzzle solver review patterns](puzzle-solver-review-patterns.md) — settled() pass bug, tree-depth histogram, duplicate shapes, frame port rerun, indep L&D checker, symmetry dedupe

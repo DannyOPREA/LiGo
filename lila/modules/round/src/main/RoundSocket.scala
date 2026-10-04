@@ -94,6 +94,8 @@ final class RoundSocket(
     gameFu.dforeach:
       _.foreach: game =>
         scheduleExpiration.exec(game)
+        // a game in its scoring phase re-sends its unanswered request and keeps its deadline (ADR 0020 §1)
+        if game.inGoScoring then roundActor ! GoScorer.Wake
         goneWeightsFor(game).dforeach: w =>
           roundActor ! RoundAsyncActor.SetGameInfo(game, w)
     roundActor
@@ -101,7 +103,7 @@ final class RoundSocket(
   private val roundHandler: SocketHandler =
     case Protocol.In.PlayerGoMove(fullId, action, blur, lag) if !stopping =>
       rounds.tell(fullId.gameId, HumanGoPlay(fullId.playerId, action, blur, lag, none))
-    case Protocol.In.PlayerDo(fullId, tpe) if !stopping =>
+    case Protocol.In.PlayerDo(fullId, tpe, data) if !stopping =>
       def forward(f: GamePlayerId => Any) = rounds.tell(fullId.gameId, f(fullId.playerId))
       tpe match
         case "moretime" => forward(Moretime(_))
@@ -119,6 +121,19 @@ final class RoundSocket(
         case "draw-force" => forward(RoundBus.DrawForce(_))
         case "abort" => forward(RoundBus.Abort(_))
         case "outoftime" => forward(_ => RoundBus.QuietFlagCheck) // mobile app BC
+        // the scoring phase (ADR 0020 §6): a stone's chain toggled, the count accepted, play resumed
+        case "score-toggle" =>
+          for
+            d <- data
+            at <- d.str("p").flatMap(ligo.gorules.Point.fromSgf)
+            seen <- d.str("v").flatMap(GoScorer.readVersion)
+          do forward(GoScorer.Toggle(_, at, seen))
+        case "score-accept" =>
+          data
+            .flatMap(_.str("v"))
+            .flatMap(GoScorer.readVersion)
+            .foreach(seen => forward(GoScorer.Accept(_, seen)))
+        case "score-resume" => forward(GoScorer.Resume(_))
         case t => logger.warn(s"Unhandled round socket message: $t")
     case Protocol.In.Flag(gameId, color, fromPlayerId) => rounds.tell(gameId, ClientFlag(color, fromPlayerId))
     case Protocol.In.PlayerChatSay(id, Right(color), msg) =>
@@ -305,7 +320,7 @@ object RoundSocket:
     object In:
 
       case class PlayerOnlines(onlines: Iterable[(GameId, Option[RoomCrowd])]) extends P.In
-      case class PlayerDo(fullId: GameFullId, tpe: String) extends P.In
+      case class PlayerDo(fullId: GameFullId, tpe: String, data: Option[JsObject] = None) extends P.In
       case class PlayerGoMove(
           fullId: GameFullId,
           action: ligo.gorules.Action,
@@ -341,7 +356,7 @@ object RoundSocket:
             for
               obj <- Json.parse(payload).asOpt[JsObject]
               tpe <- obj.str("t")
-            yield PlayerDo(GameFullId(fullId), tpe)
+            yield PlayerDo(GameFullId(fullId), tpe, obj.obj("d"))
           }
         case P.RawMsg("r/move", raw) =>
           raw.get(6) { case Array(fullId, moveS, blurS, lagS, mtS, fraS) =>

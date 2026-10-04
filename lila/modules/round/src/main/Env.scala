@@ -78,6 +78,37 @@ final class Env(
       scheduler.scheduleOnce((centis.millis + 1000).millis):
         roundApi.tell(game.id, lila.core.round.NoStart)
 
+  // the scoring service (ADR 0020 §1, unit 4.8): requests on `scoring-in`, replies on `scoring-out`
+  private lazy val scoringRedis = ScoringRedis(
+    io.lettuce.core.RedisClient
+      .create(io.lettuce.core.RedisURI.create(appConfig.get[String]("scoring.redis.uri"))),
+    chanIn = "scoring-in",
+    chanOut = "scoring-out",
+    shutdown
+  ):
+    case r: lila.game.GoScoringPlay.Reply.Counted => roundApi.tell(r.ref.gameId, GoScorer.ServiceReply(r))
+    case r @ lila.game.GoScoringPlay.Reply.Failed(Some(ref), _) =>
+      roundApi.tell(ref.gameId, GoScorer.ServiceReply(r))
+    case lila.game.GoScoringPlay.Reply.Failed(None, message) =>
+      logger.warn(s"Scoring service error: $message")
+    case lila.game.GoScoringPlay.Reply.Start =>
+      // the service (re)started: every game still waiting on it re-sends its request (ADR 0020 §1)
+      import lila.db.dsl.{ *, given }
+      gameRepo.coll
+        .primitive[GameId](
+          bdoc("sc".exists(true), lila.game.Game.BSONFields.checkAt.exists(true)) ++ lila.game.Query
+            .status(chess.Status.Started),
+          "_id"
+        )
+        .foreach(_.foreach(roundApi.tell(_, GoScorer.Wake)))
+
+  private lazy val goScorer: GoScorer = GoScorer(
+    finisher,
+    gameRepo,
+    scoringRedis.send,
+    (gameId, delay, msg) => scheduler.scheduleOnce(delay)(roundApi.tell(gameId, msg))
+  )
+
   private lazy val proxyDependencies = wire[GameProxy.Dependencies]
   private lazy val roundDependencies = wire[RoundAsyncActor.Dependencies]
 
@@ -182,6 +213,8 @@ final class Env(
   CorresAlarm(db(config.alarmColl), isUserPresent, proxyRepo.game, lightUser)
 
   system.actorOf(Props(wire[Titivate]), name = "titivate")
+
+  scoringRedis // subscribes to the scoring service's replies
 
   def resign(pov: Pov): Unit =
     if pov.game.abortableByUser then roundApi.tell(pov.gameId, RoundBus.Abort(pov.playerId))
