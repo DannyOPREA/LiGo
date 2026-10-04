@@ -71,7 +71,7 @@ case class Challenge(
 
   def goSetup: GoSetup = go | GoSetups.default
 
-  lazy val perfType = perfTypeOf(timeControl)
+  def perfType: PerfType = PerfType.Go // Go's one perf (ADR 0021 §1)
 
   def anyDeclineReason = declineReason | DeclineReason.default
 
@@ -127,7 +127,8 @@ object Challenge:
     val default = Generic
     val all = values.toList
     val byKey = values.mapBy(_.key)
-    val allExceptBot = all.filterNot(r => r == NoBot || r == OnlyBot)
+    // Standard and Variant are chess-only reasons: kept so stored declines still read, not offered (unit 3.17)
+    val allExceptBot = all.filterNot(r => r == NoBot || r == OnlyBot || r == Standard || r == Variant)
     def apply(key: String) = all.find { d => d.key == key.toLowerCase || d.trans.value == key } | Generic
 
   enum ColorChoice(val trans: I18nKey) derives Eq:
@@ -151,9 +152,6 @@ object Challenge:
   private def speedOf(timeControl: TimeControl) = timeControl match
     case TimeControl.Clock(config) => Speed(config)
     case _ => Speed.Correspondence
-
-  // Go's one perf (ADR 0021 §1)
-  private def perfTypeOf(@annotation.unused timeControl: TimeControl): PerfType = PerfType.Go
 
   private val idSize = 8
   private def randomId = ChallengeId(ThreadLocalRandom.nextString(idSize))

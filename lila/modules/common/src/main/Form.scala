@@ -241,20 +241,6 @@ object Form:
         else V.Invalid(V.ValidationError("error.maxLength", length))
       }
 
-  object fen:
-    import chess.format.Fen
-    val mapping = trim(of[String]).into[Fen.Full]
-    def playable(strict: Boolean) = mapping
-      .verifying("Invalid position", fen => Fen.read(fen).exists(_.playable(strict)))
-      .transform[Fen.Full](if strict then truncateMoveNumber else identity, identity)
-    val playableStrict = playable(strict = true)
-    def truncateMoveNumber(fen: Fen.Full) =
-      Fen.readWithMoveNumber(fen).fold(fen) { g =>
-        if g.fullMoveNumber >= chess.FullMoveNumber(150) then
-          Fen.write(g.copy(fullMoveNumber = g.fullMoveNumber.map(_ % 100))) // keep the start ply low
-        else fen
-      }
-
   object url:
     import io.mola.galimatias.URL
     given Formatter[URL] = formatter.stringTryFormatter: s =>

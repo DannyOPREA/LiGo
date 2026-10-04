@@ -16,6 +16,35 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · 3.17 part 2b · Chess variants, openings and "from position" FENs leave lila
+- Did: removed `Variant` from lila's types and every reader: setup configs and forms (hook, friend,
+  board API, challenge API, open challenges), challenges and bulk pairings, lobby hooks and seeks,
+  `core` (`Game.variant`, `ratingVariant`, `allowRated`, `PerfKey.byVariant`), game queries, light
+  games and JSON, `PerfType` variant lists, `Glicko.rankable`, history, activity, monitoring, push,
+  the db and form handlers, the `/variant` pages, `variantLink` (now `perfLink`) and the variant
+  CSS. Removed chess openings from game export (`opening`, `with_opening`), `gameOpening` and the
+  opening families. Removed the "from position" FEN fields (setup, `Challenge.initialFen`, bulk
+  `fen`), `ValidFen` and `GET /setup/validate-fen`. Tests: `GoSetupFormTest` gains a case for the
+  standard variant being accepted and other variants and any FEN refused on every form.
+- Worked: Go games were all `Standard`, so every removed variant branch reduced to its standard
+  case (no behaviour change for Go games). Old stored hooks, seeks, challenges and settings still
+  read: the BSON readers ignore the extra keys.
+- Didn't work: `String.isShouting` used chess's FEN parser; dropping it failed `StringTest`, so a
+  plain pattern keeps the check. sbt 2's `test` is `testQuick` and ran nothing; `testFull` runs the
+  suites. The cloud's `~/.sbt/repositories` needed the lila-maven line for strategygames.
+- Lessons: when deleting a type, grep for helpers left with no callers (`Form.fen`, the opening
+  families) and delete them in the same unit.
+- Decisions: logs/decisions.md 2026-10-04 (3.17 part 2b).
+- Verified by Claude: `./lila.sh compile` clean (no new warnings), `testFull` across lila (19
+  suites) green, scalafmt; reviewer pass (findings fixed: paperwork, `Form.fen`, scaladoc, decline
+  menu, a test per form).
+- Needs owner verification: create a lobby game and a friend challenge, open the challenge and
+  game pages, and check the profile ratings list.
+- Follow-ups: 3.19 part 2 drops the browser's `variant` reads and the constant; Phase 5 removes the
+  chess variant ratings on the profile side and the variant perf fields; Phase 3 keeps
+  `chess.opening` in PgnDump and Annotator (part 2a); the lobby's seek de-duplication ignores the Go
+  setup (from 3.15), noted for Phase 6.
+
 ### 2026-10-03 · 3.17 part 1 · lila's game holds only the Go game
 - Did: `Game.go` is required and the chess game is gone from lila's `Game` (`core`), with chess
   game storage (the BSON reader and writer read and write the Go block only; `PgnStorage`, the
