@@ -12,8 +12,9 @@ snabbdom, styled with SCSS, bundled by the custom esbuild-based `ui/.build/` (`u
   after state changes rather than touching the DOM.
 - Themes: SCSS variables and mixins from `ui/lib/css/abstract/`; light/dark/transparent themes are
   CSS variables, so don't hard-code colours.
-- The board: chess uses chessground. Go uses OGS goban through `libs/board`'s `mountBoard`
-  (`@ligo/board/board`, a workspace package since unit 2.1; see libs/board/README.md). Load it with
+- The board: OGS goban through `libs/board`'s `mountBoard` (`@ligo/board/board`, a workspace
+  package since unit 2.1; see libs/board/README.md). chessground and chessops left in unit 3.19
+  part 2; `@types/lichess/board.d.ts` keeps their `Color`/`Key`/`Role` type names. Load the board with
   `import()` so pages get it as a separate file; don't reimplement anything goban provides.
   `ui/playground` (unit 2.2) is the first page that mounts it: a local, no-server game whose
   `ctrl.ts` remounts the board (a fresh `key` on its container) for undo and "new game" rather than

@@ -1,11 +1,11 @@
-import type { Board, BoardConfig } from '@ligo/board/board';
+import type { Board, BoardConfig, ScoringMarks } from '@ligo/board/board';
 import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
 import { pubsub } from 'lib/pubsub';
 
 import RoundController from '../src/ctrl';
-import type { GoMoveEvent, RoundData, RoundOpts } from '../src/interfaces';
+import type { GoMoveEvent, RoundData, RoundOpts, ScoringData } from '../src/interfaces';
 
 // What the page needs from lila's globals, recorded so tests can check them.
 const played: string[] = [];
@@ -27,9 +27,13 @@ document.head.appendChild(Object.assign(document.createElement('link'), { id: 'f
 class FakeBoard implements Board {
   played: string[] = [];
   movable: BoardConfig['movable'];
+  scoring: ScoringMarks | undefined;
   destroyed = false;
-  constructor(readonly config: BoardConfig) {
+  readonly config: BoardConfig;
+  constructor(config: BoardConfig) {
+    this.config = config;
     this.movable = config.movable;
+    this.scoring = config.scoring;
   }
   play = (move: string) => void this.played.push(move);
   cancel = () => {};
@@ -37,8 +41,9 @@ class FakeBoard implements Board {
   pass = () => void (this.movable !== 'none' && this.config.onMove?.('pass'));
   pending = () => false;
   confirm = () => {};
-  set = (o: Pick<BoardConfig, 'movable' | 'confirm' | 'theme'>) => {
+  set = (o: Pick<BoardConfig, 'movable' | 'confirm' | 'theme' | 'scoring'>) => {
     if (o.movable) this.movable = o.movable;
+    if ('scoring' in o) this.scoring = o.scoring;
   };
   state = () => ({ board: [], toMove: 'black' as const, captures: { black: 0, white: 0 }, koPoint: null });
   destroy = () => void (this.destroyed = true);
@@ -185,10 +190,10 @@ describe('RoundController on a Go game', () => {
     assert.match(ctrl.statusText(), /resign/i);
   });
 
-  test('two passes end a Phase 3 game with no winner, said in words', () => {
+  test('a game the scoring service never counted ends with no result, said in words', () => {
     const { ctrl } = round(data('ee pass pass'));
     ctrl.endWithData({ status: { id: 38, name: 'unknownFinish' }, boosted: false });
-    assert.match(String(ctrl.statusText()), /goBothPlayersPassed/);
+    assert.equal(String(ctrl.statusText()), 'site.goScoreNotCounted');
   });
 
   test('the Pass button does nothing when it is not your turn', () => {
@@ -268,5 +273,160 @@ describe('RoundController on a Go game', () => {
       delete document.body.dataset.board;
       delete document.body.dataset.pieceSet;
     }
+  });
+});
+
+// The scoring phase (unit 4.10, ADR 0020 §3, §6).
+const proposal = (o: Partial<ScoringData> = {}): ScoringData => ({
+  phase: 1,
+  v: '1:1',
+  expiresIn: 180,
+  src: 'katago',
+  dead: ['cc'],
+  seal: [],
+  owner: '',
+  score: {
+    b: { territory: 10, stones: 0, prisoners: 1, total: 11 },
+    w: { territory: 3, stones: 0, prisoners: 0, komi: 6.5, compensation: 0, total: 9.5 },
+  },
+  accepted: { b: false, w: false },
+  pending: false,
+  ...o,
+});
+
+describe('the scoring phase', () => {
+  beforeEach(() => {
+    sent.length = 0;
+  });
+  // The countdown redraws every second while the phase lasts: end each game so the test run can stop.
+  afterEach(() =>
+    made.splice(0).forEach(c => {
+      c.transientMove.clear();
+      c.endWithData({ status: { id: 31, name: 'resign' }, winner: 'black', boosted: false });
+    }),
+  );
+
+  /** Black to answer the proposal of a game that ended its play on White's pass. */
+  const scoring = (o: { spectator?: boolean } = {}) => {
+    const r = round(data('ee cc pass', o));
+    r.ctrl.apiMove(moveEvent(5, { pass: true, phase: 'scoring' }));
+    return r;
+  };
+
+  test('the second pass stops play; "Counting…" shows no marks and takes no taps', () => {
+    const { ctrl, boards } = scoring();
+    assert.equal(boards[0].movable, 'none');
+    assert.ok(ctrl.inScoring());
+    assert.equal(ctrl.canMove(), false);
+    ctrl.apiScoring({ phase: 1, expiresIn: 600, counting: true });
+    assert.equal(ctrl.scoringCount(), undefined);
+    assert.equal(boards[0].scoring, undefined);
+  });
+
+  test('the proposal is drawn; a tapped chain goes to the server with the count version, once', () => {
+    const { ctrl, boards } = scoring();
+    ctrl.apiScoring(proposal());
+    assert.deepEqual(boards[0].scoring, { dead: ['cc'], owner: '', seal: [], tappable: true });
+    assert.equal(boards[0].movable, 'none');
+    assert.equal(ctrl.scoringSecondsLeft(), 180);
+    boards[0].config.onScoreTap!('ee');
+    boards[0].config.onScoreTap!('cc');
+    assert.deepEqual(sent, [['score-toggle', { p: 'ee', v: '1:1' }]]);
+    assert.equal(boards[0].scoring.tappable, false, 'no second tap until the recount');
+    ctrl.apiScoring(proposal({ v: '1:2', dead: [], pending: false }));
+    assert.equal(boards[0].scoring.tappable, true);
+    assert.deepEqual(boards[0].scoring.dead, []);
+  });
+
+  test('a recount on its way takes no taps and no accept', () => {
+    const { ctrl, boards } = scoring();
+    ctrl.apiScoring(proposal({ pending: true }));
+    assert.equal(boards[0].scoring!.tappable, false);
+    ctrl.acceptScore();
+    assert.deepEqual(sent, []);
+  });
+
+  test('Accept sends the version on show once; the opponent sees who accepted', () => {
+    const { ctrl } = scoring();
+    ctrl.apiScoring(proposal());
+    ctrl.acceptScore();
+    assert.deepEqual(sent, [['score-accept', { v: '1:1' }]]);
+    ctrl.apiScoring(proposal({ accepted: { b: true, w: false } }));
+    assert.ok(ctrl.hasAccepted());
+    ctrl.acceptScore();
+    assert.equal(sent.length, 1);
+  });
+
+  test("a spectator sees the marks and can't tap, accept or resume", () => {
+    const { ctrl, boards } = scoring({ spectator: true });
+    ctrl.apiScoring(proposal());
+    assert.equal(boards[0].scoring!.tappable, false);
+    ctrl.acceptScore();
+    ctrl.resumePlay();
+    assert.deepEqual(sent, []);
+  });
+
+  test('Resume asks the server; its resume event clears the marks and gives the turn back', () => {
+    const { ctrl, boards } = scoring();
+    ctrl.apiScoring(proposal());
+    ctrl.resumePlay();
+    assert.deepEqual(sent, [['score-resume', undefined]]);
+    ctrl.apiResume({ ply: 5, turn: 'black', phase: 'play', board: '' });
+    assert.equal(ctrl.inScoring(), false);
+    assert.equal(ctrl.data.game.scoring, undefined);
+    assert.equal(boards[0].scoring, undefined);
+    assert.equal(boards[0].movable, 'black');
+    assert.equal(ctrl.data.game.go.moves, 'ee cc pass pass resume');
+    assert.equal(ctrl.data.steps.length, 5, 'a resume is not a move in the list');
+    assert.ok(ctrl.canMove());
+  });
+
+  test("the socket's scoring and resume events reach the controller", () => {
+    const { ctrl, boards } = scoring();
+    assert.ok(ctrl.socket.receive('scoring', proposal()));
+    assert.equal(boards[0].scoring?.tappable, true);
+    assert.ok(ctrl.socket.receive('resume', { ply: 5, turn: 'black', phase: 'play', board: '' }));
+    assert.equal(ctrl.inScoring(), false);
+  });
+
+  test('a resume event out of step with the moves fetches the game again', () => {
+    const { ctrl } = scoring();
+    let reloaded = false;
+    ctrl.socket.reload = () => void (reloaded = true);
+    ctrl.apiResume({ ply: 9, turn: 'black', phase: 'play', board: '' });
+    assert.ok(reloaded);
+    assert.ok(ctrl.inScoring());
+  });
+
+  test('a game ended by counting keeps its marks and names the margin', () => {
+    const { ctrl, boards } = scoring();
+    ctrl.apiScoring(proposal({ accepted: { b: true, w: true } }));
+    ctrl.endWithData({
+      status: { id: 60, name: 'variantEnd' },
+      winner: 'black',
+      boosted: false,
+      result: 'B+1.5',
+    });
+    assert.deepEqual(boards[0].scoring, { dead: ['cc'], owner: '', seal: [], tappable: false });
+    assert.match(String(ctrl.statusText()), /^site\.goXWinsByNbPoints\(1\.5/);
+    assert.equal(ctrl.data.game.result, 'B+1.5');
+  });
+
+  test('resigning during the scoring phase takes the marks away', () => {
+    const { ctrl, boards } = scoring();
+    ctrl.apiScoring(proposal());
+    ctrl.endWithData({ status: { id: 31, name: 'resign' }, winner: 'white', boosted: false });
+    assert.equal(boards[0].scoring, undefined);
+  });
+
+  test('a game loaded in its scoring phase shows the marks at once', () => {
+    const d = data('ee cc pass pass');
+    d.game.go.phase = 'scoring';
+    d.game.scoring = proposal();
+    const { ctrl, boards } = round(d);
+    assert.equal(boards[0].config.scoring?.tappable, true);
+    assert.equal(boards[0].config.movable, 'none');
+    ctrl.userJump(3);
+    assert.equal(boards.at(-1)!.config.scoring, undefined, 'an earlier position has no marks');
   });
 });

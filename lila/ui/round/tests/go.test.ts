@@ -3,7 +3,6 @@ import { describe, test } from 'node:test';
 
 import {
   boardGame,
-  endedOnPasses,
   eventMove,
   goStatusText,
   moveName,
@@ -111,8 +110,14 @@ describe('the result', () => {
     assert.equal(resultText(status('noStart'), 'black'), 'B+F');
   });
 
-  test('no winner yet (two passes or the move limit, before scoring in Phase 4): "?"', () => {
-    assert.equal(resultText(status('unknownFinish'), undefined), '?');
+  test('a counted game: the margin, or Jigo for an even count (ADR 0020 §5)', () => {
+    assert.equal(resultText(status('variantEnd'), 'black', 'B+3.5'), 'B+3.5');
+    assert.equal(resultText(status('variantEnd'), 'white', 'W+0.5'), 'W+0.5');
+    assert.equal(resultText(status('variantEnd'), undefined, '0'), 'Jigo');
+  });
+
+  test('a game that ended with no count has no result', () => {
+    assert.equal(String(resultText(status('unknownFinish'), undefined)), 'site.goNoResult');
   });
 
   test('nothing while playing or after an abort', () => {
@@ -120,13 +125,14 @@ describe('the result', () => {
     assert.equal(resultText(status('aborted'), undefined), undefined);
   });
 
-  test('says why a game with no winner ended', () => {
-    const d = { game: { status: status('unknownFinish') } } as RoundData;
-    assert.equal(String(goStatusText(d, ['ee', 'pass', 'pass'])), 'site.goBothPlayersPassed');
-    assert.equal(String(goStatusText(d, ['ee', 'pass', 'cc'])), 'site.goMoveLimitReached');
-    assert.equal(endedOnPasses(['pass']), false);
-    const resigned = { game: { status: status('resign'), winner: 'black' } } as RoundData;
-    assert.equal(goStatusText(resigned, []), undefined);
+  test('says how a counted game, or one with no result, ended', () => {
+    const ended = (name: string, winner?: Color, result?: string) =>
+      ({ game: { status: status(name), winner, result } }) as RoundData;
+    // (the test stub drops the colour's name, a function, from the arguments it prints)
+    assert.equal(goStatusText(ended('variantEnd', 'white', 'W+12')), 'site.goXWinsByNbPoints(12, )');
+    assert.equal(String(goStatusText(ended('variantEnd', undefined, '0'))), 'site.goJigo');
+    assert.equal(String(goStatusText(ended('unknownFinish'))), 'site.goScoreNotCounted');
+    assert.equal(goStatusText(ended('resign', 'black')), undefined);
   });
 });
 

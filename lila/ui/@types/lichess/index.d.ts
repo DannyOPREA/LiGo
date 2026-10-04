@@ -1,4 +1,4 @@
-/// <reference path="./chessground.d.ts" />
+/// <reference path="./board.d.ts" />
 /// <reference path="./cash.d.ts" />
 /// <reference path="./i18n.d.ts" />
 
@@ -25,7 +25,6 @@ interface Site {
     jsModule(name: string): string;
     loadIife(path: string, opts?: AssetUrlOpts): Promise<void>;
     loadEsm<T>(key: string, opts?: EsmModuleOpts): Promise<T>;
-    loadPieces: Promise<void>;
     loadI18n(catalog: string): Promise<void>;
   };
   unload: { expected: boolean };

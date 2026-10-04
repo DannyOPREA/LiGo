@@ -36,7 +36,6 @@ lazy val `lila-ws` = project
       nettyTransport,
       "com.github.lichess-org.scalalib" %% "scalalib-lila" % "11.11.0",
       "com.github.lichess-org.scalachess" %% "scalachess" % chessVersion,
-      "com.github.lichess-org.scalachess" %% "scalachess-play-json" % chessVersion,
       "org.apache.pekko" %% "pekko-actor-typed" % pekkoVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6",
       "com.github.blemale" %% "scaffeine" % "5.3.0" % "compile",

@@ -408,7 +408,7 @@ so games can't be played in a browser in between):
 | 3.17 | No lila code uses chess rules or formats any more: FEN, PGN (including PGN import; SGF import is Phase 7), UCI, openings and variants gone, and scalachess kept or replaced as 3.9 decided, with COPYING.md updated | 3.14, 3.16 |
 | 3.18 | Round UI: `ui/round` shows `libs/board` instead of chessground, sends points and passes, shows prisoners and the Fischer clock, honours touch-confirm; the chess-only input packages it imports (`voice`, `keyboardMove`, `dgt`) go with it | 2.1, 2.3, 3.14 |
 | 3.19 | Lobby, setup and game-list UI: Go options (size, ruleset, komi) in the create-game and challenge forms, Go mini boards, chessground and the remaining chess UI packages removed | 2.1, 3.15, 3.17 |
-| 3.20 | Phase 3 demo: a Playwright test where two browsers play a casual 9×9 Fischer game to resignation (desktop and phone viewports, E2E on labelled PRs and nightly), plus the demo checklist for you | 2.4, 3.18, 3.19 |
+| 3.20 | Phase 3 demo: a Playwright test where two browsers play a casual 9×9 Fischer game to resignation (desktop and phone viewports, E2E on labelled PRs and nightly), plus the demo checklist for you; first, the browser's last `variant` reads and the server's `GoSetups.legacyVariantJson` go (moved from 3.19 part 2, since round and analyse still read them) | 2.4, 3.18, 3.19 |
 
 What stays out of Phase 3: byo-yomi, komi choices beyond the spec's defaults, the scoring phase and
 SGF export (Phase 4), ratings and ranks (Phase 5), the lobby redesign (Phase 6), the analysis board
