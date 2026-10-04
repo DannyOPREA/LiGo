@@ -2,7 +2,6 @@ package lila.user
 package ui
 
 import lila.core.perf.{ PuzPerf, UserWithPerfs }
-import lila.rating.UserWithPerfs.hasVariantRating
 import lila.ui.*
 
 import ScalatagsTemplate.{ *, given }
@@ -16,9 +15,6 @@ final class UserShowSide(helpers: Helpers):
       rankMap: lila.core.rating.UserRankMap,
       active: Option[PerfKey]
   )(using ctx: Context) =
-
-    def showNonEmptyPerf(perf: Perf, pk: PerfKey) =
-      perf.nonEmpty.option(showPerf(perf, pk))
 
     def showPerf(perf: Perf, pk: PerfKey) =
       val isPuzzle = pk == PerfKey.puzzle
@@ -45,6 +41,7 @@ final class UserShowSide(helpers: Helpers):
               ctx.pref.showRatings.option(
                 frag(
                   if perf.glicko.clueless then strong("?")
+                  else if pk == PerfKey.go then strong(goRank(perf.intRating, perf.provisional))
                   else
                     strong(
                       perf.glicko.intRating,
@@ -74,21 +71,8 @@ final class UserShowSide(helpers: Helpers):
     div(cls := "side sub-ratings")(
       (!u.lame || ctx.is(u) || Granter.opt(_.AccountInfo)).option(
         frag(
-          showNonEmptyPerf(u.perfs.ultraBullet, PerfKey.ultraBullet),
-          showPerf(u.perfs.bullet, PerfKey.bullet),
-          showPerf(u.perfs.blitz, PerfKey.blitz),
-          showPerf(u.perfs.rapid, PerfKey.rapid),
-          showPerf(u.perfs.classical, PerfKey.classical),
-          showPerf(u.perfs.correspondence, PerfKey.correspondence),
-          u.hasVariantRating.option(hr),
-          showNonEmptyPerf(u.perfs.crazyhouse, PerfKey.crazyhouse),
-          showNonEmptyPerf(u.perfs.chess960, PerfKey.chess960),
-          showNonEmptyPerf(u.perfs.kingOfTheHill, PerfKey.kingOfTheHill),
-          showNonEmptyPerf(u.perfs.threeCheck, PerfKey.threeCheck),
-          showNonEmptyPerf(u.perfs.antichess, PerfKey.antichess),
-          showNonEmptyPerf(u.perfs.atomic, PerfKey.atomic),
-          showNonEmptyPerf(u.perfs.horde, PerfKey.horde),
-          showNonEmptyPerf(u.perfs.racingKings, PerfKey.racingKings),
+          // LiGo: the one Go rating (ADR 0021 §1), shown as its rank (unit 5.6)
+          showPerf(u.perfs.go, PerfKey.go),
           u.noBot.option(
             frag(
               hr,

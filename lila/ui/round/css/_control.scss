@@ -197,7 +197,7 @@
     }
 
     &.me {
-      background: color-mix(in oklab, $c-primary 80%, $c-bg);
+      background: color-mix(in oklab, $c-primary-button 80%, $c-bg);
     }
 
     @keyframes rubber-band {
@@ -254,7 +254,7 @@
         position: absolute;
         inset: 0;
         pointer-events: none;
-        background: $c-primary;
+        background: $c-primary-button;
         opacity: 0;
         animation: button-glowing 2s ease-in-out infinite;
       }
@@ -273,13 +273,13 @@
 
     &.fbt:not(.disabled):hover {
       @include with-button-shadow(
-        hsl(from $c-primary h s calc(l + 32)),
-        hsl(from $c-primary h s calc(l - 18)),
-        hsl(from $c-primary h s calc(l + 44)),
-        hsl(from $c-primary h s calc(l - 14))
+        hsl(from $c-primary-button h s calc(l + 32)),
+        hsl(from $c-primary-button h s calc(l - 18)),
+        hsl(from $c-primary-button h s calc(l + 44)),
+        hsl(from $c-primary-button h s calc(l - 14))
       );
 
-      background: $c-primary;
+      background: $c-primary-button;
       color: #fff;
       animation: none;
     }

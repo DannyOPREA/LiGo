@@ -19,7 +19,7 @@ import _root_.chess.{
   Outcome,
   IntRating
 }
-import ligo.gorules.GoGame
+import ligo.gorules.{ ByoyomiClock, GoGame }
 import scalalib.model.Days
 
 import lila.core.id.{ GameFullId, GameId, GamePlayerId }
@@ -43,7 +43,8 @@ case class Game(
     ply: Ply,
     startedAtPly: Ply,
     clock: Option[Clock],
-    loadClockHistory: Clock => Option[ClockHistory] = _ => ClockHistory.empty.some,
+    // Reads the clock history (`cw`, `cb`) for the game's clock, Fischer or byo-yomi.
+    loadClockHistory: GameClock => Option[ClockHistory] = _ => ClockHistory.empty.some,
     status: Status,
     daysPerTurn: Option[Days],
     binaryMoveTimes: Option[Array[Byte]] = None,
@@ -52,14 +53,21 @@ case class Game(
     createdAt: Instant = nowInstant,
     movedAt: Instant = nowInstant,
     metadata: GameMetadata,
-    abortedBy: Option[Color] = None
+    abortedBy: Option[Color] = None,
+    // A byo-yomi clock (ADR 0020 §7, unit 4.7), stored under `cy`. A game has at most one of `clock` (Fischer)
+    // and `byoyomi`; code that only knows Fischer clocks reads `clock` and sees none in a byo-yomi game.
+    byoyomi: Option[ByoyomiClock] = None
 ):
 
   export chess.{ position, sans, history, variant }
   export metadata.{ tournamentId, simulId, swissId, drawOffers, source, pgnImport, hasRule }
   export players.{ white as whitePlayer, black as blackPlayer, apply as player }
 
-  lazy val clockHistory = clock.flatMap(loadClockHistory)
+  /** The game's real-time clock, whichever kind it has. */
+  def gameClock: Option[GameClock] =
+    clock.map(GameClock.Fischer(_)).orElse(byoyomi.map(GameClock.Byoyomi(_)))
+
+  lazy val clockHistory = gameClock.flatMap(loadClockHistory)
 
   /** The player to move. A Go game says itself; a chess game uses ply parity, White on even plies, the rule
     * lila uses when it loads a game (`startedAtPly` makes it hold for Go games that don't start with White
@@ -231,10 +239,10 @@ case class Game(
     if isCorrespondence then outoftimeCorrespondence else outoftimeClock(withGrace)
 
   private def outoftimeClock(withGrace: Boolean): Boolean =
-    clock.exists: c =>
+    gameClock.exists: c =>
       started && playable && {
         c.outOfTime(turnColor, withGrace) || {
-          !c.isRunning && c.players.exists(_.elapsed.centis > 0)
+          !c.isRunning && c.anyTimeUsed
         }
       }
 
@@ -244,9 +252,10 @@ case class Game(
   def isCorrespondence = speed == Speed.Correspondence
   def isSpeed(s: Speed) = speed == s
 
-  def hasClock = clock.isDefined
+  def hasClock = gameClock.isDefined
+  // Fischer settings only: a byo-yomi game has none (its settings are `byoyomi.map(_.config)`).
   def clockConfig = clock.map(_.config)
-  def speed = Speed(clockConfig)
+  def speed = byoyomi.fold(Speed(clockConfig))(c => GameClock.Byoyomi(c).speed)
 
   def hasCorrespondenceClock = daysPerTurn.isDefined
 

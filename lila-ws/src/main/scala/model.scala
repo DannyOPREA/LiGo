@@ -96,7 +96,8 @@ case class RoundEventFlags(
     troll: Boolean
 )
 
-case class Clock(white: Int, black: Int)
+/** Clocks in seconds; `periods` is each side's byo-yomi periods left (white, black), absent for Fischer. */
+case class Clock(white: Int, black: Int, periods: Option[(Int, Int)] = None)
 
 /** A Go move as the round relays it (ADR 0019 §6): an SGF point (`[a-s]{2}`, boards up to 19×19) or `pass`.
   * lila-ws checks its shape only; lila checks it against the Go rules.

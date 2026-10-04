@@ -99,7 +99,7 @@ final private class Titivate(
           gameRepo.remove(game.id)
 
         case game =>
-          game.clock match
+          game.gameClock match
 
             case Some(clock) if clock.isRunning =>
               val minutes = clock.estimateTotalSeconds / 60
