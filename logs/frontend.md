@@ -5,6 +5,13 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 9.7 part two · the puzzle rating's tooltip and the profile's puzzle tip say Go
+- Did: `translation/source/site.xml` `puzzleDesc` ("Chess tactics trainer", the puzzle row's tooltip on profiles and rating lists, via `PerfType`) now reads "Go puzzles (tsumego) trainer"; `onboarding.xml` `improveWithChessTacticsPuzzles` (the new-player tip on the profile page) reads "Improve with Go puzzles (tsumego).". Regenerated `ui/@types/lichess/i18n.d.ts`; key names unchanged, so `key.scala` is unchanged.
+- Worked: spotted by the Phase 5 thread; both strings live in Phase 9's translation files.
+- Didn't work / dead ends: none.
+- Lessons: grep `translation/source` for "chess" when a page still says it; the text is in the source XML, not the view.
+- Decisions: key names stay (renaming keys would touch every translation file).
+
 ### 2026-10-04 · unit 9.7 part two · colour pickers show stones; chess move speech unhooked
 - Did: the colour choice in the setup and challenge windows (`ui/lib/css/setup/_colorChoice.scss`) and on the puzzle page (`ui/puzzle/css/_side.scss`) shows a black and a white stone (new `public/images/ligo/{black,white}-stone.svg`, drawn like `random-color.svg`) instead of cburnett's chess kings. `site.sound.saySan` and its `speakable` import are gone, and `lib/game` no longer re-exports `sanWriter`.
 - Worked: page browser tests on the built pages: playground 49, game page 19, analysis board 15, puzzle page 32.

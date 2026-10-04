@@ -1064,7 +1064,7 @@ Playing rated games will increase stability.</string>
   <string name="rapidDesc">Rapid games: 8 to 25 minutes</string>
   <string name="classicalDesc">Classical games: 25 minutes and more</string>
   <string name="correspondenceDesc">Correspondence games: one or several days per move</string>
-  <string name="puzzleDesc">Chess tactics trainer</string>
+  <string name="puzzleDesc">Go puzzles (tsumego) trainer</string>
   <string name="important">Important</string>
   <string name="yourQuestionMayHaveBeenAnswered">Your question may already have an answer %1$s</string>
   <string name="inTheFAQ">in the FAQ</string>
