@@ -1,28 +1,9 @@
 main.importer {
   form {
-    label.pgn {
-      display: block;
-      margin-bottom: 1em;
-    }
-
-    label.pgn span {
-      display: block;
-      margin-bottom: 1em;
-    }
-
     textarea {
       width: 98%;
       height: 20vh !important;
       padding: 0.5em;
-    }
-
-    .analyse > span {
-      float: left;
-      margin-inline-end: 10px;
-    }
-
-    .analyse > label {
-      cursor: pointer;
     }
 
     .upload input {

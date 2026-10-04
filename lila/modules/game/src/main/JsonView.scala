@@ -154,7 +154,17 @@ object JsonView:
 
   /** A Go game that ended by counting: its result as SGF writes it, `B+3.5`, `W+0.5` or `0` (ADR 0020 §5). */
   def goResult(g: Game): Option[String] =
-    g.goScoring.filter(_ => g.status == chess.Status.VariantEnd).flatMap(_.result).map(_.sgf)
+    g.goScoring
+      .filter(_ => g.status == chess.Status.VariantEnd)
+      .flatMap(_.result)
+      .map(_.sgf)
+      .orElse(importedResult(g))
+
+  /** An imported game that ended by counting has no count of its own: its result is the file's `RE`, as
+    * written (`B+3.5`, `W+`, `0`), kept in `sgfi` when it was imported (ADR 0023 §2). No parse on view.
+    */
+  private def importedResult(g: Game): Option[String] =
+    g.sgfImport.filter(_ => g.status == chess.Status.VariantEnd).flatMap(_.re)
 
   /** A Go game's setup alone: size, rules, komi, handicap and custom starting position. The API's game
     * exports carry it in place of chess's variant and initial FEN (unit 3.16).

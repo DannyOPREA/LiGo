@@ -44,9 +44,12 @@ def meta(
                   span(cls := "go-setup")(goSetupName(game.go))
                 )
             ),
-            game.pgnImport.flatMap(_.date).fold(pastMomentWithPreload(game.createdAt))(frag(_))
+            game.sgfImport.flatMap(_.date).fold(pastMomentWithPreload(game.createdAt))(frag(_))
           ),
-          game.pgnImport
+          game.sgfImport
+            .flatMap(_.ru)
+            .map(ru => small(cls := "import-ruleset")(trans.site.goRulesNotRecognisedX(ru))),
+          game.sgfImport
             .flatMap(_.user)
             .map: importedBy =>
               small(

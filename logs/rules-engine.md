@@ -13,6 +13,49 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 7.5 review · Result text and ruleset note stored at import; verbatim SGF download
+- Did: `sgfi` gains optional `re` (result text for a counted game) and `ru` (raw unknown `RU`), set in
+  `Importer.parse`; `JsonView.goResult` reads `re` (no parse of up to 200 KB per round event); the game
+  page's side panel shows the unknown-ruleset note (new key `goRulesNotRecognisedX`). An import's SGF
+  export returns the stored text verbatim (`GameApiV2.storedSgf`). `Importer.clean` also drops
+  bidirectional and zero-width characters. Removed the unused `importPgn`, `copyVariationPgn` and
+  `copyMainLinePgn` strings; regenerated `key.scala` (it lacked `goDownloadGameSgf`). ADR 0023 amendment
+  for the body limit and the two fields.
+- Worked: the BSON macro handler reads a document without the new keys as `None`, tested with a
+  hand-made old `sgfi`.
+- Didn't work / dead ends: nothing new. The delay test for `/<id>/analysis` already existed as an SGF
+  dump test; one more pins the exact flags the page uses.
+- Lessons: regenerate `key.scala` after every `site.xml` edit, not once.
+- Decisions: one row in logs/decisions.md.
+- Needs real-stack check: `/paste` and `/api/import` end to end, `/<id>/analysis` through Play, the game
+  page's ruleset note, and the verbatim download's headers.
+
+### 2026-10-04 · unit 7.5 · SGF import and game analysis
+- Did: `/paste` (the form, a file picker that fills the box) and `/api/import` (`sgf=` urlencoded) take an
+  SGF record; `Importer` (`modules/game`) checks the 200 KB size, looks for the same file by hash, reads it
+  once with `libs/go-rules`' `SgfImport` and stores a finished, non-playable `source = import` Go game with
+  `sgfi { user, ca, date, sgf, h }` in place of `pgni` (the two indexes and `isPgnImport`'s uses renamed).
+  `PB`/`BR`/`WR` become the imported player names as text, `RE` the status and winner. `/<id>/analysis`
+  (new, beside `/<id>/<color>/analysis`) opens any game in `ui/analyse`: an import's own text, any other
+  game's SGF from `SgfDump` with the move delay while it is played; the page links to the game and to
+  `/game/export/<id>?format=sgf` and honours the game page's `#<ply>`. PGN import's leftovers (the form
+  file input, three PGN strings, "PGN import by") are gone.
+- Worked: 7.3's `SgfImport` already did everything the ADR asks for the main line, including the
+  messages ("move 3: B[ee] is not a legal move (occupied)", the 13×13 refusal), so the server side is glue.
+  The game page's analysis button (ui/round) already linked to `.../analysis#<ply>`, so no ui/round edit.
+  `ui/analyse` already took `cfg.sgf`, so the page change is the links and the `#ply` jump.
+- Didn't work / dead ends: my first hash test changed line breaks inside a line and expected the same
+  hash; lila's hash ignores spaces and blank lines but not where lines break (as for PGN).
+- Lessons: the shared root cases (`libs/conformance/sgf/root.json`, `records.json`) already covered the
+  RU, KM, HA and size rules, so no fixture needed changing; the importer's tests only check what the
+  importer adds (statuses, names, hash, storage).
+- Decisions: four rows in logs/decisions.md (result mapping and where the margin lives, player names,
+  limits and the rate limit before the parse, what `/<id>/analysis` does per kind of game).
+- Verified by Claude: see the PR / report for the test output. Needs owner verification: a real import
+  on the running site (`/paste`) and the game page's analysis button on a finished game.
+- Follow-ups: the `/paste` file picker reads UTF-8 only (a Latin-1 file opens right in the analysis
+  board's own file open); the page's error reasons are English (unit 9.7).
+
 ### 2026-09-29 · unit 7.3 · Review: one grammar and one tree for both SGF readers
 - Did: the reviewer's two-reader probe found the readers disagreed (the server stored files the
   analysis board refuses: a bad side variation, text after the record, non-ASCII names; and read
