@@ -53,7 +53,7 @@ final class PgnDump(
         )
       Pgn(ts, InitialComments.empty, tree, ply.next)
 
-  private def gameUrl(id: GameId) = routeUrl(routes.Round.watcher(id, Color.White))
+  def gameUrl(id: GameId) = routeUrl(routes.Round.watcher(id, Color.White))
 
   private type GameUsers = ByColor[Option[LightUser]]
 

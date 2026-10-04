@@ -19,6 +19,23 @@
 - Grade autoscore's raw `result`/`needs_sealing` (as `src/grade.ts` does), never goscorer's `owner`, against OGS's `correct_ownership`: under Japanese rules `owner` marks territory only, so a correct answer would fail by construction (2026-09-29, unit 4.6).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 4.11 · SGF export of a Go game
+- Did: `lila.game.SgfDump` (pure) builds `SgfInfo` from a stored Go game (names, rank label from unit 5.5,
+  creation date in UTC, place `LiGo <game url>`, Fischer or days-per-move clock, `RE` for resign, flag and
+  abandonment) and calls go-rules' `Sgf.write`. `GameApiV2.Format` gains `SGF`: `byRequest` picks it for
+  `Accept: application/x-go-sgf` or `?format=sgf`; `Game.exportGame` makes a Go game's no-preference export SGF
+  (content type `application/x-go-sgf`, file `ligo_<id>.sgf`); the bulk/stream exports write SGF when asked,
+  keeping PGN for a non-Go game. Tests: `SgfDumpTest` (6), `GameExportFormatTest` (4).
+- Worked: reuse of `Namer.ratingString`, `GoBridge.goColor` and go-rules' `GameResult`; no manifest change.
+- Didn't work / dead ends: a test wrote names as `ByColor(black, white)` (the order is white, black), which
+  showed up as swapped players in the record; also `play-test` is not on lila's classpath, so the format test
+  builds a request with Play's `RequestFactory`.
+- Decisions: see logs/decisions.md (default format, `RE` before 4.8, ranks).
+- Verified by Claude: the tests above and `compile`. Needs owner verification: a real download in the browser.
+- Follow-ups: counted results (`B+3.5`, `0`, `Void`) once 4.8 stores them; byo-yomi `OT` once a game stores
+  byo-yomi; the game page's Download link (it lives in `ui/round`, not in Scala views; the only Scala links, in
+  `ReplayUi`, are chess-only PGN links); an `sgf` field in the JSON exports was skipped.
+
 ### 2026-09-29 · unit 4.6 follow-up · b18 network checksum pinned
 - Did: set `NET_SHA256` in `dev/katago.sh` to the sha256 the owner pasted from his own
   `dev/ligo katago install opencl` download of `kata1-b18c384nbt-s9996604416-d4316597426.bin.gz`

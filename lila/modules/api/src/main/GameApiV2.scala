@@ -16,7 +16,7 @@ import lila.core.game.GoBridge
 import lila.db.dsl.{ *, given }
 import lila.game.JsonView.given
 import lila.game.PgnDump.{ WithFlags, applyDelay }
-import lila.game.{ Divider, Query }
+import lila.game.{ Divider, Query, SgfDump }
 import lila.round.GameProxyRepo
 
 final class GameApiV2(
@@ -46,6 +46,7 @@ final class GameApiV2(
           formatted <- config.format match
             case Format.JSON =>
               toJson(game, initialFen, analysis, opening, config).map(Json.stringify)
+            case Format.SGF => sgfOf(game).map(_ | "")
             case Format.PGN =>
               PgnStr.raw(
                 pgnDump(
@@ -61,6 +62,10 @@ final class GameApiV2(
   private val fileR = """[\s,]""".r
 
   def filename(game: Game, format: Format): Fu[String] =
+    if format == Format.SGF then fuccess(s"ligo_${game.id}.sgf") // unit 4.11
+    else pgnFilename(game, format)
+
+  private def pgnFilename(game: Game, format: Format): Fu[String] =
     gameLightUsers(game).map: users =>
       fileR.replaceAllIn(
         "lichess_pgn_%s_%s_vs_%s.%s.%s".format(
@@ -195,7 +200,26 @@ final class GameApiV2(
   private def formatterFor(config: Config) =
     config.format match
       case Format.PGN => pgnDump.formatter(config.flags)
+      case Format.SGF => sgfFormatter(config)
       case Format.JSON => jsonFormatter(config)
+
+  // Unit 4.11: a Go game as SGF. The bulk formatter keeps a game that isn't Go as PGN.
+  private def sgfOf(game: Game): Fu[Option[String]] =
+    gameLightUsers(game).map: users =>
+      val names = users.map((p, u) => SgfDump.playerName(p, u))
+      SgfDump(game, names, s"LiGo ${pgnDump.dumper.gameUrl(game.id)}")
+
+  private def sgfFormatter(config: Config) =
+    val pgn = pgnDump.formatter(config.flags)
+    (
+        game: Game,
+        initialFen: Option[Fen.Full],
+        analysis: Option[Analysis],
+        opening: Option[Opening.AtPly]
+    ) =>
+      sgfOf(game).flatMap:
+        case Some(sgf) => fuccess(s"$sgf\n\n")
+        case None => pgn(game, initialFen, analysis, opening)
 
   private def jsonFormatter(config: Config) =
     (
@@ -288,11 +312,16 @@ final class GameApiV2(
 object GameApiV2:
 
   enum Format:
-    case PGN, JSON
+    case PGN, JSON, SGF
   object Format:
+    /** JSON or NDJSON when the client asks for it, SGF with `Accept: application/x-go-sgf` or `?format=sgf`,
+      * else PGN. `Game.exportGame` turns a Go game's PGN default into SGF (unit 4.11).
+      */
     def byRequest(using req: play.api.mvc.RequestHeader) =
       if HTTPRequest.acceptsNdJson(req) || HTTPRequest.acceptsJson(req)
       then JSON
+      else if HTTPRequest.acceptsSgf(req) || HTTPRequest.queryStringGet("format").contains("sgf")
+      then SGF
       else PGN
 
   sealed trait Config:

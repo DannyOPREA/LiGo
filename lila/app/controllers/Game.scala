@@ -34,8 +34,12 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
   private[controllers] def exportGame(gameId: GameId)(using ctx: Context): Fu[Result] =
     given Option[Me] = ctx.isFullAuth.so(ctx.me)
     Found(env.round.proxyRepo.gameIfPresentOrFetch(gameId)): game =>
+      // A Go game's PGN is headers only, so unless JSON is asked for it downloads as SGF (unit 4.11).
+      val format = GameApiV2.Format.byRequest match
+        case GameApiV2.Format.PGN if game.isGo => GameApiV2.Format.SGF
+        case other => other
       val config = GameApiV2.OneConfig(
-        format = GameApiV2.Format.byRequest,
+        format = format,
         imported = getBool("imported"),
         flags = requestPgnFlags(extended = true)
       )
@@ -183,6 +187,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
   private[controllers] def gameContentType(config: GameApiV2.Config) =
     config.format match
       case GameApiV2.Format.PGN => pgnContentType
+      case GameApiV2.Format.SGF => lila.game.SgfDump.contentType
       case GameApiV2.Format.JSON =>
         config match
           case _: GameApiV2.OneConfig => JSON
