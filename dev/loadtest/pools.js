@@ -23,6 +23,11 @@ const WS = __ENV.WS_URL || 'ws://localhost:9664';
 const PAIRS = Number(__ENV.PAIRS || 10);
 const MOVES = Math.min(Number(__ENV.MOVES || 10), 18);
 const POOL = __ENV.POOL || '9x9-3m-2s';
+// TRACE=1 logs what the first two players send and receive on the round socket (for debugging)
+const TRACE = __ENV.TRACE === '1';
+const trace = (dir, text) => {
+  if (TRACE && __VU <= 2) console.log(`LOADTEST-TRACE vu=${__VU} ${dir} ${String(text).slice(0, 240)}`);
+};
 
 const poolWait = new Trend('pool_wait_ms', true);
 const moveTime = new Trend('move_ms', true);
@@ -109,7 +114,7 @@ const points = color => {
   return rows.flatMap(r => 'abcdefghi'.split('').map(c => c + r));
 };
 
-/** Plays the game to its end; true when this player saw it end. */
+/** Plays the game to its end; true when this player played all its stones and saw the game end. */
 function play(cookie, fullId) {
   const res = http.get(`${BASE}/${fullId}`, {
     headers: { ...headers(cookie), Accept: 'application/vnd.lichess.v5+json' },
@@ -117,6 +122,7 @@ function play(cookie, fullId) {
   if (!check(res, { 'game JSON': r => r.status === 200 })) return false;
   const data = res.json();
   const color = data.player.color;
+  trace('game', `${fullId} ${color} turns=${data.game.turns} v=${data.player.version}`);
   const mine = points(color);
   let played = 0;
   let sentAt = 0;
@@ -132,9 +138,14 @@ function play(cookie, fullId) {
       if (!myTurn(ply)) return;
       if (played < MOVES) {
         sentAt = waitingSince = Date.now();
-        socket.send(JSON.stringify({ t: 'move', d: { u: mine[played], a: ++ack } }));
+        const out = JSON.stringify({ t: 'move', d: { u: mine[played], a: ++ack } });
+        trace('out', out);
+        socket.send(out);
         played++;
-      } else if (color === 'black') socket.send(JSON.stringify({ t: 'resign' }));
+      } else if (color === 'black') {
+        trace('out', 'resign');
+        socket.send(JSON.stringify({ t: 'resign' }));
+      }
     };
     const onEvent = ev => {
       if (ev.t === 'ack' && sentAt) {
@@ -152,7 +163,7 @@ function play(cookie, fullId) {
         if (!ended) {
           ended = true;
           gameTime.add(Date.now() - start);
-          if (color === 'black') gamesEnded.add(1);
+          if (color === 'black' && played === MOVES) gamesEnded.add(1); // played out, not ended by lila
           socket.close();
         }
       }
@@ -163,13 +174,15 @@ function play(cookie, fullId) {
     });
     socket.on('message', raw => {
       if (raw === '0') return;
+      trace('in', raw);
       const msg = JSON.parse(raw);
       if (msg.t === 'b' && Array.isArray(msg.d)) msg.d.forEach(onEvent);
       else onEvent(msg);
     });
     socket.setTimeout(() => socket.close(), 180_000);
   });
-  return ended;
+  // a game lila ends on its own (no first move in time, a timeout) doesn't count
+  return ended && played === MOVES;
 }
 
 export default function (data) {

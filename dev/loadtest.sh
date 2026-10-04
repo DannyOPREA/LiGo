@@ -55,7 +55,7 @@ case "$cmd" in
     install
     base=${BASE_URL:-http://localhost:9663}
     say "load test against $base: ${PAIRS:-10} pairs, ${MOVES:-10} stones each"
-    "$K6_BIN" run -e BASE_URL="$base" -e WS_URL="${WS_URL:-ws://localhost:9664}" -e PAIRS="${PAIRS:-10}" -e MOVES="${MOVES:-10}" "$@" "$ROOT/dev/loadtest/pools.js"
+    "$K6_BIN" run -e BASE_URL="$base" -e WS_URL="${WS_URL:-ws://localhost:9664}" -e PAIRS="${PAIRS:-10}" -e MOVES="${MOVES:-10}" -e TRACE="${TRACE:-0}" "$@" "$ROOT/dev/loadtest/pools.js"
     ;;
   *) die "usage: dev/ligo loadtest [run|install|path] [k6 args...]" ;;
 esac
