@@ -1,8 +1,7 @@
 package lila.round
 
 import scala.math
-import chess.format.Fen
-import chess.{ ByColor, Clock, Speed }
+import chess.{ ByColor, Speed }
 import play.api.libs.json.*
 import scalalib.data.Preload
 
@@ -56,7 +55,6 @@ final class JsonView(
       pov: Pov,
       prefs: ByColor[Pref],
       users: GameUsers,
-      initialFen: Option[Fen.Full],
       flags: ExportOptions
   ): Fu[JsObject] = for
     takebackable <- takebacker.isAllowedIn(pov.game, Preload(prefs))
@@ -67,7 +65,7 @@ final class JsonView(
     import pov.*
     Json
       .obj(
-        "game" -> gameJsonView.baseWithPlayer(game, initialFen),
+        "game" -> gameJsonView.baseWithPlayer(game),
         "player" -> {
           commonPlayerJson(game, player, users(pov.color), flags) ++ Json
             .obj(
@@ -154,7 +152,6 @@ final class JsonView(
       pref: Option[Pref],
       me: Option[UserId],
       tv: Option[OnTv],
-      initialFen: Option[Fen.Full] = None,
       flags: ExportOptions
   ) =
     getSocketStatus(pov.game).map: socket =>
@@ -162,7 +159,7 @@ final class JsonView(
       Json
         .obj(
           "game" -> gameJsonView
-            .baseWithPlayer(game, initialFen)
+            .baseWithPlayer(game)
             .add("moveCentis" -> (flags.movetimes.so(game.moveTimes.map(_.map(_.centis)))))
             .add("importedBy" -> game.pgnImport.flatMap(_.user)),
           "clock" -> game.gameClock.map(clockJson),

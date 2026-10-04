@@ -1,17 +1,15 @@
 package lila.game
 
-import chess.format.pgn.PgnStr
-
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 
 object PgnImport:
 
-  def hash(pgn: PgnStr) = // ByteArray {
+  def hash(pgn: String) = // ByteArray {
     MessageDigest
       .getInstance("MD5")
       .digest:
-        pgn.value.linesIterator
+        pgn.linesIterator
           .map(_.replace(" ", ""))
           .filter(_.nonEmpty)
           .to(List)
@@ -19,7 +17,7 @@ object PgnImport:
           .getBytes(UTF_8)
       .take(12)
 
-  def make(user: Option[UserId], date: Option[String], pgn: PgnStr) =
+  def make(user: Option[UserId], date: Option[String], pgn: String) =
     lila.core.game.PgnImport(
       user = user,
       date = date,

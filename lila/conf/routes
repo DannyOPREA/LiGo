@@ -120,7 +120,6 @@ GET   /round/minis                               controllers.Round.minis(ids: St
 # Analyse
 
 GET   /game/export/$gameId<\w{8}>                             controllers.Game.exportOne(gameId: GameId)
-GET   /game/export/$gameId<\w{8}>.pgn                         controllers.Game.exportOne(gameId: GameId)
 
 # Pref
 POST  /pref/:name                             controllers.Pref.set(name)
