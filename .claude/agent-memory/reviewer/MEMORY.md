@@ -29,3 +29,4 @@
 - [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding tap dead zones, guest "Anonymous" seeks, raw reason tokens, vacuous suits (6.7)
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)
+- [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, scratch PW probes (8.7)
