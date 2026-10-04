@@ -250,3 +250,11 @@ class GoHookTest extends munit.FunSuite:
     assert(!a.compatibleWith(b.copy(go = nine.some)))
     assert(!a.compatibleWith(b.copy(go = GoSetups.default.copy(handicap = 2, komi = 0.5).some)))
     assert(!a.compatibleWith(b.copy(daysPerTurn = Some(Days(3)))))
+
+  // Unit 6.4 (second part): who has a rank in a pool (ADR 0021 §4, ADR 0022 §3)
+  test("an account at lila's starting 1500 / 500 has no rank; a declared or played one has"):
+    import lila.rating.{ Glicko, GoRating }
+    assert(!LobbySocket.hasRank(Glicko.default))
+    assert(LobbySocket.hasRank(GoRating.startingGlicko(GoRating.Rank.fromName("5k").get)))
+    assert(LobbySocket.hasRank(Glicko.default.copy(deviation = 480)), "one rated game played")
+    assert(LobbySocket.hasRank(Glicko.default.copy(rating = 1520)))

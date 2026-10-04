@@ -44,9 +44,7 @@ final private class GameStarter(
     (perfs.get(p1.userId), perfs.get(p2.userId)).tupled.traverse: (perf1, perf2) =>
       for
         // with handicap stones the weaker player takes Black (ADR 0022 §3); otherwise lila's colours
-        p1White <- couple.black.fold(userApi.firstGetsWhite(p1.userId, p2.userId))(b =>
-          fuccess(b != p1.userId)
-        )
+        p1White <- GameStarter.p1White(couple).fold(userApi.firstGetsWhite(p1.userId, p2.userId))(fuccess)
         (whitePerf, blackPerf) = if p1White then perf1 -> perf2 else perf2 -> perf1
         (whiteMember, blackMember) = if p1White then p1 -> p2 else p2 -> p1
         game <- makeGame(
@@ -87,6 +85,10 @@ final private class GameStarter(
       )
 
 private object GameStarter:
+
+  /* Whether the couple's first player takes White, when the pairing decided it: with stones the weaker player
+   * takes Black (ADR 0022 §3). None: lila's colours. */
+  def p1White(couple: MatchMaking.Couple): Option[Boolean] = couple.black.map(_ != couple.p1.userId)
 
   /* The pool's own setup with the pair's handicap: 0 is an even game, 1 the no-komi game, 2–9 stones; komi
    * is the spec's for that handicap (6.5 even, 0.5 with any handicap, R-KOMI-1/2). */

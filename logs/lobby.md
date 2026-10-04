@@ -19,6 +19,8 @@
   pool's byo-yomi or Fischer clock. Hooks reach a pool by their whole clock settings, so rated
   byo-yomi hooks can now be pulled in. The lobby page reads the pools from the server (`pools` in the
   page data) instead of a copied list; old `#pool/10+10` links find the Fischer pool with that clock.
+  The game page's "new opponent" button links to the pool by size, main time and increment or period
+  length (`#pool/19x19-10m-*x30s`: its clock shows the periods left, not the starting count).
 - Worked: GoPairing (6.2) already had stones, colours and the score, so the pool only had to pass the
   flags in and the stones out.
 - Didn't work / dead ends: none.
@@ -27,10 +29,17 @@
   their own rating.
 - Decisions: logs/decisions.md 2026-10-04 row for 6.4 part 2 (Claude, under the owner's 2026-09-28
   delegation).
-- Verified by Claude: see the PR. · Needs owner verification: the PR's list.
-- Follow-ups: pool games become rated after 5.7 (`GameStarter`); 6.6 sends the Handicap OK chip,
-  draws the tiles in three columns and shows waiting counts; the game page's "new opponent" link and
-  `lib/poolRangeStorage` still build lila's clock-only ids (the lobby maps the Fischer ones).
+- Verified by Claude: `pool/testOnly lila.pool.GoPoolTest lila.pool.GoPairingTest` (38 passed; verify's
+  `testQuick` skips the pool module), `lobby/testOnly lila.lobby.GoHookTest` (20), `node ui/test lobby`
+  (70), whole-server `compile`, `./ui/build --no-install -p`, verify.sh, the chess guard.
+  · Needs owner verification: the PR's list.
+- Review (reviewer agent): fixed its blocking finding (the "new opponent" button after a byo-yomi pool
+  game linked to no pool) and three optional ones (tests for who takes Black and who has a rank; the
+  pool JSON built once). Not done: `lib/poolRangeStorage` still keys ranges by lila's clock-only ids
+  (unused while pool games are casual; 6.6 replaces the range with the rank range).
+- Follow-ups: pool games become rated after 5.7 (`GameStarter`); 6.6 sends the Handicap OK chip
+  (until then nobody gets a handicap pool game), draws the tiles in three columns and shows waiting
+  counts.
 
 ### 2026-10-04 · unit 6.5 · Open challenges and correspondence tiles on the server
 - Did: the lobby now sends each player every open game except those from or to players they block or

@@ -46,6 +46,17 @@ describe('pool links (#pool/...)', () => {
     });
   });
 
+  test("the game page's link finds a byo-yomi pool by size, main time and period length", () => {
+    assert.deepEqual(poolFromHash('#pool/19x19-10m-*x30s/bob', pools), {
+      id: '19x19-10m-5x30s',
+      blocking: 'bob',
+    });
+    assert.deepEqual(poolFromHash('#pool/9x9-1m-*x10s', pools), { id: '9x9-1m-5x10s' });
+    assert.deepEqual(poolFromHash('#pool/19x19-10m-10s', pools), { id: '19x19-10m-10s' });
+    assert.equal(poolFromHash('#pool/19x19-10m-*x10s', pools), undefined);
+    assert.equal(poolFromHash('#pool/9x9-10m-*x30s', pools), undefined);
+  });
+
   test('an old clock-only link finds the Fischer pool with that clock, or nothing', () => {
     assert.deepEqual(poolFromHash('#pool/10+10/bob', pools), { id: '19x19-10m-10s', blocking: 'bob' });
     assert.deepEqual(poolFromHash('#pool/3+2', pools), { id: '9x9-3m-2s' });

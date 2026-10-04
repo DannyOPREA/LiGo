@@ -41,4 +41,4 @@ object PoolList:
   given isPoolCompatible: IsPoolCompatible = IsPoolCompatible: (clock, go) =>
     find(clock, go).isDefined
 
-  def json = Json.toJson(all)
+  lazy val json = Json.toJson(all)

@@ -119,6 +119,16 @@ class GoPoolTest extends munit.FunSuite:
     assertEquals(pairs.head.stones, 5)
     assertEquals(pairs.head.black, Some(UserId("k5")))
 
+  test("the weaker player of a handicap pair takes Black, whichever comes first"):
+    val k5 = handicap(member("k5", Rank.Kyu(5)))
+    val d1 = handicap(member("d1", Rank.Dan(1)))
+    for (a, b) <- List(k5 -> d1, d1 -> k5) do
+      val couple = MatchMaking(Vector(a, b), 19).head
+      val white = if GameStarter.p1White(couple).get then couple.p1 else couple.p2
+      assertEquals(white.userId, UserId("d1"))
+    val even = MatchMaking(Vector(k5, handicap(member("k5b", Rank.Kyu(5)))), 19).head
+    assertEquals(GameStarter.p1White(even), None, "an even pair gets lila's colours")
+
   test("one Even only player is enough for an even game"):
     val k5 = handicap(member("k5", Rank.Kyu(5)))
     val d1 = member("d1", Rank.Dan(1)).copy(rankKnown = true)

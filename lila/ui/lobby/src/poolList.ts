@@ -19,17 +19,19 @@ export const anonPoolSeekForm = (pool: Pool): Record<string, string | number> =>
     : { timeMode: 1, time: pool.lim ?? 0, increment: pool.inc ?? 0 }),
 });
 
-/* The pool a `#pool/<id>[/<blocking>]` link asks for. Links made before unit 6.4 name lila's clock-only ids
- * ("10+10", as the game page's "new opponent" button still does); they find the Fischer pool with that
- * clock, if there is one. */
+/* The pool a `#pool/<id>[/<blocking>]` link asks for. The game page's "new opponent" button can't know how
+ * many byo-yomi periods the game started with (its clock shows the periods left), so it writes them as `*`:
+ * `19x19-10m-*x30s` finds the pool with that size, main time and period length. Links made before unit 6.4
+ * name lila's clock-only ids ("10+10"); they find the Fischer pool with that clock, if there is one. */
 export const poolFromHash = (hash: string, pools: Pool[]): { id: PoolId; blocking?: string } | undefined => {
-  const match = /^#pool\/([\w+.-]+)(?:\/(.+))?$/.exec(hash);
+  const match = /^#pool\/([\w+.*-]+)(?:\/(.+))?$/.exec(hash);
   if (!match) return undefined;
   const [, key, blocking] = match;
   const legacy = /^(\d+(?:\.\d+)?)\+(\d+)$/.exec(key);
+  const anyPeriods = (id: string) => id.replace(/-\d+x(\d+s)$/, '-*x$1');
   const pool = legacy
     ? pools.find(p => !p.byo && p.lim === Number(legacy[1]) && p.inc === Number(legacy[2]))
-    : pools.find(p => p.id === key);
+    : pools.find(p => p.id === key || (key.includes('*') && anyPeriods(p.id) === key));
   return pool && { id: pool.id, ...(blocking ? { blocking } : {}) };
 };
 
