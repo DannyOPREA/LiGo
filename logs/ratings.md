@@ -9,6 +9,7 @@
 - The "?" threshold (`provisionalDeviation = 110`) is a scalachess top-level val, not a lila constant; changing it means a fork or replacing call sites (2026-09-27).
 - lila starts games at pairing and aborts them before 2 plies; `NoStart` (37) is a third "never played" status. "Has played a rated game" must exclude Aborted and NoStart (`Query.gotGoing`) (2026-10-03, unit 5.4).
 
+- CI's ui Lint runs `oxlint --type-aware`; verify.sh's plain oxlint misses its type rules (e.g. no-unnecessary-type-assertion). Run `pnpm exec oxlint --type-aware ui/<pkg>` before pushing UI tests (2026-10-04, unit 5.7).
 ## Entries (newest first)
 
 ### 2026-10-04 · unit 5.7 (part 2) · Rated games in the setup windows
