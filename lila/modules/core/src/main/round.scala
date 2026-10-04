@@ -52,7 +52,6 @@ case class Mlat(millis: Int)
 case class DeleteUnplayed(gameId: GameId)
 case class SocketExists(gameId: GameId, promise: Promise[Boolean])
 
-case object Threefold
 case class DrawClaim(playerId: GamePlayerId)
 case class Blindfold(playerId: GamePlayerId, blindfold: Boolean)
 object Moretime:

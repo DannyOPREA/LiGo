@@ -22,24 +22,15 @@ object String:
     try play.utils.UriEncoding.decodePathSegment(input, "UTF-8").some
     catch case _: play.utils.InvalidUriEncodingException => None
 
-  // A chess FEN's board field (8 ranks, or 9 with a crazyhouse pocket), matched without the chess
-  // library since unit 3.17
-  private val fenBoardField = """[pnbrqkPNBRQK1-8~]+(?:/[pnbrqkPNBRQK1-8~]*){7,8}""".r
-
   private[common] def isShouting(text: String) =
     text.lengthIs >= 5 && {
       import java.lang.Character.*
-      // true if >1/2 of the latin letters are uppercase (or castling notation / fen board field)
+      // true if >1/2 of the latin letters are uppercase (chess castling notation and FEN boards no longer
+      // count as lowercase: unit 3.17)
       text
         .take(1000)
         .split("\\s+")
         .filter(_.nonEmpty)
-        .map(word =>
-          if Set("O-O", "O-O-O").contains(word.filter(c => c.isLetter || c == '-')) ||
-            (word.length < 100 && fenBoardField.matches(word))
-          then word.toLowerCase
-          else word
-        )
         .mkString
         .take(80)
         .foldLeft(0) { (i, c) =>

@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.format.Fen
 import chess.{ ByColor, Color, Status }
 import chess.rating.IntRatingDiff
 import reactivemongo.pekkostream.{ PekkoStreamCursor, cursorProducer }
@@ -458,25 +457,6 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
 
   def unsetPlayingUids(g: Game): Unit =
     coll.update(ordered = false, WriteConcern.Unacknowledged).one(bid(g.id), unset(F.playingUids))
-
-  private def initialFen(gameId: GameId, readPref: ReadPref): Fu[Option[Fen.Full]] =
-    coll.withReadPreference(readPref).primitiveOne[Fen.Full](bid(gameId), F.initialFen)
-
-  def initialFen(game: Game): Fu[Option[Fen.Full]] =
-    if game.sourceIs(_.Import) then initialFen(game.id, if game.finished then _.sec else _.pri)
-    else fuccess(none)
-
-  def gameWithInitialFen(gameId: GameId): Fu[Option[WithInitialFen]] =
-    game(gameId).flatMapz: game =>
-      initialFen(game).dmap: fen =>
-        WithInitialFen(game, fen).some
-
-  def withInitialFen(game: Game): Fu[WithInitialFen] =
-    initialFen(game).dmap { WithInitialFen(game, _) }
-
-  def withInitialFens(games: List[Game]): Fu[List[(Game, Option[Fen.Full])]] =
-    games.parallel: game =>
-      initialFen(game).dmap { game -> _ }
 
   def count(query: Query.type => Bdoc): Fu[Int] = coll.countSel(query(Query))
   def countSec(query: Query.type => Bdoc): Fu[Int] = coll.secondary.countSel(query(Query))

@@ -9,16 +9,14 @@ private val dataUserTv = attr("data-user-tv")
 
 def apply(
     pov: Pov,
-    initialFen: Option[chess.format.Fen.Full],
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =
   // the "live stream" box went with the streamer module (unit 3.7).
-  ctx.noBlind.option(meta(pov, initialFen, userTv, bookmarked))
+  ctx.noBlind.option(meta(pov, userTv, bookmarked))
 
 def meta(
     pov: Pov,
-    @annotation.unused initialFen: Option[chess.format.Fen.Full], // no chess positions since unit 3.17
     userTv: Option[User] = None,
     bookmarked: Boolean
 )(using ctx: Context): Option[Frag] =

@@ -35,7 +35,6 @@ object RoundMobile:
 final class RoundMobile(
     lightUserGet: LightUser.Getter,
     userApi: lila.core.user.UserApi,
-    gameRepo: lila.core.game.GameRepo,
     jsonView: lila.game.JsonView,
     roundJson: JsonView,
     prefApi: lila.pref.PrefApi,
@@ -65,7 +64,6 @@ final class RoundMobile(
 
   private def forUseCase(game: Game, id: GameAnyId, use: UseCase): Fu[JsObject] =
     for
-      initialFen <- gameRepo.initialFen(game)
       myPlayer = id.playerId
         .flatMap(game.playerById)
         .filter: player =>
@@ -100,7 +98,7 @@ final class RoundMobile(
         .obj(
           "game" -> {
             // A Go game's moves are in the base JSON's `go` block; it has no PGN (unit 3.16).
-            jsonView.base(game, initialFen) ++ Json
+            jsonView.base(game) ++ Json
               .obj()
               .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
           },

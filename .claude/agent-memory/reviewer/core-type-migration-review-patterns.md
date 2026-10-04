@@ -62,6 +62,11 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   `playable`). Check decisions.md for earlier answers the part contradicts (3.15/3.19 said 3.17 drops
   the form `variant` field; 2b kept it). Inserting a scaladoc above an existing one orphans it.
   Chess `DeclineReason.Standard/Variant` and variant perfs on profiles survive variant removal.
+- 3.17 part 2a (PGN/FEN/UCI gone): server code was clean; the misses were user-facing text that
+  still promised the removed format: UserGamesDownload ("download imported games as PGN", include
+  toggles `opening`/`literate`/"PGN tags" now ignored), mod games "Download PGN" button, browser
+  download filenames `.json` for NDJSON. Also dead TS/CSS left behind (site.lpvEmbed, bits.lpv,
+  pgn-viewer dep) and dead prefs (autoThreefold radio). Grep views + ui for the format name.
 
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

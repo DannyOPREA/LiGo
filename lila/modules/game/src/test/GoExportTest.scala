@@ -4,7 +4,7 @@ import chess.{ ByColor, Rated }
 import ligo.gorules.{ Action, BoardSize, Point, Ruleset, Setup as GoSetup }
 import play.api.libs.json.*
 
-import lila.core.game.{ Game, GoBridge, Player, Source, WithInitialFen, newGoGame }
+import lila.core.game.{ Game, GoBridge, Player, Source, newGoGame }
 import lila.core.id.GamePlayerId
 
 // Unit 3.16: what the API's exports and streams send for a Go game, and how a light game knows it is one.
@@ -55,7 +55,7 @@ class GoExportTest extends munit.FunSuite:
     assertEquals(JsonView.goBoards(handicap).get, Vector(GoBridge.board(handicap)))
 
   test("the game stream sends the Go setup instead of a chess variant"):
-    val js = GameStream.toJson(none)(WithInitialFen(played, none))
+    val js = GameStream.toJson(none)(played)
     assert((js \ "variant").isEmpty)
     assert((js \ "initialFen").isEmpty)
     assertEquals((js \ "go" \ "size").as[Int], 9)

@@ -5,7 +5,7 @@ import chess.format.{ Uci, Fen }
 import play.api.libs.json.*
 
 import lila.ui.*
-import lila.ui.ScalatagsTemplate.{ *, given }
+import lila.ui.ScalatagsTemplate.*
 
 final class AnalyseUi(helpers: Helpers):
   import helpers.{ *, given }

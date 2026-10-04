@@ -1,10 +1,7 @@
 package lila.core
 package game
 
-import _root_.chess.format.Fen
-import _root_.chess.format.pgn.{ Pgn, Tags }
 import _root_.chess.{ ByColor, Centis, Clock, Color, Ply, Speed, Status }
-import _root_.chess.opening.Opening
 import cats.derived.*
 import play.api.libs.json.*
 import reactivemongo.pekkostream.PekkoStreamCursor
@@ -47,8 +44,6 @@ case class FinishGame(
 case class AbortedBy(pov: Pov)
 
 case class CorresAlarmEvent(userId: UserId, pov: Pov, opponent: String)
-
-case class WithInitialFen(game: Game, fen: Option[Fen.Full])
 
 opaque type Blurs = Long
 object Blurs extends OpaqueLong[Blurs]:
@@ -103,9 +98,6 @@ abstract class GameRepo(val coll: BSONCollection):
   def gamesFromSecondary(gameIds: Seq[GameId]): Fu[List[Game]]
   def gameOptionsFromSecondary(gameIds: Seq[GameId]): Fu[List[Option[Game]]]
   def getSourceAndUserIds(id: GameId): Fu[(Option[Source], List[UserId])]
-  def initialFen(game: Game): Fu[Option[Fen.Full]]
-  def withInitialFen(game: Game): Fu[WithInitialFen]
-  def gameWithInitialFen(gameId: GameId): Fu[Option[WithInitialFen]]
   def isAnalysed(game: Game): Fu[Boolean]
   def insertDenormalized(g: Game): Funit
   def recentAnalysableGamesByUserId(userId: UserId, nb: Int): Fu[List[Game]]
@@ -131,21 +123,6 @@ trait GameProxy:
   def upgradeIfPresent(games: List[Game]): Fu[List[Game]]
   def flushIfPresent(gameId: GameId): Funit
 
-trait PgnDump:
-  def apply(
-      game: Game,
-      initialFen: Option[Fen.Full],
-      opening: Option[Opening.AtPly],
-      flags: PgnDump.WithFlags
-  ): Fu[Pgn]
-  def tags(
-      game: Game,
-      initialFen: Option[Fen.Full],
-      importedTags: Option[Tags],
-      opening: Option[Opening],
-      withRating: Boolean
-  ): Fu[Tags]
-
 trait Namer:
   def gameVsText(game: Game, withRatings: Boolean = false)(using lightUser: LightUser.Getter): Fu[String]
   def playerText(player: Player, withRating: Boolean = false)(using lightUser: LightUser.Getter): Fu[String]
@@ -159,16 +136,13 @@ trait Namer:
 trait Explorer:
   def apply(id: GameId): Fu[Option[Game]]
 
-object PgnDump:
+object GameExport:
   case class WithFlags(
       clocks: Boolean = true,
       moves: Boolean = true,
       tags: Boolean = true,
       evals: Boolean = true,
-      opening: Option[Boolean] = None, // no / quick / full
       rating: Boolean = true,
-      literate: Boolean = false,
-      pgnInJson: Boolean = false,
       delayMoves: Boolean = false,
       lastFen: Boolean = false,
       accuracy: Boolean = false,

@@ -7,11 +7,9 @@ import play.api.libs.json.*
 import lila.common.Bus
 import lila.common.Json.given
 import lila.core.game.{ FinishGame, GoBridge }
-import lila.game.GameRepo
 import lila.game.actorApi.MoveGameEvent
 
 final class ApiMoveStream(
-    gameRepo: GameRepo,
     gameJsonView: lila.game.JsonView,
     lightUserApi: lila.user.LightUserApi
 )(using Executor):
@@ -21,14 +19,12 @@ final class ApiMoveStream(
   def apply(game: Game, delayMoves: Boolean): Source[JsObject, ?] =
     val delayingMoves = delayMoves && game.hasClock && game.playable
     Source.futureSource:
-      for
-        initialFen <- gameRepo.initialFen(game)
-        lightUsers <- lightUserApi.asyncManyOptions(game.players.mapList(_.userId))
+      for lightUsers <- lightUserApi.asyncManyOptions(game.players.mapList(_.userId))
       yield
         def makeGameJson(g: Game, full: Boolean) =
           val base =
-            if full then gameJsonView.base(g, initialFen)
-            else gameJsonView.immutable(g, initialFen)
+            if full then gameJsonView.base(g)
+            else gameJsonView.immutable(g)
           base ++ Json.obj(
             "players" -> JsObject(g.players.all.zip(lightUsers).map { (p, user) =>
               p.color.name -> gameJsonView.player(p, user)
