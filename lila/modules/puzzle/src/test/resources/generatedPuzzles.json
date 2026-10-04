@@ -1,0 +1,120 @@
+[
+  {
+    "id": "f0KcD",
+    "width": 19,
+    "height": 19,
+    "bounds": {
+      "top": 14,
+      "left": 14,
+      "bottom": 18,
+      "right": 18
+    },
+    "initial_state": {
+      "black": "sqrrrqqrss",
+      "white": "sprpqqqppsprpq"
+    },
+    "initial_player": "white",
+    "move_tree": {
+      "x": -1,
+      "y": -1,
+      "branches": [
+        {
+          "x": 16,
+          "y": 18,
+          "correct_answer": true
+        },
+        {
+          "x": 17,
+          "y": 18,
+          "branches": [
+            {
+              "x": 16,
+              "y": 18,
+              "wrong_answer": true
+            }
+          ]
+        }
+      ]
+    },
+    "puzzle_player_move_mode": "free",
+    "puzzle_opponent_move_mode": "automatic",
+    "goal": "kill",
+    "themes": ["lifeAndDeath", "killing", "corner", "eyeShape"],
+    "rating": 650,
+    "provenance": {
+      "source": "generated",
+      "generator": "@ligo/puzzles",
+      "version": "1",
+      "seed": 1,
+      "shape": "bent three",
+      "anchor": "corner",
+      "variation": "defender stone inside at 0,0; weak point at 0,2",
+      "orientation": 7,
+      "katago": {
+        "version": "KataGo v1.18.1",
+        "network": "g170-b6c96-s175395328-d26788732.bin.gz",
+        "sha256": "f5d32604e3675c480c7c8f6aa579a1ea857135628a0afccc8fa56330fbacd38d",
+        "visits": 400
+      }
+    }
+  },
+  {
+    "id": "NmIhF",
+    "width": 19,
+    "height": 19,
+    "bounds": {
+      "top": 0,
+      "left": 6,
+      "bottom": 3,
+      "right": 15
+    },
+    "initial_state": {
+      "black": "naianbmblbkbjbib",
+      "white": "oahaobhbocncmclckcjcichclaja"
+    },
+    "initial_player": "black",
+    "move_tree": {
+      "x": -1,
+      "y": -1,
+      "branches": [
+        {
+          "x": 10,
+          "y": 0,
+          "correct_answer": true
+        },
+        {
+          "x": 12,
+          "y": 0,
+          "branches": [
+            {
+              "x": 10,
+              "y": 0,
+              "wrong_answer": true
+            }
+          ]
+        }
+      ]
+    },
+    "puzzle_player_move_mode": "free",
+    "puzzle_opponent_move_mode": "automatic",
+    "goal": "live",
+    "themes": ["lifeAndDeath", "living", "edge", "eyeShape"],
+    "rating": 650,
+    "provenance": {
+      "source": "generated",
+      "generator": "@ligo/puzzles",
+      "version": "1",
+      "seed": 1,
+      "shape": "straight four",
+      "anchor": "edge",
+      "variation": "attacker stone inside at 7,0; attacker stone inside at 9,0",
+      "orientation": 1,
+      "katago": {
+        "version": "KataGo v1.18.1",
+        "network": "g170-b6c96-s175395328-d26788732.bin.gz",
+        "sha256": "f5d32604e3675c480c7c8f6aa579a1ea857135628a0afccc8fa56330fbacd38d",
+        "visits": 400
+      }
+    }
+  }
+]
