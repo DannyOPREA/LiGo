@@ -49,15 +49,15 @@ export const options = {
   },
 };
 
-// letters a-j only, so a name can't look like a title (GM, FM, ...)
-const letters = n => Array.from(new Uint8Array(randomBytes(n)), b => String.fromCharCode(97 + (b % 10))).join('');
+// digits only: random letters can spell a word lila's username check refuses (a run failed on one)
+const digits = n => Array.from(new Uint8Array(randomBytes(n)), b => String(b % 10)).join('');
 
 export function setup() {
   const players = [];
   const jar = http.cookieJar();
   for (let i = 0; i < 2 * PAIRS; i++) {
     jar.clear(BASE);
-    const name = `lt${letters(12)}`;
+    const name = `lt${digits(12)}`;
     const res = http.post(
       `${BASE}/signup`,
       {
@@ -79,7 +79,7 @@ export function setup() {
   return { players };
 }
 
-const sri = () => letters(12);
+const sri = () => digits(12);
 
 function headers(cookie) {
   return { Cookie: cookie, Origin: BASE };
