@@ -36,8 +36,14 @@ enum NotificationContent(val key: String):
   ) extends NotificationContent("genericLink")
   case ReportedBanned extends NotificationContent("reportedBanned") // BC
   case RatingRefund(perf: String, points: Int) extends NotificationContent("ratingRefund")
-  case GameEnd(gameId: GameFullId, opponentId: Option[UserId], win: Option[Boolean])
-      extends NotificationContent("gameEnd")
+  // `noResult` (unit 7.7): the game ended without a count, so `win = None` is not a draw. An Option so
+  // notifications stored before it read back as `None`.
+  case GameEnd(
+      gameId: GameFullId,
+      opponentId: Option[UserId],
+      win: Option[Boolean],
+      noResult: Option[Boolean] = None
+  ) extends NotificationContent("gameEnd")
   case StreamStart(streamerId: UserId, streamerName: String) extends NotificationContent("streamStart")
   case BroadcastRound(url: String, title: String, text: String) extends NotificationContent("broadcastRound")
   case TitledTournamentInvitation(id: TourId, text: String) extends NotificationContent("titledTourney")

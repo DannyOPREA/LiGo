@@ -19,7 +19,12 @@ export const anyClockView = (ctrl: RoundController, position: TopOrBottom): Loos
   const player = ctrl.playerAt(position);
   if (ctrl.clock) return renderClock(ctrl.clock, player.color, position, onTheSide(ctrl));
   else if (ctrl.data.correspondence && ctrl.data.game.turns > 1)
-    return renderCorresClock(ctrl.corresClock!, player.color, position, ctrl.data.game.player);
+    return renderCorresClock(
+      ctrl.corresClock!,
+      player.color,
+      position,
+      ctrl.inScoring() ? undefined : ctrl.data.game.player,
+    );
   else return whosTurn(ctrl, player.color, position);
 };
 

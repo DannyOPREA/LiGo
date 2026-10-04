@@ -14,7 +14,6 @@ trait Pref:
   val destination: Boolean
   val moveEvent: Int
   val highlight: Boolean
-  val is3d: Boolean
   val resizeHandle: Int
   val uiRoundness: Int
   val theme: String

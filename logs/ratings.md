@@ -35,8 +35,8 @@
   crawlers, and Round.watcher 404s challenge ids for crawlers); a 4-move game moved no ratings
   (FarmBoostDetection.newAccountBoosting: two new accounts from one address, under 10 moves, or under
   40 moves in under 90 s); repeated local runs hit the signup limit (10 per address per 10 minutes);
-  a whole e2e run makes 6 game posts in a minute against lila's limit of 5, so `createGame` sets the
-  game up again until lila takes it. The reviewer found no blocking issues; its six optional points
+  a whole e2e run makes more game posts in a minute than lila's limit of 5, so `createGame` sets the
+  game up again until lila takes it (as 4.12's specs do). The reviewer found no blocking issues; its six optional points
   (checklist steps, the unranked player's JSON, comments) were taken.
 - Lessons: see the Lessons section (crawler user agent, anti-boosting minimum, signup limit).
 - Decisions: logs/decisions.md 2026-10-04 (5.8).

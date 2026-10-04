@@ -6,6 +6,9 @@
 // Licence: AGPL-3.0-or-later, like the rest of lila.
 
 import { expect, test, type Browser, type BrowserContext, type Page, type TestInfo } from '@playwright/test';
+
+// up to two waits for lila's game-creation limit on top of the game itself (unit 4.12 does the same)
+test.describe.configure({ timeout: 240_000 });
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -64,8 +67,8 @@ async function playStone(page: Page, color: Color, size: number, [col, row]: num
 }
 
 /** Sends a create-game window's form and checks lila took it. lila takes 5 game-creation posts a minute
- * from one address (Limiters.setupPost) and the whole e2e run makes 6 within a minute (Phase 3's two
- * lobby games, then this file's challenge and guest game per screen size). If lila answers 429 Too Many
+ * from one address (Limiters.setupPost), and the whole e2e run (Phases 3, 4 and 5, desktop then phone)
+ * makes more than that. If lila answers 429 Too Many
  * Requests, the window is left stuck, so wait for the limit to clear and set the game up again. */
 async function createGame(page: Page, path: string, setUp: () => Promise<void>, create: () => Promise<void>) {
   let again = false;
@@ -77,7 +80,7 @@ async function createGame(page: Page, path: string, setUp: () => Promise<void>, 
     );
     await create();
     expect((await sent).status()).toBeLessThan(400);
-  }).toPass({ intervals: [10_000], timeout: 80_000 });
+  }).toPass({ intervals: [5_000, 10_000, 15_000], timeout: 120_000 }); // as the Phase 3 and 4 demos wait
 }
 
 async function newPlayer(browser: Browser, info: TestInfo, contexts: BrowserContext[], name: string) {

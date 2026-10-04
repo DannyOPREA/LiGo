@@ -1,4 +1,4 @@
-import { isSwitchable, isPlayerTurn } from 'lib/game';
+import { isSwitchable } from 'lib/game';
 import { storage } from 'lib/storage';
 
 import type RoundController from './ctrl';
@@ -26,7 +26,8 @@ export default class MoveOn {
 
   next = (force?: boolean): void => {
     const d = this.ctrl.data;
-    if (d.player.spectator || !isSwitchable(d) || isPlayerTurn(d) || !this.get()) return;
+    // a player who has yet to answer the count stays: it is their turn as far as lila is concerned
+    if (d.player.spectator || !isSwitchable(d) || this.ctrl.isMyTurn() || !this.get()) return;
     if (force) this.redirect('/round-next/' + d.game.id);
     else if (d.simul) {
       if (d.simul.hostId === this.ctrl.opts.userId && d.simul.nbPlaying > 1)

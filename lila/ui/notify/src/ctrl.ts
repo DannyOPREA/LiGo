@@ -31,7 +31,7 @@ export default function makeCtrl(opts: NotifyOpts, redraw: Redraw): Ctrl {
   function attention() {
     const id = data?.pager.currentPageResults.find(n => !n.read)?.content.user?.id;
     const playBell = storage.boolean('playBellSound').getOrDefault(true);
-    if ((!site.quietMode || id === 'lichess') && playBell) site.sound.playOnce('newPM');
+    if ((!site.quietMode || id === 'lichess') && playBell) site.sound.playOnce('genericNotify');
     opts.pulse();
   }
 

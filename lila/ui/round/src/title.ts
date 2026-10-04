@@ -1,4 +1,4 @@
-import { aborted, finished, isPlayerTurn } from 'lib/game';
+import { aborted, finished } from 'lib/game';
 
 import type RoundController from './ctrl';
 
@@ -37,8 +37,9 @@ export function set(ctrl: RoundController): void {
   let text = '';
   if (aborted(ctrl.data) || finished(ctrl.data)) {
     text = i18n.site.gameOver;
-  } else if (isPlayerTurn(ctrl.data)) {
-    text = i18n.site.yourTurn;
+  } else if (ctrl.isMyTurn()) {
+    // in the scoring phase the player is asked to count, not to move (unit 7.7)
+    text = ctrl.inScoring() ? i18n.site.scoringPhaseStarted : i18n.site.yourTurn;
     if (!document.hasFocus()) startTicker();
   } else {
     text = i18n.site.waitingForOpponent;

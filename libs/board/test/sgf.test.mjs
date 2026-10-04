@@ -48,6 +48,25 @@ for (const c of records.cases) {
   });
 }
 
+
+// The Phase 4 demo (unit 4.12): the SGFs lila wrote at the end of its two scripted games
+// (lila's Phase4DemoTest) read back through goban-engine to the position lila ended on, with
+// lila's counted result.
+for (const game of ["game1", "game2"]) {
+  test(`the Phase 4 demo's ${game} reads back to lila's final position`, () => {
+    const demo = (ext) => new URL(`../../conformance/demo/phase-4/${game}.${ext}`, import.meta.url);
+    const sgf = readFileSync(demo("sgf"), "utf8");
+    const expect = JSON.parse(readFileSync(demo("expect.json"), "utf8"));
+    const root = readTree(sgf);
+    assert.equal(root.settings.size, 19);
+    assert.equal(root.settings.komi, 6.5);
+    const last = mainLine(root).at(-1);
+    assert.deepEqual(last.stones, expect.stones);
+    assert.deepEqual(last.captures, expect.captures);
+    assert.equal(/RE\[([^\]]*)\]/.exec(sgf)?.[1], expect.result);
+  });
+}
+
 const moves = (root) => mainLine(root).slice(1).map((n) => n.move);
 
 test("a game's moves, passes, captures and the position after each", () => {
