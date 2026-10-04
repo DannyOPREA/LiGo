@@ -42,8 +42,6 @@ case class Pov(game: Game, color: Color):
 
   def win = game.wonBy(color)
 
-  def forecastable = game.forecastable && game.turnColor != color
-
   def mightClaimWin = game.forceResignable && !isMyTurn
 
   def sideAndStart = SideAndStart(color, game.startedAtPly)

@@ -536,7 +536,8 @@ cmd_test() {
     native:pages)
       need_node_modules
       if ui_built; then (cd "$LILA" && run pnpm exec playwright test -c ui/playground/e2e/playwright.config.ts \
-        && run pnpm exec playwright test -c ui/round/e2e/playwright.config.ts)
+        && run pnpm exec playwright test -c ui/round/e2e/playwright.config.ts \
+        && run pnpm exec playwright test -c ui/analyse/e2e/playwright.config.ts)
       else say "page browser tests skipped: build the ui first (dev/ligo compile ui)"; fi ;;
     # LiGo's performance budget (ADR 0026 §5, unit 9.5): sizes of the production build, then the
     # board's mount time in Chromium. Rebuilds the ui with -p (minified), as CI measures it.

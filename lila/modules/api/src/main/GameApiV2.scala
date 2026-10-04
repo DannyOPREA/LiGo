@@ -156,7 +156,8 @@ final class GameApiV2(
           Limit(config.max.fold(5000)(_.value)),
           PipelineOperator(lookup.simple(gameRepo.coll, "game", "g", "_id")),
           Unwind("game"),
-          ReplaceRootField("game")
+          ReplaceRootField("game"),
+          Match(Query.go) // a chess game stored before unit 3.17 is not read
         )
       .documentSource()
       .via(preparationFlow(config))

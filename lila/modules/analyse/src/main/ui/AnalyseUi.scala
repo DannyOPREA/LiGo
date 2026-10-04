@@ -16,55 +16,21 @@ final class AnalyseUi(helpers: Helpers):
   // The explorer and tablebase settings went with the explorer (unit 3.4), and the external
   // engine and WebAssembly (browser engine) permissions with the engines (unit 3.5).
 
-  def userAnalysis(
-      data: JsObject,
-      pov: Pov,
-      @annotation.unused chess960PositionNum: Option[Int] = None, // no chess variants since unit 3.17
-      withForecast: Boolean = false,
-      inlinePgn: Option[String] = None
-  )(using ctx: Context): Page =
-    val hasWiki = pov.game.synthetic
+  /** The Go analysis board (unit 7.4, ADR 0023 §1): the board, the move tree and the SGF box are built in the
+    * browser by `ui/analyse` on `libs/board`; the page only gives them somewhere to load. Nothing is stored.
+    */
+  def userAnalysis(coords: Int)(using ctx: Context): Page =
     Page(trans.site.analysis.txt())
       .css("analyse.free")
-      .css(withForecast.option("analyse.forecast"))
-      .css(ctx.blind.option("round.nvui"))
-      .csp(_.withWikiBooks)
-      .js(analyseNvuiTag)
-      .js:
-        bits.analyseModule(
-          "userAnalysis",
-          Json
-            .obj(
-              "data" -> data,
-              "wiki" -> hasWiki
-            )
-            .add("inlinePgn", inlinePgn)
-        )
-      .i18n(_.study)
-      .i18nOpt(ctx.speechSynthesis, _.nvui)
-      .i18nOpt(ctx.blind, _.keyboardMove)
+      .js(bits.analyseModule("userAnalysis", Json.obj("coords" -> coords)))
       .graph(
-        title = "Chess analysis board",
+        title = "Go analysis board",
         url = routeUrl(routes.UserAnalysis.index),
-        description = "Analyse chess positions and variations on an interactive chess board"
+        description = "Study Go positions and variations: play moves, try lines, open and save SGF files"
       )
       .flag(_.zoom):
-        main(
-          cls := List(
-            "analyse" -> true,
-            "analyse--wiki" -> hasWiki
-          )
-        )(
-          pov.game.synthetic.option(
-            st.aside(cls := "analyse__side")(
-              hasWiki.option:
-                fieldset(cls := "analyse__wiki empty toggle-box toggle-box--toggle", id := "wikibook-field")(
-                  legend(tabindex := 0)("WikiBook"),
-                  div(cls := "analyse__wiki-text")
-                )
-            )
-          ),
-          div(cls := "analyse__board main-board")(chessgroundBoard),
+        main(cls := "analyse analyse--go")(
+          div(cls := "analyse__board main-board")(div(cls := "analyse__go-board")),
           div(cls := "analyse__tools"),
           div(cls := "analyse__controls")
         )
@@ -86,11 +52,3 @@ final class AnalyseUi(helpers: Helpers):
 
     def analyseModule(mode: "userAnalysis" | "replay", json: JsObject) =
       PageModule("analyse.user", Json.obj("mode" -> mode, "cfg" -> json))
-
-    val embedUserAnalysisBody = div(id := "main-wrap", cls := "is2d")(
-      main(cls := "analyse")(
-        div(cls := "analyse__board main-board")(chessgroundBoard),
-        div(cls := "analyse__tools"),
-        div(cls := "analyse__controls")
-      )
-    )

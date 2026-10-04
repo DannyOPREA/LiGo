@@ -12,19 +12,22 @@ final class UserAnalysis(
 ) extends LilaController(env)
     with lila.web.TheftPrevention:
 
-  // The analysis board is a placeholder until Phase 7's Go analysis board (unit 7.4) replaces it (unit
-  // 3.16): the chess board it was can't show a Go position.
+  // A game opens in the analysis board in unit 7.5 (ADR 0023 §2); until then its page says so (unit 3.16).
   private def comingLater(using Context) = Ok.page:
     views.site.message.comingLater(
-      "Analysis board",
-      "The analysis board for Go arrives in a later update. Finished games can be replayed on their game page."
+      "Game analysis",
+      "Opening a game in the analysis board arrives in a later update. Finished games can be replayed on their game page."
     )
 
-  def index = Open(comingLater)
+  // The Go analysis board (unit 7.4): everything happens in the browser, nothing is stored.
+  def index = Open:
+    for page <- renderPage(views.analyse.ui.userAnalysis(ctx.pref.coords))
+    yield Ok(page).withCanonical(routes.UserAnalysis.index)
 
-  def parseArg(@annotation.unused arg: String) = Open(comingLater)
+  // lila's chess addresses (`/analysis/<variant>/<fen>`, `/analysis/pgn/<moves>`) open the Go board.
+  def parseArg(@annotation.unused arg: String) = Open(Redirect(routes.UserAnalysis.index))
 
-  def pgn(@annotation.unused pgn: String) = Open(comingLater)
+  def pgn(@annotation.unused pgn: String) = Open(Redirect(routes.UserAnalysis.index))
 
   def embed = Anon:
     InEmbedContext:

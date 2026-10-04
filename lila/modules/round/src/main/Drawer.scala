@@ -73,8 +73,6 @@ final private[round] class Drawer(
   // Go has no repetition draw to claim (ADR 0019 §6).
   def claim(@annotation.unused pov: Pov): Fu[Events] = fuccess(Nil)
 
-  def force(game: Game)(using GameProxy): Fu[Events] = finisher.other(game, _.Draw, None, None)
-
   private def offerDraw(color: Color)(game: Game) = game
     .updatePlayer(color, _.copy(isOfferingDraw = true))
     .focus(_.metadata.drawOffers)

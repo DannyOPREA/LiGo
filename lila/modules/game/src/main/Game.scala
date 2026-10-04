@@ -233,8 +233,6 @@ object Game:
 
   val syntheticId = GameId("synthetic")
 
-  val maxPlies = Ply(600) // unlimited would be a DoS target
-
   val abandonedDays = Days(21)
   def abandonedDate = nowInstant.minusDays(abandonedDays.value)
 

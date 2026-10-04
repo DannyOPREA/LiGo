@@ -75,9 +75,10 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       readPref: ReadPref = _.sec
   ): Fu[List[Pov]] =
     coll
-      .byOrderedIds[Game, GameId](gameIds, readPref = readPref)(_.id)
-      .dmap:
-        _.flatMap(Pov(_, user))
+      .list[Game](inIds(gameIds) ++ Query.go, readPref)
+      .dmap: games =>
+        val byId = games.mapBy(_.id)
+        gameIds.flatMap(byId.get).flatMap(Pov(_, user))
 
   def recentPovsByUserFromSecondary[U: UserIdOf](user: U, nb: Int, select: Bdoc = emptyBdoc): Fu[List[Pov]] =
     recentGamesFromSecondaryCursor(Query.user(user) ++ select)
@@ -86,7 +87,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
 
   def recentGamesFromSecondaryCursor(select: Bdoc = emptyBdoc) =
     coll
-      .find(select)
+      .find(select ++ Query.go)
       .sort(Query.sortCreated)
       .cursor[Game](ReadPref.sec)
 
@@ -103,7 +104,9 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       .aggregateWith[Game](readPreference = ReadPref.sec): framework =>
         import framework.*
         List(
-          Match(bdoc(lila.game.Game.BSONFields.playingUids -> bdoc("$in" -> userIds, "$size" -> 2))),
+          Match(
+            bdoc(lila.game.Game.BSONFields.playingUids -> bdoc("$in" -> userIds, "$size" -> 2)) ++ Query.go
+          ),
           AddFields:
             bdoc:
               "both" -> bdoc("$setIsSubset" -> barr("$" + F.playingUids, userIds))
@@ -114,7 +117,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
   // only one player needs to be in the userId set
   def ongoingByOneOfUserIdsCursor(userIds: Iterable[UserId]): PekkoStreamCursor[Game] =
     coll
-      .find(bdoc(F.playingUids.in(userIds)))
+      .find(bdoc(F.playingUids.in(userIds)) ++ Query.go)
       .cursor[Game](ReadPref.sec)
 
   def finishedByOneOfUserIdsSince(userIds: Iterable[UserId], since: Instant): PekkoStreamCursor[Game] =
@@ -156,7 +159,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
 
   def unanalysedGames(gameIds: Seq[GameId], max: Max = Max(100)): Fu[List[Game]] =
     coll
-      .find(inIds(gameIds) ++ Query.analysed(false) ++ Query.turns(30 -> 160))
+      .find(inIds(gameIds) ++ Query.go ++ Query.analysed(false) ++ Query.turns(30 -> 160))
       .cursor[Game](ReadPref.sec)
       .list(max.value)
 
@@ -164,7 +167,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       selector: Bdoc,
       readPref: ReadPref = _.sec
   ): PekkoStreamCursor[Game] =
-    coll.find(selector).cursor[Game](readPref)
+    coll.find(selector ++ Query.go).cursor[Game](readPref)
 
   def docCursor(
       selector: Bdoc,
@@ -178,7 +181,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       batchSize: Int = 0,
       hint: Option[Bdoc] = none
   ): PekkoStreamCursor[Game] =
-    val query = coll.find(selector).sort(sort).batchSize(batchSize)
+    val query = coll.find(selector ++ Query.go).sort(sort).batchSize(batchSize)
     hint.map(coll.hint).foldLeft(query)(_.hint(_)).cursor[Game](ReadPref.sec)
 
   // every game is in the Go perf (unit 3.17), so `pk` picks nothing out
@@ -190,7 +193,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       Query.sortChronological
     )
 
-  def byIdsCursor(ids: Iterable[GameId]): Cursor[Game] = coll.find(inIds(ids)).cursor[Game]()
+  def byIdsCursor(ids: Iterable[GameId]): Cursor[Game] = coll.find(inIds(ids) ++ Query.go).cursor[Game]()
 
   def goBerserk(pov: Pov): Funit =
     val field = s"${pov.color.fold(F.whitePlayer, F.blackPlayer)}.${PF.berserk}"
@@ -512,7 +515,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
       bdoc(
         F.playerUids.all(List(u1, u2)),
         F.createdAt.gt(since)
-      )
+      ) ++ Query.go
     )
 
   def lastGamesBetween(u1: User, u2: User, since: Instant, nb: Int): Fu[List[Game]] =
@@ -523,7 +526,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
           bdoc(
             F.playerUids.all(List(u1.id, u2.id)),
             F.createdAt.gt(since)
-          ),
+          ) ++ Query.go,
           nb
         )
       )

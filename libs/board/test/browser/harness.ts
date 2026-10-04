@@ -9,6 +9,7 @@ import {
   type Board,
   type BoardConfig,
 } from '../../src/board.ts';
+import { mountEditor, type Editor, type EditorConfig } from '../../src/editor.ts';
 import { mountPuzzle, type PuzzleBoard, type PuzzleConfig } from '../../src/puzzle.ts';
 
 interface Harness {
@@ -23,18 +24,30 @@ interface Harness {
   gobanThemes: typeof gobanThemes;
   puzzle?: PuzzleBoard;
   mountPuzzle(config: Omit<PuzzleConfig, 'onMove' | 'onResult' | 'onRefused' | 'onChange'>): void;
+  editor?: Editor;
+  /** What the editor reported, as "black:<points> white:<points>". */
+  edits: string[];
+  mountEditor(config: Omit<EditorConfig, 'onChange'>): void;
 }
+
+const clearAll = () => {
+  harness.board?.destroy();
+  harness.board = undefined;
+  harness.puzzle?.destroy();
+  harness.puzzle = undefined;
+  harness.editor?.destroy();
+  harness.editor = undefined;
+};
 
 const harness: Harness = {
   events: [],
   played: [],
+  edits: [],
   changes: 0,
   themes: { boards: BOARD_THEMES, stones: STONE_THEMES },
   gobanThemes,
   mount(config) {
-    harness.puzzle?.destroy();
-    harness.puzzle = undefined;
-    harness.board?.destroy();
+    clearAll();
     harness.events = [];
     harness.played = [];
     harness.changes = 0;
@@ -51,9 +64,7 @@ const harness: Harness = {
     });
   },
   mountPuzzle(config) {
-    harness.board?.destroy();
-    harness.board = undefined;
-    harness.puzzle?.destroy();
+    clearAll();
     harness.events = [];
     harness.changes = 0;
     const el = document.getElementById('board')!;
@@ -63,6 +74,15 @@ const harness: Harness = {
       onResult: result => harness.events.push(result),
       onRefused: reason => harness.events.push(`refused ${reason}`),
       onChange: () => harness.changes++,
+    });
+  },
+  mountEditor(config) {
+    clearAll();
+    harness.edits = [];
+    const el = document.getElementById('board')!;
+    harness.editor = mountEditor(el, {
+      ...config,
+      onChange: s => harness.edits.push(`black:${s.black.join('')} white:${s.white.join('')}`),
     });
   },
 };

@@ -65,18 +65,6 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
     ("slow", 40 * 5, 1.day)
   )
 
-  val exportImage: RateLimiter[(Unit, IpAddress)] = combine(
-    RateLimit[Unit](credits = 600, duration = 1.minute, key = "export.image.global"),
-    RateLimit[IpAddress](credits = 15, duration = 1.minute, key = "export.image.ip")
-  )
-
-  val gameImport = RateLimit.composite[IpAddress](
-    key = "import.game.ip"
-  )(
-    ("fast", 10, 1.minute),
-    ("slow", 150, 1.hour)
-  )
-
   private val imageUploadLimiter: RateLimiter[(IpAddress, UserId)] = combine(
     RateLimit.composite[IpAddress](key = "image.upload.ip")(
       ("fast", 10, 2.minutes),

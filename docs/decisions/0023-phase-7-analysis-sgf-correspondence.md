@@ -216,3 +216,26 @@ shared `records.json`, instead of a goban-engine corpus.
   outside the POC scope.
 - **A new "your turn in scoring" alarm instead of a `ScoringPhase` notification:** `CorresAlarm`
   rings once near the end of the time left; a one-day phase needs a message when it starts.
+
+## Amendment (2026-10-03, unit 7.4)
+What the analysis board page settled while it was built (Claude, under the owner's 2026-09-28
+delegation; logs/decisions.md):
+- **The move list is lila's inline view only**, every move with its number ("1 D16", "2 Q4"). lila's
+  two-column view pairs a White move with a Black one, which a handicap game (White first) or a
+  pass breaks. lila's collapsible variations ("disclosure") go with it.
+- **Setup mode** has Black stones / White stones tools and no separate erase: a tap on a stone of
+  the colour chosen removes it (goban's own puzzle-mode setup placement, wrapped as
+  `libs/board`'s `mountEditor`). Start builds the position as an SGF root and reads it with
+  `readTree`, so a stone without liberties is refused there, as it is in a file. Board size, rules,
+  komi and who plays first are chosen in the same panel.
+- **Not brought back on `/analysis`:** board flip, the settings dialog, IndexedDB saving (§1
+  already said nothing is kept), the socket, lila's replay-a-game mode, the keyboard-help dialog
+  and the PGN copy in the menu. The menu has New position, Download SGF and lila's fast/slow
+  autoplay. The SGF box under the board shows the tree as SGF, with Load SGF, Open SGF file and
+  Download SGF.
+- **Old chess links** (`/analysis/<variant>/<fen>`, `/analysis/pgn/...`) redirect to `/analysis`;
+  the embed stays not found; a game's `/<id>/<color>/analysis` stays the "later" page until 7.5.
+- **`ui/lib/src/tree` is generic** over its node type (`makeTree<N>`), so the Go node needs no
+  chess fields; the chess node and its chessops position code moved into `ui/puzzle`, its only
+  user, until 8.7 replaces the puzzle page.
+- The page's words are English until 9.7 translates the analysis page, as the round page's are.

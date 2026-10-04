@@ -5,7 +5,7 @@
 // is the referee.
 
 import type { BoardConfig, Move, Played } from '@ligo/board/board';
-import { BOARD_THEMES, DEFAULT_THEME, STONE_THEMES, type Theme } from '@ligo/board/themes';
+import { themeOf, type Theme } from '@ligo/board/themes';
 
 import { defined, type Toggle, type Prop, toggle, requestIdleCallbackSafe } from 'lib';
 import { isTouchDevice } from 'lib/device';
@@ -20,7 +20,7 @@ import * as poolRangeStorage from 'lib/poolRangeStorage';
 import { Coords, Replay } from 'lib/prefs';
 import { pubsub } from 'lib/pubsub';
 import { type SocketSendOpts } from 'lib/socket';
-import { once, storedBooleanProp, storedStringProp } from 'lib/storage';
+import { once, storedBooleanProp } from 'lib/storage';
 import type { QuestionOpts } from 'lib/types';
 import { toggleZenMode } from 'lib/view/zen';
 import * as wakeLock from 'lib/wakeLock';
@@ -43,9 +43,8 @@ import * as xhr from './xhr';
 
 type GoneBerserk = Partial<ByColor<boolean>>;
 
-/** A stored theme name that is still offered, else the default (names can change between releases). */
-const pick = <T extends string>(stored: string, offered: readonly T[], fallback: T): T =>
-  (offered as readonly string[]).includes(stored) ? (stored as T) : fallback;
+/** The board and stone themes the page was served with, or last chosen in the account menu. */
+const themeOfPage = (): Theme => themeOf(document.body.dataset.board, document.body.dataset.pieceSet);
 
 export default class RoundController {
   data: RoundData;
@@ -78,21 +77,11 @@ export default class RoundController {
    */
   readonly confirm: boolean;
   /**
-   * The board's look (ADR 0026 §3): the one chosen on the playground, kept in this browser until
-   * lila's board preferences carry Go themes (unit 9.7).
+   * The board's look (ADR 0026 §3): lila's board (`theme`) and stone (`pieceSet`) preferences, which
+   * hold goban's theme names (unit 9.7). The page carries them on <body>, and the account menu
+   * changes them there.
    */
-  readonly theme: Theme = {
-    board: pick(
-      storedStringProp('playground.board-theme', DEFAULT_THEME.board)(),
-      BOARD_THEMES,
-      DEFAULT_THEME.board,
-    ),
-    stones: pick(
-      storedStringProp('playground.stone-theme', DEFAULT_THEME.stones)(),
-      STONE_THEMES,
-      DEFAULT_THEME.stones,
-    ),
-  };
+  theme: Theme = themeOfPage();
 
   constructor(
     readonly opts: RoundOpts,
@@ -135,6 +124,10 @@ export default class RoundController {
     });
 
     pubsub.on('zen', toggleZenMode);
+    pubsub.on('board.change', () => {
+      this.theme = themeOfPage();
+      this.board.remount();
+    });
   }
 
   private readonly showExpiration = () => {
