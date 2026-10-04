@@ -152,7 +152,7 @@ final class GameUi(helpers: Helpers):
             postForm(cls := "form3 import", action := routes.Importer.sendGame)(
               form3.group(form("sgf"), trans.site.goPasteSgfHere())(form3.textarea(_)()),
               form3.group(form("sgfFile"), trans.site.goOrUploadSgfFile(), klass = "upload"): f =>
-                form3.file.sgf(f.name),
+                form3.file.sgf(f),
               form3.action(form3.submit(trans.site.importGame(), Icon.UploadCloud.some))
             )
           )

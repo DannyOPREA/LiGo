@@ -23,10 +23,15 @@ export function renderControls(ctrl: AnalyseCtrl) {
     },
     [
       hl('div.jumps', [
-        jumpButton(licon.JumpFirst, 'first', canJumpPrev),
-        jumpButton(licon.LessThan, 'prev', canJumpPrev),
-        jumpButton(licon.GreaterThan, 'next', canJumpNext),
-        jumpButton(licon.JumpLast, 'last', ctrl.node !== ctrl.mainline[ctrl.mainline.length - 1]),
+        jumpButton(licon.JumpFirst, 'first', i18n.site.goFirstMove, canJumpPrev),
+        jumpButton(licon.LessThan, 'prev', i18n.site.goPreviousMove, canJumpPrev),
+        jumpButton(licon.GreaterThan, 'next', i18n.site.goNextMove, canJumpNext),
+        jumpButton(
+          licon.JumpLast,
+          'last',
+          i18n.site.goLastMove,
+          ctrl.node !== ctrl.mainline[ctrl.mainline.length - 1],
+        ),
       ]),
       hl('button.fbt', {
         class: { active: ctrl.actionMenu() },
@@ -61,5 +66,8 @@ function clickControl(ctrl: AnalyseCtrl, e: PointerEvent) {
   ctrl.redraw();
 }
 
-const jumpButton = (icon: LiconValue, effect: string, enabled: boolean): VNode =>
-  hl('button.fbt.move', { attrs: { disabled: !enabled, 'data-act': effect, 'data-icon': icon } });
+// LiGo (unit 9.10): each button is named for screen readers (axe's button-name), as the game page's are
+const jumpButton = (icon: LiconValue, effect: string, label: string, enabled: boolean): VNode =>
+  hl('button.fbt.move', {
+    attrs: { disabled: !enabled, 'data-act': effect, 'data-icon': icon, 'aria-label': label, title: label },
+  });

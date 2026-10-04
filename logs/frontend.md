@@ -4,6 +4,22 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 9.10 CI fix · What axe found on the real site
+- Did: the first full-site axe run failed 17 pages, desktop and phone. Fixed at the source:
+  light theme's dimmed text (47% → 43% grey), accent (orange, 42% → 38%), brag (gold, 48% → 32%
+  lightness, full saturation) and mistake colour darkened to 4.5:1 on white and zebra rows; plain
+  links inside text and labels underlined; 24px tap targets for the password eye, the profile's
+  welcome links and the analysis board's game links; the analysis jump buttons named (the game page's
+  First/Previous/Next/Last move strings); the move list focusable; lila's toggle switch lost its
+  `role=button` wrapper and takes its title as the checkbox's name; the chat's on/off switch moved
+  beside the tabs (a tab can't hold a control); `mselect` dropped its menu roles; the SGF file input on
+  /paste got the id its label points at; the puzzle meta's "hidden" text and /source's asset date use
+  readable greys.
+- Verified: page tests playground 49, round 27, analyse 21, puzzle 32, lobby 74 pass (screenshots
+  unchanged); ui build; oxlint/oxfmt/stylelint. The real-site run is the e2e job again.
+- Lessons: lila's light theme had several text colours just under 4.5:1 (4.0–4.4) that only show on the
+  real server pages; the built-page tests never saw them. Run axe over the server-rendered pages early.
+
 ### 2026-10-04 · unit 9.10 · The Phase 9 demo: budget and axe over every page, the Go-club checklist
 - Did: `dev/ci/budget.json` gains a line for every page (lobby, game, analysis and analysis of a stored
   game, puzzle, puzzle dashboard, profile, account, challenge), set from the production build at about

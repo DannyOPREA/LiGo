@@ -204,7 +204,9 @@
 
     li {
       list-style: disc inside;
-      line-height: 1.5em;
+
+      // LiGo (unit 9.10): rows tall enough for 24px tap targets (WCAG 2.5.8)
+      line-height: 2em;
     }
   }
 

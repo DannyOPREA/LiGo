@@ -9,13 +9,17 @@ html.light {
   --c-bg-opaque: hsl(0 0% 100%);
   --c-body-gradient: hsl(var(---site-hue) 12% 84%);
   --c-font: hsl(0 0% 30%);
-  --c-font-dim: hsl(0 0% 47%);
+
+  // LiGo (unit 9.10): dimmed text, the accent, brag and mistake colours darkened to 4.5:1 or more on
+  // white and on the zebra rows (WCAG 1.4.3), as axe found on every page
+  --c-font-dim: hsl(0 0% 43%);
+  --c-accent: hsl(22 100% 38%);
   --c-primary: hsl(209 77% 46%);
-  --c-brag: hsl(var(---site-hue) 74% 48%);
+  --c-brag: hsl(var(---site-hue) 100% 32%);
   --c-brag-hover: hsl(from var(--c-brag) h 100 30);
   --c-shade: hsl(0 0% 84%);
   --c-inaccuracy: hsl(202 78% 40%);
-  --c-mistake: hsl(41 100% 35%);
+  --c-mistake: hsl(41 100% 30%);
   --c-blunder: hsl(0 68% 50%);
   --c-brilliant: hsl(129 71% 30%);
   --c-interesting: hsl(307 80% 59%);
