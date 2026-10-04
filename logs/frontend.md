@@ -5,6 +5,13 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 9.7 part two · lila's button blue reaches 4.5:1 under white text
+- Did: added `--c-primary-button` (hsl(209 79% 44%), 4.84:1 under white) in `ui/lib/css/theme/_theme.default.scss`, used by `.button`, `%active-primary`, the rematch button's glow and hover, and every rule that filled a box with `$c-primary` (19 files). Links keep the lighter `--c-primary`, which needs that lightness to read on the dark background. The axe helper's let-off for white on #3692e7 and the game page's `.rematch` exclusion are gone; re-recorded the two account-page screenshots whose button changed.
+- Worked: axe passes on the playground, the game page (20 repeats of the game page's check) and the analysis board with no exceptions.
+- Didn't work / dead ends: a `//` comment naming `--c-primary` in the theme file broke the build: lila's theme generator turns every `--name` it finds, comments included, into a Sass variable.
+- Lessons: never write a `--name` in a comment inside `ui/lib/css/theme/_theme.*.scss`.
+- Decisions: one darker button blue for every theme rather than darkening `--c-primary` itself (links on the dark theme would then fail).
+
 ### 2026-10-04 · unit 9.7 part two (PR #92) · The push test sends its push again when CI's Chromium loses it
 - Did: `ui/playground/e2e/pwa.spec.ts`'s push check failed on CI only (PRs #84, #87, #95): the worker was activated and reported no error, yet no notification showed in 5 s. The test now sends the same push up to three times, 3 s apart; the shared tag keeps it to one notification, and the failure message says how many pushes were sent. The page browser tests also post failures as CI annotations (Playwright's `github` reporter).
 - Worked: 10 repeats of the PWA tests locally, 50/50. The job log (GitHub MCP `get_job_logs`) carried the test's own diagnostics, which named the failing test and the worker's states.
