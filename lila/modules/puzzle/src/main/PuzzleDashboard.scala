@@ -57,24 +57,8 @@ object PuzzleDashboard:
 
     def canReplay = unfixed > 0
 
-  val irrelevantThemes = {
-    List(
-      PuzzleTheme.oneMove,
-      PuzzleTheme.short,
-      PuzzleTheme.long,
-      PuzzleTheme.veryLong,
-      PuzzleTheme.mateIn1,
-      PuzzleTheme.mateIn2,
-      PuzzleTheme.mateIn3,
-      PuzzleTheme.mateIn4,
-      PuzzleTheme.mateIn5,
-      PuzzleTheme.equality,
-      PuzzleTheme.advantage,
-      PuzzleTheme.crushing,
-      PuzzleTheme.master,
-      PuzzleTheme.masterVsMaster
-    ) ::: PuzzleTheme.hiddenThemes
-  }.map(_.key)
+  // LiGo: every puzzle has `lifeAndDeath`, so its line would repeat the global one
+  val irrelevantThemes = List(PuzzleTheme.lifeAndDeath).map(_.key)
 
   val relevantThemes = PuzzleTheme.visible.collect:
     case t if !irrelevantThemes.contains(t.key) => t.key

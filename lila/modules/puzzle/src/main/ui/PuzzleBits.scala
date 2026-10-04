@@ -1,7 +1,6 @@
 package lila.puzzle
 package ui
 
-import chess.format.{ BoardFen, Uci }
 import play.api.libs.json.Json
 
 import lila.ui.*
@@ -13,8 +12,8 @@ import scalalib.model.Days
 final class PuzzleBits(helpers: Helpers):
   import helpers.{ *, given }
 
-  def daily(p: lila.puzzle.Puzzle, fen: BoardFen, lastMove: Uci) =
-    chessgroundMini(fen, p.color, lastMove.some)(span)
+  // LiGo: a small picture of the position, where lichess shows a chessground mini board
+  def miniBoard(p: lila.puzzle.Puzzle, pixels: Int = 160): Frag = raw(PuzzleMiniBoard.svg(p, pixels))
 
   lazy val jsonThemes = PuzzleTheme.visible
     .collect { case t if t != PuzzleTheme.mix => t.key }
@@ -34,9 +33,6 @@ final class PuzzleBits(helpers: Helpers):
       a(cls := active.active("themes"), href := routes.Puzzle.themes)(
         trans.puzzle.puzzleThemes()
       ),
-      a(cls := active.active("openings"), href := routes.Puzzle.openings())(
-        trans.puzzle.byOpenings()
-      ),
       a(cls := active.active("dashboard"), href := routes.Puzzle.dashboard(days, "dashboard", u))(
         trans.puzzle.puzzleDashboard()
       ),
@@ -51,9 +47,6 @@ final class PuzzleBits(helpers: Helpers):
       ),
       a(cls := active.active("history"), href := routes.Puzzle.history(1, u))(
         trans.puzzle.history()
-      ),
-      a(cls := active.active("player"), href := routes.Puzzle.ofPlayer())(
-        trans.puzzle.fromMyGames()
       )
     )
 
@@ -72,7 +65,7 @@ final class PuzzleBits(helpers: Helpers):
         st.aside(cls := "puzzle__side")(
           div(cls := "puzzle__side__metas")
         ),
-        div(cls := "puzzle__board main-board")(chessgroundBoard),
+        div(cls := "puzzle__board main-board"),
         div(cls := "puzzle__tools"),
         div(cls := "puzzle__controls")
       )

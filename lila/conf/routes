@@ -68,21 +68,12 @@ GET   /training/daily                  controllers.Puzzle.daily
 GET   /training/frame                  controllers.Puzzle.frame
 GET   /training/help                   controllers.Puzzle.help
 GET   /training/themes                 controllers.Puzzle.themes
-GET   /training/openings               controllers.Puzzle.openings(order ?= "popular")
-GET   /training/of-player              controllers.Puzzle.ofPlayer(name: Option[UserStr] ?= None, page: Int ?= 1)
 GET   /training/dashboard/$days<\d+>   controllers.Puzzle.dashboard(days: Days, path = "home", u: Option[UserStr])
 GET   /training/dashboard/$days<\d+>/:path  controllers.Puzzle.dashboard(days: Days, path, u: Option[UserStr])
 GET   /training/replay/$days<\d+>/:theme controllers.Puzzle.replay(days: Days, theme)
 GET   /training/history                controllers.Puzzle.history(page: Int ?= 1, u: Option[UserStr])
-GET   /training/batch                  controllers.Puzzle.mobileBcBatchSelect
-POST  /training/batch                  controllers.Puzzle.mobileBcBatchSolve
-GET   /training/new                    controllers.Puzzle.mobileBcNew
-GET   /training/$numericalId<\d{6,}>/load      controllers.Puzzle.mobileBcLoad(numericalId: Long)
-POST  /training/$numericalId<\d{6,}>/vote      controllers.Puzzle.mobileBcVote(numericalId: Long)
 GET   /training/:angleOrId             controllers.Puzzle.show(angleOrId)
-GET   /training/:angle/$color<white|black|random> controllers.Puzzle.angleAndColor(angle, color: String)
 GET   /training/:angle/$id<\w{5}>      controllers.Puzzle.showWithAngle(angle, id: PuzzleId)
-POST  /training/$numericalId<\d{6,}>/round2    controllers.Puzzle.mobileBcRound(numericalId: Long)
 POST  /training/$id<\w{5}>/vote        controllers.Puzzle.vote(id: PuzzleId)
 POST  /training/$id<\w{5}>/report      controllers.Puzzle.report(id: PuzzleId)
 POST  /training/$id<\w{5}>/vote/:theme controllers.Puzzle.voteTheme(id: PuzzleId, theme)
@@ -272,8 +263,6 @@ GET   /api/puzzle/$id<\w{5}>           controllers.Puzzle.apiShow(id: PuzzleId)
 GET   /api/puzzle/many                 controllers.Puzzle.apiMany(ids: String)
 GET   /api/puzzle/next                 controllers.Puzzle.apiNext
 POST  /api/puzzle/vote-themes          controllers.Puzzle.apiBatchVoteThemes
-GET   /api/puzzle/batch/:angle         controllers.Puzzle.apiBatchSelect(angle)
-POST  /api/puzzle/batch/:angle         controllers.Puzzle.apiBatchSolve(angle)
 GET   /api/puzzle/replay/$days<\d+>/:theme controllers.Puzzle.apiReplay(days: Days, theme)
 GET   /api/user/:user                  controllers.Api.user(user: UserStr)
 GET   /api/user/:user/activity         controllers.Api.activity(user: UserStr)
