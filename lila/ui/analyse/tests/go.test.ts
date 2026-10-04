@@ -27,17 +27,18 @@ describe('point names', () => {
   });
 
   test('a pass is named Pass, however it is written', () => {
-    assert.equal(pointName(19, '..'), 'Pass');
-    assert.equal(pointName(19, 'pass'), 'Pass');
-    assert.equal(pointName(19, ''), 'Pass');
+    // The tests' i18n stand-in names a key instead of its English text.
+    assert.equal(String(pointName(19, '..')), 'site.goPass');
+    assert.equal(String(pointName(19, 'pass')), 'site.goPass');
+    assert.equal(String(pointName(19, '')), 'site.goPass');
   });
 
   test("the move list's menu names a move with its number and colour, and the root Start", () => {
     const root = readTree('(;GM[1]FF[4]SZ[19];B[dd];W[])');
     const [black, white] = treeOps.mainlineNodeList(root).slice(1);
-    assert.equal(nodeFullName(19, root), 'Start');
-    assert.equal(nodeFullName(19, black), '1. Black D16');
-    assert.equal(nodeFullName(19, white), '2. White Pass');
+    assert.equal(String(nodeFullName(19, root)), 'site.goStart');
+    assert.equal(nodeFullName(19, black), '1. site.black D16');
+    assert.equal(nodeFullName(19, white), '2. site.white site.goPass');
   });
 });
 
@@ -123,8 +124,11 @@ describe('a new position', () => {
 
   test('settings read as the side panel shows them', () => {
     const plain = readTree('(;GM[1]FF[4]SZ[19]RU[Japanese]KM[6.5])').settings;
-    assert.equal(settingsText(plain), '19×19 · Japanese · komi 6.5');
+    assert.equal(settingsText(plain), '19×19 · site.goRulesJapanese · site.goKomi 6.5');
     const handicap = readTree('(;GM[1]FF[4]SZ[19]RU[Chinese]KM[0.5]HA[3]AB[dd][pp][dp]PL[W])').settings;
-    assert.equal(settingsText(handicap), '19×19 · Chinese · komi 0.5 · 3 handicap stones');
+    assert.equal(
+      settingsText(handicap),
+      '19×19 · site.goRulesChinese · site.goKomi 0.5 · site.goNbHandicapStones(3, 3)',
+    );
   });
 });

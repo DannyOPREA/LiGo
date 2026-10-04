@@ -39,12 +39,12 @@ export function view(ctrl: AnalyseCtrl): VNode {
         hl(
           'a',
           { hook: bind('click', ctrl.startSetup, ctrl.redraw), attrs: { 'data-icon': licon.Pencil } },
-          'New position',
+          i18n.site.goNewPosition,
         ),
         hl(
           'a',
           { hook: bind('click', ctrl.downloadSgf), attrs: { 'data-icon': licon.Download } },
-          'Download SGF',
+          i18n.site.goDownloadSgf,
         ),
       ]),
       ctrl.mainline.length > 4 && [hl('h2', i18n.site.replayMode), autoplayButtons(ctrl)],

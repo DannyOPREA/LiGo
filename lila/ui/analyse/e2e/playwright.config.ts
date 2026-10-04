@@ -19,8 +19,10 @@ export default defineConfig({
   // A retry would hide a flaky screenshot; a failure here is looked at, not re-rolled.
   retries: 0,
   outputDir: 'test-results',
+  // On CI, `github` also posts each failure as an annotation on the check, so it can be read without
+  // downloading the report.
   reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    ? [['list'], ['github'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
     : 'list',
   // One baseline for every machine, as the playground's (ui/playground/e2e/playwright.config.ts).
   snapshotPathTemplate: '{testDir}/__screenshots__/{arg}{ext}',

@@ -123,6 +123,22 @@ test.describe('desktop', () => {
     expect(problems).toEqual({ requests: [], errors: [] });
   });
 
+  test('moves are written in the page font, not the chess figurine font', async ({ page }) => {
+    const { problems } = await openAnalysis(page);
+    // B19 (a "bishop" in the figurine font), K, N, Q and R columns.
+    await playAll(page, ['ba', 'jb', 'mc', 'pd', 'qe']);
+    expect(await moves(page)).toEqual(['1 B19', '2 K18', '3 N17', '4 Q16', '5 R15']);
+    const font = (selector: string) =>
+      page
+        .locator(selector)
+        .first()
+        .evaluate(el => getComputedStyle(el).fontFamily);
+    expect(await font('.analyse__moves move')).not.toContain('Chess');
+    await moveList(page).first().click({ button: 'right' });
+    expect(await font('#analyse-cm .title')).not.toContain('Chess');
+    expect(problems).toEqual({ requests: [], errors: [] });
+  });
+
   test('keyboard play keeps the focus on the board from move to move', async ({ page }) => {
     const { problems } = await openAnalysis(page);
     const board = page.locator('.analyse__go-board [role="application"]');
