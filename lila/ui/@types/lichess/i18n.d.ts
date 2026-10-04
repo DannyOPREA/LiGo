@@ -2119,7 +2119,7 @@ interface I18n {
     exploreTheSiteAndHaveFun: string;
     /** Follow your friends on LiGo. */
     followYourFriendsOnLichess: string;
-    /** Improve with chess tactics puzzles. */
+    /** Improve with Go puzzles (tsumego). */
     improveWithChessTacticsPuzzles: string;
     /** Learn the rules of chess. */
     learnChessRules: string;
@@ -4597,7 +4597,7 @@ interface I18n {
     promoteVariation: string;
     /** Propose a takeback */
     proposeATakeback: string;
-    /** Chess tactics trainer */
+    /** Go puzzles (tsumego) trainer */
     puzzleDesc: string;
     /** Puzzles */
     puzzles: string;

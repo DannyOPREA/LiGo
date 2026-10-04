@@ -53,6 +53,20 @@ _none yet_
   and the countdown reads in days and hours.
 
 
+### 2026-10-04 · unit 9.7 part two · the puzzle rating's tooltip and the profile's puzzle tip say Go
+- Did: `translation/source/site.xml` `puzzleDesc` ("Chess tactics trainer", the puzzle row's tooltip on profiles and rating lists, via `PerfType`) now reads "Go puzzles (tsumego) trainer"; `onboarding.xml` `improveWithChessTacticsPuzzles` (the new-player tip on the profile page) reads "Improve with Go puzzles (tsumego).". Regenerated `ui/@types/lichess/i18n.d.ts`; key names unchanged, so `key.scala` is unchanged.
+- Worked: spotted by the Phase 5 thread; both strings live in Phase 9's translation files.
+- Didn't work / dead ends: none.
+- Lessons: grep `translation/source` for "chess" when a page still says it; the text is in the source XML, not the view.
+- Decisions: key names stay (renaming keys would touch every translation file).
+
+### 2026-10-04 · unit 9.7 part two · colour pickers show stones; chess move speech unhooked
+- Did: the colour choice in the setup and challenge windows (`ui/lib/css/setup/_colorChoice.scss`) and on the puzzle page (`ui/puzzle/css/_side.scss`) shows a black and a white stone (new `public/images/ligo/{black,white}-stone.svg`, drawn like `random-color.svg`) instead of cburnett's chess kings. `site.sound.saySan` and its `speakable` import are gone, and `lib/game` no longer re-exports `sanWriter`.
+- Worked: page browser tests on the built pages: playground 49, game page 19, analysis board 15, puzzle page 32.
+- Didn't work / dead ends: the bulk deletion of the chess piece sets, the chess board pictures, the two unused style files and `sanWriter.ts` was refused by the permission check without the owner's own yes for that batch, so they wait for a follow-up PR.
+- Lessons: an owner's OK for one deletion batch doesn't carry over to the next; ask for each batch by name.
+- Decisions: keep `public/images/board/wood4.jpg` when the board pictures go, because it is the default background picture.
+
 ### 2026-10-04 · unit 4.10 follow-up · The game page drops its last chess styles
 - Did: `ui/round` no longer imports `lib/css/chess/variant-style` (chessground's variant overlays) or
   `lib/css/component/material` (chess piece pictures); `_material.scss` keeps only the sizing of the
