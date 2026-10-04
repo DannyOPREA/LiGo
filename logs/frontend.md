@@ -53,6 +53,23 @@ _none yet_
   and the countdown reads in days and hours.
 
 
+### 2026-10-04 · unit 4.10 follow-up · The game page drops its last chess styles
+- Did: `ui/round` no longer imports `lib/css/chess/variant-style` (chessground's variant overlays) or
+  `lib/css/component/material` (chess piece pictures); `_material.scss` keeps only the sizing of the
+  prisoners row that reuses the `.material` grid areas. Deleted `_nvui.scss` and `build/round.nvui.scss`
+  (the chess screen-reader page's styles; nothing loads `round.nvui` CSS since unit 3.18).
+- Worked: all 19 game-page browser tests pass, including all 10 screenshot baselines, unchanged.
+- Didn't work / dead ends: none.
+- Lessons: `.material` is still the class the Go prisoners row sits in (`main.ts`), so the file stays
+  with its layout rules; only the piece rules go.
+- Decisions: none.
+### 2026-10-04 · unit 9.7 part two · byo-yomi countdown sounds (`site.sound.byoyomi`)
+- Did: added `makeByoyomiSounds()` in `ui/lib/src/game/clock/byoyomiSound.ts` (pure: which sound a byo-yomi clock tick plays) and `site.sound.byoyomi(periodsLeft, secondsLeft)` / `byoyomiReset()` over it. LowTime when byo-yomi starts or a period is used up, CountDown10 to CountDown1 over the last 10 s of each period, nothing when a new turn refills the period, per ADR 0026 section 2. The game page's call belongs to unit 4.10, which owns the period display; it has the API.
+- Worked: 5 unit tests; ui tests 260+ pass. Every kept sound set already has CountDown0-10 and LowTime, so no new files.
+- Didn't work / dead ends: none.
+- Lessons: when another thread owns the page that will call a helper, ship the helper with its contract and let the owner add the one call; it avoids both threads editing the same view.
+- Decisions: the first tick plays LowTime even after a page reload mid byo-yomi; simpler than tracking whether the page saw main time end.
+
 ### 2026-10-04 · unit 4.10 · the scoring phase and byo-yomi on the game page
 - Did: libs/board's `mountBoard` takes `scoring` marks (dead stones, owner string, seal points,
   tappable) and reports taps on stones (`onScoreTap`); goban draws them in its "stone removal" phase,
@@ -99,6 +116,12 @@ _none yet_
 - Worked: the 8 analysis screenshot pairs still match pixel for pixel, so the moved styles changed nothing.
 - Lessons: before deleting a "chess" stylesheet, list its selectors and grep the page's views for them:
   `_control.scss` styled the Go page's own step buttons.
+### 2026-10-04 · unit 9.7 part two · chess-only sounds and the 3D board preference deleted
+- Did: deleted the sounds only chess uses (check-mate, berserk, explosion, out of bound, tournament places, new PM) and every `.ogg`/`.m3u` (lila plays only `.mp3`) from the four sound sets; `Error.mp3`, a link into the deleted `standard` set, now points at the set's `Check.mp3`. `sound.ts` no longer plays check/checkmate, the notify bell plays the generic notify sound, the game page no longer plays berserk. Removed lila's 3D board preference end to end (`Theme3d`, `PieceSet3d`, `is3d`/`theme3d`/`pieceSet3d` in prefs, forms, JSON and page attributes, the 3D board CSS and the Staunton pictures). ADR 0026 §2 and COPYING.md updated.
+- Worked: ui build, verify, page browser tests (playground 47, game page 13, analysis board 15) all pass on main with #100 in.
+- Didn't work / dead ends: chess piece and board pictures, blind mode and nvui stay: the chess puzzle page still uses them until unit 8.7 replaces it.
+- Lessons: grep `Error.mp3`-style symlinks before deleting a sound set; they point across sets.
+- Decisions: deletions per Danny's "yes, you can delete the chess leftovers" (2026-10-04).
 
 ### 2026-10-04 · unit 9.7 part two · lila's button blue reaches 4.5:1 under white text
 - Did: added `--c-primary-button` (hsl(209 79% 44%), 4.84:1 under white) in `ui/lib/css/theme/_theme.default.scss`, used by `.button`, `%active-primary`, the rematch button's glow and hover, and every rule that filled a box with `$c-primary` (19 files). Links keep the lighter `--c-primary`, which needs that lightness to read on the dark background. The axe helper's let-off for white on #3692e7 and the game page's `.rematch` exclusion are gone; re-recorded the two account-page screenshots whose button changed.

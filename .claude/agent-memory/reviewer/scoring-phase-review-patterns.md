@@ -58,3 +58,4 @@ Unit 4.8 (scoring phase in lila, 2026-10-04):
 - lila restart: only rounds someone is watching reload (lila-ws `r/ons`); a correspondence round
   nobody opens gets no Wake until Titivate's `ck` deadline → reply lost = NoCount.
 - verify's "lila tests" gate ran 3 tests (sbt 2 cache); always `testOnly` the unit's suites yourself.
+- 4.12 (2026-10-04): golden-file demos read at runtime (libs/conformance/demo) aren't sbt 2 cache inputs, so local `test` may skip them; CI is fresh (~/.cache/sbt/v2 not cached by setup-java). Check test copies of round logic (Status mapping) vs GoScorer, and PLAN rows left unamended when a unit swaps its acceptance test.

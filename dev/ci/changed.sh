@@ -23,12 +23,14 @@ head=${2:-HEAD}
 # and for ui: ui/puzzle's unit and page tests read the set (unit 8.7).
 # libs/go-rules counts for lila too: lila's sbt build compiles it (unit 3.10).
 # The playground's copy of the app manifest counts for lila too: StaticContentTest compares them (unit 9.6).
+# libs/conformance/demo is the Phase 4 demo's script (unit 4.12): lila writes it, the scoring service and
+# libs/board replay it, so it counts for lila, rules and scoring.
 areas=(
-  'lila|^(lila/(app|conf|modules|project|translation)/|lila/ui/playground/e2e/manifest\.json$|libs/go-rules/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
+  'lila|^(lila/(app|conf|modules|project|translation)/|libs/conformance/demo/|lila/ui/playground/e2e/manifest\.json$|libs/go-rules/|lila/(build\.sbt|lila\.sh|\.sbtopts\.default|\.scalafmt\.conf|\.scalafix\.conf)$|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ws|^(lila-ws/|\.github/workflows/lila\.yml$|dev/ci/changed\.sh$)'
   'ui|^(lila/|libs/board/|tools/puzzles/data/|\.github/workflows/ui\.yml$|dev/ci/(changed\.sh|budget\.(mjs|json))$)'
-  'rules|^(libs/go-rules/|libs/board/|libs/conformance/fixtures/|tools/puzzles/data/|lila/pnpm-(lock|workspace)\.yaml$|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
-  'scoring|^(services/scoring/|libs/conformance/fixtures/|lila/pnpm-(lock|workspace)\.yaml$|dev/katago\.sh$|\.github/workflows/scoring\.yml$|dev/ci/changed\.sh$)'
+  'rules|^(libs/go-rules/|libs/board/|libs/conformance/(fixtures|demo)/|tools/puzzles/data/|lila/pnpm-(lock|workspace)\.yaml$|\.github/workflows/rules\.yml$|dev/ci/changed\.sh$)'
+  'scoring|^(services/scoring/|libs/conformance/(fixtures|demo)/|lila/pnpm-(lock|workspace)\.yaml$|dev/katago\.sh$|\.github/workflows/scoring\.yml$|dev/ci/changed\.sh$)'
   'puzzles|^(tools/puzzles/|services/scoring/|libs/board/|lila/pnpm-(lock|workspace)\.yaml$|dev/katago\.sh$|\.github/workflows/puzzles\.yml$|dev/ci/changed\.sh$)'
 )
 

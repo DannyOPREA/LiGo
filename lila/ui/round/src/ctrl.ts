@@ -731,14 +731,12 @@ export default class RoundController {
   goBerserk = (): void => {
     if (game.berserkableBy(this.data) && !this.hasGoneBerserk(this.data.player.color)) {
       this.socket.berserk();
-      site.sound.play('berserk');
     }
   };
 
   setBerserk = (color: Color): void => {
     if (this.goneBerserk[color]) return;
     this.goneBerserk[color] = true;
-    if (color !== this.data.player.color) site.sound.play('berserk');
     this.redraw();
     $(`<icon data-icon="${licon.Berserk}">`).appendTo($(`.game__meta .player.${color} .user-link`));
   };

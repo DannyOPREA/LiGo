@@ -107,7 +107,6 @@ export const casualHookForm = (pool: Pool): Record<string, string | number> => (
 
 // A correspondence tile: a seek with the tile's days, 19×19 Japanese even, rated or casual from the chips.
 export const corresSeekForm = (tile: CorresTile, rated: boolean): Record<string, string | number> => ({
-  variant: 1,
   timeMode: 2,
   days: tile.days,
   time: 0,

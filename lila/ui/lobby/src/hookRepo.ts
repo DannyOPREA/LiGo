@@ -3,7 +3,6 @@ import type { Hook } from './interfaces';
 
 export function init(hook: Hook) {
   hook.action = hook.sri === site.sri ? 'cancel' : 'join';
-  hook.variant = hook.variant || 'standard';
 }
 
 export function initAll(ctrl: LobbyController) {

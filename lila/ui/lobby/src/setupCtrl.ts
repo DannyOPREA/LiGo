@@ -357,7 +357,13 @@ export default class SetupController {
         this.root.pools,
         this.goSize(),
         tc.isByoyomi()
-          ? { byo: { limit: tc.time() * 60, periods: tc.periods(), period: tc.periodTime() } }
+          ? {
+              byo: {
+                limit: tc.time() * 60,
+                periods: tc.periods(),
+                period: tc.periodTime(),
+              },
+            }
           : { lim: tc.time(), inc: tc.increment() },
       );
     return pool ? { id: pool.id, range: this.ratingRange() } : null;
@@ -365,7 +371,6 @@ export default class SetupController {
 
   propsToFormData = (color: ColorChoice) =>
     xhr.form({
-      variant: 1, // standard, the only variant the server accepts (unit 3.17)
       size: this.goSize().toString(),
       ruleset: this.goRuleset(),
       komi: this.goKomi().toString(),
@@ -378,7 +383,9 @@ export default class SetupController {
         periodTime: this.timeControl.periodTime().toString(),
       }),
       // the hook form has no handicap field: lobby games stay even
-      ...(this.gameType === 'friend' && { handicap: this.handicap().toString() }),
+      ...(this.gameType === 'friend' && {
+        handicap: this.handicap().toString(),
+      }),
       mode: this.gameMode() === 'casual' ? '0' : '1',
       ratingRange: this.ratingRange(),
       color,

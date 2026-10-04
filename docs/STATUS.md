@@ -10,10 +10,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
   no longer wait on Phase 2 (merged 2026-09-29).
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
-  docs/PLAN.md §5. 4.1–4.6 (design ADR, byo-yomi clock and scoring phase in `libs/go-rules`,
-  `services/scoring`, the autoscore benchmark) and 4.7 (byo-yomi clocks in lila, PR #87) merged;
-  4.8 (the scoring phase in lila) in review; 4.9 (Phase 6 thread), 4.10 (its own thread) and 4.11
-  (SGF export) under way; 4.12 (the demo) waits for all of them.
+  docs/PLAN.md §5. 4.1–4.11 merged (4.7 PR #87, 4.8 PR #101, 4.9 PR #104, 4.10 PR #113, 4.11
+  PR #99); 4.12 (the demo: a scripted two-game play-through in CI, and your checklist
+  docs/demos/phase-4.md) in review.
   Logs: logs/scoring.md, logs/clocks.md.
 
 - Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
@@ -38,7 +37,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
   and 8.2 (design ADR 0025: goban's own puzzle format and puzzle mode, PR #53) merged; 8.3 (the `tools/puzzles`
   generator and pipeline, PR #59) and 8.4 (the first 240 puzzles, PR #62) merged; 8.5 (goban's puzzle mode in
   `libs/board`, PR #64) merged; 8.6 (puzzles on the server, `dev/ligo puzzles load`, PR #89) merged;
-  8.7 (the trainer page) in review; 8.8 (the demo) follows. Log: logs/tsumego.md.
+  8.7 (the trainer page, PR #95) merged; 8.8 part one (the demo on the built page, docs/demos/phase-8.md) in review; part two (the same walk on the real stack) after 3.20. Log: logs/tsumego.md.
 
 - Phase 9 (under the owner's "work until I tell you to stop" delegation): units 9.1–9.10 in
   docs/PLAN.md §5. 9.1 (ADR 0026, PR #57), 9.2 (sounds, PR #58), 9.3 (board themes, PR #60) and
@@ -111,6 +110,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
     Phase 2.
 
 ## Next
+- Your Phase 4 demo: docs/demos/phase-4.md (two browsers, Sabaki, the benchmark on your GPU).
 - Your Phase 2 demo: docs/demos/phase-2.md.
 - Phase 3 units 3.1–3.17 in order (they don't need Phase 2); 3.18–3.20 after Phase 2.
 - Phase 0 acceptance items (CLAUDE_SETUP §14) not yet exercised: an /ask round-trip answered from
@@ -148,9 +148,9 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.15 merged; 3.19 part 1 in review (you approved the deletions for 3.1–3.7) |
-| 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.7 merged, 4.8 in review, 4.9–4.11 under way, 4.12 waits for them |
+| 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.11 merged, 4.12 (the demo) in review |
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 merged (ADR 0022), 6.4 part one in review, the rest wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
-| 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.6 merged, 8.7 in review, 8.8 next |
+| 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.7 merged, 8.8 part one in review, part two after 3.20 |
 | 9. PWA, polish & handoff | split into units 9.1–9.10 (PLAN §5); 9.1–9.6 merged, 9.8 in review; 9.7, 9.9, 9.10 wait for Phases 3–8 |

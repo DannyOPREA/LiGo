@@ -51,7 +51,11 @@ export default async function (
   const makeDataset = (
     d: AnalyseData,
     mainline: TreeNodeBase[],
-  ): { acpl: ChartDataset<'line'>; moveLabels: string[]; adviceHoverColors: string[] } => {
+  ): {
+    acpl: ChartDataset<'line'>;
+    moveLabels: string[];
+    adviceHoverColors: string[];
+  } => {
     const pointBackgroundColors: (
       | typeof orangeAccent
       | typeof blurBackgroundColorWhite
@@ -69,8 +73,7 @@ export default async function (
       let cp: number | undefined = node.eval && 0;
       if (node.eval?.mate) cp = node.eval.mate > 0 ? Infinity : -Infinity;
       else if (node.san?.includes('#')) cp = isWhite ? Infinity : -Infinity;
-      if (cp && d.game.variant.key === 'antichess' && node.san?.includes('#')) cp = -cp;
-      else if (node.eval?.cp) cp = node.eval.cp;
+      if (node.eval?.cp) cp = node.eval.cp;
       const turn = plyToTurn(node.ply);
       const dots = isWhite ? '.' : '...';
       const winchance = povChances('white', { cp });
@@ -205,7 +208,10 @@ function christmasTree(chart: AcplChart, mainline: TreeNodeBase[], hoverColors: 
           .filter(
             node => node.glyphs?.some(glyph => glyph.symbol === symbol) && (node.ply & 1) === playerColorBit,
           )
-          .map(node => ({ datasetIndex: 0, index: node.ply - mainline[0].ply - 1 }));
+          .map(node => ({
+            datasetIndex: 0,
+            index: node.ply - mainline[0].ply - 1,
+          }));
         chart.setActiveElements(points);
         chart.update('none');
       }

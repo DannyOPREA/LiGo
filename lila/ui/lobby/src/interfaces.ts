@@ -18,7 +18,6 @@ export interface Hook {
   s: number; // speed
   i: number; // increment (0 for byo-yomi)
   byo?: { limit: number; periods: number; period: number }; // byo-yomi hooks (unit 4.9)
-  variant: VariantKey;
   perf: Exclude<Perf, 'fromPosition'>;
   prov?: true; // is rating provisional
   u?: string; // username
@@ -51,7 +50,6 @@ export interface Seek {
     key: Exclude<Perf, 'fromPosition'>;
   };
   provisional?: boolean;
-  variant?: { key: VariantKey };
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
   rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'joinSeek' | 'cancelSeek';
@@ -109,10 +107,6 @@ export interface NowPlaying {
   color: Color;
   orientation?: Color;
   lastMove: string;
-  variant: {
-    key: string;
-    name: string;
-  };
   speed: string;
   perf: string;
   rated: boolean;
