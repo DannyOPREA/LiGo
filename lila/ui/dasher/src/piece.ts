@@ -1,106 +1,50 @@
-import { h, type VNode } from 'snabbdom';
-
-import { type Toggle, toggle } from 'lib';
-import { bind } from 'lib/view';
+import { pubsub } from 'lib/pubsub';
+import { bind, hl, type VNode } from 'lib/view';
 import { text as xhrText, form as xhrForm } from 'lib/xhr';
 
-import type { DasherCtrl } from '@/ctrl';
+import { PaneCtrl } from './interfaces';
+import { header } from './util';
 
-import { type Dimension, PaneCtrl } from './interfaces';
-import { header, elementScrollBarWidthSlowGuess, moreButton } from './util';
-
+/**
+ * LiGo: the stones pane lists goban's stone themes (ADR 0026 §3), black and white chosen together,
+ * which the server sends as the `pieceSet` preference's list.
+ */
 export class PieceCtrl extends PaneCtrl {
-  featured: Record<Dimension, string[]> = { d2: [], d3: [] };
-  more: Toggle;
-
-  constructor(root: DasherCtrl) {
-    super(root);
-    this.more = toggle(false, root.redraw);
-    for (const dim of ['d2', 'd3'] as Dimension[]) {
-      this.featured[dim] = this.root.data.piece[dim].list.filter(t => t.featured).map(t => t.name);
-    }
-  }
-
-  get pieceList(): string[] {
-    const all = this.dimData.list.map(t => t.name);
-    const visible = this.featured[this.dimension].slice();
-    if (!visible.includes(this.dimData.current)) visible.push(this.dimData.current);
-    return this.more() ? all : visible;
-  }
-
   render(): VNode {
-    const maxHeight = window.innerHeight - 150; // safari vh brokenness
-    const pieceSize = (222 - elementScrollBarWidthSlowGuess()) / (this.more() ? 4 : 3);
-    const pieceImage = (t: string) =>
-      this.is3d
-        ? `images/staunton/piece/${t}/White-Knight${t === 'Staunton' ? '-Preview' : ''}.webp`
-        : site.manifest.hashed[`piece/${t}/wN.webp`]
-          ? `piece/${t}/wN.webp`
-          : `piece/${t}/wN.svg`;
-
-    return h('div.sub.piece.' + this.dimension, [
+    return hl('div.sub.piece', [
       header(i18n.site.pieceSet, () => this.close()),
-      h(
+      hl(
         'div.list',
-        { attrs: { style: `max-height:${maxHeight}px;` } },
-        this.pieceList.map((t: string) =>
-          h(
-            'button.no-square',
+        this.data.list.map(({ name }) =>
+          hl(
+            'button',
             {
-              key: t,
-              attrs: { title: t, type: 'button', style: `width: ${pieceSize}px; height: ${pieceSize}px` },
-              hook: bind('click', () => this.set(t)),
-              class: { active: this.dimData.current === t },
+              key: name,
+              attrs: { type: 'button', 'aria-pressed': `${this.data.current === name}` },
+              hook: bind('click', () => this.set(name)),
+              class: { active: this.data.current === name },
             },
-            [h('piece', { attrs: { style: `background-image:url(${site.asset.url(pieceImage(t))})` } })],
+            [
+              hl('span.swatch', { attrs: { 'data-stone-theme': name } }, [hl('i.black'), hl('i.white')]),
+              name,
+            ],
           ),
         ),
       ),
-      moreButton(this.more),
     ]);
   }
 
-  apply = (t: string = this.dimData.current): void => {
-    this.dimData.current = t;
-    document.body.dataset[this.is3d ? 'pieceSet3d' : 'pieceSet'] = t;
-    if (!this.is3d) {
-      pieceVarRules(t);
-    }
-  };
-
-  private get dimData() {
-    return this.root.data.piece[this.dimension];
+  private get data() {
+    return this.root.data.piece;
   }
 
   private readonly set = (t: string) => {
-    this.apply(t);
-    const field = `pieceSet${this.is3d ? '3d' : ''}`;
-    xhrText(`/pref/${field}`, { body: xhrForm({ [field]: t }), method: 'post' }).catch(() =>
-      site.announce({ msg: 'Failed to save piece set  preference' }),
+    this.data.current = t;
+    document.body.dataset.pieceSet = t;
+    pubsub.emit('board.change', false);
+    xhrText('/pref/pieceSet', { body: xhrForm({ pieceSet: t }), method: 'post' }).catch(() =>
+      site.announce({ msg: 'Failed to save stone preference' }),
     );
     this.redraw();
   };
-}
-
-const pieceVars = [
-  ['---white-pawn', 'wP'],
-  ['---black-pawn', 'bP'],
-  ['---white-knight', 'wN'],
-  ['---black-knight', 'bN'],
-  ['---white-bishop', 'wB'],
-  ['---black-bishop', 'bB'],
-  ['---white-rook', 'wR'],
-  ['---black-rook', 'bR'],
-  ['---white-queen', 'wQ'],
-  ['---black-queen', 'bQ'],
-  ['---white-king', 'wK'],
-  ['---black-king', 'bK'],
-];
-
-function pieceVarRules(theme: string) {
-  const ext = site.manifest.hashed[`piece/${theme}/wP.webp`] ? 'webp' : 'svg';
-  for (const [varName, fileName] of pieceVars) {
-    const url = site.asset.url(`piece/${theme}/${fileName}.${ext}`, { pathOnly: true });
-    document.body.style.setProperty(varName, `url(${url})`);
-  }
 }

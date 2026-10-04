@@ -9,8 +9,6 @@ import lila.mon.extensions.*
 
 object page:
 
-  val pieceSetImages = lila.web.ui.PieceSetImages(assetHelper)
-
   val ui = lila.web.ui.layout(helpers, assetHelper)(
     popularAlternateLanguages = lila.i18n.LangList.popularAlternateLanguages,
     reportScoreThreshold = env.report.scoreThresholdsSetting.get,
@@ -23,11 +21,10 @@ object page:
   private def metaThemeColor(using ctx: Context): Frag =
     raw(s"""<meta name="theme-color" content="${ctx.pref.themeColor}">""")
 
-  private def boardPreload(using ctx: Context) = frag(
-    imagePreload(assetUrl(s"images/board/${ctx.pref.currentTheme.file}")),
-    ctx.pref.is3d.option:
-      imagePreload(assetUrl(s"images/staunton/board/${ctx.pref.currentTheme3d.file}"))
-  )
+  // LiGo: the 2D board themes are goban's, drawn from code (ADR 0026 §3), so there is no picture to
+  // preload and no chess piece images to load.
+  private def boardPreload(using ctx: Context) = ctx.pref.is3d.option:
+    imagePreload(assetUrl(s"images/staunton/board/${ctx.pref.currentTheme3d.file}"))
 
   def boardStyle(zoomable: Boolean)(using ctx: Context) =
     s"---board-opacity:${ctx.pref.board.opacity};" +
@@ -97,7 +94,6 @@ object page:
           p.withHrefLangs.map(hrefLangs),
           sitePreload(p.i18nModules, ctx.data.inquiry.isDefined.option(Esm("mod.inquiry")) :: allModules),
           lichessFontFaceCss,
-          pieceSetImages.load(ctx.pref.currentPieceSet.name),
           (ctx.pref.bg === lila.pref.Pref.Bg.SYSTEM || ctx.pref.bg === lila.pref.Pref.Bg.SYSTEM_TRANSP || ctx.impersonatedBy.isDefined)
             .so(systemThemeScript(ctx.nonce, ctx.pref.isTransparentBg))
         ).pipe(p.transformHead),
