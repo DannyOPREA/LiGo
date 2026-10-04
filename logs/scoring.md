@@ -21,6 +21,31 @@
   every end-of-game flag on it: the clock's gameActive, increments, byo-yomi period resets (2026-10-04, unit 4.8 review).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 4.12 · the Phase 4 demo as a script, and the SGF's byo-yomi and counted result
+- Did: two 19×19 Japanese byo-yomi games (10 min + 5 × 30 s) played through the scoring phase in
+  `lila/modules/game/src/test/Phase4DemoTest.scala`: one ends with an accepted proposal, one with a
+  dispute (Black marks White's invader dead, White resumes), the stone captured in play, and a
+  second count accepted. Each request lila sends, each answer it reads, and the final SGF are files
+  in `libs/conformance/demo/phase-4/`; `services/scoring/test/demo-phase4.test.ts` answers the same
+  requests (no KataGo) and must give the same replies; `libs/board/test/sgf.test.mjs` reads the
+  SGFs through goban-engine and must reach the same stones, prisoners and result. `SgfDump` now
+  writes byo-yomi (`TM[600]OT[5x30 byo-yomi]`) and the scoring phase's result (`RE[B+12.5]`, `0`,
+  or `Void` for no count). `dev/ci/changed.sh` counts `libs/conformance/demo/` for lila, rules and
+  scoring. Your checklist: docs/demos/phase-4.md.
+- Worked: lila's demo test 2/2 (B+12.5; B+8.5 after the resume), SgfDumpTest 10/10, the service's
+  demo test 5/5, the board's read-back 2/2; the counts match the hand count (171 vs 152 + 6.5;
+  166 + 1 prisoner vs 152 + 6.5).
+- Didn't: PLAN's two-browser Playwright test. The cloud has no Docker or Mongo, so the site can't
+  run here, and 3.20 (the Phase 3 two-browser harness) hasn't landed. The scripted chain stands
+  in for it in CI; the browser part is your checklist (logs/decisions.md).
+- Not done (follow-ups): a two-browser Playwright version once 3.20's harness exists (Phase 7's
+  7.8 or a 4.12 part 2); `src: katago` proposals are only checked by the service's own
+  integration test and your GPU run.
+- Decisions: the demo's CI check is a cross-component script, not a live two-browser test
+  (logs/decisions.md).
+- Lessons: golden files written by one component and replayed by the others catch wire drift
+  between Scala and Node without a running stack; keep a write mode so they can be regenerated.
+
 ### 2026-10-04 · unit 4.8 · the scoring phase in lila
 - Did: two passes (or the 1,000-ply cap, which also closes play) open a scoring phase stored as
   `sc` on the game (ADR 0020 §2; `GoScoring` in core, `GoStorage.scoring` in game). lila sends
