@@ -16,11 +16,7 @@ object GlickoExt:
     def intervalMax = (g.rating + g.deviation * 2).toInt
     def interval = g.intervalMin -> g.intervalMax
 
-    def rankable(variant: chess.variant.Variant) =
-      g.deviation <= {
-        if variant.standard then Glicko.standardRankableDeviation
-        else Glicko.variantRankableDeviation
-      }
+    def rankable = g.deviation <= Glicko.standardRankableDeviation
 
     def sanityCheck: Boolean =
       g.rating > 0 &&

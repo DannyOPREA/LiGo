@@ -169,6 +169,10 @@ lila's mini-game `data-state` for Go is `board,turn,lastMove,plies`. Protocol (Â
 (`ownerPreview`: the lobby, `/account/now-playing`, the public `/api/account/playing`, the mobile API and
 the event stream's `gameStart`) carries `board` for a Go game and its `lastMove` is the last stone (an SGF
 point) or `pass` instead of `""`. logs/decisions.md, 2026-10-03.)
+(Amended in unit 3.17, part 2a: part 2 is split. 2a removes FEN, PGN and UCI: PGN export and
+embeds, the initial FEN, the annotator and the chess move events; exports are JSON or NDJSON until
+4.11. 2b removes variants and openings, with the setup, challenge and lobby FEN fields. `chess.eval`
+and the chess analysis tree go in a later slice. logs/decisions.md, 3.17 part 2a row.)
 (Amended in unit 3.16: the API move stream now streams Go games too, `{board, turn, lm, wc, bc}` per
 position; the bus `MoveGameEvent` carries strings (the FEN or compact board, the last move).
 logs/decisions.md, 3.16 row.)

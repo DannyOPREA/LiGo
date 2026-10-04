@@ -13,7 +13,7 @@ import ligo.gorules.{
 }
 import reactivemongo.api.bson.*
 
-import lila.core.game.GoBridge
+import lila.core.game.{ GoBridge, GoScoring }
 import lila.db.BSON
 import lila.db.dsl.{ *, given }
 
@@ -29,6 +29,10 @@ object GoStorage:
     val handicap = "hc" // omitted when 0
     val position = "ip" // a custom starting position; omitted otherwise
     val actions = "ac"
+    val scoring = "sc"
+
+  /** The scoring block's key for who has accepted the count (bitmask: 1 Black, 2 White). */
+  val scoringAccepted = "acc"
 
   /** A game has no more actions than this: each resume needs a placement since the previous one (R-SP-9), so
     * there are at most as many resumes as plies. It bounds the replay of a corrupt document.
@@ -63,6 +67,92 @@ object GoStorage:
           case `pass` => Action.Pass
           case `resume` => Action.Resume
           case code => Action.Place(Point(code % size.lines, code / size.lines))
+
+  /** Sets of points (dead stones, points to seal), 2 bytes each as in `ac`, in board order. */
+  object points:
+    def write(ps: Set[Point], size: BoardSize): Array[Byte] =
+      actions.write(ps.toList.sortBy(p => (p.row, p.col)).map(Action.Place(_)), size)
+    def read(bytes: Array[Byte], size: BoardSize): Set[Point] =
+      actions.read(bytes, size).collect { case Action.Place(at) if size.contains(at) => at }.toSet
+
+  /** The scoring phase (ADR 0020 §2, unit 4.8), the `sc` subdocument. Each side's count is an array of
+    * integers: Black's territory, stones, prisoners and total × 2; White's territory, stones, prisoners, komi
+    * × 2, compensation and total × 2. `tx` marks a phase whose timeout passed while a recount was pending.
+    */
+  object scoring:
+
+    private def sideWrite(s: GoScoring.Side, white: Boolean): List[Int] =
+      val base = List(s.territory, s.stones, s.prisoners)
+      val extra = if white then List((s.komi * 2).toInt, s.compensation) else Nil
+      base ++ extra :+ (s.total * 2).toInt
+
+    private def sideRead(a: List[Int], white: Boolean): Option[GoScoring.Side] =
+      (white, a) match
+        case (false, List(t, s, p, total)) => Some(GoScoring.Side(t, s, p, 0, 0, BigDecimal(total) / 2))
+        case (true, List(t, s, p, komi, comp, total)) =>
+          Some(GoScoring.Side(t, s, p, BigDecimal(komi) / 2, comp, BigDecimal(total) / 2))
+        case _ => None
+
+    private def acceptedKey(a: Set[GoColor]): Int =
+      (if a(GoColor.Black) then 1 else 0) + (if a(GoColor.White) then 2 else 0)
+
+    def write(sc: GoScoring, size: BoardSize): Bdoc =
+      bdoc(
+        "op" -> sc.opened,
+        "q" -> sc.request,
+        "cv" -> sc.shown,
+        "pd" -> sc.proposal.map(p => points.write(p.dead, size)),
+        "src" -> sc.proposal.map(_.source.key),
+        "d" -> points.write(sc.dead, size),
+        "sl" -> points.write(sc.seal, size),
+        "ow" -> sc.owner,
+        "sb" -> sc.count.map(c => sideWrite(c.black, white = false)),
+        "sw" -> sc.count.map(c => sideWrite(c.white, white = true)),
+        scoringAccepted -> acceptedKey(sc.accepted),
+        "ex" -> sc.expiresAt,
+        "pn" -> sc.pending.option(true),
+        "tx" -> sc.overtime.option(true)
+      )
+
+    def read(doc: Bdoc, size: BoardSize): Either[String, GoScoring] =
+      val r = BSON.Reader(doc)
+      def pts(k: String) = r.bytesO(k).fold(Set.empty[Point])(b => points.read(b.value, size))
+      for
+        opened <- r.dateO("op").toRight("no op")
+        request <- r.intO("q").toRight("no q")
+        shown <- r.intO("cv").toRight("no cv")
+        expiresAt <- r.dateO("ex").toRight("no ex")
+        proposal <- r.bytesO("pd") match
+          case None => Right(None)
+          case Some(b) =>
+            GoScoring.Source.values
+              .find(s => r.strO("src").has(s.key))
+              .toRight(s"bad src ${r.strO("src")}")
+              .map(src => Some(GoScoring.Proposal(points.read(b.value, size), src)))
+        count <- (r.getO[List[Int]]("sb"), r.getO[List[Int]]("sw")) match
+          case (None, None) => Right(None)
+          case (Some(b), Some(w)) =>
+            sideRead(b, white = false)
+              .zip(sideRead(w, white = true))
+              .map(GoScoring.Count.apply)
+              .toRight(s"bad count $b $w")
+              .map(Some(_))
+          case _ => Left("half a count")
+      yield
+        val acc = r.intD(scoringAccepted)
+        GoScoring(
+          opened,
+          request,
+          shown,
+          proposal,
+          pts("d"),
+          pts("sl"),
+          r.strD("ow"),
+          count,
+          Set(GoColor.Black).filter(_ => (acc & 1) != 0) ++ Set(GoColor.White).filter(_ => (acc & 2) != 0),
+          expiresAt,
+          overtime = r.boolD("tx")
+        )
 
   private def rulesetKey(r: Ruleset) = r match
     case Ruleset.Japanese => "j"

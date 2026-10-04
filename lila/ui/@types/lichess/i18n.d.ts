@@ -3391,6 +3391,8 @@ interface I18n {
     by: I18nFormat;
     /** By CPL */
     byCPL: string;
+    /** Byo-yomi */
+    byoyomi: string;
     /** By registering, you agree to the %s. */
     byRegisteringYouAgreeToBeBoundByOur: I18nFormat;
     /** Calculating moves... */
@@ -3781,6 +3783,8 @@ interface I18n {
     gameAborted: string;
     /** Game as GIF */
     gameAsGIF: string;
+    /** Your game ended with no result */
+    gameEndedWithNoResult: string;
     /** You have a game in progress with %s. */
     gameInProgress: I18nFormat;
     /** Game mode */
@@ -3857,6 +3861,8 @@ interface I18n {
     goNextMove: string;
     /** No open challenges match. Try other filters, or create a game. */
     goNoOpenChallenges: string;
+    /** No stones, Black first */
+    goNoStonesBlackFirst: string;
     /** Games cannot be played through a web proxy. Please use %s instead. */
     goNoWebProxy: I18nFormat;
     /** To that effect, we must ensure that all players follow good practice. */
@@ -3871,6 +3877,8 @@ interface I18n {
     goPass: string;
     /** Pass: play no stone this turn */
     goPassTitle: string;
+    /** Periods */
+    goPeriods: string;
     /** Place */
     goPlace: string;
     /** Previous move */
@@ -3881,6 +3889,14 @@ interface I18n {
     goRankChangeHelp: string;
     /** Your Go rank now changes only through rated games. */
     goRankLocked: string;
+    /** Opponents from %1$s to %2$s */
+    goRankRangeXToY: I18nFormat;
+    /** A rated game with handicap stones needs a named opponent. */
+    goRatedHandicapNeedsOpponent: string;
+    /** Rated games are played on 9×9 or 19×19 with the standard komi. */
+    goRatedSetupRule: string;
+    /** A rated game between you two has %1$s to %2$s handicap stones, or none. */
+    goRatedStonesXToY: I18nFormat;
     /** Your opponent is offline, but they can accept this challenge later! */
     goRematchOfflineText: string;
     /** Challenged to a rematch */
@@ -3895,6 +3911,8 @@ interface I18n {
     goRulesJapanese: string;
     /** The file's rules are not ones LiGo plays: Japanese rules are used instead. */
     goRulesUnknown: string;
+    /** Seconds per period */
+    goSecondsPerPeriod: string;
     /** Tap a point to put a stone there. Tap a stone of the same colour to remove it. */
     goSetupHint: string;
     /** That file is too big to be an SGF record. */
@@ -3903,6 +3921,8 @@ interface I18n {
     goSgfUnreadable: string;
     /** Show clock on left */
     goShowClockOnLeft: string;
+    /** Sign up to play rated games */
+    goSignUpToPlayRated: string;
     /** Start */
     goStart: string;
     /** Start analysis */
@@ -3915,10 +3935,20 @@ interface I18n {
     goStoneThereAlready: string;
     /** Streamer mode */
     goStreamerMode: string;
+    /** Suggested for your ranks: %s */
+    goSuggestedHandicapX: I18nFormat;
     /** That move would take the last liberty of its own stones (suicide). */
     goSuicideRefused: string;
     /** To play */
     goToPlay: string;
+    /** For guests */
+    goUnjoinableGuests: string;
+    /** For signed-in players */
+    goUnjoinableMembers: string;
+    /** Your rank is outside this game's range */
+    goUnjoinableRange: string;
+    /** Rated games need an account */
+    goUnjoinableRated: string;
     /** Vibration feedback */
     goVibrationFeedback: string;
     /** White stones */
@@ -4645,6 +4675,8 @@ interface I18n {
     safeTournamentName: string;
     /** Save */
     save: string;
+    /** Time to count the game */
+    scoringPhaseStarted: string;
     /** Scroll over computer variations to preview them. */
     scrollOverComputerVariationsToPreviewThem: string;
     /** Search */

@@ -1,17 +1,13 @@
 package lila.analyse
 package ui
 
-import chess.format.{ Uci, Fen }
 import play.api.libs.json.*
 
 import lila.ui.*
-import lila.ui.ScalatagsTemplate.{ *, given }
+import lila.ui.ScalatagsTemplate.*
 
 final class AnalyseUi(helpers: Helpers):
   import helpers.{ *, given }
-
-  def miniSpan(fen: Fen.Board, color: Color = chess.White, lastMove: Option[Uci] = None) =
-    chessgroundMini(fen, color, lastMove)(span)
 
   // The explorer and tablebase settings went with the explorer (unit 3.4), and the external
   // engine and WebAssembly (browser engine) permissions with the engines (unit 3.5).
@@ -36,8 +32,7 @@ final class AnalyseUi(helpers: Helpers):
         )
 
   def titleFull(pov: Pov)(using ctx: Context) =
-    val openingName = gameOpening(pov.game, ctx.isAuth).fold(trans.site.analysis.txt())(_.name)
-    s"${titlePlayerVs(pov.game)} - $openingName"
+    s"${titlePlayerVs(pov.game)} - ${trans.site.analysis.txt()}"
 
   def titlePlayerVs(g: Game) = s"${playerText(g.whitePlayer)} vs ${playerText(g.blackPlayer)}"
 

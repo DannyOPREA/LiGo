@@ -5,7 +5,7 @@ import { colors } from 'lib/setup/color';
 import { wsPingInterval } from 'lib/socket';
 import { storage, type LichessStorage } from 'lib/storage';
 
-import { isGoRuleset, isGoSize } from './goSetup';
+import { isGoRuleset, isGoSize, isHandicap } from './goSetup';
 import * as hookRepo from './hookRepo';
 import type {
   LobbyOpts,
@@ -20,6 +20,7 @@ import type {
   LobbyMe,
 } from './interfaces';
 import { noChips, viewerOf, type Chips, type Viewer } from './openChallenges';
+import { poolFromHash } from './poolList';
 import * as seekRepo from './seekRepo';
 import SetupController from './setupCtrl';
 import LobbySocket from './socket';
@@ -88,7 +89,12 @@ export default class LobbyController {
       const komi = urlParams.get('komi');
       if (komi) forceOptions.goKomi = Number(komi);
 
-      let timeMode = urlParams.get('time');
+      // a reusable byo-yomi challenge says `timeMode=byoyomi` (unit 4.9), the others `time=unlimited`
+      let timeMode = urlParams.get('time') ?? urlParams.get('timeMode');
+      const handicap = Number(urlParams.get('handicap'));
+      if (isHandicap(handicap) && handicap > 0) forceOptions.handicap = handicap;
+      const periods = urlParams.get('periods');
+      const periodTime = urlParams.get('periodTime');
       const days = urlParams.get('days');
       const minutesPerSide = urlParams.get('minutesPerSide');
       const increment = urlParams.get('increment');
@@ -106,6 +112,12 @@ export default class LobbyController {
         forceOptions.timeMode = 'realTime';
         if (minutesPerSide) forceOptions.time = parseFloat(minutesPerSide);
         if (increment) forceOptions.increment = parseInt(increment);
+        if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'live'];
+      } else if (timeMode === 'byoyomi') {
+        forceOptions.timeMode = 'byoyomi';
+        if (minutesPerSide) forceOptions.time = parseFloat(minutesPerSide);
+        if (periods) forceOptions.periods = parseInt(periods);
+        if (periodTime) forceOptions.periodTime = parseInt(periodTime);
         if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'live'];
       } else if (timeMode === 'unlimited') {
         if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'correspondence'];
@@ -349,17 +361,15 @@ export default class LobbyController {
   // also handles onboardink link for anon users
   private readonly joinPoolFromLocationHash = () => {
     if (location.hash.startsWith('#pool/')) {
-      const regex = /^#pool\/(\d+\+\d+)(?:\/(.+))?$/,
-        match = regex.exec(location.hash),
-        member: PoolMember = { id: match![1], blocking: match![2] },
-        range = poolRangeStorage.get(this.me?.username, member.id);
-      if (range) member.range = range;
-      if (match) {
+      const member: PoolMember | undefined = poolFromHash(location.hash, this.pools);
+      if (member) {
+        const range = poolRangeStorage.get(this.me?.username, member.id);
+        if (range) member.range = range;
         this.setTab('pools');
         if (this.me) this.enterPool(member);
         else setTimeout(() => this.clickPool(member.id), 1500);
-        history.replaceState(null, '', '/');
       }
+      history.replaceState(null, '', '/');
     }
   };
 }

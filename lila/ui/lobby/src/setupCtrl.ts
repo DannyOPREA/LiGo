@@ -1,6 +1,13 @@
 import { type Prop, propWithEffect } from 'lib';
 import type { ColorChoice, ColorProp } from 'lib/setup/color';
-import { timeModes, timeControlFromStoredValues, type TimeControl } from 'lib/setup/timeControl';
+import {
+  timeModes,
+  timeModeId,
+  defaultPeriods,
+  defaultPeriodTime,
+  timeControlFromStoredValues,
+  type TimeControl,
+} from 'lib/setup/timeControl';
 import { storedJsonProp } from 'lib/storage';
 import { alert } from 'lib/view';
 import * as xhr from 'lib/xhr';
@@ -13,15 +20,39 @@ import {
   type GoSize,
   isGoRuleset,
   isGoSize,
+  isHandicap,
+  komiFor,
   standardKomi,
   validKomi,
 } from './goSetup';
 import type { ForceSetupOptions, GameMode, GameType, PoolMember, SetupStore } from './interfaces';
+import { fischerPresets, poolForClock } from './poolList';
+import { clampSteps, maxRankSteps, rankRange, type RankRange } from './rankRange';
+
+// The handicap ADR 0021 §4 suggests for a rated challenge to a named player, per rated board size, and
+// whether the challenger takes Black (`/setup/go-handicap/:username`, unit 5.7).
+export interface StoneAdvice {
+  suggested: number;
+  min: number;
+  max: number;
+}
+export interface HandicapAdvice {
+  19: StoneAdvice;
+  9: StoneAdvice;
+  black: boolean;
+}
+
+// the most stones a rated game may have on each board (ADR 0021 §4); 13×13 can't be rated
+export const maxRatedHandicap = (size: GoSize): number | undefined =>
+  size === 19 ? 9 : size === 9 ? 4 : undefined;
 
 const definedOf = (o?: ForceSetupOptions) => ({
   ...(o?.goSize !== undefined && { goSize: o.goSize }),
   ...(o?.goRuleset !== undefined && { goRuleset: o.goRuleset }),
   ...(o?.goKomi !== undefined && { goKomi: o.goKomi }),
+  ...(o?.periods !== undefined && { periods: o.periods }),
+  ...(o?.periodTime !== undefined && { periodTime: o.periodTime }),
+  ...(o?.handicap !== undefined && { handicap: o.handicap }),
 });
 
 // Every Go game is in the one `go` rating (ADR 0021 §1), whatever its board size or speed.
@@ -32,6 +63,7 @@ export default class SetupController {
   store: Record<GameType, Prop<SetupStore>>;
   gameType: GameType | null = null;
   friendUser = '';
+  handicapAdvice?: HandicapAdvice;
   loading = false;
   color: ColorProp;
   forced?: ForceSetupOptions;
@@ -40,6 +72,7 @@ export default class SetupController {
   goSize: Prop<GoSize>;
   goRuleset: Prop<GoRuleset>;
   goKomi: Prop<number>;
+  handicap: Prop<number>;
   gameMode: Prop<GameMode>;
   ratingMin: Prop<number>;
   ratingMax: Prop<number>;
@@ -69,10 +102,14 @@ export default class SetupController {
       time: 5,
       increment: 3,
       days: 2,
+      periods: defaultPeriods,
+      periodTime: defaultPeriodTime,
+      handicap: 0,
       gameMode: 'casual',
       color: 'random',
-      ratingMin: -500,
-      ratingMax: 500,
+      // ranks below and above the player's own (unit 5.7)
+      ratingMin: -maxRankSteps,
+      ratingMax: maxRankSteps,
     }));
 
   private readonly loadPropsFromStore = (forceOptions?: ForceSetupOptions) => {
@@ -83,13 +120,16 @@ export default class SetupController {
     const wanted = { ...storeProps, ...definedOf(forceOptions) };
     const size = isGoSize(wanted.goSize) ? wanted.goSize : defaultGoSize;
     const ruleset = isGoRuleset(wanted.goRuleset) ? wanted.goRuleset : defaultGoRuleset;
+    // only a friend game has handicap; a hook game is always even
+    const handicap = this.gameType === 'friend' && isHandicap(wanted.handicap) ? wanted.handicap : 0;
     const komi =
       typeof wanted.goKomi === 'number' && validKomi(wanted.goKomi, size)
         ? wanted.goKomi
-        : standardKomi(ruleset);
+        : komiFor(ruleset, handicap);
     this.goSize = this.propWithApply(size);
     this.goRuleset = this.propWithApply(ruleset);
     this.goKomi = this.propWithApply(komi);
+    this.handicap = this.propWithApply(handicap);
     const canChangeTimeMode = !!this.root.me || this.gameType !== 'hook';
     this.timeControl = timeControlFromStoredValues(
       propWithEffect(forceOptions?.timeMode || storeProps.timeMode, this.onDropdownChange),
@@ -97,8 +137,10 @@ export default class SetupController {
       forceOptions?.time ?? storeProps.time,
       forceOptions?.increment ?? storeProps.increment,
       forceOptions?.days ?? storeProps.days,
+      forceOptions?.periods ?? storeProps.periods ?? defaultPeriods,
+      forceOptions?.periodTime ?? storeProps.periodTime ?? defaultPeriodTime,
       this.onPropChange,
-      this.root.pools,
+      fischerPresets(this.root.pools),
     );
     this.gameMode = this.propWithApply(forceOptions?.mode ?? storeProps.gameMode);
     this.ratingMin = this.propWithApply(storeProps.ratingMin);
@@ -119,10 +161,11 @@ export default class SetupController {
       this.gameMode = this.propWithApply('casual');
     }
 
-    this.ratingMin = this.propWithApply(Math.min(0, this.ratingMin()));
-    this.ratingMax = this.propWithApply(Math.max(0, this.ratingMax()));
+    // whole ranks (unit 5.7); a value stored in rating points before that becomes the widest range
+    this.ratingMin = this.propWithApply(clampSteps(this.ratingMin(), -1));
+    this.ratingMax = this.propWithApply(clampSteps(this.ratingMax(), 1));
     if (this.ratingMin() === 0 && this.ratingMax() === 0) {
-      this.ratingMax = this.propWithApply(50);
+      this.ratingMax = this.propWithApply(1);
     }
   };
 
@@ -137,6 +180,9 @@ export default class SetupController {
       time: this.timeControl.time(),
       increment: this.timeControl.increment(),
       days: this.timeControl.days(),
+      periods: this.timeControl.periods(),
+      periodTime: this.timeControl.periodTime(),
+      handicap: this.handicap(),
       gameMode: this.gameMode(),
       color: this.color(),
       ratingMin: this.ratingMin(),
@@ -169,8 +215,8 @@ export default class SetupController {
     // Handle rating update here
     this.enforcePropRules();
     if (this.isProvisional()) {
-      this.ratingMin(-500);
-      this.ratingMax(500);
+      this.ratingMin(-maxRankSteps);
+      this.ratingMax(maxRankSteps);
       this.savePropsToStoreExceptRating();
     } else {
       if (this.gameType) {
@@ -194,20 +240,82 @@ export default class SetupController {
     this.loading = false;
     this.friendUser = friendUser || '';
     this.forced = forceOptions;
+    this.handicapAdvice = undefined;
     this.loadPropsFromStore(forceOptions);
+    if (this.friendUser && this.root.me) this.fetchHandicapAdvice(this.friendUser);
+  };
+
+  private readonly fetchHandicapAdvice = async (username: string) => {
+    try {
+      const advice: HandicapAdvice = await xhr.json(`/setup/go-handicap/${encodeURIComponent(username)}`);
+      if (this.friendUser !== username) return;
+      this.handicapAdvice = advice;
+      const stones = this.stoneAdvice();
+      // a rated challenge with stones starts from the suggestion when they are outside the allowed range;
+      // an even game is always allowed, and stones a challenge link fixed stay as they are
+      if (
+        this.gameMode() === 'rated' &&
+        stones &&
+        this.forced?.handicap === undefined &&
+        this.handicap() > 0 &&
+        (this.handicap() < stones.min || this.handicap() > stones.max)
+      )
+        this.setHandicap(stones.suggested);
+      this.root.redraw();
+    } catch (_) {
+      // without advice the form still works; the server checks a rated handicap when it is sent
+    }
+  };
+
+  // the suggestion for the chosen board, when the window challenges a named player
+  stoneAdvice = (): StoneAdvice | undefined => {
+    const size = this.goSize();
+    return size === 13 ? undefined : this.handicapAdvice?.[size];
+  };
+
+  // A rated handicap game's colours come from the ranks (ADR 0021 §4): the window shows them instead of
+  // the colour buttons, and the server sets them.
+  lockedColor = (): Color | undefined =>
+    this.gameMode() === 'rated' && this.gameType === 'friend' && this.handicap() > 0 && this.handicapAdvice
+      ? this.handicapAdvice.black
+        ? 'black'
+        : 'white'
+      : undefined;
+
+  // Why the chosen settings can't make a rated game (ADR 0021 §4–§5, unit 5.7), as the server would refuse.
+  ratedProblem = (): string | undefined => {
+    if (this.gameMode() !== 'rated') return undefined;
+    const max = maxRatedHandicap(this.goSize());
+    const handicap = this.gameType === 'friend' ? this.handicap() : 0;
+    if (max === undefined || this.goKomi() !== komiFor(this.goRuleset(), handicap))
+      return i18n.site.goRatedSetupRule;
+    if (handicap === 0) return undefined;
+    if (!this.friendUser) return i18n.site.goRatedHandicapNeedsOpponent;
+    const advice = this.stoneAdvice();
+    if (advice && (handicap < advice.min || handicap > advice.max))
+      return i18n.site.goRatedStonesXToY(advice.min, advice.max);
+    return handicap > max ? i18n.site.goRatedSetupRule : undefined;
   };
 
   closeModal?: () => void; // managed by view/setup/modal.ts
 
   // A new ruleset brings its own standard komi, as on the playground.
   setGoRuleset = (ruleset: GoRuleset) => {
-    this.goKomi = this.propWithApply(standardKomi(ruleset));
+    this.goKomi = this.propWithApply(komiFor(ruleset, this.handicap()));
     this.goRuleset(ruleset);
+  };
+
+  // Handicap stones bring the server's komi of 0.5, and no stones bring the ruleset's standard komi back.
+  setHandicap = (handicap: number) => {
+    if (!isHandicap(handicap)) return;
+    this.goKomi = this.propWithApply(komiFor(this.goRuleset(), handicap));
+    this.handicap(handicap);
   };
 
   // A new size keeps the komi when it still fits the board, and otherwise resets it.
   setGoSize = (size: GoSize) => {
-    if (!validKomi(this.goKomi(), size)) this.goKomi = this.propWithApply(standardKomi(this.goRuleset()));
+    if (!validKomi(this.goKomi(), size))
+      this.goKomi = this.propWithApply(komiFor(this.goRuleset(), this.handicap()));
     this.goSize(size);
   };
 
@@ -217,50 +325,70 @@ export default class SetupController {
     if (validKomi(komi, this.goSize())) this.goKomi(komi);
   };
 
-  // Go games are casual until ratings arrive (unit 5.7); the server refuses a rated one (unit 3.15).
-  ratedModeDisabled = () => true;
+  // Guests play casual games only (ADR 0021 §5): they see a sign-up line instead (gameModeButtons).
+  ratedModeDisabled = () => !this.root.me;
+
+  // the ranks the sliders cover, as ratings (ADR 0021 §3, unit 5.7)
+  rankRange = (): RankRange | undefined => {
+    const rating = this.myRating();
+    const table = this.root.data.rankTable;
+    return rating && table?.length ? rankRange(table, rating, this.ratingMin(), this.ratingMax()) : undefined;
+  };
 
   ratingRange = (): string => {
-    const rating = this.myRating();
-    return rating ? `${Math.max(100, rating + this.ratingMin())}-${rating + this.ratingMax()}` : '';
+    const range = this.rankRange();
+    return range ? `${range.min}-${range.max}` : '';
   };
 
   hookToPoolMember = (color: ColorChoice): PoolMember | null => {
     const valid =
       color === 'random' &&
       this.gameType === 'hook' &&
-      // pools play 19×19 Japanese games with standard komi (ADR 0022 §1), as the server checks
-      this.goSize() === defaultGoSize &&
+      // pools play even Japanese games with standard komi (ADR 0022 §1), as the server checks
+      this.handicap() === 0 &&
       this.goRuleset() === defaultGoRuleset &&
       this.goKomi() === standardKomi(defaultGoRuleset) &&
       this.gameMode() === 'rated' &&
-      this.timeControl.isRealTime();
-    const id = this.timeControl.clockStr();
-    return valid && this.root.pools.some(p => p.id === id)
-      ? {
-          id,
-          range: this.ratingRange(),
-        }
-      : null;
+      this.timeControl.isLive();
+    const tc = this.timeControl;
+    const pool =
+      valid &&
+      poolForClock(
+        this.root.pools,
+        this.goSize(),
+        tc.isByoyomi()
+          ? { byo: { limit: tc.time() * 60, periods: tc.periods(), period: tc.periodTime() } }
+          : { lim: tc.time(), inc: tc.increment() },
+      );
+    return pool ? { id: pool.id, range: this.ratingRange() } : null;
   };
 
   propsToFormData = (color: ColorChoice) =>
     xhr.form({
-      variant: 1, // standard: the only value the server takes until unit 3.17 drops the field
+      variant: 1, // standard, the only variant the server accepts (unit 3.17)
       size: this.goSize().toString(),
       ruleset: this.goRuleset(),
       komi: this.goKomi().toString(),
-      timeMode: timeModes.findIndex(tm => tm === this.timeControl.mode()),
+      timeMode: timeModeId(this.timeControl.mode()),
       time: this.timeControl.time().toString(),
       increment: this.timeControl.increment().toString(),
       days: this.timeControl.days().toString(),
+      ...(this.timeControl.isByoyomi() && {
+        periods: this.timeControl.periods().toString(),
+        periodTime: this.timeControl.periodTime().toString(),
+      }),
+      // the hook form has no handicap field: lobby games stay even
+      ...(this.gameType === 'friend' && { handicap: this.handicap().toString() }),
       mode: this.gameMode() === 'casual' ? '0' : '1',
       ratingRange: this.ratingRange(),
       color,
     });
 
   valid = () =>
-    validKomi(this.goKomi(), this.goSize()) && this.timeControl.valid(0) && this.validConstraints();
+    validKomi(this.goKomi(), this.goSize()) &&
+    this.timeControl.valid(0) &&
+    this.validConstraints() &&
+    !this.ratedProblem();
 
   private readonly invalid = <A>(forced: A | undefined, current: A) =>
     forced !== undefined && forced !== current;
@@ -274,10 +402,17 @@ export default class SetupController {
         this.invalid(this.forced.days, this.timeControl.days())
       )
         return false;
-      if (this.timeControl.mode() === 'realTime') {
+      if (this.timeControl.isLive()) {
         if (this.invalid(this.forced.time, this.timeControl.time())) return false;
+      }
+      if (this.timeControl.mode() === 'realTime') {
         if (this.invalid(this.forced.increment, this.timeControl.increment())) return false;
       }
+      if (this.timeControl.isByoyomi()) {
+        if (this.invalid(this.forced.periods, this.timeControl.periods())) return false;
+        if (this.invalid(this.forced.periodTime, this.timeControl.periodTime())) return false;
+      }
+      if (this.gameType === 'friend' && this.invalid(this.forced.handicap, this.handicap())) return false;
     }
     return true;
   };
@@ -291,8 +426,7 @@ export default class SetupController {
       return;
     }
 
-    if (this.gameType === 'hook')
-      this.root.showOpen(this.timeControl.isRealTime() ? 'live' : 'correspondence');
+    if (this.gameType === 'hook') this.root.showOpen(this.timeControl.isLive() ? 'live' : 'correspondence');
     this.loading = true;
     this.root.redraw();
 

@@ -1,78 +1,63 @@
-import { Result } from '@badrap/result';
-import type { DrawShape } from '@lichess-org/chessground/draw';
-import { uciToMove } from '@lichess-org/chessground/util';
-import { Chess, normalizeMove } from 'chessops/chess';
-import { chessgroundDests } from 'chessops/compat';
-import { parseFen, makeFen } from 'chessops/fen';
-import { makeSanAndPlay } from 'chessops/san';
-import type { Role, Move, Outcome } from 'chessops/types';
-import { parseSquare, parseUci, makeSquare, makeUci, opposite } from 'chessops/util';
+// The trainer page's controller (unit 8.7, ADR 0025 §3): lila's rated trainer on a Go puzzle. goban's
+// puzzle mode (libs/board's `mountPuzzle`) follows the tree and says right or wrong; this holds what
+// lila's page holds around it: the result and its rating change, the next puzzle, the votes, the
+// session strip, and the solution a player may ask to see.
 
-import { prop, type Prop, propWithEffect, type Toggle, toggle, requestIdleCallbackSafe, myUserId } from 'lib';
+import { themeOf, type Theme } from '@ligo/board/themes';
+
+import { toggle, myUserId } from 'lib';
 import { type Deferred, defer } from 'lib/async';
-import { plyColor } from 'lib/game/chess';
-import { endgameShapes } from 'lib/game/endgame';
-import { type WithGround } from 'lib/game/ground';
-import { PromotionCtrl } from 'lib/game/promotion';
+import { isTouchDevice } from 'lib/device';
+import { Coords } from 'lib/prefs';
 import { pubsub } from 'lib/pubsub';
 import { type StoredProp, storedBooleanProp, storedBooleanPropWithEffect } from 'lib/storage';
-import { makeTree, treeOps, treePath, type TreeWrapper } from 'lib/tree';
-import { last } from 'lib/tree/ops';
-import type { TreePath } from 'lib/tree/types';
 import { alert } from 'lib/view';
 import { toggleZenMode } from 'lib/view/zen';
 
-import computeAutoShapes from './autoShape';
-import { type ChessNode, completeNode } from './chessNode';
-import type {
-  PuzzleOpts,
-  PuzzleData,
-  MoveTest,
-  ThemeKey,
-  ReplayEnd,
-  PuzzleRound,
-  RoundThemes,
-} from './interfaces';
-import keyboard from './keyboard';
-import moveTest from './moveTest';
-import { pgnToTree, mergeSolution, nextCorrectMove } from './moveTree';
+import { BoardHost, type Shown } from './board';
+import { resolveConfirm } from './go';
+import type { PuzzleData, PuzzleOpts, PuzzleReplay, PuzzleRound, ThemeKey } from './interfaces';
+import * as keyboard from './keyboard';
 import PuzzleSession from './session';
+import { buildSolution, positionPuzzle, type Solution } from './solution';
 import * as xhr from './xhr';
+
+/** The board and stone themes the page was served with, or last chosen in the account menu. */
+const themeOfPage = (): Theme => themeOf(document.body.dataset.board, document.body.dataset.pieceSet);
+
+export type Mode = 'play' | 'try' | 'view';
+export type Feedback = 'init' | 'good' | 'fail' | 'win';
+
+type ReplayEnd = PuzzleReplay;
 
 export default class PuzzleCtrl {
   data: PuzzleData;
   next: Deferred<PuzzleData | ReplayEnd> = defer<PuzzleData>();
-  tree: TreeWrapper<ChessNode>;
   autoNext: StoredProp<boolean>;
   rated: StoredProp<boolean>;
-  ground: Prop<CgApi> = prop<CgApi | undefined>(undefined) as Prop<CgApi>;
   session: PuzzleSession;
-  menu: Toggle;
-  flipped = toggle(false);
-  googlyEyes?: () => DrawShape[];
-  promotion: PromotionCtrl;
-  keyboardHelp: Prop<boolean>;
-  cgConfig?: CgConfig;
-  path: TreePath;
-  node: ChessNode;
-  nodeList: ChessNode[];
-  mainline: ChessNode[];
-  initialPath: TreePath;
-  initialNode: ChessNode;
-  pov: Color;
-  mode: 'play' | 'view' | 'try';
+  board: BoardHost;
+  /** `play`: nothing decided yet; `try`: a wrong line was played (the loss is sent) and another try may go on; `view`: over. */
+  mode: Mode = 'play';
+  lastFeedback: Feedback = 'init';
   round?: PuzzleRound;
-  resultSent: boolean;
-  lastFeedback: 'init' | 'fail' | 'win' | 'good' | 'retry';
+  resultSent = false;
   canViewSolution = toggle(false);
-  showHint = toggle(false);
-  hintHasBeenShown = toggle(false);
   voted?: boolean;
-  autoScrollRequested: boolean;
-  autoScrollNow: boolean;
-  isDaily: boolean;
-  blindfolded: StoredProp<boolean>;
-  cgVersion = 0;
+  /** A wrong line was played, or the solution was asked for: the puzzle is done, not "solved". */
+  failed = false;
+  isDaily = false;
+  /** Taps only preview the stone; Confirm (or a second tap on it) plays it. */
+  readonly confirm: boolean;
+  theme: Theme = themeOfPage();
+  /** The puzzle's right line, laid out once someone asks for it. */
+  solution?: Solution;
+  /** The solution is on show: the board draws its position `solutionStep`, and plays nothing. */
+  solutionOpen = false;
+  solutionStep = 0;
+  /** The puzzle has no right line the page can lay out (never, for the generated set). */
+  solutionMissing = false;
+  private viewSolutionTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     readonly opts: PuzzleOpts,
@@ -80,283 +65,114 @@ export default class PuzzleCtrl {
   ) {
     this.rated = storedBooleanPropWithEffect('puzzle.rated', true, this.redraw);
     this.autoNext = storedBooleanProp('puzzle.autoNext', false);
-    this.blindfolded = storedBooleanProp(`puzzle.${myUserId() || 'anon'}.blindfolded`, false);
     this.session = new PuzzleSession(opts.data.angle.key, myUserId());
-    this.menu = toggle(false, redraw);
-
+    this.confirm = resolveConfirm(opts.pref.confirmMoves, isTouchDevice());
+    this.data = opts.data;
+    this.board = new BoardHost(this.shown, this.redraw);
     this.initiate(opts.data);
-    this.promotion = new PromotionCtrl(
-      this.withGround,
-      () => this.withGround(g => g.set(this.cgConfig!)),
-      redraw,
-    );
-
-    this.keyboardHelp = propWithEffect(location.hash === '#keyboard', this.redraw);
-    keyboard(this);
-
-    // If the page loads while being hidden (like when changing settings),
-    // chessground is not displayed, and the first move is not fully applied.
-    // Make sure chessground is fully shown when the page goes back to being visible.
-    document.addEventListener('visibilitychange', () =>
-      requestIdleCallbackSafe(() => this.jump(this.path), 500),
-    );
-    pubsub.on('board.change', () => {
-      this.withGround(g => g.redrawAll());
-      this.setAutoShapes();
-    });
+    keyboard.bind(this);
     pubsub.on('zen', toggleZenMode);
+    pubsub.on('board.change', () => {
+      this.theme = themeOfPage();
+      this.board.api?.set({ theme: this.theme });
+    });
     $('body').addClass('playing'); // for zen
     $('#zentog').on('click', () => pubsub.emit('zen'));
-    (window as any).lichess.puzzle = {
-      playUci: (uci: Uci) => this.sendMove(parseUci(uci)!),
-    };
-    (window as any).lichess.chessground = this.ground;
   }
 
-  private readonly loadSound = (name: string, volume?: number) => {
-    site.sound.load(name, site.sound.url(`${name}.mp3`));
-    return () => site.sound.play(name, volume);
-  };
-  sound = {
-    good: this.loadSound('sfx/Confirmation', 0.7),
-    end: this.loadSound('sfx/Victory', 1),
-  };
-
-  setPath = (path: TreePath): void => {
-    this.path = path;
-    this.nodeList = this.tree.getNodeList(path);
-    this.node = treeOps.last(this.nodeList)!;
-    this.mainline = treeOps.mainlineNodeList(this.tree.root);
-    this.showHint(false);
-  };
-
-  setChessground = (cg: CgApi): void => {
-    this.ground(cg);
-    requestAnimationFrame(() => this.redraw());
-
-    this.googlyEyesAuto();
+  /** What the board element shows now: the puzzle to play, or a position of the solution to look at. */
+  private readonly shown = (): Shown => {
+    const node = this.solutionOpen ? this.solution?.[this.solutionStep] : undefined;
+    return {
+      puzzle: node ? positionPuzzle(this.data.puzzle, node) : this.data.puzzle,
+      confirm: this.confirm && !node,
+      coordinates: this.opts.pref.coords !== Coords.Hidden,
+      theme: this.theme,
+      onMove: (_move, by) => {
+        if (this.solutionOpen) return;
+        site.sound.play('move');
+        // goban says "right" or "wrong" right after the stone that decides; until then the line is good.
+        if (by === 'player' && this.mode !== 'view' && this.attempting()) this.lastFeedback = 'good';
+      },
+      onResult: r => (r === 'right' ? this.onRight() : this.onWrong()),
+      onRefused: () => site.sound.play('error'),
+      onChange: this.redraw,
+    };
   };
 
-  googlyEyesStart: () => void = () => {
-    if (!this.googlyEyes)
-      this.withGround(cg => {
-        site.asset
-          .loadEsm('bits.googlyHorsey', {
-            init: { cg, redraw: this.setAutoShapes },
-          })
-          .then(({ makeGooglyShapes }: { makeGooglyShapes: () => DrawShape[] }) => {
-            this.googlyEyes = makeGooglyShapes;
-            this.setAutoShapes();
-          });
-      });
-  };
-
-  private readonly googlyEyesAuto = () => {
-    if (this.isDaily && new Date().getMonth() === 3 && new Date().getDate() === 1) this.googlyEyesStart();
-  };
-
-  pref = this.opts.pref;
-
-  withGround: WithGround = f => {
-    const g = this.ground();
-    return g ? f(g) : undefined;
-  };
+  /** The player is the colour that moves first. */
+  get pov(): Color {
+    return this.data.puzzle.initial_player;
+  }
 
   initiate = (fromData: PuzzleData): void => {
     this.data = fromData;
-    this.tree = makeTree(pgnToTree(this.data.game.pgn.split(' ')));
-    const initialPath = treePath.fromNodeList(treeOps.mainlineNodeList(this.tree.root));
-    this.mode = 'play';
     this.next = defer();
+    this.mode = 'play';
     this.round = undefined;
     this.resultSent = false;
     this.lastFeedback = 'init';
-    this.initialPath = initialPath;
-    this.initialNode = this.tree.nodeAtPath(initialPath);
-    this.pov = plyColor(this.initialNode.ply);
-    this.isDaily = !!this.data.isDaily;
-    this.hintHasBeenShown(false);
-    this.canViewSolution(false);
+    this.failed = false;
+    this.isDaily = !!fromData.isDaily;
     this.voted = undefined;
-
-    this.setPath(site.blindMode ? initialPath : treePath.init(initialPath));
-    setTimeout(
-      () => {
-        this.jump(initialPath);
-        this.redraw();
-      },
-      this.opts.pref.animation.duration > 0 ? 500 : 0,
-    );
-
+    this.solution = undefined;
+    this.solutionOpen = false;
+    this.solutionStep = 0;
+    this.solutionMissing = false;
+    this.canViewSolution(false);
+    clearTimeout(this.viewSolutionTimer);
     // just to delay button display
-    setTimeout(
+    this.viewSolutionTimer = setTimeout(
       () => {
         this.canViewSolution(true);
         this.redraw();
       },
       this.rated() ? 4000 : 2000,
     );
-
-    this.cgVersion++;
+    this.board.remount();
   };
 
-  position = (): Chess => {
-    const setup = parseFen(this.node.fen).unwrap();
-    return Chess.fromSetup(setup).unwrap();
-  };
-
-  makeCgOpts = (): CgConfig => {
-    const node = this.node;
-    const color = plyColor(node.ply);
-    const dests = chessgroundDests(this.position());
-    const nextNode = this.node.children[0];
-    const canMove = this.mode === 'view' || (color === this.pov && (!nextNode || nextNode.puzzle === 'fail'));
-    const movable = canMove
-      ? {
-          color: dests.size > 0 ? color : undefined,
-          dests,
-        }
-      : {
-          color: undefined,
-          dests: new Map(),
-        };
-
-    const config = {
-      fen: node.fen,
-      orientation: this.flipped() ? opposite(this.pov) : this.pov,
-      turnColor: color,
-      movable,
-      premovable: {
-        enabled: false,
-      },
-      check: node.check(),
-      lastMove: uciToMove(node.uci),
-    };
-    if (node.ply >= this.initialNode.ply) {
-      if (this.mode !== 'view' && color !== this.pov && !nextNode) {
-        config.movable.color = this.pov;
-        config.premovable.enabled = true;
-      }
-    }
-    this.cgConfig = config;
-    return config;
-  };
-
-  showGround = (g: CgApi): void => {
-    g.set(this.makeCgOpts());
-    this.setAutoShapes();
-  };
-
-  pluginMove = (orig: Key, dest: Key, role?: Role) => {
-    if (role) this.playUserMove(orig, dest, role);
-    else
-      this.withGround(g => {
-        g.move(orig, dest);
-        g.state.movable.dests = undefined;
-        g.state.turnColor = opposite(g.state.turnColor);
+  private readonly onRight = (): void => {
+    if (this.solutionOpen) return;
+    this.lastFeedback = 'win';
+    if (this.mode !== 'view') {
+      const sent = this.mode === 'play' ? this.sendResult(true) : Promise.resolve();
+      this.mode = 'view';
+      sent.then(() => {
+        if (this.autoNext()) this.nextPuzzle();
       });
-  };
-
-  userMove = (orig: Key, dest: Key): void => {
-    const isPromoting = this.promotion.start(orig, dest, {
-      submit: this.playUserMove,
-    });
-    if (!isPromoting) this.playUserMove(orig, dest);
-  };
-
-  playUci = (uci: Uci): void => this.sendMove(parseUci(uci)!);
-
-  playUserMove = (orig: Key, dest: Key, promotion?: Role): void =>
-    this.sendMove({
-      from: parseSquare(orig)!,
-      to: parseSquare(dest)!,
-      promotion,
-    });
-
-  sendMove = (move: Move): void => this.sendMoveAt(this.path, this.position(), move);
-
-  sendMoveAt = (path: TreePath, pos: Chess, move: Move): void => {
-    move = normalizeMove(pos, move);
-    const san = makeSanAndPlay(pos, move);
-    this.addNode(
-      completeNode('standard')({
-        ply: 2 * (pos.fullmoves - 1) + (pos.turn === 'white' ? 0 : 1),
-        fen: makeFen(pos.toSetup()),
-        uci: makeUci(move),
-        san,
-        pos: () => Result.ok(pos),
-      }),
-      path,
-    );
-  };
-
-  addNode = (node: ChessNode, path: TreePath): void => {
-    const newPath = this.tree.addNode(node, path)!;
-    this.jump(newPath);
-    this.withGround(g => g.playPremove());
-
-    const progress = moveTest(this);
-    this.setAutoShapes();
-    if (progress === 'fail') site.sound.say(i18n.puzzle.failed);
-    if (progress) this.applyProgress(progress);
-    this.reorderChildren(path);
-    this.redraw();
-  };
-
-  reorderChildren = (path: TreePath, recursive?: boolean): void => {
-    const node = this.tree.nodeAtPath(path);
-    node.children.sort((c1, _) => {
-      const p = c1.puzzle;
-      if (p === 'fail') return 1;
-      if (p === 'good' || p === 'win') return -1;
-      return 0;
-    });
-    if (recursive) node.children.forEach(child => this.reorderChildren(path + child.id, true));
-  };
-
-  private readonly instantRevertUserMove = (): void => {
-    this.withGround(g => {
-      g.cancelPremove();
-      g.selectSquare(null);
-    });
-    this.jump(treePath.init(this.path));
-    this.redraw();
-  };
-
-  revertUserMove = (): void => {
-    if (site.blindMode) this.instantRevertUserMove();
-    else setTimeout(this.instantRevertUserMove, 300);
-  };
-
-  applyProgress = (progress: undefined | 'fail' | 'win' | MoveTest): void => {
-    if (progress === 'fail') {
-      this.lastFeedback = 'fail';
-      this.revertUserMove();
-      if (this.mode === 'play') {
-        this.canViewSolution(true);
-        this.mode = 'try';
-        this.sendResult(false);
-      }
-    } else if (progress === 'win') {
-      this.lastFeedback = 'win';
-      if (this.mode !== 'view') {
-        const sent = this.mode === 'play' ? this.sendResult(true) : Promise.resolve();
-        this.mode = 'view';
-        this.withGround(this.showGround);
-        sent.then(_ => {
-          if (this.autoNext()) this.nextPuzzle();
-        });
-      }
-    } else if (progress) {
-      this.lastFeedback = 'good';
-      setTimeout(
-        () => {
-          const pos = Chess.fromSetup(parseFen(progress.fen).unwrap()).unwrap();
-          this.sendMoveAt(progress.path, pos, progress.move);
-        },
-        this.opts.pref.animation.duration * (this.autoNext() ? 1 : 1.5),
-      );
     }
+    if (!this.failed) site.sound.say(i18n.puzzle.puzzleSuccess);
+    this.redraw();
+  };
+
+  private readonly onWrong = (): void => {
+    if (this.solutionOpen) return;
+    this.lastFeedback = 'fail';
+    this.failed = true;
+    site.sound.say(i18n.puzzle.failed);
+    if (this.mode === 'play') {
+      this.canViewSolution(true);
+      this.mode = 'try';
+      this.sendResult(false);
+    }
+    this.redraw();
+  };
+
+  /** The attempt is under way and not decided: the line so far is right. */
+  readonly attempting = (): boolean => this.board.api?.result() === undefined;
+
+  /** The Confirm button shows while a stone waits to be played (touch-confirm). */
+  movePending = (): boolean => !!this.board.api?.pending();
+
+  confirmMove = (): void => this.board.api?.confirm();
+
+  /** Another try at the same puzzle, after a wrong line. */
+  retry = (): void => {
+    if (this.mode === 'view') return;
+    this.board.api?.retry();
+    this.lastFeedback = 'init';
+    this.redraw();
   };
 
   sendResult = async (win: boolean): Promise<void> => {
@@ -367,9 +183,8 @@ export default class PuzzleCtrl {
       this.data.puzzle.id,
       this.data.angle.key,
       win,
-      this.rated() && !this.hintHasBeenShown(),
+      this.rated(),
       this.data.replay,
-      this.opts.settings.color,
     );
     const next = res.next;
     if (next?.user && this.data.user) {
@@ -378,7 +193,6 @@ export default class PuzzleCtrl {
       this.round = res.round;
       if (res.round?.ratingDiff) this.session.setRatingDiff(this.data.puzzle.id, res.round.ratingDiff);
     }
-    if (win) site.sound.say(i18n.puzzle.puzzleSuccess);
     if (next) {
       this.next.resolve(this.data.replay && res.replayComplete ? this.data.replay : next);
     }
@@ -411,98 +225,29 @@ export default class PuzzleCtrl {
     }
   };
 
-  setAutoShapes = (): void =>
-    this.withGround(g =>
-      g.setAutoShapes([
-        ...computeAutoShapes({
-          ...this,
-          node: this.node,
-          hint: this.hintSquare(),
-        }),
-        ...(this.lastFeedback === 'win' && this.node.outcome()
-          ? endgameShapes(
-              this.node.fen,
-              this.node.outcome()?.winner,
-              this.node.outcome()?.winner ? 'mate' : 'stalemate',
-            )
-          : []),
-      ]),
-    );
-
-  hintSquare = () => {
-    const hint = this.showHint() ? nextCorrectMove(this) : undefined;
-    return hint?.from;
-  };
-
-  // (unit 3.5) no local engine: only the server's stored best move is used
-  nextNodeBest = () => treeOps.withMainlineChild(this.node, n => n.eval?.best);
-
-  outcome = (): Outcome | undefined => this.position().outcome();
-
-  jump = (path: TreePath): void => {
-    const pathChanged = path !== this.path,
-      isForwardStep = pathChanged && path.length === this.path.length + 2;
-    this.setPath(path);
-    this.withGround(this.showGround);
-    if (pathChanged) {
-      if (isForwardStep) {
-        site.sound.saySan(this.node.san);
-        site.sound.move(this.node);
-      }
-    }
-    this.promotion.cancel();
-    this.autoScrollRequested = true;
-    pubsub.emit('ply', this.node.ply);
-  };
-
-  userJump = (path: TreePath): void => {
-    if (this.tree.nodeAtPath(path)?.puzzle === 'fail' && this.mode !== 'view') return;
-    this.withGround(g => g.selectSquare(null));
-    this.jump(path);
-  };
-
-  userJumpPlyDelta = (plyDelta: Ply) => {
-    // ensure we are jumping to a valid ply
-    let maxValidPly = this.mainline.length - 1;
-    if (last(this.mainline)?.puzzle === 'fail' && this.mode !== 'view') maxValidPly -= 1;
-    const newPly = Math.min(Math.max(this.node.ply + plyDelta, 0), maxValidPly);
-    this.userJump(treePath.fromNodeList(this.mainline.slice(0, newPly + 1)));
-  };
-
-  toggleHint = (): void => {
-    if (!this.showHint()) {
-      this.hintHasBeenShown(true);
-      this.userJump(treePath.fromNodeList(this.mainline.filter(node => node.puzzle !== 'fail')));
-    }
-    this.showHint.toggle();
-    this.setAutoShapes();
-    const hint = this.hintSquare();
-    this.withGround(g => g.selectSquare(hint ? makeSquare(hint) : null));
-    this.redraw();
-  };
-
+  /** "View the solution": the loss is sent as lila does, and the board steps through the right line. */
   viewSolution = (): void => {
     this.sendResult(false);
+    if (this.lastFeedback !== 'win') this.failed = true;
     this.mode = 'view';
-    mergeSolution(this.tree, this.initialPath, this.data.puzzle.solution, this.pov);
-    this.reorderChildren(this.initialPath, true);
-
-    // try to play the solution next move
-    const next = this.node.children[0];
-    if (next?.puzzle === 'good') this.userJump(this.path + next.id);
-    else {
-      const firstGoodPath = treeOps.takePathWhile(this.mainline, node => node.puzzle !== 'good');
-      if (firstGoodPath) this.userJump(firstGoodPath + this.tree.nodeAtPath(firstGoodPath).children[0].id);
+    this.solution ??= buildSolution(this.data.puzzle);
+    this.solutionMissing = !this.solution;
+    if (this.solution) {
+      this.solutionOpen = true;
+      this.solutionStep = Math.min(1, this.solution.length - 1);
+      this.board.remount();
     }
-
-    this.autoScrollRequested = true;
     this.redraw();
   };
 
-  flip = () => {
-    this.flipped.toggle();
-    this.cgVersion++;
-    this.withGround(g => g.toggleOrientation());
+  /** Moves the solution's cursor: 0 is the puzzle's start, the last is the end of the line. */
+  jumpSolution = (step: number): void => {
+    if (!this.solutionOpen || !this.solution) return;
+    const to = Math.max(0, Math.min(step, this.solution.length - 1));
+    if (to === this.solutionStep) return;
+    this.solutionStep = to;
+    this.board.remount();
+    site.sound.play('move');
     this.redraw();
   };
 
@@ -514,7 +259,7 @@ export default class PuzzleCtrl {
 
   voteTheme = (theme: ThemeKey, v: boolean) => {
     if (this.round) {
-      this.round.themes = this.round.themes || ({} as RoundThemes);
+      this.round.themes = this.round.themes || {};
       if (v === this.round.themes[theme]) {
         delete this.round.themes[theme];
         xhr.voteTheme(this.data.puzzle.id, theme, undefined);
@@ -526,22 +271,17 @@ export default class PuzzleCtrl {
       this.redraw();
     }
   };
-  blindfold = (v?: boolean): boolean => {
-    if (v !== undefined && v !== this.blindfolded()) {
-      this.blindfolded(v);
-      this.redraw();
-    }
-    return this.blindfolded();
-  };
+
+  /** A theme's name and description: the server translated them (the Go themes have no i18n keys). */
+  themeName = (key: ThemeKey): string => this.opts.themeNames[key]?.name ?? key;
+  themeDesc = (key: ThemeKey): string => this.opts.themeNames[key]?.desc ?? '';
+
   autoNexting = () => this.lastFeedback === 'win' && this.autoNext();
-  getOrientation = () => this.withGround(g => g.state.orientation)!;
   allThemes = this.opts.themes && {
     dynamic: this.opts.themes.dynamic.split(' '),
     static: new Set(this.opts.themes.static.split(' ')),
   };
   toggleRated = () => this.rated(!this.rated());
-  getNode = () => this.node;
-  showEvaluation = () => this.mode === 'view';
   routerWithLang = (path: string): string => {
     if (document.body.hasAttribute('data-user')) return path;
     const language = document.documentElement.lang.slice(0, 2);

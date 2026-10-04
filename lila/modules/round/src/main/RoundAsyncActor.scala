@@ -1,13 +1,12 @@
 package lila.round
 
 import chess.{ ByColor, Centis, Color }
-import play.api.libs.json.*
 import scalalib.actor.AsyncActor
 
 import lila.core.round.*
-import lila.core.socket.{ GetVersion, SocketSend, SocketVersion, makeMessage, userLag }
+import lila.core.socket.{ GetVersion, SocketSend, SocketVersion, userLag }
 import lila.game.GameExt.*
-import lila.game.{ Event, GameRepo, Player as GamePlayer, Progress }
+import lila.game.{ Event, GameRepo, Player as GamePlayer }
 import lila.room.RoomSocket.{ Protocol as RP, * }
 import lila.round.RoundGame.*
 import lila.mon.extensions.*
@@ -137,11 +136,6 @@ final private class RoundAsyncActor(
             gameRepo.setHoldAlert(pov, GamePlayer.HoldAlert(ply = pov.game.ply, mean = mean, sd = sd)).void
         yield Nil
 
-    case lila.tree.AnalysisProgress(_, payload) =>
-      fuccess:
-        socketSend.exec:
-          RP.Out.tellRoom(roomId, makeMessage("analysisProgress", payload()))
-
     // round stuff
 
     case p: HumanGoPlay =>
@@ -161,6 +155,32 @@ final private class RoundAsyncActor(
           lila.mon.round.move.time.record(lap.nanos)
           MoveLatMonitor.recordMicros(lap.micros)
       )
+
+    // the scoring phase (ADR 0020 §3, unit 4.8)
+    case GoScorer.Toggle(playerId, at, seen) =>
+      handle(playerId)(goScorer.toggle(_, at, seen))
+
+    case GoScorer.Accept(playerId, seen) =>
+      handle(playerId)(goScorer.accept(_, seen))
+
+    case GoScorer.Resume(playerId) =>
+      handle(playerId)(goScorer.resume)
+
+    case GoScorer.ServiceReply(reply) =>
+      handle(goScorer.reply(_, reply))
+
+    case GoScorer.Expiry =>
+      handle(goScorer.expire)
+
+    case GoScorer.Wake =>
+      handle: g =>
+        goScorer.wake(g)
+        fuccess(Nil)
+
+    case GoScorer.Resend(ref) =>
+      handle: g =>
+        goScorer.wake(g, Some(ref))
+        fuccess(Nil)
 
     case RoundBus.Abort(playerId) =>
       handle(playerId): pov =>
@@ -238,14 +258,6 @@ final private class RoundAsyncActor(
       handle: game =>
         (game.playable && !game.sourceIs(_.Import)).so:
           finisher.other(game, _.Cheat, Some(!color))
-
-    case Threefold =>
-      proxy.withGame: game =>
-        drawer
-          .autoThreefold(game)
-          .map:
-            _.foreach: pov =>
-              this ! DrawClaim(pov.player.id)
 
     case RoundBus.Rematch(playerId, rematch) => handle(playerId)(rematcher(_, rematch))
 
@@ -362,10 +374,6 @@ final private class RoundAsyncActor(
         version = version.map(_ + 1)
         socketSend.exec:
           Protocol.Out.tellVersion(roomId, version, e)
-      if events.exists:
-          case e: Event.Move => e.threefold
-          case _ => false
-      then this ! Threefold
 
   private def errorHandler(name: String): PartialFunction[Throwable, Unit] =
     case e: BenignError =>
@@ -397,6 +405,7 @@ object RoundAsyncActor:
       val finisher: Finisher,
       val rematcher: Rematcher,
       val player: MovePlayer,
+      val goScorer: GoScorer,
       val drawer: Drawer,
       val jsonView: JsonView
   )

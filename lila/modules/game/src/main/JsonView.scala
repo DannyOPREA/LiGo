@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.format.Fen
 import chess.{ Centis, Clock, Color }
 import play.api.libs.json.*
 
@@ -13,11 +12,11 @@ final class JsonView(rematches: Rematches):
 
   import JsonView.given
 
-  def immutable(game: Game, initialFen: Option[Fen.Full]) =
+  def immutable(game: Game) =
     Json
       .obj(
         "id" -> game.id,
-        "variant" -> game.variant,
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> game.speed.key,
         "perf" -> game.perfKey,
         "rated" -> game.rated,
@@ -25,27 +24,29 @@ final class JsonView(rematches: Rematches):
         "createdAt" -> game.createdAt
       )
       .add("startedAtTurn" -> game.startedAtPly.some.filter(_ > 0))
-      .add("initialFen" -> initialFen)
       .add("tournamentId" -> game.tournamentId)
       .add("swissId" -> game.swissId)
       .add("rules" -> game.metadata.nonEmptyRules)
 
-  def base(game: Game, initialFen: Option[Fen.Full]) =
-    immutable(game, initialFen) ++ Json
+  def base(game: Game) =
+    immutable(game) ++ Json
       .obj(
         "turns" -> game.ply,
         "status" -> game.status
       )
       // A Go game has no FEN: its setup, moves and position facts instead (ADR 0019 §3).
       .add("go" -> JsonView.go(game.go).some)
+      // the scoring phase under way, or the count that ended the game (ADR 0020 §6)
+      .add("scoring" -> game.goScoring.map(JsonView.goScoring(_, game.go, nowInstant)))
+      .add("result" -> JsonView.goResult(game))
       .add("winner" -> game.winnerColor)
       .add("abortedBy" -> game.abortedBy)
       .add("rematch" -> rematches.getAcceptedId(game.id))
       .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
 
   // adds the player to move, which the client could compute
-  def baseWithPlayer(game: Game, initialFen: Option[Fen.Full]) =
-    base(game, initialFen) ++ Json.obj("player" -> game.turnColor)
+  def baseWithPlayer(game: Game) =
+    base(game) ++ Json.obj("player" -> game.turnColor)
 
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json
@@ -56,10 +57,7 @@ final class JsonView(rematches: Rematches):
         "lastMove" -> GoBridge.lastMove(pov.game.go),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
-        "variant" -> Json.obj(
-          "key" -> pov.game.variant.key,
-          "name" -> pov.game.variant.name
-        ),
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> pov.game.speed.key,
         "perf" -> pov.game.perfKey,
         "rated" -> pov.game.rated,
@@ -81,7 +79,6 @@ final class JsonView(rematches: Rematches):
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)
       .add("swissId" -> pov.game.swissId)
-      // .add("orientation" -> pov.game.variant.racingKings.option(chess.White))
       .add("winner" -> pov.game.winnerColor)
       .add("rating" -> pov.player.rating)
       .add("goRank" -> Namer.ratingString(pov.player))
@@ -115,6 +112,51 @@ object JsonView:
           case Phase.Scoring => "scoring")
       )
       .add("ko" -> g.koPoint.map(_.sgf))
+
+  /** A Go game's scoring phase as players see it (ADR 0020 §6): `counting` while the proposal is awaited;
+    * then the count version `v` toggles and accepts must name, where the proposal came from, the dead stones,
+    * the points that may need sealing, each point's owner, the count, who accepted, whether a recount is
+    * under way, and the seconds left before the phase times out.
+    */
+  def goScoring(sc: lila.core.game.GoScoring, go: ligo.gorules.GoGame, now: Instant): JsObject =
+    import lila.core.game.GoScoring.{ Side, Source }
+    val phase = lila.core.game.GoScoring.phaseOf(go)
+    val left = Json.obj("phase" -> phase, "expiresIn" -> sc.expiresAt.toSeconds.-(now.toSeconds).max(0))
+    def points(ps: Set[ligo.gorules.Point]) = ps.toList.sortBy(p => (p.row, p.col)).map(_.sgf)
+    def side(s: Side) = Json.obj(
+      "territory" -> s.territory,
+      "stones" -> s.stones,
+      "prisoners" -> s.prisoners,
+      "total" -> s.total
+    )
+    (sc.proposal, sc.count) match
+      case (Some(proposal), Some(count)) =>
+        left ++ Json.obj(
+          "v" -> sc.version(phase).toString,
+          "src" -> (proposal.source match
+            case Source.KataGo => "katago"
+            case Source.Fallback => "none"),
+          "dead" -> points(sc.dead),
+          "seal" -> points(sc.seal),
+          "owner" -> sc.owner,
+          "score" -> Json.obj(
+            "b" -> side(count.black),
+            "w" -> (side(count.white) ++ Json.obj(
+              "komi" -> count.white.komi,
+              "compensation" -> count.white.compensation
+            ))
+          ),
+          "accepted" -> Json.obj(
+            "b" -> sc.accepted(ligo.gorules.Color.Black),
+            "w" -> sc.accepted(ligo.gorules.Color.White)
+          ),
+          "pending" -> sc.pending
+        )
+      case _ => left ++ Json.obj("counting" -> true)
+
+  /** A Go game that ended by counting: its result as SGF writes it, `B+3.5`, `W+0.5` or `0` (ADR 0020 §5). */
+  def goResult(g: Game): Option[String] =
+    g.goScoring.filter(_ => g.status == chess.Status.VariantEnd).flatMap(_.result).map(_.sgf)
 
   /** A Go game's setup alone: size, rules, komi, handicap and custom starting position. The API's game
     * exports carry it in place of chess's variant and initial FEN (unit 3.16).
@@ -197,13 +239,6 @@ object JsonView:
       "bits" -> blurs.binaryString
     )
 
-  given OWrites[chess.variant.Variant] = OWrites: v =>
-    Json.obj(
-      "key" -> v.key,
-      "name" -> v.name,
-      "short" -> v.shortName
-    )
-
   given OWrites[Clock] = OWrites: c =>
     Json.obj(
       "running" -> c.isRunning,
@@ -228,6 +263,8 @@ object JsonView:
       "black" -> Centis(reading(Color.Black).centis).toSeconds,
       "emerg" -> (c.config.periodSeconds / 3).atLeast(3).atMost(10),
       "periods" -> Json.obj("b" -> reading(Color.Black).periodsLeft, "w" -> reading(Color.White).periodsLeft),
+      // whether each side's time is main time or a period (unit 4.8): equal readings can mean either
+      "inByo" -> Json.obj("b" -> reading(Color.Black).inByoyomi, "w" -> reading(Color.White).inByoyomi),
       "byo" -> c.config.periodSeconds
     )
 

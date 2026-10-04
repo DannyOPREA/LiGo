@@ -1,11 +1,47 @@
 import { hl, type VNode } from 'lib/view';
 
-import { goRulesets, goSizes, rulesetName, sizeName, type GoRuleset, type GoSize } from '../../../goSetup';
+import {
+  goRulesets,
+  goSizes,
+  handicapName,
+  handicaps,
+  rulesetName,
+  sizeName,
+  type GoRuleset,
+  type GoSize,
+} from '../../../goSetup';
 import type SetupController from '../../../setupCtrl';
 
-// Board size, ruleset and komi (unit 3.19).
+// Board size, ruleset and komi (unit 3.19), and in a friend game the handicap (unit 4.9).
 export const goOptions = (setupCtrl: SetupController): VNode =>
-  hl('div.go-options', [sizePicker(setupCtrl), rulesetPicker(setupCtrl), komiInput(setupCtrl)]);
+  hl('div.go-options', [
+    sizePicker(setupCtrl),
+    rulesetPicker(setupCtrl),
+    komiInput(setupCtrl),
+    setupCtrl.gameType === 'friend' ? handicapPicker(setupCtrl) : null,
+  ]);
+
+// With a named opponent, the stones ADR 0021 §4 suggests for the two ranks (unit 5.7).
+const handicapPicker = (setupCtrl: SetupController): VNode =>
+  hl('div.config-group', [
+    hl('label.label', { attrs: { for: 'sf_handicap' } }, i18n.site.goHandicap),
+    hl(
+      'select#sf_handicap',
+      { on: { change: (e: Event) => setupCtrl.setHandicap(Number((e.target as HTMLSelectElement).value)) } },
+      handicaps.map(handicap =>
+        hl(
+          'option',
+          { attrs: { value: handicap }, props: { selected: handicap === setupCtrl.handicap() } },
+          handicapName(handicap),
+        ),
+      ),
+    ),
+    setupCtrl.stoneAdvice() &&
+      hl(
+        'p.setup-suggested-stones',
+        i18n.site.goSuggestedHandicapX(handicapName(setupCtrl.stoneAdvice()!.suggested)),
+      ),
+  ]);
 
 const sizePicker = (setupCtrl: SetupController): VNode =>
   site.blindMode

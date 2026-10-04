@@ -120,7 +120,6 @@ GET   /round/minis                               controllers.Round.minis(ids: St
 # Analyse
 
 GET   /game/export/$gameId<\w{8}>                             controllers.Game.exportOne(gameId: GameId)
-GET   /game/export/$gameId<\w{8}>.pgn                         controllers.Game.exportOne(gameId: GameId)
 
 # Pref
 POST  /pref/:name                             controllers.Pref.set(name)
@@ -135,7 +134,7 @@ POST  /setup/friend                    controllers.Setup.friend(user: Option[Use
 POST  /setup/hook/:sri/like/:gameId    controllers.Setup.like(sri: Sri, gameId: GameId)
 POST  /setup/hook/:sri                 controllers.Setup.hook(sri: Sri)
 GET   /setup/filter                    controllers.Setup.filterForm
-GET   /setup/validate-fen              controllers.Setup.validateFen
+GET   /setup/go-handicap/:username     controllers.Setup.goHandicap(username: UserStr)
 
 # Challenge
 GET   /challenge                       controllers.Challenge.all
@@ -419,10 +418,6 @@ GET   /source                          controllers.Cms.source
 GET   /survey                          controllers.Main.survey
 GET   /qa/:id/:slug                    controllers.Main.legacyQaQuestion(id: Int, slug)
 GET   /page/:key                       controllers.Cms.lonePage(key: CmsPageKey)
-
-# Variants
-GET   /variant                         controllers.Cms.variantHome
-GET   /variant/:key                    controllers.Cms.variant(key: chess.variant.Variant.LilaKey)
 
 # Help
 GET   /help/contribute                 controllers.Cms.help

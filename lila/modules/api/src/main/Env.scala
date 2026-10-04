@@ -6,7 +6,6 @@ import play.api.Mode
 
 import lila.chat.{ GetLinkCheck, IsChatFresh }
 import lila.common.Bus
-import lila.core.misc.lpv.Lpv
 
 @Module
 final class Env(
@@ -23,7 +22,6 @@ final class Env(
     playBanApi: lila.playban.PlaybanApi,
     userEnv: lila.user.Env,
     relationEnv: lila.relation.Env,
-    analyseEnv: lila.analyse.Env,
     lobbyEnv: lila.lobby.Env,
     challengeEnv: lila.challenge.Env,
     socketEnv: lila.socket.Env,
@@ -37,7 +35,6 @@ final class Env(
     fideIdOf: lila.core.user.PublicFideIdOf,
     modLogApi: lila.mod.ModlogApi,
     activityWriteApi: lila.activity.ActivityWriteApi,
-    cacheApi: lila.memo.CacheApi,
     webConfig: lila.web.WebConfig,
     manifest: lila.web.AssetManifest,
     tokenApi: lila.oauth.AccessTokenApi,
@@ -52,10 +49,6 @@ final class Env(
 ):
 
   export net.{ baseUrl, domain }
-
-  lazy val pgnDump: PgnDump = wire[PgnDump]
-
-  lazy val textLpvExpand = wire[TextLpvExpand]
 
   lazy val userApi = wire[UserApi]
 
@@ -93,9 +86,6 @@ final class Env(
   Bus.sub[IsChatFresh]:
     case IsChatFresh(source, promise) =>
       promise.completeWith(chatFreshness.of(source))
-  Bus.sub[Lpv]:
-    case Lpv.AllPgnsFromText(text, max, p) => p.completeWith(textLpvExpand.allPgnsFromText(text, max))
-    case Lpv.LinkRenderFromText(text, p) => p.completeWith(textLpvExpand.linkRenderFromText(text))
   Bus.sub[lila.core.security.GarbageCollect]: gc =>
     accountTermination.garbageCollect(gc.userId)
   Bus.sub[lila.core.playban.RageSitClose]: close =>

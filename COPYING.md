@@ -76,7 +76,11 @@ the small UI images in `lila/public/images/ligo/`, and their generator `lila/bin
 (`lila/modules/rating/src/test/GoRatingTest.scala`, `src/test/resources/goRatingCases.{json,py}`),
 which port OGS's goratings (MIT, notice in `lila/modules/rating/NOTICE-goratings.md`; §3).
 Also `lila/modules/round/src/main/GoRatedGame.scala` and its test
-(`lila/modules/round/src/test/GoRatedGameTest.scala`), which apply that maths to rated Go games.
+(`lila/modules/round/src/test/GoRatedGameTest.scala`), which apply that maths to rated Go games,
+and `lila/modules/challenge/src/main/GoRatedChallenge.scala` and its test
+(`lila/modules/challenge/src/test/GoRatedChallengeTest.scala`), its handicap rule for rated
+challenges (unit 5.7), and `lila/ui/lobby/src/rankRange.ts` and its test
+(`lila/ui/lobby/tests/rankRange.test.ts`), the setup window's rank filter (unit 5.7).
 
 ### 1.2 npm packages removed with Phase 3 features
 
@@ -128,6 +132,11 @@ workspace package (MIT, §2), and libs/board gained a `./editor` export (LiGo's 
 goban's setup placement). `ui/analyse` no longer imports chessground or chessops; its old
 dependency entries stay until unit 3.19 part 2 changes the lockfile. No third-party package was
 added.
+
+Unit 8.7 put `libs/board` on the puzzle trainer page: `ui/puzzle` now depends on the `@ligo/board`
+workspace package (MIT, §2) in place of `@badrap/result` (MIT), which only its chess code used and
+which stays in the lockfile for `ui/analyse` and `ui/lib`. `ui/puzzle` no longer imports chessground,
+chessops or the chess nvui code. No third-party package was added.
 
 ## 2. LiGo's own code — MIT
 

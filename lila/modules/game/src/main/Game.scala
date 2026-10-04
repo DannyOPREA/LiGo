@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.variant.Variant
 import chess.{ Centis, Clock, Color, Ply, Speed, Status }
 import scalalib.model.Days
 
@@ -46,9 +45,7 @@ object GameExt:
     everyOther(mts.toList))
 
   def analysable(g: Game) =
-    g.replayable && g.playedPlies > 4 &&
-      Game.analysableVariants(g.variant) &&
-      !Game.isOldHorde(g)
+    g.replayable && g.playedPlies > 4
 
   extension (clockHistory: ClockHistory)
 
@@ -144,11 +141,20 @@ object GameExt:
           )
           Clock.WithCompensatedLag(GameClock.Byoyomi(if firstMoves then c2.start else c2), None)
 
-    /** A Phase 3 Go game is over once play stops (ADR 0019 §7): the second consecutive pass, or the ply cap.
+    /** Play has stopped (ADR 0019 §7, ADR 0020 §3.1): the second consecutive pass, or the ply cap. The
+      * scoring phase opens then.
       */
     def goPlayEnds: Boolean =
       g.go.phase == ligo.gorules.Phase.Scoring ||
         g.playedPlies.value >= lila.core.game.GoBridge.maxPlies
+
+    /** Whether the clock keeps running after the Go action that leads to `next`: always, except at the ply
+      * cap, which closes play for good (ADR 0020 §3). The second pass doesn't end the game but opens the
+      * scoring phase, which play may resume from, so it earns its increment or byo-yomi period reset like any
+      * move; the phase then stops the clock.
+      */
+    def goClockActiveAfter(next: ligo.gorules.GoGame): Boolean =
+      lila.core.game.GoBridge.plies(next) < lila.core.game.GoBridge.maxPlies
 
     /** Apply a Go action already accepted by the rules (`next`), with the clock stepped for it (ADR 0019 §5):
       * the Go game, ply, clock and its history, move times and blurs, and the move event.
@@ -260,25 +266,6 @@ object Game:
 
   val syntheticId = GameId("synthetic")
 
-  val analysableVariants: Set[Variant] = Set(
-    chess.variant.Standard,
-    chess.variant.Crazyhouse,
-    chess.variant.Chess960,
-    chess.variant.KingOfTheHill,
-    chess.variant.ThreeCheck,
-    chess.variant.Antichess,
-    chess.variant.FromPosition,
-    chess.variant.Horde,
-    chess.variant.Atomic,
-    chess.variant.RacingKings
-  )
-
-  val unanalysableVariants: Set[Variant] = Variant.list.all.toSet -- analysableVariants
-
-  private val hordeWhitePawnsSince = instantOf(2015, 4, 11, 10, 0)
-  def isOldHorde(game: Game) =
-    game.variant == chess.variant.Horde && game.createdAt.isBefore(Game.hordeWhitePawnsSince)
-
   val abandonedDays = Days(21)
   def abandonedDate = nowInstant.minusDays(abandonedDays.value)
 
@@ -310,7 +297,6 @@ object Game:
     val whiteClockHistory = "cw"
     val blackClockHistory = "cb"
     val rated = "ra"
-    val variant = "v"
     val bookmarks = "bm"
     val source = "so"
     val tournamentId = "tid"

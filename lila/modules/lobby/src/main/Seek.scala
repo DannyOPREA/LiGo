@@ -2,7 +2,6 @@ package lila.lobby
 
 import chess.IntRating
 import chess.rating.RatingProvisional
-import chess.variant.Variant
 import chess.Rated
 import play.api.libs.json.*
 import scalalib.ThreadLocalRandom
@@ -19,7 +18,6 @@ import lila.rating.PerfType
 // correspondence Go, persistent
 case class Seek(
     _id: String,
-    variant: Variant.Id, // always standard chess, carried unused until unit 3.17
     go: Option[GoSetup], // board size, ruleset and komi (unit 3.15); none on older seeks
     daysPerTurn: Option[Days],
     rated: Rated,
@@ -28,8 +26,6 @@ case class Seek(
     createdAt: Instant
 ):
   inline def id = _id
-
-  val realVariant = Variant.orDefault(variant)
 
   def compatibleWith(h: Seek) =
     user.id != h.user.id &&
@@ -41,7 +37,7 @@ case class Seek(
 
   def goSetup: GoSetup = go | GoSetups.default
 
-  private def compatibilityProperties = (variant, goSetup, rated, daysPerTurn)
+  private def compatibilityProperties = (goSetup, rated, daysPerTurn)
 
   lazy val realRatingRange: Option[RatingRange] = ratingRange.ifNotDefault
 
@@ -57,7 +53,6 @@ case class Seek(
         "id" -> _id,
         "username" -> user.username,
         "rating" -> rating,
-        "variant" -> Json.obj("key" -> realVariant.key),
         "perf" -> Json.obj("key" -> perfType.key),
         "mode" -> rated.id, // must keep BC
         "go" -> GoSetups.json(goSetup)
@@ -65,6 +60,7 @@ case class Seek(
       .add("days" -> daysPerTurn)
       .add("provisional" -> perf.provisional.yes)
       .add("goRank" -> lila.rating.GoRating.label(perf.rating, perf.provisional).some) // LiGo (unit 5.5)
+      .add("rr" -> realRatingRange.map(RatingRanges.json)) // LiGo (unit 6.5)
 
 object Seek:
 
@@ -74,7 +70,6 @@ object Seek:
   def makeId = ThreadLocalRandom.nextString(idSize)
 
   def make(
-      variant: chess.variant.Variant,
       go: GoSetup,
       daysPerTurn: Option[Days],
       rated: Rated,
@@ -83,7 +78,6 @@ object Seek:
       blocking: lila.core.pool.Blocking
   ): Seek = Seek(
     _id = makeId,
-    variant = variant.id,
     go = go.some,
     daysPerTurn = daysPerTurn,
     rated = rated,
@@ -94,7 +88,6 @@ object Seek:
 
   def renew(seek: Seek) = Seek(
     _id = makeId,
-    variant = seek.variant,
     go = seek.go,
     daysPerTurn = seek.daysPerTurn,
     rated = seek.rated,

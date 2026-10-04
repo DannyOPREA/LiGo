@@ -130,6 +130,7 @@ function timeControl(c: TimeControl): string {
     case 'correspondence':
       return c.daysPerTurn + ' days';
     case 'clock':
+    case 'byoyomi': // e.g. 10+5×30s (unit 4.9)
       return c.show || '-';
     default:
       return '-';

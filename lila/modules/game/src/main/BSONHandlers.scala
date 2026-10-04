@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.variant.Variant
 import chess.{ ByColor, Clock, Color, Ply, Status }
 import reactivemongo.api.bson.*
 import scalalib.model.Days
@@ -186,7 +185,16 @@ object BSONHandlers:
               .flatMap(ByoyomiClock.restore(_))
               .left
               .map(e => lila.log("game").warn(s"Go game ${light.id}: unreadable byo-yomi clock: $e"))
-              .toOption
+              .toOption,
+        goScoring = for
+          doc <- r.getO[BSONDocument](GoStorage.F.scoring)
+          // an unreadable scoring phase loads the game without it, logged, rather than failing the whole game
+          sc <- GoStorage.scoring
+            .read(doc, go.size)
+            .left
+            .map(e => lila.log("game").warn(s"Go game ${light.id}: unreadable scoring phase: $e"))
+            .toOption
+        yield sc
       )
 
     def writes(w: BSON.Writer, o: Game) =
@@ -226,7 +234,8 @@ object BSONHandlers:
         F.analysed -> w.boolO(o.metadata.analysed),
         F.rules -> o.metadata.nonEmptyRules,
         F.abortedBy -> o.abortedBy
-      ) ++ GoStorage.write(o.go) // a game writes its Go block and none of the chess keys (ADR 0019 §4)
+      ) ++ GoStorage.write(o.go) ++ // a game writes its Go block and none of the chess keys (ADR 0019 §4)
+        bdoc(GoStorage.F.scoring -> o.goScoring.map(GoStorage.scoring.write(_, o.go.size)))
 
   given lightGameReader: lila.db.BSONReadOnly[LightGame] with
 
@@ -250,7 +259,6 @@ object BSONHandlers:
         blackPlayer = makePlayer(F.blackPlayer, Color.Black, blackUid),
         status = r.get[Status](F.status),
         win = winC,
-        variant = Variant.idOrDefault(r.getO[Variant.Id](F.variant)),
         isGo = GoStorage.isGo(r)
       )
 

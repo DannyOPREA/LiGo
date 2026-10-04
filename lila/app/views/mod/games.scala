@@ -35,7 +35,7 @@ def games(
           // "Analyse selected" (fishnet analysis) and the engine assessment columns went with the
           // fishnet and evaluation modules (unit 3.5).
           submitButton(cls := "button button-empty button-thin", name := "action", value := "pgn")(
-            "Download PGN"
+            "Download games (NDJSON)"
           ),
           table(cls := "mod-games game-list slist")(
             thead(
@@ -71,9 +71,9 @@ def games(
                     playerLink(pov.opponent, withDiff = false, mod = true)
                   ),
                   td(
-                    dataSort := pov.game.clock.fold(
+                    dataSort := pov.game.gameClock.fold(
                       pov.game.correspondenceClock.fold(Int.MaxValue)(_.daysPerTurn * 3600 * 24)
-                    )(_.config.estimateTotalSeconds)
+                    )(_.estimateTotalSeconds)
                   )(
                     iconTag(pov.game.perfType.icon)(cls := "text"),
                     shortClockName(pov.game)

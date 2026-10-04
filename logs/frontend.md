@@ -5,6 +5,17 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 7.4 clean-up · The analysis board drops its last chess styles
+- Did: for 3.19 part 2 (chessground and chessops gone), `ui/analyse` no longer imports `lib/css/chess/{promotion,
+  variant-style,zh-pocket}` or `lib/css/component/material`. The crazyhouse build (`analyse.zh`) and the chess
+  material styles in `_player-clock.scss` are deleted. The step-button styles the Go page does use moved from
+  `lib/css/chess/_control.scss` to `lib/css/component/_analyse-controls.scss`; the old file now only forwards to it
+  for the puzzle page (Phase 8's) until that imports the new one. Scala `AnalyseUi.miniSpan` (chessgroundMini, no
+  callers) and `lib/game/nodePGN.ts` with its test (no callers left) are deleted; AnalyseUi left the chess-guard
+  baseline.
+- Worked: the 8 analysis screenshot pairs still match pixel for pixel, so the moved styles changed nothing.
+- Lessons: before deleting a "chess" stylesheet, list its selectors and grep the page's views for them:
+  `_control.scss` styled the Go page's own step buttons.
 ### 2026-10-04 · unit 9.7 part two · chess-only sounds and the 3D board preference deleted
 - Did: deleted the sounds only chess uses (check-mate, berserk, explosion, out of bound, tournament places, new PM) and every `.ogg`/`.m3u` (lila plays only `.mp3`) from the four sound sets; `Error.mp3`, a link into the deleted `standard` set, now points at the set's `Check.mp3`. `sound.ts` no longer plays check/checkmate, the notify bell plays the generic notify sound, the game page no longer plays berserk. Removed lila's 3D board preference end to end (`Theme3d`, `PieceSet3d`, `is3d`/`theme3d`/`pieceSet3d` in prefs, forms, JSON and page attributes, the 3D board CSS and the Staunton pictures). ADR 0026 §2 and COPYING.md updated.
 - Worked: ui build, verify, page browser tests (playground 47, game page 13, analysis board 15) all pass on main with #100 in.
@@ -25,6 +36,28 @@ _none yet_
 - Didn't work / dead ends: never reproduced locally, so the cause (a push delivered just as the worker activates being dropped) is inferred, not proven.
 - Lessons: when a CI-only failure can't be reproduced, read the job log through the GitHub MCP; the plain API's log redirect is refused here.
 - Decisions: retry the delivery, not the assertion: a worker that never shows the notification still fails.
+
+### 2026-10-04 · unit 8.7 · The Go puzzle trainer page
+- Did: `ui/puzzle` is a Go trainer on 8.5's `mountPuzzle`; goban's right and wrong events drive
+  lila's flow (result, rating change, next puzzle, votes, session strip, replay). The source line
+  sits under the board; "View the solution" replays the first right line through 7.2's
+  `readTree`/`playFrom` into a move list and a stepper. Touch-confirm and the board theme come from
+  the preferences. The controller's HTML actions are back (trainer, themes, daily, embed,
+  dashboard, history, replay), replacing 3.16's placeholder. 12 unit tests (one replays the right
+  line of all 240 puzzles), 12 behaviour tests and 10 screenshot tests at desktop and phone size,
+  in `dev/ligo test pages` and the `ui` CI job.
+- Worked: the board box follows the puzzle's `bounds`, so a corner puzzle fills a phone screen.
+- Didn't work / dead ends: lila doesn't compile in the cloud, so CI is the Scala compile.
+- Lessons: lila's `san` element sets moves in a chess font, so columns B, K, N, Q and R showed as
+  chess pieces (the analysis board has the same issue). Playwright's `request.postData()` of an
+  `xhr.form` body is multipart, not urlencoded.
+- Decisions: hints dropped (goban marks no hint), a Confirm move button as on the game page, theme
+  names sent by the server (logs/decisions.md, ADR 0025 amendment).
+- Verified by Claude: UI build, lint, format, 255 unit tests, 22 Playwright tests, CI.
+  · Needs owner verification: `/training`, `/training/themes`, `/training/dashboard/30`,
+  `/training/history` on a computer and a phone; solve one, fail one, view a solution.
+- Follow-ups: 8.8 (the demo); keyboard and screen-reader play for puzzles is not wired
+  (`mountPuzzle` has no `access.ts`).
 
 ### 2026-10-04 · unit 7.4 fix · Go moves drawn as chess pieces
 - Did: lila's move list writes moves in the Noto Chess figurine font, so moves in columns B, K, N, Q and R showed as pieces on `/analysis` ("B19" as a bishop; found by Phase 8's 8.7). The analysis move list and its menu's title now use the page font, as the game page's already did (3.18). The tree's header comment no longer points at `ui/puzzle/src/chessNode.ts`, which 8.7 deletes. A browser test plays B19, K18, N17, Q16 and R15 and checks the font of the list and the menu title.

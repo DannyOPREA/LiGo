@@ -9,7 +9,67 @@
 - The "?" threshold (`provisionalDeviation = 110`) is a scalachess top-level val, not a lila constant; changing it means a fork or replacing call sites (2026-09-27).
 - lila starts games at pairing and aborts them before 2 plies; `NoStart` (37) is a third "never played" status. "Has played a rated game" must exclude Aborted and NoStart (`Query.gotGoing`) (2026-10-03, unit 5.4).
 
+- CI's ui Lint runs `oxlint --type-aware`; verify.sh's plain oxlint misses its type rules (e.g. no-unnecessary-type-assertion). Run `pnpm exec oxlint --type-aware ui/<pkg>` before pushing UI tests (2026-10-04, unit 5.7).
 ## Entries (newest first)
+
+### 2026-10-04 · unit 5.7 (part 2) · Rated games in the setup windows
+- Did: the create-game windows follow part 1's server rules. Guests see a sign-up link instead of the
+  casual/rated choice; a signed-in player sees why settings can't be rated (board, komi, stones without
+  a named opponent, stones outside the allowed range). A rated challenge to a named player fetches
+  `/setup/go-handicap/:username` (suggested stones per board, ±1, and who takes Black), shows the
+  suggestion and "You play X", and moves out-of-range stones to the suggestion. The rating filter is in
+  whole Go ranks (lobby page data carries GoRating's rank table). Pools follow 6.4 part 2 (rated
+  pools), which merged while this PR was open: a rated game that fits a pool joins it.
+- Worked: the server's eligibility check stays the source of truth; the form mirrors it, so a missed
+  case still gets the server's refusal. 77 lobby tests (stubbed fetch for the suggestion).
+- Didn't work / dead ends: `@/options` imports fail under the test resolver (use a relative path);
+  the i18n test proxy must return functions for format keys.
+- Lessons: the reviewer caught three real bugs: the lowest rank must be open downwards (a player under
+  the 25k edge was outside their own range); a "reset to the suggestion" must never override what is
+  always allowed (an even game) or fixed by a link; and a pool test with `pools: []` passed vacuously
+  while the pool path had become dead code. Give a stub the data that makes the branch reachable.
+- Decisions: casual stays the form's default (lila's is rated). Claude's calls under the 2026-09-28 delegation (logs/decisions.md).
+- Verified by Claude: `node ui/test lobby` (77/77), `dev/ligo compile ui` (tsc), oxlint, verify.sh.
+  · Needs owner verification: the windows on desktop and phone, a guest's sign-up link, a rated
+  handicap challenge's colours vs "You play X", the rank filter.
+- Follow-ups: 5.5 part 2 (the Go leaderboard).
+
+### 2026-10-04 · unit 5.7 (part 1) · Rated Go games in the server
+- Did: rated Go games are back. Signed-in players may create rated lobby games, correspondence
+  seeks, direct challenges, open challenges and bulk pairings (form and API) when the setup is one
+  ADR 0021 §4 rates: 9×9 or 19×19, the spec's komi, at most 9 or 4 stones (`GoSetups.ratedRefusal`,
+  now shared with the rating update). A rated handicap needs a challenge to a named player with
+  GoRating's suggestion ±1 stones (`GoRatedChallenge`); the server gives Black to the lower-rated
+  player and won't send such a challenge to someone else later. Guests can't create, join or accept
+  rated games (forms, `Hook.make`, `ChallengeApi.accept`, and `newGoGame` as the backstop, which also
+  makes any uncovered setup casual). Rematches stay rated, and a handicap game's rematch keeps its
+  colours on both of lila's rematch paths.
+- Worked: one rule in `GoSetups` checked at three layers (form, game creation, rating update);
+  `GoRating`'s existing stone function only needed a `Perf` version with ADR 0021's
+  unknown-rank rule.
+- Didn't work / dead ends: verify.sh's sbt test gate replayed cached results ("Total 0"); `testFull`
+  runs the suites for real. Merging main after 3.17 part 2b needed nine conflict resolutions (variant
+  and FEN fields gone from the same forms).
+- Lessons: lila has two rematch paths (round's `Rematcher`, challenge's `ChallengeMaker`); a rule
+  about colours must live in `rematchAlternatesColor`, which both ask. A rule computed against the
+  opponent when a challenge is sent must be re-checked wherever the opponent can change
+  (`toFriend`).
+- Decisions: 5.7 split in two PRs (server, then forms); even rated challenges are always allowed;
+  a guest's open challenge is casual; bulk pairings may be rated (even); "New opponent" after a
+  handicap game resets komi; pools stay casual until 6.4 part 2 (Claude, under the owner's
+  2026-09-28 delegation; ADR 0021 amendment, logs/decisions.md).
+- Review (reviewer agent): blocking, both fixed: the in-game rematch of a handicap game swapped
+  colours (now kept, tested); a rated handicap challenge could be re-targeted with `toFriend` (now
+  refused, tested). Should-fix, done: rated even challenges written down in the ADR; guests' rated
+  open challenges refused; COPYING.md entry for the new MIT file; tests for both fixes. Left for
+  part 2: i18n keys for the new server messages, the stale UI comments, the HTML form's error.
+- Verified by Claude: `testFull` for core 31, rating 23, setup 20, challenge 12, lobby 26, round 19,
+  pool 30, and `GoRematchTest` 2/2, all passing; lila compile; chess guard; verify.sh. · Needs owner
+  verification: on the real stack, a rated game between two accounts moves both ranks; a guest
+  opening a rated challenge link sees "Sign up to play rated games"; Rematch after a rated handicap
+  game keeps Black with the stones.
+- Follow-ups: part 2 (the forms' rated option, guest line, rank ranges, suggested stones); 5.5 part
+  2 (the Go leaderboard).
 
 ### 2026-10-04 · unit 5.6 · The profile in Go ranks
 - Did: the profile shows the Go rank beside the name and, in the side panel, the one Go perf as its

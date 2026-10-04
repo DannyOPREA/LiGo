@@ -1,11 +1,7 @@
 package lila.core
 package game
 
-import _root_.chess.format.Fen
-import _root_.chess.format.pgn.{ Pgn, Tags }
-import _root_.chess.variant.Variant
 import _root_.chess.{ ByColor, Centis, Clock, Color, Ply, Speed, Status }
-import _root_.chess.opening.Opening
 import cats.derived.*
 import play.api.libs.json.*
 import reactivemongo.pekkostream.PekkoStreamCursor
@@ -48,8 +44,8 @@ case class FinishGame(
 case class AbortedBy(pov: Pov)
 
 case class CorresAlarmEvent(userId: UserId, pov: Pov, opponent: String)
-
-case class WithInitialFen(game: Game, fen: Option[Fen.Full])
+// a correspondence Go game's scoring phase opened for this player (ADR 0023 §4, unit 7.6)
+case class ScoringPhaseEvent(userId: UserId, pov: Pov, opponent: String)
 
 opaque type Blurs = Long
 object Blurs extends OpaqueLong[Blurs]:
@@ -104,9 +100,6 @@ abstract class GameRepo(val coll: BSONCollection):
   def gamesFromSecondary(gameIds: Seq[GameId]): Fu[List[Game]]
   def gameOptionsFromSecondary(gameIds: Seq[GameId]): Fu[List[Option[Game]]]
   def getSourceAndUserIds(id: GameId): Fu[(Option[Source], List[UserId])]
-  def initialFen(game: Game): Fu[Option[Fen.Full]]
-  def withInitialFen(game: Game): Fu[WithInitialFen]
-  def gameWithInitialFen(gameId: GameId): Fu[Option[WithInitialFen]]
   def isAnalysed(game: Game): Fu[Boolean]
   def insertDenormalized(g: Game): Funit
   def recentAnalysableGamesByUserId(userId: UserId, nb: Int): Fu[List[Game]]
@@ -132,21 +125,6 @@ trait GameProxy:
   def upgradeIfPresent(games: List[Game]): Fu[List[Game]]
   def flushIfPresent(gameId: GameId): Funit
 
-trait PgnDump:
-  def apply(
-      game: Game,
-      initialFen: Option[Fen.Full],
-      opening: Option[Opening.AtPly],
-      flags: PgnDump.WithFlags
-  ): Fu[Pgn]
-  def tags(
-      game: Game,
-      initialFen: Option[Fen.Full],
-      importedTags: Option[Tags],
-      opening: Option[Opening],
-      withRating: Boolean
-  ): Fu[Tags]
-
 trait Namer:
   def gameVsText(game: Game, withRatings: Boolean = false)(using lightUser: LightUser.Getter): Fu[String]
   def playerText(player: Player, withRating: Boolean = false)(using lightUser: LightUser.Getter): Fu[String]
@@ -160,23 +138,17 @@ trait Namer:
 trait Explorer:
   def apply(id: GameId): Fu[Option[Game]]
 
-object PgnDump:
+object GameExport:
   case class WithFlags(
       clocks: Boolean = true,
       moves: Boolean = true,
       tags: Boolean = true,
-      evals: Boolean = true,
-      opening: Option[Boolean] = None, // no / quick / full
       rating: Boolean = true,
-      literate: Boolean = false,
-      pgnInJson: Boolean = false,
       delayMoves: Boolean = false,
       lastFen: Boolean = false,
-      accuracy: Boolean = false,
       division: Boolean = false,
       bookmark: Boolean = false
   ):
-    def requiresAnalysis = evals || accuracy
     def keepDelayIf(cond: Boolean) = copy(delayMoves = delayMoves && cond)
 
 object BSONFields:
@@ -190,11 +162,6 @@ object BSONFields:
   val pgnImport = "pgni"
   val playingUids = "pl"
 
-def allowRated(variant: Variant, clock: Option[Clock.Config]) =
-  variant.standard || clock.exists: c =>
-    c.estimateTotalTime >= Centis(3000) &&
-      c.limitSeconds > 0 || c.incrementSeconds > 1
-
 def isBoardCompatible(clock: Clock.Config): Boolean = Speed(clock) >= Speed.Rapid
 def isBotCompatible(clock: Clock.Config): Boolean = Speed(clock) >= Speed.Bullet
 
@@ -207,10 +174,5 @@ def interleave[A](a: Seq[A], b: Seq[A]): Vector[A] =
 
   builder.result()
 
-def reasonableMinimumNumberOfMoves(variant: Variant): Int =
-  import _root_.chess.variant.*
-  variant.match
-    case Standard | Chess960 | Horde => 20
-    case Antichess | Crazyhouse | KingOfTheHill => 15
-    case ThreeCheck | Atomic | RacingKings => 10
-    case _ => 15 // from position
+// Plies below which a resignation counts as an early one (lichess's figure for standard chess).
+val reasonableMinimumNumberOfMoves = 20

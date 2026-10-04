@@ -163,9 +163,6 @@ db.donation.createIndex({ date: -1 });
 db.donation.createIndex({ gross: -1 });
 db.player_assessment.createIndex({ userId: 1, date: -1 });
 db.player_assessment.createIndex({ date: 1 }, { expireAfterSeconds: 15552000 });
-db.analysis2.createIndex({ hash: 1 }, { partialFilterExpression: { hash: { $exists: true } } });
-db.fishnet_analysis.createIndex({ 'sender.system': 1, createdAt: 1 });
-db.fishnet_analysis.createIndex({ 'game.id': 1 });
 db.fishnet_analysis.createIndex({ 'sender.userId': 1 });
 db.fishnet_analysis.createIndex({ 'sender.ip': 1 });
 db.fishnet_analysis.createIndex({ 'sender.system': 1 });
@@ -191,7 +188,6 @@ db.swiss.createIndex(
   { featurable: 1 },
   { partialFilterExpression: { featurable: true, 'settings.i': { $lte: 600 } } },
 );
-db.analysis_requester.createIndex({ total: -1 });
 db.plan_patron.createIndex(
   { 'stripe.customerId': 1 },
   { partialFilterExpression: { 'stripe.customerId': { $exists: true } } },
@@ -246,7 +242,6 @@ db.oauth2_access_token.createIndex(
   { partialFilterExpression: { clientOrigin: 'https://auth.taketaketake.com' } },
 );
 db.cache.createIndex({ e: 1 }, { expireAfterSeconds: 0 });
-db.forecast.createIndex({ date: 1 }, { expireAfterSeconds: 1296000 });
 db.msg_thread.createIndex({ users: 1, 'lastMsg.date': -1 });
 db.msg_thread.createIndex({ users: 1 }, { partialFilterExpression: { 'lastMsg.read': false } });
 db.msg_thread.createIndex({ users: 1, 'maskWith.date': -1 });

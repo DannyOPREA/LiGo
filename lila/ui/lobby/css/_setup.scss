@@ -119,6 +119,33 @@ $c-slider: $c-setup;
     }
   }
 
+  // LiGo, unit 5.7: the rated choice's notes, the locked colour of a rated handicap game and the rank range
+  .setup-rated-problem,
+  .setup-suggested-stones,
+  .setup-locked-color,
+  .setup-rank-range {
+    width: 100%;
+    margin: 0.4em 0 0;
+    text-align: center;
+    font-size: 0.9em;
+  }
+
+  .setup-rated-problem {
+    color: $c-bad;
+
+    &:empty {
+      margin: 0;
+    }
+  }
+
+  .setup-locked-color {
+    font-weight: bold;
+  }
+
+  .setup-rated-signup {
+    justify-content: center;
+  }
+
   .ratings {
     width: 100%;
     text-align: center;
@@ -185,6 +212,12 @@ $c-slider: $c-setup;
       .sliders-grid {
         display: grid;
         grid-template-columns: 1fr 3ch 1fr;
+
+        // byo-yomi (unit 4.9): main time, periods and period length, one under the other
+        &.byoyomi {
+          grid-template-columns: 1fr;
+          gap: 1.2rem;
+        }
       }
 
       .slider-container {

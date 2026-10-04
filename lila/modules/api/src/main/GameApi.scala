@@ -1,13 +1,11 @@
 package lila.api
 
-import chess.format.Fen
 import play.api.libs.json.*
 import play.api.mvc.RequestHeader
 import reactivemongo.api.bson.*
 import scalalib.Json.given
 import scalalib.paginator.Paginator
 
-import lila.analyse.{ Analysis, JsonView as analysisJson }
 import lila.common.Json.given
 import lila.core.config.*
 import lila.db.dsl.{ *, given }
@@ -20,7 +18,6 @@ final private[api] class GameApi(
     apiToken: Secret,
     gameRepo: lila.game.GameRepo,
     gameCache: lila.game.Cached,
-    analysisRepo: lila.analyse.AnalysisRepo,
     crosstableApi: lila.game.CrosstableApi
 )(using Executor):
 
@@ -120,29 +117,17 @@ final private[api] class GameApi(
   private def makeUrl(game: Game) = s"${net.baseUrl}/${game.id}/${game.naturalOrientation.name}"
 
   private def gamesJson(withFlags: WithFlags)(games: Seq[Game]): Fu[Seq[JsObject]] =
-    val allAnalysis =
-      if withFlags.analysis then analysisRepo.byIds(games.map(g => Analysis.Id(g.id)))
-      else fuccess(List.fill(games.size)(none[Analysis]))
-    allAnalysis.flatMap { analysisOptions =>
-      (games.map(gameRepo.initialFen)).parallel.map { initialFens =>
-        games.zip(analysisOptions).zip(initialFens).map { case ((g, analysisOption), initialFen) =>
-          gameToJson(g, analysisOption, initialFen, checkToken(withFlags))
-        }
-      }
-    }
+    fuccess(games.map(gameToJson(_, checkToken(withFlags))))
 
   private def checkToken(withFlags: WithFlags) = withFlags.applyToken(apiToken.value)
 
   private def gameToJson(
       g: Game,
-      analysisOption: Option[Analysis],
-      initialFen: Option[Fen.Full],
       withFlags: WithFlags
   ) =
     Json
       .obj(
         "id" -> g.id,
-        "initialFen" -> initialFen,
         "rated" -> g.rated,
         // a Go game has its setup instead of a chess variant (unit 3.16)
         "go" -> lila.game.JsonView.goSetup(g.go),
@@ -174,10 +159,6 @@ final private[api] class GameApi(
             .add("moveCentis" -> withFlags.moveTimes.so:
               lila.game.GameExt.computeMoveTimes(g, p.color).map(_.map(_.centis)))
             .add("blurs" -> withFlags.blurs.option(p.blurs.nb))
-            .add(
-              "analysis" -> analysisOption
-                .flatMap(analysisJson.player(g.pov(p.color).sideAndStart)(_, accuracy = none))
-            )
         }),
         "moves" -> withFlags.moves.option(lila.game.JsonView.goMoves(g.go).mkString(" ")),
         // the game's positions as live mini boards receive them (ADR 0019 §6), from the start
@@ -187,16 +168,14 @@ final private[api] class GameApi(
         "winner" -> g.winnerColor.map(_.name),
         "url" -> makeUrl(g)
       )
-      .add("analysis", analysisOption.ifTrue(withFlags.analysis).map(analysisJson.moves(_)))
       .noNull
 
 object GameApi:
 
+  // `with_analysis` went with chess engine analysis (unit 3.17, slice b).
   case class WithFlags(
-      analysis: Boolean = false,
       moves: Boolean = false,
       fens: Boolean = false,
-      opening: Boolean = false,
       moveTimes: Boolean = false,
       blurs: Boolean = false,
       token: Option[String] = none
@@ -206,10 +185,8 @@ object GameApi:
   def requestFlags(using RequestHeader) =
     import lila.common.HTTPRequest.*
     WithFlags(
-      analysis = queryStringBool("with_analysis"),
       moves = queryStringBool("with_moves"),
       fens = queryStringBool("with_fens"),
-      opening = queryStringBool("with_opening"),
       moveTimes = queryStringBool("with_movetimes"),
       token = queryStringGet("token")
     )

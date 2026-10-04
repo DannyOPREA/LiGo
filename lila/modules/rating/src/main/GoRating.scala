@@ -181,11 +181,37 @@ object GoRating:
    * at 9 and 4. 0 is an even game and 1 the no-komi game. Server games are
    * 9×9 and 19×19 only (R-SCOPE-1), so any other size gets an even game.
    * ADR 0021's other rule, an even game for an account that never declared
-   * a rank and never finished a rated game, needs the account and is
-   * applied by the caller (unit 5.7). */
+   * a rank and never finished a rated game, is the `Perf` version below. */
   def suggestedStones(ratingA: Double, ratingB: Double, size: Int): Int =
     val gap = (rankOf(ratingA) - rankOf(ratingB)).abs
     size match
       case 19 => math.floor(gap + 0.5).toInt.min(9)
       case 9 => math.floor(gap / 6 + 0.5).toInt.min(4)
       case _ => 0
+
+  /* Whether a player's go rating says anything about their strength (ADR
+   * 0021 §4): false for an account still at lila's default 1500 / 500, which
+   * never declared a rank and never finished a rated game. */
+  def rankKnown(perf: lila.core.perf.Perf): Boolean =
+    perf.nb > 0 || perf.glicko.deviation < lila.rating.Glicko.default.deviation
+
+  /* The stones ADR 0021 §4 suggests for two players (unit 5.7): from their
+   * ratings, or an even game when either one's rank isn't known yet. */
+  def suggestedStones(a: lila.core.perf.Perf, b: lila.core.perf.Perf, size: Int): Int =
+    if rankKnown(a) && rankKnown(b) then suggestedStones(a.glicko.rating, b.glicko.rating, size) else 0
+
+  /* The stone counts a rated direct challenge may have (ADR 0021 §4, unit
+   * 5.7): the suggestion or one stone either way, within the rated cap of 9
+   * on 19×19 and 4 on 9×9. Other sizes can't be rated, so only 0. */
+  def ratedStoneChoices(a: lila.core.perf.Perf, b: lila.core.perf.Perf, size: Int): Range =
+    val max = size match
+      case 19 => 9
+      case 9 => 4
+      case _ => 0
+    val suggested = suggestedStones(a, b, size)
+    (suggested - 1).max(0) to (suggested + 1).min(max)
+
+  /* The challenger's colour in a handicap challenge (ADR 0021 §4): the
+   * lower-rated player takes Black, the challenged player on an exact tie. */
+  def handicapColor(challenger: lila.core.perf.Perf, challenged: lila.core.perf.Perf): Color =
+    if challenger.glicko.rating < challenged.glicko.rating then Color.Black else Color.White

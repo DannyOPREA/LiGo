@@ -1,6 +1,5 @@
 package controllers
 
-import chess.format.Fen
 import play.api.libs.json.Json
 import play.api.mvc.{ EssentialAction, Result }
 
@@ -10,7 +9,6 @@ import lila.core.socket.Sri
 import lila.core.id.SessionId
 import lila.game.AnonCookie
 import lila.setup.Processor.HookResult
-import lila.setup.ValidFen
 
 final class Setup(
     env: Env,
@@ -49,33 +47,75 @@ final class Setup(
                       case _ if HTTPRequest.isLichobile(ctx.req) => Challenger.Open.some
                       case _ => none
                     .so: challenger =>
-                      val timeControl = makeTimeControl(config.makeClock, config.makeDaysPerTurn)
-                      val challenge = lila.challenge.Challenge.make(
-                        variant = config.variant,
-                        initialFen = config.fen,
-                        go = config.goSetup,
-                        timeControl = timeControl,
-                        rated = config.rated,
-                        color = config.color.name,
-                        challenger = challenger,
-                        destUser = destUser,
-                        rematchOf = none
-                      )
-                      env.challenge.api
-                        .create(challenge)
-                        .flatMap:
-                          if _ then
-                            negotiate(
-                              Redirect(routes.Round.watcher(challenge.gameId, Color.white)),
-                              challengeC.showChallenge(challenge, justCreated = true)
-                            )
-                          else
-                            negotiate(
-                              Redirect(routes.Lobby.home),
-                              JsonBadRequest("Challenge not created")
-                            )
+                      lila.challenge.GoRatedChallenge
+                        .color(
+                          config.goSetup,
+                          config.rated,
+                          config.color.name,
+                          origUser.map(_.perf),
+                          destUser.map(_.perf)
+                        )
+                        .fold(
+                          err => negotiate(Redirect(routes.Lobby.home), JsonBadRequest(err)),
+                          color => createFriendChallenge(config, challenger, destUser, color)
+                        )
             yield result
         )
+
+  private def createFriendChallenge(
+      config: lila.setup.FriendConfig,
+      challenger: lila.challenge.Challenge.Challenger,
+      destUser: lila.core.user.GameUser,
+      color: String
+  )(using Context) =
+    import lila.challenge.Challenge.makeTimeControl
+    val timeControl =
+      makeTimeControl(config.makeClock, config.makeDaysPerTurn, config.makeByoyomi)
+    val challenge = lila.challenge.Challenge.make(
+      go = config.goSetup,
+      timeControl = timeControl,
+      rated = config.rated,
+      color = color,
+      challenger = challenger,
+      destUser = destUser,
+      rematchOf = none
+    )
+    env.challenge.api
+      .create(challenge)
+      .flatMap:
+        if _ then
+          negotiate(
+            Redirect(routes.Round.watcher(challenge.gameId, Color.white)),
+            challengeC.showChallenge(challenge, justCreated = true)
+          )
+        else
+          negotiate(
+            Redirect(routes.Lobby.home),
+            JsonBadRequest("Challenge not created")
+          )
+
+  /* LiGo: the handicap ADR 0021 §4 suggests for a rated challenge to this player, on each rated board size,
+   * and whether the challenger would take Black (unit 5.7). */
+  def goHandicap(username: UserStr) = Auth { _ ?=> me ?=>
+    for
+      mine <- env.user.perfsRepo.perfOf(me, PerfKey.go)
+      theirs <- env.user.api.enabledWithPerf(username, lila.rating.PerfType.Go)
+    yield theirs.fold(notFoundJson()): dest =>
+      import lila.rating.GoRating
+      def size(n: Int) =
+        val choices = GoRating.ratedStoneChoices(mine, dest.perf, n)
+        Json.obj(
+          "suggested" -> GoRating.suggestedStones(mine, dest.perf, n),
+          "min" -> choices.head,
+          "max" -> choices.last
+        )
+      JsonOk:
+        Json.obj(
+          "19" -> size(19),
+          "9" -> size(9),
+          "black" -> GoRating.handicapColor(mine, dest.perf).black
+        )
+  }
 
   private def hookResponse(res: HookResult) = res match
     case HookResult.Created(id) =>
@@ -197,11 +237,6 @@ final class Setup(
 
   def filterForm = Open:
     Ok.snip(views.setup.filter(forms.filter))
-
-  def validateFen = Open:
-    (get("fen").map(Fen.Full.clean): Option[Fen.Full]).flatMap(ValidFen(getBool("strict"))) match
-      case None => BadRequest
-      case Some(v) => Ok.snip(views.analyse.ui.miniSpan(v.fen.board, v.color))
 
   private[controllers] def redirectPov(pov: Pov)(using ctx: Context) =
     val redir = Redirect(routes.Round.watcher(pov.gameId, Color.white))

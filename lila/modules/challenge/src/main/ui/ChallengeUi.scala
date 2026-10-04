@@ -43,10 +43,9 @@ final class ChallengeUi(helpers: Helpers):
       .css("challenge.page")
 
   private def challengeTitle(c: Challenge)(using ctx: Context) =
-    val speed = c.clock.map(_.config).fold(chess.Speed.Correspondence.name) { clock =>
-      s"${chess.Speed(clock).name} (${clock.show})"
+    val speed = c.timeControl.clockSettings.fold(chess.Speed.Correspondence.name) { clock =>
+      s"${clock.speed.name} (${clock.show})"
     }
-    val variant = c.variant.exotic.so(s" ${c.variant.name}")
     val challenger = c.challengerUser.fold(trans.site.anonymous.txt()): reg =>
       s"${titleNameOrId(reg.id)}${ctx.pref.showRatings.so(s" (${goLabel(reg.rating)})")}"
     val players =
@@ -54,21 +53,23 @@ final class ChallengeUi(helpers: Helpers):
       else
         c.destUser.fold(s"Challenge from $challenger"): dest =>
           s"$challenger challenges ${titleNameOrId(dest.id)}${ctx.pref.showRatings.so(s" (${goLabel(dest.rating)})")}"
-    s"$speed$variant ${c.rated.name} Go • $players"
+    s"$speed ${c.rated.name} Go • $players"
 
   private def details(c: Challenge, requestedColor: Option[Color])(using ctx: Context) =
     div(cls := "details-wrapper")(
       div(cls := "content")(
         div(
           cls := "variant",
-          dataIcon := (if c.initialFen.isDefined then Icon.Feather else c.perfType.icon)
+          dataIcon := c.perfType.icon
         )(
           div(
-            variantLink(c.variant, c.perfType),
+            perfLink(c.perfType),
             br,
             span(cls := "clock"):
               c.daysPerTurn
-                .fold(shortClockName(c.clock.map(_.config))): days =>
+                .fold(c.timeControl match
+                  case b: Challenge.TimeControl.Byoyomi => frag(b.show) // e.g. 10+5×30s (unit 4.9)
+                  case _ => shortClockName(c.clock.map(_.config))): days =>
                   if days.value == 1 then trans.site.oneDay()
                   else trans.site.nbDays.pluralSame(days.value)
           )
@@ -77,7 +78,12 @@ final class ChallengeUi(helpers: Helpers):
           c.open.fold(c.colorChoice.some)(_.colorFor(requestedColor)).map { colorChoice =>
             frag(colorChoice.trans(), br)
           },
-          ratedName(c.rated)
+          ratedName(c.rated),
+          // a handicap game (unit 4.9): Black's stones, or none with Black first for one (R-HCP-2)
+          c.goSetup.handicap match
+            case 0 => emptyFrag
+            case 1 => frag(br, trans.site.goNoStonesBlackFirst())
+            case n => frag(br, trans.site.goNbHandicapStones.pluralSame(n))
         )
       ),
       c.rules.nonEmpty.option(
@@ -129,7 +135,7 @@ final class ChallengeUi(helpers: Helpers):
                 .map { destId =>
                   div(cls := "waiting")(
                     userIdLink(destId.some, cssClass = "target".some),
-                    if c.clock.isEmpty then
+                    if c.timeControl.clockSettings.isEmpty then
                       div(cls := "correspondence-waiting text", dataIcon := Icon.Checkmark):
                         "Challenge sent"
                     else spinner,
@@ -190,11 +196,6 @@ final class ChallengeUi(helpers: Helpers):
                         )
                     )
                 },
-              c.notableInitialFen.map: fen =>
-                frag(
-                  br,
-                  div(cls := "board-preview", chessgroundMini(fen.board, c.finalColor)(div))
-                ),
               (!c.isOpen).option(cancelForm)
             )
           case Status.Declined =>
@@ -250,8 +251,6 @@ final class ChallengeUi(helpers: Helpers):
                       )
               ,
               details(c, color),
-              c.notableInitialFen.map: fen =>
-                div(cls := "board-preview", chessgroundMini(fen.board, !c.finalColor)(div)),
               if relation.has(Relation.Block) then badTag("You have blocked this player.")
               else if c.open.exists(!_.canJoin) then
                 div(
@@ -282,7 +281,9 @@ final class ChallengeUi(helpers: Helpers):
                     a(
                       cls := "button",
                       href := s"${routes.Auth.login}?referrer=${routes.Round.watcher(c.gameId, Color.white)}"
-                    )(trans.site.signIn())
+                    )(trans.site.signIn()),
+                    // LiGo: guests play casual games only (ADR 0021 §5, unit 5.7)
+                    a(cls := "button", href := routes.Auth.signup)(trans.site.goSignUpToPlayRated())
                   )
                 )
             )
@@ -324,11 +325,19 @@ final class ChallengeUi(helpers: Helpers):
           "ruleset" -> GoSetups.rulesetKey(go.ruleset),
           "komi" -> go.komi.toString
         ),
+        Option.when(go.handicap > 0)("handicap" -> go.handicap.toString).toList,
         timeControl.match
           case Challenge.TimeControl.Clock(config) =>
             List(
               "minutesPerSide" -> config.limitInMinutes.toString,
               "increment" -> config.increment.roundSeconds.toString
+            )
+          case b: Challenge.TimeControl.Byoyomi =>
+            List(
+              "timeMode" -> "byoyomi",
+              "minutesPerSide" -> (b.config.mainSeconds / 60d).toString,
+              "periods" -> b.config.periods.toString,
+              "periodTime" -> b.config.periodSeconds.toString
             )
           case Challenge.TimeControl.Correspondence(days) => List("days" -> days.value.toString)
           case Challenge.TimeControl.Unlimited => List("time" -> "unlimited"),

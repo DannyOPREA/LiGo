@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.format.Fen
 import chess.{ ByColor, Color, Status }
 import chess.rating.IntRatingDiff
 import reactivemongo.pekkostream.{ PekkoStreamCursor, cursorProducer }
@@ -151,7 +150,6 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
           ++ Query.rated
           ++ Query.user(userId)
           ++ Query.turnsGt(22)
-          ++ Query.variantStandard
           ++ Query.clock(true)
       )
       .sort(sort.asc(F.createdAt))
@@ -185,12 +183,12 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
     val query = coll.find(selector ++ Query.go).sort(sort).batchSize(batchSize)
     hint.map(coll.hint).foldLeft(query)(_.hint(_)).cursor[Game](ReadPref.sec)
 
-  def sortedCursor(user: UserId, pk: PerfKey): PekkoStreamCursor[Game] =
+  // every game is in the Go perf (unit 3.17), so `pk` picks nothing out
+  def sortedCursor(user: UserId, @annotation.unused pk: PerfKey): PekkoStreamCursor[Game] =
     sortedCursor(
       Query.user(user.id) ++
         Query.finished ++
-        Query.turnsGt(2) ++
-        Query.variant(lila.rating.PerfType.variantOf(pk)),
+        Query.turnsGt(2),
       Query.sortChronological
     )
 
@@ -240,14 +238,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
   def countWhereUserTurn(userId: UserId): Fu[Int] = coll
     .countSel(
       // important, hits the index!
-      Query.nowPlaying(userId) ++ bdoc(
-        "$or" ->
-          List(0, 1).map: rem =>
-            bdoc(
-              s"${F.playingUids}.$rem" -> userId,
-              F.turns -> bdoc("$mod" -> barr(2, rem))
-            )
-      )
+      Query.userTurn(userId)
     )
 
   def playingRealtimeNoAi(user: User): Fu[List[GameId]] =
@@ -407,8 +398,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
 
   def insertDenormalized(g: Game): Funit =
     val g2 =
-      if g.rated.yes && (g.userIds.distinct.size != 2 ||
-          !lila.core.game.allowRated(g.variant, g.clock.map(_.config)))
+      if g.rated.yes && g.userIds.distinct.size != 2
       then g.copy(rated = chess.Rated.No)
       else g
     val userIds = g2.userIds.distinct
@@ -460,28 +450,6 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
 
   def unsetPlayingUids(g: Game): Unit =
     coll.update(ordered = false, WriteConcern.Unacknowledged).one(bid(g.id), unset(F.playingUids))
-
-  private def initialFen(gameId: GameId, readPref: ReadPref): Fu[Option[Fen.Full]] =
-    coll.withReadPreference(readPref).primitiveOne[Fen.Full](bid(gameId), F.initialFen)
-
-  def initialFen(game: Game): Fu[Option[Fen.Full]] =
-    if game.sourceIs(_.Import) || !game.variant.standardInitialPosition then
-      initialFen(game.id, if game.finished then _.sec else _.pri).dmap:
-        case None if game.variant == chess.variant.Chess960 => Fen.initial.some
-        case fen => fen
-    else fuccess(none)
-
-  def gameWithInitialFen(gameId: GameId): Fu[Option[WithInitialFen]] =
-    game(gameId).flatMapz: game =>
-      initialFen(game).dmap: fen =>
-        WithInitialFen(game, fen).some
-
-  def withInitialFen(game: Game): Fu[WithInitialFen] =
-    initialFen(game).dmap { WithInitialFen(game, _) }
-
-  def withInitialFens(games: List[Game]): Fu[List[(Game, Option[Fen.Full])]] =
-    games.parallel: game =>
-      initialFen(game).dmap { game -> _ }
 
   def count(query: Query.type => Bdoc): Fu[Int] = coll.countSel(query(Query))
   def countSec(query: Query.type => Bdoc): Fu[Int] = coll.secondary.countSel(query(Query))
