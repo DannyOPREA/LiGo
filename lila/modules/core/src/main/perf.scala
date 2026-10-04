@@ -1,7 +1,6 @@
 package lila.core
 
-import _root_.chess.variant.Variant
-import _root_.chess.{ Speed, IntRating, variant as ChessVariant }
+import _root_.chess.{ Speed, IntRating }
 import _root_.chess.rating.IntRatingDiff
 import _root_.chess.rating.glicko.Glicko
 import monocle.syntax.all.*
@@ -81,21 +80,8 @@ object perf:
     given Eq[PerfKey] = Eq.by(_.value)
 
     def apply(key: String): Option[PerfKey] = Option.when(all.contains(key))(key)
-    def apply(variant: Variant, speed: Speed): PerfKey = byVariant(variant) | standardBySpeed(speed)
 
     def keyToId(key: PerfKey): PerfId = keyIdMap(key)
-
-    def byVariant(variant: Variant): Option[PerfKey] = variant match
-      case ChessVariant.Standard => none
-      case ChessVariant.FromPosition => none
-      case ChessVariant.Crazyhouse => crazyhouse.some
-      case ChessVariant.Chess960 => chess960.some
-      case ChessVariant.KingOfTheHill => kingOfTheHill.some
-      case ChessVariant.ThreeCheck => threeCheck.some
-      case ChessVariant.Antichess => antichess.some
-      case ChessVariant.Atomic => atomic.some
-      case ChessVariant.Horde => horde.some
-      case ChessVariant.RacingKings => racingKings.some
 
     def standardBySpeed(speed: Speed): PerfKey = speed match
       case Speed.Bullet => bullet

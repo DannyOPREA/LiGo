@@ -43,8 +43,6 @@ object UiEnv
   def manifest = env.web.manifest
   val translator = lila.i18n.Translator
   val langList = lila.i18n.LangList
-  // Go games have no chess opening (unit 3.17); the helper itself goes in part 2.
-  val gameOpening = (_: lila.core.game.Game, _: Boolean) => none
   protected val namer = lila.game.Namer
 
   protected def isProd = env.mode.isProd

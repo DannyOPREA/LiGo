@@ -1,6 +1,5 @@
 package lila.api
 
-import chess.format.Fen
 import play.api.libs.json.*
 import play.api.mvc.RequestHeader
 import reactivemongo.api.bson.*
@@ -123,11 +122,9 @@ final private[api] class GameApi(
     val allAnalysis =
       if withFlags.analysis then analysisRepo.byIds(games.map(g => Analysis.Id(g.id)))
       else fuccess(List.fill(games.size)(none[Analysis]))
-    allAnalysis.flatMap { analysisOptions =>
-      (games.map(gameRepo.initialFen)).parallel.map { initialFens =>
-        games.zip(analysisOptions).zip(initialFens).map { case ((g, analysisOption), initialFen) =>
-          gameToJson(g, analysisOption, initialFen, checkToken(withFlags))
-        }
+    allAnalysis.map { analysisOptions =>
+      games.zip(analysisOptions).map { (g, analysisOption) =>
+        gameToJson(g, analysisOption, checkToken(withFlags))
       }
     }
 
@@ -136,13 +133,11 @@ final private[api] class GameApi(
   private def gameToJson(
       g: Game,
       analysisOption: Option[Analysis],
-      initialFen: Option[Fen.Full],
       withFlags: WithFlags
   ) =
     Json
       .obj(
         "id" -> g.id,
-        "initialFen" -> initialFen,
         "rated" -> g.rated,
         // a Go game has its setup instead of a chess variant (unit 3.16)
         "go" -> lila.game.JsonView.goSetup(g.go),
@@ -196,7 +191,6 @@ object GameApi:
       analysis: Boolean = false,
       moves: Boolean = false,
       fens: Boolean = false,
-      opening: Boolean = false,
       moveTimes: Boolean = false,
       blurs: Boolean = false,
       token: Option[String] = none
@@ -209,7 +203,6 @@ object GameApi:
       analysis = queryStringBool("with_analysis"),
       moves = queryStringBool("with_moves"),
       fens = queryStringBool("with_fens"),
-      opening = queryStringBool("with_opening"),
       moveTimes = queryStringBool("with_movetimes"),
       token = queryStringGet("token")
     )

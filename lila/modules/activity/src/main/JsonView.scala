@@ -25,8 +25,6 @@ final class JsonView(
           .map: (pk, score) =>
             pk.value -> Json.toJson(score)
 
-    given Writes[chess.variant.Variant] = writeAs(_.key)
-
     given Writes[Puzzles] = writeWrap("score")(_.value)
     given Writes[Storm] = Json.writes
     given Writes[Racer] = Json.writes

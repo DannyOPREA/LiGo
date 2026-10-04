@@ -5,7 +5,7 @@ import { colors } from 'lib/setup/color';
 import { wsPingInterval } from 'lib/socket';
 import { storage, type LichessStorage } from 'lib/storage';
 
-import { isGoRuleset, isGoSize } from './goSetup';
+import { isGoRuleset, isGoSize, isHandicap } from './goSetup';
 import * as hookRepo from './hookRepo';
 import type {
   LobbyOpts,
@@ -88,7 +88,12 @@ export default class LobbyController {
       const komi = urlParams.get('komi');
       if (komi) forceOptions.goKomi = Number(komi);
 
-      let timeMode = urlParams.get('time');
+      // a reusable byo-yomi challenge says `timeMode=byoyomi` (unit 4.9), the others `time=unlimited`
+      let timeMode = urlParams.get('time') ?? urlParams.get('timeMode');
+      const handicap = Number(urlParams.get('handicap'));
+      if (isHandicap(handicap) && handicap > 0) forceOptions.handicap = handicap;
+      const periods = urlParams.get('periods');
+      const periodTime = urlParams.get('periodTime');
       const days = urlParams.get('days');
       const minutesPerSide = urlParams.get('minutesPerSide');
       const increment = urlParams.get('increment');
@@ -106,6 +111,12 @@ export default class LobbyController {
         forceOptions.timeMode = 'realTime';
         if (minutesPerSide) forceOptions.time = parseFloat(minutesPerSide);
         if (increment) forceOptions.increment = parseInt(increment);
+        if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'live'];
+      } else if (timeMode === 'byoyomi') {
+        forceOptions.timeMode = 'byoyomi';
+        if (minutesPerSide) forceOptions.time = parseFloat(minutesPerSide);
+        if (periods) forceOptions.periods = parseInt(periods);
+        if (periodTime) forceOptions.periodTime = parseInt(periodTime);
         if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'live'];
       } else if (timeMode === 'unlimited') {
         if (locationHash === 'hook') [this.tab, this.mode] = ['open', 'correspondence'];

@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.format.Fen
 import chess.{ Centis, Clock, Color }
 import play.api.libs.json.*
 
@@ -13,11 +12,11 @@ final class JsonView(rematches: Rematches):
 
   import JsonView.given
 
-  def immutable(game: Game, initialFen: Option[Fen.Full]) =
+  def immutable(game: Game) =
     Json
       .obj(
         "id" -> game.id,
-        "variant" -> game.variant,
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> game.speed.key,
         "perf" -> game.perfKey,
         "rated" -> game.rated,
@@ -25,13 +24,12 @@ final class JsonView(rematches: Rematches):
         "createdAt" -> game.createdAt
       )
       .add("startedAtTurn" -> game.startedAtPly.some.filter(_ > 0))
-      .add("initialFen" -> initialFen)
       .add("tournamentId" -> game.tournamentId)
       .add("swissId" -> game.swissId)
       .add("rules" -> game.metadata.nonEmptyRules)
 
-  def base(game: Game, initialFen: Option[Fen.Full]) =
-    immutable(game, initialFen) ++ Json
+  def base(game: Game) =
+    immutable(game) ++ Json
       .obj(
         "turns" -> game.ply,
         "status" -> game.status
@@ -44,8 +42,8 @@ final class JsonView(rematches: Rematches):
       .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
 
   // adds the player to move, which the client could compute
-  def baseWithPlayer(game: Game, initialFen: Option[Fen.Full]) =
-    base(game, initialFen) ++ Json.obj("player" -> game.turnColor)
+  def baseWithPlayer(game: Game) =
+    base(game) ++ Json.obj("player" -> game.turnColor)
 
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json
@@ -56,10 +54,7 @@ final class JsonView(rematches: Rematches):
         "lastMove" -> GoBridge.lastMove(pov.game.go),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
-        "variant" -> Json.obj(
-          "key" -> pov.game.variant.key,
-          "name" -> pov.game.variant.name
-        ),
+        "variant" -> lila.core.game.GoSetups.legacyVariantJson, // read by the browser until 3.19 part 2
         "speed" -> pov.game.speed.key,
         "perf" -> pov.game.perfKey,
         "rated" -> pov.game.rated,
@@ -81,7 +76,6 @@ final class JsonView(rematches: Rematches):
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)
       .add("swissId" -> pov.game.swissId)
-      // .add("orientation" -> pov.game.variant.racingKings.option(chess.White))
       .add("winner" -> pov.game.winnerColor)
       .add("rating" -> pov.player.rating)
       .add("goRank" -> Namer.ratingString(pov.player))
@@ -195,13 +189,6 @@ object JsonView:
     Json.obj(
       "nb" -> blurs.nb,
       "bits" -> blurs.binaryString
-    )
-
-  given OWrites[chess.variant.Variant] = OWrites: v =>
-    Json.obj(
-      "key" -> v.key,
-      "name" -> v.name,
-      "short" -> v.shortName
     )
 
   given OWrites[Clock] = OWrites: c =>

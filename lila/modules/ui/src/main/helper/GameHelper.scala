@@ -11,8 +11,6 @@ trait GameHelper:
 
   protected val namer: Namer
 
-  def gameOpening: (Game, Boolean) => Option[_root_.chess.opening.Opening]
-
   def titleGame(g: Game) =
     val speed = chess.Speed(g.clock.map(_.config)).name
     val game = s"${g.go.size.lines}×${g.go.size.lines} Go"
@@ -144,11 +142,7 @@ trait GameHelper:
   def aiNameFrag(level: Int)(using Translate) =
     raw(aiName(level).replace(" ", "&nbsp;"))
 
-  def variantLink(
-      variant: chess.variant.Variant,
-      pk: PerfKey,
-      shortName: Boolean = false
-  )(using Translate): Frag =
+  def perfLink(pk: PerfKey)(using Translate): Frag =
 
     def link(href: String, title: String, name: String) = a(
       cls := "variant-link",
@@ -157,17 +151,7 @@ trait GameHelper:
       st.title := title
     )(name)
 
-    if variant.exotic then
-      link(
-        href = variant match
-          // FromPosition linked to the board editor, removed in unit 3.7.
-          case v => routes.Cms.variant(v.key).url
-        ,
-        title = variant.variantTitleTrans.txt(),
-        name = (if shortName && variant == chess.variant.KingOfTheHill then variant.shortName
-                else variant.variantTrans.txt()).toUpperCase
-      )
-    else if pk == PerfKey.correspondence then
+    if pk == PerfKey.correspondence then
       link(
         href = s"${routes.Main.faq}#correspondence",
         title = PerfKey.correspondence.perfDesc.txt(),

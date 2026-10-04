@@ -253,9 +253,17 @@
   <string name="goRulesJapanese">Japanese</string>
   <string name="goRulesChinese">Chinese</string>
   <string name="goKomi">Komi</string>
+  <string name="byoyomi">Byo-yomi</string>
+  <string name="goPeriods">Periods</string>
+  <string name="goSecondsPerPeriod">Seconds per period</string>
+  <string name="goNoStonesBlackFirst">No stones, Black first</string>
   <string name="openChallenges">Open challenges</string>
   <string name="live">Live</string>
   <string name="goEven">Even</string>
+  <string name="goUnjoinableRated">Rated games need an account</string>
+  <string name="goUnjoinableRange">Your rank is outside this game's range</string>
+  <string name="goUnjoinableMembers">For signed-in players</string>
+  <string name="goUnjoinableGuests">For guests</string>
   <string name="goHandicap">Handicap</string>
   <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>
   <string name="goFirstMove">First move</string>

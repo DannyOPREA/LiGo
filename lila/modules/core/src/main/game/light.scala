@@ -2,7 +2,6 @@ package lila.core
 package game
 
 import _root_.chess.{ Color, Status, IntRating }
-import _root_.chess.variant.Variant
 import _root_.chess.rating.{ IntRatingDiff, RatingProvisional }
 
 import lila.core.id.GameId
@@ -14,8 +13,6 @@ case class LightGame(
     blackPlayer: LightPlayer,
     status: Status,
     win: Option[Color],
-    variant: Variant,
-    // A Go game (unit 3.16): its `variant` is the unused chess default until unit 3.17 removes it.
     isGo: Boolean = false
 ):
   def playable = status < Status.Aborted

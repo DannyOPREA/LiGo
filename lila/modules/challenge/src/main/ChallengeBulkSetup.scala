@@ -2,8 +2,6 @@ package lila.challenge
 
 import cats.mtl.Handle.*
 import org.apache.pekko.stream.scaladsl.*
-import chess.format.Fen
-import chess.variant.Variant
 import ligo.gorules.Setup as GoSetup
 import chess.{ ByColor, Clock, Rated }
 import play.api.data.*
@@ -37,7 +35,7 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
       setupForm.variant,
       setupForm.clock,
       setupForm.optionalDays,
-      "fen" -> optional(lila.common.Form.fen.mapping),
+      "fen" -> setupForm.noFen,
       "rated" -> boolean.into[Rated],
       "pairAt" -> optional(timestampInNearFuture),
       "startClocksAt" -> optional(timestampInNearFuture),
@@ -49,10 +47,10 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
     ) {
       (
           tokens: String,
-          variant: Option[Variant.LilaKey],
+          _: Option[String], // a chess variant, refused by the form (unit 3.17)
           clock: Option[Clock.Config],
           days: Option[Days],
-          fen: Option[Fen.Full],
+          _: Option[String], // a chess position, refused by the form (unit 3.17)
           rated: Rated,
           pairTs: Option[Long],
           clockTs: Option[Long],
@@ -64,7 +62,6 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
       ) =>
         BulkFormData(
           tokens,
-          Variant.orDefault(variant),
           clock,
           days,
           rated,
@@ -72,7 +69,6 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
           clockTs.map(millisToInstant),
           message.map(Template.apply),
           ~rules,
-          fen,
           GoOptions(size, ruleset, komi)
         )
     }(_ => None)
@@ -80,7 +76,6 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
         "clock or correspondence days required",
         c => c.clock.isDefined || c.days.isDefined
       )
-      .verifying("Go games can't start from a chess position", _.validFen)
       .verifying("Go games are casual until ratings arrive", _.rated.no)
       .verifying("Komi must be a multiple of 0.5 no bigger than the board", _.go.valid)
       .verifying(
@@ -154,7 +149,6 @@ final class ChallengeBulkSetupApi(
                     id = ThreadLocalRandom.nextString(8),
                     by = me.id,
                     _,
-                    data.variant,
                     data.clockOrDays,
                     data.rated,
                     pairAt = data.pairAt | nowInstant,
@@ -181,7 +175,6 @@ object ChallengeBulkSetup:
       @Key("_id") id: ID,
       by: UserId,
       games: List[ScheduledGame],
-      variant: Variant,
       clock: Either[Clock.Config, Days],
       rated: Rated,
       pairAt: Instant,
@@ -190,7 +183,6 @@ object ChallengeBulkSetup:
       message: Option[Template],
       rules: Set[GameRule] = Set.empty,
       pairedAt: Option[Instant] = None,
-      fen: Option[Fen.Full] = None, // never set since unit 3.15
       // board size, ruleset and komi (unit 3.15); none on bulks scheduled before it
       go: Option[GoSetup] = None
   ):
@@ -209,7 +201,6 @@ object ChallengeBulkSetup:
 
   case class BulkFormData(
       tokens: String,
-      variant: Variant,
       clock: Option[Clock.Config],
       days: Option[Days],
       rated: Rated,
@@ -217,15 +208,11 @@ object ChallengeBulkSetup:
       startClocksAt: Option[Instant],
       message: Option[Template],
       rules: Set[GameRule],
-      fen: Option[Fen.Full] = None,
       go: GoOptions = GoOptions.default
   ):
     def clockOrDays = clock.toLeft(days | Days(3))
 
     def allowMultiplePairingsPerUser = clock.isEmpty
-
-    // Go games start from their setup, never from a chess position (unit 3.15)
-    def validFen = fen.isEmpty
 
   def toJson(bulk: ScheduledBulk) =
     import bulk.*
@@ -240,7 +227,6 @@ object ChallengeBulkSetup:
             "white" -> g.white,
             "black" -> g.black
           ),
-        "variant" -> variant.key,
         "rated" -> rated,
         "pairAt" -> pairAt,
         "startClocksAt" -> startClocksAt,
@@ -256,7 +242,6 @@ object ChallengeBulkSetup:
         Json.obj("daysPerTurn" -> days))
       .add("message" -> message.map(_.value))
       .add("rules" -> nonEmptyRules)
-      .add("fen" -> fen)
       .add("go" -> GoSetups.json(goSetup).some)
 
   private[challenge] def extractTokenPairs(str: String): List[PairOf[Bearer]] =
