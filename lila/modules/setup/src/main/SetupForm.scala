@@ -1,8 +1,6 @@
 package lila.setup
 
 import chess.{ Clock, Rated }
-import chess.format.Fen
-import chess.variant.Variant
 import play.api.data.*
 import play.api.data.Forms.*
 import scalalib.model.Days
@@ -19,11 +17,6 @@ object SetupForm:
 
   // Games against the computer (ai, aiFilled, api.ai) went with fishnet (unit 3.5).
 
-  // A Go game never starts from a chess position (unit 3.15), so a `fen` in the URL is dropped.
-  def friendFilled(fen: Option[Fen.Full])(using Option[Me]): Form[FriendConfig] =
-    friend.fill(FriendConfig.default)
-
-  private val goFenError = "Go games can't start from a chess position"
   private val ratedError = "Go games are casual until ratings arrive"
   private val komiError = "Komi must be a multiple of 0.5 no bigger than the board"
   private val byoyomiError = "Use one of clock, byoyomi or days"
@@ -38,7 +31,7 @@ object SetupForm:
       "days" -> days,
       "mode" -> mode(withRated = false), // casual until Phase 5
       "color" -> color,
-      "fen" -> fenField,
+      "fen" -> Mappings.noFen,
       "size" -> goSize,
       "ruleset" -> goRuleset,
       "komi" -> goKomi,
@@ -49,7 +42,6 @@ object SetupForm:
       .verifying("Invalid clock", _.validClock)
       .verifying("Invalid speed", _.validSpeed(me.exists(_.isBot)))
       .verifying("Can't create rated unlimited game", !_.isRatedUnlimited)
-      .verifying(goFenError, _.validFen)
       .verifying(goError, _.go.valid)
 
   def hookFilled(timeModeString: Option[String])(using me: Option[Me]): Form[HookConfig] =
@@ -80,16 +72,15 @@ object SetupForm:
       "time" -> optional(time),
       "increment" -> optional(increment),
       "days" -> optional(days),
-      "variant" -> optional(boardApiVariantKeys),
+      "variant" -> variant,
       "rated" -> optional(boolean.into[Rated]),
       "ratingRange" -> optional(ratingRange),
       "color" -> optional(color),
       "size" -> goSize,
       "ruleset" -> goRuleset,
       "komi" -> goKomi
-    )((t, i, d, v, r, g, c, size, ruleset, komi) =>
+    )((t, i, d, _, r, g, c, size, ruleset, komi) =>
       HookConfig(
-        variant = Variant.orDefault(v),
         timeMode = if d.isDefined then TimeMode.Correspondence else TimeMode.RealTime,
         time = t | 10,
         increment = i | Clock.IncrementSeconds(5),
@@ -128,7 +119,9 @@ object SetupForm:
 
     lazy val optionalDays = "days" -> optional(days)
 
-    lazy val variant = "variant" -> optional(typeIn(boardApiVariants))
+    lazy val variant = "variant" -> Mappings.variant
+
+    def noFen = Mappings.noFen
 
     lazy val goSize = "size" -> Mappings.goSize
     lazy val goRuleset = "ruleset" -> Mappings.goRuleset
@@ -171,7 +164,7 @@ object SetupForm:
         optionalDays,
         "rated" -> boolean.into[Rated],
         "color" -> optional(color),
-        "fen" -> fenField,
+        "fen" -> noFen,
         message,
         "keepAliveStream" -> optional(boolean),
         rules,
@@ -182,7 +175,6 @@ object SetupForm:
         goHandicap,
         byoyomi
       )(ApiConfig.from)(_ => none)
-        .verifying(goFenError, _.validFen)
         .verifying(ratedError, _.validRated)
         .verifying(goError, _.go.valid)
         .verifying(byoyomiError, c => c.byoyomi.isEmpty || (c.clock.isEmpty && c.days.isEmpty))
@@ -199,7 +191,7 @@ object SetupForm:
       clock,
       optionalDays,
       "rated" -> boolean.into[Rated],
-      "fen" -> fenField,
+      "fen" -> noFen,
       "users" -> optional:
         LilaForm.strings
           .separator(",")
@@ -217,7 +209,6 @@ object SetupForm:
       goHandicap,
       byoyomi
     )(OpenConfig.from)(_ => none)
-      .verifying(goFenError, _.validFen)
       .verifying(ratedError, _.rated.no)
       .verifying(goError, _.go.valid)
       .verifying(byoyomiError, c => c.byoyomi.isEmpty || (c.clock.isEmpty && c.days.isEmpty))

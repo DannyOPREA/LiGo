@@ -34,7 +34,7 @@ final class HistoryApi(
 
   def add(user: User, game: Game, perfs: UserPerfs): Funit = withColl: coll =>
     val changes = HistoryApi
-      .perfKeysOf(isGo = true, PerfKey(game.ratingVariant, game.speed)) // every game is Go (unit 3.17)
+      .perfKeysOf(isGo = true, PerfKey.standardBySpeed(game.speed)) // every game is Go (unit 3.17)
       .map(pk => pk.value -> perfs(pk).intRating)
     val days = daysBetween(user.createdAt, game.movedAt)
     coll.update

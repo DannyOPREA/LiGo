@@ -278,7 +278,7 @@ export default class SetupController {
 
   propsToFormData = (color: ColorChoice) =>
     xhr.form({
-      variant: 1, // standard: the only value the server takes until unit 3.17 drops the field
+      variant: 1, // standard, the only variant the server accepts (unit 3.17)
       size: this.goSize().toString(),
       ruleset: this.goRuleset(),
       komi: this.goKomi().toString(),

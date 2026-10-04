@@ -2,7 +2,6 @@ package lila.api
 
 import org.apache.pekko.stream.scaladsl.*
 import chess.ByColor
-import chess.opening.Opening
 import play.api.libs.json.*
 import reactivemongo.pekkostream.cursorProducer
 
@@ -32,7 +31,7 @@ final class GameApiV2(
   def exportOne(game: Game, config: OneConfig): Fu[String] =
     for
       (game, analysis) <- enrich(config.flags)(game)
-      json <- toJson(game, analysis, none, config)
+      json <- toJson(game, analysis, config)
     yield Json.stringify(json)
 
   private val fileR = """[\s,]""".r
@@ -89,7 +88,7 @@ final class GameApiV2(
     config = MobileRecentConfig(user)
     enriched <- games.sequentially(enrich(config.flags))
     jsons <- enriched.sequentially: (game, analysis) =>
-      toJson(game, analysis, none, config)
+      toJson(game, analysis, config)
   yield JsArray(jsons)
 
   def mobileCurrent(user: User)(using Option[Me]): Fu[Option[JsObject]] =
@@ -99,7 +98,7 @@ final class GameApiV2(
       .flatMapz: game =>
         val config = OneConfig(GameApiV2.Format.JSON, WithFlags())
         enrich(config.flags)(game).flatMap: (game, analysis) =>
-          toJson(game, analysis, none, config).dmap(some)
+          toJson(game, analysis, config).dmap(some)
 
   def exportByIds(config: ByIdsConfig): Source[String, ?] =
     gameRepo
@@ -152,7 +151,7 @@ final class GameApiV2(
       .mapAsync(4)(enrich(config.flags))
       .mapAsync(4): (game, analysis) =>
         // a Go game has no chess opening (unit 3.16)
-        toJson(game, analysis, none, config).map: json =>
+        toJson(game, analysis, config).map: json =>
           s"${Json.stringify(json)}\n"
 
   private def enrich(flags: WithFlags)(game: Game): Fu[(Game, Option[Analysis])] =
@@ -161,7 +160,6 @@ final class GameApiV2(
   private def toJson(
       g: Game,
       analysisOption: Option[Analysis],
-      opening: Option[Opening.AtPly],
       config: Config
   ): Fu[JsObject] = for
     lightUsers <- gameLightUsers(g)
@@ -195,7 +193,6 @@ final class GameApiV2(
     .add("go" -> lila.game.JsonView.goSetup(g.go).some)
     .add("fullId" -> config.by.flatMap(Pov(g, _)).map(_.fullId))
     .add("winner" -> g.winnerColor.map(_.name))
-    .add("opening" -> opening)
     .add("moves" -> flags.moves.option {
       val moves = lila.game.JsonView.goMoves(g.go)
       applyDelay(moves, flags.keepDelayIf(g.playable)).mkString(" ")

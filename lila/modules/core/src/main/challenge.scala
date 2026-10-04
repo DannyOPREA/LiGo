@@ -1,7 +1,6 @@
 package lila.core
 package challenge
 
-import _root_.chess.variant.Variant
 import _root_.chess.{ Color, Rated }
 import _root_.chess.rating.RatingProvisional
 import _root_.chess.IntRating
@@ -14,7 +13,6 @@ import lila.core.game.Game
 trait Challenge:
   import Challenge.*
   val id: ChallengeId
-  val variant: Variant
   val rated: Rated
   val timeControl: TimeControl
   val finalColor: Color

@@ -104,7 +104,7 @@ private object SeekApi:
         case ((res, h), seek) if seek.user.id == user.id => (seek :: res, h)
         case ((res, h), seek) =>
           val seekH =
-            List(seek.variant, seek.goSetup, seek.daysPerTurn, seek.rated.name, seek.user.id).mkString(",")
+            List(seek.goSetup, seek.daysPerTurn, seek.rated.name, seek.user.id).mkString(",")
           if h contains seekH then (res, h)
           else (seek :: res, h + seekH)
       ._1

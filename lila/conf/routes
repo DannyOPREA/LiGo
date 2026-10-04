@@ -134,7 +134,6 @@ POST  /setup/friend                    controllers.Setup.friend(user: Option[Use
 POST  /setup/hook/:sri/like/:gameId    controllers.Setup.like(sri: Sri, gameId: GameId)
 POST  /setup/hook/:sri                 controllers.Setup.hook(sri: Sri)
 GET   /setup/filter                    controllers.Setup.filterForm
-GET   /setup/validate-fen              controllers.Setup.validateFen
 
 # Challenge
 GET   /challenge                       controllers.Challenge.all
@@ -418,10 +417,6 @@ GET   /source                          controllers.Cms.source
 GET   /survey                          controllers.Main.survey
 GET   /qa/:id/:slug                    controllers.Main.legacyQaQuestion(id: Int, slug)
 GET   /page/:key                       controllers.Cms.lonePage(key: CmsPageKey)
-
-# Variants
-GET   /variant                         controllers.Cms.variantHome
-GET   /variant/:key                    controllers.Cms.variant(key: chess.variant.Variant.LilaKey)
 
 # Help
 GET   /help/contribute                 controllers.Cms.help

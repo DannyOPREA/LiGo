@@ -14,7 +14,6 @@ class GoHookTest extends munit.FunSuite:
 
   private def hook(go: GoSetup, sri: String) = Hook.make(
     sri = lila.core.socket.Sri(sri),
-    variant = chess.variant.Standard,
     go = go,
     clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
     rated = Rated.No,
@@ -48,7 +47,6 @@ class GoHookTest extends munit.FunSuite:
     )
     val seek = Seek(
       "abcdefgh",
-      chess.variant.Standard.id,
       nine.some,
       None,
       Rated.No,
@@ -66,7 +64,6 @@ class GoHookTest extends munit.FunSuite:
   // Unit 6.4 (first part): which hooks the pools may take (ADR 0022 §6)
   private def rated(go: GoSetup, color: TriColor = TriColor.Random) = Hook.make(
     sri = lila.core.socket.Sri("r"),
-    variant = chess.variant.Standard,
     go = go,
     clock = ClockSettings.Fischer(Clock.Config(Clock.LimitSeconds(300), Clock.IncrementSeconds(3))),
     rated = Rated.Yes,
@@ -125,7 +122,7 @@ class GoHookTest extends munit.FunSuite:
   private val alice = seekUser("alice")
 
   private def dupSeek(id: String, go: Option[GoSetup], by: LobbyUser = bob) =
-    Seek(id, chess.variant.Standard.id, go, Some(Days(3)), Rated.No, by, RatingRange.default, nowInstant)
+    Seek(id, go, Some(Days(3)), Rated.No, by, RatingRange.default, nowInstant)
 
   private def shown(seeks: List[Seek]) = SeekApi.noDupsFor(alice, seeks).map(_.id)
 

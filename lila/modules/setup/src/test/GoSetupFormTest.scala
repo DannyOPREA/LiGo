@@ -58,6 +58,23 @@ class GoSetupFormTest extends munit.FunSuite:
     assertEquals(ok.get.goSetup.size, BoardSize.Nine)
     assert(board.bind(Map("time" -> "10", "increment" -> "5", "rated" -> "true")).hasErrors)
 
+  // Unit 3.17: the server has no chess variants or positions; `variant` 1/standard is still accepted
+  test("every form accepts the standard variant and refuses other variants and any position"):
+    val startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    val friend = lobbyGame + ("color" -> "random")
+    for v <- List("1", "standard") do
+      assert(!SetupForm.hook.bind(lobbyGame + ("variant" -> v)).hasErrors, s"hook $v")
+      assert(!SetupForm.friend.bind(friend + ("variant" -> v)).hasErrors, s"friend $v")
+    val board = SetupForm.boardApiHook(allowFastGames = true)
+    val seek = Map("time" -> "10", "increment" -> "5")
+    assert(!board.bind(seek + ("variant" -> "standard")).hasErrors, "board standard")
+    assert(board.bind(seek + ("variant" -> "atomic")).hasErrors, "board atomic")
+    val open = SetupForm.api.open(isAdmin = false)
+    assert(!open.bind(Map("rated" -> "false")).hasErrors, open.bind(Map("rated" -> "false")).errors)
+    assert(open.bind(Map("rated" -> "false", "variant" -> "horde")).hasErrors, "open variant")
+    assert(open.bind(Map("rated" -> "false", "fen" -> startFen)).hasErrors, "open fen")
+    assert(!open.bind(Map("rated" -> "false", "fen" -> "")).hasErrors, "open empty fen")
+
   test("New opponent after a rated handicap game makes a casual, even Go hook on the same board"):
     import lila.core.game.{ Player, Source, newGoGame }
     val players =
@@ -67,7 +84,7 @@ class GoSetupFormTest extends munit.FunSuite:
       .fold(e => fail(e.message), _.sloppy)
       .copy(rated = chess.Rated.Yes)
     val config = HookConfig.default(auth = true).updateFrom(old)
-    assertEquals((config.rated, config.variant), (chess.Rated.No, chess.variant.Standard))
+    assertEquals(config.rated, chess.Rated.No)
     assertEquals(config.goSetup, nine.copy(handicap = 0))
 
   // Unit 4.9: byo-yomi clocks in both forms, handicap in the challenge forms.

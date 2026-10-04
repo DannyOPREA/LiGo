@@ -125,7 +125,7 @@ final private class Finisher(
     import prog.game
     if game.nonAi && game.isCorrespondence then Color.all.foreach(notifier.gameEnd(prog.game))
     lila.mon.game
-      .finish(game.variant, game.speed, game.source, game.rated, status)
+      .finish(game.speed, game.source, game.rated, status)
       .increment()
     recordLagStats(game)
     for

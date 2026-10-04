@@ -32,7 +32,7 @@ def meta(
                 div(
                   a(href := routes.Importer.importGame, title := trans.site.importGame.txt())("IMPORT"),
                   separator,
-                  variantLink(game.variant, game.perfType, shortName = true)
+                  perfLink(game.perfType)
                 )
               else
                 frag(
