@@ -24,8 +24,8 @@ function renderPrisoners(ctrl: RoundController, position: TopOrBottom): VNode {
   const n = ctrl.prisoners()[color];
   return hl(`div.material.material-${position}.go-prisoners`, [
     hl(`span.go-prisoners__stone.${color}`, { attrs: { 'aria-hidden': 'true' } }),
-    hl('span.go-prisoners__color', color === 'black' ? 'Black' : 'White'),
-    hl('span.go-prisoners__count', `${n} ${n === 1 ? 'prisoner' : 'prisoners'}`),
+    hl('span.go-prisoners__color', color === 'black' ? i18n.site.black : i18n.site.white),
+    hl('span.go-prisoners__count', i18n.site.goNbPrisoners(n, n)),
   ]);
 }
 
@@ -60,7 +60,7 @@ export function main(ctrl: RoundController): VNode {
         },
         [
           ctrl.board.loadFailed
-            ? hl('p.round__go-board-failed', 'The board could not be loaded. Reload the page to try again.')
+            ? hl('p.round__go-board-failed', i18n.site.goBoardFailedToLoad)
             : renderBoard(ctrl),
         ],
       ),

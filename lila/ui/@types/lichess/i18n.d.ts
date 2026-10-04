@@ -3801,38 +3801,142 @@ interface I18n {
     giveNbSeconds: I18nPlural;
     /** Glicko-2 rating */
     glicko2Rating: string;
+    /** GO BERSERK! Half the time, no increment, bonus point */
+    goBerserkTitle: string;
+    /** Black stones */
+    goBlackStones: string;
+    /** Black: %s */
+    goBlackX: I18nFormat;
+    /** The board could not be loaded. Reload the page to try again. */
+    goBoardFailedToLoad: string;
     /** Board size */
     goBoardSize: string;
+    /** Both players passed. Counting the score comes in a later version. */
+    goBothPlayersPassed: string;
+    /** Connecting to the game */
+    goConnectingToTheGame: string;
+    /** Current tournament rank */
+    goCurrentTournamentRank: string;
     /** Go deeper */
     goDeeper: string;
+    /** Delete %s? */
+    goDeleteX: I18nFormat;
+    /** Download SGF */
+    goDownloadSgf: string;
     /** Even */
     goEven: string;
     /** First move */
     goFirstMove: string;
     /** Handicap */
     goHandicap: string;
+    /** Joined the game */
+    goJoinedTheGame: string;
     /** Komi */
     goKomi: string;
+    /** That move would repeat an earlier position (ko). */
+    goKoRefused: string;
     /** Last move */
     goLastMove: string;
+    /** Left the game */
+    goLeftTheGame: string;
+    /** Load SGF */
+    goLoadSgf: string;
+    /** Move limit reached */
+    goMoveLimitReached: string;
+    /** %s comments */
+    goNbComments: I18nPlural;
+    /** %s handicap stones */
+    goNbHandicapStones: I18nPlural;
+    /** %s moves */
+    goNbMoves: I18nPlural;
+    /** %s prisoners */
+    goNbPrisoners: I18nPlural;
+    /** New position */
+    goNewPosition: string;
     /** Next move */
     goNextMove: string;
     /** No open challenges match. Try other filters, or create a game. */
     goNoOpenChallenges: string;
+    /** Games cannot be played through a web proxy. Please use %s instead. */
+    goNoWebProxy: I18nFormat;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
+    /** Ok, got it */
+    goOkGotIt: string;
+    /** Open SGF file */
+    goOpenSgfFile: string;
+    /** Your opponent left the game. You can claim victory, or wait for them. */
+    goOpponentLeftChoices: string;
+    /** Pass */
+    goPass: string;
+    /** Pass: play no stone this turn */
+    goPassTitle: string;
+    /** Place */
+    goPlace: string;
     /** Previous move */
     goPreviousMove: string;
+    /** Prisoners: */
+    goPrisonersLabel: string;
     /** Your Go rating starts there. You can change it until your first rated game starts. */
     goRankChangeHelp: string;
     /** Your Go rank now changes only through rated games. */
     goRankLocked: string;
+    /** Your opponent is offline, but they can accept this challenge later! */
+    goRematchOfflineText: string;
+    /** Challenged to a rematch */
+    goRematchOfflineTitle: string;
+    /** Result: %s */
+    goResultX: I18nFormat;
     /** Rules */
     goRules: string;
     /** Chinese */
     goRulesChinese: string;
     /** Japanese */
     goRulesJapanese: string;
+    /** The file's rules are not ones LiGo plays: Japanese rules are used instead. */
+    goRulesUnknown: string;
+    /** Tap a point to put a stone there. Tap a stone of the same colour to remove it. */
+    goSetupHint: string;
+    /** That file is too big to be an SGF record. */
+    goSgfTooBig: string;
+    /** That record could not be read. */
+    goSgfUnreadable: string;
+    /** Show clock on left */
+    goShowClockOnLeft: string;
+    /** Start */
+    goStart: string;
+    /** Start analysis */
+    goStartAnalysis: string;
+    /** Stones Black has taken */
+    goStonesBlackHasTaken: string;
+    /** Stones White has taken */
+    goStonesWhiteHasTaken: string;
+    /** There is a stone there already. */
+    goStoneThereAlready: string;
+    /** Streamer mode */
+    goStreamerMode: string;
+    /** That move would take the last liberty of its own stones (suicide). */
+    goSuicideRefused: string;
+    /** To play */
+    goToPlay: string;
+    /** Vibration feedback */
+    goVibrationFeedback: string;
+    /** White stones */
+    goWhiteStones: string;
+    /** White: %s */
+    goWhiteX: I18nFormat;
+    /** %1$s and %2$s */
+    goXAndY: I18nFormat;
+    /** %s joined the game. */
+    goXJoinedTheGame: I18nFormat;
+    /** %s passed. */
+    goXPassed: I18nFormat;
+    /** %1$s played %2$s. */
+    goXPlayedY: I18nFormat;
+    /** You play %s. */
+    goYouPlayX: I18nFormat;
+    /** Your opponent */
+    goYourOpponent: string;
     /** Graph */
     graph: string;
     /** Hang on! */
