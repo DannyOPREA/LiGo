@@ -194,9 +194,6 @@ final class RoundSocket(
   Bus.sub[Tell]:
     case Tell(gameId, msg) => rounds.tell(gameId, msg)
 
-  Bus.sub[lila.tree.AnalysisProgress]: progress =>
-    rounds.tellIfPresent(progress.gameId, progress)
-
   Bus.sub[lila.game.actorApi.NotifyRematch]: rematch =>
     rounds.tellIfPresent(rematch.rematchOf, rematch)
 

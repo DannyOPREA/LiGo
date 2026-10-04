@@ -2,13 +2,6 @@
 # In --report-only mode these are reported, not failed; any other file with chess code fails.
 # Units 3.17 parts 2a and 2b remove the chess code and drop files from this list; the last 3.17 PR
 # deletes this file and the --report-only flag in .github/workflows/lila.yml.
-lila/modules/analyse/src/main/AccuracyPercent.scala
-lila/modules/analyse/src/test/AccuracyPercentTest.scala
 lila/modules/common/src/main/Json.scala
 lila/modules/db/src/main/Handlers.scala
-lila/modules/tree/src/main/Advice.scala
-lila/modules/tree/src/main/Info.scala
-lila/modules/tree/src/main/StatusText.scala
-lila/modules/tree/src/main/eval.scala
-lila/modules/tree/src/main/tree.scala
 lila/modules/ui/src/main/helper/ChessHelper.scala

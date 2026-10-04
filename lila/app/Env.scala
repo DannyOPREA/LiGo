@@ -51,7 +51,6 @@ final class Env(
   val shutup: lila.shutup.Env = wire[lila.shutup.Env]
   val chat: lila.chat.Env = wire[lila.chat.Env]
   val playban: lila.playban.Env = wire[lila.playban.Env]
-  val analyse: lila.analyse.Env = wire[lila.analyse.Env]
   val history: lila.history.Env = wire[lila.history.Env]
   val bookmark: lila.bookmark.Env = wire[lila.bookmark.Env]
   val round: lila.round.Env = wire[lila.round.Env]

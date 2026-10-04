@@ -49,12 +49,10 @@ final class UserAnalysis(
   private def mobileAnalysis(pov: Pov)(using ctx: Context): Fu[Result] = for
     users <- env.user.api.gamePlayers.analysis(pov.game)
     _ = gameC.preloadUsers(users)
-    analysis <- env.analyse.analyser.get(pov.game)
     crosstable <- env.game.crosstableApi(pov.game)
     data <- env.api.roundApi.review(
       pov,
       users,
-      analysis,
       tv = none,
       withFlags = ExportOptions(
         clocks = true,
