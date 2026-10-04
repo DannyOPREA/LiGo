@@ -3,6 +3,7 @@ package lila.round
 import ligo.gorules.{ CountVersion, Point }
 import play.api.libs.json.JsObject
 
+import lila.common.Bus
 import lila.core.round.ClientError
 import lila.game.GameRepo
 import lila.game.GoScoringPlay
@@ -93,6 +94,7 @@ final private class GoScorer(
             .filter(_ => game.playable)
             .so(sc => gameRepo.setCheckAt(game, checkAt(sc, nowInstant)))
             .inject(Nil)
+      _ = if step.ending.isEmpty then GoScorer.publishCorres(step.progress.origin, game)
     yield step.progress.events ::: ended
 
   private def requestRef(request: JsObject): Option[String] = (request \ "ref").asOpt[String]
@@ -109,6 +111,44 @@ final private class GoScorer(
           schedule(game.id, (millis.max(0) + 1000).millis, Expiry)
 
 object GoScorer:
+
+  /** What a step of the phase means for a correspondence game's alarms and notifications (ADR 0023 §4). */
+  enum CorresStep:
+    /** The proposal arrived: the phase's day starts. */
+    case Opened
+
+    /** Who has accepted the count changed (an accept, or a toggle clearing the accepts). */
+    case Changed
+
+    /** Play resumed. Not a move in lila, but published as one (below), so the day-clock alarm and the "your
+      * turn" push start again, with nobody credited in the activity feed.
+      */
+    case Resumed
+
+  def corresStep(before: Game, after: Game): Option[CorresStep] =
+    if !after.isCorrespondence || after.hasAi || !after.playable then None
+    else
+      (before.goScoring, after.goScoring) match
+        case (Some(b), Some(a)) if b.proposal.isEmpty && a.proposal.isDefined => Some(CorresStep.Opened)
+        case (Some(b), Some(a)) if b.accepted != a.accepted => Some(CorresStep.Changed)
+        case (Some(_), None) => Some(CorresStep.Resumed)
+        case _ => None
+
+  private[round] def publishCorres(before: Game, after: Game): Unit =
+    import lila.core.round.*
+    import RoundGame.*
+    corresStep(before, after).foreach:
+      case CorresStep.Opened => Bus.pub(GoScoringOpened(after.id))
+      case CorresStep.Changed => Bus.pub(GoScoringChanged(after.id))
+      case CorresStep.Resumed =>
+        Bus.pub:
+          CorresMoveEvent(
+            MoveEvent(after.id, lila.core.game.GoBridge.board(after.go), "resume"),
+            playerUserId = None,
+            mobilePushable = after.mobilePushable,
+            alarmable = after.alarmable,
+            unlimited = after.isUnlimited
+          )
 
   /** lila re-sends an unanswered request this often (ADR 0020 §1, §4). */
   val resendDelay = 30.seconds

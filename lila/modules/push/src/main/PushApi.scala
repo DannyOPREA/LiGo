@@ -54,6 +54,7 @@ final class PushApi(
               title = pov.win match
                 case Some(true) => "You won!"
                 case Some(false) => "You lost."
+                case _ if isVoid(game) => "Your game ended with no result"
                 case _ => "It's a draw."
               ,
               body = s"Your game with $opponent is over.",
@@ -79,7 +80,8 @@ final class PushApi(
       gameProxy
         .game(move.gameId)
         .flatMap:
-          _.filter(_.playable).so: game =>
+          // no "It's your turn" for the second pass: the scoring phase's own push says it (ADR 0023 §4)
+          _.filter(g => g.playable && !g.inGoScoring).so: game =>
             lastMoveText(game).so: sanMove =>
               game.povs.toList.sequentiallyVoid: pov =>
                 pov.player.userId.so: userId =>
@@ -171,7 +173,9 @@ final class PushApi(
           payload <- corresGamePayload(pov, "corresAlarm", userId)
         yield Data(
           title = "Time is almost up!",
-          body = s"You are about to lose on time against $opponent",
+          body =
+            if pov.game.inGoScoring then s"The count in your game with $opponent stands if you don't answer"
+            else s"You are about to lose on time against $opponent",
           key = Key.gameMove,
           urgency = Urgency.High,
           payload = payload,
@@ -180,6 +184,25 @@ final class PushApi(
         )
       maybePushNotif(userId, _.corresAlarm, PrefEvent.gameEvent, data) >>
         alwaysPushFirebaseData(userId, _.corresAlarm, data)
+
+  /** A correspondence Go game's scoring phase opened (ADR 0023 §4): sent instead of "It's your turn". */
+  def scoringPhase(pov: Pov): Funit =
+    pov.player.userId.so: userId =>
+      val data = LazyFu: () =>
+        for
+          opponent <- asyncOpponentName(pov)
+          payload <- corresGamePayload(pov, "scoringPhase", userId)
+        yield Data(
+          title = "Time to count the game",
+          body = s"Check the dead stones and accept the score with $opponent",
+          key = Key.gameScoring,
+          urgency = Urgency.Normal,
+          payload = payload,
+          mobileCompatible = LichessMobileVersion.zero.some,
+          firebaseMod = offlineRoundNotif
+        )
+      IfAway(pov)(maybePushNotif(userId, _.scoringPhase, PrefEvent.gameEvent, data)) >>
+        alwaysPushFirebaseData(userId, _.scoringPhase, data)
 
   private def corresGamePayload(pov: Pov, typ: String, userId: UserId): Fu[Data.Payload] =
     roundJson
@@ -374,6 +397,9 @@ final class PushApi(
     case move => s"$opponent played $move"
 
   // A Go move as players read it (`D4`, `pass`) (unit 3.16).
+  // a game that ended without a count (ADR 0020 §4): no result, not a draw
+  private def isVoid(game: Game) = game.status == chess.Status.UnknownFinish && game.winnerColor.isEmpty
+
   private def lastMoveText(game: Game): Option[String] =
     game.go.actions.lastOption.map(lila.core.game.GoBridge.label(_, game.go.size.lines))
 

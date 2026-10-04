@@ -4855,6 +4855,10 @@ interface I18n {
     time: string;
     /** Time is almost up! */
     timeAlmostUp: string;
+    /** Time to count the game */
+    scoringPhaseStarted: string;
+    /** Your game ended with no result */
+    gameEndedWithNoResult: string;
     /** Time before tournament starts */
     timeBeforeTournamentStarts: string;
     /** Time control */

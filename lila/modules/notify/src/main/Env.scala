@@ -34,6 +34,10 @@ final class Env(
     case lila.core.game.CorresAlarmEvent(userId, pov, opponent) =>
       api.notifyOne(userId, NotificationContent.CorresAlarm(pov.game.id, opponent))
 
+  Bus.sub[lila.core.game.ScoringPhaseEvent]:
+    case lila.core.game.ScoringPhaseEvent(userId, pov, opponent) =>
+      api.notifyOne(userId, NotificationContent.ScoringPhase(pov.game.id, opponent))
+
   wire[NotifyCli]
 
 final class NotifyColls(val notif: Coll, val pref: Coll)

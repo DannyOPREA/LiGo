@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import lila.common.Bus
 import lila.core.round.*
-import lila.game.GameExt.{ applyGoMove, goClockActiveAfter, stepGoClock }
+import lila.game.GameExt.{ applyGoMove, goClockActiveAfter, goPlayEnds, stepGoClock }
 import lila.game.actorApi.MoveGameEvent
 import lila.game.Progress
 import lila.round.RoundGame.*
@@ -70,12 +70,15 @@ final private class MovePlayer(
 
     // publish correspondence moves
     if game.isCorrespondence && game.nonAi then
+      // the move that opens the scoring phase is no "your turn" and sets no day-clock alarm: the phase's
+      // own push and alarms take over once the proposal arrives (ADR 0023 §4)
+      val opensScoring = game.goPlayEnds
       Bus.pub:
         CorresMoveEvent(
           move = moveEvent,
           playerUserId = game.player(color).userId,
-          mobilePushable = game.mobilePushable,
-          alarmable = game.alarmable,
+          mobilePushable = game.mobilePushable && !opensScoring,
+          alarmable = game.alarmable && !opensScoring,
           unlimited = game.isUnlimited
         )
 

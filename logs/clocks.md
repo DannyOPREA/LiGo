@@ -9,6 +9,38 @@
   `clock` is the Fischer one only, so "is it real-time" means `timeControl.clockSettings` (2026-10-04, unit 4.9).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.6 · Correspondence on the server
+- Did: a Go game on lila's days-per-move clock needed little: Titivate, the 21-day abandonment and
+  the days choices (1, 2, 3, 5, 7, 10, 14, in the friend and challenge forms; the lobby's hook form is
+  real-time only, as in lila, with 6.5's two tiles for correspondence) work as they are, and unit 4.8
+  had already given the scoring phase its 1-day timeout (counted from the proposal's arrival), its
+  1-day wait for the proposal and the stopped and restarted clock, so none of that was added. New:
+  a `ScoringPhase(gameId, opponent)` notification (BSON, JSON, `NotifyApi.shouldSkip` as for
+  `CorresAlarm`) and push, sent to both players when the proposal arrives; per-player scoring
+  alarms in `round_alarm` (80% of what is left of the phase, removed by an accept, set again by a
+  toggle that clears accepts); the second pass publishes its move event with push and alarm off;
+  a resume publishes one (no user) so its alarm and "It's your turn" push start; "Your game ended
+  with no result" in the game-over push; `Pov.isMyTurn` and `countWhereUserTurn` (new
+  `Query.userTurn`) count a player who has not accepted as to move. Forecasts: nothing was left
+  on the server but the `db.forecast` index script and a metric, now removed.
+- Worked: `GoScorer.corresStep` is a pure comparison of the game before and after a step, so what the
+  alarms hear is tested without a round actor; the scoring alarms reuse `CorresAlarmEvent`, so the
+  notify and push wiring is one more `Bus.sub` each. A 40-line matcher runs `Query.userTurn` on a
+  stored game document, which is how "Pov and the Mongo query agree" is tested with no Mongo.
+- Didn't work / dead ends: the i18n generator couldn't run until `dev/ligo deps` had installed the
+  worktree's Node packages, so I first typed `key.scala` and `i18n.d.ts` by hand; running the
+  generator afterwards gave the same `key.scala` (no diff). `i18n.d.ts` is typed by hand in the ui
+  build's format (it regenerates it on a ui build).
+- Lessons: none new.
+- Decisions: logs/decisions.md 2026-10-04 rows for 7.6 (Claude, under the owner's 2026-09-28 delegation).
+- Verified by Claude: see the PR. · Needs owner verification: play a correspondence Go game to the
+  second pass on the real stack and look for one "Time to count the game" bell and push each, no
+  "It's your turn" push for the second pass, and an alarm push about 4.8 hours before the day ends.
+- Follow-ups: 7.7 renders `scoringPhase` in `ui/notify/src/renderers.ts` (fields `id`, `op`) and
+  the no-result `gameEnd` (key `gameEndedWithNoResult`); the in-site bell for a scoring alarm is
+  lila's "Time is almost up!" (`corresAlarm`); a correspondence game whose proposal never arrives
+  gets no scoring notification (it ends with no result after a day); the daily "your turn" email
+  counts the scoring phase through `Pov.isMyTurn` (opt-in, off by default, untested by Phase 7).
 ### 2026-10-04 · unit 4.9 · Byo-yomi and handicap in the setup and challenge forms
 - Did: the lobby's and the friend window's forms gain a fourth time mode, byo-yomi (`timeMode` 3):
   the minutes field is its main time, plus `periods` (1–10) and `periodTime` (5 s to 5 min from a

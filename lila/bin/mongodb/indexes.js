@@ -246,7 +246,6 @@ db.oauth2_access_token.createIndex(
   { partialFilterExpression: { clientOrigin: 'https://auth.taketaketake.com' } },
 );
 db.cache.createIndex({ e: 1 }, { expireAfterSeconds: 0 });
-db.forecast.createIndex({ date: 1 }, { expireAfterSeconds: 1296000 });
 db.msg_thread.createIndex({ users: 1, 'lastMsg.date': -1 });
 db.msg_thread.createIndex({ users: 1 }, { partialFilterExpression: { 'lastMsg.read': false } });
 db.msg_thread.createIndex({ users: 1, 'maskWith.date': -1 });

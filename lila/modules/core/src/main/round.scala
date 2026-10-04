@@ -40,6 +40,10 @@ case class CorresMoveEvent(
     alarmable: Boolean,
     unlimited: Boolean
 )
+// A correspondence Go game's scoring phase (ADR 0023 §4, unit 7.6): the proposal arrived, which starts the
+// phase's day; or who has accepted the count changed (an accept, or a toggle that cleared the accepts).
+case class GoScoringOpened(gameId: GameId)
+case class GoScoringChanged(gameId: GameId)
 case class CorresTakebackOfferEvent(gameId: GameId)
 case class CorresDrawOfferEvent(gameId: GameId)
 case class BoardDrawEvent(gameId: GameId)

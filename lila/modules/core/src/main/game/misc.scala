@@ -44,6 +44,8 @@ case class FinishGame(
 case class AbortedBy(pov: Pov)
 
 case class CorresAlarmEvent(userId: UserId, pov: Pov, opponent: String)
+// a correspondence Go game's scoring phase opened for this player (ADR 0023 §4, unit 7.6)
+case class ScoringPhaseEvent(userId: UserId, pov: Pov, opponent: String)
 
 opaque type Blurs = Long
 object Blurs extends OpaqueLong[Blurs]:
