@@ -84,6 +84,50 @@
   `PgnDump`, `TextLpvExpand`, `Annotator`, setup and lobby variants); part 3 (the CI check,
   scalachess-tiebreak, -test-kit and maybe -play-json, COPYING). Phase 7 removes the browser's
   forecast and GIF code in ui/analyse (7.4/7.6).
+### 2026-10-03 · 3.19 (mini-board slice) review · Reviewer findings fixed
+- Did: the reviewer's two blocking findings: `lib/tests/goMiniGame.test.ts` (7 tests) now covers the Go
+  mini game's clocks (paused before two plies, then the player to move; a pass counts; a re-sent position
+  doesn't), a chess message on a Go board, a non-board `data-state`, and profile rows; ADR 0019 and the
+  decisions row now name the public "now playing" API change (`board`, Go `lastMove`). Also typed
+  `socket.in.fen` for Go messages.
+- Worked: the tests fail when the two-ply rule or the repeat check is broken (checked by breaking each).
+  Mocked timers (`mock.timers`) instead of `process.exit` keep the clock widgets from holding node open
+  without hiding results.
+- Didn't work / dead ends: a chess-shaped message on a Go node threw (`getChessground(null)`): now ignored.
+- Lessons: `ownerPreview` is public API, not only the lobby's. lila-ws's `fen` message has no ply, so a
+  page that misses two moves before it starts watching keeps the clocks paused until the next move (rare;
+  forwarding lila's `ply` would fix it, a protocol change left for later).
+- Decisions: none new.
+- Verified by Claude: `bash .claude/skills/verify/verify.sh`. · Needs owner verification: as the entry below.
+- Follow-ups: the fast-start clock case above; the board's `aria-label` is English (9.7's translations);
+  `ui/analyse/src/socket.ts` reads `e.fen` (unreachable for Go until Phase 7).
+
+### 2026-10-03 · 3.19 (mini-board slice) · Go mini boards in game lists, on TV, in the lobby and profiles
+- Did: a Go game's mini board is now a small SVG drawn from the compact board string (ADR 0019 §6) by
+  `lila/ui/lib/src/view/goMini.ts`: grid, star points, stones, a ring on the last stone. lila renders a
+  `.go-mini` span (GameUi `mini.boardWrap`, the round page's "current games", profile game rows via
+  `widgets.miniBoard`) with `data-state` = `board,player to move,last move,plies` (`GoBridge.miniState`);
+  the lobby's "now playing" JSON (`ownerPreview`) gains `board` and a Go `lastMove`. `updateMiniGame`
+  reads lila-ws's `{board, turn, lm, wc, bc}` and redraws; its clocks run for the player to move once
+  each side has played (as lila's `stepGoClock`), counting plies and ignoring lila-ws's re-sent position.
+  Chess mini boards keep chessground until 3.19 part 2. Tests: `lib/tests/goMini.test.ts` (5),
+  GoBridgeTest's mini-game state (1).
+- Worked: a scratch page bundling `miniBoard.ts` with esbuild and lila's built `site.css`, checked in
+  Chromium: 9×9, 13×13 and 19×19 boards at 200 px, last-move rings, a live update, clocks paused until two
+  plies and not advanced by a repeated position, no page errors.
+- Didn't work / dead ends: `%square` is `height: 0; padding-bottom: 100%`, so a child at `height: 100%`
+  draws nothing: the SVG is positioned absolutely inside. Playwright 1.63's own headless shell isn't in the
+  cloud image: launch with `executablePath: '/opt/pw-browsers/chromium'`.
+- Lessons: a mini board needs no rules engine or goban; one goban per thumbnail on a page of twenty would
+  cost far more than the picture is worth.
+- Decisions: own SVG thumbnails instead of a goban per mini board (Claude, under the owner's delegation;
+  logs/decisions.md, ADR 0019 §8 amendment). Mini boards don't flip for White (Go boards don't).
+- Verified by Claude: `bash .claude/skills/verify/verify.sh`, the Chromium check above. · Needs owner
+  verification: on the real stack, a live game's mini board in game lists, the lobby's current games and a
+  profile's game list (`dev/ligo up`).
+- Follow-ups: 3.19 part 2 removes chessground and the chess mini-board path; the mini board could follow
+  the player's board theme (9.3) later.
+
 ### 2026-10-03 · register backfill · docs/UPSTREAM.md lists every merged change to lila/ and lila-ws/
 - Did: added 30 rows to docs/UPSTREAM.md's modification register (AGPL §5(a)), one per merged PR
   on main that changed a file under `lila/` or `lila-ws/` and had no row: units 0.4, 0.6, 0.7,

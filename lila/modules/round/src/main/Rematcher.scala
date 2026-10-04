@@ -92,7 +92,7 @@ final private class Rematcher(
       case Some(Rematches.NextGame.Accepted(id)) => gameRepo.game(id).mapz(redirectEvents)
       case Some(Rematches.NextGame.Offered(_, id)) => createGame(id.some)
 
-  // A rematch replays the game's board size, ruleset, komi and handicap (unit 3.15)
+  // A rematch replays the game's board size, ruleset, komi, handicap (unit 3.15) and clock (unit 4.7)
   private def returnGame(pov: Pov, withId: Option[GameId]): Fu[Game] =
     val go = pov.game.go
     for
@@ -104,7 +104,8 @@ final private class Rematcher(
           players = ByColor(returnPlayer(pov.game, _, users)),
           rated = Rated.No, // casual until unit 5.7
           source = pov.game.source | lila.core.game.Source.Lobby,
-          daysPerTurn = pov.game.daysPerTurn
+          daysPerTurn = pov.game.daysPerTurn,
+          byoyomi = pov.game.byoyomi.map(_.config)
         )
         .fold(e => fufail(s"Go rematch of ${pov.gameId}: ${e.message}"), fuccess)
       game <- withId.fold(idGenerator.withUniqueId(sloppy))(id => fuccess(sloppy.withId(id)))

@@ -8,6 +8,20 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · fix · Correspondence seeks that differ only in Go setup all show
+- Did: lila's `SeekApi.noDupsFor` shows another player's seeks once per game, keyed on variant, days,
+  rated and player; since 3.15 two seeks differing only in board size, ruleset or komi showed as one. The
+  key now includes the seek's Go setup (an older seek without one counts as the default). The function
+  moved to `SeekApi`'s companion so a test can call it; 5 tests in `GoHookTest` (a new test file using the chess variant id would trip the chess guard).
+- Worked: found by the 3.17 part 2b thread.
+- Didn't work / dead ends: none.
+- Lessons: when a setup joins a game's identity, grep for every key lila builds from game properties
+  (hook and seek compatibility, de-duplication, pool lookup).
+- Decisions: none.
+- Verified by Claude: `lobby/testOnly lila.lobby.GoHookTest` 11/11, scalafmt,
+  verify.sh. · Needs owner verification: none (seen on the lobby once correspondence games run).
+- Follow-ups: none.
+
 ### 2026-09-30 · unit 6.7 (part one) · The open-challenges table
 - Did: lila's Lobby and Correspondence tabs are one "Open challenges" tab (tabs: Quick pairing · Open
   challenges · Now playing) with a Live / Correspondence chip, remembered like the tab was (a tab stored

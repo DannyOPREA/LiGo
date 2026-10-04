@@ -40,7 +40,7 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
               span(
                 cls := s"mini-game mini-game--init is2d",
                 gameUi.mini.renderState(pov)
-              )(gameUi.mini.cgWrap),
+              )(gameUi.mini.boardWrap),
               span(cls := "meta")(
                 playerUsername(
                   pov.opponent.light,

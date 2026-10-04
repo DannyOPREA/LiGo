@@ -6,18 +6,19 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Phase 3 (under the owner's "work until I tell you to stop" delegation): units 3.1–3.20 in
   docs/PLAN.md §5, module map ADR 0018, design ADR 0019 (unit 3.9). 3.1 (PR #24), 3.2 (PR #28), 3.3 (PR #33), 3.4 (PR #38),
   3.5 (PR #46), 3.6 (PR #56), 3.7 (PR #65), 3.8 (PR #67), 3.10 (PR #66), 3.11 (PR #68), 3.12 (PR #72),
-  3.13 (PR #73), 3.14 (PR #75) and 3.15 (PR #77) merged; 3.16 (the other modules answer Go games in Go; analysis and puzzle placeholders) and 3.19 part 1 (Go options in the create-game forms) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
+  3.13 (PR #73), 3.14 (PR #75), 3.15 (PR #77), 3.16 (PR #80) and 3.18 (PR #74) merged; 3.19's mini-board slice (Go mini boards in game lists, TV, the lobby and profiles) in review. The owner OK'd the bulk deletions of 3.1–3.7 on 2026-09-28. Logs: logs/upstream-fork.md. 3.18–3.20
   no longer wait on Phase 2 (merged 2026-09-29).
 
 - Phase 4 (under the owner's "work until I tell you to stop" delegation): units 4.1–4.12 in
   docs/PLAN.md §5. 4.1–4.6 (design ADR, byo-yomi clock and scoring phase in `libs/go-rules`,
-  `services/scoring`, the autoscore benchmark) need nothing from Phases 2–3 and run now; 4.7–4.12
-  wait for Phase 3 units 3.12–3.20. Logs: logs/scoring.md, logs/clocks.md.
+  `services/scoring`, the autoscore benchmark) merged; 4.7 (byo-yomi clocks in lila) in review;
+  4.8 (the scoring phase in lila) next; 4.9–4.12 wait for 3.19 part 2, 3.20 and 4.7–4.8.
+  Logs: logs/scoring.md, logs/clocks.md.
 
 - Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
   docs/PLAN.md §5. 5.1 (ADR 0021, PR #37), 5.2 (rating maths, PR #39), 5.4's signup half (PR #70)
   and 5.3 (rated Go games move ratings with handicap, PR #76) merged; 5.4's account page (PR #85) merged;
-  5.5 part 1 (ranks shown instead of ratings) in review, its leaderboard part after 3.17; 5.6 next; 5.7 waits for 4.9, 5.8 for all of them. Log: logs/ratings.md.
+  5.5 part 1 (PR #90) merged, its leaderboard part after 3.17; 5.6 (the profile in Go ranks) in review; 5.7 waits for 4.9, 5.8 for all of them. Log: logs/ratings.md.
 
 - Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
   docs/PLAN.md §5. 6.1 (ADR 0022, PR #41) and 6.2 (auto-handicap pairing in `lila/modules/pool`,
@@ -146,7 +147,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 1. Build-vs-buy + rules integration | done (units 1.1–1.9) |
 | 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.15 merged; 3.19 part 1 in review (you approved the deletions for 3.1–3.7) |
-| 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 under way, 4.7–4.12 wait for Phase 3 |
+| 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.6 merged, 4.7 in review, 4.8 next, 4.9–4.12 wait for Phase 3 |
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 merged (ADR 0022), 6.4 part one in review, the rest wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |

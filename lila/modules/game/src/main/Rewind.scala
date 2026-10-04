@@ -2,8 +2,9 @@ package lila.game
 
 object Rewind:
 
-  /** An accepted takeback of a game's last action (ADR 0019 §6): go-rules' `undo`, with the clock restored
-    * from the clock history.
+  /** An accepted takeback of a game's last action (ADR 0019 §6): go-rules' `undo`, with a Fischer clock
+    * restored from the clock history. A byo-yomi clock only gives the turn back: the time and periods already
+    * used stay used (unit 4.7), since main time and periods can't be rebuilt from one number per move.
     */
   def go(game: CoreGame): Either[String, Progress] =
     for undone <- game.go.undo.left.map(r => s"${game.id} takeback refused: ${r.key}")
@@ -17,6 +18,7 @@ object Rewind:
       }
       val newGame = undoneGame.copy(
         clock = newClock,
+        byoyomi = game.byoyomi.map(_.takeback),
         players = game.players.map(_.removeTakebackProposition),
         binaryMoveTimes = game.binaryMoveTimes.map { binary =>
           val moveTimes = BinaryFormat.moveTime.read(binary, game.playedPlies)

@@ -271,11 +271,7 @@ final private class RoundAsyncActor(
         .withGame: g =>
           g.playable.so:
             proxy.saveAndFlush:
-              g.clock.fold(Progress(g)): clock =>
-                g.withClock:
-                  clock
-                    .giveTime(g.turnColor, Centis(2000))
-                    .giveTime(!g.turnColor, Centis(1000))
+              moretimer.addTime(g, List(g.turnColor -> Centis(2000), !g.turnColor -> Centis(1000)))
         .recoverDefault: e =>
           logger.warn(s"RoundAsyncActor LilaStop error: ${e.getMessage}")
         .tap(promise.completeWith)
@@ -311,7 +307,7 @@ final private class RoundAsyncActor(
                 _.so: millis =>
                   val pov = g.pov(c)
                   if millis <= 0 then notifyGone(pov, gone = true)
-                  else if g.clock.exists(_.remainingTime(c).millis > millis + 3000)
+                  else if g.gameClock.exists(_.remainingTime(c).millis > millis + 3000)
                   then notifyGoneIn(pov, millis)
               })
       } | funit

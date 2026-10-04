@@ -47,10 +47,10 @@ object GameDiff:
 
     def getClockHistory(color: Color)(g: Game): Option[ClockHistorySide] =
       for
-        clk <- g.clock
+        clk <- g.gameClock
         history <- g.clockHistory
         times = history(color)
-      yield (clk.limit, times, g.flagged.has(color))
+      yield (clk.startTime, times, g.flagged.has(color))
 
     def clockHistoryToBytes(o: Option[ClockHistorySide]) =
       o.flatMap { case (x, y, z) =>
@@ -75,6 +75,11 @@ object GameDiff:
         o.flatMap { c =>
           BSONHandlers.clockBSONWrite(a.createdAt, c).toOption
         }
+    )
+    dOpt(
+      byoyomi,
+      _.byoyomi.map(_.state),
+      (o: Option[ligo.gorules.ByoyomiState]) => o.flatMap(BSONHandlers.byoyomiStateHandler.writeOpt)
     )
     dTry(drawOffers, _.drawOffers, BSONHandlers.gameDrawOffersHandler.writeTry)
     for i <- 0 to 1 do

@@ -11,6 +11,11 @@ object UserWithPerfs:
     def titleUsernameWithBestRating =
       p.title.fold(p.usernameWithBestRating): t =>
         s"$t ${p.usernameWithBestRating}"
+    // LiGo (unit 5.6): the profile's link preview title, "Name (5k)", or the name alone before a rank
+    def titleUsernameWithGoRank =
+      val go = p.perfs.go.glicko
+      val name = p.title.fold(p.username.value)(t => s"$t ${p.username}")
+      if go.clueless then name else s"$name (${GoRating.label(go)})"
     def lightPerf(key: PerfKey) =
       val perf = p.perfs(key)
       LightPerf(p.light, key, perf.intRating, perf.progress)

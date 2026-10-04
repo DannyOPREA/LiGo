@@ -16,6 +16,15 @@
   color: $c-font-dim;
 }
 
+// Go moves are points (B19) and Pass: lila's move font is the chess figurine font, which draws B,
+// K, N, Q and R as pieces. The move list and its menu's title use the page font instead (as the
+// game page's move list does, ui/round css/_moves.scss). Declared here, not extended, so it comes
+// after lila's own move and menu rules.
+.analyse--go .tview2 move,
+#analyse-cm .title {
+  font-family: 'Noto Sans', sans-serif;
+}
+
 // Who plays next and each player's prisoners, above the move list.
 .analyse__go-status {
   display: flex;

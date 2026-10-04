@@ -100,6 +100,7 @@ enum SetupError(val message: String):
   case StoneOffBoard(at: Point) extends SetupError(s"stone off the board at ${at.sgf}")
   case StonesWithoutLiberty(at: Point)
       extends SetupError(s"the chain at ${at.sgf} has no liberties in the starting position")
+  case BadByoyomi(config: ByoyomiConfig) extends SetupError(s"invalid byo-yomi settings: $config")
 
 object Komi:
 
