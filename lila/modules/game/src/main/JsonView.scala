@@ -192,7 +192,6 @@ object JsonView:
       "bits" -> blurs.binaryString
     )
 
-
   given OWrites[Clock] = OWrites: c =>
     Json.obj(
       "running" -> c.isRunning,

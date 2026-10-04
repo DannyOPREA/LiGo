@@ -43,4 +43,3 @@ object page:
           h1("Redirecting...")
         )
       )
-

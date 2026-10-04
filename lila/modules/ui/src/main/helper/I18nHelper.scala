@@ -18,7 +18,6 @@ trait I18nHelper:
     def perfDesc: I18nKey = ratingApi.toDescKey(pk)
     def perfTrans(using translate: Translate): String = perfName.txt()
 
-
   export lila.core.i18n.Translate
   export lila.core.i18n.I18nKey as trans
   export I18nKey.{ txt, pluralTxt, pluralSameTxt, apply, plural, pluralSame, rawHtml, pluralRawHtml }
