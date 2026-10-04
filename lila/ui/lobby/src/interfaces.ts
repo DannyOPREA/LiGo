@@ -123,6 +123,8 @@ export interface NowPlaying {
   };
   isMyTurn: boolean;
   secondsLeft?: number;
+  /** A Go game's state; `phase` is "scoring" while the dead stones are agreed. */
+  go?: { phase?: string };
 }
 
 export interface PoolMember {

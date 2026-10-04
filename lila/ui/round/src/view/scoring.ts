@@ -13,6 +13,28 @@ import type { ScoreSide, ScoringData } from '../interfaces';
 export const minutesSeconds = (seconds: number): string =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 
+/**
+ * The time left to agree, in the unit that fits it (unit 7.7): "2:41" under an hour, as a real-time
+ * game's phase is (3 minutes); "5 hours 12 minutes" under a day; "1 day 3 hours" for a correspondence
+ * game's day (ADR 0023 §4). A zero part is left out.
+ */
+export function timeLeft(seconds: number): string {
+  const s = Math.max(0, Math.ceil(seconds));
+  if (s < 3600) return minutesSeconds(s);
+  const parts = (
+    big: number,
+    bigLabel: (n: number) => string,
+    small: number,
+    smallLabel: (n: number) => string,
+  ) => [bigLabel(big), small ? smallLabel(small) : ''].filter(Boolean).join(' ');
+  const days = Math.floor(s / 86400),
+    hours = Math.floor((s % 86400) / 3600),
+    minutes = Math.floor((s % 3600) / 60);
+  return days
+    ? parts(days, i18n.site.nbDays, hours, i18n.site.nbHours)
+    : parts(hours, i18n.site.nbHours, minutes, i18n.site.nbMinutes);
+}
+
 /** A number of points as Go writes it: "6.5", "41". */
 const points = (n: number | undefined): string => String(n ?? 0);
 
@@ -128,7 +150,7 @@ export function renderScoring(ctrl: RoundController): LooseVNode {
     hl(
       'p.go-scoring__countdown',
       { class: { emerg: ctrl.scoringSecondsLeft() <= 30 } },
-      i18n.site.goTimeLeftToAgree(minutesSeconds(ctrl.scoringSecondsLeft())),
+      i18n.site.goTimeLeftToAgree(timeLeft(ctrl.scoringSecondsLeft())),
     ),
   ]);
 }

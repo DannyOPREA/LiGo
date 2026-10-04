@@ -9,6 +9,33 @@ function timer(pov: NowPlaying) {
   return time('.timeago', { hook: onInsert(el => el.setAttribute('datetime', String(date))) }, timeago(date));
 }
 
+/**
+ * What the game's row says when it waits for you (unit 7.7): the count in the scoring phase (lila's
+ * `Pov.isMyTurn` is true for a player who has not accepted it, and the turn clock does not run), the
+ * time left on your clock, or "Your turn".
+ */
+export const waitingFor = (pov: NowPlaying): 'count' | 'time' | 'move' | undefined =>
+  !pov.isMyTurn
+    ? undefined
+    : pov.go?.phase === 'scoring'
+      ? 'count'
+      : !!pov.secondsLeft && pov.hasMoved
+        ? 'time'
+        : 'move';
+
+const indicator = (pov: NowPlaying) => {
+  switch (waitingFor(pov)) {
+    case 'count':
+      return i18n.site.scoringPhaseStarted;
+    case 'time':
+      return timer(pov);
+    case 'move':
+      return i18n.site.yourTurn;
+    default:
+      return span('\xa0');
+  }
+};
+
 export default function ({ data }: LobbyController) {
   return div(
     '.now-playing',
@@ -21,14 +48,7 @@ export default function ({ data }: LobbyController) {
           pov.opponent.ai
             ? i18n.site.aiNameLevelAiLevel('Stockfish', pov.opponent.ai)
             : pov.opponent.username,
-          span(
-            '.indicator',
-            pov.isMyTurn
-              ? !!pov.secondsLeft && pov.hasMoved
-                ? timer(pov)
-                : i18n.site.yourTurn
-              : span('\xa0'),
-          ),
+          span('.indicator', indicator(pov)),
         ]),
       ]),
     ),
