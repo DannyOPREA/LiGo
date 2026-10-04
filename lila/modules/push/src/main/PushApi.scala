@@ -387,7 +387,7 @@ final class PushApi(
         case c: Clock => c.show
         case b: Byoyomi => b.show
       ,
-      c.variant.name
+      "Go"
     ).mkString(" • ")
 
   private def IfAway(pov: Pov)(f: => Funit): Funit =

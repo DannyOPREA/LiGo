@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.variant.Variant
 import chess.{ ByColor, Clock, Color, Ply, Status }
 import reactivemongo.api.bson.*
 import scalalib.model.Days
@@ -250,7 +249,6 @@ object BSONHandlers:
         blackPlayer = makePlayer(F.blackPlayer, Color.Black, blackUid),
         status = r.get[Status](F.status),
         win = winC,
-        variant = Variant.idOrDefault(r.getO[Variant.Id](F.variant)),
         isGo = GoStorage.isGo(r)
       )
 

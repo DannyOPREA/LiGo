@@ -6,8 +6,6 @@ export lila.core.lilaism.Lilaism.{ Game as CoreGame, Pov as CorePov, *, given }
 export lila.common.extensions.*
 export lila.core.id.{ GameFullId, GamePlayerId, GameAnyId }
 
-type GameQuickOpening = lila.core.game.Game => Option[chess.opening.Opening]
-
 private lazy val logger = lila.log("game")
 
 /* LiGo: a handicap game's rematch keeps the colours, so the same player gets the stones again (units 4.9

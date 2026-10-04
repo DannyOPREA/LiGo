@@ -130,14 +130,6 @@ object Query:
 
   def checkableOld = F.checkAt.lt(nowInstant.minusHours(1))
 
-  def variant(v: chess.variant.Variant) =
-    bdoc(F.variant -> (if v.standard then exists(false) else bint(v.id)))
-
-  val variantStandard = variant(chess.variant.Standard)
-
-  val notFromPosition: Bdoc =
-    F.variant.neq(chess.variant.FromPosition.id)
-
   def createdSince(d: Instant): Bdoc = F.createdAt.gte(d)
 
   def createdBetween(since: Option[Instant], until: Option[Instant]): Bdoc =

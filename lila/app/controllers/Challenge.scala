@@ -324,8 +324,6 @@ final class Challenge(env: Env) extends LilaController(env):
           .color(config.goSetup, config.rated, config.color.name, orig.perf.some, dest.perf.some)
           .map: color =>
             lila.challenge.Challenge.make(
-              variant = config.variant,
-              initialFen = config.position,
               go = config.goSetup,
               timeControl = timeControl,
               rated = config.rated,

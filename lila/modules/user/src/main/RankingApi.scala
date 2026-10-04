@@ -38,7 +38,7 @@ final class RankingApi(
               "perf" -> perfType.id,
               "rating" -> perf.intRating,
               "prog" -> perf.progress,
-              "stable" -> perf.glicko.rankable(lila.rating.PerfType.variantOf(perfType)),
+              "stable" -> perf.glicko.rankable,
               "expiresAt" -> nowInstant.plusDays(7)
             ),
             upsert = true

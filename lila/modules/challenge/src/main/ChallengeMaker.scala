@@ -65,8 +65,6 @@ final class ChallengeMaker(
       // a handicap game's rematch keeps the colours (rematchAlternatesColor, units 4.9 and 5.7)
       val alternateColor = rematchAlternatesColor(pov.game, List(challenger.map(_.user), dest.user.some))
       Challenge.make(
-        variant = pov.game.variant,
-        initialFen = none, // a Go game never starts from a chess position
         // a rematch replays the game's board size, ruleset and komi (unit 3.15)
         go = pov.game.go.setup.copy(position = None),
         timeControl = timeControl,
