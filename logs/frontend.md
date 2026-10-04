@@ -5,6 +5,13 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 9.7 part two · colour pickers show stones; chess move speech unhooked
+- Did: the colour choice in the setup and challenge windows (`ui/lib/css/setup/_colorChoice.scss`) and on the puzzle page (`ui/puzzle/css/_side.scss`) shows a black and a white stone (new `public/images/ligo/{black,white}-stone.svg`, drawn like `random-color.svg`) instead of cburnett's chess kings. `site.sound.saySan` and its `speakable` import are gone, and `lib/game` no longer re-exports `sanWriter`.
+- Worked: page browser tests on the built pages: playground 49, game page 19, analysis board 15, puzzle page 32.
+- Didn't work / dead ends: the bulk deletion of the chess piece sets, the chess board pictures, the two unused style files and `sanWriter.ts` was refused by the permission check without the owner's own yes for that batch, so they wait for a follow-up PR.
+- Lessons: an owner's OK for one deletion batch doesn't carry over to the next; ask for each batch by name.
+- Decisions: keep `public/images/board/wood4.jpg` when the board pictures go, because it is the default background picture.
+
 ### 2026-10-04 · unit 4.10 follow-up · The game page drops its last chess styles
 - Did: `ui/round` no longer imports `lib/css/chess/variant-style` (chessground's variant overlays) or
   `lib/css/component/material` (chess piece pictures); `_material.scss` keeps only the sizing of the
