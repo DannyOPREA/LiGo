@@ -10,6 +10,21 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.10 · The Phase 6 demo
+- What: `lila/tests/e2e-demo/phase6-demo.spec.ts`, run by the `e2e` workflow at desktop and phone
+  sizes. A guest clicks the 9×9 3+2 tile another guest waits on, and the game's first stone is timed
+  from the landing page (under PLAN §4's 10 s; the time is printed and kept as a test annotation). A
+  new 5k and 1d click the same rated 19×19 tile with Handicap OK and get a rated game with five
+  stones; the 1d creates a rated 9×9 game from the Custom tile's window and the 5k joins it from Open
+  challenges; the 5k challenges the 1d from the 1d's profile, where the window has the five suggested
+  stones filled in, and the 1d accepts. Shared helpers in `tests/e2e-demo/players.ts`. Your
+  checklist: docs/demos/phase-6.md, ending with the player test (6.3's kit).
+- Tests: typechecked (`tsc -p tests/e2e-demo`), oxlint and oxfmt clean here; the cloud session has no
+  Docker for Mongo and Redis, so the real run is the PR's `demo` check (the PR carries the `e2e` label).
+- Lessons: one account pair per screen size, not per test: lila allows 10 sign-ups per 10 minutes
+  from one address, and the Phase 5 demo signs up four. A timed click needs its own rate-limit retry
+  that restarts the clock, or a refused attempt's wait gets counted.
+
 ### 2026-10-04 · unit 6.8 · One window for custom games and challenges
 - What: lila's "Create a game" and "Challenge a friend" windows are one window. An Opponent choice
   (Anyone, the named player, Link for a friend) switches between them and keeps every setting. Presets
