@@ -10,7 +10,7 @@
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
 - [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, goban SGF hangs, goban puzzle-mode glue, solver GHI/ko/spike budget
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
-- [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs, CI area gaps, headless-shell, `--list` for import.meta, no Origin → CSRF 403, casual /training/:id (8.8)
+- [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs, CI area gaps, headless-shell, `--list` for import.meta, no Origin → CSRF 403, casual /training/:id (8.8); preset+Rated custom game enters a pool, signup 10/10min (6.10)
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, deleted-TS DOM effects, privacy deletes, stand-ins keeping dead code (3.3–3.19p2)

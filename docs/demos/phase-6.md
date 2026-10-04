@@ -27,9 +27,10 @@ window), so the site sees two players.
       place of the Rated chip.
 - [ ] Click the **9×9 3+2** tile. It shows that you're waiting, with the time going up and Cancel.
 - [ ] In browser B, also signed out, open the same address and click the same tile. Count in your
-      head: both browsers should open the same game, and Black's first stone be on the board, within
+      head (the automated demo measures the machine alone, with no thinking time): both browsers should open the same game, and Black's first stone be on the board, within
       10 seconds of B's page opening (B's own stone counts, if B is Black).
-- [ ] Resign from either browser.
+- [ ] Play a stone each, then resign from either browser (before both have moved, lila offers
+      Abort instead).
 
 ## 3. A 5k and a 1d
 
@@ -39,7 +40,7 @@ window), so the site sees two players.
 
 ### A rated handicap pool game
 
-- [ ] Both click the **19×19 5 min + 5×10 s** tile. Within a few seconds both open the same game:
+- [ ] Both click the **19×19 5+5×10s** tile. Within a few seconds both open the same game:
       Rated, 19×19, komi 0.5, five black stones on the board, the 5k plays Black and White moves
       first.
 - [ ] Play a stone or two each, then resign.
@@ -47,15 +48,17 @@ window), so the site sees two players.
 ### A custom game, accepted from the table
 
 - [ ] As the 1d, click the **Custom** tile. The window opens on "Anyone" with the presets on top.
-      Pick **9×9 Blitz**, choose **Rated**, and open **Advanced**: the summary line matches what's
-      inside (ruleset, komi, stones, rank range). Press **Create lobby game**.
+      Pick **9×9 Blitz**, choose **Rated**, open **Advanced** and choose **Chinese** rules: the
+      summary line follows what's inside (ruleset, komi, stones, rank range). Press **Create lobby
+      game**. (With exactly a pool's settings and Rated, the window joins that pool instead, as
+      lila does, and the game doesn't wait in Open challenges: that's why the demo changes the rules.)
 - [ ] As the 5k, open **Open challenges**. The 1d's game is there, with the 1d's name and rank, 9×9,
-      Rated, and not greyed out. Click it: both open the same rated 9×9 game. Resign.
+      Chinese, Rated, and not greyed out. Click it: both open the same rated 9×9 game. Resign.
 
 ### A challenge from a profile
 
-- [ ] As the 5k, open the 1d's profile (click their name anywhere) and choose **Challenge to a
-      game** (on a narrow window it's under **More**). The window says "Challenge" and the 1d's
+- [ ] As the 5k, open the 1d's profile (click their name anywhere) and choose **Challenge** (on a narrow
+      window it's under **More**, or the ☰ menu). The window says "Challenge" and the 1d's
       name, and the opponent choice shows the 1d.
 - [ ] Choose 19×19 and Rated. It says "Suggested for your ranks: 5 handicap stones", the stones
       are already set to 5 under Advanced, and "You play Black." Press **Send challenge**.
@@ -69,7 +72,7 @@ the phone open `http://<your address>:8080`.
 
 - [ ] The tiles fit the screen in one column without sideways scrolling, and the chips wrap.
 - [ ] Do §2 with the phone as browser B: one tap on the tile, and the game opens in time.
-- [ ] Sign in as the 5k on the phone and repeat the custom game from §3: the open challenges are
+- [ ] Sign in as the 5k on the phone and join a custom game the 1d creates as in §3: the open challenges are
       cards, and a tap on the 1d's card joins it.
 - [ ] Afterwards, run `dev/ligo down` and then `dev/ligo up` without the two settings.
 
@@ -83,7 +86,8 @@ dev/ligo e2e demo phase6-demo
 ```
 
 It should end with "4 passed" (two tests, desktop and phone) and print the one-click time for
-each size. `dev/ligo e2e demo` alone runs every phase's demo.
+each size. `dev/ligo e2e demo` alone runs every phase's demo. lila allows 10 sign-ups per 10
+minutes from one address and the full run uses all 10, so wait 10 minutes between full runs.
 
 ## 6. Then: the player test
 

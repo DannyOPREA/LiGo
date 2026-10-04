@@ -36,5 +36,20 @@ Real-stack e2e (lila/tests/e2e-demo, unit 8.8 part two, PR #126, 2026-10-04):
 - /api/puzzle/many costs 1 credit per id against 300/hour/IP (puzzle.fetch.ip): 240 ids per run
   means a CI retry or a 2nd local run in an hour gets 429. /api/puzzle/:id (apiShow) is unlimited.
 
+Phase 6 demo (unit 6.10, PR #134, 2026-10-04):
+- The lobby's Custom window turns a rated, random-colour, Japanese, standard-komi live game whose clock
+  equals a pool's into a POOL entry (setupCtrl.hookToPoolMember): no /setup/hook POST, no Open
+  challenges row. The 6.8 presets ARE pool clocks, so "preset + Rated + Create" never makes a table row.
+  Check any spec/checklist that creates a rated lobby game from a preset.
+- CONFIRMED by CI: `.lpools [data-id=X]` hits 2 elements once waiting (the tile's Cancel button carries
+  the same data-id) -> strict-mode failure. Grep the view for every element carrying a selector's attr.
+  CI annotations are readable via `gh api .../check-runs/<id>/annotations` (job logs are not).
+- Signups: lila allows 10 per 10 min per IP (Signup `account.create.ip` "fast"); count every demo's
+  signups (phase8 posts /signup too) plus CI `retries: 1`.
+- A `toPass` block that retries from `goto('/')` after a game started is dead: the lobby opens on
+  now_playing / the player is in a game; only pre-pairing refusals are retryable.
+- lila's `challengeToPlay` is "Challenge" in LiGo's source xml (not "Challenge to a game"); the
+  profile's More is a hamburger icon when no item fits.
+
 **Why:** these pass locally and only surface on CI failure or on the wrong PR.
 **How to apply:** any unit adding Playwright tests or CI browser steps. See [[ci-review-patterns]].

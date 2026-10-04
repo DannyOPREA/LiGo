@@ -30,7 +30,8 @@ import {
 // PLAN §4: "one click from the landing page to a game (the first move) in under 10 s".
 const oneClickBudgetMs = 10_000;
 
-const tile = (page: Page, id: string) => page.locator(`.lpools [data-id="${id}"]`);
+// the tile itself: a waiting tile's Cancel button carries the same data-id
+const tile = (page: Page, id: string) => page.locator(`.lpools div.lpool[data-id="${id}"]`);
 
 test.describe.configure({ timeout: 300_000 });
 
@@ -60,11 +61,12 @@ test('a guest gets from the landing page to the first move with one click, withi
     await expect(tile(a, blitz)).toHaveClass(/active/);
 
     // B: the clock starts with the landing page and stops when the game's first stone is on B's board.
-    // A refused click (the same limit) restarts the attempt from the landing page.
-    let elapsed = 0;
+    // A click refused by the same limit restarts the attempt from the landing page; once lila takes the
+    // click, the rest must work first time.
+    let start = 0;
     await expect(async () => {
       await dismissAlert(b);
-      const start = Date.now();
+      start = Date.now();
       await b.goto('/');
       const [sent] = await Promise.all([
         b.waitForResponse(r => r.url().includes('/setup/hook/') && r.request().method() === 'POST', {
@@ -73,14 +75,14 @@ test('a guest gets from the landing page to the first move with one click, withi
         tile(b, blitz).click({ timeout: 5000 }), // the one click
       ]);
       expect(sent.ok()).toBe(true);
-      await sameGame(a, b);
-      const pages: Record<Color, Page> =
-        (await colorOf(a)) === 'black' ? { black: a, white: b } : { black: b, white: a };
-      // Black plays at once (if Black is B, its own move is part of the time)
-      await playStone(pages.black, 'black', 9, [4, 4], phone);
-      await expect(stones(b, 'black')).toHaveCount(1);
-      elapsed = Date.now() - start;
     }).toPass({ intervals: [15_000], timeout: 120_000 });
+    await sameGame(a, b);
+    const first: Record<Color, Page> =
+      (await colorOf(a)) === 'black' ? { black: a, white: b } : { black: b, white: a };
+    // Black plays at once (if Black is B, its own move is part of the time)
+    await playStone(first.black, 'black', 9, [4, 4], phone);
+    await expect(stones(b, 'black')).toHaveCount(1);
+    const elapsed = Date.now() - start;
 
     info.annotations.push({ type: 'one click to the first move', description: `${elapsed} ms` });
     console.log(`[${info.project.name}] landing page to the first move: ${elapsed} ms`);
@@ -157,6 +159,12 @@ test('a 5k and a 1d meet in a rated handicap pool, from the open challenges tabl
       await expect(setup.locator('#sf_size_9')).toBeChecked();
       await setup.locator('label[for=sf_mode_rated]').click({ timeout: 5000 });
       await expect(setup.locator('#sf_mode_rated')).toBeChecked();
+      // Chinese rules under Advanced: a rated game with exactly a pool's settings would join that pool
+      // (setupCtrl's hookToPoolMember) rather than wait in Open challenges
+      const advanced = setup.locator('details.setup-advanced');
+      if ((await advanced.getAttribute('open')) === null) await advanced.locator('summary').click();
+      await setup.locator('#sf_ruleset').selectOption('chinese', { timeout: 5000 });
+      await expect(advanced.locator('.setup-advanced__digest')).toContainText('Chinese');
     };
     await openCustom();
     await createGame(d, '/setup/hook', openCustom, () =>
@@ -170,11 +178,13 @@ test('a 5k and a 1d meet in a rated handicap pool, from the open challenges tabl
     await expect(row).toHaveCount(1);
     await expect(row.locator('td.board')).toHaveText('9×9');
     await expect(row.locator('td.mode')).toHaveText('Rated');
+    await expect(row.locator('td.rules')).toContainText('Chinese');
     await row.click();
     await sameGame(k, d);
     for (const p of [k, d]) {
       await expect(p.locator('.game__meta__infos .setup')).toContainText('Rated');
       await expect(p.locator('.go-setup')).toContainText('9×9');
+      await expect(p.locator('.go-setup')).toContainText('Chinese');
     }
     const kColor = await colorOf(k);
     const custom: Record<Color, Page> = kColor === 'black' ? { black: k, white: d } : { black: d, white: k };

@@ -24,6 +24,12 @@
 - Lessons: one account pair per screen size, not per test: lila allows 10 sign-ups per 10 minutes
   from one address, and the Phase 5 demo signs up four. A timed click needs its own rate-limit retry
   that restarts the clock, or a refused attempt's wait gets counted.
+- Review (first CI run red): the tile selector also matched the waiting tile's Cancel button (same
+  `data-id`), and a rated custom game with exactly a pool's settings joins that pool
+  (`hookToPoolMember`) instead of waiting in Open challenges; the demo now picks Chinese rules. The
+  timed retry now covers only the click, and the checklist's labels match the page.
+- Lessons: target the element type, not just a data attribute a child may share. A full e2e run now
+  makes all 10 of lila's sign-ups per 10 minutes from one address (Phases 5, 6 and 8).
 
 ### 2026-10-04 · unit 6.8 · One window for custom games and challenges
 - What: lila's "Create a game" and "Challenge a friend" windows are one window. An Opponent choice
