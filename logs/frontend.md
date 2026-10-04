@@ -5,6 +5,15 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 7.4 fix · Go moves drawn as chess pieces
+- Did: lila's move list writes moves in the Noto Chess figurine font, so moves in columns B, K, N, Q and R showed as pieces on `/analysis` ("B19" as a bishop; found by Phase 8's 8.7). The analysis move list and its menu's title now use the page font, as the game page's already did (3.18). The tree's header comment no longer points at `ui/puzzle/src/chessNode.ts`, which 8.7 deletes. A browser test plays B19, K18, N17, Q16 and R15 and checks the font of the list and the menu title.
+- Worked: switching the rule off makes the test fail ("Noto Chess", "Noto Sans"), so it guards the fix.
+- Didn't work / dead ends: none.
+- Lessons: the glyph-hidden screenshots can't catch a font swap; check the computed font in a test.
+- Decisions: none new.
+- Verified by Claude: analysis browser tests 15/15; ui tests; oxlint, oxfmt, stylelint; verify.sh. · Needs owner verification: none.
+- Follow-ups: none.
+
 ### 2026-10-03 · unit 9.7 part one review · Reviewer findings fixed (PR #84)
 - Did: an independent review found nothing blocking; fixed its 5 should-fix and 4 of its 6 nits. 3D now always reads off on the server (`PrefHandlers`, `RequestPref`), since the menu lost its switch and a stored `is3d=true` would have kept lila's 3D board stylesheet squashing the Go board. A test keeps the three copies of the theme names in step (lila's lists, `libs/board`'s, the menu's swatch styles), and the menu's two panes are tested (list, `aria-pressed`, the `/pref/theme` and `/pref/pieceSet` posts, `<body>` and `board.change`). The stones pane reads "Stones" (English text of the `pieceSet` key). The public preferences JSON gives the Go name for a stored chess one. Night's swatch uses goban's own stone colours; the round controller test restores `<body>` in a `finally`; the test page escapes its attributes. Added the PR's row to docs/UPSTREAM.md (new project rule).
 - Worked: reading the Scala lists in a node test with a regex, no Scala build needed.
