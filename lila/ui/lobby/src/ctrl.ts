@@ -25,7 +25,6 @@ import * as seekRepo from './seekRepo';
 import SetupController from './setupCtrl';
 import LobbySocket from './socket';
 import { make as makeStores, readChips, writeChips, type Stores } from './store';
-import variantConfirm from './variant';
 import * as xhr from './xhr';
 
 export default class LobbyController {
@@ -258,18 +257,16 @@ export default class LobbyController {
   // What the open-challenges table needs to know about you.
   viewer = (): Viewer => viewerOf(this.me, this.data.ratingMap);
 
-  clickHook = async (id: string) => {
+  clickHook = (id: string) => {
     const hook = hookRepo.find(this, id);
     if (!hook || hook.disabled || this.stepping || this.redirecting) return;
-    if (hook.action === 'cancel' || (await variantConfirm(hook.variant)))
-      this.socket.send(hook.action, hook.id);
+    this.socket.send(hook.action, hook.id);
   };
 
-  clickSeek = async (id: string) => {
+  clickSeek = (id: string) => {
     const seek = seekRepo.find(this, id);
     if (!seek || this.redirecting) return;
-    if (seek.action === 'cancelSeek' || (await variantConfirm(seek.variant?.key)))
-      this.socket.send(seek.action, seek.id);
+    this.socket.send(seek.action, seek.id);
   };
 
   fetchSeeks = async () => {

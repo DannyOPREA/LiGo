@@ -29,9 +29,6 @@ export interface AnalyseData {
   treeParts: TreeNodeBase[];
   game: {
     division?: Division;
-    variant: {
-      key: string;
-    };
     moveCentis?: number[];
     status: {
       name: string;

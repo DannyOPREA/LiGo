@@ -73,7 +73,6 @@ describe('pool links (#pool/...)', () => {
 describe("a guest's click on a tile", () => {
   test("sends a casual byo-yomi hook with the tile's size and periods", () => {
     assert.deepEqual(anonPoolSeekForm(pools[0]), {
-      variant: 1,
       days: 1,
       color: 'random',
       size: 9,
@@ -87,7 +86,6 @@ describe("a guest's click on a tile", () => {
 
   test("sends a Fischer hook with the tile's size and clock", () => {
     assert.deepEqual(anonPoolSeekForm(pools[6]), {
-      variant: 1,
       days: 1,
       color: 'random',
       size: 19,
