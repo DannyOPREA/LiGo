@@ -180,15 +180,23 @@ const renderChips = (ctrl: LobbyController): VNode => {
 const modeChip = (ctrl: LobbyController, mode: Mode, label: string): VNode =>
   chip(label, ctrl.mode === mode, () => ctrl.setMode(mode), mode);
 
+// "Create a game" under the list (unit 6.8): the same window as the grid's Custom tile, opened on the
+// list's clock. Live games are for guests too; a correspondence game needs an account and room among
+// your seeks.
 const createSeek = (ctrl: LobbyController): VNode | undefined => {
-  if (!ctrl.me || ctrl.mode !== 'correspondence' || ctrl.data.seeks.length >= 8) return undefined;
+  const live = ctrl.mode === 'live';
+  if (live ? ctrl.opts.playban || ctrl.me?.isBot || ctrl.hasOngoingRealTimeGame(true) : !canSeek(ctrl))
+    return undefined;
   return div('.create', [
     button(
       '.button',
       {
         hook: bind(
           'click',
-          () => ctrl.setupCtrl.openModal('hook', { timeMode: 'correspondence' }),
+          () =>
+            ctrl.setupCtrl.openModal('hook', undefined, undefined, {
+              timeMode: live ? 'realTime' : 'correspondence',
+            }),
           ctrl.redraw,
         ),
       },
@@ -196,6 +204,8 @@ const createSeek = (ctrl: LobbyController): VNode | undefined => {
     ),
   ]);
 };
+
+const canSeek = (ctrl: LobbyController) => !!ctrl.me && ctrl.data.seeks.length < 8;
 
 const onRowClick = (ctrl: LobbyController) =>
   bind(

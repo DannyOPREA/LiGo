@@ -284,6 +284,12 @@
   <string name="goSuggestedHandicapX">Suggested for your ranks: %s</string>
   <string name="goRankRangeXToY">Opponents from %1$s to %2$s</string>
   <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>
+  <string name="goOpponentAnyone" comment="Create-game window, opponent choice: any online player can join the game">Anyone</string>
+  <string name="goOpponentLink" comment="Create-game window, opponent choice: you get a link to send to a friend">Link for a friend</string>
+  <string name="goLastSettings" comment="Create-game window: the settings you used last time">Last settings</string>
+  <string name="goPresets" comment="Create-game window: ready-made settings to start from">Presets</string>
+  <string name="goCreateChallengeLink">Create challenge link</string>
+  <string name="goSendChallenge">Send challenge</string>
   <string name="goFirstMove">First move</string>
   <string name="goPreviousMove">Previous move</string>
   <string name="goNextMove">Next move</string>
@@ -1064,7 +1070,7 @@ Playing rated games will increase stability.</string>
   <string name="rapidDesc">Rapid games: 8 to 25 minutes</string>
   <string name="classicalDesc">Classical games: 25 minutes and more</string>
   <string name="correspondenceDesc">Correspondence games: one or several days per move</string>
-  <string name="puzzleDesc">Chess tactics trainer</string>
+  <string name="puzzleDesc">Go puzzles (tsumego) trainer</string>
   <string name="important">Important</string>
   <string name="yourQuestionMayHaveBeenAnswered">Your question may already have an answer %1$s</string>
   <string name="inTheFAQ">in the FAQ</string>
