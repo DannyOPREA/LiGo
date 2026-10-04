@@ -154,7 +154,28 @@ object JsonView:
 
   /** A Go game that ended by counting: its result as SGF writes it, `B+3.5`, `W+0.5` or `0` (ADR 0020 §5). */
   def goResult(g: Game): Option[String] =
-    g.goScoring.filter(_ => g.status == chess.Status.VariantEnd).flatMap(_.result).map(_.sgf)
+    g.goScoring
+      .filter(_ => g.status == chess.Status.VariantEnd)
+      .flatMap(_.result)
+      .map(_.sgf)
+      .orElse(importedResult(g))
+
+  /** An imported game that ended by counting has no count of its own: its result is the file's `RE`, as
+    * written (`B+3.5`, `W+`, `0`), read from the stored text (ADR 0023 §2). Other games skip the read.
+    */
+  private def importedResult(g: Game): Option[String] =
+    import ligo.gorules.{ SgfReader, SgfResult }
+    def letter(w: ligo.gorules.Color) = if w == ligo.gorules.Color.Black then "B" else "W"
+    g.sgfImport
+      .filter(_ => g.status == chess.Status.VariantEnd)
+      .flatMap(i => SgfReader.parse(i.sgf).toOption)
+      .flatMap(_.one("RE"))
+      .map(re => SgfResult(re))
+      .flatMap:
+        case SgfResult.Points(w, m) => s"${letter(w)}+${m.bigDecimal.stripTrailingZeros.toPlainString}".some
+        case SgfResult.Won(w) => s"${letter(w)}+".some
+        case SgfResult.Jigo => "0".some
+        case _ => none
 
   /** A Go game's setup alone: size, rules, komi, handicap and custom starting position. The API's game
     * exports carry it in place of chess's variant and initial FEN (unit 3.16).

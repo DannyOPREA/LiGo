@@ -212,7 +212,7 @@ final class GameApiV2(
     // the game's position, as live mini boards receive it (ADR 0019 §6)
     .add("lastBoard" -> flags.lastFen.option(GoBridge.board(g.go)))
     .add("bookmarked" -> bookmarked)
-    .add("import" -> g.pgnImport.map: i =>
+    .add("import" -> g.sgfImport.map: i =>
       Json.obj().add("date" -> i.date))
 
   private def gameLightUsers(game: Game): Future[ByColor[(lila.core.game.Player, Option[LightUser])]] =

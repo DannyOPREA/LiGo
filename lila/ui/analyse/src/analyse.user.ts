@@ -11,6 +11,17 @@ import { patch } from './view/util';
 
 export { patch };
 
+/**
+ * A game's page links here with `#<ply>` (ui/round's analysis button): the game's own ply, which counts
+ * the ply the game started at (1 when Black moves first), so the move shown is that many fewer.
+ */
+function jumpToHash(ctrl: AnalyseCtrl): void {
+  const ply = parseInt(location.hash.slice(1));
+  if (isNaN(ply) || !ctrl.opts.game) return;
+  ctrl.jumpToMain(ply - (ctrl.root.settings.toMove === 'black' ? 1 : 0));
+  ctrl.redraw();
+}
+
 export function initModule({
   cfg,
 }: {
@@ -25,5 +36,6 @@ export function initModule({
   element.innerHTML = '';
   vnode = patch(element, view(ctrl));
   menuHover();
+  jumpToHash(ctrl);
   return { ctrl, path: () => ctrl.path };
 }
