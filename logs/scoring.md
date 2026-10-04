@@ -21,6 +21,26 @@
   every end-of-game flag on it: the clock's gameActive, increments, byo-yomi period resets (2026-10-04, unit 4.8 review).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 4.12 part 2 · the Phase 4 games in two real browsers
+- Did: once 3.20 merged its two-browser harness, `lila/tests/e2e-demo/phase4-demo.spec.ts` plays two
+  19×19 Japanese byo-yomi games (the lobby's 5+5×10s tile, two guests) on the real stack, desktop
+  and phone. Game 1: a few stones, two passes, both accept the count. Game 2: White's stone in Black's
+  corner, two passes, Black taps it (the count changes for both), Black accepts, White resumes,
+  Black captures it in play, two passes, both accept. Each game's SGF export (`?format=sgf`) has
+  `TM[300]OT[5x10 byo-yomi]` and the result shown, and libs/board's `readTree` reads it back to the
+  stones on the page (and one prisoner in game 2). The `e2e` workflow and `dev/ligo e2e demo` run it
+  after the Phase 3 game. PLAN's 4.12b follow-up row is gone again.
+- Worked: all 6 demo tests (3.20's and these 4) pass twice in a row against `dev/ligo up` in a cloud
+  session (dockerd started by hand).
+- Didn't: guests have no byo-yomi in the setup window's lobby game, so the tile it is. The first
+  runs failed one game in three: a guest's tile click got lila's 429 (5 new games a minute from one
+  address, upstream), the tile still showed Cancel, and the other player waited forever.
+  Playwright's ES-module loader also breaks goban-engine's default export, so the SGF is read in a
+  child Node process.
+- Decisions: the tile and the retry over the rate limit (logs/decisions.md).
+- Lessons: in the lobby, a waiting tile showing Cancel doesn't mean the server took the game; wait
+  for the POST's answer. Every e2e spec that creates games shares the 5-a-minute budget.
+
 ### 2026-10-04 · unit 4.12 · the Phase 4 demo as a script, and the SGF's byo-yomi and counted result
 - Did: two 19×19 Japanese byo-yomi games (10 min + 5 × 30 s) played through the scoring phase in
   `lila/modules/game/src/test/Phase4DemoTest.scala`: one ends with an accepted proposal, one with a

@@ -47,6 +47,9 @@ async function playStone(page: Page, color: Color, col: number, row: number, pho
 const colorOf = async (page: Page): Promise<Color> =>
   (await page.locator('.rclock-bottom').getAttribute('class'))!.includes('rclock-black') ? 'black' : 'white';
 
+// A game takes seconds, but waiting out lila's new-game rate limit can take most of a minute.
+test.describe.configure({ timeout: 240_000 });
+
 test('two players play a casual 9x9 Fischer game from the lobby to a resignation', async ({
   browser,
 }, info) => {
@@ -81,7 +84,21 @@ test('two players play a casual 9x9 Fischer game from the lobby to a resignation
     await setup.locator('label[for=sf_size_9]').click();
     await expect(setup.locator('#sf_size_9')).toBeChecked();
     await expect(setup.getByText('Sign up to play rated games')).toBeVisible(); // guests only play casual
-    await setup.locator('button.lobby__start__button--hook').click();
+    // lila allows 5 new games a minute from one address (upstream's rate limit), which the Phase 4 demo's
+    // games share: create again until the server takes it (unit 4.12).
+    await expect(async () => {
+      if (!(await setup.isVisible()))
+        await a.locator('.lobby__start button.lobby__start__button--hook').click();
+      await setup.locator('label[for=sf_size_9]').click();
+      const created = a.waitForResponse(
+        r => r.url().includes('/setup/hook/') && r.request().method() === 'POST',
+        {
+          timeout: 5000,
+        },
+      );
+      await setup.locator('button.lobby__start__button--hook').click();
+      expect((await created).ok()).toBe(true);
+    }).toPass({ intervals: [5_000, 10_000, 15_000], timeout: 120_000 });
 
     // Player B: lobby, Open challenges, A's game, join.
     await b.goto('/');

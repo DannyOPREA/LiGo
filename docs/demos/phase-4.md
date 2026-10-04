@@ -4,8 +4,9 @@ Phase 4's acceptance (docs/PLAN.md §5, unit 4.12): **two players play a 19×19 
 game that ends with an accepted count, and a disputed game that resumes and then ends; the SGF
 opens in Sabaki; the scoring benchmark passes on your GPU.**
 
-CI already plays two such games as a script on every pull request that touches lila, the scoring
-service or the board: lila plays them through the scoring phase, the scoring service answers lila's
+The `e2e` workflow plays two such games in two real browsers every night and on any pull request
+labelled `e2e` (lila/tests/e2e-demo/phase4-demo.spec.ts, desktop and phone). CI also plays two as a
+script on every pull request that touches lila, the scoring service or the board: lila plays them through the scoring phase, the scoring service answers lila's
 real messages, and goban-engine reads lila's SGF back to the same final position
 (`libs/conformance/demo/phase-4/`, its README says how). This checklist is the part only you can
 do: the real site, two browsers, Sabaki and your GPU. It takes about 30 minutes.
