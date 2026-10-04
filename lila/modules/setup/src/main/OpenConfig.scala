@@ -14,7 +14,8 @@ final case class OpenConfig(
     userIds: Option[(UserId, UserId)],
     rules: Set[GameRule] = Set.empty,
     expiresAt: Option[Instant],
-    go: GoOptions = GoOptions.default
+    go: GoOptions = GoOptions.default,
+    byoyomi: Option[ligo.gorules.ByoyomiConfig] = None
 ) extends lila.core.setup.OpenConfig:
 
   // Go's one perf (ADR 0021 §1)
@@ -36,7 +37,9 @@ object OpenConfig:
       expiresAt: Option[Instant],
       size: Option[Int],
       ruleset: Option[String],
-      komi: Option[Double]
+      komi: Option[Double],
+      handicap: Option[Int],
+      byoyomi: Option[ligo.gorules.ByoyomiConfig]
   ) =
     OpenConfig(
       name = n.map(_.trim).filter(_.nonEmpty),
@@ -48,5 +51,6 @@ object OpenConfig:
       },
       rules = ~rules,
       expiresAt = expiresAt,
-      go = GoOptions(size, ruleset, komi)
+      go = GoOptions(size, ruleset, komi, handicap),
+      byoyomi = byoyomi
     )

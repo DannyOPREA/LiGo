@@ -86,3 +86,52 @@ class GoSetupFormTest extends munit.FunSuite:
     val config = HookConfig.default(auth = true).updateFrom(old)
     assertEquals(config.rated, chess.Rated.No)
     assertEquals(config.goSetup, nine.copy(handicap = 0))
+
+  // Unit 4.9: byo-yomi clocks in both forms, handicap in the challenge forms.
+  private val byoyomi = Map("timeMode" -> "3", "time" -> "10", "periods" -> "5", "periodTime" -> "30")
+
+  test("a byo-yomi lobby game: main time in minutes, then periods of seconds"):
+    val form = SetupForm.hook.bind(lobbyGame ++ byoyomi)
+    assert(!form.hasErrors, form.errors)
+    assertEquals(form.get.makeByoyomi, Some(ligo.gorules.ByoyomiConfig(600, 5, 30)))
+    assertEquals(form.get.makeClock, None)
+    val hook = form.get.hook(lila.core.socket.Sri("sri"), none, none, lila.core.pool.Blocking(Set.empty))
+    assertEquals(hook.left.toOption.map(_.clock.show), Some("10+5×30s"))
+
+  test("byo-yomi periods and lengths come from fixed lists, and a form without them gets 5 × 30 s"):
+    val noPeriods =
+      SetupForm.friend.bind(lobbyGame ++ byoyomi - "periods" - "periodTime" + ("color" -> "random"))
+    assertEquals(noPeriods.value.flatMap(_.makeByoyomi), Some(ligo.gorules.ByoyomiConfig(600, 5, 30)))
+    for bad <- List(Map("periods" -> "11"), Map("periods" -> "0"), Map("periodTime" -> "7"))
+    do assert(SetupForm.hook.bind(lobbyGame ++ byoyomi ++ bad).hasErrors, bad)
+    val sudden = SetupForm.hook.bind(lobbyGame ++ byoyomi ++ Map("time" -> "0", "periodTime" -> "5"))
+    assertEquals(sudden.value.flatMap(_.makeByoyomi), Some(ligo.gorules.ByoyomiConfig(0, 5, 5)))
+
+  test("a friend game takes a handicap, with 0.5 komi unless one is given"):
+    val friend = lobbyGame + ("color" -> "black")
+    val four = SetupForm.friend.bind(friend + ("handicap" -> "4"))
+    assert(!four.hasErrors, four.errors)
+    assertEquals(four.get.goSetup, GoSetup(BoardSize.Nineteen, Ruleset.Japanese, 0.5, handicap = 4))
+    val nine = SetupForm.friend.bind(friend ++ Map("size" -> "9", "handicap" -> "2", "komi" -> "3.5"))
+    assertEquals(
+      nine.value.map(_.goSetup),
+      Some(GoSetup(BoardSize.Nine, Ruleset.Japanese, 3.5, handicap = 2))
+    )
+    assert(SetupForm.friend.bind(friend + ("handicap" -> "10")).hasErrors, "10 stones")
+
+  test("lobby games stay even: the lobby form has no handicap"):
+    val form = SetupForm.hook.bind(lobbyGame + ("handicap" -> "4"))
+    assertEquals(form.value.map(_.goSetup.handicap), Some(0))
+
+  test("the challenge API takes a byo-yomi clock or a Fischer one, and a handicap"):
+    val api = SetupForm.api.admin
+    val byo = Map("byoyomi.limit" -> "600", "byoyomi.periods" -> "3", "byoyomi.period" -> "30")
+    val ok = api.bind(Map("rated" -> "false", "handicap" -> "3") ++ byo)
+    assert(!ok.hasErrors, ok.errors)
+    assertEquals(ok.get.byoyomi, Some(ligo.gorules.ByoyomiConfig(600, 3, 30)))
+    assertEquals(ok.get.goSetup.handicap, 3)
+    assertEquals(ok.get.clockSettings.map(_.show), Some("10+3×30s"))
+    val both = Map("clock.limit" -> "300", "clock.increment" -> "3")
+    assert(api.bind(Map("rated" -> "false") ++ byo ++ both).hasErrors, "clock and byoyomi")
+    assert(api.bind(Map("rated" -> "false", "days" -> "3") ++ byo).hasErrors, "days and byoyomi")
+    assert(api.bind(Map("rated" -> "false", "byoyomi.limit" -> "0", "byoyomi.periods" -> "3")).hasErrors)

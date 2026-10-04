@@ -216,7 +216,7 @@ final class PushApi(
   def challengeCreate(c: Challenge): Funit =
     c.destUser.so: dest =>
       c.challengerUser
-        .ifTrue(c.clock.isEmpty)
+        .ifTrue(c.timeControl.clockSettings.isEmpty)
         .so: challenger =>
           lightUser(challenger.id).flatMap: lightChallenger =>
             maybePushNotif(
@@ -239,7 +239,7 @@ final class PushApi(
 
   def challengeAccept(c: Challenge, game: Game, joinerId: Option[UserId]): Funit =
     c.challengerUser
-      .ifTrue(c.finalColor.white && c.clock.isEmpty)
+      .ifTrue(c.finalColor.white && c.timeControl.clockSettings.isEmpty)
       .so: challenger =>
         joinerId
           .so(lightUser.optional)
@@ -385,6 +385,7 @@ final class PushApi(
         case Unlimited => "Unlimited"
         case Correspondence(d) => s"$d days"
         case c: Clock => c.show
+        case b: Byoyomi => b.show
       ,
       "Go"
     ).mkString(" • ")

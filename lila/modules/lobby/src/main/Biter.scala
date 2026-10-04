@@ -58,17 +58,25 @@ final private class Biter(
 
   // A Go game from the hook's or seek's setup (unit 3.15); the setup was checked when it was made.
   private def makeGame(hook: Hook, users: GameUsers): Fu[lila.core.game.NewGame] =
-    newGo(hook.go, hook.clock.toClock.some, users, hook.rated, daysPerTurn = none)
+    newGo(
+      hook.go,
+      hook.clock.fischer.map(_.toClock),
+      users,
+      hook.rated,
+      daysPerTurn = none,
+      hook.clock.byoyomi
+    )
 
   private def makeGame(seek: Seek, users: GameUsers): Fu[lila.core.game.NewGame] =
-    newGo(seek.goSetup, clock = none, users, seek.rated, seek.daysPerTurn)
+    newGo(seek.goSetup, clock = none, users, seek.rated, seek.daysPerTurn, byoyomi = none)
 
   private def newGo(
       setup: ligo.gorules.Setup,
       clock: Option[chess.Clock],
       users: GameUsers,
       rated: chess.Rated,
-      daysPerTurn: Option[scalalib.model.Days]
+      daysPerTurn: Option[scalalib.model.Days],
+      byoyomi: Option[ligo.gorules.ByoyomiConfig]
   ): Fu[lila.core.game.NewGame] =
     lila.core.game
       .newGoGame(
@@ -77,7 +85,8 @@ final private class Biter(
         players = users.mapWithColor(newPlayer.apply),
         rated = rated,
         source = lila.core.game.Source.Lobby,
-        daysPerTurn = daysPerTurn
+        daysPerTurn = daysPerTurn,
+        byoyomi = byoyomi
       )
       .fold(e => fufail(s"Can't start a Go game from $setup: ${e.message}"), g => fuccess(g.start))
 

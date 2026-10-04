@@ -18,7 +18,8 @@ final case class ApiConfig(
     keepAliveStream: Boolean,
     rules: Set[GameRule] = Set.empty,
     onlyIfOpponentFollowsMe: Boolean = false,
-    go: GoOptions = GoOptions.default
+    go: GoOptions = GoOptions.default,
+    byoyomi: Option[ligo.gorules.ByoyomiConfig] = None
 ):
 
   // Go's one perf (ADR 0021 §1)
@@ -28,8 +29,13 @@ final case class ApiConfig(
   def goSetup = go.orDefault
 
   def validSpeed(isBot: Boolean) =
-    !isBot || clock.forall: c =>
-      Speed(c) >= Speed.Bullet
+    !isBot || clockSettings.forall(_.speed >= Speed.Bullet)
+
+  // the real-time clock asked for, Fischer or byo-yomi (unit 4.9)
+  def clockSettings: Option[lila.core.game.ClockSettings] =
+    byoyomi
+      .map(lila.core.game.ClockSettings.Byoyomi(_))
+      .orElse(clock.map(lila.core.game.ClockSettings.Fischer(_)))
 
   // Go games are casual until Phase 5 (unit 3.15)
   def validRated = rated.no
@@ -52,7 +58,9 @@ object ApiConfig extends BaseConfig:
       onlyIfOpponentFollowsMe: Option[Boolean],
       size: Option[Int],
       ruleset: Option[String],
-      komi: Option[Double]
+      komi: Option[Double],
+      handicap: Option[Int],
+      byoyomi: Option[ligo.gorules.ByoyomiConfig]
   ) =
     ApiConfig(
       clock = cl,
@@ -63,5 +71,6 @@ object ApiConfig extends BaseConfig:
       keepAliveStream = ~keepAliveStream,
       rules = ~rules,
       onlyIfOpponentFollowsMe = ~onlyIfOpponentFollowsMe,
-      go = GoOptions(size, ruleset, komi)
+      go = GoOptions(size, ruleset, komi, handicap),
+      byoyomi = byoyomi
     )

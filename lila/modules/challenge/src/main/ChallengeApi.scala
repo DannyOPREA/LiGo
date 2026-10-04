@@ -36,7 +36,7 @@ final class ChallengeApi(
   def createOpen(config: lila.core.setup.OpenConfig)(using me: Option[Me]): Fu[Challenge] =
     val c = Challenge.make(
       go = config.goSetup,
-      timeControl = Challenge.makeTimeControl(config.clock, config.days),
+      timeControl = Challenge.makeTimeControl(config.clock, config.days, config.byoyomi),
       rated = config.rated,
       color = "random",
       challenger = Challenger.Open,
@@ -134,7 +134,9 @@ final class ChallengeApi(
       then "The challenge has been canceled.".raise
       else if c.declined
       then "The challenge has been declined.".raise
-      else if me.exists(_.isBot) && !c.clock.map(_.config).forall(lila.core.game.isBotCompatible)
+      else if me.exists(_.isBot) && !c.timeControl.clockSettings.forall(
+          _.fischer.forall(lila.core.game.isBotCompatible)
+        )
       then "Game incompatible with a BOT account".raise
       else if c.open.exists(!_.canJoin)
       then "The challenge is not for you to accept.".raise
@@ -187,7 +189,7 @@ final class ChallengeApi(
     repo.byId(gameId.into(ChallengeId)).flatMap(_.so(remove))
 
   private def isLimitedByMaxPlaying(c: Challenge) =
-    c.clock.nonEmpty.so:
+    c.timeControl.clockSettings.nonEmpty.so:
       c.userIds.existsM: userId =>
         gameCache.nbPlaying(userId).dmap(lila.core.game.maxPlaying <= _)
 

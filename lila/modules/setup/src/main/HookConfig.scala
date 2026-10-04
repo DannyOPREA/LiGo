@@ -19,7 +19,8 @@ case class HookConfig(
     rated: Rated,
     color: TriColor,
     ratingRange: RatingRange,
-    go: GoOptions = GoOptions.default
+    go: GoOptions = GoOptions.default,
+    byoyomi: ByoyomiPeriods = ByoyomiPeriods.default
 ) extends HumanConfig:
 
   def withinLimits(using me: Option[Me], perf: Perf): HookConfig =
@@ -37,12 +38,15 @@ case class HookConfig(
     color.name.some,
     go.size,
     go.ruleset,
-    go.komi
+    go.komi,
+    byoyomi.periods,
+    byoyomi.seconds
   ).some
 
   def withTimeModeString(tc: Option[String]) =
     tc match
       case Some("realTime") => copy(timeMode = TimeMode.RealTime)
+      case Some("byoyomi") => copy(timeMode = TimeMode.Byoyomi)
       case Some("correspondence") => copy(timeMode = TimeMode.Correspondence)
       case Some("unlimited") => copy(timeMode = TimeMode.Unlimited)
       case _ => this
@@ -53,9 +57,8 @@ case class HookConfig(
       sid: Option[SessionId],
       blocking: lila.core.pool.Blocking
   ): Either[Hook, Option[Seek]] =
-    timeMode match
-      case TimeMode.RealTime =>
-        val clock = justMakeClock
+    makeClockSettings match
+      case Some(clock) =>
         Left:
           Hook.make(
             sri = sri,
@@ -68,7 +71,7 @@ case class HookConfig(
             sid = sid,
             ratingRange = ratingRange
           )
-      case _ =>
+      case None =>
         Right:
           user.map: u =>
             Seek.make(
@@ -83,11 +86,12 @@ case class HookConfig(
   def updateFrom(game: Game) =
     val h1 = copy(
       timeMode = TimeMode.ofGame(game),
-      time = game.clock.map(_.limitInMinutes) | time,
+      time = game.byoyomi.map(_.config.mainSeconds / 60d).orElse(game.clock.map(_.limitInMinutes)) | time,
       increment = game.clock.map(_.incrementSeconds) | increment,
       days = game.daysPerTurn | days,
       rated = Rated.No, // casual until unit 5.7, even after an older rated game
-      go = GoOptions.of(game.go.setup.copy(handicap = 0, position = None))
+      go = GoOptions.of(game.go.setup.copy(handicap = 0, position = None)),
+      byoyomi = game.byoyomi.fold(byoyomi)(b => ByoyomiPeriods(b.config.periods, b.config.periodSeconds))
     )
     val h2 = if h1.isRatedUnlimited then h1.copy(rated = Rated.No) else h1
     if !h2.validClock then h2.copy(time = 1) else h2
@@ -110,7 +114,9 @@ object HookConfig extends BaseConfig:
       c: Option[String],
       size: Option[Int] = None,
       ruleset: Option[String] = None,
-      komi: Option[Double] = None
+      komi: Option[Double] = None,
+      periods: Int = ByoyomiPeriods.default.periods,
+      periodTime: Int = ByoyomiPeriods.default.seconds
   ) =
     new HookConfig(
       timeMode = TimeMode(tm).err(s"Invalid time mode $tm"),
@@ -120,7 +126,8 @@ object HookConfig extends BaseConfig:
       rated = m.fold(Rated.default)(Rated.orDefault),
       color = TriColor.orDefault(c),
       ratingRange = e.fold(RatingRange.default)(RatingRange.orDefault),
-      go = GoOptions(size, ruleset, komi)
+      go = GoOptions(size, ruleset, komi),
+      byoyomi = ByoyomiPeriods(periods, periodTime)
     )
 
   // Go games are casual until Phase 5 (PLAN §5, unit 3.15)
@@ -149,7 +156,8 @@ object HookConfig extends BaseConfig:
         days = r.get("d"),
         rated = Rated.orDefault(r.int("m")),
         color = TriColor.Random,
-        ratingRange = r.strO("e").flatMap(RatingRange.parse).getOrElse(RatingRange.default)
+        ratingRange = r.strO("e").flatMap(RatingRange.parse).getOrElse(RatingRange.default),
+        byoyomi = ByoyomiPeriods.read(r.intO("bp"), r.intO("bs"))
       )
 
     def writes(w: BSON.Writer, o: HookConfig) =
@@ -159,5 +167,7 @@ object HookConfig extends BaseConfig:
         "i" -> o.increment,
         "d" -> o.days,
         "m" -> o.rated.id,
-        "e" -> o.ratingRange.toString
+        "e" -> o.ratingRange.toString,
+        "bp" -> o.byoyomi.periods,
+        "bs" -> o.byoyomi.seconds
       )
