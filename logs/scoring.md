@@ -17,8 +17,81 @@
   don't catch a listener's throw — an uncaught one takes the whole process down (2026-09-28, unit
   4.5 review fixes).
 - Grade autoscore's raw `result`/`needs_sealing` (as `src/grade.ts` does), never goscorer's `owner`, against OGS's `correct_ownership`: under Japanese rules `owner` marks territory only, so a correct answer would fail by construction (2026-09-29, unit 4.6).
+- When a "game-ending" move becomes resumable (the second pass opening the scoring phase), revisit
+  every end-of-game flag on it: the clock's gameActive, increments, byo-yomi period resets (2026-10-04, unit 4.8 review).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 4.8 · the scoring phase in lila
+- Did: two passes (or the 1,000-ply cap, which also closes play) open a scoring phase stored as
+  `sc` on the game (ADR 0020 §2; `GoScoring` in core, `GoStorage.scoring` in game). lila sends
+  `propose` to the service on Redis `scoring-in` and reads `scoring-out` (`ScoringRedis` in round,
+  adapted from lichess's old `FishnetRedis`); the proposal, toggles, recounts, accepts, resume,
+  the 3-minute (1-day correspondence) timeout and the 10-minute / 1-day waits are pure steps in
+  `lila.game.GoScoringPlay`, applied by `GoScorer` in the round (save, send, end through the
+  Finisher). Re-sends every 30 s, on round load, on the service's `start`, and from Titivate
+  every minute while a request is unanswered (`ck`). Clocks stop in the phase and restart on
+  resume; `outoftime` is false while `sc` exists; either player may claim the win when the other
+  has gone. A count accepted by both, or standing at the timeout, ends the game as
+  `Status.VariantEnd` with the winner (none for jigo); no count at all ends it as `UnknownFinish`.
+  lila-ws forwards `score-toggle`, `score-accept`, `score-resume` as `r/do` with their `d`.
+  Events: versioned `scoring` and `resume`; `endData` and the game JSON carry `result` (`B+0.5`).
+  go-rules gained `Scoring.restore`. For 4.10's clock, byo-yomi clock JSON and clock events also
+  carry `inByo: {b, w}` (whether each side is in byo-yomi; ADR 0020 §7 amended).
+- Worked: 18 GoScoringTest cases (opening, proposal, stale/partial/second proposals, malformed
+  replies, toggles and recounts, accepts, jigo, resume and phase 2, deadlines and overtime,
+  correspondence limits, BSON and GameDiff, the cap, the service's JSON), 3 round tests, one
+  lila-ws test, one go-rules test; verify passes.
+- Didn't: review found the second pass still stepped the clock as a game-ending move (no Fischer
+  increment, no byo-yomi period reset: a resume left 10 s of a 30 s period). Fixed: only the
+  ply cap stops the clock's step now (`goClockActiveAfter`), with tests. Also fixed from review:
+  expiry timers deduplicated, Titivate wakes unanswered games after a lila restart, the service
+  restart query uses `ck`, a reply with a wrong-sized `owner` or an off-board seal point is refused.
+- Not done (follow-ups): no end-to-end Redis round trip test in lila (the Redis worker has one,
+  4.5); a proposal go-rules refuses is logged and the game ends with no result after 10 minutes,
+  as ADR 0020 says; a corrupt `sc` loads without it and the stopped clock then reads as flagged;
+  playban's SitResign can fire on a resign during the phase; until 4.10 there is no UI, and the
+  "Variant ending" wording is 4.10's.
+- Decisions: ADR 0020 §2 amended: `sb`/`sw` store the service's total × 2; new `tx` key for a
+  timeout passed while a recount was pending (logs/decisions.md).
+- Lessons: once a "game-ending" move becomes resumable, revisit every end-of-game flag on it
+  (the clock's gameActive, increments, period resets).
+
+### 2026-10-04 · unit 4.11 merge · SGF next to 3.17's JSON-only downloads
+- Did: merged main after 3.17 part 2a (#105), which removed PGN and made game downloads JSON. `GameApiV2.Format`
+  is now JSON or SGF: SGF with `?format=sgf` or `Accept: application/x-go-sgf`, else JSON. The single and bulk
+  exports both write SGF when asked; the record's place is `LiGo <baseUrl>/<game id>` (PgnDump's game URL went).
+- Decision: a download with no preference stays JSON, as 3.17 made it, instead of 4.11's first "SGF by default".
+- Lessons: an export format added in parallel with a format removal is easiest to keep as its own branch in
+  `exportOne` and the bulk flow, so the merge is local.
+
+### 2026-10-04 · unit 4.11 review · SGF export holds back a live game's last moves
+- Did: an independent review of PR #99 found the SGF export skipped lila's move delay (an untrusted caller
+  gets a game in play without its last 3 moves in PGN and JSON) and ignored `moves=false`. `SgfDump` now
+  takes the export flags and writes the record from the shown prefix of the actions (replayed by go-rules).
+  Also: `NoStart` (a player who never moved in a game that couldn't be aborted) writes `B+F` like a forfeit;
+  `?format=sgf` on a game that isn't Go falls back to PGN instead of an empty `.sgf`; the format test's query
+  parsing no longer throws on `a=b=c`. Tests: `SgfDumpTest` 9 (delay, `moves=false`, NoStart, Cheat, escaping).
+- Worked: `GoGame.replay(setup, prefix)` rebuilds the shown game; `Sgf.write` reads only setup and actions.
+- Lessons: any new export format must go through `applyDelay`/`keepDelayIf` like PGN and JSON.
+- Left as is: a bulk SGF export's filename keeps upstream's `lichess_<user>_<date>` stem (the rename is 3.17's).
+
+### 2026-10-04 · unit 4.11 · SGF export of a Go game
+- Did: `lila.game.SgfDump` (pure) builds `SgfInfo` from a stored Go game (names, rank label from unit 5.5,
+  creation date in UTC, place `LiGo <game url>`, Fischer or days-per-move clock, `RE` for resign, flag and
+  abandonment) and calls go-rules' `Sgf.write`. `GameApiV2.Format` gains `SGF`: `byRequest` picks it for
+  `Accept: application/x-go-sgf` or `?format=sgf`; `Game.exportGame` makes a Go game's no-preference export SGF
+  (content type `application/x-go-sgf`, file `ligo_<id>.sgf`); the bulk/stream exports write SGF when asked,
+  keeping PGN for a non-Go game. Tests: `SgfDumpTest` (6), `GameExportFormatTest` (4).
+- Worked: reuse of `Namer.ratingString`, `GoBridge.goColor` and go-rules' `GameResult`; no manifest change.
+- Didn't work / dead ends: a test wrote names as `ByColor(black, white)` (the order is white, black), which
+  showed up as swapped players in the record; also `play-test` is not on lila's classpath, so the format test
+  builds a request with Play's `RequestFactory`.
+- Decisions: see logs/decisions.md (default format, `RE` before 4.8, ranks).
+- Verified by Claude: the tests above and `compile`. Needs owner verification: a real download in the browser.
+- Follow-ups: counted results (`B+3.5`, `0`, `Void`) once 4.8 stores them; byo-yomi `OT` once a game stores
+  byo-yomi; the game page's Download link (it lives in `ui/round`, not in Scala views; the only Scala links, in
+  `ReplayUi`, are chess-only PGN links); an `sgf` field in the JSON exports was skipped.
+
 ### 2026-09-29 · unit 4.6 follow-up · b18 network checksum pinned
 - Did: set `NET_SHA256` in `dev/katago.sh` to the sha256 the owner pasted from his own
   `dev/ligo katago install opencl` download of `kata1-b18c384nbt-s9996604416-d4316597426.bin.gz`

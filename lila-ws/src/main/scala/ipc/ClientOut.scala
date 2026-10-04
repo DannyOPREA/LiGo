@@ -106,7 +106,9 @@ object ClientOut:
               case "bye2" => Some(RoundBye)
               case "blindfold-yes" | "blindfold-no" | "moretime" | "rematch-yes" | "rematch-no" |
                   "takeback-yes" | "takeback-no" | "draw-yes" | "draw-no" | "draw-claim" | "resign" |
-                  "resign-force" | "draw-force" | "abort" | "outoftime" =>
+                  "resign-force" | "draw-force" | "abort" | "outoftime" |
+                  // a Go game's scoring phase (ADR 0020 §6): lila reads `d` itself
+                  "score-toggle" | "score-accept" | "score-resume" =>
                 Some(RoundPlayerForward(o))
               // chat
               case "talk" => o.str("d").map { ChatSay.apply }
