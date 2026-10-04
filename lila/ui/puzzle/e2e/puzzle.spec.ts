@@ -137,9 +137,10 @@ test.describe('desktop', () => {
     await key(page, 'end');
     await expect(moves.last()).toHaveClass(/active/);
     await expect(page.getByRole('button', { name: 'Next move' })).toBeDisabled();
-    // the board shows a picture of the position: a click does nothing
+    // the board shows a picture of the position: a click does nothing (White is to move here, so
+    // a click that got through would place a white stone, not a black one)
     await play(page, 'ee');
-    await expect.poll(() => stoneAt(page, 'ee')).not.toBe('X');
+    await expect.poll(() => stoneAt(page, 'ee')).toBe('.');
     expect(opened.completed).toHaveLength(1);
     expect(opened.problems).toEqual({ requests: [], errors: [] });
   });
