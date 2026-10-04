@@ -33,7 +33,7 @@ with `dev/ligo logs lila`). Open http://localhost:8080/training.
 - [ ] Your puzzle rating shows on the left.
 - [ ] Solve it: the page says "Success!", your rating goes up (a green "+N"), and the puzzle's own
       rating appears. Press Continue to get the next puzzle.
-- [ ] Fail one: play a wrong move. the opponent's answer appears on the board, the page says "That's not
+- [ ] Fail one: play a wrong move. The opponent's answer appears on the board, the page says "That's not
       the move!", and your rating goes down (a red "−N"). The session strip below the board shows a win and a
       loss.
 - [ ] Press "View the solution" and step through the moves with the arrows or the arrow keys.
