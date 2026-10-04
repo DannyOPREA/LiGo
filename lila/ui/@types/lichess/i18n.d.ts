@@ -3815,8 +3815,14 @@ interface I18n {
     goBoardSize: string;
     /** Both players passed. Counting the score comes in a later version. */
     goBothPlayersPassed: string;
+    /** Can meet %s */
+    goCanMeetX: I18nFormat;
+    /** Casual quick games are even */
+    goCasualQuickGamesEven: string;
     /** Connecting to the game */
     goConnectingToTheGame: string;
+    /** Correspondence games need an account */
+    goCorrespondenceNeedsAccount: string;
     /** Current tournament rank */
     goCurrentTournamentRank: string;
     /** Go deeper */
@@ -3827,10 +3833,14 @@ interface I18n {
     goDownloadSgf: string;
     /** Even */
     goEven: string;
+    /** Even only */
+    goEvenOnly: string;
     /** First move */
     goFirstMove: string;
     /** Handicap */
     goHandicap: string;
+    /** Handicap OK */
+    goHandicapOk: string;
     /** Joined the game */
     goJoinedTheGame: string;
     /** Komi */
@@ -3853,6 +3863,8 @@ interface I18n {
     goNbMoves: I18nPlural;
     /** %s prisoners */
     goNbPrisoners: I18nPlural;
+    /** %s waiting */
+    goNbWaiting: I18nPlural;
     /** New position */
     goNewPosition: string;
     /** Next move */
@@ -3871,6 +3883,8 @@ interface I18n {
     goOpenSgfFile: string;
     /** Your opponent left the game. You can claim victory, or wait for them. */
     goOpponentLeftChoices: string;
+    /** or with up to %s handicap stones */
+    goOrUpToNbStones: I18nPlural;
     /** Pass */
     goPass: string;
     /** Pass: play no stone this turn */
@@ -3911,6 +3925,8 @@ interface I18n {
     goSgfUnreadable: string;
     /** Show clock on left */
     goShowClockOnLeft: string;
+    /** Sign up to play rated games */
+    goSignUpForRated: string;
     /** Start */
     goStart: string;
     /** Start analysis */
@@ -3937,6 +3953,8 @@ interface I18n {
     goUnjoinableRated: string;
     /** Vibration feedback */
     goVibrationFeedback: string;
+    /** An estimate of who the pairing would accept now; it widens while you wait */
+    goWaitingRangeHint: string;
     /** White stones */
     goWhiteStones: string;
     /** White: %s */

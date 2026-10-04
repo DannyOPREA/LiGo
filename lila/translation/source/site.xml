@@ -264,6 +264,21 @@
   <string name="goUnjoinableRange">Your rank is outside this game's range</string>
   <string name="goUnjoinableMembers">For signed-in players</string>
   <string name="goUnjoinableGuests">For guests</string>
+  <string name="goHandicapOk" comment="Quick pairing chip: the player accepts a handicap game when the ranks differ">Handicap OK</string>
+  <string name="goEvenOnly" comment="Quick pairing chip: the player wants even games only">Even only</string>
+  <string name="goCasualQuickGamesEven">Casual quick games are even</string>
+  <string name="goSignUpForRated">Sign up to play rated games</string>
+  <string name="goCorrespondenceNeedsAccount">Correspondence games need an account</string>
+  <plurals name="goNbWaiting" comment="How many players wait on a quick pairing tile">
+    <item quantity="one">%s waiting</item>
+    <item quantity="other">%s waiting</item>
+  </plurals>
+  <string name="goCanMeetX" comment="%s is a range of Go ranks, like 3k–1d">Can meet %s</string>
+  <plurals name="goOrUpToNbStones" comment="Follows 'Can meet 3k–1d': handicap games with stronger or weaker players">
+    <item quantity="one">or with up to %s handicap stone</item>
+    <item quantity="other">or with up to %s handicap stones</item>
+  </plurals>
+  <string name="goWaitingRangeHint">An estimate of who the pairing would accept now; it widens while you wait</string>
   <string name="goHandicap">Handicap</string>
   <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>
   <string name="goFirstMove">First move</string>
