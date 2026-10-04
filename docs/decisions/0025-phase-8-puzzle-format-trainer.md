@@ -300,3 +300,15 @@ Building the generator made these points of §2 concrete. Claude's calls under t
 The feasibility gate passed: with seed 1, 250 of 265 catalogue positions were settled within the
 budget (14 rest on a ko, 1 ran over), in 46 s on the cloud's CPU.
 
+### 2026-10-04, unit 8.7 (as built)
+Claude's calls under the owner's 2026-09-28 delegation (logs/decisions.md):
+- **No hints**: lila's "Get a hint" is dropped; goban's puzzle mode has no way to mark one.
+- **A Confirm move button** shows when Confirm moves applies, as on the game page; a second tap
+  on the same point also plays.
+- **The board box follows `bounds`**, so a corner puzzle isn't drawn inside an empty square.
+- **"View the solution"** steps through the first right line (a move list and arrows), also after
+  a win; it sends a loss first if no result was sent, as lila does.
+- **Theme names come from the server** for now: the Go themes have no i18n keys yet.
+- **Blind-mode play is not wired** for puzzles yet: `mountPuzzle` doesn't carry `libs/board`'s
+  keyboard and live-region glue (ADR 0026 §4).
+

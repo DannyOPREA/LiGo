@@ -1,30 +1,29 @@
-import type { Move } from 'chessops/types';
-import type { VNode } from 'snabbdom';
+// The trainer page's data (unit 8.7): what lila's puzzle JSON holds for a Go puzzle (ADR 0025 §1,
+// `JsonView.puzzleJson`). The puzzle itself is goban's puzzle format, which `@ligo/board/puzzle`
+// plays; lila's own fields (id, rating, plays, themes) and LiGo's (goal, source) sit beside it.
 
-import perfIcons from 'lib/game/perfIcons';
-import type { Coords } from 'lib/prefs';
-import type { TreePath } from 'lib/tree/types';
+import type { Puzzle as BoardPuzzle } from '@ligo/board/puzzle';
 
 export type PuzzleId = string;
-export type ThemeKey = keyof I18n['puzzleTheme'];
+/** A theme's key: lila's `mix`, or one of the Go themes (`PuzzleTheme.scala`). */
+export type ThemeKey = string;
 
-export interface NvuiPlugin {
-  render(): VNode;
-}
-
-export type ReplayEnd = PuzzleReplay;
+/** goban's move tree: the root, then each line, its last node marked right or wrong. */
+export type MoveTree = BoardPuzzle['move_tree'];
 
 export type PuzzleDifficulty = 'easiest' | 'easier' | 'normal' | 'harder' | 'hardest';
 
 export interface PuzzleSettings {
   difficulty: PuzzleDifficulty;
-  color?: Color;
 }
 
 export interface PuzzleOpts {
   pref: PuzzlePrefs;
   data: PuzzleData;
   settings: PuzzleSettings;
+  /** Every theme's name and description: the server translates them (the Go themes have no i18n keys). */
+  themeNames: Record<ThemeKey, ThemeName>;
+  /** The themes a signed-in player may vote on, and the ones no vote can change. */
   themes?: {
     dynamic: string;
     static: string;
@@ -32,37 +31,26 @@ export interface PuzzleOpts {
   showRatings: boolean;
 }
 
+export interface ThemeName {
+  name: string;
+  desc: string;
+}
+
+/** The preferences the page reads: `Pref.coords` and `Pref.confirmMoves`. */
 export interface PuzzlePrefs {
-  coords: Coords;
-  is3d: boolean;
-  destination: boolean;
-  rookCastle: boolean;
-  moveEvent: number;
-  highlight: boolean;
-  animation: {
-    duration: number;
-  };
-  blindfold: boolean;
-  keyboardMove: boolean;
-  voiceMove: boolean;
+  coords: number;
+  confirmMoves?: number;
 }
 
 export interface Angle {
   key: ThemeKey;
   name: string;
   desc: string;
-  chapter?: string;
-  opening?: {
-    key: string;
-    name: string;
-  };
-  openingAbstract?: boolean;
 }
 
 export interface PuzzleData {
-  puzzle: Puzzle;
+  puzzle: PuzzleJson;
   angle: Angle;
-  game: PuzzleGame;
   user?: PuzzleUser;
   replay?: PuzzleReplay;
   isDaily?: boolean;
@@ -74,38 +62,21 @@ export interface PuzzleReplay {
   days: number;
 }
 
-export interface PuzzleGame {
-  id: string;
-  perf?: {
-    key: keyof typeof perfIcons;
-    name: string;
-  };
-  rated: boolean;
-  players: [PuzzlePlayer, PuzzlePlayer];
-  pgn: string;
-  clock?: string;
-}
-
-export interface PuzzlePlayer {
-  name: string;
-  rating?: number;
-  title?: string;
-  flair?: string;
-  color: Color;
-}
-
 export interface PuzzleUser {
   rating: number;
   provisional?: boolean;
 }
 
-export interface Puzzle {
+/** goban's puzzle, plus lila's and LiGo's fields. */
+export interface PuzzleJson extends BoardPuzzle {
   id: PuzzleId;
-  solution: Uci[];
   rating: number;
   plays: number;
-  initialPly: number;
   themes: ThemeKey[];
+  /** "live" or "kill" (the classics may also have "ko", "capture" or "connect"). */
+  goal: string;
+  /** One line for under the board: where the puzzle comes from. */
+  source: string;
 }
 
 export interface PuzzleResult {
@@ -120,10 +91,4 @@ export interface PuzzleRound {
   win: boolean;
   ratingDiff: number;
   themes?: RoundThemes;
-}
-
-export interface MoveTest {
-  move: Move;
-  fen: FEN;
-  path: TreePath;
 }
