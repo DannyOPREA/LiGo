@@ -121,7 +121,8 @@ export default function makeRenderers(): Renderers {
             result = i18n.site.defeat;
             break;
           default:
-            result = n.content.noResult ? i18n.site.gameEndedWithNoResult : i18n.site.draw;
+            // "No result vs X", like "Draw vs X" (the bell's longer sentence reads oddly before "vs")
+            result = n.content.noResult ? i18n.site.goNoResult : i18n.site.draw;
         }
         return i18n.site.resVsX(result, userFullName(n.content.opponent));
       },

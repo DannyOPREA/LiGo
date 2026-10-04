@@ -435,6 +435,22 @@ describe('the scoring phase', () => {
     assert.equal(ctrl.isMyTurn(), true, 'a toggle clears the accepts');
   });
 
+  test('"play the next game" is asked once, when the accept arrives, not on every later event', () => {
+    const { ctrl } = scoring();
+    let asked = 0;
+    ctrl.moveOn.next = () => void asked++;
+    ctrl.apiScoring(proposal());
+    assert.equal(asked, 0, 'not before Black accepts');
+    ctrl.apiScoring(proposal({ accepted: { b: true, w: false } }));
+    assert.equal(asked, 1, 'Black accepted');
+    ctrl.apiScoring(proposal({ accepted: { b: true, w: false }, pending: true }));
+    ctrl.apiScoring(proposal({ accepted: { b: true, w: false } }));
+    assert.equal(asked, 1, 'the same accept seen again asks nothing new');
+    ctrl.apiScoring(proposal({ v: '1:2', accepted: { b: false, w: false } }));
+    ctrl.apiScoring(proposal({ v: '1:2', accepted: { b: true, w: false } }));
+    assert.equal(asked, 2, 'a new accept after a recount asks again');
+  });
+
   test("a spectator's game is nobody's turn in the scoring phase", () => {
     const { ctrl } = scoring({ spectator: true });
     assert.equal(ctrl.isMyTurn(), false);

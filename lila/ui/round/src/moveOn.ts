@@ -1,27 +1,35 @@
 import { isSwitchable } from 'lib/game';
-import { storage } from 'lib/storage';
+import { type LichessBooleanStorage, storage } from 'lib/storage';
 
 import type RoundController from './ctrl';
 import { whatsNext } from './xhr';
 
 export default class MoveOn {
-  private readonly storage = storage.boolean(this.key);
+  // set in the constructor, after `key`: a field initializer may run before parameter properties are
+  // assigned (it does under node's type transform, which the unit tests use)
+  private readonly storage: LichessBooleanStorage;
+  readonly get: () => boolean;
 
   constructor(
     private readonly ctrl: RoundController,
-    private readonly key: string,
-  ) {}
+    key: string,
+    // how the page leaves for the next game (the tests record it instead)
+    private readonly navigate: (href: string) => void = href => {
+      window.location.href = href;
+    },
+  ) {
+    this.storage = storage.boolean(key);
+    this.get = this.storage.get;
+  }
 
   toggle = (): void => {
     this.storage.toggle();
     this.next(true);
   };
 
-  get: () => boolean = this.storage.get;
-
   private readonly redirect = (href: string) => {
     this.ctrl.setRedirecting();
-    window.location.href = href;
+    this.navigate(href);
   };
 
   next = (force?: boolean): void => {
