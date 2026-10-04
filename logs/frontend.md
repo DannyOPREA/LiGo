@@ -5,6 +5,13 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 9.7 part two (PR #92) · The push test sends its push again when CI's Chromium loses it
+- Did: `ui/playground/e2e/pwa.spec.ts`'s push check failed on CI only (PRs #84, #87, #95): the worker was activated and reported no error, yet no notification showed in 5 s. The test now sends the same push up to three times, 3 s apart; the shared tag keeps it to one notification, and the failure message says how many pushes were sent. The page browser tests also post failures as CI annotations (Playwright's `github` reporter).
+- Worked: 10 repeats of the PWA tests locally, 50/50. The job log (GitHub MCP `get_job_logs`) carried the test's own diagnostics, which named the failing test and the worker's states.
+- Didn't work / dead ends: never reproduced locally, so the cause (a push delivered just as the worker activates being dropped) is inferred, not proven.
+- Lessons: when a CI-only failure can't be reproduced, read the job log through the GitHub MCP; the plain API's log redirect is refused here.
+- Decisions: retry the delivery, not the assertion: a worker that never shows the notification still fails.
+
 ### 2026-10-04 · unit 7.4 fix · Go moves drawn as chess pieces
 - Did: lila's move list writes moves in the Noto Chess figurine font, so moves in columns B, K, N, Q and R showed as pieces on `/analysis` ("B19" as a bishop; found by Phase 8's 8.7). The analysis move list and its menu's title now use the page font, as the game page's already did (3.18). The tree's header comment no longer points at `ui/puzzle/src/chessNode.ts`, which 8.7 deletes. A browser test plays B19, K18, N17, Q16 and R15 and checks the font of the list and the menu title.
 - Worked: switching the rule off makes the test fail ("Noto Chess", "Noto Sans"), so it guards the fix.
