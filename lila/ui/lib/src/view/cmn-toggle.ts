@@ -35,10 +35,17 @@ export const cmnToggleProp = (opts: CmnToggleProp): VNode =>
     change: v => opts.prop(v),
   });
 
+// LiGo (unit 9.10): the checkbox is the control, so its wrapper has no role of its own (axe's
+// nested-interactive and aria-command-name), and the title names it for screen readers (axe's label)
 export const cmnToggle = (opts: CmnToggle): VNode =>
-  h('span.cmn-toggle', { attrs: { role: 'button' } }, [
+  h('span.cmn-toggle', [
     h(`input#cmn-tg-${opts.id}`, {
-      attrs: { type: 'checkbox', checked: opts.checked, disabled: !!opts.disabled },
+      attrs: {
+        type: 'checkbox',
+        checked: opts.checked,
+        disabled: !!opts.disabled,
+        ...(opts.title ? { 'aria-label': opts.title } : {}),
+      },
       on: {
         click: blurIfPrimaryClick,
       },

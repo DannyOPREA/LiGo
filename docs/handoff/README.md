@@ -42,16 +42,19 @@ LiGo's own code is mostly glue between those parts, plus:
 
 ## What is unfinished
 
-At the time of writing, these units from `docs/PLAN.md` §5 were not merged:
+At the time of writing (2026-10-04), every unit in `docs/PLAN.md` §5 had merged except one:
 
-- **Phase 6:**
-  - 6.9, the load test;
-  - 6.10, the lobby demo.
-  - The lobby player test (see [lobby-research.md](lobby-research.md)) runs after 6.10.
-- **Phase 7:** 7.8, the analysis and correspondence demo.
-- **Phase 9:**
-  - 9.9 part two, the demo-video script;
-  - 9.10, the final demo and the Go-club checklist.
+- **Phase 6:** 6.9, the lobby load test. `dev/ligo loadtest` plays many pairs of 9×9 pool games
+  at once over lila's own websockets with k6, and a `loadtest` workflow runs it on demand. It is
+  in review as PR #138.
+
+The lobby player test (see [lobby-research.md](lobby-research.md)) can run now that 6.10, the
+lobby demo, has merged. It needs real players, so it hadn't been run.
+
+The demo video (unit 9.9) is recorded by `lila/tests/e2e-demo/handoff-video.spec.ts`: a 9×9 game
+through the count, a puzzle, and an SGF import, at desktop and phone size. Every run of the `e2e`
+workflow keeps the videos for 30 days as its `ligo-demo-video` artifact (Actions tab), and
+`dev/ligo e2e video` records them on a running stack. The videos are not in git.
 
 Beyond the plan, LiGo has never run in public. A public site would first need the legal steps in
 PLAN §8 (UK Online Safety Act assessments, ICO registration, a privacy notice, moderation turned

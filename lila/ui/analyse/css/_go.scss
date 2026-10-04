@@ -149,6 +149,13 @@
   flex-direction: column;
   gap: 0.4em;
   margin: 0.8em 0;
+
+  // 24px tap targets at least (WCAG 2.5.8, unit 9.10)
+  a {
+    min-height: 24px;
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 // Setup mode: the panel beside the position editor. On a phone it is taller than the move list's

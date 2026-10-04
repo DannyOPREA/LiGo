@@ -18,8 +18,20 @@ export function renderChat(ctrl: ChatCtrl, hook: Hooks = {}): VNode {
 function normalView(ctrl: ChatCtrl) {
   const active = ctrl.getTab();
   return [
-    div(`.mchat__tabs.nb_${ctrl.visibleTabs.length}`, { role: 'tablist' }, [
-      ctrl.visibleTabs.map(t => renderTab(ctrl, t, active)),
+    // LiGo (unit 9.10): the chat's on/off switch sits beside the tabs, not inside one: a tab can't hold
+    // another control (axe's nested-interactive)
+    hl(`div.mchat__tabs.nb_${ctrl.visibleTabs.length}`, [
+      div('.mchat__tablist', { role: 'tablist' }, [ctrl.visibleTabs.map(t => renderTab(ctrl, t, active))]),
+      ctrl.isOptional &&
+        hl(
+          'span.mchat__toggle',
+          cmnToggleProp({
+            id: `chat-toggle-${ctrl.data.id}`,
+            title: i18n.site.toggleTheChat,
+            prop: ctrl.chatEnabled,
+            redraw: ctrl.redraw,
+          }),
+        ),
     ]),
     div(
       `.mchat__content.${active.key}`,
@@ -49,11 +61,7 @@ const renderTab = (ctrl: ChatCtrl, tab: Tab, active: Tab) =>
 
 function tabName(ctrl: ChatCtrl, tab: Tab) {
   if (tab.key === 'discussion') {
-    const id = `chat-toggle-${ctrl.data.id}`;
-    return [
-      span(ctrl.data.name),
-      ctrl.isOptional && cmnToggleProp({ id, prop: ctrl.chatEnabled, redraw: ctrl.redraw }),
-    ];
+    return [span(ctrl.data.name)];
   }
   if (tab.key === 'note') return [span(i18n.site.notes)];
   if (tab.key === ctrl.plugin?.key) return [span(ctrl.plugin.name)];

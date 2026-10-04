@@ -213,6 +213,8 @@ export function render(ctrl: RoundController): LooseVNode {
       hl(
         movesTag,
         {
+          // focusable, so a long move list scrolls from the keyboard too (axe's scrollable-region-focusable, unit 9.10)
+          attrs: { tabindex: 0 },
           hook: onInsert(el => {
             el.addEventListener('mousedown', e => {
               const ply = (e.target as HTMLElement).getAttribute('data-ply');

@@ -29,9 +29,11 @@ object bits:
         st.id := s"mselect-$id",
         autocomplete := "off"
       ),
-      label(`for` := s"mselect-$id", cls := "mselect__label", role := "menu")(current),
+      // LiGo (unit 9.10): plain links, no menu roles: a "menu" label holding no menu items failed
+      // axe's aria-required-children
+      label(`for` := s"mselect-$id", cls := "mselect__label")(current),
       label(`for` := s"mselect-$id", cls := "fullscreen-mask"),
-      st.nav(cls := "mselect__list")(items.map(_(cls := "mselect__item", role := "menuitem")))
+      st.nav(cls := "mselect__list")(items.map(_(cls := "mselect__item")))
     )
 
   // url: (year: Int, month: Int)

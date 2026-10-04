@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // LiGo's performance budget for built browser code (ADR 0026 §5, unit 9.5): the gzipped size of
 // the board chunk, lila's shared site code, each page's JavaScript and CSS, checked against the
-// limits in budget.json. The board's mount time is checked by the playground's page tests
-// (lila/ui/playground/e2e/budget.spec.ts), which read the same file.
+// limits in budget.json. A page's entry may name its bundle (`js`) and stylesheet (`css`) when they
+// differ from its key (unit 9.10 measures every page). The board's mount time is checked by the
+// playground's page tests (lila/ui/playground/e2e/budget.spec.ts), which read the same file.
 //
 // Usage: node dev/ci/budget.mjs [lila-dir]   (after a production build: ui/build -p)
 // Exits 1 when a size is over its limit, or when something the budget names is missing from the
@@ -89,14 +90,16 @@ const check = (label, bytes, limitKiB) => {
 try {
   // The board chunk and any chunk it imports that no page loads before it: bytes the board costs.
   const board = boardChunk();
-  const before = new Set(['site', ...Object.keys(budget.pages)].flatMap(jsFiles));
+  const before = new Set(['site', ...Object.entries(budget.pages).map(([p, l]) => l.js ?? p)].flatMap(jsFiles));
   const boardOnly = refs(board).filter(f => !before.has(f));
   check('board chunk (goban + libs/board)', sum([board, ...boardOnly]), budget.boardChunkKiB);
   check('site JS (shared by every page)', sum(jsFiles('site')), budget.siteJsKiB);
   check('site CSS (theme + site)', gz(cssFile('lib.theme.all')) + gz(cssFile('site')), budget.siteCssKiB);
   for (const [page, limits] of Object.entries(budget.pages)) {
-    check(`${page}: JS before the board (site + page)`, sum([...jsFiles('site'), ...jsFiles(page)]), limits.jsKiB);
-    check(`${page}: own CSS`, gz(cssFile(page)), limits.cssKiB);
+    // a page whose bundle or stylesheet has another name says so (`js`, `css`)
+    const js = limits.js ?? page;
+    check(`${page}: JS before the board (site + page)`, sum([...jsFiles('site'), ...jsFiles(js)]), limits.jsKiB);
+    check(`${page}: own CSS`, gz(cssFile(limits.css ?? page)), limits.cssKiB);
   }
 } catch (e) {
   console.error(`budget: ${e.message}`);

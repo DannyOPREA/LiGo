@@ -189,6 +189,17 @@ it imports that no page loads before it. The board mount, timed inside the page 
 more than sizes, and it stays well under the 1 s ceiling. The 4× slowdown is relative to the
 machine running the test, so the number is a regression guard, not a fixed phone speed. The limits live in `dev/ci/budget.json`.
 
+**Unit 9.10 amendment (2026-10-04):** every page now has a line, from the production build at about
++15%. Site + page JS before the board: lobby 64.1 → **74 KiB**, game 72.4 → **84**, analysis
+(`analyse.user`) 102.5 → **118**, puzzle 99.7 → **115**, puzzle dashboard 109.0 → **126**, profile
+(`user`) 46.7 → **54**, account 48.2 → **56**, challenge 47.6 → **55**. CSS: lobby 5.0 → **6**, game
+8.6 → **10**, analysis 8.4 → **10** (of a stored game, `analyse.round`, 10.6 → **13**), puzzle 6.4 →
+**8**, puzzle dashboard 2.3 → **3**, profile 6.2 → **8**, account 4.3 → **5**, challenge 1.4 → **2**.
+All are under the 130 KiB ceiling above. A page whose bundle or stylesheet is named differently
+from its line says so in `budget.json` (`js`, `css`). The accessibility check runs over every page on
+the real stack (`lila/tests/e2e-demo/phase9-demo.spec.ts`), as a guest and signed in, at desktop and
+phone size.
+
 A budget raised later needs a line in logs/frontend.md saying why. New pages (round, analysis,
 puzzle, lobby) add their own line when they land; 9.10 runs the whole set over every page.
 

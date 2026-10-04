@@ -60,7 +60,8 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
   e2e [demo|video|-- args]
                       Smoke-test the running stack (home page + lobby websocket); with demo,
                       also play the Phase 3, 4, 5 and 6 demos in two browsers (desktop and phone,
-                      units 3.20, 4.12, 5.8, 6.10) and the Phase 8 puzzle walk (phone, unit 8.8); with
+                      units 3.20, 4.12, 5.8, 6.10), the Phase 8 puzzle walk (phone, unit 8.8) and the
+                      accessibility check over every page (unit 9.10); with
                       video, record the handoff demo video into lila/tests/e2e-demo/video/ (unit 9.9);
                       with args after --, also run lila's Playwright suite with them
   loadtest [run|install|path] [k6 args]  The lobby load test (unit 6.9, ADR 0022 §10): pinned k6
@@ -623,7 +624,7 @@ cmd_e2e() {
   if [[ "${1:-}" == demo ]]; then
     shift
     need_node_modules
-    say "the Phase 3, 4, 5, 6 and 8 demos: a 9x9 game to a resignation, two 19x19 byo-yomi games through the scoring phase, a rated handicap game between a new 5k and 1d and a guest's casual game, the Phase 6 lobby demo (one click, pool, table, profile), a player solving and failing puzzles"
+    say "the Phase 3, 4, 5, 6 and 8 demos: a 9x9 game to a resignation, two 19x19 byo-yomi games through the scoring phase, a rated handicap game between a new 5k and 1d and a guest's casual game, the Phase 6 lobby demo (one click, pool, table, profile), a player solving and failing puzzles, axe over every page"
     (cd "$LILA" && BASE_URL=$base run pnpm exec playwright test -c tests/e2e-demo/playwright.config.ts "$@")
   elif [[ "${1:-}" == video ]]; then
     shift
