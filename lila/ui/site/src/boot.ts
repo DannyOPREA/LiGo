@@ -2,7 +2,6 @@
 import * as ab from 'ab/site';
 
 import { scrollToInnerSelector, requestIdleCallbackSafe } from 'lib';
-import { dispatchChessgroundResize } from 'lib/chessgroundResize';
 import { prefersLightThemeQuery } from 'lib/device';
 import { watchInstall } from 'lib/install';
 import { licon } from 'lib/licon';
@@ -55,8 +54,6 @@ export function boot() {
     addDomHandlers();
 
     toggleBoxInit();
-
-    window.addEventListener('resize', dispatchChessgroundResize);
 
     ab.init();
 

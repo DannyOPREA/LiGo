@@ -1,5 +1,3 @@
-import type { Api as CgApi } from '@lichess-org/chessground/api';
-
 import { domDialog, alert, confirm, prompt } from '@/view';
 
 import { type PubsubEventKey, type PubsubEvents, pubsub } from './pubsub';
@@ -54,7 +52,6 @@ export interface Api {
   overrides: Overrides;
   analysis?: any;
   puzzle?: any;
-  chessground?: () => CgApi;
 }
 
 export type Overrides = Record<string, never>;
