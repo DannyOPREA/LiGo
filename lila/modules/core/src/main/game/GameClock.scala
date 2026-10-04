@@ -53,3 +53,8 @@ enum GameClock:
   def speed: Speed = this match
     case Fischer(c) => Speed(c.config)
     case Byoyomi(c) => Speed.byTime(c.estimateTotalSeconds)
+
+  /** The time control as players read it: "5+3", or "10+5×30s" for byo-yomi (`ClockSettings.show`). */
+  def show: String = this match
+    case Fischer(c) => c.config.show
+    case Byoyomi(c) => ClockSettings.showByoyomi(c.config)

@@ -9,6 +9,15 @@
   `clock` is the Fischer one only, so "is it real-time" means `timeControl.clockSettings` (2026-10-04, unit 4.9).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 4.7 follow-up · byo-yomi games in filters, game lists and page meta
+- Did: `Query.clock(true)` (real-time games: Irwin's extra games, "playing now" without AI, the mod
+  games filter) also matches a byo-yomi game (`cy`), and `clock(false)` excludes it. `GameClock.show`
+  writes a game's time control ("5+3", or "1+3×30s" for byo-yomi, via 4.9's `ClockSettings.showByoyomi`);
+  the mini game's `data-tc`, the game side panel's clock, `shortClockName`, the page title's speed, the
+  round page's meta description and the mod games table read `game.gameClock` instead of the Fischer clock.
+- Worked: one new `ByoyomiPlayTest` case (the label, both query shapes); compile and verify.
+- Lessons: none new (the 4.7 lesson "read clocks through `gameClock`" covers it).
+
 ### 2026-10-04 · unit 4.9 · Byo-yomi and handicap in the setup and challenge forms
 - Did: the lobby's and the friend window's forms gain a fourth time mode, byo-yomi (`timeMode` 3):
   the minutes field is its main time, plus `periods` (1–10) and `periodTime` (5 s to 5 min from a
