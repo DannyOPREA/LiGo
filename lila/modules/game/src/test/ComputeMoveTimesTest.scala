@@ -1,16 +1,13 @@
 package lila.game
 
-import chess.format.Fen
-import chess.variant.Standard
-import chess.{ ByColor, Centis, Clock, Color, Game as ChessGame, Ply, Position, Rated, Status }
+import chess.{ ByColor, Centis, Clock, Color, Ply, Rated, Status }
+import ligo.gorules.Action
 
-import lila.core.game.{ Game, Player, Source, newGame }
+import lila.core.game.{ Game, GoSetups, Player, Source, newGoGame }
 import lila.core.id.GamePlayerId
 import lila.game.GameExt.computeMoveTimes
 
 class ComputeMoveTimesTest extends munit.FunSuite:
-
-  private val startFen = Fen.initial.board
 
   /* Builds a game with an arbitrary clock history, so that computeMoveTimes can be
    * exercised without replaying an actual game.
@@ -24,22 +21,21 @@ class ComputeMoveTimesTest extends munit.FunSuite:
       status: Status,
       incrementSeconds: Int
   ): Game =
-    val fen = Fen.Full(s"$startFen ${turn.fold("w", "b")} KQkq - 0 1")
-    val chessGame = ChessGame(
-      position = Position(Standard, fen.some),
-      sans = Vector.empty,
-      clock = Clock(Clock.LimitSeconds(600), Clock.IncrementSeconds(incrementSeconds)).some,
-      ply = Ply(plies),
-      startedAtPly = Ply(0)
-    )
-    newGame(
-      chessGame,
+    // Black moves first in an empty Go game; one pass hands the turn to White.
+    val start = newGoGame(
+      GoSetups.default,
+      Clock(Clock.LimitSeconds(600), Clock.IncrementSeconds(incrementSeconds)).some,
       ByColor(c => Player(GamePlayerId("abcd"), c, aiLevel = none)),
       rated = Rated.No,
-      source = Source.Api,
-      pgnImport = none
-    ).sloppy
+      source = Source.Api
+    ).fold(e => fail(e.message), _.sloppy)
+    val turned =
+      if turn == Color.Black then start
+      else start.withGo(start.go(Action.Pass).fold(r => fail(r.key), identity))
+    turned
       .copy(
+        ply = Ply(plies),
+        startedAtPly = Ply(0),
         status = status,
         loadClockHistory = _ => ByColor(white.map(Centis(_)), black.map(Centis(_))).some
       )

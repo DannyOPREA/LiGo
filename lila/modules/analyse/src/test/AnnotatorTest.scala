@@ -1,5 +1,5 @@
 package lila.analyse
-import chess.format.pgn.{ InitialComments, Move, Parser, Pgn, PgnStr, SanStr, Tag, Tags }
+import chess.format.pgn.{ InitialComments, Move, Pgn, PgnStr, SanStr, Tag, Tags }
 import chess.opening.OpeningDb
 import chess.{ ByColor, Node, Ply }
 
@@ -14,25 +14,20 @@ class AnnotatorTest extends munit.FunSuite:
   given Executor = scala.concurrent.ExecutionContextOpportunistic
 
   val annotator = Annotator(NetDomain("l.org"))
-  def makeGame(g: chess.Game) =
+  val game =
     lila.core.game
-      .newGame(
-        g,
+      .newGoGame(
+        lila.core.game.GoSetups.default,
+        none,
         ByColor(lila.core.game.Player(GamePlayerId("abcd"), _, aiLevel = none)),
         rated = chess.Rated.No,
-        source = lila.core.game.Source.Api,
-        pgnImport = none
+        source = lila.core.game.Source.Api
       )
-      .sloppy
+      .fold(e => fail(e.message), _.sloppy)
   val emptyPgn = Pgn(Tags.empty, InitialComments.empty, None, Ply.initial)
   def withAnnotator(pgn: Pgn) = pgn.copy(tags = pgn.tags + Tag(name = "Annotator", value = "l.org"))
   val emptyAnalysis = Analysis(Analysis.Id(GameId("abcd")), Nil, Ply.initial, nowInstant, None, None)
   val emptyEval = Eval(none, none, none)
-
-  val pgnStr = PgnStr("""1. a3 g6?! 2. g4""")
-  val playedGame: chess.Game =
-    val parsed = Parser.full(pgnStr).toOption.get
-    parsed.toGame.forward(parsed.mainline).toOption.get
 
   import lila.core.i18n.*
   given Translator = TranslatorStub
@@ -45,13 +40,13 @@ class AnnotatorTest extends munit.FunSuite:
 
   test("empty game"):
     assertEquals(
-      annotator(emptyPgn, makeGame(chess.Game(chess.variant.Standard)), none, none),
+      annotator(emptyPgn, game, none, none),
       withAnnotator(emptyPgn)
     )
 
   test("empty analysis"):
     assertEquals(
-      annotator(emptyPgn, makeGame(chess.Game(chess.variant.Standard)), emptyAnalysis.some, none),
+      annotator(emptyPgn, game, emptyAnalysis.some, none),
       withAnnotator(emptyPgn)
     )
 
@@ -74,6 +69,6 @@ class AnnotatorTest extends munit.FunSuite:
     val opening = OpeningDb.search(List(SanStr("a3"), SanStr("g6"), SanStr("g4")))
 
     assertEquals(
-      annotator(dumped, makeGame(playedGame), none, opening).copy(tags = Tags.empty).render,
+      annotator(dumped, game, none, opening).copy(tags = Tags.empty).render,
       PgnStr("""1. a3 { A00 Anderssen's Opening } g6 2. g4""")
     )
