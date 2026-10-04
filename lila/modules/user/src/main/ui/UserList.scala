@@ -21,10 +21,9 @@ final class UserList(helpers: Helpers, bits: UserBits):
       .css("user.list")
       .flag(_.fullScreen)
       .graph(
-        title = "Chess players and leaderboards",
+        title = "Go players and leaderboard",
         url = routeUrl(routes.User.list),
-        description =
-          "Best chess players in bullet, blitz, rapid, classical, Chess960 and more chess variants"
+        description = "The best rated Go players on LiGo, by kyu/dan rank"
       ):
         main(cls := "page-menu")(
           bits.communityMenu("leaderboard"),
@@ -41,20 +40,9 @@ final class UserList(helpers: Helpers, bits: UserBits):
             div(cls := "community__leaders")(
               h2(trans.site.leaderboard()),
               div(cls := "leaderboards")(
-                userTopPerf(leaderboards.bullet, PerfKey.bullet),
-                userTopPerf(leaderboards.blitz, PerfKey.blitz),
-                userTopPerf(leaderboards.rapid, PerfKey.rapid),
-                userTopPerf(leaderboards.classical, PerfKey.classical),
-                userTopPerf(leaderboards.ultraBullet, PerfKey.ultraBullet),
-                userTopActive(nbAllTime, trans.site.activePlayers(), icon = Icon.Swords.some),
-                userTopPerf(leaderboards.crazyhouse, PerfKey.crazyhouse),
-                userTopPerf(leaderboards.chess960, PerfKey.chess960),
-                userTopPerf(leaderboards.antichess, PerfKey.antichess),
-                userTopPerf(leaderboards.atomic, PerfKey.atomic),
-                userTopPerf(leaderboards.threeCheck, PerfKey.threeCheck),
-                userTopPerf(leaderboards.kingOfTheHill, PerfKey.kingOfTheHill),
-                userTopPerf(leaderboards.horde, PerfKey.horde),
-                userTopPerf(leaderboards.racingKings, PerfKey.racingKings)
+                // LiGo: the one Go leaderboard (ADR 0021 §3, unit 5.5)
+                userTopPerf(leaderboards.go, PerfKey.go),
+                userTopActive(nbAllTime, trans.site.activePlayers(), icon = Icon.Swords.some)
               )
             )
           )
@@ -68,9 +56,14 @@ final class UserList(helpers: Helpers, bits: UserBits):
       ol(users.map: l =>
         li(
           lightUserLink(l.user),
-          ctx.pref.showRatings.option(l.rating)
+          ctx.pref.showRatings.option(stableGoRank(l))
         ))
     )
+
+  // LiGo: a leaderboard entry shows its kyu/dan rank, the rating in its title (ADR 0021 §3, unit 5.5); entries
+  // are stable (deviation at most 75), so no "?"
+  private def stableGoRank(l: LightPerf): Frag =
+    if l.perfKey == PerfKey.go then goRank(l.rating, chess.rating.RatingProvisional.No) else l.rating.toString
 
   private def userTopActive(users: List[LightCount], hTitle: Frag, icon: Option[Icon])(using Context) =
     st.section(cls := "user-top")(
@@ -92,7 +85,7 @@ final class UserList(helpers: Helpers, bits: UserBits):
       .graph(
         title = s"Leaderboard of ${perf.trans}",
         url = routeUrl(routes.User.top(perf.key)),
-        description = s"The top rated players in ${perf.trans}, sorted by rating"
+        description = s"The top rated ${perf.trans} players on LiGo, by kyu/dan rank"
       ):
         main(cls := "page-small box")(
           boxTop(h1(a(href := routes.User.list, dataIcon := Icon.LessThan, cls := "text"), title)),
@@ -108,7 +101,7 @@ final class UserList(helpers: Helpers, bits: UserBits):
                   td(lightUserLink(u.user)),
                   ctx.pref.showRatings.option(
                     frag(
-                      td(u.rating),
+                      td(stableGoRank(u)),
                       td(ratingProgress(u.progress))
                     )
                   )
