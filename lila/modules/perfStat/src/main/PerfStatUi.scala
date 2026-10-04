@@ -421,12 +421,17 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
       .js(
         PageModule(
           "chart.ratingDistribution",
-          Json.obj(
-            "freq" -> data,
-            "myRating" -> myVisiblePerfs.map(_(perfType).intRating),
-            "otherRating" -> otherUser.ifTrue(ctx.pref.showRatings).map(_.perfs(perfType).intRating),
-            "otherPlayer" -> otherUser.map(_.username)
-          )
+          Json
+            .obj(
+              "freq" -> data,
+              "myRating" -> myVisiblePerfs.map(_(perfType).intRating),
+              "otherRating" -> otherUser.ifTrue(ctx.pref.showRatings).map(_.perfs(perfType).intRating),
+              "otherPlayer" -> otherUser.map(_.username)
+            )
+            .add( // LiGo: a kyu/dan axis, as on the rating graph (ADR 0021 §3, unit 5.5)
+              "rankTable" -> (perfType.key == PerfKey.go)
+                .option(Json.parse(lila.rating.GoRating.rankTableJson))
+            )
         )
       ):
         main(cls := "page-menu")(
@@ -458,7 +463,11 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
                   div(
                     trans.site.nbPerfTypePlayersThisWeek(strong(sum.localize), perfType.trans),
                     br,
-                    trans.site.yourPerfTypeRatingIsRating(perfType.trans, strong(rating)),
+                    trans.site.yourPerfTypeRatingIsRating(
+                      perfType.trans,
+                      // LiGo: the kyu/dan rank, the rating in its title (unit 5.5)
+                      strong(if perfType.key == PerfKey.go then goRankTag(rating.value) else rating.toString)
+                    ),
                     br,
                     trans.site.youAreBetterThanPercentOfPerfTypePlayers(
                       strong((under * 100.0 / sum).round, "%"),

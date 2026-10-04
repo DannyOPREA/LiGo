@@ -1,7 +1,7 @@
 package lila.user
 
 import chess.IntRating
-import chess.rating.{ IntRatingDiff, RatingProvisional }
+import chess.rating.IntRatingDiff
 import play.api.libs.json.*
 
 import lila.core.LightUser
@@ -32,14 +32,13 @@ class GoLeaderboardJsonTest extends munit.FunSuite:
     assertEquals((alice \ "username").as[String], "alice")
     assertEquals((perfOf(alice) \ "rating").as[Int], 1960)
     assertEquals((perfOf(alice) \ "progress").as[Int], 12)
-    assertEquals((perfOf(alice) \ "goRank").as[String], GoRating.label(IntRating(1960), RatingProvisional.No))
-    assertEquals((perfOf(bob) \ "goRank").as[String], GoRating.label(IntRating(1500), RatingProvisional.No))
+    assertEquals((perfOf(alice) \ "goRank").as[String], "1d")
+    assertEquals((perfOf(bob) \ "goRank").as[String], "6k")
 
-  test("a leaderboard rank never has the provisional ?, and starts at its rank-table edge"):
+  test("a leaderboard rank starts at its rank-table edge"):
     GoRating.rankTable.foreach: (name, edge) =>
       val rank = (perfOf(Json.toJson(entry("p", edge))) \ "goRank").as[String]
       assertEquals(rank, name)
-      assert(!rank.contains("?"))
 
   test("only a Go entry gets a goRank"):
     assertEquals((perfOf(Json.toJson(entry("p", 1500, PerfKey.blitz)), "blitz") \ "goRank").toOption, None)

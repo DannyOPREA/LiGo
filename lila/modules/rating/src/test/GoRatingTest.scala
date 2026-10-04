@@ -274,3 +274,5 @@ class GoRatingTest extends munit.FunSuite:
     assert(!PerfType.isLeaderboardable(PerfKey.blitz))
     assert(Glicko(1800, 75, 0.06).rankable)
     assert(!Glicko(1800, 75.01, 0.06).rankable)
+    // a leaderboard entry (deviation at most 75) is never provisional, so it shows its rank without "?"
+    assert(Glicko(1800, 75, 0.06).provisional.no)

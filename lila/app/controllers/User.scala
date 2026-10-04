@@ -255,18 +255,21 @@ final class User(
       JsonOk(leaderboards)
     }
 
+  // LiGo: only the one Go leaderboard exists (ADR 0021 §3, unit 5.5); other perfs are not found
   def top(perfKey: PerfKey, page: Int) = Open:
-    Reasonable(page, Max(20)):
-      env.user.cached
-        .topPerfPager(perfKey, page)
-        .flatMap: pager =>
-          negotiate(
-            Ok.page(views.user.list.top(perfKey, pager)),
-            topNbJson(pager.currentPageResults)
-          )
+    Found(perfKey.some.filter(lila.rating.PerfType.isLeaderboardable)): perfKey =>
+      Reasonable(page, Max(20)):
+        env.user.cached
+          .topPerfPager(perfKey, page)
+          .flatMap: pager =>
+            negotiate(
+              Ok.page(views.user.list.top(perfKey, pager)),
+              topNbJson(pager.currentPageResults)
+            )
 
   def topNbApi(nb: Int, perfKey: PerfKey) = Anon:
-    env.user.cached.firstPageOf(perfKey).dmap(_.take(nb)).map(topNbJson)
+    Found(perfKey.some.filter(lila.rating.PerfType.isLeaderboardable)): perfKey =>
+      env.user.cached.firstPageOf(perfKey).dmap(_.take(nb)).map(topNbJson)
 
   private def topNbJson(users: Seq[LightPerf]) =
     given OWrites[LightPerf] = OWrites(env.user.jsonView.lightPerfIsOnline)
