@@ -199,28 +199,39 @@ async function expectPush(page: Page, site: Site): Promise<void> {
   await cdp.send('ServiceWorker.enable');
   await openHome(page, site);
   const registrationId = await registration;
-  await cdp.send('ServiceWorker.deliverPushMessage', {
-    origin: site.origin,
-    registrationId,
-    data: JSON.stringify({
-      title: 'Your turn',
-      body: 'against Danny',
-      tag: 'move',
-      payload: { userData: {} },
-    }),
-  });
+  const deliver = () =>
+    cdp.send('ServiceWorker.deliverPushMessage', {
+      origin: site.origin,
+      registrationId,
+      data: JSON.stringify({
+        title: 'Your turn',
+        body: 'against Danny',
+        tag: 'move',
+        payload: { userData: {} },
+      }),
+    });
   const notifications = () =>
     page.evaluate(async () =>
       (await (await navigator.serviceWorker.ready).getNotifications()).map(n => `${n.title}: ${n.body}`),
     );
+  // A push delivered right as the worker activates is sometimes lost on CI's Chromium with no worker
+  // error (PRs #84, #87, #95; never locally): the push event never reaches the worker. The same push is
+  // sent again, at most three times in all; the tag makes a repeat replace the first, so exactly one
+  // notification still has to show. A worker that drops or breaks push still fails every attempt.
+  let attempts = 0;
   try {
-    await expect.poll(notifications).toEqual(['Your turn: against Danny']);
+    await expect(async () => {
+      attempts++;
+      await deliver();
+      await expect.poll(notifications, { timeout: 3000 }).toEqual(['Your turn: against Danny']);
+    }).toPass({ timeout: 10_000, intervals: [0] });
   } catch (err) {
     const permission = await page.evaluate(() => Notification.permission);
     throw new Error(
-      `no notification (permission ${permission}, registration ${registrationId}; ${seen.join('; ')})\n${err}`,
+      `no notification after ${attempts} pushes (permission ${permission}, registration ${registrationId}; ${seen.join('; ')})\n${err}`,
     );
   }
+  if (attempts > 1) console.log(`push: shown on attempt ${attempts}`);
 }
 
 test.describe('the board on a phone', () => {

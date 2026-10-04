@@ -50,7 +50,8 @@
       margin-inline-end: 0.5em;
     }
 
-    rating span,
+    // LiGo: `>` so the Go rank's own span inside `strong` (unit 5.6) keeps its size and shows on phones
+    rating > span,
     .rank {
       font-size: 0.9em;
     }
@@ -109,7 +110,7 @@
     h3,
     hr,
     rating .rp,
-    rating span {
+    rating > span {
       display: none;
     }
   }

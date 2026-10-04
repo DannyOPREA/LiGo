@@ -19,7 +19,8 @@ case class History(
     rapid: RatingsMap,
     classical: RatingsMap,
     correspondence: RatingsMap,
-    puzzle: RatingsMap
+    puzzle: RatingsMap,
+    go: RatingsMap // LiGo (unit 5.6)
 ):
 
   def apply(pk: PerfKey): RatingsMap =
@@ -40,7 +41,7 @@ case class History(
       case PerfKey.crazyhouse => crazyhouse
       case PerfKey.puzzle => puzzle
       case PerfKey.ultraBullet => ultraBullet
-      // the go perf's rating history arrives with rated Go games (Phase 5)
+      case PerfKey.go => go
       case _ => Nil
 
 object History:
@@ -75,5 +76,6 @@ object History:
         rapid = ratingsMap("rapid"),
         classical = ratingsMap("classical"),
         correspondence = ratingsMap("correspondence"),
-        puzzle = ratingsMap("puzzle")
+        puzzle = ratingsMap("puzzle"),
+        go = ratingsMap("go")
       )

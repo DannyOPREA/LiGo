@@ -162,7 +162,7 @@ async function boot(
   storage.make('reload-round-tabs').listen(site.reload);
 
   if (!data.player.spectator && location.hostname !== (document as any)['Location'.toLowerCase()].hostname) {
-    alert(`Games cannot be played through a web proxy. Please use ${location.hostname} instead.`);
+    alert(i18n.site.goNoWebProxy(location.hostname));
     wsDestroy();
   }
   return ctrl;

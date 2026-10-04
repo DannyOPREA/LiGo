@@ -11,8 +11,8 @@ export function initModule(): RoundTour {
     const tour = new Shepherd.Tour();
 
     tour.addStep({
-      title: 'Challenged to a rematch',
-      text: 'Your opponent is offline, but they can accept this challenge later!',
+      title: i18n.site.goRematchOfflineTitle,
+      text: i18n.site.goRematchOfflineText,
       attachTo: {
         element: 'button.rematch',
         on: 'bottom',
@@ -22,7 +22,7 @@ export function initModule(): RoundTour {
           action() {
             return this.next();
           },
-          text: 'Ok, got it',
+          text: i18n.site.goOkGotIt,
         },
       ],
     });

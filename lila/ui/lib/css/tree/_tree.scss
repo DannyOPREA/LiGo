@@ -470,6 +470,6 @@ $disclosure-btn-size: calc(15px + var(---button-size-pointer-adjust, 0px));
 
 @supports not (color: color-mix(in oklab, red, blue)) {
   .tview2 move.active {
-    background: $c-primary;
+    background: $c-primary-button;
   }
 }

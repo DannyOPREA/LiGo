@@ -22,12 +22,14 @@ import { create as createSlider, type Options, PipsMode } from 'nouislider';
 import { memoize } from 'lib';
 import { pubsub } from 'lib/pubsub';
 
+import { type RankTable, rankAt, rankBounds, rankTicks } from './goRank';
 import { fontColor, fontFamily, gridColor, hoverBorderColor, tooltipBgColor } from './index';
 import type { PerfRatingHistory } from './interface';
 
 interface Opts {
   data: PerfRatingHistory[];
   singlePerfName?: string;
+  rankTable?: RankTable; // LiGo: draw a kyu/dan axis (unit 5.6)
 }
 
 type TsAndRating = { ts: number; rating: number };
@@ -47,27 +49,9 @@ dayjs.extend(duration);
 dayjs.extend(dayOfYear);
 dayjs.extend(utc);
 
-const shortDash = [3];
 const noDash: number[] = [];
-const longDash = [10, 5];
-// order from RatingChartApi
-const styles: ChartPerf[] = [
-  { color: '#009E73', borderDash: longDash, symbol: 'triangle', name: 'UltraBullet' },
-  { color: '#56B4E9', borderDash: noDash, symbol: 'circle', name: 'Bullet' },
-  { color: '#0072B2', borderDash: noDash, symbol: 'rectRot', name: 'Blitz' },
-  { color: '#009E73', borderDash: noDash, symbol: 'rect', name: 'Rapid' },
-  { color: '#459f3b', borderDash: noDash, symbol: 'triangle', name: 'Classical' },
-  { color: '#F0E442', borderDash: shortDash, symbol: 'triangle', name: 'Correspondence' },
-  { color: '#56B4E9', borderDash: longDash, symbol: 'rectRounded', name: 'Crazyhouse' },
-  { color: '#E69F00', borderDash: shortDash, symbol: 'circle', name: 'Chess960' },
-  { color: '#D55E00', borderDash: shortDash, symbol: 'rectRot', name: 'KingOfTheHill' },
-  { color: '#CC79A7', borderDash: shortDash, symbol: 'rect', name: 'ThreeCheck' },
-  { color: '#DF5353', borderDash: shortDash, symbol: 'triangle', name: 'Antichess' },
-  { color: '#66558C', borderDash: shortDash, symbol: 'triangle', name: 'Atomic' },
-  { color: '#99E699', borderDash: longDash, symbol: 'circle', name: 'Horde' },
-  { color: '#FFAEAA', borderDash: shortDash, symbol: 'rectRot', name: 'RacingKings' },
-  { color: '#0072B2', borderDash: longDash, symbol: 'triangle', name: 'Puzzle' },
-];
+// order from RatingChartApi: LiGo plots the one Go rating (unit 5.6)
+const styles: ChartPerf[] = [{ color: '#0072B2', borderDash: noDash, symbol: 'circle', name: 'Go' }];
 
 const oneDay = 24 * 60 * 60 * 1000;
 
@@ -81,7 +65,7 @@ const dateFormat = memoize(() =>
     : (d: Date) => d.toLocaleDateString(),
 );
 
-export function initModule({ data, singlePerfName }: Opts): void {
+export function initModule({ data, singlePerfName, rankTable }: Opts): void {
   $('.spinner').remove();
 
   const $el = $('canvas.rating-history');
@@ -142,7 +126,19 @@ export function initModule({ data, singlePerfName }: Opts): void {
             color: gridColor,
           },
           position: 'right',
+          // LiGo: ticks on the rank edges, labelled 5k, 1d (unit 5.6)
+          afterDataLimits: rankTable
+            ? axis => {
+                [axis.min, axis.max] = rankBounds(rankTable, axis.min, axis.max);
+              }
+            : undefined,
+          afterBuildTicks: rankTable
+            ? axis => {
+                axis.ticks = rankTicks(rankTable, axis.min, axis.max).map(value => ({ value }));
+              }
+            : undefined,
           ticks: {
+            callback: rankTable ? value => rankAt(rankTable, Number(value)) : undefined,
             align: 'end',
             mirror: true,
             maxTicksLimit: 7,
@@ -197,7 +193,9 @@ export function initModule({ data, singlePerfName }: Opts): void {
           callbacks: {
             title: items => dateFormat()(dayjs.utc(items[0].parsed.x).valueOf()),
             label(context) {
-              return `${context.dataset.label}: ${context.formattedValue}`;
+              return rankTable
+                ? `${context.dataset.label}: ${rankAt(rankTable, context.parsed.y ?? 0)} (${context.formattedValue})`
+                : `${context.dataset.label}: ${context.formattedValue}`;
             },
           },
         },
@@ -218,6 +216,11 @@ export function initModule({ data, singlePerfName }: Opts): void {
     margin: 1000 * 60 * 60 * 24 * 7,
     direction: 'ltr',
     behaviour: 'drag',
+    // LiGo (unit 5.6): the handles need names for screen readers (axe: aria-input-field-name)
+    handleAttributes: [
+      { 'aria-label': i18n.site.ratingGraphStart },
+      { 'aria-label': i18n.site.ratingGraphEnd },
+    ],
     step: oneDay * 7,
     range: {
       min: startDate.valueOf(),

@@ -5,10 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { axeProblems } from '../../playground/e2e/axe';
 import { ConfirmMoves, openRound } from './page';
 
-// Rematch is lila's primary blue under light text (3.3–3.7:1 as its glow animates), the same colour
-// problem as lila's buttons everywhere; unit 9.7's second part fixes lila's colours site-wide and
-// drops this exclusion (ADR 0026 §4).
-const problems = (page: Page) => axeProblems(page, 'main.round', ['.rematch']);
+const problems = (page: Page) => axeProblems(page, 'main.round');
 
 for (const phone of [false, true])
   test.describe(phone ? 'phone' : 'desktop', () => {

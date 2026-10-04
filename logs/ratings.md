@@ -11,6 +11,39 @@
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 5.6 · The profile in Go ranks
+- Did: the profile shows the Go rank beside the name and, in the side panel, the one Go perf as its
+  rank (games and progress beside it) above the puzzle line, instead of lila's chess perf lines. The
+  rating history stores a `go` series (a Go game writes only that point now, not chess's standard
+  and speed points) and the profile and perf-stats graphs plot only Go, with ticks on the rank edges
+  labelled 25k–9d and the rating in the tooltip (`ui/chart/src/goRank.ts`, from the server's
+  `GoRating.rankTableJson`). The Go perf-stats page shows ranks for the rating, highest and lowest,
+  average opponent and best wins (numbers in hover titles). Activity says "5k → 4k" or "5k". The
+  link preview says "Name (5k)" and "Current Go rank: 5k.". The graph's range slider handles got
+  names (two site keys).
+- Worked: lila's perf-stats indexer already handled Go games; chart.js's `afterDataLimits` and
+  `afterBuildTicks` hooks gave a rank axis without a custom scale, and they rerun on every pan.
+- Didn't work / dead ends: lila's phone CSS hides every span inside a side-panel rating, which hid
+  the rank (now `rating > span`); the page test caught it only once it asserted visibility. The
+  graph is canvas, so its picture is compared with a 3% pixel tolerance for the axis labels.
+- Lessons: a page test that hides text in screenshots must also assert the key text is visible, or
+  a CSS rule that hides it passes unnoticed.
+- Decisions: chess perf lines leave the side panel now rather than at 3.17 (their data stays);
+  puzzle ratings leave the graph (they would sit on a kyu/dan axis) but keep their side-panel line;
+  Go games stop writing chess history points; activity drops the "?" (it keeps no deviation); a
+  rank shows wherever one is known (deviation below lila's "clueless" 500), including a declared
+  rank before any game (Claude, under the owner's 2026-09-28 delegation; logs/decisions.md).
+- Review (reviewer agent): blocking: this log entry. Non-blocking fixed: ranks in the best-wins
+  list, one rule for when a rank shows (header, title and description agreed on two), the chart
+  test now uses the real rank edges, the history key choice is a pure tested function. Left for
+  3.17: the now-unused `usernameWithBestRating`/`hasVariantRating` helpers.
+- Verified by Claude: `rating/testOnly lila.rating.GoRatingTest` 19/19 (incl. the page test's
+  rank-table copy), `history/testOnly lila.history.GoHistoryTest` 4/4, `node ui/test chart` 5/5,
+  lila compile, the profile page test (desktop and phone, axe check) and the account page test,
+  verify.sh. · Needs owner verification: the profile, the Go perf-stats page and the activity tab
+  on the real stack after a rated Go game (from 5.7), dragging the graph through time.
+- Follow-ups: 5.5 part 2 (the one Go leaderboard).
+
 ### 2026-10-03 · unit 5.5 (part 1) · Go ranks instead of rating numbers
 - Did: wherever lila showed a rating, LiGo now shows the Go rank label ("5k", "5k?" while
   provisional) with the number in the hover title: user links, mini-profiles, game lists and

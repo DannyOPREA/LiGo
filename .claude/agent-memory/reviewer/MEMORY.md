@@ -1,5 +1,5 @@
 - [Guard hook review patterns](guard-hook-review-patterns.md) — `--flag=value` bypasses, doc stragglers, stale origin/main
-- [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs
+- [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs, import-anchored guards
 - [Dev script review patterns](dev-script-review-patterns.md) — missing .ligo mkdir, hidden failures, unbounded curl, pending-decision merges
 - [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, brand constants, snabbdom input attrs, new-pref checklist, stranded is3d, live chess pages (9.7)
 - [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM licences, §3.1 row scope, spike cross-checks, fixture circularity, run overlap, unlisted params, deferred options
