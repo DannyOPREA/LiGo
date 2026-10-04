@@ -96,6 +96,20 @@ export const corres = [
 export interface LobbyOptions {
   /** A signed-in member (rated Go 1650), or a guest. */
   member?: boolean;
+  /** The URL to open, with its query and hash: '/?user=Shiro#friend' is a profile's challenge link. */
+  path?: string;
+}
+
+/** GoRating.rankTable, as the lobby page data carries it (ADR 0021 §3). */
+const rankTable = JSON.parse(
+  readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../playground/e2e/rank-table.json'), 'utf8'),
+);
+
+/** What GET /setup/go-handicap/:username answers (controllers.Setup.goHandicap): stones per rated board. */
+export interface HandicapAdvice {
+  19: { suggested: number; min: number; max: number };
+  9: { suggested: number; min: number; max: number };
+  black: boolean;
 }
 
 function initOptions(o: LobbyOptions) {
@@ -106,6 +120,7 @@ function initOptions(o: LobbyOptions) {
       nbMyTurn: 0,
       nowPlaying: [],
       ratingMap: o.member ? { go: 1650 } : null,
+      ...(o.member ? { goRank: '3k', rankTable } : {}),
       counters: { members: 120, rounds: 4 },
     },
     showRatings: true,
@@ -149,7 +164,21 @@ window.site = {
   manifest: { i18n: {} },
   sound: { play: async () => {}, say: () => false, speech: () => false, preloadBoardSounds: () => {} },
   mousetrap: chain,
-  asset: { loadCssPath: async () => {}, loadEsm: async () => ({}), flairSrc: () => '' },
+  // dialogs load their own styles (bits.dialog, and the window's lobby.setup) by hashed path, as lila's site bundle does
+  asset: {
+    loadCssPath: key => new Promise(done => {
+      if (document.querySelector('link[data-css="' + key + '"]')) return done();
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/assets/css/' + key + '.' + ${JSON.stringify(m.css)}[key] + '.css';
+      link.dataset.css = key;
+      link.onload = link.onerror = () => done();
+      document.head.append(link);
+    }),
+    removeCssPath: () => {},
+    loadEsm: async () => ({}),
+    flairSrc: () => '',
+  },
   powertip: {},
   unload: { expected: false },
   quietMode: false,
@@ -204,6 +233,9 @@ export class FakeLobby {
   /** LobbySocket's `poolSizes`: how many wait in each pool. */
   poolSizes = (sizes: Record<string, number>) => this.push('poolSizes', sizes);
 
+  /** LobbySocket's `hooks`: every open real-time game, as lila sends them when the Live list opens. */
+  hooks = (list: unknown[]) => this.push('hooks', list);
+
   /** LobbySocket's `poolRange`: who the waiting player can meet. */
   poolRange = (range: { id: string; weakest: string; strongest: string; stones: number }) =>
     this.push('poolRange', range);
@@ -213,6 +245,12 @@ export interface Opened {
   server: FakeLobby;
   /** Form bodies POSTed to /setup/hook/<sri>, as key/value objects, in order. */
   hooks: Array<Record<string, string>>;
+  /** Challenges POSTed to /setup/friend: the named player (the `user` parameter) and the form. */
+  friends: Array<{ user: string | null; form: Record<string, string> }>;
+  /** What GET /setup/go-handicap/:username answers; a test may change it before opening the window. */
+  advice: HandicapAdvice;
+  /** The usernames the page asked a suggestion for. */
+  adviceAsked: string[];
   /** What GET /lobby/seeks answers: a test adds seeks here. */
   seeks: Array<Record<string, unknown>>;
   /** Requests the page made that this harness doesn't answer, and errors it logged. */
@@ -227,6 +265,13 @@ export async function openLobby(page: Page, options: LobbyOptions = {}): Promise
   const server = new FakeLobby();
   const hooks: Array<Record<string, string>> = [];
   const seeks: Array<Record<string, unknown>> = [];
+  const friends: Opened['friends'] = [];
+  const adviceAsked: string[] = [];
+  const advice: HandicapAdvice = {
+    19: { suggested: 5, min: 4, max: 6 },
+    9: { suggested: 1, min: 0, max: 2 },
+    black: true,
+  };
   const problems = { requests: [] as string[], errors: [] as string[] };
   page.on('pageerror', e => problems.errors.push(String(e)));
   page.on('console', msg => msg.type() === 'error' && problems.errors.push(msg.text()));
@@ -253,16 +298,25 @@ export async function openLobby(page: Page, options: LobbyOptions = {}): Promise
       hooks.push(formFields(request.postData() ?? ''));
       return route.fulfill({ contentType: 'application/json', body: '{"ok":true}' });
     }
+    // a challenge: to a link, or to the player named by `?user=`
+    if (url.origin === origin && request.method() === 'POST' && url.pathname === '/setup/friend') {
+      friends.push({ user: url.searchParams.get('user'), form: formFields(request.postData() ?? '') });
+      return route.fulfill({ contentType: 'application/json', body: '{"ok":true}' });
+    }
+    if (url.origin === origin && url.pathname.startsWith('/setup/go-handicap/')) {
+      adviceAsked.push(decodeURIComponent(url.pathname.slice('/setup/go-handicap/'.length)));
+      return route.fulfill({ contentType: 'application/json', body: JSON.stringify(advice) });
+    }
     if (url.origin === origin && url.pathname === '/lobby/seeks')
       return route.fulfill({ contentType: 'application/json', body: JSON.stringify(seeks) });
     problems.requests.push(`${request.method()} ${url.href}`);
     return route.abort();
   });
-  await page.goto(`${origin}/`);
+  await page.goto(`${origin}${options.path ?? '/'}`);
   await page.locator('.lpool').first().waitFor();
   await expect.poll(server.connected).toBe(true);
   await page.evaluate(() => document.fonts.ready);
-  return { server, hooks, seeks, problems };
+  return { server, hooks, friends, advice, adviceAsked, seeks, problems };
 }
 
 /** The fields of a form lila's `form()` sends (multipart/form-data). */

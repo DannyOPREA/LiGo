@@ -12,10 +12,10 @@ import {
 } from '../../../goSetup';
 import type SetupController from '../../../setupCtrl';
 
-// Board size, ruleset and komi (unit 3.19), and in a friend game the handicap (unit 4.9).
-export const goOptions = (setupCtrl: SetupController): VNode =>
+// Ruleset and komi (unit 3.19), and in a challenge the handicap (unit 4.9): the advanced options
+// folded away in the custom-game window (unit 6.8). The board size stays in view (goSizePicker).
+export const goAdvancedFields = (setupCtrl: SetupController): VNode =>
   hl('div.go-options', [
-    sizePicker(setupCtrl),
     rulesetPicker(setupCtrl),
     komiInput(setupCtrl),
     setupCtrl.gameType === 'friend' ? handicapPicker(setupCtrl) : null,
@@ -27,7 +27,9 @@ const handicapPicker = (setupCtrl: SetupController): VNode =>
     hl('label.label', { attrs: { for: 'sf_handicap' } }, i18n.site.goHandicap),
     hl(
       'select#sf_handicap',
-      { on: { change: (e: Event) => setupCtrl.setHandicap(Number((e.target as HTMLSelectElement).value)) } },
+      {
+        on: { change: (e: Event) => setupCtrl.chooseHandicap(Number((e.target as HTMLSelectElement).value)) },
+      },
       handicaps.map(handicap =>
         hl(
           'option',
@@ -43,7 +45,7 @@ const handicapPicker = (setupCtrl: SetupController): VNode =>
       ),
   ]);
 
-const sizePicker = (setupCtrl: SetupController): VNode =>
+export const goSizePicker = (setupCtrl: SetupController): VNode =>
   site.blindMode
     ? hl('div.config-group', [
         hl('label', { attrs: { for: 'sf_size' } }, i18n.site.goBoardSize),

@@ -27,6 +27,7 @@ import {
   applyChips,
   fit,
   type Unjoinable,
+  handicapChoices,
   hookRow,
   liveSpeeds,
   noChips,
@@ -35,17 +36,24 @@ import {
   ratedChoices,
   seekRow,
   sortRows,
+  toggleHandicap,
   toggleRated,
   toggleSize,
   toggleSpeed,
   type OpenRow,
+  type Wants,
 } from '../openChallenges';
+import { effectiveChips } from '../quickPair';
+
+// What suits you is what the Quick tab's chip row says you play (ADR 0022 §5), as a click there would
+// send it: a guest plays casual, and casual is even.
+const wants = (ctrl: LobbyController): Wants => effectiveChips(ctrl.quickChips, !!ctrl.me);
 
 // The rows on screen: hooks (as last flushed, so rows don't jump under the cursor) or seeks, filtered by
 // the chips and sorted for this viewer.
 export const visibleRows = (ctrl: LobbyController): OpenRow[] => {
   const rows = ctrl.mode === 'live' ? ctrl.stepHooks.map(hookRow) : ctrl.data.seeks.map(seekRow);
-  return sortRows(applyChips(rows, ctrl.chips), ctrl.viewer(), ctrl.chips);
+  return sortRows(applyChips(rows, ctrl.chips), ctrl.viewer(), wants(ctrl), ctrl.data.rankTable);
 };
 
 const setupOf = (row: OpenRow): string =>
@@ -67,23 +75,28 @@ const unjoinableTitle = (reason: Unjoinable): string =>
           ? i18n.site.goUnjoinableGuests
           : i18n.site.cancel;
 
+// Why a greyed row can't be joined, with the range it asks for: its title, and a line on a phone's card.
+const reasonOf = (row: OpenRow, reason: Unjoinable): string =>
+  unjoinableTitle(reason) + (row.range && rangeLabel(row.range) ? ` (${rangeLabel(row.range)})` : '');
+
 const renderRow = (ctrl: LobbyController, row: OpenRow): VNode => {
-  const f = fit(row, ctrl.viewer(), ctrl.chips);
+  const f = fit(row, ctrl.viewer(), wants(ctrl));
   const setup = setupOf(row);
+  const unjoinable = !row.disabled && !row.own && !f.joinable;
+  const reason = unjoinable && f.reason ? reasonOf(row, f.reason) : undefined;
   return tr(
     `.${row.kind === 'live' ? 'hook' : 'seek'}.${row.own ? 'cancel' : 'join'}`,
     {
       key: row.kind + row.id,
-      class: { disabled: row.disabled, unjoinable: !row.disabled && !row.own && !f.joinable },
+      class: { disabled: row.disabled, unjoinable, suits: !row.own && f.suits },
       role: 'button',
       'aria-disabled': row.disabled || (!row.own && !f.joinable) ? 'true' : undefined,
       title: row.disabled
         ? ''
         : row.own
           ? i18n.site.cancel
-          : !f.joinable && f.reason
-            ? unjoinableTitle(f.reason) +
-              (row.range && rangeLabel(row.range) ? ` (${rangeLabel(row.range)})` : '')
+          : reason
+            ? reason
             : i18n.site.joinTheGame + (setup ? ` | ${setup}` : ''),
       'data-id': row.id,
       'data-kind': row.kind,
@@ -111,6 +124,8 @@ const renderRow = (ctrl: LobbyController, row: OpenRow): VNode => {
       ),
       td('.handicap', row.handicap > 0 ? `${i18n.site.goHandicap} ${row.handicap}` : i18n.site.goEven),
       td('.mode', i18n.site[row.rated ? 'rated' : 'casual']),
+      // shown on a phone's card only, where there is no title to hover
+      reason ? td('.reason', reason) : null,
     ],
   );
 };
@@ -130,6 +145,7 @@ const chip = (label: string, pressed: boolean, onClick: () => void, key?: string
 const group = (label: string, chips: VNode[], cls = ''): VNode =>
   div(`.open__group${cls}`, { attrs: { role: 'group', 'aria-label': label } }, chips);
 
+// A chip's click reads the chips as they are then: `bind` keeps the handler of the chip's first render.
 const renderChips = (ctrl: LobbyController): VNode => {
   const { chips } = ctrl;
   return div('.open__chips', [
@@ -142,7 +158,7 @@ const renderChips = (ctrl: LobbyController): VNode => {
           chip(
             sizeName(size),
             chips.sizes.includes(size),
-            () => ctrl.setChips(toggleSize(chips, size)),
+            () => ctrl.setChips(toggleSize(ctrl.chips, size)),
             `s${size}`,
           ),
         ),
@@ -154,7 +170,7 @@ const renderChips = (ctrl: LobbyController): VNode => {
             chip(
               i18n.site[speed],
               chips.speeds.includes(speed),
-              () => ctrl.setChips(toggleSpeed(chips, speed)),
+              () => ctrl.setChips(toggleSpeed(ctrl.chips, speed)),
               speed,
             ),
           ),
@@ -166,7 +182,18 @@ const renderChips = (ctrl: LobbyController): VNode => {
         chip(
           i18n.site[choice],
           chips.rated.includes(choice),
-          () => ctrl.setChips(toggleRated(chips, choice)),
+          () => ctrl.setChips(toggleRated(ctrl.chips, choice)),
+          choice,
+        ),
+      ),
+    ),
+    group(
+      i18n.site.goHandicap,
+      handicapChoices.map(choice =>
+        chip(
+          choice === 'even' ? i18n.site.goEven : i18n.site.goHandicap,
+          chips.handicap.includes(choice),
+          () => ctrl.setChips(toggleHandicap(ctrl.chips, choice)),
           choice,
         ),
       ),
@@ -180,15 +207,23 @@ const renderChips = (ctrl: LobbyController): VNode => {
 const modeChip = (ctrl: LobbyController, mode: Mode, label: string): VNode =>
   chip(label, ctrl.mode === mode, () => ctrl.setMode(mode), mode);
 
+// "Create a game" under the list (unit 6.8): the same window as the grid's Custom tile, opened on the
+// list's clock. Live games are for guests too; a correspondence game needs an account and room among
+// your seeks.
 const createSeek = (ctrl: LobbyController): VNode | undefined => {
-  if (!ctrl.me || ctrl.mode !== 'correspondence' || ctrl.data.seeks.length >= 8) return undefined;
+  const live = ctrl.mode === 'live';
+  if (live ? ctrl.opts.playban || ctrl.me?.isBot || ctrl.hasOngoingRealTimeGame(true) : !canSeek(ctrl))
+    return undefined;
   return div('.create', [
     button(
       '.button',
       {
         hook: bind(
           'click',
-          () => ctrl.setupCtrl.openModal('hook', { timeMode: 'correspondence' }),
+          () =>
+            ctrl.setupCtrl.openModal('hook', undefined, undefined, {
+              timeMode: live ? 'realTime' : 'correspondence',
+            }),
           ctrl.redraw,
         ),
       },
@@ -196,6 +231,8 @@ const createSeek = (ctrl: LobbyController): VNode | undefined => {
     ),
   ]);
 };
+
+const canSeek = (ctrl: LobbyController) => !!ctrl.me && ctrl.data.seeks.length < 8;
 
 const onRowClick = (ctrl: LobbyController) =>
   bind(
