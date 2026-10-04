@@ -9,6 +9,7 @@ import { expect, test, type Browser, type BrowserContext, type Page, type TestIn
 
 // up to two waits for lila's game-creation limit on top of the game itself (unit 4.12 does the same)
 test.describe.configure({ timeout: 240_000 });
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -105,7 +106,7 @@ async function newPlayer(browser: Browser, info: TestInfo, contexts: BrowserCont
 async function signUp(page: Page, username: string, rank: string) {
   await page.goto('/signup');
   await page.locator('#form3-username').fill(username);
-  await page.locator('#form3-password').fill(`${username}-demo-password`);
+  await page.locator('#form3-password').fill(randomUUID());
   await page.locator('#form3-email').fill(`${username}@ligo-demo.org`);
   await page.locator('#form3-goRank').selectOption(rank);
   // the agreement inputs are hidden behind styled toggles: click each toggle
@@ -137,7 +138,7 @@ test('a 5k and a 1d sign up, play a rated 19x19 handicap game, and their ratings
   const phone = !!info.project.use.isMobile;
   const contexts: BrowserContext[] = [];
   // fresh accounts each run: a letter, the rank, and a random tail (usernames are 2 to 20 characters)
-  const tail = `${Date.now().toString(36)}${Math.floor(Math.random() * 1000)}`.slice(-9);
+  const tail = randomUUID().replace(/-/g, '').slice(0, 9);
   const [kyuName, danName] = [`k5${tail}${phone ? 'p' : 'd'}`, `d1${tail}${phone ? 'p' : 'd'}`];
   try {
     const K = await newPlayer(browser, info, contexts, '5k');
