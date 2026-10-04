@@ -5,7 +5,7 @@
 // Assets come from lila/public as lila serves them at /assets/; any other request fails the test.
 
 import { expect, type Page } from '@playwright/test';
-import { readFileSync, readdirSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,9 +21,11 @@ const manifest = () => {
 };
 
 const i18nFile = (prefix: string) => {
-  const name = readdirSync(join(publicDir, 'compiled/i18n')).find(
-    f => f.startsWith(`${prefix}.`) && /^[0-9a-f]+\.js$/.test(f.slice(prefix.length + 1)),
-  );
+  // The newest build's file: earlier builds leave theirs behind (a fresh checkout, as on CI, has one).
+  const dir = join(publicDir, 'compiled/i18n');
+  const name = readdirSync(dir)
+    .filter(f => f.startsWith(`${prefix}.`) && /^[0-9a-f]+\.js$/.test(f.slice(prefix.length + 1)))
+    .sort((a, b) => statSync(join(dir, b)).mtimeMs - statSync(join(dir, a)).mtimeMs)[0];
   if (!name) throw new Error(`no ${prefix} i18n file in lila/public/compiled/i18n: build the ui first`);
   return `/assets/compiled/i18n/${name}`;
 };

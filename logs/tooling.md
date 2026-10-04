@@ -29,6 +29,31 @@
 - sbt 2 in the cloud: `~/.sbt/repositories` overrides build resolvers, so a project needing an extra repo passes `-Dsbt.repository.config=<copy with the repo added>`; and the thin client keeps a running server's JVM options, so `sbt shutdown` first (2026-09-27, 1.1).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 3.17 part 3 · The chess guard in CI
+- Did: `dev/ci/chess_guard.py` scans every tracked `.scala`/`.sbt` file (comments stripped) and finds
+  any `chess.format|variant|opening|eval` and `chess.Board|Position|Square|Move|Game` (written out
+  anywhere, or named in `import`/`export chess.{ … }`) in lila/ and lila-ws/, and `import strategygames…` anywhere
+  but libs/go-rules/. It runs as the last step of lila.yml's `lila-paths` job, which runs on every PR
+  and push, so even a docs-only PR is checked. While 3.17 parts 2a and 2b still remove chess code it
+  runs with `--report-only`: the 128 files in `dev/ci/chess-guard-baseline.txt` are reported, any
+  other file with chess code fails (with a `::error` annotation), and baseline files that are clean
+  now are listed to drop. Phase 3's last 3.17 PR deletes `--report-only` from lila.yml and the
+  baseline file. Eleven self-tests in `dev/tests/run.sh` on a throwaway repo. No lila/ or lila-ws/ code.
+- Worked: report-only passes on main (0 files outside the baseline); full mode fails on all 128. Breaking the script on purpose (no comment stripping, rules applied everywhere)
+  fails four of the self-tests.
+- Didn't work / dead ends: the first version matched only `import` lines; the review found 24 more
+  files writing `chess.variant.Standard`, `export chess.format.Uci` or `import chess.{ Speed, variant }`.
+  Fixed before the PR (pattern widened, baseline regenerated, two self-tests added).
+- Lessons: a step in an always-running job is the cheapest way to gate every PR without a new
+  required check in the ruleset.
+- Decisions: report-only fails new offenders (not nothing), so the guard bites from day one;
+  `chess.Color`, `chess.Ply` and other chess names stay allowed (they aren't in the slice's list).
+  Known limit: `import chess.*` then a bare `Board` isn't caught; the compile after 3.17 is the backstop.
+  Trade-off: `lila` and `lila-ws` need `lila-paths`, so a failing guard shows them as skipped on that
+  push; a separate job would avoid it but needs a new required check in the ruleset (the owner's).
+- Verified by Claude: `bash dev/tests/run.sh` (74 passed), the guard on this repo, verify.sh.
+- Follow-ups: Phase 3's last 3.17 PR flips the switch (delete one flag and one file).
+
 ### 2026-09-29 · fix · The ui container sees services/scoring
 - Did: `dev/ligo compile ui` on the owner's box (docker mode) failed with
   `ERR_PNPM_PACKAGE_MANAGER_UNSAFE_IMPORTER_PATH` for `../services/scoring`. Cause: unit 4.4 put

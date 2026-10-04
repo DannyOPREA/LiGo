@@ -1,5 +1,5 @@
 - [Guard hook review patterns](guard-hook-review-patterns.md) — `--flag=value` bypasses, doc stragglers, stale origin/main
-- [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs
+- [CI review patterns](ci-review-patterns.md) — renames hide paths, decisions.md fools log check, --prod misses bundled libs, import-anchored guards
 - [Dev script review patterns](dev-script-review-patterns.md) — missing .ligo mkdir, hidden failures, unbounded curl, pending-decision merges
 - [lila edit review patterns](lila-edit-review-patterns.md) — scalafmt 110 cols, brand constants, snabbdom input attrs, new-pref checklist, stranded is3d, live chess pages (9.7)
 - [Build-vs-buy memo review patterns](build-vs-buy-memo-review-patterns.md) — POM licences, §3.1 row scope, spike cross-checks, fixture circularity, run overlap, unlisted params, deferred options
@@ -27,5 +27,6 @@
 - [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, PLAN-row scope gaps, gated-predicate side readers (isGone), empty sans, Resume index drift, empty steps (3.11–3.16)
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, Setup.like/rematch bypass, kept chess rematch, vacuous me=None tests (3.15)
 - [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding tap dead zones, guest "Anonymous" seeks, raw reason tokens, vacuous suits (6.7)
+- [Mini board review patterns](mini-board-review-patterns.md) — ownerPreview is public API, fen-message ply undercount, DOM-testable miniBoard.ts (3.19)
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)

@@ -36,7 +36,12 @@ export interface PubsubEvents {
   }) => void;
   'socket.in.announce': (data: { msg?: string; date?: string }) => void;
   'socket.in.endData': (data: any) => void;
-  'socket.in.fen': (data: { id: string; fen: FEN; lm: Uci; wc?: number; bc?: number }) => void;
+  // LiGo (unit 3.19): Go games send `board` and `turn` (ADR 0019 §6); chess ones `fen` until 3.19 part 2
+  'socket.in.fen': (
+    data:
+      | { id: string; fen: FEN; lm: Uci; wc?: number; bc?: number }
+      | { id: string; board: string; turn: Color; lm: string; wc?: number; bc?: number },
+  ) => void;
   'socket.in.finish': (data: { id: string; win?: 'b' | 'w' }) => void;
   'socket.in.following_enters': (
     titleName: string,
