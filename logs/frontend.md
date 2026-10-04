@@ -4,6 +4,19 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 9.10 · The Phase 9 demo: budget and axe over every page, the Go-club checklist
+- Did: `dev/ci/budget.json` gains a line for every page (lobby, game, analysis and analysis of a stored
+  game, puzzle, puzzle dashboard, profile, account, challenge), set from the production build at about
+  +15% (numbers in ADR 0026's 9.10 amendment). `budget.mjs` reads an optional `js`/`css` name for pages
+  whose bundle or stylesheet differs from the line's key. `lila/tests/e2e-demo/phase9-demo.spec.ts`
+  runs axe (serious or critical WCAG 2.2 AA, `ui/playground/e2e/axe.ts`) over every page on the real
+  stack, as a guest (13 pages incl. an imported game and its analysis) and signed in (5 pages), desktop
+  and phone; all pages are checked before it fails. `docs/demos/phase-9.md`: your phone install and
+  offline check, and the Go-club demo (order, what to say, what to do when something breaks). The
+  handoff README now says 6.10 merged and 6.9 is in review (#138), and where the demo video is.
+- Verified: `ui/build -p` then `node ../dev/ci/budget.mjs`: every size within its limit; tsc, oxfmt
+  and oxlint over tests/e2e-demo. The axe run itself is the PR's `e2e` job (the cloud can't run lila).
+
 ### 2026-10-04 · unit 9.9 part two · The handoff demo video, recorded by Playwright
 - Did: `lila/tests/e2e-demo/handoff-video.spec.ts` records one player's browser on the real stack: a
   9x9 lobby game with a capture, two passes, the count accepted by both and the result; a puzzle solved on
