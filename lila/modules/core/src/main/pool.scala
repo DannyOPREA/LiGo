@@ -1,13 +1,14 @@
 package lila.core
 package pool
 
-import _root_.chess.{ Clock, ByColor }
+import _root_.chess.ByColor
 import _root_.chess.IntRating
 import ligo.gorules.Setup as GoSetup
 import alleycats.Zero
 
 import scalalib.bus.NotBuseable
 
+import lila.core.game.ClockSettings
 import lila.core.perf.PerfKey
 import lila.core.rating.RatingRange
 import lila.core.socket.Sri
@@ -22,8 +23,8 @@ opaque type PoolConfigId = String
 object PoolConfigId extends OpaqueString[PoolConfigId]
 
 /* Whether a hook with this clock and Go setup would be a game of some pool (ADR 0022 §6). */
-opaque type IsPoolCompatible = (Clock.Config, GoSetup) => Boolean
-object IsPoolCompatible extends FunctionWrapper[IsPoolCompatible, (Clock.Config, GoSetup) => Boolean]
+opaque type IsPoolCompatible = (ClockSettings, GoSetup) => Boolean
+object IsPoolCompatible extends FunctionWrapper[IsPoolCompatible, (ClockSettings, GoSetup) => Boolean]
 
 enum PoolFrom:
   case Socket, Api, Hook
@@ -38,7 +39,11 @@ case class PoolMember(
     lame: Boolean,
     blocking: Blocking,
     rageSitCounter: Int = 0,
-    misses: Int = 0 // how many waves they missed
+    misses: Int = 0, // how many waves they missed
+    // LiGo (ADR 0022 §2–§3, unit 6.4): the member's "Handicap OK / Even only" chip, and whether their rating
+    // is a rank at all (false for an account still at lila's default 1500 / 500, which gets even games only)
+    handicapOk: Boolean = false,
+    rankKnown: Boolean = false
 )
 
 case class Pairing(players: ByColor[(Sri, GameFullId)])
@@ -47,7 +52,7 @@ case class Pairings(pairings: List[Pairing])
 object HookThieve:
 
   enum HookBus:
-    case GetCandidates(clock: Clock.Config, go: GoSetup, promise: Promise[PoolHooks])
+    case GetCandidates(clock: ClockSettings, go: GoSetup, promise: Promise[PoolHooks])
     case StolenHookIds(ids: Vector[String])
 
   case class PoolHook(hookId: String, member: PoolMember) extends NotBuseable
@@ -59,4 +64,4 @@ trait PoolApi:
   def poolPerfKeys: Map[PoolConfigId, PerfKey]
   def join(poolId: PoolConfigId, member: PoolMember): Unit
   def leave(poolId: PoolConfigId, user: UserId): Unit
-  def poolOf(clock: Clock.Config, go: GoSetup): Option[PoolConfigId]
+  def poolOf(clock: ClockSettings, go: GoSetup): Option[PoolConfigId]

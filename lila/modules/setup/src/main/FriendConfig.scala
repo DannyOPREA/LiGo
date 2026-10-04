@@ -72,7 +72,7 @@ object FriendConfig extends BaseConfig:
     time = 5d,
     increment = Clock.IncrementSeconds(8),
     days = Days(2),
-    rated = Rated.No, // casual until Phase 5
+    rated = Rated.No,
     color = TriColor.default
   )
 

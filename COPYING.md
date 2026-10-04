@@ -69,7 +69,10 @@ the small UI images in `lila/public/images/ligo/`, and their generator `lila/bin
 (`lila/modules/rating/src/test/GoRatingTest.scala`, `src/test/resources/goRatingCases.{json,py}`),
 which port OGS's goratings (MIT, notice in `lila/modules/rating/NOTICE-goratings.md`; §3).
 Also `lila/modules/round/src/main/GoRatedGame.scala` and its test
-(`lila/modules/round/src/test/GoRatedGameTest.scala`), which apply that maths to rated Go games.
+(`lila/modules/round/src/test/GoRatedGameTest.scala`), which apply that maths to rated Go games,
+and `lila/modules/challenge/src/main/GoRatedChallenge.scala` and its test
+(`lila/modules/challenge/src/test/GoRatedChallengeTest.scala`), its handicap rule for rated
+challenges (unit 5.7).
 
 ### 1.2 npm packages removed with Phase 3 features
 

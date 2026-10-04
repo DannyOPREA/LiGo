@@ -50,8 +50,9 @@ def newGoGame(
         byoyomi = byoClock,
         status = Status.Created,
         daysPerTurn = daysPerTurn,
-        // Go games are casual until unit 5.7 turns rated play on, whatever an older record or game asks for
-        rated = Rated.No,
+        // a rated game needs two signed-in players and a setup the rating maths covers (ADR 0021 §4–§5,
+        // unit 5.7); the forms refuse anything else, so this only keeps a stray request casual
+        rated = Rated(rated.yes && players.forall(_.userId.isDefined) && GoSetups.canBeRated(setup)),
         metadata = newMetadata(source).copy(rules = rules),
         createdAt = createdAt,
         movedAt = createdAt

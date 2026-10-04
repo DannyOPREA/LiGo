@@ -10,6 +10,45 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.4 part 2 (addendum) · Pool games are rated
+- Did: 5.7's server part (#109) merged while #112 was open, so `GameStarter` now starts rated pool
+  games (pools are rated only, ADR 0022 §2); handicap pool games are rated with the handicap as 5.3
+  does. This closes 6.4.
+- Verified by Claude: whole-server `compile`; `pool/testOnly` 38 passed, `lobby/testOnly` 21 passed.
+- Follow-ups: `lib/poolRangeStorage` shifts a player's stored range after a rated pool game by lila's
+  clock-only id, which no pool has now, so it does nothing (6.6 replaces the range with ranks).
+
+### 2026-10-04 · unit 6.4 part 2 · ADR 0022's seven pools, Handicap OK and handicap pool games
+- Did: `PoolList` is now ADR 0022 §1's seven pools (9×9 1+5×10s, 3+3×20s, 3+2; 19×19 5+5×10s,
+  10+5×30s, 20+5×30s, 10+10), each with a `ClockSettings` clock (Fischer or byo-yomi, unit 4.9) and
+  ids like `19x19-10m-5x30s`. `PoolMember` carries the Handicap OK chip (`poolIn`'s new `handicap`
+  field) and whether the player has a rank; `MatchMaking` gives a pair who both said Handicap OK
+  GoPairing's stones and colours, and `GameStarter` starts the game with them (0.5 komi) and with the
+  pool's byo-yomi or Fischer clock. Hooks reach a pool by their whole clock settings, so rated
+  byo-yomi hooks can now be pulled in. The lobby page reads the pools from the server (`pools` in the
+  page data) instead of a copied list; old `#pool/10+10` links find the Fischer pool with that clock.
+  The game page's "new opponent" button links to the pool by size, main time and increment or period
+  length (`#pool/19x19-10m-*x30s`: its clock shows the periods left, not the starting count).
+- Worked: GoPairing (6.2) already had stones, colours and the score, so the pool only had to pass the
+  flags in and the stones out.
+- Didn't work / dead ends: none.
+- Lessons: lila joins a provisional player to a pool at a random rating around their own (to spread
+  new players); for handicap that would add up to a stone of noise, so a player with a rank joins at
+  their own rating.
+- Decisions: logs/decisions.md 2026-10-04 row for 6.4 part 2 (Claude, under the owner's 2026-09-28
+  delegation).
+- Verified by Claude: `pool/testOnly lila.pool.GoPoolTest lila.pool.GoPairingTest` (38 passed; verify's
+  `testQuick` skips the pool module), `lobby/testOnly lila.lobby.GoHookTest` (20), `node ui/test lobby`
+  (70), whole-server `compile`, `./ui/build --no-install -p`, verify.sh, the chess guard.
+  · Needs owner verification: the PR's list.
+- Review (reviewer agent): fixed its blocking finding (the "new opponent" button after a byo-yomi pool
+  game linked to no pool) and three optional ones (tests for who takes Black and who has a rank; the
+  pool JSON built once). Not done: `lib/poolRangeStorage` still keys ranges by lila's clock-only ids
+  (unused while pool games are casual; 6.6 replaces the range with the rank range).
+- Follow-ups: pool games become rated after 5.7 (`GameStarter`); 6.6 sends the Handicap OK chip
+  (until then nobody gets a handicap pool game), draws the tiles in three columns and shows waiting
+  counts.
+
 ### 2026-10-04 · unit 6.5 · Open challenges and correspondence tiles on the server
 - Did: the lobby now sends each player every open game except those from or to players they block or
   who block them, and those of the other "lame" kind (`Biter.visible`); games they can't join (out of
