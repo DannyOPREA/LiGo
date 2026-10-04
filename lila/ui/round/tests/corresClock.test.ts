@@ -24,9 +24,9 @@ describe('the days clock', () => {
     globalThis.clearInterval = realClearInterval;
   });
 
-  const clock = (scoring: boolean, flagged: string[]) => {
+  const clock = (scoring: boolean, flagged: string[], statusId = 20) => {
     const root = {
-      data: { correspondence: {}, game: { player: 'white' as Color } },
+      data: { correspondence: {}, game: { player: 'white' as Color, status: { id: statusId } } },
       corresClock: {},
       inScoring: () => scoring,
       redraw: () => {},
@@ -57,6 +57,16 @@ describe('the days clock', () => {
     c.times.lastUpdate = performance.now() - 60_000;
     tickers[0]();
     assert.deepEqual(flagged, [], 'the day does not run out while the count is awaited');
+    assert.equal(c.millisOf('white'), 1_000);
+  });
+
+  test('stands still once the game is over: a finished game never flags', () => {
+    const flagged: string[] = [];
+    const c = clock(false, flagged, 31); // resigned
+    c.times.white = 1_000;
+    c.times.lastUpdate = performance.now() - 60_000;
+    tickers[0]();
+    assert.deepEqual(flagged, []);
     assert.equal(c.millisOf('white'), 1_000);
   });
 });

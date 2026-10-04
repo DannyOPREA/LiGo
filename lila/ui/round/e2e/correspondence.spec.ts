@@ -5,7 +5,7 @@
 // snapshots.spec.ts); the picture hides the page's glyphs, so the words are checked in the tests.
 import { expect, test, type Page } from '@playwright/test';
 
-import { openRound } from './page';
+import { openRound, play } from './page';
 
 const HOUR = 3600,
   DAY = 86400;
@@ -81,7 +81,9 @@ for (const [device, options] of Object.entries(viewports))
     test('in the scoring phase the countdown is in days and hours and the days clocks stand still', async ({
       page,
     }) => {
-      // White's clock is at zero in the stored game, which must not read as a flag in the phase.
+      // White's clock is at zero in the stored game, which must not read as a flag in the phase. The
+      // page's clock is Playwright's, so the days clock's 1 s ticks can be run without waiting.
+      await page.clock.install();
       const { server, problems } = await openRound(page, {
         ...scoringGame(),
         correspondence: { ...days, white: 0 },
@@ -101,6 +103,15 @@ for (const [device, options] of Object.entries(viewports))
       await expect(page.locator('.go-scoring__countdown')).toHaveText(
         '5 hours 12 minutes left to agree. Then the marks stand as they are.',
       );
+
+      // Even with the player to move (Black) at zero, the clock's ticks take nothing off and never flag.
+      server.event('cclock', { white: 0, black: 0 });
+      await page.clock.runFor(3000);
+      await expect(page.locator('.rclock-correspondence.outoftime')).toHaveCount(0);
+      // The socket keeps its order: once a toggle sent after the ticks arrives, any flag would have too.
+      await play(page, 'gg', 9, device === 'phone');
+      await expect.poll(() => server.received.map(m => m.t)).toContain('score-toggle');
+      expect(server.received.map(m => m.t)).not.toContain('flag');
       expect(problems).toEqual({ requests: [], errors: [] });
     });
   });

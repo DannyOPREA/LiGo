@@ -1,3 +1,5 @@
+import { playable } from 'lib/game';
+
 import type RoundController from '../ctrl';
 
 export interface CorresClockData {
@@ -38,8 +40,9 @@ export class CorresClockController {
     this.ticker = setInterval(() => {
       if (!root.data.correspondence || !root.corresClock) return clearInterval(this.ticker);
       // The days clock stands still while the dead stones are agreed (ADR 0023 §4): the scoring
-      // phase has its own countdown, and lila neither flags nor runs the turn clock in it.
-      if (root.inScoring()) {
+      // phase has its own countdown, and lila neither flags nor runs the turn clock in it. Nor does it
+      // run again once the game is over (a counted game ends while the clock stands still).
+      if (root.inScoring() || !playable(root.data)) {
         this.times.lastUpdate = performance.now();
         return;
       }

@@ -4,6 +4,22 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.7 review · Reviewer findings fixed
+- Did: the reviewer found nothing blocking. Its two should-fix items are fixed. The days clock now
+  also stands still once the game is over (a counted game ends while the clock stands still, and
+  the clock ticked again afterwards). The browser test now zeroes the player-to-move's days clock
+  in the scoring phase, runs the page's clock 3 s and checks that no `flag` is sent.
+- Worked: the new unit test ("stands still once the game is over") and the browser check both fail
+  with the guard removed and pass with it (round e2e 25/25, three runs).
+- Didn't work / dead ends: the first browser check zeroed White's clock while Black was to move, so
+  it passed with the bug too; and checking `server.received` straight after `runFor` raced the
+  websocket. A score toggle sent afterwards gives an ordered sync point.
+- Lessons: to assert a websocket message was NOT sent, send a later one and wait for it; the socket
+  keeps order. Zero the clock of the colour whose turn it is, or the tick never touches it.
+- Follow-ups (nits, not fixed here): `resVsX` wording for a no-result game in the bell; TimelineUi
+  and RoundUi still say "draw" for a no-result game; whats-next is re-asked on every scoring event;
+  no unit test for `moveOn`.
+
 ### 2026-10-04 · unit 7.7 · Correspondence UI
 - Did: a correspondence Go game on the game page. Lila's days clock (`corresClock`) already worked with Go;
   what was missing was the scoring phase. The days clock now stands still in the phase (no ticking, no
