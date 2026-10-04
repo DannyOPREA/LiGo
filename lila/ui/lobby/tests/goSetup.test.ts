@@ -4,6 +4,7 @@ import { beforeEach, describe, test } from 'node:test';
 import {
   init as snabInit,
   attributesModule,
+  h,
   classModule,
   eventListenersModule,
   propsModule,
@@ -15,7 +16,7 @@ import { goSetupName, standardKomi, validKomi } from '../src/goSetup';
 import SetupController, { type HandicapAdvice } from '../src/setupCtrl';
 import { colorButtons } from '../src/view/setup/components/colorButtons';
 import { gameModeButtons } from '../src/view/setup/components/gameModeButtons';
-import { goOptions } from '../src/view/setup/components/goOptions';
+import { goAdvancedFields, goSizePicker } from '../src/view/setup/components/goOptions';
 
 // The shared test setup's i18n strings are functions; the site's are strings, which snabbdom renders as
 // text, so this file uses plain strings.
@@ -81,6 +82,9 @@ const lobby = (
   (ctrl as any).setupCtrl = setup;
   return { ctrl, setup };
 };
+
+// the board size and the folded options, as the window shows them together
+const goOptions = (setup: SetupController): VNode => h('div', [goSizePicker(setup), goAdvancedFields(setup)]);
 
 const formOf = (setup: SetupController) => Object.fromEntries(setup.propsToFormData('random').entries());
 
@@ -354,7 +358,7 @@ describe('the create-game form', () => {
     test('keeps an even rated challenge, which is always allowed', async () => {
       const { setup } = lobby({ go: 1580 });
       setup.openModal('friend', { mode: 'rated' }, 'bob');
-      setup.setHandicap(0);
+      setup.chooseHandicap(0);
       await flush();
       restore();
       assert.equal(setup.handicap(), 0);

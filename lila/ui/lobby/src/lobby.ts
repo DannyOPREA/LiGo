@@ -37,7 +37,7 @@ export function initModule(opts: LobbyOpts) {
   pubsub.after('socket.hasConnected').then(() => {
     const gameId = new URLSearchParams(location.search).get('hook_like');
     if (!gameId) return;
-    const { ratingMin, ratingMax } = lobbyCtrl.setupCtrl.makeSetupStore('hook')();
+    const { ratingMin, ratingMax } = lobbyCtrl.setupCtrl.makeSetupStore()();
     xhr.text(
       xhr.url(`/setup/hook/${site.sri}/like/${gameId}`, { deltaMin: ratingMin, deltaMax: ratingMax }),
       {

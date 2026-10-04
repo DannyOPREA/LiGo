@@ -10,6 +10,26 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.8 · One window for custom games and challenges
+- What: lila's "Create a game" and "Challenge a friend" windows are one window. An Opponent choice
+  (Anyone, the named player, Link for a friend) switches between them and keeps every setting. Presets
+  (Last settings, 19×19 Rapid, 9×9 Blitz, Correspondence 1 day) come from the pools the viewer can
+  play. Ruleset, komi, handicap and rank range fold under Advanced with a one-line summary, opening by
+  themselves when a link fixed one or a rule problem points at one. A named opponent (profile,
+  mini-profile, `/?user=X#friend`) pre-fills 5.7's suggested stones, which follow the board size until
+  the player picks stones. One remembered store per player, migrated from the old two. The Custom tile
+  and a new live-mode "Create a game" button in Open challenges open it. No Scala change.
+- Tests: 135 lobby unit tests (36 new), 60 lobby Playwright tests (21 new behaviour tests, 6 new
+  screenshots). verify.sh and the strict chess guard pass.
+- Review: one blocking bug, fixed with tests: a guest's presets were built from byo-yomi pools, but a
+  guest's open game is real time only, so the preset gave a wrong clock. Also fixed: an untouched
+  suggestion was saved as the player's choice; an old challenge store opened the Custom tile on
+  Unlimited; the opponent choice is now real radio inputs (arrow keys work); switching to Anyone drops
+  a link's forced correspondence clock for a guest; "Last settings" lights only when nothing changed.
+- Lessons: anything built from pools must be filtered by the clock modes the window allows for this
+  viewer. lila's root font is about 12–14px, so `rem` sizes fall short of 44px touch targets on a
+  phone: use px. A trimmed e2e page must load dialog CSS itself (`site.asset.loadCssPath`).
+
 ### 2026-10-04 · unit 7.5 (ride-along) · Retrying a rate-limited new game
 - What: the e2e demos failed on CI's phone run once #122 and 3.20 both created games: lila allows 5 new
   games a minute per IP, and after a refused one the setup window kept its Create button disabled
