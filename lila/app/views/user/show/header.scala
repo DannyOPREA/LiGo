@@ -52,7 +52,7 @@ object header:
   // LiGo: the Go rank beside the name (unit 5.6), the rating in its title; none before a rank is known
   private def rankTag(info: UserInfo)(using ctx: Context) =
     val go = info.user.perfs.go
-    (ctx.pref.showRatings && !go.glicko.clueless).option:
+    (ctx.pref.showRatings && lila.rating.GoRating.rankKnown(go)).option:
       span(cls := "user-show__rank")(goRank(go.intRating, go.provisional))
 
   def apply(u: User, info: UserInfo, angle: UserInfo.Angle, social: UserInfo.Social)(using ctx: Context) =

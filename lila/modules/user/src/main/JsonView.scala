@@ -109,7 +109,11 @@ object JsonView:
   def perfsJson(p: UserPerfs, rankMap: Option[UserRankMap] = None): JsObject =
     JsObject:
       p.perfsList.collect:
-        case (key, perf) if perf.nb > 0 || lila.rating.PerfType.standardSet(key) =>
+        // LiGo: the Go perf shows before a first game once a declared rank starts it (ADR 0021 §2,
+        // unit 5.8); a player who declared none has no rank yet, as their profile shows
+        case (key, perf)
+            if perf.nb > 0 || (key == PerfKey.go && lila.rating.GoRating.rankKnown(perf)) ||
+              lila.rating.PerfType.standardSet(key) =>
           key.value -> perfWrites
             .writes(perf)
             .add("rank" -> rankMap.flatMap(_.get(key)))
