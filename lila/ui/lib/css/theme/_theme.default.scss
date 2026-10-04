@@ -47,6 +47,9 @@
   --c-border-light: hsl(0 0% 40%);
   --c-primary: hsl(209 79% 56%);
   --c-primary-clear: color-mix(in oklab, var(--c-clearer) 20%, var(--c-primary));
+  /* LiGo: the primary blue under white button text, dark enough for 4.5:1 in every theme (WCAG AA,
+     ADR 0026 section 4). Links keep the lighter primary blue, which reads on dark backgrounds. */
+  --c-primary-button: hsl(209 79% 44%);
   --c-secondary: hsl(88 62% 37%);
   --c-secondary-dim: color-mix(in oklab, var(--c-dimmer) 20%, var(--c-secondary));
   --c-secondary-dimmer: color-mix(in oklab, var(--c-dimmer) 40%, var(--c-secondary));
