@@ -9,7 +9,6 @@ export const complete = (
   win: boolean,
   rated: boolean,
   replay?: PuzzleReplay,
-  color?: Color,
 ): Promise<PuzzleResult> =>
   xhrJson(`/training/complete/${theme}/${puzzleId}`, {
     method: 'POST',
@@ -17,7 +16,6 @@ export const complete = (
       win,
       ...(replay ? { replayDays: replay.days } : {}),
       rated,
-      color,
     }),
   });
 

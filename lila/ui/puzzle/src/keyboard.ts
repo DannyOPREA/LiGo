@@ -1,39 +1,19 @@
 import { pubsub } from 'lib/pubsub';
-import { snabDialog } from 'lib/view';
 
-import * as control from './control';
 import type PuzzleCtrl from './ctrl';
 
-export default (ctrl: PuzzleCtrl) =>
+/** lila's keys that still mean something here: N for the next puzzle, Z for zen, and the arrow keys through the solution. */
+export const bind = (ctrl: PuzzleCtrl): void => {
+  const step = (by: number | 'first' | 'last') => () => {
+    if (!ctrl.solution) return;
+    const to = by === 'first' ? 0 : by === 'last' ? ctrl.solution.length - 1 : ctrl.solutionStep + by;
+    ctrl.jumpSolution(to);
+  };
   site.mousetrap
-    .bind(['left', 'k'], () => {
-      control.prev(ctrl);
-      ctrl.redraw();
-    })
-    .bind(['right', 'j'], () => {
-      control.next(ctrl);
-      ctrl.redraw();
-    })
-    .bind(['up', '0', 'home'], () => {
-      control.first(ctrl);
-      ctrl.redraw();
-    })
-    .bind(['down', '$', 'end'], () => {
-      control.last(ctrl);
-      ctrl.redraw();
-    })
+    .bind(['left', 'k'], step(-1))
+    .bind(['right', 'j'], step(1))
+    .bind(['up', '0', 'home'], step('first'))
+    .bind(['down', '$', 'end'], step('last'))
     .bind('z', () => pubsub.emit('zen'))
-    .bind('?', () => ctrl.keyboardHelp(!ctrl.keyboardHelp()))
-    .bind('f', ctrl.flip)
-    .bind('n', ctrl.nextPuzzle)
-    .bind('h', ctrl.menu.toggle)
-    .bind('G', ctrl.googlyEyesStart);
-
-export const view = (ctrl: PuzzleCtrl) =>
-  snabDialog({
-    class: 'help',
-    htmlUrl: '/training/help',
-    onClose: () => ctrl.keyboardHelp(false),
-    modal: true,
-    easyClose: 'clickOutside',
-  });
+    .bind('n', ctrl.nextPuzzle);
+};

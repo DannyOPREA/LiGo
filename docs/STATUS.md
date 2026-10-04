@@ -37,8 +37,8 @@ _Updated at the end of every session (`/status`). Newest information wins._
   docs/PLAN.md §5. 8.1 (ADR 0024: puzzles LiGo generates and checks itself, plus a small classics tail, PR #49)
   and 8.2 (design ADR 0025: goban's own puzzle format and puzzle mode, PR #53) merged; 8.3 (the `tools/puzzles`
   generator and pipeline, PR #59) and 8.4 (the first 240 puzzles, PR #62) merged; 8.5 (goban's puzzle mode in
-  `libs/board`, PR #64) merged; 8.6 (puzzles on the server, `dev/ligo puzzles load`) in review; 8.7
-  (the trainer page) and 8.8 (the demo) follow. Log: logs/tsumego.md.
+  `libs/board`, PR #64) merged; 8.6 (puzzles on the server, `dev/ligo puzzles load`, PR #89) merged;
+  8.7 (the trainer page) in review; 8.8 (the demo) follows. Log: logs/tsumego.md.
 
 - Phase 9 (under the owner's "work until I tell you to stop" delegation): units 9.1–9.10 in
   docs/PLAN.md §5. 9.1 (ADR 0026, PR #57), 9.2 (sounds, PR #58), 9.3 (board themes, PR #60) and
@@ -152,5 +152,5 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 merged (ADR 0022), 6.4 part one in review, the rest wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
-| 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.5 merged, 8.6 in review, 8.7–8.8 next |
+| 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.6 merged, 8.7 in review, 8.8 next |
 | 9. PWA, polish & handoff | split into units 9.1–9.10 (PLAN §5); 9.1–9.6 merged, 9.8 in review; 9.7, 9.9, 9.10 wait for Phases 3–8 |

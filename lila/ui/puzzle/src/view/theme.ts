@@ -2,11 +2,7 @@ import { licon } from 'lib/licon';
 import { type VNode, type MaybeVNode, bind, hl, type VNodeData, icon } from 'lib/view';
 
 import type PuzzleCtrl from '@/ctrl';
-import type { ThemeKey, RoundThemes } from '@/interfaces';
-
-import { renderColorForm } from './side';
-
-const STUDY_URL = 'https://lichess.org/study/viiWlKjv';
+import type { ThemeKey } from '@/interfaces';
 
 export default function theme(ctrl: PuzzleCtrl): MaybeVNode {
   const { angle, replay } = ctrl.data;
@@ -14,7 +10,7 @@ export default function theme(ctrl: PuzzleCtrl): MaybeVNode {
 
   if (replay) return showEditor ? hl('div.puzzle__side__theme', editor(ctrl)) : null;
 
-  const backHref = ctrl.routerWithLang(`/training/${angle.opening ? 'openings' : 'themes'}`);
+  const backHref = ctrl.routerWithLang('/training/themes');
 
   if (ctrl.isDaily) {
     return hl(
@@ -25,37 +21,21 @@ export default function theme(ctrl: PuzzleCtrl): MaybeVNode {
 
   return hl('div.puzzle__side__theme', [
     backToTheme(backHref, ['« ', angle.name], { class: { long: angle.name.length > 20 } }),
-    hl('p', [
-      angle.desc,
-      angle.chapter &&
-        hl(
-          'a.puzzle__side__theme__chapter.text',
-          { attrs: { href: `${STUDY_URL}/${angle.chapter}`, target: '_blank' } },
-          [' ', i18n.puzzle.example],
-        ),
-    ]),
-    showEditor
-      ? hl('div.puzzle__themes', editor(ctrl))
-      : !replay && (angle.opening || angle.openingAbstract) && renderColorForm(ctrl),
+    hl('p', angle.desc),
+    showEditor && hl('div.puzzle__themes', editor(ctrl)),
   ]);
 }
-
-const invisibleThemes = new Set(['master', 'masterVsMaster', 'superGM']);
 
 function backToTheme(href: string, content: string[], data: VNodeData = {}): VNode {
   return hl('a.puzzle__side__theme__back', { attrs: { href }, ...data }, content);
 }
 
-function themeTrans(key: string) {
-  return key in i18n.puzzleTheme ? i18n.puzzleTheme[key as keyof typeof i18n.puzzleTheme].toString() : key;
-}
-
 const editor = (ctrl: PuzzleCtrl): VNode[] => {
   const { puzzle } = ctrl.data;
-  const votedThemes = ctrl.round?.themes ?? ({} as RoundThemes);
+  const votedThemes = ctrl.round?.themes ?? {};
 
   const visibleThemes: ThemeKey[] = [
-    ...puzzle.themes.filter(t => !invisibleThemes.has(t)),
+    ...puzzle.themes,
     ...Object.keys(votedThemes).filter(
       (t: ThemeKey): t is ThemeKey => !!votedThemes[t] && !puzzle.themes.includes(t),
     ),
@@ -63,7 +43,7 @@ const editor = (ctrl: PuzzleCtrl): VNode[] => {
   const allThemes = ctrl.isDaily ? null : ctrl.allThemes;
   const availableThemes = allThemes ? allThemes.dynamic.filter((t: ThemeKey) => !votedThemes[t]) : null;
 
-  if (availableThemes) availableThemes.sort((a, b) => (themeTrans(a) < themeTrans(b) ? -1 : 1));
+  if (availableThemes) availableThemes.sort((a, b) => (ctrl.themeName(a) < ctrl.themeName(b) ? -1 : 1));
 
   return [
     hl(
@@ -77,11 +57,7 @@ const editor = (ctrl: PuzzleCtrl): VNode[] => {
       },
       visibleThemes.map(key =>
         hl('div.puzzle__themes__list__entry', { class: { strike: votedThemes[key] === false } }, [
-          hl(
-            'a',
-            { attrs: { href: `/training/${key}`, title: themeTrans(`${key}Description`) } },
-            themeTrans(key),
-          ),
+          hl('a', { attrs: { href: `/training/${key}`, title: ctrl.themeDesc(key) } }, ctrl.themeName(key)),
           allThemes &&
             hl(
               'div.puzzle__themes__votes',
@@ -108,7 +84,7 @@ const editor = (ctrl: PuzzleCtrl): VNode[] => {
             {
               hook: {
                 ...bind('change', e => {
-                  const theme = (e.target as HTMLInputElement).value as ThemeKey;
+                  const theme = (e.target as HTMLInputElement).value;
                   if (theme) ctrl.voteTheme(theme, true);
                 }),
                 postpatch(_, vnode) {
@@ -121,16 +97,11 @@ const editor = (ctrl: PuzzleCtrl): VNode[] => {
               availableThemes.map(theme =>
                 hl(
                   'option',
-                  { attrs: { value: theme, title: themeTrans(`${theme}Description`) } },
-                  themeTrans(theme),
+                  { attrs: { value: theme, title: ctrl.themeDesc(theme) } },
+                  ctrl.themeName(theme),
                 ),
               ),
             ],
-          ),
-          hl(
-            'a.puzzle__themes__study.text',
-            { attrs: { 'data-icon': licon.InfoCircle, href: STUDY_URL, target: '_blank' } },
-            'About puzzle themes',
           ),
         ]
       : []),

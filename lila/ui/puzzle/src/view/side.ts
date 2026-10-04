@@ -1,28 +1,17 @@
-import { capitalize } from 'lib/game';
-import perfIcons from 'lib/game/perfIcons';
 import { numberFormat } from 'lib/i18n';
-import { colors } from 'lib/setup/color';
-import { type VNode, dataIcon, onInsert, type MaybeVNode, hl } from 'lib/view';
+import { type VNode, onInsert, type MaybeVNode, hl } from 'lib/view';
 import { cmnToggleWrap } from 'lib/view/cmn-toggle';
-import { userLink } from 'lib/view/userLink';
 
 import type PuzzleCtrl from '@/ctrl';
-import type { Angle, PuzzleDifficulty } from '@/interfaces';
+import type { PuzzleDifficulty } from '@/interfaces';
 
 export function puzzleBox(ctrl: PuzzleCtrl): VNode {
-  return hl('div.puzzle__side__metas', [puzzleInfos(ctrl), gameInfos(ctrl)]);
+  return hl('div.puzzle__side__metas', [puzzleInfos(ctrl)]);
 }
 
-const angleImg = (angle: Angle): string => {
-  const name =
-    angle.opening || angle.openingAbstract ? 'opening' : angle.key.startsWith('mateIn') ? 'mate' : angle.key;
-  return site.asset.url(`images/puzzle-themes/${name}.svg`);
-};
-
 const puzzleInfos = (ctrl: PuzzleCtrl): VNode => {
-  const { puzzle, angle } = ctrl.data;
+  const { puzzle } = ctrl.data;
   return hl('div.infos.puzzle', [
-    hl('img.infos__angle-img', { attrs: { src: angleImg(angle), alt: angle.name } }),
     hl('div', [
       hl(
         'p',
@@ -42,33 +31,6 @@ const puzzleInfos = (ctrl: PuzzleCtrl): VNode => {
   ]);
 };
 
-function gameInfos(ctrl: PuzzleCtrl): VNode {
-  const { game, puzzle } = ctrl.data;
-  const gameName = game.clock && game.perf ? `${game.clock} • ${game.perf.name}` : 'import';
-  return hl('div.infos', { attrs: game.perf && dataIcon(perfIcons[game.perf.key]) }, [
-    hl('div', [
-      hl(
-        'p',
-        i18n.puzzle.fromGameLink.asArray(
-          ctrl.mode === 'play'
-            ? hl('span', gameName)
-            : hl('a', { attrs: { href: `/${game.id}/${ctrl.pov}#${puzzle.initialPly}` } }, gameName),
-        ),
-      ),
-      hl(
-        'div.players',
-        game.players.map(p => {
-          const user =
-            p.name === 'ghost'
-              ? p.rating?.toString() || ''
-              : userLink({ ...p, rating: ctrl.opts.showRatings ? p.rating : undefined, line: false });
-          return hl('div.player.color-icon.is.text.' + p.color, user);
-        }),
-      ),
-    ]),
-  ]);
-}
-
 export const userBox = (ctrl: PuzzleCtrl): VNode => {
   const { data } = ctrl;
   if (!data.user)
@@ -77,16 +39,16 @@ export const userBox = (ctrl: PuzzleCtrl): VNode => {
       hl('a.button', { attrs: { href: ctrl.routerWithLang('/signup') } }, i18n.site.signUp),
     ]);
   const diff = ctrl.round?.ratingDiff;
-  const ratedId = `puzzle-toggle-rated_hint-${ctrl.hintHasBeenShown()}`;
+  const ratedId = 'puzzle-toggle-rated';
   return hl('div.puzzle__side__user', [
     !data.replay &&
       data.user &&
       cmnToggleWrap({
         id: ratedId,
         name: i18n.site.rated,
-        checked: ctrl.rated() && !ctrl.hintHasBeenShown(),
+        checked: ctrl.rated(),
         change: ctrl.toggleRated,
-        disabled: ctrl.lastFeedback !== 'init' || ctrl.hintHasBeenShown(),
+        disabled: ctrl.lastFeedback !== 'init' || ctrl.resultSent,
         redraw: ctrl.redraw,
       }),
     hl(
@@ -115,7 +77,7 @@ export function replay(ctrl: PuzzleCtrl): MaybeVNode {
   const { replay, angle } = ctrl.data;
   if (!replay) return undefined;
   const i = replay.i + (ctrl.mode === 'play' ? 0 : 1);
-  const text = i18n.puzzleTheme[angle.key];
+  const text = ctrl.themeName(angle.key);
   return hl('div.puzzle__side__replay', [
     hl('a', { attrs: { href: `/training/dashboard/${replay.days}` } }, ['« ', `Replaying ${text} puzzles`]),
     hl('div.puzzle__side__replay__bar', {
@@ -176,26 +138,4 @@ export const renderDifficultyForm = (ctrl: PuzzleCtrl): VNode =>
         ),
       ),
     ],
-  );
-
-export const renderColorForm = (ctrl: PuzzleCtrl): VNode =>
-  hl(
-    'div.puzzle__side__config__color',
-    hl(
-      'group.radio',
-      colors.map(key =>
-        hl('div', [
-          hl(
-            `a.label.color-${key}${key === (ctrl.opts.settings.color || 'random') ? '.active' : ''}`,
-            {
-              attrs: {
-                href: `/training/${ctrl.data.angle.key}/${key}`,
-                title: key === 'random' ? i18n.site.randomColor : i18n.site[`as${capitalize(key)}`],
-              },
-            },
-            hl('icon'),
-          ),
-        ]),
-      ),
-    ),
   );
