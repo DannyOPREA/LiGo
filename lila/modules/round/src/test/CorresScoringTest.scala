@@ -7,7 +7,6 @@ import scalalib.model.Days
 import lila.core.game.{ Game, GoScoring, Player, Source, newGoGame }
 import lila.core.id.GamePlayerId
 import lila.game.GoScoringPlay
-import lila.game.GameExt.*
 import lila.round.GoScorer.CorresStep
 
 // Unit 7.6 (ADR 0023 §4): what a step of a correspondence game's scoring phase means for alarms and
