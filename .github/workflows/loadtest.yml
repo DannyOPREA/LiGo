@@ -76,6 +76,7 @@ jobs:
         run: dev/ligo up
       - name: Load test
         run: |
+          set -o pipefail # (a step's default shell has no pipefail: tee would hide k6's exit code)
           status=0
           dev/ligo loadtest run 2>&1 | tee loadtest.log || status=$?
           line=$(grep '^LOADTEST' loadtest.log | tail -1 || true)

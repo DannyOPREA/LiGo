@@ -29,6 +29,7 @@ const moveTime = new Trend('move_ms', true);
 const turnTime = new Trend('turn_ms', true);
 const gameTime = new Trend('game_ms', true);
 const gamesEnded = new Counter('games_ended');
+const movesAcked = new Counter('moves_acked');
 const completed = new Rate('player_completed');
 
 export const options = {
@@ -38,7 +39,8 @@ export const options = {
   },
   thresholds: {
     player_completed: ['rate>=0.95'],
-    move_ms: ['count>0', 'p(95)<1000'],
+    move_ms: ['p(95)<1000'],
+    moves_acked: ['count>0'], // a threshold on a trend with no samples would pass
   },
 };
 
@@ -137,6 +139,7 @@ function play(cookie, fullId) {
     const onEvent = ev => {
       if (ev.t === 'ack' && sentAt) {
         moveTime.add(Date.now() - sentAt); // the server took our stone (lila-ws acks it to the mover)
+        movesAcked.add(1);
         sentAt = 0;
       } else if (ev.t === 'move' && ev.d) {
         const ply = ev.d.ply;

@@ -28,6 +28,10 @@
   (`turn_ms`), and `move_ms` must have samples.
 - Lessons: lila-ws doesn't echo a player's own move to them; it acks it. A k6 threshold on a metric
   with no samples passes, so require `count>0`.
+- The second run showed no summary line yet passed: k6 refused `count>0` on a trend (it needs a
+  counter, now `moves_acked`), and the step's default shell has no `pipefail`, so `| tee` hid k6's
+  exit code. Both fixed.
+- Lessons: a GitHub Actions `run:` step is `bash -e` without `pipefail` unless `shell: bash` is set.
 
 ### 2026-10-04 · unit 6.10 · The Phase 6 demo
 - What: `lila/tests/e2e-demo/phase6-demo.spec.ts`, run by the `e2e` workflow at desktop and phone
