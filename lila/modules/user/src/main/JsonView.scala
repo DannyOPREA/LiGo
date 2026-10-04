@@ -75,7 +75,9 @@ object JsonView:
         "id" -> l.user.id,
         "username" -> l.user.name,
         "perfs" -> Json.obj(
-          l.perfKey.value -> Json.obj("rating" -> l.rating, "progress" -> l.progress)
+          l.perfKey.value -> Json
+            .obj("rating" -> l.rating, "progress" -> l.progress)
+            .add("goRank" -> lightGoRankOf(l))
         )
       )
       .add("title" -> l.user.title)
@@ -99,6 +101,10 @@ object JsonView:
   // leaderboard position
   private def goRankOf(key: PerfKey, perf: Perf): Option[String] =
     (key == PerfKey.go).option(lila.rating.GoRating.label(perf.glicko))
+
+  // a leaderboard entry is stable (deviation at most 75, under the "?" threshold), so its label has no "?"
+  private def lightGoRankOf(l: LightPerf): Option[String] =
+    (l.perfKey == PerfKey.go).option(lila.rating.GoRating.label(l.rating, chess.rating.RatingProvisional.No))
 
   def perfsJson(p: UserPerfs, rankMap: Option[UserRankMap] = None): JsObject =
     JsObject:
@@ -140,30 +146,4 @@ object JsonView:
 
   given leaderboardsWrites(using OWrites[LightPerf]): OWrites[lila.rating.UserPerfs.Leaderboards] =
     OWrites: leaderboards =>
-      Json.obj(
-        "bullet" -> leaderboards.bullet,
-        "blitz" -> leaderboards.blitz,
-        "rapid" -> leaderboards.rapid,
-        "classical" -> leaderboards.classical,
-        "ultraBullet" -> leaderboards.ultraBullet,
-        "crazyhouse" -> leaderboards.crazyhouse,
-        "chess960" -> leaderboards.chess960,
-        "kingOfTheHill" -> leaderboards.kingOfTheHill,
-        "threeCheck" -> leaderboards.threeCheck,
-        "antichess" -> leaderboards.antichess,
-        "atomic" -> leaderboards.atomic,
-        "horde" -> leaderboards.horde,
-        "racingKings" -> leaderboards.racingKings
-      )
-
-  given leaderboardStandardTopOneWrites(using
-      OWrites[LightPerf]
-  ): OWrites[lila.rating.UserPerfs.Leaderboards] =
-    OWrites: leaderboards =>
-      Json.obj(
-        "bullet" -> leaderboards.bullet.headOption,
-        "blitz" -> leaderboards.blitz.headOption,
-        "rapid" -> leaderboards.rapid.headOption,
-        "classical" -> leaderboards.classical.headOption,
-        "ultraBullet" -> leaderboards.ultraBullet.headOption
-      )
+      Json.obj("go" -> leaderboards.go)

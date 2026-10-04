@@ -124,7 +124,7 @@ describe('the create-game form', () => {
     assert.equal(form.ruleset, 'japanese');
     assert.equal(form.komi, '6.5');
     assert.equal(form.mode, '0');
-    assert.equal(form.variant, '1');
+    assert.equal(form.variant, undefined);
     assert.equal(form.fen, undefined);
     assert.ok(setup.valid());
   });
@@ -199,10 +199,7 @@ describe('the create-game form', () => {
     const { setup } = lobby();
     setup.openModal('hook');
     const form = formOf(setup);
-    assert.deepEqual(
-      [form.size, form.ruleset, form.komi, form.mode, form.variant],
-      ['19', 'japanese', '6.5', '1', '1'],
-    );
+    assert.deepEqual([form.size, form.ruleset, form.komi, form.mode], ['19', 'japanese', '6.5', '1']);
     assert.ok(setup.valid());
   });
 

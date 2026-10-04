@@ -67,7 +67,6 @@ const hook = (over: Partial<Hook> = {}): Hook =>
     t: 480,
     s: 2,
     i: 1,
-    variant: 'standard',
     perf: 'go',
     rating: 1500,
     u: 'bob',

@@ -2,6 +2,8 @@ import type { Chart } from 'chart.js';
 
 import type { TreeNodeBase } from 'lib/tree/types';
 
+import type { RankTable } from './goRank';
+
 export interface PlyChart extends Chart<'line' | 'bar'> {
   selectPly(ply: number, isMainline: boolean): void;
 }
@@ -29,9 +31,6 @@ export interface AnalyseData {
   treeParts: TreeNodeBase[];
   game: {
     division?: Division;
-    variant: {
-      key: string;
-    };
     moveCentis?: number[];
     status: {
       name: string;
@@ -58,6 +57,7 @@ export interface DistributionData {
   myRating: number | null;
   otherPlayer: string | null;
   otherRating: number | null;
+  rankTable?: RankTable; // LiGo: draw a kyu/dan axis (unit 5.5)
 }
 
 export interface PerfRatingHistory {

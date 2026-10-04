@@ -266,9 +266,9 @@ final class UserApi(userRepo: UserRepo, perfsRepo: UserPerfsRepo, cacheApi: Cach
         import framework.*
         import lila.user.BSONFields as F
         Match(
-          inIds(ids) ++ bdoc("standard.gl.d".lt(chess.rating.glicko.provisionalDeviation))
+          inIds(ids) ++ bdoc("go.gl.d".lt(chess.rating.glicko.provisionalDeviation))
         ) -> List(
-          Sort(Descending("standard.gl.r")),
+          Sort(Descending("go.gl.r")), // LiGo: the one Go rating (unit 5.5)
           Limit(nb * 5),
           PipelineOperator:
             lookup.simple(
