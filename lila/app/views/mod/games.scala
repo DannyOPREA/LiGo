@@ -71,9 +71,9 @@ def games(
                     playerLink(pov.opponent, withDiff = false, mod = true)
                   ),
                   td(
-                    dataSort := pov.game.clock.fold(
+                    dataSort := pov.game.gameClock.fold(
                       pov.game.correspondenceClock.fold(Int.MaxValue)(_.daysPerTurn * 3600 * 24)
-                    )(_.config.estimateTotalSeconds)
+                    )(_.estimateTotalSeconds)
                   )(
                     iconTag(pov.game.perfType.icon)(cls := "text"),
                     shortClockName(pov.game)
