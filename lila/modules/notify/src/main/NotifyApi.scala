@@ -183,7 +183,7 @@ final class NotifyApi(
       userApi.isKid(note.to).dmap(_.yes) >>|
         repo.hasRecent(note, "content.studyId" -> studyId, 3.days)
     case _: PrivateMessage => fuFalse
-    case _: CorresAlarm => fuFalse
+    case _: CorresAlarm | _: ScoringPhase => fuFalse
     case _ => userApi.isKid(note.to).dmap(_.yes)
 
   private def shouldSkipBell(note: Notification): Fu[Boolean] = note.content match

@@ -1,8 +1,8 @@
-import { opposite } from '@lichess-org/chessground/util';
 import { h, type VNode } from 'snabbdom';
 
+import { opposite } from 'lib/game/chess';
 import { licon } from 'lib/licon';
-import { spinnerVdom, initMiniBoard, dataIcon, onInsert, icon } from 'lib/view';
+import { spinnerVdom, dataIcon, onInsert, icon } from 'lib/view';
 import { userLink } from 'lib/view/userLink';
 
 import type ChallengeCtrl from './ctrl';
@@ -36,8 +36,7 @@ const allChallenges = (ctrl: ChallengeCtrl, d: ChallengeData, nb: number): VNode
 
 function challenge(ctrl: ChallengeCtrl, dir: ChallengeDirection) {
   return (c: Challenge) => {
-    const fromPosition = c.variant.key === 'fromPosition';
-    const origColor = c.color === 'random' ? (fromPosition ? c.finalColor : 'random') : c.finalColor;
+    const origColor = c.color === 'random' ? 'random' : c.finalColor;
     const myColor = dir === 'out' ? origColor : origColor === 'random' ? 'random' : opposite(origColor);
     const opponent = dir === 'in' ? c.challenger : c.destUser;
     return h(
@@ -59,12 +58,6 @@ function challenge(ctrl: ChallengeCtrl, dir: ChallengeDirection) {
           ]),
           icon(c.perf.icon)('.perf'),
         ]),
-        fromPosition
-          ? h('div.position.mini-board.cg-wrap.is2d', {
-              attrs: { 'data-state': `${c.initialFen},${myColor}` },
-              hook: onInsert(initMiniBoard),
-            })
-          : null,
         h('div.buttons', (dir === 'in' ? inButtons : outButtons)(ctrl, c)),
       ],
     );

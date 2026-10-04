@@ -1,6 +1,6 @@
 package lila.api
 
-import play.api.libs.json.{ JsObject, Json, Writes }
+import play.api.libs.json.{ JsObject, JsValue, Json, Writes }
 
 import lila.common.Json.given
 import lila.core.perf.{ UserPerfs, UserWithPerfs }
@@ -35,6 +35,8 @@ final class LobbyApi(
           .add("ratingMap", me.map(_.perfs).map(ratingMap))
           // LiGo: the viewer's Go rank label (ADR 0021 §3, unit 5.5)
           .add("goRank", me.map(u => lila.rating.GoRating.label(u.perfs.go.glicko)))
+          // LiGo: the rating at the lower edge of each rank, for the rank-range sliders (ADR 0021 §3, unit 5.7)
+          .add("rankTable", me.isDefined.option(LobbyApi.rankTable))
           .add(
             "me",
             me.map: u =>
@@ -51,3 +53,6 @@ final class LobbyApi(
           pk -> (perf.intRating.value * (if perf.glicko.provisional.yes then -1 else 1))
         }.toMap
       )
+
+private object LobbyApi:
+  lazy val rankTable: JsValue = Json.parse(lila.rating.GoRating.rankTableJson)

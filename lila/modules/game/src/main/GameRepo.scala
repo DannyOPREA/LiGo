@@ -238,14 +238,7 @@ final class GameRepo(c: Coll)(using Executor) extends lila.core.game.GameRepo(c)
   def countWhereUserTurn(userId: UserId): Fu[Int] = coll
     .countSel(
       // important, hits the index!
-      Query.nowPlaying(userId) ++ bdoc(
-        "$or" ->
-          List(0, 1).map: rem =>
-            bdoc(
-              s"${F.playingUids}.$rem" -> userId,
-              F.turns -> bdoc("$mod" -> barr(2, rem))
-            )
-      )
+      Query.userTurn(userId)
     )
 
   def playingRealtimeNoAi(user: User): Fu[List[GameId]] =
