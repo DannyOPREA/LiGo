@@ -1,6 +1,5 @@
 package lila.api
 
-import chess.format.Fen
 import play.api.libs.json.*
 import play.api.mvc.RequestHeader
 import reactivemongo.api.bson.*
@@ -118,23 +117,17 @@ final private[api] class GameApi(
   private def makeUrl(game: Game) = s"${net.baseUrl}/${game.id}/${game.naturalOrientation.name}"
 
   private def gamesJson(withFlags: WithFlags)(games: Seq[Game]): Fu[Seq[JsObject]] =
-    (games.map(gameRepo.initialFen)).parallel.map { initialFens =>
-      games.zip(initialFens).map { (g, initialFen) =>
-        gameToJson(g, initialFen, checkToken(withFlags))
-      }
-    }
+    fuccess(games.map(gameToJson(_, checkToken(withFlags))))
 
   private def checkToken(withFlags: WithFlags) = withFlags.applyToken(apiToken.value)
 
   private def gameToJson(
       g: Game,
-      initialFen: Option[Fen.Full],
       withFlags: WithFlags
   ) =
     Json
       .obj(
         "id" -> g.id,
-        "initialFen" -> initialFen,
         "rated" -> g.rated,
         // a Go game has its setup instead of a chess variant (unit 3.16)
         "go" -> lila.game.JsonView.goSetup(g.go),

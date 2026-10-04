@@ -56,10 +56,8 @@ final class UserGamesDownload(helpers: Helpers):
               .is(user)
               .option:
                 p(style := "text-align: right")(
-                  "Or download imported games as PGN: ",
-                  a(href := importedGamesUrl)("original"),
-                  " / ",
-                  a(href := addQueryParam(importedGamesUrl.url, "annotated", "1"))("annotated")
+                  // LiGo: imported games download as NDJSON until SGF export (unit 4.11)
+                  a(href := importedGamesUrl)("Download imported games (NDJSON)")
                 )
           )
         )
@@ -144,11 +142,9 @@ final class UserGamesDownload(helpers: Helpers):
     ),
     td(
       div(id := "dl-includes", cls := "toggle-columns")(
-        includeToggle("tags", true, trans.study.pgnTags()),
-        includeToggle("clocks", false, trans.site.moveTimes()),
-        includeToggle("evals", false, trans.search.evaluation()),
-        includeToggle("opening", false, trans.site.opening()),
-        includeToggle("literate", false, "Textual annotations")
+        // LiGo: PGN tags, openings and textual annotations went with PGN export, and engine
+        // evaluations with chess analysis (unit 3.17)
+        includeToggle("clocks", false, trans.site.moveTimes())
       )
     )
   )

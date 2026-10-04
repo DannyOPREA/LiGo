@@ -36,16 +36,16 @@
       visibility: hidden;
     }
 
-    cg-container {
+    svg.puzzle-mini {
       outline: 3px solid transparent;
       border-radius: $small-box-radius-size;
     }
 
-    &.good cg-container {
+    &.good svg.puzzle-mini {
       outline-color: $c-good;
     }
 
-    &.bad cg-container {
+    &.bad svg.puzzle-mini {
       outline-color: $c-bad;
     }
 

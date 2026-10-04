@@ -137,7 +137,7 @@ final class Round(
                     env.game.crosstableApi.withMatchup(pov.game)
                   bookmarked <- env.bookmark.api.exists(pov.game, ctx.me)
                   tv = userTv.map(u => lila.round.OnTv.User(u.id))
-                  data <- env.api.roundApi.watcher(pov, users, tv, details = details)
+                  data <- env.api.roundApi.watcher(pov, users, tv)
                   page <- renderPage:
                     views.round.watcher(
                       pov,
@@ -151,7 +151,7 @@ final class Round(
               api = _ =>
                 for
                   users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
-                  data <- env.api.roundApi.watcher(pov, users, tv = none, details = details)
+                  data <- env.api.roundApi.watcher(pov, users, tv = none)
                   chat <- getWatcherChat(pov.game)
                 // No `analysis`: chess engine analysis went with unit 3.17 (slice b).
                 yield Ok(data.add("chat" -> chat.map(_.lines)))
@@ -186,11 +186,10 @@ final class Round(
   def sides(gameId: GameId, color: Color) = Open:
     FoundSnip(env.round.proxyRepo.pov(gameId, color)): pov =>
       (
-        env.game.gameRepo.initialFen(pov.game),
         env.game.crosstableApi.withMatchup(pov.game),
         env.bookmark.api.exists(pov.game, ctx.me)
-      ).flatMapN: (initialFen, crosstable, bookmarked) =>
-        Snippet(views.game.sides(pov, initialFen, crosstable, bookmarked = bookmarked))
+      ).flatMapN: (crosstable, bookmarked) =>
+        Snippet(views.game.sides(pov, crosstable, bookmarked = bookmarked))
 
   def writeNote(gameId: GameId) = AuthBody { ctx ?=> me ?=>
     bindForm(env.round.noteApi.form)(

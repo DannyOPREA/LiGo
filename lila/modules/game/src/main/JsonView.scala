@@ -1,6 +1,5 @@
 package lila.game
 
-import chess.format.Fen
 import chess.{ Centis, Clock, Color }
 import play.api.libs.json.*
 
@@ -13,7 +12,7 @@ final class JsonView(rematches: Rematches):
 
   import JsonView.given
 
-  def immutable(game: Game, initialFen: Option[Fen.Full]) =
+  def immutable(game: Game) =
     Json
       .obj(
         "id" -> game.id,
@@ -25,13 +24,12 @@ final class JsonView(rematches: Rematches):
         "createdAt" -> game.createdAt
       )
       .add("startedAtTurn" -> game.startedAtPly.some.filter(_ > 0))
-      .add("initialFen" -> initialFen)
       .add("tournamentId" -> game.tournamentId)
       .add("swissId" -> game.swissId)
       .add("rules" -> game.metadata.nonEmptyRules)
 
-  def base(game: Game, initialFen: Option[Fen.Full]) =
-    immutable(game, initialFen) ++ Json
+  def base(game: Game) =
+    immutable(game) ++ Json
       .obj(
         "turns" -> game.ply,
         "status" -> game.status
@@ -44,8 +42,8 @@ final class JsonView(rematches: Rematches):
       .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
 
   // adds the player to move, which the client could compute
-  def baseWithPlayer(game: Game, initialFen: Option[Fen.Full]) =
-    base(game, initialFen) ++ Json.obj("player" -> game.turnColor)
+  def baseWithPlayer(game: Game) =
+    base(game) ++ Json.obj("player" -> game.turnColor)
 
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json

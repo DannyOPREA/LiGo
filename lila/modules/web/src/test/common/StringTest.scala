@@ -70,10 +70,9 @@ class StringTest extends munit.FunSuite:
 
   test("not shouting"):
     List(
-      "1. Nf3 O-O-O#",
-      "4k3/8/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1",
-      "FEN: 4k3/8/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1.",
-      "FEN: 4k3/8/8/8/8/8/PPPPPPPP/RNBQKBNR/Pp w KQ - 0 1."
+      "Thanks for the game, gg",
+      "I think D4 was a mistake, Q16 was better",
+      "OK"
     ).foreach: testCase =>
       assert(!String.isShouting(testCase))
       assertEquals(String.noShouting(testCase), testCase)

@@ -62,6 +62,11 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   docs/UPSTREAM.md row conflict; guard on the merged tree needs git (`--root` on an archive fails).
   Leftovers to grep after removing an export flag: kept UI toggles (UserGamesDownload evals/literate),
   `bin/mongodb/indexes.js` (dev/ligo runs it) still creating removed collections.
+- 3.17 part 2a (PGN/FEN/UCI gone): server code was clean; the misses were user-facing text that
+  still promised the removed format: UserGamesDownload ("download imported games as PGN", include
+  toggles `opening`/`literate`/"PGN tags" now ignored), mod games "Download PGN" button, browser
+  download filenames `.json` for NDJSON. Also dead TS/CSS left behind (site.lpvEmbed, bits.lpv,
+  pgn-viewer dep) and dead prefs (autoThreefold radio). Grep views + ui for the format name.
 
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.

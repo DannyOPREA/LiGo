@@ -1,7 +1,6 @@
 package lila.markdown
 
 import scala.util.chaining.*
-import chess.format.pgn.PgnStr
 import com.vladsch.flexmark.ast.*
 import com.vladsch.flexmark.ext.anchorlink.AnchorLinkExtension
 import com.vladsch.flexmark.ext.autolink.AutolinkExtension
@@ -15,8 +14,7 @@ import com.vladsch.flexmark.html.renderer.{
   NodeRenderer,
   NodeRendererContext,
   NodeRendererFactory,
-  NodeRenderingHandler,
-  ResolvedLink
+  NodeRenderingHandler
 }
 import com.vladsch.flexmark.html.{
   AttributeProvider,
@@ -39,16 +37,13 @@ import com.vladsch.flexmark.util.sequence.BasedSequence
 
 import java.time.{ Instant, ZoneOffset }
 import java.time.format.DateTimeFormatter
-import java.util.Arrays
 import java.util.regex.Pattern
 import scala.collection.Set
 import scala.jdk.CollectionConverters.*
-import scala.util.matching.Regex
 import scala.util.Try
 import io.mola.galimatias.{ StrictErrorHandler, URL, URLParsingSettings }
 
-import lila.core.config.{ AssetDomain, NetDomain }
-import lila.core.misc.lpv.LpvEmbed
+import lila.core.config.AssetDomain
 import lila.core.data.{ Markdown, Html, Url }
 import lila.core.userId.UserName
 
@@ -65,7 +60,6 @@ final class MarkdownRender(
     sourceMap: Boolean = false,
     removeHtmlEntities: Boolean = false,
     allowedTags: Set[String] = Set.empty,
-    pgnExpand: Option[MarkdownRender.PgnSourceExpand] = None,
     assetDomain: Option[AssetDomain] = None
 ):
 
@@ -78,9 +72,7 @@ final class MarkdownRender(
   if autoLink then
     extensions.add(AutolinkExtension.create())
     extensions.add(MarkdownRender.WhitelistedImage.create(assetDomain))
-  extensions.add(
-    pgnExpand.fold[Extension](MarkdownRender.LilaLinkExtension)(MarkdownRender.PgnEmbedExtension(_))
-  )
+  extensions.add(MarkdownRender.LilaLinkExtension)
   if timestamp then extensions.add(MarkdownRender.TimestampExtension)
   if sourceMap then extensions.add(MarkdownRender.SourceMapExtension)
   private val allowedTagsExtension = Option.when(allowedTags.nonEmpty):
@@ -128,10 +120,6 @@ final class MarkdownRender(
 object MarkdownRender:
 
   type Key = String
-  type PgnSourceId = String
-
-  case class PgnSourceExpand(domain: NetDomain, getPgn: PgnSourceId => Option[LpvEmbed])
-
   def unlink(text: Markdown): String =
     text.value.replaceAll(raw"""(?i)!?\[([^\]\n]*)\]\([^)]*\)""", "[$1]")
 
@@ -228,115 +216,6 @@ object MarkdownRender:
                 .tag("a")
                 .text(if altText.isEmpty then url else altText)
                 .tag("/a")
-
-  private class PgnEmbedExtension(expander: PgnSourceExpand) extends HtmlRenderer.HtmlRendererExtension:
-    override def rendererOptions(options: MutableDataHolder) = ()
-    override def extend(htmlRendererBuilder: HtmlRenderer.Builder, rendererType: String) =
-      htmlRendererBuilder.nodeRendererFactory:
-        new:
-          override def apply(options: DataHolder) = new PgnEmbedNodeRenderer(expander)
-
-  private class PgnEmbedNodeRenderer(expander: PgnSourceExpand) extends NodeRenderer:
-    override def getNodeRenderingHandlers() = java.util.HashSet:
-      Arrays.asList(
-        NodeRenderingHandler(classOf[Link], renderLink(_, _, _)),
-        NodeRenderingHandler(classOf[AutoLink], renderAutoLink(_, _, _))
-      )
-
-    final class PgnRegexes(val game: Regex, val chapter: Regex)
-    private val pgnRegexes: PgnRegexes =
-      val quotedDomain = Pattern.quote(expander.domain.value)
-      PgnRegexes(
-        s"""^(?:https?://)?$quotedDomain/(?:embed/)?(?:game/)?(\\w{8})(?:(?:/(white|black))|\\w{4}|)(?:#(\\d+))?$$""".r,
-        s"""^(?:https?://)?$quotedDomain/study/(?:embed/)?(?:\\w{8}/)?(\\w{8})(?:#(last|\\d+))?$$""".r
-      )
-
-    private def renderLink(node: Link, context: NodeRendererContext, html: HtmlWriter): Unit =
-      renderLinkWithBase(
-        node,
-        context,
-        html,
-        context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null)
-      )
-
-    private def renderAutoLink(node: AutoLink, context: NodeRendererContext, html: HtmlWriter): Unit =
-      renderLinkNode(node, context, html)
-
-    private def renderLinkNode(node: LinkNode, context: NodeRendererContext, html: HtmlWriter) =
-      // Based on implementation in CoreNodeRenderer.
-      if context.isDoNotRenderLinks || CoreNodeRenderer.isSuppressedLinkPrefix(node.getUrl(), context) then
-        context.renderChildren(node)
-      else
-        val link = context.resolveLink(LinkType.LINK, node.getUrl().unescape(), null, null)
-        def justAsLink() = renderLinkWithBase(node, context, html, link)
-        link.getUrl match
-          case pgnRegexes.game(id, color, ply) =>
-            expander
-              .getPgn(id)
-              .fold(justAsLink())(renderLpvEmbed(node, context, html, link, _, Option(color), Option(ply)))
-          case pgnRegexes.chapter(id, ply) =>
-            expander
-              .getPgn(id)
-              .fold(justAsLink())(renderLpvEmbed(node, context, html, link, _, None, Option(ply)))
-          case _ => justAsLink()
-
-    private def renderLinkWithBase(
-        node: LinkNode,
-        context: NodeRendererContext,
-        html: HtmlWriter,
-        baseLink: ResolvedLink
-    ) =
-      val link = if node.getTitle.isNotNull then baseLink.withTitle(node.getTitle().unescape()) else baseLink
-      html.attr("href", addProtocolIfNecessary(link.getUrl))
-      html.attr(link.getNonNullAttributes())
-      html.srcPos(node.getChars()).withAttr(link).tag("a")
-      context.renderChildren(node)
-      html.tag("/a")
-
-    private def addProtocolIfNecessary(url: String): String =
-      if url.startsWith("/") || url.matches("(?i)^https?://.*") then url
-      else s"https://$url"
-
-    private def renderLpvEmbed(
-        node: LinkNode,
-        context: NodeRendererContext,
-        html: HtmlWriter,
-        link: ResolvedLink,
-        embed: LpvEmbed,
-        color: Option[String],
-        ply: Option[String]
-    ) =
-      embed match
-        case LpvEmbed.PublicPgn(pgn) =>
-          html
-            .attr("data-pgn", pgn.value)
-            .attr("class", "lpv--autostart is2d")
-          color.foreach:
-            html.attr("data-orientation", _)
-          ply.foreach:
-            html.attr("data-ply", _)
-          html
-            .srcPos(node.getChars())
-            .withAttr(link)
-            .tag("div")
-            .text(link.getUrl)
-            .tag("/div")
-        case LpvEmbed.PrivateStudy =>
-          html
-            .attr("href", link.getUrl)
-            .attr(link.getNonNullAttributes())
-            .srcPos(node.getChars())
-            .withAttr(link)
-            .tag("a")
-            .withAttr()
-            .attr("class", "private-study")
-            .attr("title", "Private")
-            .attr("aria-label", "Private")
-            .tag("i")
-            .tag("/i")
-          context.renderChildren(node)
-          html
-            .tag("/a")
 
   private object LilaLinkExtension extends HtmlRenderer.HtmlRendererExtension:
     override def rendererOptions(options: MutableDataHolder) = ()

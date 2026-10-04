@@ -1,6 +1,5 @@
 package lila.api
 
-import chess.format.Fen
 import scalalib.data.Preload
 import play.api.libs.json.*
 
@@ -16,7 +15,6 @@ final private[api] class RoundApi(
     jsonView: JsonView,
     noteApi: lila.round.NoteApi,
     bookmarkApi: lila.bookmark.BookmarkApi,
-    gameRepo: lila.game.GameRepo,
     userApi: lila.user.UserApi,
     prefApi: lila.pref.PrefApi,
     userLag: lila.socket.UserLagCache
@@ -31,12 +29,11 @@ final private[api] class RoundApi(
       users: Preload[GameUsers]
   )(using ctx: Context): Fu[JsObject] = {
     for
-      initialFen <- gameRepo.initialFen(pov.game)
       users <- users.orLoad(userApi.gamePlayers(pov.game.userIdPair, pov.game.perfKey))
       prefs <- prefApi.get(users.map(_.map(_.user)), pov.color, ctx.pref)
       (json, note, bookmarked) <-
         (
-          jsonView.playerJson(pov, prefs, users, initialFen, ctxFlags),
+          jsonView.playerJson(pov, prefs, users, ctxFlags),
           ctx.myId.ifTrue(ctx.isMobileApi).so(noteApi.get(pov.gameId, _)),
           bookmarkApi.exists(pov.game, ctx.me)
         ).tupled
@@ -50,15 +47,11 @@ final private[api] class RoundApi(
   def watcher(
       pov: Pov,
       users: GameUsers,
-      tv: Option[lila.round.OnTv],
-      details: Boolean,
-      initialFenO: Option[Option[Fen.Full]] = None // Preload[Option[Fen.Full]]?
+      tv: Option[lila.round.OnTv]
   )(using ctx: Context): Fu[JsObject] = {
-    for
-      initialFen <- initialFenO.fold(gameRepo.initialFen(pov.game))(fuccess)
-      (json, note, bookmarked) <-
+    for (json, note, bookmarked) <-
         (
-          jsonView.watcherJson(pov, users, ctx.pref.some, ctx.me, tv, initialFen, ctxFlags),
+          jsonView.watcherJson(pov, users, ctx.pref.some, ctx.me, tv, ctxFlags),
           ctx.me.ifTrue(ctx.isMobileApi).so(noteApi.get(pov.gameId, _)),
           bookmarkApi.exists(pov.game, ctx.me)
         ).tupled
@@ -89,7 +82,6 @@ final private[api] class RoundApi(
         ctx.pref.some,
         ctx.me,
         tv,
-        initialFen = none,
         flags = withFlags.copy(blurs = Granter.opt(_.ViewBlurs))
       ),
       ctx.me.ifTrue(ctx.isMobileApi).so(noteApi.get(pov.gameId, _)),
