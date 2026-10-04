@@ -62,6 +62,8 @@ export interface GoNode {
   glyphs: SgfGlyph[];
   /** SGF properties kept as they were (marks, game info), written back. */
   sgf: Record<string, string[]>;
+  /** Shown as a variation although it is the first child (lila's tree; not written to SGF). */
+  forceVariation?: boolean;
 }
 
 export interface GoRoot extends GoNode {

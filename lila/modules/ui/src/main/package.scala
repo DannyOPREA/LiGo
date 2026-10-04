@@ -1,5 +1,7 @@
 package lila.ui
 
+import chess.IntRating
+import chess.rating.RatingProvisional
 import play.api.libs.json.JsValue
 import scalatags.Text.all.Frag
 
@@ -15,6 +17,8 @@ trait RatingApi:
   val toIcon: PerfKey => Icon
   val bestRated: UserPerfs => Option[KeyedPerf]
   val dubiousPuzzle: UserPerfs => Boolean
+  // LiGo: the kyu/dan label shown instead of a Go rating, "5k" or "5k?" (ADR 0021 §3, unit 5.5)
+  val goLabel: (IntRating, RatingProvisional) => String
 
 case class PageModule(name: String, data: JsValue | SafeJsonStr)
 case class Esm(key: String, init: WithNonce[Frag] = _ => ScalatagsExtensions.emptyFrag)

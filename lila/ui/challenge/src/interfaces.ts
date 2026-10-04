@@ -14,6 +14,7 @@ export type ChallengeDirection = 'in' | 'out';
 export interface ChallengeUser extends LightUser {
   rating: number;
   provisional?: boolean;
+  goRank?: string; // LiGo: the kyu/dan label (ADR 0021 §3)
   online?: boolean;
   lag?: number;
 }

@@ -1,29 +1,12 @@
 // Accessibility of the playground (unit 9.4, ADR 0026 §4): axe-core finds no serious or critical
 // WCAG 2.2 AA problem at desktop and phone sizes, and a whole short game can be played from the
 // keyboard with what a screen reader reads out checked along the way.
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
+import { axeProblems } from './axe';
 import { ConfirmMoves, captures, openPlayground, status } from './page';
 
-const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
-
-async function problems(page: Page): Promise<string[]> {
-  const { violations } = await new AxeBuilder({ page }).include('.playground').withTags(WCAG).analyze();
-  // lila's own buttons (white on its primary blue #3692e7, 3.3:1) fail colour contrast on every
-  // page; unit 9.7 fixes them site-wide (ADR 0026 §4). Only that pair of colours is let off.
-  const lilaBlue = (n: { any: { data?: unknown }[] }) =>
-    n.any.some(c => {
-      const d = c.data as { fgColor?: string; bgColor?: string } | undefined;
-      return d?.fgColor === '#ffffff' && d?.bgColor === '#3692e7';
-    });
-  return violations
-    .filter(v => v.impact === 'serious' || v.impact === 'critical')
-    .map(v => (v.id === 'color-contrast' ? { ...v, nodes: v.nodes.filter(n => !lilaBlue(n)) } : v))
-    .filter(v => v.nodes.length > 0)
-    .map(v => `${v.id}: ${v.help} (${v.nodes.map(n => n.target.join(' ')).join(', ')})`);
-}
-
+const problems = (page: Page) => axeProblems(page, '.playground');
 const said = (page: Page) => page.locator('.playground__board [role=status]');
 const board = (page: Page) => page.getByRole('application', { name: /^\d+ by \d+$/ });
 

@@ -36,6 +36,6 @@ object Namer extends lila.core.game.Namer:
       s"${playerTextUser(game.whitePlayer, wu, withRatings)} - ${playerTextUser(game.blackPlayer, bu, withRatings)}"
     }
 
+  // LiGo: the Go rank label, "5k" or "5k?" (ADR 0021 §3, unit 5.5)
   def ratingString(p: Player): Option[String] =
-    p.rating.map: rating =>
-      s"$rating${p.provisional.yes.so("?")}"
+    p.rating.map(lila.rating.GoRating.label(_, p.provisional))

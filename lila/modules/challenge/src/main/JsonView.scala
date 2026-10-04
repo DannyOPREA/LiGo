@@ -22,6 +22,9 @@ final class JsonView(
       Json
         .obj("rating" -> r.rating.int)
         .add("provisional" -> r.rating.provisional)
+        .add(
+          "goRank" -> lila.rating.GoRating.label(r.rating.int, r.rating.provisional).some
+        ) // LiGo (unit 5.5)
         .add("online" -> isOnline.exec(r.id))
         .add("lag" -> getLagRating(r.id))
 

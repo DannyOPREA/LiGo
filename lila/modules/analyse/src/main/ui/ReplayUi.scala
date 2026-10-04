@@ -85,7 +85,8 @@ final class ReplayUi(helpers: Helpers)(analyseUi: AnalyseUi):
       .i18n(_.study)
       .i18nOpt(ctx.speechSynthesis, _.nvui)
       .i18nOpt(ctx.blind, _.keyboardMove, _.nvui)
-      .js(analyseNvuiTag)
+      // LiGo: only chess games reach this replay (Round.scala); the Go analysis module ignores its
+      // data (unit 7.4) until unit 7.5 opens finished Go games in the analysis board.
       .js:
         analyseUi.bits.analyseModule(
           "replay",

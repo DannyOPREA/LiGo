@@ -1,36 +1,3 @@
-import {
-  attributesModule,
-  classModule,
-  eventListenersModule,
-  init,
-  propsModule,
-  type VNodeData,
-} from 'snabbdom';
-
-import { fixCrazySan, plyToTurn } from 'lib/game/chess';
-import type { TreeComment, TreeNode } from 'lib/tree/types';
-import { option as opt } from 'lib/view';
+import { attributesModule, classModule, eventListenersModule, init, propsModule } from 'snabbdom';
 
 export const patch = init([classModule, attributesModule, propsModule, eventListenersModule]);
-
-export const emptyRedButton = 'button.button.button-red.button-empty';
-
-export const baseUrl = () => `${window.location.protocol}//${window.location.host}`;
-
-export const nodeFullName = (node: TreeNode): string =>
-  node.san
-    ? plyToTurn(node.ply) + (node.ply % 2 === 1 ? '.' : '...') + ' ' + fixCrazySan(node.san)
-    : 'Initial position';
-
-export const plural = (noun: string, nb: number): string => nb + ' ' + (nb === 1 ? noun : noun + 's');
-
-export function titleNameToId(titleName: string): string {
-  const split = titleName.split(' ');
-  return (split.length === 1 ? split[0] : split[1]).toLowerCase();
-}
-
-export const option = (value: string, current: string | undefined, name: string, data?: VNodeData) =>
-  opt({ attrs: { value, selected: value === current }, ...data }, name);
-
-export const authorText = (author?: TreeComment['by']): string =>
-  !author ? 'Unknown' : typeof author === 'string' ? author : author.name;

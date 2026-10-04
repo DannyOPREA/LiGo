@@ -23,7 +23,7 @@ object RequestPref:
         pieceSet = paramOrSession("pieceSet") | default.pieceSet,
         pieceSet3d = paramOrSession("pieceSet3d") | default.pieceSet3d,
         soundSet = paramOrSession("soundSet") | default.soundSet,
-        is3d = paramOrSession("is3d").has("true"),
+        is3d = false, // LiGo: no 3D Go board (ADR 0026 §3)
         uiRoundness = paramOrSession("uiRoundness").flatMap(_.toIntOption) | default.uiRoundness,
         board = default.board.copy(
           opacity = paramOrSession("boardOpacity").flatMap(_.toIntOption) | default.board.opacity,

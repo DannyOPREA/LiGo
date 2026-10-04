@@ -18,6 +18,7 @@ import {
   liveSpeedOf,
   noChips,
   parseChips,
+  playerRatingLabel,
   seekRow,
   sortRows,
   toggleRated,
@@ -129,6 +130,14 @@ describe('the rows', () => {
     assert.equal(row.handicap, 0);
     assert.equal(row.own, false);
     assert.equal(hookRow(hook({ action: 'cancel' })).own, true);
+  });
+
+  test("a row shows the player's kyu/dan label the server made (unit 5.5)", () => {
+    assert.equal(hookRow(hook({ goRank: '5k?' })).goRank, '5k?');
+    assert.equal(seekRow(seek({ goRank: '1d' })).goRank, '1d');
+    assert.equal(playerRatingLabel(1580, true, '5k?'), '5k?');
+    // a server that sent no label: the rating, as before
+    assert.equal(playerRatingLabel(1580, true), '1580?');
   });
 
   test('a seek becomes a row in days, and an unlimited one has none', () => {
