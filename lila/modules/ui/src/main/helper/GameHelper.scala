@@ -12,7 +12,7 @@ trait GameHelper:
   protected val namer: Namer
 
   def titleGame(g: Game) =
-    val speed = chess.Speed(g.clock.map(_.config)).name
+    val speed = g.gameClock.fold(chess.Speed.Correspondence)(_.speed).name
     val game = s"${g.go.size.lines}×${g.go.size.lines} Go"
     s"$speed $game • ${playerText(g.whitePlayer)} vs ${playerText(g.blackPlayer)}"
 
@@ -27,7 +27,7 @@ trait GameHelper:
   def shortClockName(game: Game)(using Translate): Frag =
     game.correspondenceClock
       .map(c => trans.site.nbDays(c.daysPerTurn))
-      .orElse(game.clock.map(_.config).map(shortClockName))
+      .orElse(game.gameClock.map(c => raw(c.show)))
       .getOrElse(trans.site.unlimited())
 
   def ratedName(rated: Rated)(using Translate): String =
