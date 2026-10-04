@@ -1,9 +1,9 @@
 package lila.game
 
-import chess.format.pgn.{ InitialComments, Parser, Pgn, PgnTree, SanStr, Tag, TagType, Tags }
-import chess.format.{ Fen, pgn as chessPgn }
+import chess.format.pgn.{ InitialComments, Parser, Pgn, Tag, TagType, Tags }
+import chess.format.Fen
 import chess.opening.Opening
-import chess.{ ByColor, Centis, Color, Outcome, Ply, Tree }
+import chess.{ ByColor, Color, Outcome, Ply }
 import chess.rating.IntRatingDiff
 
 import lila.core.LightUser
@@ -45,13 +45,7 @@ final class PgnDump(
     tagsFuture.map: ts =>
       val ply = ts.fen.flatMap(Fen.readWithMoveNumber).fold(Ply.initial)(_.ply)
       // A Go game has no PGN moves: its record is SGF (Phase 4, unit 4.11); until then only the headers.
-      val tree = (flags.moves && !game.isGo).so:
-        makeTree(
-          applyDelay(game.sans, flags.keepDelayIf(game.playable)),
-          flags.clocks.so(~game.bothClockStates),
-          game.startColor
-        )
-      Pgn(ts, InitialComments.empty, tree, ply.next)
+      Pgn(ts, InitialComments.empty, none, ply.next)
 
   private def gameUrl(id: GameId) = routeUrl(routes.Round.watcher(id, Color.White))
 
@@ -150,18 +144,6 @@ object PgnDump:
 
   private val delayMovesBy = 3
   private val delayKeepsFirstMoves = 5
-
-  private[game] def makeTree(
-      moves: Seq[SanStr],
-      clocks: Vector[Centis],
-      startColor: Color
-  ): Option[PgnTree] =
-    val clockOffset = startColor.fold(0, 1)
-    def f(san: SanStr, index: Int) = chessPgn.Move(
-      san = san,
-      timeLeft = clocks.lift(index - clockOffset).map(_.roundSeconds)
-    )
-    Tree.buildWithIndex(moves, f)
 
   def applyDelay[M](moves: Seq[M], flags: WithFlags): Seq[M] =
     if !flags.delayMoves then moves

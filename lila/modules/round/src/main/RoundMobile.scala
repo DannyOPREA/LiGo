@@ -8,7 +8,6 @@ import lila.common.Json.given
 import scalalib.data.Preload
 import lila.pref.Pref
 import lila.round.RoundGame.*
-import lila.round.Forecast.given
 import lila.core.LightUser
 
 object RoundMobile:
@@ -18,7 +17,6 @@ object RoundMobile:
       val chat: Boolean,
       val prefs: Boolean,
       val bookmark: Boolean,
-      val forecast: Boolean,
       val as: Option[Option[MyId]]
   ):
     // full round for every-day use
@@ -28,16 +26,11 @@ object RoundMobile:
           chat = true,
           prefs = true,
           bookmark = true,
-          forecast = true,
           as = me.some
         )
     // correspondence game sent through firebase data
     // https://github.com/lichess-org/mobile/blob/main/lib/src/model/correspondence/offline_correspondence_game.dart
-    case Offline
-        extends UseCase(none, chat = false, prefs = false, bookmark = false, forecast = false, as = none)
-    // requested by the forecast analysis board to refresh the game
-    case Forecast
-        extends UseCase(none, chat = false, prefs = false, bookmark = false, forecast = true, as = none)
+    case Offline extends UseCase(none, chat = false, prefs = false, bookmark = false, as = none)
 
 final class RoundMobile(
     lightUserGet: LightUser.Getter,
@@ -48,7 +41,6 @@ final class RoundMobile(
     prefApi: lila.pref.PrefApi,
     takebacker: Takebacker,
     moretimer: Moretimer,
-    forecastApi: ForecastApi,
     isOfferingRematch: lila.core.round.IsOfferingRematch,
     chatApi: lila.chat.ChatApi,
     chatJson: lila.chat.ChatJsonView,
@@ -71,9 +63,6 @@ final class RoundMobile(
   def offline(game: Game, id: GameAnyId): Fu[JsObject] =
     forUseCase(game, id, UseCase.Offline)
 
-  def forecast(game: Game, id: GameAnyId)(using Me): Fu[JsObject] =
-    forUseCase(game, id, UseCase.Forecast)
-
   private def forUseCase(game: Game, id: GameAnyId, use: UseCase): Fu[JsObject] =
     for
       initialFen <- gameRepo.initialFen(game)
@@ -91,7 +80,6 @@ final class RoundMobile(
         then getPlayerChat(game, myPlayer.exists(_.hasUser))
         else getWatcherChat(game)(using use.as.flatten)
       bookmarked <- use.bookmark.so(bookmarkExists(game, myPlayer.flatMap(_.userId)))
-      forecast <- use.forecast.so(myPlayer).so(p => forecastApi.loadForDisplay(Pov(game, p)))
       tournament <- tourInfo
     yield
       def playerJson(color: Color) =
@@ -114,7 +102,6 @@ final class RoundMobile(
             // A Go game's moves are in the base JSON's `go` block; it has no PGN (unit 3.16).
             jsonView.base(game, initialFen) ++ Json
               .obj()
-              .add("pgn" -> (!game.isGo).option(game.sans.mkString(" ")))
               .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
           },
           "white" -> playerJson(Color.White),
@@ -122,7 +109,7 @@ final class RoundMobile(
         )
         .add("socket" -> use.socketStatus.map(_.version))
         .add("expiration" -> lila.game.JsonView.expiration(game))
-        .add("clock", game.clock.map(roundJson.clockJson))
+        .add("clock", game.gameClock.map(roundJson.clockJson))
         .add("correspondence", game.correspondenceClock)
         .add("takebackable" -> takebackable)
         .add("moretimeable" -> moretimeable)
@@ -137,7 +124,6 @@ final class RoundMobile(
         )
         .add("bookmarked", bookmarked)
         .add("tournament", tournament)
-        .add("forecast" -> forecast)
 
   // tournaments were removed (unit 3.2); game.tournamentId is a neutral field kept for storage
   // continuity and is never set, so there is never a tournament to describe here.

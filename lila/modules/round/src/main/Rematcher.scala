@@ -1,8 +1,6 @@
 package lila.round
 
-import chess.format.Fen
-import chess.variant.*
-import chess.{ Rated, ByColor, Clock, Color as ChessColor, Game as ChessGame, Ply }
+import chess.{ Rated, ByColor, Color as ChessColor }
 import scalalib.cache.ExpireSetMemo
 
 import lila.common.Bus
@@ -10,8 +8,6 @@ import lila.core.game.{ GameRepo, IdGenerator }
 import lila.core.i18n.{ I18nKey as trans, Translator, defaultLang }
 import lila.core.user.{ GameUsers, UserApi }
 import lila.game.{ AnonCookie, Event, Rematches, rematchAlternatesColor }
-
-import ChessColor.White
 
 final private class Rematcher(
     gameRepo: GameRepo,
@@ -32,8 +28,6 @@ final private class Rematcher(
     log = false
   )
 
-  private val chess960 = ExpireSetMemo[GameId](3.hours)
-
   export rematches.isOffering
 
   def apply(pov: Pov, confirm: Boolean): Fu[Events] =
@@ -41,12 +35,10 @@ final private class Rematcher(
 
   // Only Go games are rematched: from unit 3.15 on, no chess game is created (ADR 0019 §8).
   private def couldRematch(g: Game): Boolean =
-    g.isGo &&
-      g.finishedOrAborted &&
+    g.finishedOrAborted &&
       g.nonMandatory &&
       !g.hasRule(_.noRematch) &&
-      !g.boosted &&
-      !(g.hasAi && g.variant == FromPosition && g.clock.exists(_.config.limitSeconds < 60))
+      !g.boosted
 
   def yes(pov: Pov): Fu[Events] =
     pov match
@@ -88,7 +80,6 @@ final private class Rematcher(
     def createGame(withId: Option[GameId]) = for
       nextGame <- returnGame(pov, withId).map(_.start)
       _ = rematches.accept(pov.gameId, nextGame.id)
-      _ = if pov.game.variant == Chess960 && !chess960.get(pov.gameId) then chess960.put(nextGame.id)
       _ <- gameRepo.insertDenormalized(nextGame)
     yield
       messenger.volatile(pov.game, trans.site.rematchOfferAccepted.txt())
@@ -101,11 +92,9 @@ final private class Rematcher(
       case Some(Rematches.NextGame.Accepted(id)) => gameRepo.game(id).mapz(redirectEvents)
       case Some(Rematches.NextGame.Offered(_, id)) => createGame(id.some)
 
+  // A rematch replays the game's board size, ruleset, komi, handicap (unit 3.15) and clock (unit 4.7)
   private def returnGame(pov: Pov, withId: Option[GameId]): Fu[Game] =
-    pov.game.go.fold(fufail(s"${pov.gameId} is not a Go game"))(returnGo(pov, withId, _))
-
-  // A Go rematch replays the game's board size, ruleset, komi and handicap (unit 3.15)
-  private def returnGo(pov: Pov, withId: Option[GameId], go: ligo.gorules.GoGame): Fu[Game] =
+    val go = pov.game.go
     for
       users <- userApi.gamePlayersAny(pov.game.userIdPair, pov.game.perfKey)
       sloppy <- lila.core.game
@@ -115,7 +104,8 @@ final private class Rematcher(
           players = ByColor(returnPlayer(pov.game, _, users)),
           rated = Rated.No, // casual until unit 5.7
           source = pov.game.source | lila.core.game.Source.Lobby,
-          daysPerTurn = pov.game.daysPerTurn
+          daysPerTurn = pov.game.daysPerTurn,
+          byoyomi = pov.game.byoyomi.map(_.config)
         )
         .fold(e => fufail(s"Go rematch of ${pov.gameId}: ${e.message}"), fuccess)
       game <- withId.fold(idGenerator.withUniqueId(sloppy))(id => fuccess(sloppy.withId(id)))
@@ -141,27 +131,3 @@ final private class Rematcher(
       Event.RedirectOwner(!color, game.fullIdOf(color), AnonCookie.json(game.pov(color)))
     val spectatorRedirect = Event.RematchTaken(game.id)
     spectatorRedirect :: ownerRedirects.toList
-
-object Rematcher:
-  // returns a new chess game with the same Board as the previous game
-  // except for Chess960, where if shouldRepeatChess960Position is true,
-  // the same position is returned otherwise a new random position is returned
-  def returnChessGame(
-      variant: Variant,
-      clock: Option[Clock],
-      initialFen: Option[Fen.Full],
-      shouldRepeatChess960Position: Boolean
-  ): ChessGame =
-    val prevPosition = initialFen.flatMap(Fen.readWithMoveNumber(variant, _))
-    val newPosition = variant match
-      case Chess960 if shouldRepeatChess960Position => prevPosition.fold(Chess960.initialPosition)(_.position)
-      case Chess960 => Chess960.initialPosition
-      case variant => prevPosition.fold(variant.initialPosition)(_.position)
-    val ply = prevPosition.fold(Ply.initial)(_.ply)
-    val color = prevPosition.fold[Color](White)(_.position.color)
-    ChessGame(
-      position = newPosition.withColor(color),
-      clock = clock.map(c => Clock(c.config)),
-      ply = ply,
-      startedAtPly = ply
-    )

@@ -213,3 +213,31 @@ class ByoyomiClockTest extends munit.FunSuite:
     for color <- Color.values do assertEquals(back.reading(color), stopped.reading(color))
     assert(!back.isRunning)
     assertEquals(back.config, main60)
+
+  // Unit 4.7: what lila's round reads besides the readings.
+
+  test("a takeback gives the turn back and keeps the time and periods already used"):
+    given w: Wall = Wall()
+    val inByo = blackThinks(clock().start, 70) // Black: main time gone, first period kept; Black to move
+    val afterBlack = inByo.after(5) // Black thinks 5 s in the period and moves
+    val back = afterBlack.takeback
+    assertEquals(back.toMove, Color.Black)
+    assertEquals(back.reading(Color.White), afterBlack.reading(Color.White))
+    assertEquals(back.reading(Color.Black).periodsLeft, afterBlack.reading(Color.Black).periodsLeft)
+    assert(back.reading(Color.Black).inByoyomi)
+
+  test("any time used: false on a fresh clock, true after a move that took time"):
+    given w: Wall = Wall()
+    assert(!clock().anyTimeUsed)
+    assert(clock().start.after(3).anyTimeUsed)
+
+  test("the expected length grows with main time and with periods"):
+    given w: Wall = Wall()
+    val short = clock(ByoyomiConfig(60, 3, 30)).estimateTotalSeconds
+    assert(short >= 60, s"$short s")
+    assert(clock(ByoyomiConfig(600, 3, 30)).estimateTotalSeconds > short)
+    assert(clock(ByoyomiConfig(60, 5, 60)).estimateTotalSeconds > short)
+
+  test("more time can be given to a player with time left"):
+    given w: Wall = Wall()
+    assert(clock().moretimeable(Color.White))

@@ -1,7 +1,7 @@
 package lila.game
 
 import chess.format.Fen
-import chess.{ Clock, Color }
+import chess.{ Centis, Clock, Color }
 import play.api.libs.json.*
 
 import lila.common.Json.{ *, given }
@@ -37,20 +37,15 @@ final class JsonView(rematches: Rematches):
         "status" -> game.status
       )
       // A Go game has no FEN: its setup, moves and position facts instead (ADR 0019 §3).
-      .add("fen" -> (!game.isGo).option(Fen.write(game.chessState)))
-      .add("go" -> game.go.map(JsonView.go))
-      .add("threefold" -> game.history.threefoldRepetition)
+      .add("go" -> JsonView.go(game.go).some)
       .add("winner" -> game.winnerColor)
       .add("abortedBy" -> game.abortedBy)
       .add("rematch" -> rematches.getAcceptedId(game.id))
       .add("drawOffers" -> (!game.drawOffers.isEmpty).option(game.drawOffers.normalizedPlies))
 
-  // adds fields that should be computed by the client instead
-  def baseWithChessDenorm(game: Game, initialFen: Option[Fen.Full]) =
-    base(game, initialFen) ++ Json
-      .obj("player" -> game.turnColor)
-      .add("check" -> game.position.checkSquare.map(_.key))
-      .add("lastMove" -> game.lastMoveKeys)
+  // adds the player to move, which the client could compute
+  def baseWithPlayer(game: Game, initialFen: Option[Fen.Full]) =
+    base(game, initialFen) ++ Json.obj("player" -> game.turnColor)
 
   def ownerPreview(pov: Pov)(using LightUser.GetterSync) =
     Json
@@ -58,7 +53,7 @@ final class JsonView(rematches: Rematches):
         "fullId" -> pov.fullId,
         "gameId" -> pov.gameId,
         "color" -> pov.color,
-        "lastMove" -> pov.game.go.fold(pov.game.lastMoveKeys | "")(GoBridge.lastMove),
+        "lastMove" -> GoBridge.lastMove(pov.game.go),
         "source" -> pov.game.source,
         "status" -> pov.game.status,
         "variant" -> Json.obj(
@@ -81,10 +76,8 @@ final class JsonView(rematches: Rematches):
           .add("ai" -> pov.opponent.aiLevel),
         "isMyTurn" -> pov.isMyTurn
       )
-      .add("fen" -> (!pov.game.isGo).option(maybeFen(pov)))
-      // A Go game's mini board (unit 3.19), empty for a blindfold player as a chess one is
-      .add("board" -> pov.game.go.map(GoBridge.miniBoard(_, pov.player.blindfold)))
-      .add("go" -> pov.game.go.map(JsonView.go))
+      .add("board" -> GoBridge.miniBoard(pov.game.go, pov.player.blindfold).some)
+      .add("go" -> JsonView.go(pov.game.go).some)
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)
       .add("swissId" -> pov.game.swissId)
@@ -93,9 +86,6 @@ final class JsonView(rematches: Rematches):
       .add("rating" -> pov.player.rating)
       .add("goRank" -> Namer.ratingString(pov.player))
       .add("ratingDiff" -> pov.player.ratingDiff)
-
-  def maybeFen(pov: Pov): Fen.Full =
-    if pov.player.blindfold then Fen.Full("8/8/8/8/8/8/8/8") else Fen.write(pov.game.chessState)
 
   def player(p: Player, user: Option[LightUser]) =
     Json
@@ -223,6 +213,27 @@ object JsonView:
       "black" -> c.remainingTime(Color.Black).toSeconds,
       "emerg" -> c.config.emergSeconds
     )
+
+  /** A byo-yomi clock (ADR 0020 §7): Fischer's keys, with `initial` the main time, no increment, `white` and
+    * `black` the main time or the time left in the current period, plus each side's periods left and `byo`,
+    * the period length in seconds. It turns red in the last third of a period, between 3 and 10 seconds.
+    */
+  def byoyomiClockJson(c: ligo.gorules.ByoyomiClock): JsObject =
+    def reading(color: Color) = c.reading(lila.core.game.GoBridge.goColor(color))
+    Json.obj(
+      "running" -> c.isRunning,
+      "initial" -> c.config.mainSeconds,
+      "increment" -> 0,
+      "white" -> Centis(reading(Color.White).centis).toSeconds,
+      "black" -> Centis(reading(Color.Black).centis).toSeconds,
+      "emerg" -> (c.config.periodSeconds / 3).atLeast(3).atMost(10),
+      "periods" -> Json.obj("b" -> reading(Color.Black).periodsLeft, "w" -> reading(Color.White).periodsLeft),
+      "byo" -> c.config.periodSeconds
+    )
+
+  def gameClockJson(c: lila.core.game.GameClock): JsObject = c match
+    case lila.core.game.GameClock.Fischer(f) => Json.toJsObject(f)
+    case lila.core.game.GameClock.Byoyomi(b) => byoyomiClockJson(b)
 
   given Writes[Source] = writeAs(_.name)
   given Writes[lila.core.game.GameRule] = writeAs(_.toString)

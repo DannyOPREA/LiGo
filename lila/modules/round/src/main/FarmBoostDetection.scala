@@ -6,7 +6,6 @@ import chess.{ ByColor, IntRating }
 import lila.core.LightUser.IsBotSync
 import lila.core.perf.UserWithPerfs
 import lila.game.{ CrosstableApi, GameRepo }
-import lila.core.game.reasonableMinimumNumberOfMoves
 
 final private class FarmBoostDetection(
     gameRepo: GameRepo,
@@ -38,10 +37,9 @@ final private class FarmBoostDetection(
             .addEffect:
               if _ then lila.mon.round.farming.bot.increment()
 
-  // The first moves: SAN for chess, SGF points and `pass` for Go (unit 3.16).
+  // The first moves: SGF points and `pass` (unit 3.16).
   private def opening(g: Game): Vector[String] =
-    g.go.fold(g.sans.take(SAME_PLIES).map(_.value)):
-      _.actions.take(SAME_PLIES).map(lila.core.game.GoBridge.token)
+    g.go.actions.take(SAME_PLIES).map(lila.core.game.GoBridge.token)
 
   def newAccountBoosting(g: Game, users: ByColor[UserWithPerfs]): Fu[Boolean] =
     newAccountBoostingWin(g, users) >>| newAccountBoostingDraw(g, users)
@@ -62,13 +60,10 @@ final private class FarmBoostDetection(
       .so:
         val perf = users(favor).perfs(g.perfKey)
         val minSeconds = linearInterpolation(perf.nb)(0 -> 90, 5 -> 60)
-        def minPliesForPerfNb =
-          if g.isGo || g.variant.standard
-          then linearInterpolation(perf.nb)(0 -> 40, 5 -> 20)
-          else reasonableMinimumNumberOfMoves(g.variant)
+        def minPliesForPerfNb = linearInterpolation(perf.nb)(0 -> 40, 5 -> 20)
         def minPliesForLoserRating =
-          (g.isGo || g.variant.standard)
-            .so(g.loser.flatMap(_.rating))
+          g.loser
+            .flatMap(_.rating)
             .map: rating =>
               linearInterpolation(rating.value)(1500 -> 10, 2500 -> 40)
         (
