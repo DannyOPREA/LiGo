@@ -79,7 +79,7 @@
   }
 
   // a row that suits you (ADR 0022 §5: joinable, and rated/casual and even/handicap as you play)
-  tr.suits td:first-child {
+  tr.suits > td:first-child {
     box-shadow: inset 3px 0 0 $c-good;
   }
 
@@ -133,11 +133,11 @@
         cursor: default;
       }
 
-      // the card has the accent, not its first cell
+      // the card has the accent, not its first cell (this beats the desktop rule by specificity)
       &.suits {
         box-shadow: inset 3px 0 0 $c-good;
 
-        td {
+        > td.player {
           box-shadow: none;
         }
       }
@@ -199,6 +199,12 @@
         color: $c-font-dim;
         font-size: 0.9em;
       }
+    }
+
+    // the one line of a greyed card that is there to be read: not faded with the rest
+    tr.unjoinable td.reason {
+      opacity: 1;
+      color: $c-font;
     }
   }
 }

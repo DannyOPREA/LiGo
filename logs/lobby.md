@@ -32,6 +32,10 @@
 - Verified by Claude: `node ui/test lobby` (107 pass), the lobby Playwright suite (47 pass, 8 new
   pictures looked at), verify.sh. · Needs owner verification: the list on the real site, live and
   correspondence, desktop and phone.
+- Review (reviewer agent): no blocking findings. Fixed: the phone reason line no longer fades with
+  the greyed card; the accent rules no longer rely on source order; a test now checks the accent's
+  computed style (the screenshots' tolerance can't see a 3 px edge). Left: the chip group and one
+  chip share the word "Handicap" (no better existing key; a new one isn't worth a translation).
 - Follow-ups: 6.10 (the demo).
 
 ### 2026-10-04 · unit 6.6 (addendum) · Review fixes

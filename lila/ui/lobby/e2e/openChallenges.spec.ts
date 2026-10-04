@@ -87,6 +87,14 @@ test.describe('as a member', () => {
       .poll(() => ids(page))
       .toEqual(['MidoriAA', 'AoAAAAAA', 'ShiroAAA', 'AkaAAAAA', 'KiiroAAA', 'GuestAAA']);
     expect(await suiting(page)).toEqual(['MidoriAA', 'AoAAAAAA', 'ShiroAAA']);
+    // the accent: a green inset edge on a suiting row's first cell, none on the others
+    const edge = (id: string) =>
+      row(page, id)
+        .locator('td')
+        .first()
+        .evaluate(td => getComputedStyle(td).boxShadow);
+    expect(await edge('MidoriAA')).toMatch(/inset/);
+    expect(await edge('AkaAAAAA')).toBe('none');
     await expect(row(page, 'KiiroAAA')).toHaveClass(/unjoinable/);
     await expect(row(page, 'GuestAAA')).toHaveClass(/unjoinable/);
     expect(problems).toEqual({ requests: [], errors: [] });
@@ -153,6 +161,18 @@ test.describe('on a phone', () => {
     );
     await expect(row(page, 'GuestAAA').locator('td.reason')).toHaveText('For guests');
     await expect(row(page, 'AoAAAAAA').locator('td.reason')).toHaveCount(0);
+    // the reason is not faded with the rest of the greyed card, and the card (not its cell) has the accent
+    expect(
+      await row(page, 'KiiroAAA')
+        .locator('td.reason')
+        .evaluate(td => getComputedStyle(td).opacity),
+    ).toBe('1');
+    expect(await row(page, 'AoAAAAAA').evaluate(tr => getComputedStyle(tr).boxShadow)).toMatch(/inset/);
+    expect(
+      await row(page, 'AoAAAAAA')
+        .locator('td.player')
+        .evaluate(td => getComputedStyle(td).boxShadow),
+    ).toBe('none');
     // the line sits under the card's other two
     const [reason, board] = await Promise.all([
       row(page, 'KiiroAAA').locator('td.reason').boundingBox(),
