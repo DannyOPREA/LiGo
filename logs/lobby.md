@@ -21,6 +21,13 @@
 - Tests: k6 parses the scenario (`k6 inspect`); shellcheck and dev/tests pass; verify passes. The
   cloud session can't start the stack (no Docker for Mongo), so the run itself is the PR's
   `loadtest` job.
+- First run (GitHub runner, 10 pairs, 10 stones each, d4260b5): all 10 games ended, 100% of players
+  finished; pool wait 6.3 s (p50 and p95: one 5 s wave plus start-up); a game of 20 stones and a
+  resignation took 25.8 s (p50). Its stone time read 0 because lila-ws answers the mover with an `ack`,
+  not the move event: the scenario now times the ack (`move_ms`) and the wait for the opponent's reply
+  (`turn_ms`), and `move_ms` must have samples.
+- Lessons: lila-ws doesn't echo a player's own move to them; it acks it. A k6 threshold on a metric
+  with no samples passes, so require `count>0`.
 
 ### 2026-10-04 · unit 6.10 · The Phase 6 demo
 - What: `lila/tests/e2e-demo/phase6-demo.spec.ts`, run by the `e2e` workflow at desktop and phone

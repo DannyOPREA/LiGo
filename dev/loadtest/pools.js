@@ -5,7 +5,9 @@
 //  1. opens the lobby websocket with its session cookie and sends `poolIn` for the 9x9 3+2 pool;
 //  2. waits for the `redirect` to its new game (pool_wait_ms);
 //  3. reads its colour and the socket version from the game's JSON, opens the round websocket and
-//     plays MOVES stones in turn (move_ms: from sending a stone to the server's move event for it);
+//     plays MOVES stones in turn (move_ms: from sending a stone to the server's ack of it; turn_ms:
+//     from sending a stone to the opponent's reply arriving, two trips through the server plus the
+//     other player's own handling);
 //  4. Black resigns after White's last stone; the game counts once both players see it end.
 // Stones go on the edge rows (Black rows a-b, White rows h-i), so nothing is ever captured.
 // Licence: MIT (LiGo's own code, ADR 0006).
@@ -24,6 +26,7 @@ const POOL = __ENV.POOL || '9x9-3m-2s';
 
 const poolWait = new Trend('pool_wait_ms', true);
 const moveTime = new Trend('move_ms', true);
+const turnTime = new Trend('turn_ms', true);
 const gameTime = new Trend('game_ms', true);
 const gamesEnded = new Counter('games_ended');
 const completed = new Rate('player_completed');
@@ -35,7 +38,7 @@ export const options = {
   },
   thresholds: {
     player_completed: ['rate>=0.95'],
-    move_ms: ['p(95)<1000'],
+    move_ms: ['count>0', 'p(95)<1000'],
   },
 };
 
@@ -115,6 +118,7 @@ function play(cookie, fullId) {
   const mine = points(color);
   let played = 0;
   let sentAt = 0;
+  let waitingSince = 0;
   let ack = 0;
   let ended = false;
   const start = Date.now();
@@ -125,18 +129,21 @@ function play(cookie, fullId) {
     const move = ply => {
       if (!myTurn(ply)) return;
       if (played < MOVES) {
-        sentAt = Date.now();
+        sentAt = waitingSince = Date.now();
         socket.send(JSON.stringify({ t: 'move', d: { u: mine[played], a: ++ack } }));
         played++;
       } else if (color === 'black') socket.send(JSON.stringify({ t: 'resign' }));
     };
     const onEvent = ev => {
-      if (ev.t === 'move' && ev.d) {
+      if (ev.t === 'ack' && sentAt) {
+        moveTime.add(Date.now() - sentAt); // the server took our stone (lila-ws acks it to the mover)
+        sentAt = 0;
+      } else if (ev.t === 'move' && ev.d) {
         const ply = ev.d.ply;
-        if (!myTurn(ply - 1)) move(ply); // the opponent's stone: our turn
-        else if (sentAt) {
-          moveTime.add(Date.now() - sentAt); // our own stone, back from the server
-          sentAt = 0;
+        if (!myTurn(ply - 1)) {
+          // the opponent's stone, and our turn
+          if (waitingSince) turnTime.add(Date.now() - waitingSince);
+          move(ply);
         }
       } else if (ev.t === 'endData' || ev.t === 'end') {
         if (!ended) {
@@ -177,6 +184,7 @@ export function handleSummary(summary) {
     `players_completed=${m.player_completed ? (100 * m.player_completed.values.rate).toFixed(1) : 'n/a'}% ` +
     `pool_wait_ms(p50/p95/max)=${val('pool_wait_ms', 'med')}/${val('pool_wait_ms', 'p(95)')}/${val('pool_wait_ms', 'max')} ` +
     `move_ms(p50/p95/max)=${val('move_ms', 'med')}/${val('move_ms', 'p(95)')}/${val('move_ms', 'max')} ` +
+    `turn_ms(p50/p95)=${val('turn_ms', 'med')}/${val('turn_ms', 'p(95)')} ` +
     `game_ms(p50)=${val('game_ms', 'med')}`;
   return { stdout: `\n${line}\n`, 'loadtest-summary.json': JSON.stringify(summary, null, 2) };
 }
