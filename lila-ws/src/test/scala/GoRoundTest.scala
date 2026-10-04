@@ -114,3 +114,15 @@ class GoRoundTest extends munit.FunSuite:
       ClientIn.Fen(Game.Id("abcdefgh"), board).write,
       """{"t":"fen","d":{"id":"abcdefgh","lm":"ee","board":"9/9/9/9/4b4/9/9/9/9","turn":"white","wc":60,"bc":61}}"""
     )
+
+  test("the scoring phase's toggle, accept and resume go to lila as r/do with their data (unit 4.8)"):
+    val fullId = Game.FullId("abcdefghwxyz")
+    List(
+      """{"t":"score-toggle","d":{"p":"pd","v":"2:3"}}""",
+      """{"t":"score-accept","d":{"v":"2:3"}}""",
+      """{"t":"score-resume"}"""
+    ).foreach: js =>
+      parse(js) match
+        case ClientOut.RoundPlayerForward(payload) =>
+          assertEquals(LilaIn.RoundPlayerDo(fullId, payload).write, s"r/do abcdefghwxyz $js")
+        case other => fail(s"$js parsed as $other")

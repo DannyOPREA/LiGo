@@ -64,6 +64,11 @@ object GameDiff:
       (actions: Vector[ligo.gorules.Action]) =>
         byteArrayHandler.writeTry(ByteArray(GoStorage.actions.write(actions, b.go.size)))
     )
+    dOpt(
+      GoStorage.F.scoring,
+      _.goScoring,
+      (o: Option[lila.core.game.GoScoring]) => o.map(GoStorage.scoring.write(_, b.go.size))
+    )
     d(turns, _.ply, ply => w.int(ply.value))
     dOpt(moveTimes, _.binaryMoveTimes, (o: Option[Array[Byte]]) => o.flatMap(arrayByteHandler.writeOpt))
     dOpt(whiteClockHistory, getClockHistory(White), clockHistoryToBytes)
