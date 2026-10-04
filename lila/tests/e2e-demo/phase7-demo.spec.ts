@@ -53,8 +53,7 @@ const readTreeOf = (sgf: string): Tree =>
         '--input-type=module',
         '-e',
         `import { readTree } from ${JSON.stringify(sgfReader)};
-         import { readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+         import { readFileSync } from 'node:fs';
          let n = readTree(readFileSync(0, 'utf8'));
          const mainline = [], branches = [];
          while (n.children.length) {
@@ -135,8 +134,9 @@ async function newContext(browser: Browser, info: TestInfo, contexts: BrowserCon
     isMobile,
     hasTouch,
     deviceScaleFactor,
-    // lila answers 404 to some pages (a challenge, a game) for a "HeadlessChrome" browser, which it takes for
-    // a crawler: the desktop project has no user agent of its own, so players use an ordinary Chrome one
+    // lila takes a "HeadlessChrome" browser for a crawler (HttpFilter): it refuses the login form's submit
+    // and strips some pages. The desktop project has no user agent of its own, so players use an ordinary
+    // Chrome one
     userAgent: userAgent ?? desktopUserAgent,
   });
   contexts.push(context);
@@ -165,6 +165,7 @@ async function signUp(page: Page, name: string) {
 const accountsFile = (baseURL: string) =>
   join(tmpdir(), `ligo-phase7-demo-accounts-${new URL(baseURL).port || '80'}.json`);
 const password = (name: string) => `demo-pass-${name}`;
+// (unseeded on purpose: a name only has to be new to the server, and nothing checks its value)
 const randomName = () => `dem${Math.random().toString(36).slice(2, 8)}`;
 
 /** Signs in through the real form; false when the server does not know the account (a new database). */
@@ -289,15 +290,16 @@ test('correspondence: a move each, the bell, two passes, the count and the resul
       // both are asked to count, not to move
       await expect(p).toHaveTitle(/^Time to count the game - /);
     }
-    const clocks = await black.locator('.rclock-correspondence .time').allTextContents();
-    expect(clocks).toHaveLength(2);
+    // (this game's id: the accounts are reused across projects and runs, so older games and bell entries exist)
+    const gameId = new URL(black.url()).pathname.slice(1, 9);
 
-    // the bell: "Time to count the game" against the opponent, from the scoring-phase notification
+    // the bell: "Time to count the game" against the opponent, from this game's scoring-phase notification
     for (const p of [black, white]) {
       await expect(bell(p).locator('.data-count')).toHaveAttribute('data-count', /^[1-9]/);
       const list = await bellEntries(p);
-      await expect(list).toContainText('Time to count the game');
-      await expect(list).toContainText(`Game vs ${nameOf(p === a ? b : a)}`);
+      const entry = list.locator(`a.site_notification.scoringPhase[href^="/${gameId}"]`);
+      await expect(entry).toContainText('Time to count the game');
+      await expect(entry).toContainText(`Game vs ${nameOf(p === a ? b : a)}`);
       await bell(p).click(); // close it again
     }
 
@@ -309,15 +311,10 @@ test('correspondence: a move each, the bell, two passes, the count and the resul
     const playingTab = lobby.getByRole('tab', { name: /in play/ });
     await expect(playingTab.locator('icon.unread')).toHaveText(/^[1-9]/);
     await playingTab.click();
-    // (a server that played an earlier, abandoned run may list more games: this game's row is the opponent's)
-    const row = lobby
-      .locator('.now-playing a')
-      .filter({ hasText: nameOf(white) })
-      .first();
+    // (the same two players may have older unfinished games: this game's row links to this game)
+    const row = lobby.locator(`.now-playing a[href*="/${gameId}"]`);
     await expect(row.locator('.indicator')).toHaveText('Time to count the game');
     await lobby.close();
-    // the clocks did not move while the pages sat in the phase
-    expect(await black.locator('.rclock-correspondence .time').allTextContents()).toEqual(clocks);
 
     // Black accepts and leaves the game page; White accepts. lila rings the bell for a player who is not on
     // the game page when it ends, so Black's bell gets the game-end entry, which takes Black back to the game.
@@ -327,7 +324,6 @@ test('correspondence: a move each, the bell, two passes, the count and the resul
       'You accepted this score. Waiting for your opponent.',
     );
     await expect(white.locator('.go-scoring__accepted')).toHaveText('Your opponent accepted this score.');
-    const gameUrl = black.url();
     await black.goto('/');
     await expect(black.locator('.lobby__start')).toBeVisible();
     // White's page shows Black gone once the server knows (the game's room is what the bell rings against)
@@ -346,7 +342,6 @@ test('correspondence: a move each, the bell, two passes, the count and the resul
     await expect(bell(black).locator('.data-count')).toHaveAttribute('data-count', /^[1-9]/);
     const list = await bellEntries(black);
     // (this game's entry: a server that played earlier runs keeps those games' entries too)
-    const gameId = new URL(gameUrl).pathname.slice(1, 9);
     const entry = list.locator(`a.site_notification.gameEnd[href^="/${gameId}"]`);
     await expect(entry).toContainText(`Game vs ${nameOf(white)}`);
     await expect(entry).toContainText(
@@ -409,7 +404,7 @@ async function exploreAndExport(page: Page, phone: boolean) {
   );
   await expect(page.locator('.analyse__go-settings')).toContainText('Result: B+2');
   await expect(analysisMoves(page)).toHaveCount(325);
-  // Shusaku plays first, at the 4-4 point on the right
+  // Shusaku plays first, at the 3-4 point (komoku) top right
   await expect(analysisMoves(page).first()).toHaveText(/1\s*R16/);
 
   // Step through with the keys: forward three moves, back one, to the end and back to the start.
@@ -443,7 +438,7 @@ async function exploreAndExport(page: Page, phone: boolean) {
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download SGF' }).click();
   const file = await download;
-  const sgf = readFileSync((await file.path())!, 'utf8');
+  const sgf = readFileSync(await file.path(), 'utf8');
   const tree = readTreeOf(sgf);
   expect(tree.length).toBe(325);
   expect(tree.mainline).toEqual(original.mainline);

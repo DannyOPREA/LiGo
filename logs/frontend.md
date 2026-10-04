@@ -4,6 +4,22 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.8 review · Reviewer findings fixed
+- Did: the reviewer found nothing blocking. Its three should-fix items are fixed in
+  `lila/tests/e2e-demo/phase7-demo.spec.ts`; all three were checks weakened by the demo's reused accounts.
+  The "Time to count the game" bell check and the lobby's now-playing row are now found by this game's id;
+  before, an older game or bell entry between the same two players could satisfy them. The "days clocks
+  did not move" text comparison is gone: the clock shows whole hours, so it could not fail, and the
+  `.running` count of 0 is the real check. Nits fixed: unused imports in the SGF reader script, the
+  opening point (3-4, not 4-4), the crawler comment (lila refuses HeadlessChrome's login submit), a
+  comment on the unseeded names, the fixture's README and GC (no place claimed; why a bare 1846 move
+  list is public domain whatever the copy's licence), and an unneeded non-null assertion oxlint flagged.
+- Verified: `dev/ligo up` in this cloud session, then the phase7 demo 6/6 (desktop and phone), run
+  against accounts and games left over from earlier runs (the case the fixes cover); oxlint, oxfmt and
+  tsc on the spec are clean; verify.sh.
+- Lessons: a demo that reuses accounts must identify everything it asserts by this run's game id;
+  name- or text-wide checks pass on stale data.
+
 ### 2026-10-04 · unit 7.8 · The Phase 7 demo
 - Did: `lila/tests/e2e-demo/phase7-demo.spec.ts` (desktop and phone) with three tests on the real stack.
   (1) Correspondence: two players sign up through the real /signup form (the dev server asks for no email

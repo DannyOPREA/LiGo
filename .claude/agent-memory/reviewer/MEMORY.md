@@ -10,14 +10,14 @@
 - [Differential test review patterns](differential-test-review-patterns.md) — oracle-mutation wrapper, zero-coverage floors, exit-code labels, eager undo
 - [Design ADR review patterns](design-adr-review-patterns.md) — javap scalachess, runtime vs load truth, stopped clock, goban SGF hangs, goban puzzle-mode glue, solver GHI/ko/spike budget
 - [Phase plan review patterns](phase-plan-review-patterns.md) — check POMs of "kept" artifacts, script build graph, exhaustive lists, Needs column
-- [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs, CI area gaps, headless-shell, `--list` for import.meta, no Origin → CSRF 403, casual /training/:id (8.8)
+- [Playwright e2e review patterns](playwright-e2e-review-patterns.md) — report dirs, CI area gaps, headless-shell, `--list` for import.meta, no Origin → CSRF 403, casual /training/:id (8.8), reused accounts make list asserts stale, HeadlessChrome=crawler (7.8)
 - [Clock wrapper review patterns](clock-wrapper-review-patterns.md) — main=0 5 s floor, giveTime banks in byo, step on stopped clock free, ??? methods
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — sbt testQuick Total 0, count versions, autoscore mutates board, Chinese prisoners, stdin EPIPE, validate graders on stored maps, NaN gates
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, deleted-TS DOM effects, privacy deletes, stand-ins keeping dead code (3.3–3.19p2)
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — testQuick Total 0, count versions, autoscore mutates, EPIPE, NaN gates, 2nd-pass gameActive, scratch sbt probe, timer dedupe (4.8)
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects, literal links, privacy deletes (3.3–3.7)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
-- [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, two-reader probes (7.3), export move delay + NoStart RE (4.11)
+- [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, two-reader probes (7.3), export delay (4.11), key.scala regen probe + ADR drift (7.5)
 - [Puzzle solver review patterns](puzzle-solver-review-patterns.md) — settled() pass bug, tree-depth histogram, duplicate shapes, frame port rerun, indep L&D checker, symmetry dedupe
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick
 - [Perf budget review patterns](perf-budget-review-patterns.md) — undefined limit passes, harness overhead in timings, goban shadow DOM, scratch probes (9.5)
