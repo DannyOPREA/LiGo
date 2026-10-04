@@ -31,7 +31,7 @@ The kit is in [`docs/research/lobby-test/`](../research/lobby-test/) (unit 6.3).
 
 ## The findings (later)
 
-The test runs after unit 6.10, the lobby demo, works on the owner's machine. It hadn't been run
+The test can run now that unit 6.10, the lobby demo, has merged (2026-10-04). It hadn't been run
 when this was written. Once the notes are in, `docs/research/lobby-test/results.md` will set out:
 
 - the timings and ease ratings side by side;

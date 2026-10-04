@@ -79,7 +79,12 @@ host, and `pnpm install --frozen-lockfile` once in `lila/`.
 
 - `dev/ligo e2e`: a smoke test of the running site (home page and the lobby's websocket).
 - `dev/ligo e2e demo`: the demo games in two browsers (desktop and phone): a 9×9 game to
-  resignation, two games through the scoring phase, and a puzzle walk.
+  resignation, two games through the scoring phase, and a puzzle walk; and the accessibility
+  check (axe) over every page, as a guest and signed in.
+- `dev/ligo e2e video`: records the demo video (a 9×9 game, a puzzle, an SGF import, desktop and
+  phone) into `lila/tests/e2e-demo/video/`.
+- `dev/ligo test budget`: the size of every page's JavaScript and CSS, and the board's mount time,
+  against the limits in `dev/ci/budget.json`.
 - `dev/ligo test all`: every unit test suite. `dev/ligo test rules` runs only the two rules
   engines against the shared fixtures.
 - The demo checklists in `docs/demos/` are what a person checks by hand.

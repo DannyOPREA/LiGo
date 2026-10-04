@@ -48,6 +48,13 @@ a {
   }
 }
 
+// LiGo (unit 9.10): a plain link inside running text or a label is underlined, so it is told apart
+// from the words around it without colour (WCAG 1.4.1, axe's link-in-text-block)
+p a:not([class]),
+label a:not([class]) {
+  text-decoration: underline;
+}
+
 button {
   appearance: none;
   background: none;

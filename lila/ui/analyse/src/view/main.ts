@@ -73,7 +73,10 @@ function renderStatus(ctrl: AnalyseCtrl): VNode {
 function renderTools(ctrl: AnalyseCtrl): VNode {
   return hl('div.analyse__tools', [
     renderStatus(ctrl),
-    hl('div.analyse__moves.areplay', { hook: ctrl.treeView.hook() }, [hl('div', ctrl.treeView.render())]),
+    // focusable, so the move list scrolls from the keyboard too (axe's scrollable-region-focusable, unit 9.10)
+    hl('div.analyse__moves.areplay', { attrs: { tabindex: 0 }, hook: ctrl.treeView.hook() }, [
+      hl('div', ctrl.treeView.render()),
+    ]),
     renderEngine(ctrl),
     hl('div.analyse__go-actions', [
       hl(

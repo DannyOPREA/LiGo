@@ -319,5 +319,7 @@ final class Form3(formHelper: FormHelper & I18nHelper & AssetHelper, flairApi: F
   object file:
     def image(name: String): Frag =
       st.input(tpe := "file", st.name := name, accept := "image/png, image/jpeg, image/webp")
-    def sgf(name: String): Frag = st.input(tpe := "file", st.name := name, accept := ".sgf")
+    // LiGo (unit 9.10): the field's id, so its group's label names it (axe's label)
+    def sgf(field: Field): Frag =
+      st.input(tpe := "file", st.name := field.name, st.id := id(field), accept := ".sgf")
     def selectImage = button(cls := "button select-image", tpe := "button")("Select image")

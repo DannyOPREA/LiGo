@@ -4,6 +4,45 @@
 _none yet_
 
 ## Entries (newest first)
+
+### 2026-10-04 · unit 9.10 CI fix 2 · The last two axe findings
+- **Done:** the second axe run (run 37238255126) found two things on every size. The stored game page's
+  move list scrolls but couldn't take keyboard focus: it now has `tabindex=0` (`ui/round/src/view/replay.ts`).
+  The profile's activity dates read #ac7419 on white (3.98:1): the light theme's brag colour is #a36300,
+  but lila's base `time` rule sets `opacity: 0.9`, which blends it with the white. The activity dates now
+  keep full opacity (`ui/user/css/_activity.scss`).
+- **Worked:** working back from the measured colour to the alpha (0.9) pointed straight at the `time` rule.
+- **Didn't:** the first fix round darkened `--c-brag` but missed the fade.
+- **Lessons:** when axe reports a colour that matches no theme value, suspect opacity on the element or a parent.
+### 2026-10-04 · unit 9.10 CI fix · What axe found on the real site
+- Did: the first full-site axe run failed 17 pages, desktop and phone. Fixed at the source:
+  light theme's dimmed text (47% → 43% grey), accent (orange, 42% → 38%), brag (gold, 48% → 32%
+  lightness, full saturation) and mistake colour darkened to 4.5:1 on white and zebra rows; plain
+  links inside text and labels underlined; 24px tap targets for the password eye, the profile's
+  welcome links and the analysis board's game links; the analysis jump buttons named (the game page's
+  First/Previous/Next/Last move strings); the move list focusable; lila's toggle switch lost its
+  `role=button` wrapper and takes its title as the checkbox's name; the chat's on/off switch moved
+  beside the tabs (a tab can't hold a control); `mselect` dropped its menu roles; the SGF file input on
+  /paste got the id its label points at; the puzzle meta's "hidden" text and /source's asset date use
+  readable greys.
+- Verified: page tests playground 49, round 27, analyse 21, puzzle 32, lobby 74 pass (screenshots
+  unchanged); ui build; oxlint/oxfmt/stylelint. The real-site run is the e2e job again.
+- Lessons: lila's light theme had several text colours just under 4.5:1 (4.0–4.4) that only show on the
+  real server pages; the built-page tests never saw them. Run axe over the server-rendered pages early.
+
+### 2026-10-04 · unit 9.10 · The Phase 9 demo: budget and axe over every page, the Go-club checklist
+- Did: `dev/ci/budget.json` gains a line for every page (lobby, game, analysis and analysis of a stored
+  game, puzzle, puzzle dashboard, profile, account, challenge), set from the production build at about
+  +15% (numbers in ADR 0026's 9.10 amendment). `budget.mjs` reads an optional `js`/`css` name for pages
+  whose bundle or stylesheet differs from the line's key. `lila/tests/e2e-demo/phase9-demo.spec.ts`
+  runs axe (serious or critical WCAG 2.2 AA, `ui/playground/e2e/axe.ts`) over every page on the real
+  stack, as a guest (13 pages incl. an imported game and its analysis) and signed in (5 pages), desktop
+  and phone; all pages are checked before it fails. `docs/demos/phase-9.md`: your phone install and
+  offline check, and the Go-club demo (order, what to say, what to do when something breaks). The
+  handoff README now says 6.10 merged and 6.9 is in review (#138), and where the demo video is.
+- Verified: `ui/build -p` then `node ../dev/ci/budget.mjs`: every size within its limit; tsc, oxfmt
+  and oxlint over tests/e2e-demo. The axe run itself is the PR's `e2e` job (the cloud can't run lila).
+
 ### 2026-10-04 · unit 9.9 part two · The handoff demo video, recorded by Playwright
 - Did: `lila/tests/e2e-demo/handoff-video.spec.ts` records one player's browser on the real stack: a
   9x9 lobby game with a capture, two passes, the count accepted by both and the result; a puzzle solved on

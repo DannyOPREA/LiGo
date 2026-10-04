@@ -3,5 +3,58 @@
   "siteJsKiB": 90,
   "siteCssKiB": 16,
   "boardMountMs": 250,
-  "pages": { "playground": { "jsKiB": 95, "cssKiB": 2 } }
+  "pages": {
+    "playground": {
+      "jsKiB": 95,
+      "cssKiB": 2
+    },
+    "lobby": {
+      "jsKiB": 74,
+      "cssKiB": 6
+    },
+    "round": {
+      "jsKiB": 84,
+      "cssKiB": 10
+    },
+    "analysis": {
+      "js": "analyse.user",
+      "css": "analyse.free",
+      "jsKiB": 118,
+      "cssKiB": 10
+    },
+    "analysis of a game": {
+      "js": "analyse.user",
+      "css": "analyse.round",
+      "jsKiB": 118,
+      "cssKiB": 13
+    },
+    "puzzle": {
+      "jsKiB": 115,
+      "cssKiB": 8
+    },
+    "puzzle dashboard": {
+      "js": "puzzle.dashboard",
+      "css": "puzzle.dashboard",
+      "jsKiB": 126,
+      "cssKiB": 3
+    },
+    "profile": {
+      "js": "user",
+      "css": "user.show",
+      "jsKiB": 54,
+      "cssKiB": 8
+    },
+    "account": {
+      "js": "user.account",
+      "css": "user.account",
+      "jsKiB": 56,
+      "cssKiB": 5
+    },
+    "challenge": {
+      "js": "challenge",
+      "css": "challenge.page",
+      "jsKiB": 55,
+      "cssKiB": 2
+    }
+  }
 }

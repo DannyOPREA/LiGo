@@ -2,6 +2,17 @@
   &__tabs {
     flex: 0 0 auto;
     display: flex;
+    align-items: center;
+  }
+
+  // the tabs lay out as if they were the row's own children; the chat switch follows them (unit 9.10)
+  &__tablist {
+    display: contents;
+  }
+
+  &__toggle {
+    flex: 0 0 auto;
+    padding: 0 0.5em;
   }
 
   &__tab {
