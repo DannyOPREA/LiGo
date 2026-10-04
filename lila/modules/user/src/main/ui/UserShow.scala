@@ -103,13 +103,13 @@ final class UserShow(helpers: Helpers, bits: UserBits):
   def transLocalize(key: lila.core.i18n.I18nKey, number: Int)(using Translate) =
     key.pluralSameTxt(number)
 
-  def describeUser(user: lila.core.perf.UserWithPerfs)(using Translate) =
-    import lila.rating.UserPerfsExt.bestRatedPerf
+  def describeUser(user: lila.core.perf.UserWithPerfs) =
     val name = user.titleUsername
     val nbGames = user.count.game
     val createdAt = showEnglishDate(user.createdAt)
-    val currentRating = user.perfs.bestRatedPerf.so: p =>
-      s" Current ${p.key.perfTrans} rating: ${p.perf.intRating}."
-    s"$name played $nbGames games since $createdAt.$currentRating"
+    // LiGo (unit 5.6): the Go rank once one is known, as the header and title show it (ADR 0021 §3)
+    val go = user.perfs.go.glicko
+    val currentRank = (!go.clueless).so(s" Current Go rank: ${lila.rating.GoRating.label(go)}.")
+    s"$name played $nbGames games since $createdAt.$currentRank"
 
   val dataUsername = attr("data-username")
