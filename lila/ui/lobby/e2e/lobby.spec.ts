@@ -123,8 +123,9 @@ test.describe('as a member', () => {
       timeMode: '1',
       time: '3',
       increment: '2',
-      variant: '1',
     });
+    // LiGo (unit 3.20): the browser no longer sends a chess variant.
+    expect(hooks[0]).not.toHaveProperty('variant');
     expect(server.sent('poolIn')).toEqual([]);
     await expect(tile(page, '9x9-3m-2s')).toHaveClass(/active/);
   });

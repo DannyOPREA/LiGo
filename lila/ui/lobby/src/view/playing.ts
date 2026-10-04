@@ -13,9 +13,11 @@ export default function ({ data }: LobbyController) {
   return div(
     '.now-playing',
     data.nowPlaying.map(pov =>
-      a('/' + pov.fullId)(`.${pov.variant.key}`, { key: `${pov.gameId}${pov.lastMove}` }, [
+      a('/' + pov.fullId)({ key: `${pov.gameId}${pov.lastMove}` }, [
         pov.board !== undefined
-          ? span('.go-mini', { hook: onInsert(el => renderGoMini(el, pov.board!, pov.lastMove)) })
+          ? span('.go-mini', {
+              hook: onInsert(el => renderGoMini(el, pov.board!, pov.lastMove)),
+            })
           : null,
         span('.meta', [
           pov.opponent.ai
