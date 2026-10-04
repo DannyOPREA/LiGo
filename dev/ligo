@@ -64,6 +64,10 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
                       accessibility check over every page (unit 9.10); with
                       video, record the handoff demo video into lila/tests/e2e-demo/video/ (unit 9.9);
                       with args after --, also run lila's Playwright suite with them
+  loadtest [run|install|path] [k6 args]  The lobby load test (unit 6.9, ADR 0022 §10): pinned k6
+                      plays PAIRS (10) pairs of 9x9 pool games of MOVES (10) stones each against the
+                      running stack; needs net.ratelimit = false in lila/conf/application.conf
+                      (dev/loadtest.sh). Prints one LOADTEST summary line.
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
   verify-mirror       Cross-check Google-mirror downloads against Maven Central (cloud, ADR 0008)
   katago <cmd>        KataGo: install [cpu|opencl], smoke, bench, path, env (dev/katago.sh)
@@ -594,6 +598,13 @@ cmd_test() {
   esac
 }
 
+# The load test (unit 6.9): dev/loadtest.sh against this mode's lila and lila-ws.
+cmd_loadtest() {
+  local ws_url=ws://localhost:9664
+  [[ "$MODE" == docker ]] && ws_url=ws://localhost:8080
+  BASE_URL=$(site_url) WS_URL=$ws_url exec "$ROOT/dev/loadtest.sh" "$@"
+}
+
 cmd_e2e() {
   local base; base=$(site_url)
   local ws_url=ws://localhost:9664
@@ -703,6 +714,7 @@ main() {
     deps) cmd_deps ;;
     verify-mirror) verify_mirror ;;
     katago) exec "$ROOT/dev/katago.sh" "$@" ;;
+    loadtest) cmd_loadtest "$@" ;;
     scoring) cmd_scoring "$@" ;;
     puzzles) cmd_puzzles "$@" ;;
     differential) cmd_differential "$@" ;;

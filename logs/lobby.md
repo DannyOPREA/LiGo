@@ -10,6 +10,39 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.9 · The lobby load test
+- What: `dev/ligo loadtest` (dev/loadtest.sh) downloads pinned k6 v1.3.0 into `.ligo/k6/` and runs
+  `dev/loadtest/pools.js`: setup signs up 2 × PAIRS players at 5k; each player opens the lobby
+  websocket, sends `poolIn` for 9×9 3+2, follows the `redirect` to its game, reads its colour from the
+  game JSON, plays MOVES stones over the round websocket, and Black resigns. It measures the pool wait,
+  each stone's round trip (sent to the server's move event), game length and how many games end, and
+  prints one LOADTEST line. The `loadtest` workflow (by hand, or a `loadtest` label on a PR) starts
+  the stack with lila's rate limits off and runs it.
+- Tests: k6 parses the scenario (`k6 inspect`); shellcheck and dev/tests pass; verify passes. The
+  cloud session can't start the stack (no Docker for Mongo), so the run itself is the PR's
+  `loadtest` job.
+- First run (GitHub runner, 10 pairs, 10 stones each, d4260b5): all 10 games ended, 100% of players
+  finished; pool wait 6.3 s (p50 and p95: one 5 s wave plus start-up); a game of 20 stones and a
+  resignation took 25.8 s (p50). Its stone time read 0 because lila-ws answers the mover with an `ack`,
+  not the move event: the scenario now times the ack (`move_ms`) and the wait for the opponent's reply
+  (`turn_ms`), and `move_ms` must have samples.
+- Lessons: lila-ws doesn't echo a player's own move to them; it acks it. A k6 threshold on a metric
+  with no samples passes, so require `count>0`.
+- The second run showed no summary line yet passed: k6 refused `count>0` on a trend (it needs a
+  counter, now `moves_acked`), and the step's default shell has no `pipefail`, so `| tee` hid k6's
+  exit code. Both fixed.
+- Lessons: a GitHub Actions `run:` step is `bash -e` without `pipefail` unless `shell: bash` is set.
+- Correction: the first two runs' games never got going. A new Go game's JSON says `turns=1`, so
+  the script took ply parity as White's turn; lila refused White's stone and aborted every game at its
+  first-move limit (25 s, hence the 25.8 s "game"). A trace (`TRACE=1`, on in the workflow) showed it.
+  Turns now follow the JSON's colour to move, and only players who play all their stones count.
+  Random letters also spelled a word lila's username check refuses (HTTP 400): names are digits now.
+- Real run (db302da, 10 pairs, 10 stones each): 10/10 games played out and resigned, 100% of
+  players; pool wait 3.8 s (p50 and p95, one 5 s wave); stone ack 3 ms p50, 9 ms p95, 24 ms max;
+  opponent's reply 25 ms p50, 84 ms p95; a 20-stone game 0.5 s.
+- Lessons: a load test that "passes" needs a check that the work happened (games played out), not
+  just that something ended. Read `game.player` for whose turn it is, never ply parity.
+
 ### 2026-10-04 · unit 6.10 · The Phase 6 demo
 - What: `lila/tests/e2e-demo/phase6-demo.spec.ts`, run by the `e2e` workflow at desktop and phone
   sizes. A guest clicks the 9×9 3+2 tile another guest waits on, and the game's first stone is timed
