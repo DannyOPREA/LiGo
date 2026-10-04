@@ -2539,6 +2539,8 @@ object I18nKey:
     val `lostAgainstTOSViolator`: I18nKey = "lostAgainstTOSViolator"
     val `refundXpointsTimeControlY`: I18nKey = "refundXpointsTimeControlY"
     val `timeAlmostUp`: I18nKey = "timeAlmostUp"
+    val `scoringPhaseStarted`: I18nKey = "scoringPhaseStarted"
+    val `gameEndedWithNoResult`: I18nKey = "gameEndedWithNoResult"
     val `clickToRevealEmailAddress`: I18nKey = "clickToRevealEmailAddress"
     val `download`: I18nKey = "download"
     val `coachManager`: I18nKey = "coachManager"
