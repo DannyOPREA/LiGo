@@ -6,13 +6,14 @@ import play.api.libs.json.*
 import reactivemongo.pekkostream.cursorProducer
 
 import lila.analyse.{ AccuracyPercent, Analysis, JsonView as analysisJson }
+import lila.common.HTTPRequest
 import lila.common.Json.given
 import lila.core.LightUser
 import lila.core.game.GoBridge
 import lila.db.dsl.{ *, given }
 import lila.game.JsonView.given
 import lila.game.GameExport.{ WithFlags, applyDelay }
-import lila.game.Query
+import lila.game.{ Query, SgfDump }
 import lila.round.GameProxyRepo
 
 final class GameApiV2(
@@ -22,6 +23,7 @@ final class GameApiV2(
     analysisRepo: lila.analyse.AnalysisRepo,
     getLightUser: LightUser.Getter,
     gameProxy: GameProxyRepo,
+    baseUrl: lila.core.config.BaseUrl,
     bookmarkApi: lila.bookmark.BookmarkApi,
     crosstableApi: lila.game.CrosstableApi
 )(using Executor, org.apache.pekko.actor.ActorSystem):
@@ -29,14 +31,21 @@ final class GameApiV2(
   import GameApiV2.*
 
   def exportOne(game: Game, config: OneConfig): Fu[String] =
-    for
-      (game, analysis) <- enrich(config.flags)(game)
-      json <- toJson(game, analysis, config)
-    yield Json.stringify(json)
+    config.format match
+      case Format.SGF => sgfOf(game, config.flags).map(_ | "")
+      case Format.JSON =>
+        for
+          (game, analysis) <- enrich(config.flags)(game)
+          json <- toJson(game, analysis, config)
+        yield Json.stringify(json)
 
   private val fileR = """[\s,]""".r
 
   def filename(game: Game, format: Format): Fu[String] =
+    if format == Format.SGF then fuccess(s"ligo_${game.id}.sgf") // unit 4.11
+    else jsonFilename(game, format)
+
+  private def jsonFilename(game: Game, format: Format): Fu[String] =
     gameLightUsers(game).map: users =>
       fileR.replaceAllIn(
         "ligo_%s_%s_vs_%s.%s.%s".format(
@@ -151,8 +160,20 @@ final class GameApiV2(
       .mapAsync(4)(enrich(config.flags))
       .mapAsync(4): (game, analysis) =>
         // a Go game has no chess opening (unit 3.16)
-        toJson(game, analysis, config).map: json =>
+        def json = toJson(game, analysis, config).map: json =>
           s"${Json.stringify(json)}\n"
+        config.format match
+          case Format.SGF =>
+            sgfOf(game, config.flags).flatMap:
+              case Some(sgf) => fuccess(s"$sgf\n\n")
+              case None => json
+          case Format.JSON => json
+
+  // Unit 4.11: a Go game as SGF, with the same move delay and `moves` flag as the JSON export.
+  private def sgfOf(game: Game, flags: WithFlags): Fu[Option[String]] =
+    gameLightUsers(game).map: users =>
+      val names = users.map((p, u) => SgfDump.playerName(p, u))
+      SgfDump(game, names, s"LiGo $baseUrl/${game.id}", flags)
 
   private def enrich(flags: WithFlags)(game: Game): Fu[(Game, Option[Analysis])] =
     flags.requiresAnalysis.so(analysisRepo.byGame(game)).dmap(game -> _)
@@ -222,12 +243,14 @@ final class GameApiV2(
 
 object GameApiV2:
 
-  // Game exports are JSON (or NDJSON) only since PGN went with chess games (unit 3.17); SGF export joins
-  // in Phase 4 (unit 4.11).
+  // Game exports are JSON (or NDJSON) since PGN went with chess games (unit 3.17), or SGF (unit 4.11).
   enum Format:
-    case JSON
+    case JSON, SGF
   object Format:
-    def byRequest: Format = JSON
+    /** SGF with `Accept: application/x-go-sgf` or `?format=sgf`, else JSON (or NDJSON). */
+    def byRequest(using req: play.api.mvc.RequestHeader): Format =
+      if HTTPRequest.acceptsSgf(req) || HTTPRequest.queryStringGet("format").contains("sgf") then SGF
+      else JSON
 
   private val dateFormat =
     java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd").withZone(java.time.ZoneOffset.UTC)

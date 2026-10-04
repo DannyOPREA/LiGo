@@ -15,7 +15,7 @@
 - [Scoring phase review patterns](scoring-phase-review-patterns.md) — testQuick Total 0, count versions, autoscore mutates, EPIPE, NaN gates, 2nd-pass gameActive, scratch sbt probe, timer dedupe (4.8)
 - [Module removal review patterns](module-removal-review-patterns.md) — orphan bundles/CSS, glue, UPSTREAM gaps, literal URLs, kept clients, deleted-TS DOM side effects, literal links, privacy deletes (3.3–3.7)
 - [Rating maths review patterns](rating-maths-review-patterns.md) — regenerate goratings oracle, testQuick vacuity, javap scalachess, lila caps, lila/ MIT files
-- [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, lowercase ids, quadratic merges, two-reader parity probes (7.3)
+- [SGF tree review patterns](sgf-tree-review-patterns.md) — stray pnpm files, root B/W, two-reader probes (7.3), export move delay + NoStart RE (4.11)
 - [Puzzle solver review patterns](puzzle-solver-review-patterns.md) — settled() pass bug, tree-depth histogram, duplicate shapes, frame port rerun, indep L&D checker, symmetry dedupe
 - [Pool pairing review patterns](pool-pairing-review-patterns.md) — Python model of waiting range, 9×9 rank holes, lila-derived code marked MIT, testQuick
 - [Perf budget review patterns](perf-budget-review-patterns.md) — undefined limit passes, harness overhead in timings, goban shadow DOM, scratch probes (9.5)

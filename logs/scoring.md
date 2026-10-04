@@ -56,6 +56,42 @@
 - Lessons: once a "game-ending" move becomes resumable, revisit every end-of-game flag on it
   (the clock's gameActive, increments, period resets).
 
+### 2026-10-04 · unit 4.11 merge · SGF next to 3.17's JSON-only downloads
+- Did: merged main after 3.17 part 2a (#105), which removed PGN and made game downloads JSON. `GameApiV2.Format`
+  is now JSON or SGF: SGF with `?format=sgf` or `Accept: application/x-go-sgf`, else JSON. The single and bulk
+  exports both write SGF when asked; the record's place is `LiGo <baseUrl>/<game id>` (PgnDump's game URL went).
+- Decision: a download with no preference stays JSON, as 3.17 made it, instead of 4.11's first "SGF by default".
+- Lessons: an export format added in parallel with a format removal is easiest to keep as its own branch in
+  `exportOne` and the bulk flow, so the merge is local.
+
+### 2026-10-04 · unit 4.11 review · SGF export holds back a live game's last moves
+- Did: an independent review of PR #99 found the SGF export skipped lila's move delay (an untrusted caller
+  gets a game in play without its last 3 moves in PGN and JSON) and ignored `moves=false`. `SgfDump` now
+  takes the export flags and writes the record from the shown prefix of the actions (replayed by go-rules).
+  Also: `NoStart` (a player who never moved in a game that couldn't be aborted) writes `B+F` like a forfeit;
+  `?format=sgf` on a game that isn't Go falls back to PGN instead of an empty `.sgf`; the format test's query
+  parsing no longer throws on `a=b=c`. Tests: `SgfDumpTest` 9 (delay, `moves=false`, NoStart, Cheat, escaping).
+- Worked: `GoGame.replay(setup, prefix)` rebuilds the shown game; `Sgf.write` reads only setup and actions.
+- Lessons: any new export format must go through `applyDelay`/`keepDelayIf` like PGN and JSON.
+- Left as is: a bulk SGF export's filename keeps upstream's `lichess_<user>_<date>` stem (the rename is 3.17's).
+
+### 2026-10-04 · unit 4.11 · SGF export of a Go game
+- Did: `lila.game.SgfDump` (pure) builds `SgfInfo` from a stored Go game (names, rank label from unit 5.5,
+  creation date in UTC, place `LiGo <game url>`, Fischer or days-per-move clock, `RE` for resign, flag and
+  abandonment) and calls go-rules' `Sgf.write`. `GameApiV2.Format` gains `SGF`: `byRequest` picks it for
+  `Accept: application/x-go-sgf` or `?format=sgf`; `Game.exportGame` makes a Go game's no-preference export SGF
+  (content type `application/x-go-sgf`, file `ligo_<id>.sgf`); the bulk/stream exports write SGF when asked,
+  keeping PGN for a non-Go game. Tests: `SgfDumpTest` (6), `GameExportFormatTest` (4).
+- Worked: reuse of `Namer.ratingString`, `GoBridge.goColor` and go-rules' `GameResult`; no manifest change.
+- Didn't work / dead ends: a test wrote names as `ByColor(black, white)` (the order is white, black), which
+  showed up as swapped players in the record; also `play-test` is not on lila's classpath, so the format test
+  builds a request with Play's `RequestFactory`.
+- Decisions: see logs/decisions.md (default format, `RE` before 4.8, ranks).
+- Verified by Claude: the tests above and `compile`. Needs owner verification: a real download in the browser.
+- Follow-ups: counted results (`B+3.5`, `0`, `Void`) once 4.8 stores them; byo-yomi `OT` once a game stores
+  byo-yomi; the game page's Download link (it lives in `ui/round`, not in Scala views; the only Scala links, in
+  `ReplayUi`, are chess-only PGN links); an `sgf` field in the JSON exports was skipped.
+
 ### 2026-09-29 · unit 4.6 follow-up · b18 network checksum pinned
 - Did: set `NET_SHA256` in `dev/katago.sh` to the sha256 the owner pasted from his own
   `dev/ligo katago install opencl` download of `kata1-b18c384nbt-s9996604416-d4316597426.bin.gz`
