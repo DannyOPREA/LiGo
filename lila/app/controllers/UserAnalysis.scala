@@ -12,13 +12,6 @@ final class UserAnalysis(
 ) extends LilaController(env)
     with lila.web.TheftPrevention:
 
-  // A game opens in the analysis board in unit 7.5 (ADR 0023 §2); until then its page says so (unit 3.16).
-  private def comingLater(using Context) = Ok.page:
-    views.site.message.comingLater(
-      "Game analysis",
-      "Opening a game in the analysis board arrives in a later update. Finished games can be replayed on their game page."
-    )
-
   // The Go analysis board (unit 7.4): everything happens in the browser, nothing is stored.
   def index = Open:
     for page <- renderPage(views.analyse.ui.userAnalysis(ctx.pref.coords))
@@ -33,18 +26,43 @@ final class UserAnalysis(
     InEmbedContext:
       NotFound.snip(views.analyse.embed.notFound)
 
-  // used by lichobile for post-game analysis; forecasts went with chess moves (unit 3.17)
+  // A stored game opens in the analysis board (unit 7.5, ADR 0023 §2): an import with the SGF text it was
+  // stored with, any other game with the server's record. A game still in play is shown with the move delay
+  // everywhere else applies, and its own players are sent back to their game. lichobile's post-game
+  // analysis (the `api` case) is kept.
   def game(id: GameId, color: Color) = Open:
     Found(env.game.gameRepo.game(id)): g =>
       env.round.proxyRepo.upgradeIfPresent(g).flatMap { game =>
         val pov = Pov(game, color)
         negotiateApi(
           html =
-            if game.replayable then Redirect(routes.Round.watcher(game.id, color))
-            else comingLater,
+            if playablePovForReq(game).isDefined then Redirect(routes.Round.watcher(game.id, color))
+            else gamePage(pov),
           api = _ => mobileAnalysis(pov)
         )
       }
+
+  private def gamePage(pov: Pov)(using ctx: Context): Fu[Result] =
+    for
+      users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
+      _ = gameC.preloadUsers(users)
+      sgf <- gameSgf(pov.game)
+      page <- renderPage(views.analyse.ui.gameAnalysis(pov, sgf, ctx.pref.coords))
+    yield Ok(page).noCache
+
+  /** The record the board opens: an import's own text, else the game as SGF (delayed while it is played). */
+  private def gameSgf(game: lila.core.game.Game): Fu[String] =
+    game.sgfImport match
+      case Some(i) => fuccess(i.sgf)
+      case None =>
+        given Option[Me] = none // the page never reads a player's private fields
+        env.api.gameApiV2.exportOne(
+          game,
+          lila.api.GameApiV2.OneConfig(
+            lila.api.GameApiV2.Format.SGF,
+            lila.game.GameExport.WithFlags(delayMoves = true)
+          )
+        )
 
   private def mobileAnalysis(pov: Pov)(using ctx: Context): Fu[Result] = for
     users <- env.user.api.gamePlayers.analysis(pov.game)

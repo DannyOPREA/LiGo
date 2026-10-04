@@ -1,0 +1,24 @@
+{
+  "t": "proposal",
+  "ref": "demo0002:1:1",
+  "src": "none",
+  "dead": [],
+  "seal": [],
+  "owner": "...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww...........wwwwwwww",
+  "score": {
+    "b": {
+      "territory": 0,
+      "stones": 0,
+      "prisoners": 0,
+      "total": 0
+    },
+    "w": {
+      "territory": 152,
+      "stones": 0,
+      "prisoners": 0,
+      "komi": 6.5,
+      "compensation": 0,
+      "total": 158.5
+    }
+  }
+}

@@ -16,7 +16,7 @@ import lila.core.game.{
   GameRule,
   LightGame,
   LightPlayer,
-  PgnImport,
+  SgfImport,
   Source,
   emptyDrawOffers
 }
@@ -89,7 +89,7 @@ object BSONHandlers:
       )
   )
 
-  given BSONDocumentHandler[PgnImport] = Macros.handler
+  given BSONDocumentHandler[SgfImport] = Macros.handler
 
   given gameHandler: BSON[Game] with
     import lila.game.Game.BSONFields as F
@@ -164,7 +164,7 @@ object BSONHandlers:
         movedAt = r.dateD(F.movedAt, createdAt),
         metadata = GameMetadata(
           source = r.getO[Source](F.source),
-          pgnImport = r.getO[PgnImport](F.pgnImport),
+          sgfImport = r.getO[SgfImport](F.sgfImport),
           tournamentId = r.getO[TourId](F.tournamentId),
           swissId = r.getO[SwissId](F.swissId),
           simulId = r.getO[SimulId](F.simulId),
@@ -227,7 +227,7 @@ object BSONHandlers:
         F.createdAt -> w.date(o.createdAt),
         F.movedAt -> w.date(o.movedAt),
         F.source -> o.metadata.source,
-        F.pgnImport -> o.metadata.pgnImport,
+        F.sgfImport -> o.metadata.sgfImport,
         F.tournamentId -> o.metadata.tournamentId,
         F.swissId -> o.metadata.swissId,
         F.simulId -> o.metadata.simulId,

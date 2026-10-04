@@ -4,6 +4,54 @@
 _none yet_
 
 ## Entries (newest first)
+### 2026-10-04 · unit 7.7 review · Reviewer findings fixed
+- Did: the reviewer found nothing blocking. Its two should-fix items are fixed. The days clock now
+  also stands still once the game is over (a counted game ends while the clock stands still, and
+  the clock ticked again afterwards). The browser test now zeroes the player-to-move's days clock
+  in the scoring phase, runs the page's clock 3 s and checks that no `flag` is sent.
+- Worked: the new unit test ("stands still once the game is over") and the browser check both fail
+  with the guard removed and pass with it (round e2e 25/25, three runs).
+- Didn't work / dead ends: the first browser check zeroed White's clock while Black was to move, so
+  it passed with the bug too; and checking `server.received` straight after `runFor` raced the
+  websocket. A score toggle sent afterwards gives an ordered sync point.
+- Lessons: to assert a websocket message was NOT sent, send a later one and wait for it; the socket
+  keeps order. Zero the clock of the colour whose turn it is, or the tick never touches it.
+- Follow-ups (nits, not fixed here): `resVsX` wording for a no-result game in the bell; TimelineUi
+  and RoundUi still say "draw" for a no-result game; whats-next is re-asked on every scoring event;
+  no unit test for `moveOn`.
+
+### 2026-10-04 · unit 7.7 · Correspondence UI
+- Did: a correspondence Go game on the game page. Lila's days clock (`corresClock`) already worked with Go;
+  what was missing was the scoring phase. The days clock now stands still in the phase (no ticking, no
+  flag, no "running" or "out of time" look, whatever a stored turn clock says), the phase's countdown reads
+  in days, hours or minutes ("1 day 2 hours left to agree", "5 hours 12 minutes", "2:41"), and
+  `RoundController.isMyTurn` says what the server's `Pov.isMyTurn` says (your move, or a count you have not
+  accepted): the tab reads "Time to count the game", lila's "play the next game" setting stays on a game
+  that waits for your answer and moves on once you accept. The lobby's "now playing" row says "Time to
+  count the game" for such a game. The bell has a `scoringPhase` entry and a no-result `gameEnd`
+  ("Your game ended with no result"), through one new optional field on the server's `GameEnd` notification.
+- Checked on the server, nothing to change: the lobby's now-playing list, `/account/now-playing`, the
+  round's next-game button (`whatsNext`, `selectNext`), the blind lobby and `nbMyTurn` all read
+  `Pov.isMyTurn`, which 7.6 made count the scoring phase; the JSON a list row gets already carries
+  `go.phase`.
+- Worked: the round e2e harness took a `correspondence` option (days clock data, no real-time clock, no
+  moretime) and the existing scoring fixtures; the new browser tests need no timers because the days
+  clock's tick is a unit test (a captured interval callback called by hand).
+- Didn't work / dead ends: a route added in a Playwright test before `openRound` never answers, because
+  routes added later win and `openRound` adds a catch-all that aborts: add test routes after it. The bell's
+  tests could not read text from the tests' i18n stand-in (it gives functions, which snabbdom takes for
+  element data), so that test swaps in a stand-in whose plain keys are strings.
+- Not done: a reload mid-phase shows the days clock as lila computes it (the turn colour's time since the
+  second pass, so smaller than at the second pass, never flagged); a game with its proposal never arrived
+  shows no scoring countdown beyond the phase's own `expiresIn` (7.6 / ADR 0023 §4). The game page's
+  opponent-gone "claim victory" still asks the turn clock, not the count (the server decides, 7.6).
+- Lessons: the page's own idea of "my turn" (`game.player === me`) is wrong in the scoring phase; ask
+  `ctrl.isMyTurn()`, which agrees with the server's lists.
+- Decisions: four rows in logs/decisions.md (2026-10-04, unit 7.7).
+- Needs owner verification: a real correspondence Go game on the stack to the second pass: the bell shows
+  "Time to count the game" with the opponent's name, the lobby's now-playing row and tab title say so,
+  and the countdown reads in days and hours.
+
 
 ### 2026-10-04 · unit 9.7 part two · the puzzle rating's tooltip and the profile's puzzle tip say Go
 - Did: `translation/source/site.xml` `puzzleDesc` ("Chess tactics trainer", the puzzle row's tooltip on profiles and rating lists, via `PerfType`) now reads "Go puzzles (tsumego) trainer"; `onboarding.xml` `improveWithChessTacticsPuzzles` (the new-player tip on the profile page) reads "Improve with Go puzzles (tsumego).". Regenerated `ui/@types/lichess/i18n.d.ts`; key names unchanged, so `key.scala` is unchanged.

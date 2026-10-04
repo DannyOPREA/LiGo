@@ -39,6 +39,14 @@ final class Limiters(using Executor, lila.core.config.RateLimit):
     ("slow", 30000, 1.day)
   )
 
+  // SGF import (unit 7.5): the limit runs before the file is read (ADR 0023 §2)
+  val gameImport = RateLimit.composite[IpAddress](
+    key = "import.game.ip"
+  )(
+    ("fast", 10, 1.minute),
+    ("slow", 150, 1.hour)
+  )
+
   val userGames = RateLimit[IpAddress](credits = 500, duration = 10.minutes, key = "user_games.web.ip")
 
   val crosstable = RateLimit[IpAddress](credits = 30, duration = 10.minutes, key = "crosstable.api.ip")

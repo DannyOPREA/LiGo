@@ -143,6 +143,14 @@
   flex-direction: column;
 }
 
+// A stored game's own page and SGF download (unit 7.5).
+.analyse__go-game {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4em;
+  margin: 0.8em 0;
+}
+
 // Setup mode: the panel beside the position editor. On a phone it is taller than the move list's
 // row, so the rows take their content's height and nothing covers its buttons.
 main.analyse.analyse--setup {

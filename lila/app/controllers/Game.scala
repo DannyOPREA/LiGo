@@ -18,7 +18,7 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
 
   def delete(gameId: GameId) = Auth { _ ?=> me ?=>
     Found(env.game.gameRepo.game(gameId)): game =>
-      if game.pgnImport.flatMap(_.user).exists(me.is(_)) then
+      if game.sgfImport.flatMap(_.user).exists(me.is(_)) then
         for
           _ <- env.bookmark.api.removeByGameId(game.id)
           _ <- env.game.gameRepo.remove(game.id)
