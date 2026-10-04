@@ -56,6 +56,12 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   app/mashup and PaginatorBuilder. Also check for code copied from an open sibling PR (3.17 pulled
   #88's `GoBridge.miniState` + GameUi go-mini markup without its TS): merge-tree against that branch.
 
+- 3.17 part 2b (variants/openings/FEN fields out): removals of `variant` branches are no-ops for Go
+  only because every Go game was `Standard`; verify each reduces to its standard branch. Grep for
+  helpers orphaned by the removal (`lila.common.Form.fen` lost its last users and still calls chess
+  `playable`). Check decisions.md for earlier answers the part contradicts (3.15/3.19 said 3.17 drops
+  the form `variant` field; 2b kept it). Inserting a scaladoc above an existing one orphans it.
+  Chess `DeclineReason.Standard/Variant` and variant perfs on profiles survive variant removal.
 - 3.17 part 2a (PGN/FEN/UCI gone): server code was clean; the misses were user-facing text that
   still promised the removed format: UserGamesDownload ("download imported games as PGN", include
   toggles `opening`/`literate`/"PGN tags" now ignored), mod games "Download PGN" button, browser

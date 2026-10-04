@@ -105,20 +105,6 @@ final class Cms(env: Env) extends LilaController(env):
               env.web.lilaVersion
             )
 
-  def variantHome = Open:
-    negotiate(
-      Ok.async(views.site.variant.home),
-      Ok(lila.web.StaticContent.variantsJson)
-    )
-
-  import chess.variant.Variant
-  def variant(key: Variant.LilaKey) = Open:
-    (for
-      variant <- Variant(key)
-      perfKey <- PerfKey.byVariant(variant)
-    yield negotiateCms(CmsPageKey(s"variant-${variant.key}")): page =>
-      views.site.variant.show(page, variant, perfKey)) | notFound
-
   private def negotiateCms(
       key: CmsPageKey
   )(f: CmsPage.Render => Fu[lila.ui.Page])(using Context): Fu[Result] =

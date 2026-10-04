@@ -191,7 +191,6 @@ object GameApi:
       analysis: Boolean = false,
       moves: Boolean = false,
       fens: Boolean = false,
-      opening: Boolean = false,
       moveTimes: Boolean = false,
       blurs: Boolean = false,
       token: Option[String] = none
@@ -204,7 +203,6 @@ object GameApi:
       analysis = queryStringBool("with_analysis"),
       moves = queryStringBool("with_moves"),
       fens = queryStringBool("with_fens"),
-      opening = queryStringBool("with_opening"),
       moveTimes = queryStringBool("with_movetimes"),
       token = queryStringGet("token")
     )

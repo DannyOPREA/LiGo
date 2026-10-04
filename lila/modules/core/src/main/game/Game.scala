@@ -1,7 +1,6 @@
 package lila.core
 package game
 
-import _root_.chess.variant.{ Standard, Variant }
 import _root_.chess.{
   ByColor,
   Centis,
@@ -49,9 +48,6 @@ case class Game(
     // and `byoyomi`; code that only knows Fischer clocks reads `clock` and sees none in a byo-yomi game.
     byoyomi: Option[ByoyomiClock] = None
 ):
-
-  /** Every game is standard Go; lila's chess variants go in unit 3.17's second part, with this. */
-  def variant: Variant = Standard
 
   export metadata.{ tournamentId, simulId, swissId, drawOffers, source, pgnImport, hasRule }
   export players.{ white as whitePlayer, black as blackPlayer, apply as player }
@@ -140,9 +136,6 @@ case class Game(
 
   def perfKey: PerfKey = GoBridge.perfKey
 
-  def ratingVariant: Variant =
-    if isTournament && variant.fromPosition then Standard else variant
-
   def started = status >= Status.Started
 
   def aborted = status == Status.Aborted
@@ -184,7 +177,7 @@ case class Game(
 
   def replayable = isPgnImport || finished || (aborted && bothPlayersHaveMoved)
 
-  def fromPosition = variant.fromPosition || source.has(Source.Position)
+  def fromPosition = source.has(Source.Position)
 
   def sourceIs(f: Source.type => Source): Boolean = source contains f(Source)
   def lobbyOrPool = source.exists(s => s == Source.Lobby || s == Source.Pool)
@@ -267,7 +260,7 @@ case class Game(
 
   def isPgnImport = pgnImport.isDefined
 
-  def hasFewerMovesThanExpected = playedPlies <= reasonableMinimumNumberOfMoves(variant)
+  def hasFewerMovesThanExpected = playedPlies <= reasonableMinimumNumberOfMoves
 
   def pov(c: Color) = Pov(this, c)
   def povs: ByColor[Pov] = ByColor(pov)

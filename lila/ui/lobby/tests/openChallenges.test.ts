@@ -314,6 +314,21 @@ describe('the table', () => {
     assert.equal(cellsOf(mount(renderOpen(ctrl)))[0][4], 'site.goHandicap 3');
   });
 
+  test('a byo-yomi hook shows its clock string, and an increment of 0 breaks nothing', () => {
+    const byo = hook({
+      clock: '10+5×30s',
+      t: 25 * 60,
+      s: 3,
+      i: 0,
+      byo: { limit: 600, periods: 5, period: 30 },
+    });
+    const row = hookRow(byo);
+    assert.equal(row.clock, '10+5×30s');
+    assert.equal(row.speed, 'classical');
+    const ctrl = lobby({ stepHooks: [byo] });
+    assert.equal(cellsOf(mount(renderOpen(ctrl)))[0][2], '10+5×30s');
+  });
+
   test('ratings are hidden when the site hides them', () => {
     const ctrl = lobby({ stepHooks: [hook()], opts: { showRatings: false } });
     assert.equal(cellsOf(mount(renderOpen(ctrl)))[0][0], 'bob');
