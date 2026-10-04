@@ -409,7 +409,7 @@ body.no-inquiry {
       transition: all 1s ease-out;
 
       &.note-flash {
-        background: $c-primary;
+        background: $c-primary-button;
         box-shadow: 0 0 15px $c-primary;
         transition: none;
 

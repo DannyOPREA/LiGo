@@ -51,6 +51,8 @@ object ClientIn:
           )
           .add("wc" -> board.clock.map(_.white))
           .add("bc" -> board.clock.map(_.black))
+          .add("wp" -> board.clock.flatMap(_.periods).map(_._1))
+          .add("bp" -> board.clock.flatMap(_.periods).map(_._2))
       )
 
   case class Finish(gameId: Game.Id, winner: Option[Color]) extends ClientIn:

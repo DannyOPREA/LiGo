@@ -49,6 +49,12 @@ object header:
           else flair
     )
 
+  // LiGo: the Go rank beside the name (unit 5.6), the rating in its title; none before a rank is known
+  private def rankTag(info: UserInfo)(using ctx: Context) =
+    val go = info.user.perfs.go
+    (ctx.pref.showRatings && !go.glicko.clueless).option:
+      span(cls := "user-show__rank")(goRank(go.intRating, go.provisional))
+
   def apply(u: User, info: UserInfo, angle: UserInfo.Angle, social: UserInfo.Social)(using ctx: Context) =
     val showLinks = !possibleSeoBot(u) || isGranted(_.Shadowban)
     frag(
@@ -57,9 +63,10 @@ object header:
           case Some(p) =>
             h1(cls := s"user-link ${if isOnline.exec(u.id) then "online" else "offline"}")(
               patronIcon(p),
-              userDom(u)
+              userDom(u),
+              rankTag(info)
             )
-          case None => h1(userDom(u)),
+          case None => h1(userDom(u), rankTag(info)),
         div(cls := "trophies")(
           views.user.bits.perfTrophies(u, info.ranks),
           otherTrophies(info),

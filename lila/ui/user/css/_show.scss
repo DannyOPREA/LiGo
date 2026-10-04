@@ -16,7 +16,7 @@
 }
 
 @mixin dropdown-action-highlight {
-  background: $c-primary;
+  background: $c-primary-button;
 
   &,
   &::after {

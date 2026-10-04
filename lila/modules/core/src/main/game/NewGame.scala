@@ -2,7 +2,7 @@ package lila.core
 package game
 
 import _root_.chess.{ ByColor, Clock, Rated, Status }
-import ligo.gorules.{ GoGame, Setup as GoSetup, SetupError }
+import ligo.gorules.{ ByoyomiClock, ByoyomiConfig, GoGame, Setup as GoSetup, SetupError }
 import scalalib.ThreadLocalRandom
 import scalalib.model.Days
 
@@ -23,31 +23,39 @@ def newGoGame(
     rated: Rated,
     source: Source,
     daysPerTurn: Option[Days] = None,
-    rules: Set[GameRule] = Set.empty
+    rules: Set[GameRule] = Set.empty,
+    // a byo-yomi clock instead of the Fischer `clock` (ADR 0020 §7, unit 4.7)
+    byoyomi: Option[ByoyomiConfig] = None
 ): Either[SetupError, NewGame] =
-  GoGame
-    .start(setup)
-    .map: go =>
-      val startedAtPly = GoBridge.startedAtPly(go)
-      // chess.Clock starts with White's side; a Black-first game starts Black's (ADR 0019 §5).
-      val firstClock = clock.map(_.copy(color = GoBridge.color(go.toMove)))
-      val createdAt = nowInstant
-      NewGame:
-        new Game(
-          id = IdGenerator.uncheckedGame,
-          players = players,
-          go = go,
-          ply = startedAtPly,
-          startedAtPly = startedAtPly,
-          clock = firstClock,
-          status = Status.Created,
-          daysPerTurn = daysPerTurn,
-          // Go games are casual until unit 5.7 turns rated play on, whatever an older record or game asks for
-          rated = Rated.No,
-          metadata = newMetadata(source).copy(rules = rules),
-          createdAt = createdAt,
-          movedAt = createdAt
-        )
+  for
+    go <- GoGame.start(setup)
+    byoClock <- byoyomi match
+      case None => Right(None)
+      case Some(c) =>
+        ByoyomiClock(c, go.toMove).map(Some(_)).left.map(_ => SetupError.BadByoyomi(c))
+  yield
+    val startedAtPly = GoBridge.startedAtPly(go)
+    // chess.Clock starts with White's side; a Black-first game starts Black's (ADR 0019 §5). A game has at
+    // most one clock: a byo-yomi one replaces the Fischer one.
+    val firstClock = clock.filter(_ => byoClock.isEmpty).map(_.copy(color = GoBridge.color(go.toMove)))
+    val createdAt = nowInstant
+    NewGame:
+      new Game(
+        id = IdGenerator.uncheckedGame,
+        players = players,
+        go = go,
+        ply = startedAtPly,
+        startedAtPly = startedAtPly,
+        clock = firstClock,
+        byoyomi = byoClock,
+        status = Status.Created,
+        daysPerTurn = daysPerTurn,
+        // Go games are casual until unit 5.7 turns rated play on, whatever an older record or game asks for
+        rated = Rated.No,
+        metadata = newMetadata(source).copy(rules = rules),
+        createdAt = createdAt,
+        movedAt = createdAt
+      )
 
 trait IdGenerator:
   def game: Fu[GameId]

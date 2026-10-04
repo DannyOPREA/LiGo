@@ -114,7 +114,7 @@ final class JsonView(
             // Go's touch-confirm (unit 2.3): the board previews a tapped stone until confirmed (3.18)
             .add("confirmMoves" -> pref.confirmMoves.some)
       )
-      .add("clock" -> game.clock.map(clockJson))
+      .add("clock" -> game.gameClock.map(clockJson))
       .add("correspondence" -> game.correspondenceClock)
       .add("takebackable" -> takebackable)
       .add("moretimeable" -> moretimeable)
@@ -165,7 +165,7 @@ final class JsonView(
             .baseWithPlayer(game, initialFen)
             .add("moveCentis" -> (flags.movetimes.so(game.moveTimes.map(_.map(_.centis)))))
             .add("importedBy" -> game.pgnImport.flatMap(_.user)),
-          "clock" -> game.clock.map(clockJson),
+          "clock" -> game.gameClock.map(clockJson),
           "correspondence" -> game.correspondenceClock,
           "player" -> {
             commonWatcherJson(game, player, users(pov.color), flags) ++ Json
@@ -228,8 +228,8 @@ final class JsonView(
         ("percent" -> JsNumber(game.playerBlurPercent(player.color)))
 
   private val moretimeJson = ("moretime" -> JsNumber(lila.core.round.Moretime.defaultDuration.toSeconds))
-  private[round] def clockJson(clock: Clock): JsObject =
-    Json.toJsObject(clock) + moretimeJson
+  private[round] def clockJson(clock: lila.core.game.GameClock): JsObject =
+    lila.game.JsonView.gameClockJson(clock) + moretimeJson
 
   private def animationMillis(pov: Pov, pref: Pref) =
     pref.animationMillis * {
@@ -238,4 +238,7 @@ final class JsonView(
     }
 
   private def estimateTotalTime(g: Game) =
-    g.clock.map(_.estimateTotalSeconds).orElse(g.correspondenceClock.map(_.estimateTotalTime)).getOrElse(1200)
+    g.gameClock
+      .map(_.estimateTotalSeconds)
+      .orElse(g.correspondenceClock.map(_.estimateTotalTime))
+      .getOrElse(1200)
