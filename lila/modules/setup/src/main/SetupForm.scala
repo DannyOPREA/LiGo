@@ -6,7 +6,7 @@ import play.api.data.Forms.*
 import scalalib.model.Days
 
 import lila.common.Form as LilaForm
-import lila.common.Form.*
+import lila.common.Form.{ *, given }
 import lila.core.rating.RatingRange
 
 object SetupForm:
