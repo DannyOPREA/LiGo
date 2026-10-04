@@ -1,0 +1,25 @@
+{
+  "t": "count",
+  "ref": "demo0002:1:2",
+  "dead": [
+    "dd"
+  ],
+  "seal": [],
+  "owner": "bbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbb.bbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwwwbbbbbbbbb..wwwwwwww",
+  "score": {
+    "b": {
+      "territory": 170,
+      "stones": 0,
+      "prisoners": 1,
+      "total": 171
+    },
+    "w": {
+      "territory": 152,
+      "stones": 0,
+      "prisoners": 0,
+      "komi": 6.5,
+      "compensation": 0,
+      "total": 158.5
+    }
+  }
+}

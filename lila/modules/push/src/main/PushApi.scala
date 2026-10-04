@@ -54,7 +54,7 @@ final class PushApi(
               title = pov.win match
                 case Some(true) => "You won!"
                 case Some(false) => "You lost."
-                case _ if isVoid(game) => "Your game ended with no result"
+                case _ if game.endedWithNoResult => "Your game ended with no result"
                 case _ => "It's a draw."
               ,
               body = s"Your game with $opponent is over.",
@@ -397,9 +397,6 @@ final class PushApi(
     case move => s"$opponent played $move"
 
   // A Go move as players read it (`D4`, `pass`) (unit 3.16).
-  // a game that ended without a count (ADR 0020 §4): no result, not a draw
-  private def isVoid(game: Game) = game.status == chess.Status.UnknownFinish && game.winnerColor.isEmpty
-
   private def lastMoveText(game: Game): Option[String] =
     game.go.actions.lastOption.map(lila.core.game.GoBridge.label(_, game.go.size.lines))
 

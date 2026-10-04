@@ -55,25 +55,27 @@ object SgfDump:
   /** The rank label ("5k", "1d", "5k?" while provisional) as the rest of the site shows it (unit 5.5). */
   private def rank(p: Player): Option[String] = if p.aiLevel.isDefined then None else Namer.ratingString(p)
 
-  /** The clock as SGF `TM`/`OT`. A correspondence game has days per move; a live one has Fischer time. A game
-    * with neither (untimed) has none. Byo-yomi is not stored on a game yet, so it can't be written here.
+  /** The clock as SGF `TM`/`OT`. A correspondence game has days per move; a live one has Fischer time or
+    * byo-yomi (unit 4.7's clock, written `OT[5x30 byo-yomi]` as Sabaki and CGoban read it). A game with none
+    * (untimed) has none.
     */
   def time(game: Game): Option[SgfTime] =
     game.daysPerTurn
       .map(d => SgfTime.Correspondence(d.value))
       .orElse(game.clockConfig.map(c => SgfTime.Fischer(c.limitSeconds.value, c.incrementSeconds.value)))
+      .orElse(game.byoyomi.map(b => SgfTime.Byoyomi(b.config)))
 
-  /** `RE` (R-RES-2). Only the endings that need no count are written: resignation `B+R`, a flag `W+T`, and a
-    * forfeit `B+F` (a player who left, never moved in a game that couldn't be aborted, or cheated). A game
-    * that ended with a count, by two passes or the ply cap, or never finished or started, has none. Counted
-    * results (`B+3.5`, `0`, `Void`) follow once the scoring phase (unit 4.8) stores them.
+  /** `RE` (R-RES-2): resignation `B+R`, a flag `W+T`, a forfeit `B+F` (a player who left, never moved in a
+    * game that couldn't be aborted, or cheated), the scoring phase's count `B+3.5` or `0` for jigo (unit 4.8,
+    * kept on the finished game as `goScoring`), and `Void` when the scoring phase ended with no count (ADR
+    * 0020 §4). A game that never finished, was aborted, or has no stored count, has none.
     */
   def result(game: Game): Option[GameResult] =
-    for
-      winner <- game.winnerColor.map(GoBridge.goColor)
-      r <- game.status match
-        case Status.Resign => Some(GameResult.Resigned(winner))
-        case Status.Outoftime => Some(GameResult.OutOfTime(winner))
-        case Status.Timeout | Status.NoStart | Status.Cheat => Some(GameResult.Forfeit(winner))
-        case _ => None
-    yield r
+    def won(r: chess.Color => GameResult) = game.winnerColor.map(r)
+    game.status match
+      case Status.Resign => won(c => GameResult.Resigned(GoBridge.goColor(c)))
+      case Status.Outoftime => won(c => GameResult.OutOfTime(GoBridge.goColor(c)))
+      case Status.Timeout | Status.NoStart | Status.Cheat => won(c => GameResult.Forfeit(GoBridge.goColor(c)))
+      case Status.VariantEnd => game.goScoring.flatMap(_.result)
+      case Status.UnknownFinish => game.goScoring.map(_ => GameResult.NoResult)
+      case _ => None

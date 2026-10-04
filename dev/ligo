@@ -58,8 +58,8 @@ Usage: dev/ligo <command> [args]        (mode: $MODE)
                       tests (solver, catalogue, frame, puzzle checks, SGF), with a real-KataGo test
                       when KataGo is installed, then 'puzzles check' over the committed set
   e2e [demo|-- args]  Smoke-test the running stack (home page + lobby websocket); with demo,
-                      also play the Phase 3 demo game in two browsers (desktop and phone,
-                      unit 3.20); with args after --, also run lila's Playwright suite with them
+                      also play the Phase 3 and 4 demo games in two browsers (desktop and phone,
+                      units 3.20, 4.12); with args after --, also run lila's Playwright suite with them
   deps                Fetch dependencies (sbt update, frozen pnpm install); native mode only
   verify-mirror       Cross-check Google-mirror downloads against Maven Central (cloud, ADR 0008)
   katago <cmd>        KataGo: install [cpu|opencl], smoke, bench, path, env (dev/katago.sh)
@@ -609,7 +609,7 @@ cmd_e2e() {
   if [[ "${1:-}" == demo ]]; then
     shift
     need_node_modules
-    say "the Phase 3 demo: two browsers play a casual 9x9 game from the lobby to a resignation"
+    say "the Phase 3 and 4 demos: two browsers play a 9x9 game to a resignation, then two 19x19 byo-yomi games through the scoring phase"
     (cd "$LILA" && BASE_URL=$base run pnpm exec playwright test -c tests/e2e-demo/playwright.config.ts "$@")
   elif [[ "${1:-}" == "--" ]]; then
     shift

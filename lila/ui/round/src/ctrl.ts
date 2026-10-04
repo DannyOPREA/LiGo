@@ -307,8 +307,11 @@ export default class RoundController {
     if (!this.replaying()) this.board.board?.set({ scoring: this.scoringMarks(), movable: 'none' });
     if (!o.counting && o.score && (before?.counting || before?.v !== o.v))
       site.sound.say(`${i18n.site.black} ${o.score.b.total}, ${i18n.site.white} ${o.score.w.total}`);
+    this.setTitle();
     this.redraw();
     this.onChange();
+    // having answered the count, the player has nothing more to do here: lila's "play next game"
+    if (this.isPlaying() && this.hasAccepted()) this.moveOn.next();
   };
 
   /** The server's `resume` event: a player took the game back from the scoring phase to play. */
@@ -374,6 +377,14 @@ export default class RoundController {
   /** Whether the player may place a stone now: their turn, on the last position. */
   canMove = (): boolean =>
     !this.replaying() && !this.moveInFlight && !this.inScoring() && game.isPlayerTurn(this.data);
+
+  /**
+   * The game waits for this player: what lila's `Pov.isMyTurn` says, so the page agrees with the lists
+   * of games to move. Their turn, or in the scoring phase a count they have not yet accepted
+   * (unit 7.7, ADR 0023 §4).
+   */
+  isMyTurn = (): boolean =>
+    this.inScoring() ? !this.data.player.spectator && !this.hasAccepted() : game.isPlayerTurn(this.data);
 
   replayEnabledByPref = (): boolean => {
     const d = this.data;
@@ -720,14 +731,12 @@ export default class RoundController {
   goBerserk = (): void => {
     if (game.berserkableBy(this.data) && !this.hasGoneBerserk(this.data.player.color)) {
       this.socket.berserk();
-      site.sound.play('berserk');
     }
   };
 
   setBerserk = (color: Color): void => {
     if (this.goneBerserk[color]) return;
     this.goneBerserk[color] = true;
-    if (color !== this.data.player.color) site.sound.play('berserk');
     this.redraw();
     $(`<icon data-icon="${licon.Berserk}">`).appendTo($(`.game__meta .player.${color} .user-link`));
   };

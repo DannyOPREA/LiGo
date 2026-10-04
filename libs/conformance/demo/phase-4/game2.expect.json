@@ -1,0 +1,11 @@
+{
+  "result" : "B+8.5",
+  "stones" : {
+    "black" : [ "ja", "jb", "cc", "dc", "jc", "cd", "ed", "jd", "de", "je", "jf", "jg", "jh", "ji", "jj", "jk", "jl", "jm", "jn", "jo", "jp", "jq", "jr", "js" ],
+    "white" : [ "ka", "kb", "kc", "kd", "ke", "kf", "kg", "kh", "ki", "kj", "kk", "kl", "km", "kn", "ko", "kp", "kq", "kr", "ks" ]
+  },
+  "captures" : {
+    "black" : 1,
+    "white" : 0
+  }
+}

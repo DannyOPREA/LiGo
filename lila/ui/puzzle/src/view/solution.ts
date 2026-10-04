@@ -47,7 +47,7 @@ export function controls(ctrl: PuzzleCtrl): MaybeVNode {
   if (!ctrl.solutionOpen || !line) return undefined;
   const at = ctrl.solutionStep;
   const last = line.length - 1;
-  return hl('div.puzzle__controls.analyse-controls', [
+  return hl('div.puzzle__controls', [
     hl(
       'div.jumps',
       {

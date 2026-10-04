@@ -108,6 +108,10 @@ adds **no new sound files** in Phase 9. Go events map onto the existing names:
 - 9.7 deletes the chess- and tournament-only files from each set (Check, Checkmate, Berserk,
   Explosion, OutOfBound, Tournament1st/2nd/3rd/Other) and NewPM (private messages went in unit
   3.6), with their callers; NewChallenge and NewChatMessage stay.
+- **Unit 9.7 amendment (2026-10-04):** every set's `Error` was a link to the `standard` set unit
+  3.1 deleted, so the refused-move sound played nothing; no free set has its own. `Error` now links
+  to each set's `Check`, which therefore stays. The notification bell, NewPM's last caller, plays
+  GenericNotify. The unused `.ogg` and `.m3u` copies go too (lila plays only `.mp3`).
 - A wooden stone-click set is not made in Phase 9: OGS's sound packs are served from its CDN with
   no stated licence, and freesound/opengameart are not reachable from the cloud to check one. It
   can come later as its own unit with a licence check.

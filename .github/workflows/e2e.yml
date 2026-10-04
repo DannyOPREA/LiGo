@@ -1,6 +1,7 @@
 # The end-to-end demo game (unit 3.20, PLAN §5 row 3.20): the whole stack (lila, lila-ws, Mongo,
 # Redis, the scoring worker) started by `dev/ligo up` in native mode, then two browsers play a
-# casual 9x9 Fischer game from the lobby to a resignation, at desktop and phone sizes
+# casual 9x9 Fischer game from the lobby to a resignation (unit 3.20) and two 19x19 byo-yomi games
+# through the scoring phase, one with a resume (unit 4.12), at desktop and phone sizes
 # (lila/tests/e2e-demo). It takes a cold lila build, so it runs nightly, on demand, and on a pull
 # request only while it carries the `e2e` label. Not a required check.
 name: e2e
@@ -63,7 +64,8 @@ jobs:
         working-directory: lila
         run: pnpm exec playwright install --with-deps chromium
       # Mongo and Redis in docker, the ui build, lila-ws, lila and the scoring worker (without
-      # KataGo: scoring isn't part of this game), then waits for lila to answer.
+      # KataGo: its proposals mark nothing dead, which the Phase 4 games allow for), then waits for
+      # lila to answer.
       - name: Start the stack
         run: dev/ligo up
       - name: Smoke test and the demo game

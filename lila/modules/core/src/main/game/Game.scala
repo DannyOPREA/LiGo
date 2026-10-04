@@ -195,6 +195,9 @@ case class Game(
   def winnerColor: Option[Color] = winner.map(_.color)
   def outcome: Option[Outcome] = finished.option(Outcome(winnerColor))
 
+  /** A game that ended without a count (ADR 0020 §4): no result, not a draw (a counted tie is `Draw`). */
+  def endedWithNoResult: Boolean = status == Status.UnknownFinish && winnerColor.isEmpty
+
   def winnerUserId: Option[UserId] = winner.flatMap(_.userId)
 
   def loserUserId: Option[UserId] = loser.flatMap(_.userId)

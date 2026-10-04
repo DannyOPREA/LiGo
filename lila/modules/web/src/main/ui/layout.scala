@@ -195,8 +195,6 @@ final class layout(helpers: Helpers, assetHelper: lila.web.ui.AssetFullHelper)(
   val dataDirection = attr("data-direction")
   val dataBoard = attr("data-board")
   val dataPieceSet = attr("data-piece-set")
-  val dataBoard3d = attr("data-board3d")
-  val dataPieceSet3d = attr("data-piece-set3d")
   val dataAssetUrl = attr("data-asset-url") := netConfig.assetBaseUrl.value
   val dataAssetVersion = attr("data-asset-version")
 
