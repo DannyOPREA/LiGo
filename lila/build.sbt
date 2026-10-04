@@ -119,7 +119,7 @@ lazy val mon = module("mon",
 
 lazy val common = module("common",
   Seq(core),
-  Seq(kamon.core, scaffeine, apacheText, chess.playJson)
+  Seq(kamon.core, scaffeine, apacheText)
 )
 
 lazy val markdown = module("markdown",
@@ -203,7 +203,7 @@ lazy val user = module("user",
 
 lazy val game = module("game",
   Seq(tree, rating, memo),
-  Seq(compression) ++ tests.bundle ++ Seq(scalacheck, munitCheck, chess.testKit)
+  Seq(compression) ++ tests.bundle ++ Seq(scalacheck, munitCheck)
 )
 
  // good dep to game
@@ -310,7 +310,7 @@ lazy val socket = module("socket",
 
 lazy val tree = module("tree",
   Seq(core),
-  Seq(chess.playJson)
+  Seq()
 )
 
 lazy val ui = module("ui",

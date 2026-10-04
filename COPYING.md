@@ -137,6 +137,11 @@ dropped `@lichess-org/chessground` 10.2.0, `chessops` 0.15.1 and `@lichess-org/p
 went the chess screen-reader code (`ui/lib/src/nvui`), the pgn-viewer embeds and lila's chess piece
 and board stylesheets. No third-party package was added.
 
+Unit 3.17 part 3 dropped three scalachess artifacts from lila's sbt build: `scalachess-tiebreak`,
+`scalachess-test-kit` and `scalachess-play-json` (`com.github.lichess-org.scalachess`, 17.17.1, all
+MIT). lila keeps `scalachess` and `scalachess-rating` (MIT) for game-neutral types and Glicko-2
+(ADR 0019 §1), lila-ws keeps `scalachess` and drops `scalachess-play-json`, which it no longer used. No package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file
