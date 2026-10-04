@@ -169,3 +169,83 @@ class GoHookTest extends munit.FunSuite:
     given lila.core.pool.IsPoolCompatible = lila.core.pool.IsPoolCompatible((_, _) => true)
     assert(!h.compatibleWithPools)
     assert(!h.compatibleWithPool(Clock.Config(Clock.LimitSeconds(600), Clock.IncrementSeconds(0)), h.go))
+
+  // Unit 6.5: open games a player can't join are sent anyway, greyed by the browser (ADR 0022 §5)
+  private def member(id: String, rating: Int, lame: Boolean = false, blocks: Set[String] = Set.empty) =
+    LobbyUser(
+      UserId(id),
+      UserName(id),
+      lame = lame,
+      bot = false,
+      perfMap = Map(PerfKey.go -> LobbyPerf(chess.IntRating(rating), chess.rating.RatingProvisional.No)),
+      blocking = lila.core.pool.Blocking(blocks.map(UserId(_)))
+    )
+  private val ranged = RatingRange(chess.IntRating(1700), chess.IntRating(1900))
+  private def memberHook(by: LobbyUser, range: RatingRange = RatingRange.default) =
+    hook(GoSetups.default, by.id.value).copy(user = by.some, ratingRange = range)
+
+  test("a hook out of your range, or a member's hook seen by a guest, is sent but can't be joined"):
+    val carol = member("carol", 1800)
+    val weak = member("weak", 1200)
+    val h = memberHook(carol, ranged)
+    assert(Biter.visible(h, weak.some) && !Biter.canJoin(h, weak.some), "out of range")
+    assert(Biter.canJoin(h, member("near", 1750).some))
+    assert(Biter.visible(h, none) && !Biter.canJoin(h, none), "guest")
+    val guestHook = hook(GoSetups.default, "g")
+    assert(Biter.visible(guestHook, weak.some) && !Biter.canJoin(guestHook, weak.some), "member")
+
+  test("blocks either way and the other lame kind still hide a hook or a seek"):
+    val carol = member("carol", 1800, blocks = Set("dave"))
+    val dave = member("dave", 1800)
+    assert(!Biter.visible(memberHook(carol), dave.some), "carol blocks dave")
+    assert(!Biter.visible(memberHook(dave), carol.some), "dave is blocked by carol")
+    val troll = member("troll", 1800, lame = true)
+    assert(!Biter.visible(memberHook(troll), dave.some) && !Biter.visible(memberHook(troll), none))
+    assert(Biter.visible(memberHook(troll), member("other", 1500, lame = true).some))
+    val seek = dupSeek("s", None, by = carol).copy(ratingRange = ranged)
+    assert(!Biter.visible(seek, dave))
+    val weak = member("weak", 1200)
+    assert(Biter.visible(seek, weak) && !Biter.canJoin(seek, weak), "a seek out of range is sent")
+
+  test("a hook with no range of its own takes any rank: lila's chess default range is gone"):
+    val h = memberHook(member("carol", 1800))
+    assert(Biter.canJoin(h, member("beginner", 600).some))
+    assert(Biter.canJoin(h, member("strong", 2700).some))
+
+  test("hooks and seeks tell the browser who made them and the range they asked for"):
+    val h = memberHook(member("carol", 1800), ranged)
+    assertEquals((h.render \ "auth").as[Boolean], true)
+    assertEquals((h.render \ "rr" \ "min").as[Int], 1700)
+    assertEquals((h.render \ "rr" \ "low").asOpt[String], RatingRanges.low(ranged))
+    assertEquals((hook(GoSetups.default, "g").render \ "auth").as[Boolean], false)
+    assertEquals((hook(GoSetups.default, "g").render \ "rr").toOption, None)
+    val seek = dupSeek("s", None).copy(ratingRange = ranged)
+    assertEquals((seek.render \ "rr" \ "max").as[Int], 1900)
+
+  test("a range's bounds carry their ranks, and a bound at lila's limit is open"):
+    import chess.IntRating
+    val label = (r: Int) => lila.rating.GoRating.label(IntRating(r), chess.rating.RatingProvisional.No)
+    assertEquals(
+      (RatingRanges.low(ranged), RatingRanges.high(ranged)),
+      (Some(label(1700)), Some(label(1900)))
+    )
+    val upward = RatingRange(IntRating(1700), RatingRange.max)
+    assertEquals((RatingRanges.low(upward), RatingRanges.high(upward)), (Some(label(1700)), None))
+    val any = RatingRanges.json(RatingRange.default)
+    assertEquals(((any \ "low").toOption, (any \ "high").toOption), (None, None))
+
+  test("the correspondence tiles are 1 and 3 days of 19×19 Japanese even games"):
+    assertEquals(CorresPresets.all.map(_.id), List("19x19-1d", "19x19-3d"))
+    for p <- CorresPresets.all do
+      assertEquals(
+        (p.go.size, p.go.ruleset, p.go.komi, p.go.handicap),
+        (BoardSize.Nineteen, Ruleset.Japanese, 6.5, 0)
+      )
+    assertEquals(CorresPresets.all.map(_.days.value), List(1, 3))
+    // two players clicking the same tile get seeks that match; another board size or a handicap doesn't
+    val a = dupSeek("a", CorresPresets.all.head.go.some, by = bob).copy(daysPerTurn = Some(Days(1)))
+    val b = dupSeek("b", CorresPresets.all.head.go.some, by = alice).copy(daysPerTurn = Some(Days(1)))
+    assert(a.compatibleWith(b))
+    assert(!a.compatibleWith(b.copy(go = nine.some)))
+    assert(!a.compatibleWith(b.copy(go = GoSetups.default.copy(handicap = 2, komi = 0.5).some)))
+    assert(!a.compatibleWith(b.copy(daysPerTurn = Some(Days(3)))))

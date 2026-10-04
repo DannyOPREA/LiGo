@@ -65,6 +65,7 @@ case class Seek(
       .add("days" -> daysPerTurn)
       .add("provisional" -> perf.provisional.yes)
       .add("goRank" -> lila.rating.GoRating.label(perf.rating, perf.provisional).some) // LiGo (unit 5.5)
+      .add("rr" -> realRatingRange.map(RatingRanges.json)) // LiGo (unit 6.5)
 
 object Seek:
 

@@ -3927,6 +3927,14 @@ interface I18n {
     goSuicideRefused: string;
     /** To play */
     goToPlay: string;
+    /** For guests */
+    goUnjoinableGuests: string;
+    /** For signed-in players */
+    goUnjoinableMembers: string;
+    /** Your rank is outside this game's range */
+    goUnjoinableRange: string;
+    /** Rated games need an account */
+    goUnjoinableRated: string;
     /** Vibration feedback */
     goVibrationFeedback: string;
     /** White stones */
