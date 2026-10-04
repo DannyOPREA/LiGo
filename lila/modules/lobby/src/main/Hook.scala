@@ -130,7 +130,8 @@ object Hook:
       variant = variant.id,
       go = go,
       clock = clock,
-      rated = rated,
+      // a guest's game is casual whatever the request says (ADR 0021 §5, unit 5.7)
+      rated = Rated(rated.yes && user.isDefined),
       color = color,
       user = user.map(LobbyUser.make(_, blocking)),
       sid = sid,

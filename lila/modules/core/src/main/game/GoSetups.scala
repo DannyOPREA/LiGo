@@ -45,6 +45,29 @@ object GoSetups:
   /** Rated games use the standard komi (ADR 0021 §4). */
   def hasStandardKomi(s: GoSetup): Boolean = s.komi == Komi.standard(s.ruleset, s.handicap)
 
+  /** The most handicap stones a rated game may have (ADR 0021 §4): 9 on 19×19, 4 on 9×9; none for 13×13,
+    * which can't be rated until its own ADR.
+    */
+  def maxRatedHandicap(size: BoardSize): Option[Int] = size match
+    case BoardSize.Nineteen => 9.some
+    case BoardSize.Nine => 4.some
+    case BoardSize.Thirteen => none
+
+  /** Why a game with this setup can't be rated, if it can't (ADR 0021 §4, unit 5.7): only games the handicap
+    * maths was calibrated for are rated, so 9×9 or 19×19, no custom position, at most `maxRatedHandicap`
+    * stones and the spec's komi. The forms refuse a rated game that fails this, game creation makes it
+    * casual, and the rating update checks it last (unit 5.3).
+    */
+  def ratedRefusal(s: GoSetup): Option[String] =
+    maxRatedHandicap(s.size) match
+      case None => s"a ${s.size.lines}x${s.size.lines} board".some
+      case _ if s.position.isDefined => "a custom starting position".some
+      case Some(max) if s.handicap > max => s"handicap ${s.handicap} on ${s.size.lines}x${s.size.lines}".some
+      case _ if !hasStandardKomi(s) => s"komi ${s.komi}".some
+      case _ => none
+
+  def canBeRated(s: GoSetup): Boolean = ratedRefusal(s).isEmpty
+
   /** `{ size, rules, komi, handicap? }`, the keys of a game's own `go` block (unit 3.12). */
   def json(s: GoSetup): JsObject =
     Json

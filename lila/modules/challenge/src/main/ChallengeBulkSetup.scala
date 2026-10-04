@@ -81,7 +81,11 @@ final class ChallengeBulkSetup(setupForm: lila.core.setup.SetupForm):
         c => c.clock.isDefined || c.days.isDefined
       )
       .verifying("Go games can't start from a chess position", _.validFen)
-      .verifying("Go games are casual until ratings arrive", _.rated.no)
+      // rated games on setups the rating maths covers (ADR 0021 §4, unit 5.7)
+      .verifying(
+        "A rated Go game needs a 9x9 or 19x19 board and the standard komi",
+        c => c.rated.no || c.go.setup.exists(lila.core.game.GoSetups.canBeRated)
+      )
       .verifying("Komi must be a multiple of 0.5 no bigger than the board", _.go.valid)
       .verifying(
         "Tokens must be unique for real-time games (not correspondence)",

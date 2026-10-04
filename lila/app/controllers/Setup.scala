@@ -49,34 +49,54 @@ final class Setup(
                       case _ if HTTPRequest.isLichobile(ctx.req) => Challenger.Open.some
                       case _ => none
                     .so: challenger =>
-                      val timeControl =
-                        makeTimeControl(config.makeClock, config.makeDaysPerTurn, config.makeByoyomi)
-                      val challenge = lila.challenge.Challenge.make(
-                        variant = config.variant,
-                        initialFen = config.fen,
-                        go = config.goSetup,
-                        timeControl = timeControl,
-                        rated = config.rated,
-                        color = config.color.name,
-                        challenger = challenger,
-                        destUser = destUser,
-                        rematchOf = none
-                      )
-                      env.challenge.api
-                        .create(challenge)
-                        .flatMap:
-                          if _ then
-                            negotiate(
-                              Redirect(routes.Round.watcher(challenge.gameId, Color.white)),
-                              challengeC.showChallenge(challenge, justCreated = true)
-                            )
-                          else
-                            negotiate(
-                              Redirect(routes.Lobby.home),
-                              JsonBadRequest("Challenge not created")
-                            )
+                      lila.challenge.GoRatedChallenge
+                        .color(
+                          config.goSetup,
+                          config.rated,
+                          config.color.name,
+                          origUser.map(_.perf),
+                          destUser.map(_.perf)
+                        )
+                        .fold(
+                          err => negotiate(Redirect(routes.Lobby.home), JsonBadRequest(err)),
+                          color => createFriendChallenge(config, challenger, destUser, color)
+                        )
             yield result
         )
+
+  private def createFriendChallenge(
+      config: lila.setup.FriendConfig,
+      challenger: lila.challenge.Challenge.Challenger,
+      destUser: lila.core.user.GameUser,
+      color: String
+  )(using Context) =
+    import lila.challenge.Challenge.makeTimeControl
+    val timeControl =
+      makeTimeControl(config.makeClock, config.makeDaysPerTurn, config.makeByoyomi)
+    val challenge = lila.challenge.Challenge.make(
+      variant = config.variant,
+      initialFen = config.fen,
+      go = config.goSetup,
+      timeControl = timeControl,
+      rated = config.rated,
+      color = color,
+      challenger = challenger,
+      destUser = destUser,
+      rematchOf = none
+    )
+    env.challenge.api
+      .create(challenge)
+      .flatMap:
+        if _ then
+          negotiate(
+            Redirect(routes.Round.watcher(challenge.gameId, Color.white)),
+            challengeC.showChallenge(challenge, justCreated = true)
+          )
+        else
+          negotiate(
+            Redirect(routes.Lobby.home),
+            JsonBadRequest("Challenge not created")
+          )
 
   private def hookResponse(res: HookResult) = res match
     case HookResult.Created(id) =>

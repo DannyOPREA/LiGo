@@ -288,6 +288,7 @@ final class Challenge(env: Env) extends LilaController(env):
                 res <- limit.challengeUser(me, rateLimited, cost = cost):
                   for
                     challenge <- makeOauthChallenge(config, me, destUser)
+                    challenge <- challenge.raiseIfLeft
                     denied <- env.challenge.granter.isDenied(destUser, config.perfKey.some)
                     _ <- raiseIfSome(denied.map(lila.challenge.ChallengeDenied.translated))(funit)
                     createNow <- env.challenge.api.delayedCreate(challenge)
@@ -316,18 +317,21 @@ final class Challenge(env: Env) extends LilaController(env):
     env.user.perfsRepo
       .withPerf(orig -> dest, config.perfType, _.sec)
       .map: (orig, dest) =>
-        lila.challenge.Challenge.make(
-          variant = config.variant,
-          initialFen = config.position,
-          go = config.goSetup,
-          timeControl = timeControl,
-          rated = config.rated,
-          color = config.color.name,
-          challenger = ChallengeModel.toRegistered(orig),
-          destUser = dest.some,
-          rematchOf = none,
-          rules = config.rules
-        )
+        lila.challenge.GoRatedChallenge
+          .color(config.goSetup, config.rated, config.color.name, orig.perf.some, dest.perf.some)
+          .map: color =>
+            lila.challenge.Challenge.make(
+              variant = config.variant,
+              initialFen = config.position,
+              go = config.goSetup,
+              timeControl = timeControl,
+              rated = config.rated,
+              color = color,
+              challenger = ChallengeModel.toRegistered(orig),
+              destUser = dest.some,
+              rematchOf = none,
+              rules = config.rules
+            )
 
   def openCreate = AnonOrScopedBody(parse.anyContent)(_.Challenge.Write, _.Web.Mobile, _.Web.Takex3): ctx ?=>
     bindForm(

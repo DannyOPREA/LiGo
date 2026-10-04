@@ -24,7 +24,12 @@ object SetupForm:
     friend.fill(FriendConfig.default)
 
   private val goFenError = "Go games can't start from a chess position"
-  private val ratedError = "Go games are casual until ratings arrive"
+  // ADR 0021 §4–§5 (unit 5.7): rated games for signed-in players, on setups the rating maths covers
+  private val ratedError =
+    "A rated Go game needs a 9x9 or 19x19 board, the standard komi, and at most 9 handicap stones on 19x19 or 4 on 9x9"
+  private val ratedEvenError = "A rated game without a named opponent has no handicap"
+  private def ratedOk(rated: Rated, go: lila.core.setup.GoOptions) =
+    rated.no || go.setup.exists(lila.core.game.GoSetups.canBeRated)
   private val komiError = "Komi must be a multiple of 0.5 no bigger than the board"
   private val byoyomiError = "Use one of clock, byoyomi or days"
   private val goError = "Komi must be a multiple of 0.5 no bigger than the board, and handicap 0 to 9 stones"
@@ -36,7 +41,7 @@ object SetupForm:
       "time" -> time,
       "increment" -> increment,
       "days" -> days,
-      "mode" -> mode(withRated = false), // casual until Phase 5
+      "mode" -> mode(withRated = me.isDefined),
       "color" -> color,
       "fen" -> fenField,
       "size" -> goSize,
@@ -51,6 +56,7 @@ object SetupForm:
       .verifying("Can't create rated unlimited game", !_.isRatedUnlimited)
       .verifying(goFenError, _.validFen)
       .verifying(goError, _.go.valid)
+      .verifying(ratedError, c => ratedOk(c.rated, c.go))
 
   def hookFilled(timeModeString: Option[String])(using me: Option[Me]): Form[HookConfig] =
     hook.fill(HookConfig.default(me.isDefined).withTimeModeString(timeModeString))
@@ -62,7 +68,7 @@ object SetupForm:
       "time" -> time,
       "increment" -> increment,
       "days" -> days,
-      "mode" -> mode(withRated = false), // casual until Phase 5
+      "mode" -> mode(withRated = me.isDefined),
       "ratingRange" -> optional(ratingRange),
       "color" -> lila.common.Form.empty,
       "size" -> goSize,
@@ -74,6 +80,7 @@ object SetupForm:
       .verifying("Invalid clock", _.validClock)
       .verifying("Can't create rated unlimited game", !_.isRatedUnlimited)
       .verifying(komiError, _.go.valid)
+      .verifying(ratedError, c => ratedOk(c.rated, c.go))
 
   private lazy val boardApiHookBase: Mapping[HookConfig] =
     mapping(
@@ -101,8 +108,8 @@ object SetupForm:
       )
     )(_ => none)
       .verifying("Invalid clock", _.validClock)
-      .verifying(ratedError, _.rated.no)
       .verifying(komiError, _.go.valid)
+      .verifying(ratedError, c => ratedOk(c.rated, c.go))
 
   def boardApiHook(allowFastGames: Boolean) = Form:
     boardApiHookBase.verifying(
@@ -218,6 +225,7 @@ object SetupForm:
       byoyomi
     )(OpenConfig.from)(_ => none)
       .verifying(goFenError, _.validFen)
-      .verifying(ratedError, _.rated.no)
       .verifying(goError, _.go.valid)
+      .verifying(ratedError, c => ratedOk(c.rated, c.go))
+      .verifying(ratedEvenError, c => c.rated.no || c.go.handicap.forall(_ == 0))
       .verifying(byoyomiError, c => c.byoyomi.isEmpty || (c.clock.isEmpty && c.days.isEmpty))

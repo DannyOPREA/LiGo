@@ -72,7 +72,8 @@ final class ChallengeMaker(
         // a rematch replays the game's board size, ruleset and komi (unit 3.15)
         go = pov.game.go.setup.copy(position = None),
         timeControl = timeControl,
-        rated = chess.Rated.No, // casual until unit 5.7
+        // a rated game's rematch is rated, with the same stones and colours (ADR 0021 §4, unit 5.7)
+        rated = pov.game.rated,
         color = (if alternateColor then !pov.color else pov.color).name,
         // for anon, we don't know the secret, but this challenge is only serialized to json and sent to a listening bot anyway,
         // which doesn't use the secret, so we just use an empty string
