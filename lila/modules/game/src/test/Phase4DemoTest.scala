@@ -30,8 +30,9 @@ class Phase4DemoTest extends munit.FunSuite:
       .takeWhile(_.isDefined)
       .flatten
       .map(_.resolve("libs/conformance/demo/phase-4"))
-      .find(d => Files.isDirectory(d.getParent))
-      .getOrElse(fail("libs/conformance/demo not found above the working directory"))
+      // found by libs/conformance, so write mode can recreate demo/phase-4
+      .find(d => Files.isDirectory(d.getParent.getParent))
+      .getOrElse(fail("libs/conformance not found above the working directory"))
 
   private val writing = sys.env.get("LIGO_DEMO_WRITE").contains("1")
 

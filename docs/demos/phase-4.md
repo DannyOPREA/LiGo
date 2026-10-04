@@ -32,11 +32,11 @@ dev/ligo status
 - [ ] As A, open **Challenge a friend**. Choose board size 19×19, rules **Japanese**, komi 6.5, and
       the **Byo-yomi** time control: 10 minutes, then 5 periods of 30 seconds. Casual. Send the link to
       B (paste it into the private window) and accept there.
-- [ ] Both clocks show the main time and "5 × 30s". Play a short game: a few stones each, a
+- [ ] Both clocks show the main time and "+5×30s" beside it (the periods still to come). Play a short game: a few stones each, a
       capture if you like.
 - [ ] Let one player's main time run down into byo-yomi (set the main time to 1 minute if you'd
       rather not wait). The clock shows the period counting down and the periods left; moving in
-      time gives the period back in full.
+      time gives the period back in full. The label then shows the periods left, such as "5×30s".
 - [ ] Both players pass. The board turns into the scoring board: "Counting…" briefly, then the
       proposed dead stones (crossed out), each side's territory and the live score. The clocks stop.
 - [ ] Both press **Accept**. The game ends with a result such as `B+12.5`, shown on both sides.

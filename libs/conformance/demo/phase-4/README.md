@@ -23,4 +23,7 @@ and the service's test in turn with `LIGO_DEMO_WRITE=1` until nothing is missing
 (cd services/scoring && LIGO_DEMO_WRITE=1 node --test test/demo-phase4.test.ts)
 ```
 
+sbt doesn't see these files as the test's inputs, so after changing only them, run the test with
+`testOnly` (as above), not a cached `test`.
+
 These are LiGo's own files (MIT, ADR 0006). Not rules fixtures: nothing here defines a rule.

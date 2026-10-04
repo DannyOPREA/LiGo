@@ -435,6 +435,7 @@ the go-rules halves are split from their lila halves so they can be built early)
 | 4.10 | Round UI: the byo-yomi clock with its periods, the scoring-phase board on `libs/board` (dead marks, territory, live score, tap a chain to toggle, Accept and Resume buttons, the timeout countdown), the result line | 3.18, 4.7, 4.8 |
 | 4.11 | SGF export: download from the game page and the API, with result, players and time settings from 4.3's writer | 3.12, 4.3, 4.8 |
 | 4.12 | Phase 4 demo: a Playwright test where two browsers play a 19×19 Japanese byo-yomi game that ends with an accepted proposal, and a disputed game that resumes and then ends; the exported SGF read back by goban-engine; the demo checklist for you (opening the SGF in Sabaki, the benchmark on your GPU) | 3.20, 4.6, 4.9, 4.10, 4.11 |
+| 4.12b | Phase 4 demo in browsers (follow-up, 2026-10-04): 4.12 shipped the demo as a script CI runs across lila, the scoring service and goban (`libs/conformance/demo/phase-4/`) plus your checklist, since the cloud can't run the site and 3.20 hadn't landed (logs/decisions.md); this adds the two-browser Playwright test on 3.20's harness | 3.20, 4.12 |
 
 What stays out of Phase 4: rating changes and auto-handicap (Phases 5 and 6), correspondence
 notifications and SGF import (Phase 7), a remote GPU scoring worker (after the POC; the Redis
