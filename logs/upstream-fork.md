@@ -35,7 +35,13 @@
   account deletion; LiGo never wrote to them.
 - Follow-ups: `game.metadata.analysed` and the `analysed` query filters stay (they read a stored flag);
   `lila.tree` now holds only `ExportOptions`, and its `chess.playJson` dependency can go with the last
-  3.17 PR; PgnDump's `WithFlags` evals/literate/accuracy fields go with 2a.
+  3.17 PR; PgnDump's `WithFlags` evals/literate/accuracy fields go with 2a, together with the now inert
+  "Evaluation" and "Textual annotations" boxes on the games download page (`UserGamesDownload.scala`)
+  and their parsing in `app/controllers/Game.scala`. Left as harmless: HttpFilter's `/fishnet/` client
+  name and the dead `bin/mongodb/{game-analysed,analysis-requester-cleanup}.js` scripts.
+- Review: no blocking code findings; `bin/mongodb/indexes.js` no longer creates the analysis indexes, and
+  the UPSTREAM row names `analyse/package.scala`. Lesson: verify's lila test gate ran `testQuick`
+  with 0 tests; for a removal, run each touched project's full `test`.
 
 ### 2026-10-03 · 3.17 part 1 · lila's game holds only the Go game
 - Did: `Game.go` is required and the chess game is gone from lila's `Game` (`core`), with chess
