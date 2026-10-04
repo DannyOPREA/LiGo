@@ -129,11 +129,7 @@ export function opponentGone(ctrl: RoundController): LooseVNode {
   if (ctrl.data.game.rules?.includes('noClaimWin')) return null;
   return gone === true
     ? hl('div.suggestion', [
-        hl(
-          'p',
-          { hook: onSuggestionHook },
-          'Your opponent left the game. You can claim victory, or wait for them.',
-        ),
+        hl('p', { hook: onSuggestionHook }, i18n.site.goOpponentLeftChoices),
         hl(
           'button.button.button-green',
           { hook: bind('click', () => ctrl.socket.sendLoading('resign-force')) },
@@ -186,10 +182,10 @@ export function goMoves(ctrl: RoundController): LooseVNode {
       hl(
         'button.button.button-metal.go-moves__pass',
         {
-          attrs: { disabled: !ctrl.canMove(), title: 'Pass: play no stone this turn' },
+          attrs: { disabled: !ctrl.canMove(), title: i18n.site.goPassTitle },
           hook: bind('click', ctrl.pass, ctrl.redraw),
         },
-        'Pass',
+        i18n.site.goPass,
       ),
   ]);
 }

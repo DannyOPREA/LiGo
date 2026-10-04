@@ -188,7 +188,7 @@ describe('RoundController on a Go game', () => {
   test('two passes end a Phase 3 game with no winner, said in words', () => {
     const { ctrl } = round(data('ee pass pass'));
     ctrl.endWithData({ status: { id: 38, name: 'unknownFinish' }, boosted: false });
-    assert.match(ctrl.statusText(), /Both players passed/);
+    assert.match(String(ctrl.statusText()), /goBothPlayersPassed/);
   });
 
   test('the Pass button does nothing when it is not your turn', () => {

@@ -17,8 +17,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: 0,
   outputDir: 'test-results',
+  // On CI, `github` also posts each failure as an annotation on the check, so it can be read without
+  // downloading the report.
   reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    ? [['list'], ['github'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
     : 'list',
   // As the playground's (ui/playground/e2e/playwright.config.ts, unit 2.4): one baseline for every
   // machine, a strict count for the board and the page's glyphs hidden (Chromium builds draw text a
