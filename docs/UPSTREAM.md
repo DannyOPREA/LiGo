@@ -124,6 +124,7 @@ AGPL §5(a) modification notices. Every change to a file under `lila/` or `lila-
 | 2026-10-04 | lila: `ui/round` (`css/build/round.scss` no longer imports `lib/css/chess/variant-style`; `css/_material.scss` keeps only the prisoners row's sizing, without `lib/css/component/material` and the chess piece rules; deleted `css/_nvui.scss` and `css/build/round.nvui.scss`) | Go's game page carries no chess styles (follow-up to unit 4.10) | round chess CSS clean-up PR |
 | 2026-10-04 | lila: ui `site/src/sound.ts` (`byoyomi`, `byoyomiReset`), `@types/lichess/index.d.ts`; new `lib/src/game/clock/byoyomiSound.ts`, `lib/tests/byoyomiSound.test.ts` | Byo-yomi clocks can play LowTime at each period and a 10-to-1 countdown | Phase 9 sounds (ADR 0026 §2) | unit 9.7 part two (byo-yomi sounds) PR |
 | 2026-10-04 | lila: `ui/lobby/src/setupCtrl.ts` | A refused new game (e.g. the rate limit) no longer leaves the Create button stuck on its spinner, and a plain-text refusal ("Too many requests…") is shown in the alert instead of throwing | Fix found by the e2e demos running into the rate limit | unit 7.5 PR |
+| 2026-10-04 | lila: `tests/e2e-demo/phase8-demo.spec.ts` (new) | The Phase 8 demo on the real stack: sign up, solve and fail puzzles with the real rating change, all 240 puzzles from the server | Phase 8 acceptance (PLAN §5) | unit 8.8 part two PR |
 
 ## Reused libraries (tracked for fixes)
 

@@ -1,6 +1,6 @@
 ---
 name: playwright-e2e-review-patterns
-description: Checks for Playwright page/screenshot tests in lila/ui (unit 2.4) — output dirs resolve to nearest package.json, CI path-area gaps, browser mismatch
+description: Checks for Playwright tests in lila (units 2.4, 8.8) — output dirs, CI area gaps, browser mismatch, import.meta loads 0 tests, no Origin on page.request, casual by-id puzzles, API rate limits
 metadata:
   type: feedback
 ---
@@ -23,6 +23,18 @@ Found reviewing unit 2.4 (playground screenshots + scripted game, 2026-09-28):
 - verify.sh adds gates by changed paths; new test commands (e.g. `dev/ligo test pages`) need a gate.
 - `test all` gaining a step that `die`s (ui not built) aborts the later lila/ws/rules steps.
 - Probe demo-checklist UI claims with a scratchpad Playwright spec (copy page.ts, symlink node_modules).
+
+Real-stack e2e (lila/tests/e2e-demo, unit 8.8 part two, PR #126, 2026-10-04):
+- `import.meta` in a spec under a dir whose nearest package.json lacks `"type": "module"` (lila/
+  has none; ui/<pkg>/ do) makes Playwright load NOTHING: "Total: 0 tests", the other demos die too.
+  `tsc`/oxlint/format all pass. Always run `pnpm exec playwright test -c <config> --list`.
+- `page.request.post` sends no Origin and no X-Requested-With (probe: node http server + Playwright
+  request). lila's CSRFRequestHandler rejects a POST with no Origin (403). Needs an `Origin` header
+  matching net.domain, or X-Requested-With: XMLHttpRequest, or drive the real form.
+- lila's `/training/:id` (and /training/:angle/:id) marks the puzzle casual for a user who never
+  played it (PuzzleApi.casual): no rating change. Only puzzles the selector serves are rated.
+- /api/puzzle/many costs 1 credit per id against 300/hour/IP (puzzle.fetch.ip): 240 ids per run
+  means a CI retry or a 2nd local run in an hour gets 429. /api/puzzle/:id (apiShow) is unlimited.
 
 **Why:** these pass locally and only surface on CI failure or on the wrong PR.
 **How to apply:** any unit adding Playwright tests or CI browser steps. See [[ci-review-patterns]].
