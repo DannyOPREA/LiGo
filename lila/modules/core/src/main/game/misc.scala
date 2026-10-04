@@ -159,7 +159,7 @@ object BSONFields:
   val movedAt = "ua" // ua = updatedAt (bc)
   val turns = "t"
   val analysed = "an"
-  val pgnImport = "pgni"
+  val sgfImport = "sgfi"
   val playingUids = "pl"
 
 def isBoardCompatible(clock: Clock.Config): Boolean = Speed(clock) >= Speed.Rapid

@@ -126,6 +126,37 @@ final class GameUi(helpers: Helpers):
         trans.site.variantEnding.txt()
       case _ => ""
 
+  /** `/paste`: an SGF box and a file picker (unit 7.5, ADR 0023 §2). The file is read in the browser into the
+    * box (`ui/bits`' importer), so one text field is what the server gets, parsed once.
+    */
+  object importer:
+
+    def apply(form: play.api.data.Form[?])(using ctx: Context) =
+      Page(trans.site.importGame.txt())
+        .css("bits.importer")
+        .js(esmInitBit("importer"))
+        .graph(
+          title = trans.site.importGame.txt(),
+          url = routeUrl(routes.Importer.importGame),
+          description = trans.site.importGameExplanation.txt()
+        ):
+          main(cls := "importer page-small box box-pad")(
+            h1(cls := "box__top")(trans.site.importGame()),
+            p(cls := "explanation")(
+              trans.site.importGameExplanation(),
+              br,
+              span(cls := "text", dataIcon := Icon.InfoCircle):
+                trans.site.importGameDataPrivacyWarning()
+            ),
+            standardFlash,
+            postForm(cls := "form3 import", action := routes.Importer.sendGame)(
+              form3.group(form("sgf"), trans.site.goPasteSgfHere())(form3.textarea(_)()),
+              form3.group(form("sgfFile"), trans.site.goOrUploadSgfFile(), klass = "upload"): f =>
+                form3.file.sgf(f.name),
+              form3.action(form3.submit(trans.site.importGame(), Icon.UploadCloud.some))
+            )
+          )
+
   object crosstable:
 
     def option(cross: Option[lila.game.Crosstable.WithMatchup], game: Game)(using ctx: Context) =
@@ -192,7 +223,7 @@ final class GameUi(helpers: Helpers):
           div(cls := "header", dataIcon := gameIcon(g))(
             div(cls := "header__text")(
               source(g),
-              g.pgnImport.flatMap(_.date).fold[Frag](pastMomentWithPreload(g.createdAt))(frag(_)),
+              g.sgfImport.flatMap(_.date).fold[Frag](pastMomentWithPreload(g.createdAt))(frag(_)),
               contextLink.map(l => frag(separator, l))
             )
           ),
@@ -206,8 +237,8 @@ final class GameUi(helpers: Helpers):
           g.metadata.analysed.option(
             div(cls := "metadata text", dataIcon := Icon.BarChart)(trans.site.computerAnalysisAvailable())
           ),
-          g.pgnImport.flatMap(_.user).map { user =>
-            div(cls := "metadata")("PGN import by ", userIdLink(user.some))
+          g.sgfImport.flatMap(_.user).map { user =>
+            div(cls := "metadata")("SGF import by ", userIdLink(user.some))
           }
         )
       )
@@ -222,7 +253,7 @@ final class GameUi(helpers: Helpers):
         if g.sourceIs(_.Import) then
           frag(
             span("IMPORT"),
-            g.pgnImport.flatMap(_.user).map { user =>
+            g.sgfImport.flatMap(_.user).map { user =>
               frag(" ", trans.site.by(userIdLink(user.some, None, withOnline = false)))
             },
             separator,

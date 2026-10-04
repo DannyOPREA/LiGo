@@ -160,7 +160,7 @@ final class JsonView(
           "game" -> gameJsonView
             .baseWithPlayer(game)
             .add("moveCentis" -> (flags.movetimes.so(game.moveTimes.map(_.map(_.centis)))))
-            .add("importedBy" -> game.pgnImport.flatMap(_.user)),
+            .add("importedBy" -> game.sgfImport.flatMap(_.user)),
           "clock" -> game.gameClock.map(clockJson),
           "correspondence" -> game.correspondenceClock,
           "player" -> {

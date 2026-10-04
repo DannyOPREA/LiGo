@@ -115,6 +115,20 @@ function renderSide(ctrl: AnalyseCtrl): LooseVNodes {
         ]),
       one('RE') && hl('p', i18n.site.goResultX(one('RE'))),
     ]),
+    // a stored game's own page and SGF (unit 7.5), beside the tree's download in the SGF box
+    ctrl.opts.game &&
+      hl('div.analyse__go-game', [
+        hl(
+          'a.text',
+          { attrs: { href: ctrl.opts.game.url, 'data-icon': licon.Back } },
+          i18n.site.goBackToTheGame,
+        ),
+        hl(
+          'a.text',
+          { attrs: { href: ctrl.opts.game.sgfUrl, download: '', 'data-icon': licon.Download } },
+          i18n.site.goDownloadGameSgf,
+        ),
+      ]),
     !ctrl.setup &&
       hl(
         'button.button.button-empty.text',

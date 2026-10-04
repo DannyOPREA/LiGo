@@ -47,6 +47,8 @@ final class Env(
 
   lazy val rematches = wire[Rematches]
 
+  lazy val importer = wire[lila.game.importer.Importer]
+
   lazy val jsonView = wire[JsonView]
 
   lazy val userGameApi = UserGameApi(lightUserApi)
