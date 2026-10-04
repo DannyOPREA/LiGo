@@ -15,9 +15,7 @@ trait GameHelper:
 
   def titleGame(g: Game) =
     val speed = chess.Speed(g.clock.map(_.config)).name
-    val game = g.go match
-      case Some(go) => s"${go.size.lines}×${go.size.lines} Go"
-      case None => s"${g.variant.exotic.so(s"${g.variant.name} ")}Chess"
+    val game = s"${g.go.size.lines}×${g.go.size.lines} Go"
     s"$speed $game • ${playerText(g.whitePlayer)} vs ${playerText(g.blackPlayer)}"
 
   /** A Go game's setup as players read it, e.g. `9×9 • Japanese • komi 6.5 • 2 stones` (unit 3.16). */

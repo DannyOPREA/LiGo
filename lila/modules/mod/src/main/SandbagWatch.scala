@@ -86,12 +86,7 @@ final private class SandbagWatch(
       else if loserRatingGt(1600) then 12
       else 8
 
-    import chess.variant.*
-    val minTurns = game.variant match
-      case _ if game.isGo => baseMinTurns // unit 3.16: a Go game's variant is the unused chess default
-      case Atomic => baseMinTurns / 4
-      case KingOfTheHill | ThreeCheck => baseMinTurns / 2
-      case _ => baseMinTurns
+    val minTurns = baseMinTurns
 
     game.playedPlies <= minTurns && game.winner.exists(_.ratingDiff.exists(_.positive))
   }

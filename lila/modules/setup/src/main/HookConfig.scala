@@ -92,7 +92,7 @@ case class HookConfig(
       increment = game.clock.map(_.incrementSeconds) | increment,
       days = game.daysPerTurn | days,
       rated = Rated.No, // casual until unit 5.7, even after an older rated game
-      go = game.go.fold(go)(g => GoOptions.of(g.setup.copy(handicap = 0, position = None)))
+      go = GoOptions.of(game.go.setup.copy(handicap = 0, position = None))
     )
     val h2 = if h1.isRatedUnlimited then h1.copy(rated = Rated.No) else h1
     if !h2.validClock then h2.copy(time = 1) else h2

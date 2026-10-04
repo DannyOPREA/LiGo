@@ -1,11 +1,9 @@
 package controllers
 
-import play.api.libs.json.Json
 import play.api.mvc.*
 
-import lila.app.{ *, given }
+import lila.app.*
 import lila.common.HTTPRequest
-import lila.core.id.GameFullId
 import lila.tree.ExportOptions
 
 final class UserAnalysis(
@@ -35,8 +33,7 @@ final class UserAnalysis(
     InEmbedContext:
       NotFound.snip(views.analyse.embed.notFound)
 
-  // correspondence premove aka forecast
-  // also used by lichobile for post-game analysis
+  // used by lichobile for post-game analysis; forecasts went with chess moves (unit 3.17)
   def game(id: GameId, color: Color) = Open:
     Found(env.game.gameRepo.game(id)): g =>
       env.round.proxyRepo.upgradeIfPresent(g).flatMap { game =>
@@ -50,9 +47,7 @@ final class UserAnalysis(
       }
 
   private def mobileAnalysis(pov: Pov)(using ctx: Context): Fu[Result] = for
-    initialFen <- env.game.gameRepo.initialFen(pov.game)
     users <- env.user.api.gamePlayers.analysis(pov.game)
-    owner = isMyPov(pov)
     _ = gameC.preloadUsers(users)
     analysis <- env.analyse.analyser.get(pov.game)
     crosstable <- env.game.crosstableApi(pov.game)
@@ -60,69 +55,17 @@ final class UserAnalysis(
       pov,
       users,
       analysis,
-      env.game.gameOpening.of(pov.game, ctx.isAuth),
-      initialFen = initialFen,
       tv = none,
       withFlags = ExportOptions(
-        division = true,
         clocks = true,
         movetimes = true,
         rating = ctx.pref.showRatings,
         lichobileCompat = HTTPRequest.isLichobile(ctx.req)
-      ),
-      owner = owner
+      )
     )
   yield
     import lila.game.JsonView.given
     Ok(data.add("crosstable", crosstable))
-
-  private def forecastReload = JsonOk(Json.obj("reload" -> true))
-
-  def forecastsPost(fullId: GameFullId) = AuthOrScopedBodyWithParser(parse.json)(_.Web.Mobile) { ctx ?=> _ ?=>
-    import lila.round.Forecast
-    Found(env.round.proxyRepo.pov(fullId)): pov =>
-      if isTheft(pov) then theftResponse
-      else if !Forecast.isValid(ctx.body.body) then BadRequest
-      else
-        ctx.body.body
-          .validate[Forecast.Steps]
-          .fold(
-            err => BadRequest(err.toString),
-            forecasts =>
-              val fu = for
-                _ <- env.round.forecastApi.save(pov, forecasts)
-                res <- env.round.forecastApi.loadForDisplay(pov)
-              yield res.fold(JsonOk(Json.obj("none" -> true)))(JsonOk(_))
-              fu.recover:
-                case Forecast.OutOfSync => forecastReload
-                case _: lila.core.round.ClientError => forecastReload
-          )
-  }
-
-  def forecastsGet(fullId: GameFullId) = Scoped(_.Web.Mobile) { _ ?=> _ ?=>
-    Found(env.round.proxyRepo.pov(fullId)): pov =>
-      JsonOk(env.round.mobile.forecast(pov.game, pov.fullId.anyId))
-  }
-
-  def forecastsOnMyTurn(fullId: GameFullId, uci: String) =
-    AuthOrScopedBodyWithParser(parse.json)(_.Web.Mobile) { ctx ?=> _ ?=>
-      import lila.round.Forecast
-      Found(env.round.proxyRepo.pov(fullId)): pov =>
-        if isTheft(pov) then theftResponse
-        else if !Forecast.isValid(ctx.body.body) then BadRequest
-        else
-          ctx.body.body
-            .validate[Forecast.Steps]
-            .fold(
-              err => BadRequest(err.toString),
-              forecasts =>
-                for
-                  _ <- env.round.forecastApi.playAndSave(pov, uci, forecasts).recoverDefault
-                  wait = (1 + Forecast.maxPlies(forecasts).min(10)) * 50
-                  _ <- lila.common.LilaFuture.sleep(wait.millis)
-                yield forecastReload
-            )
-    }
 
   def help = Open:
     Ok.snip:

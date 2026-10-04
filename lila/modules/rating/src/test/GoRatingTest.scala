@@ -217,3 +217,19 @@ class GoRatingTest extends munit.FunSuite:
     assert(isCloseTo(back.glicko.deviation, 250d, 1e-9), s"deviation ${back.glicko.deviation}")
     assertEquals(back.glicko.volatility, 0.06)
     assertEquals(label(back.glicko), "5k?")
+
+  test("activity names the rank a change ended on, and the rank it left when it changed (unit 5.6)"):
+    assertEquals(rankChange(chess.IntRating(1580), chess.IntRating(1590)), (None, "5k"))
+    assertEquals(rankChange(chess.IntRating(1918), chess.IntRating(1919)), (Some("1k"), "1d"))
+    assertEquals(rankChange(chess.IntRating(1919), chess.IntRating(1918)), (Some("1d"), "1k"))
+
+  test("the rating graph gets the rank table as [name, rating] pairs, 25k to 9d (unit 5.6)"):
+    val json = play.api.libs.json.Json.parse(rankTableJson).as[List[(String, Int)]]
+    assertEquals(json, rankTable)
+    assertEquals(json.head._1, "25k")
+    assertEquals(json.last._1, "9d")
+
+  test("the profile page test's copy of the rank table matches GoRating's (unit 5.6)"):
+    val file = java.nio.file.Paths.get("ui/playground/e2e/rank-table.json")
+    assume(java.nio.file.Files.exists(file), s"run from lila/: ${file.toAbsolutePath}")
+    assertEquals(Json.parse(java.nio.file.Files.readString(file)), Json.parse(rankTableJson))

@@ -8,8 +8,7 @@ import lila.tree.Analysis
 
 final class Analyser(
     gameRepo: lila.core.game.GameRepo,
-    analysisRepo: AnalysisRepo,
-    divider: lila.core.game.Divider
+    analysisRepo: AnalysisRepo
 )(using Executor)
     extends lila.tree.Analyser:
 
@@ -34,27 +33,12 @@ final class Analyser(
   private def sendAnalysisProgress(analysis: Analysis, complete: Boolean): Funit =
     analysis.id match
       case Analysis.Id.Game(id) =>
-        gameRepo.gameWithInitialFen(id).mapz { g =>
-          Bus.pub(
-            lila.tree.AnalysisProgress(
-              id,
-              () => makeProgressPayload(analysis, g.game, g.fen | g.game.variant.initialFen)
-            )
-          )
+        gameRepo.game(id).mapz { game =>
+          Bus.pub(lila.tree.AnalysisProgress(id, () => makeProgressPayload(analysis, game)))
         }
       case _ =>
         fuccess:
           Bus.pub(lila.tree.StudyAnalysisProgress(analysis, complete))
 
-  private def makeProgressPayload(
-      analysis: Analysis,
-      game: Game,
-      initialFen: chess.format.Fen.Full
-  ): JsObject =
-    import lila.tree.{ TreeBuilder, ExportOptions, Node }
-    val tree = TreeBuilder(game, analysis.some, initialFen, ExportOptions.default, lila.log.system.warn)
-    val division = divider(game.id, game.sans, game.variant, initialFen.some)
-    Json.obj(
-      "analysis" -> JsonView.bothPlayers(game.startedAtPly, analysis, division = division),
-      "tree" -> Node.lichobileNodeJsonWriter.writes(tree)
-    )
+  private def makeProgressPayload(analysis: Analysis, game: Game): JsObject =
+    Json.obj("analysis" -> JsonView.bothPlayers(game.startedAtPly, analysis))

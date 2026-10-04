@@ -7,7 +7,7 @@ import scalalib.data.Preload
 import lila.common.Bus
 import lila.core.i18n.{ I18nKey as trans, Translator, defaultLang }
 import lila.core.round.*
-import lila.game.{ Event, GameRepo, Progress, Rewind }
+import lila.game.{ Event, Progress, Rewind }
 import lila.pref.{ Pref, PrefApi }
 
 private final class TakebackState(nbDeclined: Int, lastDeclined: Option[Instant]):
@@ -21,7 +21,6 @@ private given takebackBoardZero: Zero[TakebackBoard] = Zero(ByColor.fill(Takebac
 
 final private class Takebacker(
     messenger: Messenger,
-    gameRepo: GameRepo,
     prefApi: PrefApi
 )(using Executor, Translator):
 
@@ -97,7 +96,7 @@ final private class Takebacker(
 
   private def offerTakebackMessage(pov: Pov): String =
     val k = if pov.game.turnOf(pov.color) then 2 else 1
-    pov.game.go.fold(chessTakebackMessage(pov, k))(goTakebackMessage(pov, k, _))
+    goTakebackMessage(pov, k, pov.game.go)
 
   // Go moves are numbered 1, 2, 3… in play order: "Black proposes takeback (4. ee 5. cc)".
   private def goTakebackMessage(pov: Pov, k: Int, go: ligo.gorules.GoGame): String =
@@ -109,18 +108,6 @@ final private class Takebacker(
         s"${first + i}. ${lila.core.game.GoBridge.token(a)}"
     val base = pov.color.fold(trans.site.whiteProposesTakeback, trans.site.blackProposesTakeback).txt()
     s"$base (${moves.mkString(" ")})"
-
-  private def chessTakebackMessage(pov: Pov, k: Int): String =
-    val lastSans = pov.game.sans.takeRight(k).toList.map(_.value)
-    val startPly = pov.game.ply - k + 1
-    def movePrefix(ply: Ply, secondMove: Boolean): String =
-      if secondMove && ply.turn.white then ""
-      else s"${(ply.value + 1) / 2}${if ply.turn.black then "." else "..."}"
-    val rollbackMoves: List[String] =
-      lastSans.zipWithIndex.map: (san, i) =>
-        s"${movePrefix(startPly + i, i == 1)}$san"
-    val base = pov.color.fold(trans.site.whiteProposesTakeback, trans.site.blackProposesTakeback).txt()
-    s"$base (${rollbackMoves.mkString(" ")})"
 
   private def isAllowedByPrefs(game: Game, prefs: Preload[ByColor[Pref]]): Fu[Boolean] =
     if game.hasAi then fuTrue
@@ -141,20 +128,11 @@ final private class Takebacker(
         else fufail(ClientError("[takebacker] disallowed by preferences " + game.id))
 
   private def rewind(pov: Pov, plies: Int)(using GameProxy): Fu[Events] =
-    if pov.game.isGo then
-      // go-rules' undo, one action at a time (ADR 0019 §6)
-      (1 to plies)
-        .foldLeft[Either[String, Progress]](Right(Progress(pov.game))): (prev, _) =>
-          prev.flatMap(prog => Rewind.go(prog.game).map(rewinded => prog.withGame(rewinded.game)))
-        .fold(e => fufail(ClientError(s"[takebacker] $e")), saveAndNotify(_, pov))
-    else
-      for
-        fen <- gameRepo.initialFen(pov.game)
-        progress <- (1 to plies).foldLeft(fuccess(Progress(pov.game))): (prev, _) =>
-          prev.flatMap: prog =>
-            Rewind(prog.game, fen).toFuture.dmap(rewinded => prog.withGame(rewinded.game))
-        events <- saveAndNotify(progress, pov)
-      yield events
+    // go-rules' undo, one action at a time (ADR 0019 §6)
+    (1 to plies)
+      .foldLeft[Either[String, Progress]](Right(Progress(pov.game))): (prev, _) =>
+        prev.flatMap(prog => Rewind.go(prog.game).map(rewinded => prog.withGame(rewinded.game)))
+      .fold(e => fufail(ClientError(s"[takebacker] $e")), saveAndNotify(_, pov))
 
   private def saveAndNotify(p1: Progress, pov: Pov)(using proxy: GameProxy): Fu[Events] =
     val p2 = p1 + Event.Reload

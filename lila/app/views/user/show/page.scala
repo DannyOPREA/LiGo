@@ -5,7 +5,7 @@ import lila.app.UiEnv.{ *, given }
 import lila.app.mashup.UserInfo
 import lila.core.data.SafeJsonStr
 import lila.game.GameFilter
-import lila.rating.UserWithPerfs.titleUsernameWithBestRating
+import lila.rating.UserWithPerfs.titleUsernameWithGoRank
 
 lazy val ui = lila.user.ui.UserShow(helpers, bits)
 
@@ -25,7 +25,7 @@ object page:
       .graph(
         OpenGraph(
           image = staticAssetUrl("logo/ligo-tile-wide.png").some,
-          title = u.titleUsernameWithBestRating,
+          title = u.titleUsernameWithGoRank,
           url = routeUrl(routes.User.show(u.username)),
           description = ui.describeUser(u)
         )
@@ -76,7 +76,10 @@ object page:
 
   private def pageModule(info: UserInfo): Option[PageModule] =
     info.ratingChart.map: rc =>
-      PageModule("chart.ratingHistory", SafeJsonStr(s"""{"data":$rc}"""))
+      PageModule(
+        "chart.ratingHistory",
+        SafeJsonStr(s"""{"data":$rc,"rankTable":${lila.rating.GoRating.rankTableJson}}""")
+      )
 
   def deleted(canCreate: Boolean) =
     Page("No such player"):

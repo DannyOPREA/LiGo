@@ -2,9 +2,9 @@ package lila.core
 package game
 
 import _root_.chess.format.Fen
-import _root_.chess.format.pgn.{ Pgn, SanStr, Tags }
+import _root_.chess.format.pgn.{ Pgn, Tags }
 import _root_.chess.variant.Variant
-import _root_.chess.{ ByColor, Centis, Clock, Color, Division, Ply, Speed, Status }
+import _root_.chess.{ ByColor, Centis, Clock, Color, Ply, Speed, Status }
 import _root_.chess.opening.Opening
 import cats.derived.*
 import play.api.libs.json.*
@@ -108,7 +108,7 @@ abstract class GameRepo(val coll: BSONCollection):
   def withInitialFen(game: Game): Fu[WithInitialFen]
   def gameWithInitialFen(gameId: GameId): Fu[Option[WithInitialFen]]
   def isAnalysed(game: Game): Fu[Boolean]
-  def insertDenormalized(g: Game, initialFen: Option[Fen.Full] = None): Funit
+  def insertDenormalized(g: Game): Funit
   def recentAnalysableGamesByUserId(userId: UserId, nb: Int): Fu[List[Game]]
   def lastGamesBetween(u1: User, u2: User, since: Instant, nb: Int): Fu[List[Game]]
   def analysed(id: GameId): Fu[Option[Game]]
@@ -159,11 +159,6 @@ trait Namer:
 
 trait Explorer:
   def apply(id: GameId): Fu[Option[Game]]
-
-trait Divider:
-  def apply(id: GameId, sans: => Vector[SanStr], variant: Variant, initialFen: Option[Fen.Full]): Division
-
-type GameOpening = (Game, Boolean) => Option[Opening]
 
 object PgnDump:
   case class WithFlags(

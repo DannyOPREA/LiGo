@@ -539,15 +539,3 @@ object Node:
   def partitionTreeWriter(node: Node, lichobile: Boolean): JsValue =
     val writer = if lichobile then lichobileNodeJsonWriter.writes else defaultNodeJsonWriter.writes
     JsArray(node.mainlineNodeList.map(writer))
-
-object Tree:
-
-  def makePartitionTreeJson(
-      game: Game,
-      analysis: Option[Analysis],
-      initialFen: Fen.Full,
-      options: ExportOptions,
-      logChessError: TreeBuilder.LogChessError
-  ): JsValue =
-    val root = TreeBuilder(game, analysis, initialFen, options, logChessError)
-    Node.partitionTreeWriter(root, options.lichobileCompat)

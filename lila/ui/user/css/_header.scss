@@ -22,4 +22,11 @@
   .line {
     vertical-align: top;
   }
+
+  // LiGo: the Go rank beside the name (unit 5.6)
+  .user-show__rank {
+    margin-inline-start: 0.5em;
+    color: $c-font-dim;
+    font-weight: normal;
+  }
 }
