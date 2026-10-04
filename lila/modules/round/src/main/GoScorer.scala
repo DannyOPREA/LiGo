@@ -25,6 +25,8 @@ final private class GoScorer(
 
   // the refs with a re-send already scheduled, so each unanswered request has one timer at a time
   private val resending = scala.collection.concurrent.TrieMap.empty[String, Unit]
+  // the deadline each game's expiry timer is set for, so a deadline gets one timer however often it is met
+  private val expiring = scala.collection.concurrent.TrieMap.empty[GameId, Instant]
 
   /** After a Go move: the second pass, or the move cap, opens the phase. */
   def afterMove(game: Game)(using GameProxy): Option[Fu[Events]] =
@@ -55,6 +57,7 @@ final private class GoScorer(
 
   /** The phase's deadline may have passed. */
   def expire(game: Game)(using GameProxy): Fu[Events] =
+    expiring.remove(game.id)
     GoScoringPlay.expire(game, nowInstant).fold(fuccess(Nil))(apply)
 
   /** The round was loaded, the service restarted, or a re-send is due: send the request still unanswered, if
@@ -88,7 +91,7 @@ final private class GoScorer(
           scheduleExpiry(game)
           game.goScoring
             .filter(_ => game.playable)
-            .so(sc => gameRepo.setCheckAt(game, sc.expiresAt))
+            .so(sc => gameRepo.setCheckAt(game, checkAt(sc, nowInstant)))
             .inject(Nil)
     yield step.progress.events ::: ended
 
@@ -101,13 +104,21 @@ final private class GoScorer(
     game.goScoring
       .filter(_ => game.playable)
       .foreach: sc =>
-        val millis = sc.expiresAt.toMillis - nowMillis
-        schedule(game.id, (millis.max(0) + 1000).millis, Expiry)
+        if !expiring.put(game.id, sc.expiresAt).contains(sc.expiresAt) then
+          val millis = sc.expiresAt.toMillis - nowMillis
+          schedule(game.id, (millis.max(0) + 1000).millis, Expiry)
 
 object GoScorer:
 
   /** lila re-sends an unanswered request this often (ADR 0020 §1, §4). */
   val resendDelay = 30.seconds
+
+  /** When Titivate should look at a game in the scoring phase (its `ck`): at the deadline, and every minute
+    * while a request is unanswered, so a round nobody has loaded since a lila restart still re-sends it (ADR
+    * 0020 §1–2).
+    */
+  def checkAt(sc: lila.core.game.GoScoring, now: Instant): Instant =
+    if sc.outstanding && sc.expiresAt.isAfter(now.plusMinutes(1)) then now.plusMinutes(1) else sc.expiresAt
 
   // the round's messages (RoundAsyncActor)
   case class Toggle(playerId: GamePlayerId, at: Point, seen: CountVersion)

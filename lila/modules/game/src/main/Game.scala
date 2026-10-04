@@ -215,6 +215,14 @@ object GameExt:
       g.go.exists(_.phase == ligo.gorules.Phase.Scoring) ||
         g.playedPlies.value >= lila.core.game.GoBridge.maxPlies
 
+    /** Whether the clock keeps running after the Go action that leads to `next`: always, except at the ply
+      * cap, which closes play for good (ADR 0020 §3). The second pass doesn't end the game but opens the
+      * scoring phase, which play may resume from, so it earns its increment or byo-yomi period reset like any
+      * move; the phase then stops the clock.
+      */
+    def goClockActiveAfter(next: ligo.gorules.GoGame): Boolean =
+      lila.core.game.GoBridge.plies(next) < lila.core.game.GoBridge.maxPlies
+
     /** Apply a Go action already accepted by the rules (`next`), with the clock stepped for it (ADR 0019 §5):
       * the Go game, ply, clock and its history, move times and blurs, and the move event.
       */

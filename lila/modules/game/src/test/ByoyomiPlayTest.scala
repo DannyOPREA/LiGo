@@ -77,7 +77,7 @@ class ByoyomiPlayTest extends munit.FunSuite:
   // What the round does for a move the rules accepted: step the clock, then apply.
   private def play(g: Game, action: Action, metrics: MoveMetrics = MoveMetrics()): Progress =
     val next = g.go.get(action).fold(r => fail(s"refused $action: ${r.key}"), identity)
-    g.applyGoMove(next, g.stepGoClock(metrics, gameActive = !g.withGo(next).goPlayEnds).map(_.value))
+    g.applyGoMove(next, g.stepGoClock(metrics, gameActive = g.goClockActiveAfter(next)).map(_.value))
 
   // Black thinks `s` seconds, then White answers at once.
   private def round(g: Game, black: String, white: String, s: Double)(using w: Wall): Game =
@@ -142,11 +142,12 @@ class ByoyomiPlayTest extends munit.FunSuite:
     val stepped = g4.stepGoClock(MoveMetrics(), gameActive = true)
     assert(stepped.exists(_.value.outOfTime(Color.Black, withGrace = false)))
 
-  test("a game-ending move stops the clock; finishing stops it too"):
+  test("the scoring phase stops the clock; finishing stops it too"):
     given w: Wall = Wall()
     val g2 = playAll(newGo(), "ee", "cc")
-    val ended = play(play(g2, Action.Pass).game, Action.Pass).game
-    assert(!ended.byoyomi.get.isRunning)
+    val passed = play(play(g2, Action.Pass).game, Action.Pass).game
+    val scoring = GoScoringPlay.open(passed, java.time.Instant.EPOCH).getOrElse(fail("no phase")).game
+    assert(!scoring.byoyomi.get.isRunning)
     val g3 = play(g2, Action.Place(p("gg"))).game
     assert(g3.byoyomi.get.isRunning)
     val finished = g3.finish(Status.Resign, Some(Color.Black))

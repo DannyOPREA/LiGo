@@ -28,3 +28,13 @@ class GoScorerTest extends munit.FunSuite:
     assertEquals(GoScorer.readVersion("2:3"), Some(CountVersion(2, 3)))
     List("", "2", "2:", ":3", "a:b", "1:2:3").foreach: s =>
       assertEquals(GoScorer.readVersion(s), None, s)
+
+  test("Titivate looks at a game every minute while the service owes it an answer, else at the deadline"):
+    import lila.core.game.GoScoring
+    val now = java.time.Instant.parse("2026-10-04T12:00:00Z")
+    val waiting = GoScoring.waiting(now, now.plusSeconds(600))
+    assertEquals(GoScorer.checkAt(waiting, now), now.plusSeconds(60))
+    assertEquals(GoScorer.checkAt(waiting, now.plusSeconds(570)), now.plusSeconds(600))
+    val answered =
+      waiting.copy(shown = 1, proposal = Some(GoScoring.Proposal(Set.empty, GoScoring.Source.KataGo)))
+    assertEquals(GoScorer.checkAt(answered, now), now.plusSeconds(600))
