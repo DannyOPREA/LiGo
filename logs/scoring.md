@@ -35,7 +35,8 @@
   `Status.VariantEnd` with the winner (none for jigo); no count at all ends it as `UnknownFinish`.
   lila-ws forwards `score-toggle`, `score-accept`, `score-resume` as `r/do` with their `d`.
   Events: versioned `scoring` and `resume`; `endData` and the game JSON carry `result` (`B+0.5`).
-  go-rules gained `Scoring.restore`.
+  go-rules gained `Scoring.restore`. For 4.10's clock, byo-yomi clock JSON and clock events also
+  carry `inByo: {b, w}` (whether each side is in byo-yomi; ADR 0020 §7 amended).
 - Worked: 18 GoScoringTest cases (opening, proposal, stale/partial/second proposals, malformed
   replies, toggles and recounts, accepts, jigo, resume and phase 2, deadlines and overtime,
   correspondence limits, BSON and GameDiff, the cap, the service's JSON), 3 round tests, one

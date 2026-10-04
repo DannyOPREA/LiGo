@@ -128,6 +128,7 @@ class ByoyomiPlayTest extends munit.FunSuite:
     assertEquals((js \ "periods" \ "b").as[Int], 3)
     assertEquals((js \ "periods" \ "w").as[Int], 3)
     assertEquals((js \ "byo").as[Int], 30)
+    assertEquals((js \ "inByo").as[JsObject], Json.obj("b" -> true, "w" -> false))
 
   test("a period that runs out is used up; the last one running out is out of time"):
     given w: Wall = Wall()
@@ -211,6 +212,7 @@ class ByoyomiPlayTest extends munit.FunSuite:
     assertEquals((js \ "periods" \ "b").as[Int], 3)
     assertEquals((js \ "byo").as[Int], 30)
     assertEquals((js \ "emerg").as[Int], 10)
+    assertEquals((js \ "inByo").as[JsObject], Json.obj("b" -> false, "w" -> false))
 
   private def playAll(g: Game, moves: String*): Game =
     moves.foldLeft(g)((g, m) => play(g, Action.Place(p(m))).game)
