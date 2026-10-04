@@ -1,38 +1,15 @@
 // no side effects allowed due to re-export by index.ts
 
-import { Chessground as makeChessground } from '@lichess-org/chessground';
-import { uciToMove } from '@lichess-org/chessground/util';
-import { COLORS } from 'chessops';
 import { h, type VNode } from 'snabbdom';
 
-import * as domData from '@/data';
-import { fenColor } from '@/game/chess';
-import { lichessClockIsRunning, setClockWidget } from '@/game/clock/clockWidget';
+import { COLORS } from '@/game/chess';
+import { setClockWidget } from '@/game/clock/clockWidget';
 import { pubsub } from '@/pubsub';
 import { wsSend } from '@/socket';
 
 import { renderGoMini } from './goMini';
 
-export const initMiniBoard = (node: HTMLElement): void => {
-  const [fen, orientation, lm] = node.getAttribute('data-state')!.split(',');
-  initMiniBoardWith(node, { fen, orientation: orientation as Color, lastMove: uciToMove(lm) });
-};
-
-export const initMiniBoardWith = (node: HTMLElement, config: CgConfig): void => {
-  const cgConfig = {
-    coordinates: false,
-    viewOnly: !node.getAttribute('data-playable'),
-    drawable: { enabled: false, visible: false },
-    ...config,
-  };
-  domData.set(node, 'chessground', makeChessground(node, cgConfig));
-};
-
 export const initMiniBoards = (parent?: HTMLElement): void => {
-  Array.from((parent || document).getElementsByClassName('mini-board--init')).forEach((el: HTMLElement) => {
-    el.classList.remove('mini-board--init');
-    initMiniBoard(el);
-  });
   // LiGo (unit 3.19, mini-board slice): a Go game's static mini board, `data-state` as a mini game's
   Array.from((parent || document).getElementsByClassName('go-mini--init')).forEach(el => {
     el.classList.remove('go-mini--init');
@@ -48,7 +25,7 @@ export const renderClock = (color: Color, time: number): VNode =>
 
 // LiGo (unit 3.19, mini-board slice): a Go game's mini game has a `.go-mini` board instead of a
 // chessground, and its `data-state` is `board,color,lastMove,plies` (lila's GameUi.mini). Chess mini
-// games keep chessground until 3.19 part 2 removes it.
+// games went with chessground in 3.19 part 2.
 const goMiniOf = (node: Element): HTMLElement | null => node.querySelector('.go-mini');
 
 // A Go game's clocks start once each side has played (lila's `stepGoClock`), so a mini game counts the
@@ -74,39 +51,10 @@ const initGoMiniGame = (node: Element, board: HTMLElement): string | null => {
   return node.getAttribute('data-live');
 };
 
-export const initMiniGame = (node: Element, withCg?: typeof makeChessground): string | null => {
+export const initMiniGame = (node: Element): string | null => {
   const goBoard = goMiniOf(node);
-  if (goBoard) return initGoMiniGame(node, goBoard);
-  const [fen, color, lm] = node.getAttribute('data-state')!.split(','),
-    config = {
-      coordinates: false,
-      viewOnly: true,
-      fen,
-      orientation: color as Color,
-      lastMove: uciToMove(lm),
-      drawable: {
-        enabled: false,
-        visible: false,
-      },
-    },
-    $el = $(node).removeClass('mini-game--init'),
-    $cg = $el.find('.cg-wrap'),
-    turnColor = fenColor(fen);
-
-  domData.set($cg[0] as Element, 'chessground', (withCg ?? makeChessground)($cg[0] as HTMLElement, config));
-
-  COLORS.forEach(color =>
-    $el.find('.mini-game__clock--' + color).each(function (this: HTMLElement) {
-      setClockWidget(this, {
-        time: parseInt(this.getAttribute('data-time')!),
-        pause: color !== turnColor || !lichessClockIsRunning(fen, color),
-      });
-    }),
-  );
-  return node.getAttribute('data-live');
+  return goBoard ? initGoMiniGame(node, goBoard) : null;
 };
-
-export const getChessground = (node: HTMLElement): CgApi => domData.get(node, 'chessground');
 
 export const initMiniGames = (parent?: HTMLElement): void => {
   const nodes = Array.from((parent || document).getElementsByClassName('mini-game--init')),
@@ -123,31 +71,10 @@ const updateGoMiniGame = (node: HTMLElement, board: HTMLElement, data: GoMiniGam
   setGoClocks(node, data.turn, seen.plies, { white: data.wc, black: data.bc });
 };
 
-export const updateMiniGame = (node: HTMLElement, data: MiniGameUpdateData | GoMiniGameUpdateData): void => {
+export const updateMiniGame = (node: HTMLElement, data: GoMiniGameUpdateData): void => {
   const goBoard = goMiniOf(node);
-  // a Go board only takes Go positions, and a chess board only chess ones
-  if (goBoard || 'board' in data) {
-    if (goBoard && 'board' in data) updateGoMiniGame(node, goBoard, data);
-    return;
-  }
-  const lm = data.lm,
-    cg = getChessground(node.querySelector('.cg-wrap')!);
-  if (cg)
-    cg.set({
-      fen: data.fen,
-      lastMove: uciToMove(lm),
-    });
-  const turnColor = fenColor(data.fen);
-  const updateClock = (time: number | undefined, color: Color) => {
-    const clockEl = node?.querySelector('.mini-game__clock--' + color) as HTMLElement;
-    if (clockEl && !isNaN(time!))
-      setClockWidget(clockEl, {
-        time: time!,
-        pause: color !== turnColor || !lichessClockIsRunning(data.fen, color),
-      });
-  };
-  updateClock(data.wc, 'white');
-  updateClock(data.bc, 'black');
+  // a Go board only takes Go positions, whatever else reaches it
+  if (goBoard && typeof data.board === 'string') updateGoMiniGame(node, goBoard, data);
 };
 
 export const finishMiniGame = (node: HTMLElement, win?: 'b' | 'w'): void =>
@@ -159,13 +86,6 @@ export const finishMiniGame = (node: HTMLElement, win?: 'b' | 'w'): void =>
         `<span class="mini-game__result">${win ? (win === color[0] ? 1 : 0) : '½'}</span>`,
       );
   });
-
-interface MiniGameUpdateData {
-  fen: FEN;
-  lm: Uci;
-  wc?: number;
-  bc?: number;
-}
 
 // lila-ws's `fen` message for a Go game (ADR 0019 §6): the compact board, the player to move, and the
 // last move as an SGF point or `pass`.

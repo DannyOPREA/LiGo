@@ -10,8 +10,8 @@ import {
   type PointStyle,
   Tooltip,
 } from 'chart.js';
-import { COLORS } from 'chessops';
 
+import { COLORS } from 'lib/game/chess';
 import { pubsub } from 'lib/pubsub';
 
 import division from './division';

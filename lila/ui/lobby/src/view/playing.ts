@@ -1,5 +1,5 @@
 import { timeago } from 'lib/i18n';
-import { onInsert, initMiniBoard, renderGoMini, div, time, a, span } from 'lib/view';
+import { onInsert, renderGoMini, div, time, a, span } from 'lib/view';
 
 import type LobbyController from '@/ctrl';
 import type { NowPlaying } from '@/interfaces';
@@ -16,10 +16,7 @@ export default function ({ data }: LobbyController) {
       a('/' + pov.fullId)(`.${pov.variant.key}`, { key: `${pov.gameId}${pov.lastMove}` }, [
         pov.board !== undefined
           ? span('.go-mini', { hook: onInsert(el => renderGoMini(el, pov.board!, pov.lastMove)) })
-          : span('.mini-board.cg-wrap.is2d', {
-              'data-state': `${pov.fen},${pov.orientation || pov.color},${pov.lastMove}`,
-              hook: onInsert(initMiniBoard),
-            }),
+          : null,
         span('.meta', [
           pov.opponent.ai
             ? i18n.site.aiNameLevelAiLevel('Stockfish', pov.opponent.ai)

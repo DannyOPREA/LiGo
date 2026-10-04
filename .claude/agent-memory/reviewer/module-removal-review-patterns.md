@@ -67,5 +67,14 @@ Checks that found real problems in Phase 3 removal units (3.2 tournaments, 3.3 s
   Review base: when origin/main has moved, `git diff origin/main` (two-dot) shows other units'
   merges as reverts; use `git diff $(git merge-base HEAD origin/main)`.
 
+- 3.19 part 2 (2026-10-04, chessground/chessops removal) finds: "stand-ins" re-implementing a removed
+  library to keep a kept file compiling can be keeping DEAD code alive — follow each kept export to a
+  live caller (sanWriter's parser had only the deleted nvui; `speakable` only `site.sound.saySan`,
+  which nothing calls; `fenColor` only deleted miniBoard). Dead Scala helpers emitting removed assets
+  (`chessgroundTag` -> npm/chessground.min.js, `chessgroundMini`) survive a "UI only" unit. Check open
+  sibling PRs for file overlap with `gh api repos/:owner/:repo/pulls/N/files`. verify.sh has no
+  `compile ui` (tsc/esbuild/sass) gate; stale `ui/*/dist/*.d.ts` and `public/compiled` copies of
+  deleted modules sit on disk (gitignored), so grep src, not the build tree.
+
 **Why:** compile + UI build pass with all of these; only grep-driven review finds them.
 **How to apply:** every Phase 3 removal unit (3.4–3.7 next). See also [[lila-edit-review-patterns]].
