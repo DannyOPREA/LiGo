@@ -141,15 +141,12 @@ object GameExport:
       clocks: Boolean = true,
       moves: Boolean = true,
       tags: Boolean = true,
-      evals: Boolean = true,
       rating: Boolean = true,
       delayMoves: Boolean = false,
       lastFen: Boolean = false,
-      accuracy: Boolean = false,
       division: Boolean = false,
       bookmark: Boolean = false
   ):
-    def requiresAnalysis = evals || accuracy
     def keepDelayIf(cond: Boolean) = copy(delayMoves = delayMoves && cond)
 
 object BSONFields:
