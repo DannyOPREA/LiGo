@@ -4,6 +4,7 @@ import { beforeEach, describe, test } from 'node:test';
 import {
   init as snabInit,
   attributesModule,
+  h,
   classModule,
   eventListenersModule,
   propsModule,
@@ -15,7 +16,7 @@ import { goSetupName, standardKomi, validKomi } from '../src/goSetup';
 import SetupController, { type HandicapAdvice } from '../src/setupCtrl';
 import { colorButtons } from '../src/view/setup/components/colorButtons';
 import { gameModeButtons } from '../src/view/setup/components/gameModeButtons';
-import { goOptions } from '../src/view/setup/components/goOptions';
+import { goAdvancedFields, goSizePicker } from '../src/view/setup/components/goOptions';
 
 // The shared test setup's i18n strings are functions; the site's are strings, which snabbdom renders as
 // text, so this file uses plain strings.
@@ -81,6 +82,9 @@ const lobby = (
   (ctrl as any).setupCtrl = setup;
   return { ctrl, setup };
 };
+
+// the board size and the folded options, as the window shows them together
+const goOptions = (setup: SetupController): VNode => h('div', [goSizePicker(setup), goAdvancedFields(setup)]);
 
 const formOf = (setup: SetupController) => Object.fromEntries(setup.propsToFormData('random').entries());
 
@@ -262,9 +266,22 @@ describe('the create-game form', () => {
     assert.ok(setup.valid());
   });
 
+  test('a game with no clock is casual: the server refuses a rated unlimited game (unit 5.8)', () => {
+    const { setup } = lobby({ go: 1580 });
+    setup.openModal('friend', { mode: 'rated', timeMode: 'unlimited' }, 'bob');
+    assert.equal(setup.gameMode(), 'casual');
+    assert.ok(setup.ratedModeDisabled());
+    setup.timeControl.mode('realTime');
+    assert.ok(!setup.ratedModeDisabled());
+    setup.gameMode('rated');
+    setup.timeControl.mode('unlimited');
+    assert.equal(setup.gameMode(), 'casual');
+    assert.equal(formOf(setup).mode, '0');
+  });
+
   test('a rated game with stones needs a named opponent', () => {
     const { setup } = lobby();
-    setup.openModal('friend', { mode: 'rated' });
+    setup.openModal('friend', { mode: 'rated', timeMode: 'realTime' });
     setup.setHandicap(3);
     assert.equal(setup.ratedProblem(), 'site.goRatedHandicapNeedsOpponent');
     setup.gameMode('casual');
@@ -273,7 +290,7 @@ describe('the create-game form', () => {
 
   test('a rated challenge to a named player keeps the stones within one of the suggestion, and the ranks pick colours', () => {
     const { setup } = lobby({ go: 1580 });
-    setup.openModal('friend', { mode: 'rated' }, 'bob');
+    setup.openModal('friend', { mode: 'rated', timeMode: 'realTime' }, 'bob');
     const advice: HandicapAdvice = {
       19: { suggested: 5, min: 4, max: 6 },
       9: { suggested: 1, min: 0, max: 2 },
@@ -341,7 +358,7 @@ describe('the create-game form', () => {
 
     test('moves stones outside the allowed range to the suggestion, and shows the colours', async () => {
       const { setup } = lobby({ go: 1580 });
-      setup.openModal('friend', { mode: 'rated' }, 'bob');
+      setup.openModal('friend', { mode: 'rated', timeMode: 'realTime' }, 'bob');
       setup.setHandicap(9);
       await flush();
       restore();
@@ -353,8 +370,8 @@ describe('the create-game form', () => {
 
     test('keeps an even rated challenge, which is always allowed', async () => {
       const { setup } = lobby({ go: 1580 });
-      setup.openModal('friend', { mode: 'rated' }, 'bob');
-      setup.setHandicap(0);
+      setup.openModal('friend', { mode: 'rated', timeMode: 'realTime' }, 'bob');
+      setup.chooseHandicap(0);
       await flush();
       restore();
       assert.equal(setup.handicap(), 0);
@@ -363,7 +380,7 @@ describe('the create-game form', () => {
 
     test('keeps the stones a challenge link fixed, and says why they cannot be rated', async () => {
       const { setup } = lobby({ go: 1580 });
-      setup.openModal('friend', { mode: 'rated', handicap: 2, goKomi: 0.5 }, 'bob');
+      setup.openModal('friend', { mode: 'rated', timeMode: 'realTime', handicap: 2, goKomi: 0.5 }, 'bob');
       await flush();
       restore();
       assert.equal(setup.handicap(), 2);
@@ -372,7 +389,7 @@ describe('the create-game form', () => {
 
     test('a reply for an opponent the window no longer challenges is dropped', async () => {
       const { setup } = lobby({ go: 1580 });
-      setup.openModal('friend', { mode: 'rated' }, 'bob');
+      setup.openModal('friend', { mode: 'rated', timeMode: 'realTime' }, 'bob');
       setup.openModal('hook', { mode: 'rated' });
       await flush();
       restore();

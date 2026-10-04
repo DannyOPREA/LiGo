@@ -3,12 +3,16 @@
 // in what order they are listed. Pure functions, so tests/openChallenges.test.ts can check them.
 import { goSizes, type GoRuleset, type GoSize } from './goSetup';
 import type { Hook, Mode, RatingRangeJson, Seek } from './interfaces';
+import { rankIndex, type RankTable } from './rankRange';
 
 export type LiveSpeed = 'bullet' | 'blitz' | 'rapid' | 'classical';
 export const liveSpeeds: LiveSpeed[] = ['bullet', 'blitz', 'rapid', 'classical'];
 
 export type RatedChoice = 'rated' | 'casual';
 export const ratedChoices: RatedChoice[] = ['rated', 'casual'];
+
+export type HandicapChoice = 'even' | 'handicap';
+export const handicapChoices: HandicapChoice[] = ['even', 'handicap'];
 
 // A hook or a seek, in the shape the table shows.
 export interface OpenRow {
@@ -103,12 +107,13 @@ export interface Chips {
   sizes: GoSize[];
   speeds: LiveSpeed[];
   rated: RatedChoice[];
+  handicap: HandicapChoice[];
 }
 
-export const noChips = (): Chips => ({ sizes: [], speeds: [], rated: [] });
+export const noChips = (): Chips => ({ sizes: [], speeds: [], rated: [], handicap: [] });
 
 export const anyChip = (chips: Chips): boolean =>
-  chips.sizes.length + chips.speeds.length + chips.rated.length > 0;
+  chips.sizes.length + chips.speeds.length + chips.rated.length + chips.handicap.length > 0;
 
 const toggled = <A>(list: A[], value: A): A[] =>
   list.includes(value) ? list.filter(v => v !== value) : [...list, value];
@@ -125,9 +130,13 @@ export const toggleRated = (chips: Chips, choice: RatedChoice): Chips => ({
   ...chips,
   rated: toggled(chips.rated, choice),
 });
+export const toggleHandicap = (chips: Chips, choice: HandicapChoice): Chips => ({
+  ...chips,
+  handicap: toggled(chips.handicap, choice),
+});
 
 // Reads what the browser stored, whatever shape it has (a stored value from lila's old filter form has
-// another shape and yields no chips).
+// another shape and yields no chips; one stored before the even/handicap group has none pressed there).
 export const parseChips = (json: string | null): Chips => {
   try {
     const raw = json ? JSON.parse(json) : null;
@@ -137,6 +146,7 @@ export const parseChips = (json: string | null): Chips => {
       sizes: keep(raw?.sizes, goSizes),
       speeds: keep(raw?.speeds, liveSpeeds),
       rated: keep(raw?.rated, ratedChoices),
+      handicap: keep(raw?.handicap, handicapChoices),
     };
   } catch {
     return noChips();
@@ -149,7 +159,8 @@ const matches = (row: OpenRow, chips: Chips): boolean =>
   (!chips.speeds.length ||
     row.kind !== 'live' ||
     (row.speed !== 'correspondence' && chips.speeds.includes(row.speed))) &&
-  (!chips.rated.length || chips.rated.includes(row.rated ? 'rated' : 'casual'));
+  (!chips.rated.length || chips.rated.includes(row.rated ? 'rated' : 'casual')) &&
+  (!chips.handicap.length || chips.handicap.includes(row.handicap > 0 ? 'handicap' : 'even'));
 
 // Your own challenge always stays in the list, as lila's filter kept your own hook.
 export const applyChips = (rows: OpenRow[], chips: Chips): OpenRow[] =>
@@ -177,9 +188,22 @@ export interface Fit {
   suits: boolean;
 }
 
+// What you play, from the quick-pairing chip row (unit 6.6's `QuickChips`, ADR 0022 §5): rated or casual,
+// and whether a handicap game is fine. Structural, so quickPair.ts (which imports this file) needn't be
+// imported here.
+export interface Wants {
+  rated: boolean;
+  handicap: boolean;
+}
+
+// A joinable row suits you when it is rated or casual as you play, and even or (with Handicap OK) a
+// handicap game. Without `wants`, every joinable row suits.
+const suitsWants = (row: OpenRow, wants?: Wants): boolean =>
+  !wants || (row.rated === wants.rated && (row.handicap === 0 || wants.handicap));
+
 // The server's own join rules (`Biter.canJoin`), from the fields it sends since unit 6.5: it sends the
 // rows you can't join too, and the table greys them with the reason.
-export const fit = (row: OpenRow, viewer: Viewer, chips: Chips = noChips()): Fit => {
+export const fit = (row: OpenRow, viewer: Viewer, wants?: Wants): Fit => {
   const no = (reason: Unjoinable): Fit => ({ joinable: false, reason, suits: false });
   // yours, from this tab or another one (the server refuses a hook of your own whichever tab made it)
   if (row.own || (!!viewer.username && row.user === viewer.username)) return no('own');
@@ -188,7 +212,7 @@ export const fit = (row: OpenRow, viewer: Viewer, chips: Chips = noChips()): Fit
     if (row.auth) return no('members');
   } else if (!row.auth) return no('guests');
   if (viewer.username && row.range && outOfRange(viewer.rating, row.range)) return no('range');
-  return { joinable: !row.disabled, suits: !row.disabled && matches(row, chips) };
+  return { joinable: !row.disabled, suits: !row.disabled && suitsWants(row, wants) };
 };
 
 // lila's `RatingRange.contains`: a bound at lila's limit (400 or 2900) is open
@@ -208,22 +232,37 @@ export const rangeLabel = (r: RatingRangeJson): string =>
         : '';
 
 // Your own challenge first, then what suits you, then the other joinable rows, then the rest; inside
-// each group the closest rating to yours first (ADR 0022 §5), and the shortest game first when you
-// have no rating to compare (or the rows have none).
-export const sortRows = (rows: OpenRow[], viewer: Viewer, chips: Chips = noChips()): OpenRow[] => {
-  const rank = (row: OpenRow): number => {
+// each group the closest rank to yours first (ADR 0022 §5), then the closest rating, and the shortest
+// game first when you have no rating to compare (or the rows have none). Without a rank table, ratings
+// alone.
+export const sortRows = (
+  rows: OpenRow[],
+  viewer: Viewer,
+  wants?: Wants,
+  rankTable?: RankTable,
+): OpenRow[] => {
+  const group = (row: OpenRow): number => {
     if (row.own) return 0;
-    const f = fit(row, viewer, chips);
+    const f = fit(row, viewer, wants);
     return f.suits ? 1 : f.joinable ? 2 : 3;
   };
-  const distance = (row: OpenRow): number =>
-    viewer.rating !== undefined && row.rating !== undefined ? Math.abs(row.rating - viewer.rating) : Infinity;
+  const compare = viewer.rating !== undefined;
+  const ranks = (row: OpenRow): number =>
+    compare && rankTable?.length && row.rating !== undefined
+      ? Math.abs(rankIndex(rankTable, row.rating) - rankIndex(rankTable, viewer.rating!))
+      : Infinity;
+  const points = (row: OpenRow): number =>
+    compare && row.rating !== undefined ? Math.abs(row.rating - viewer.rating!) : Infinity;
+  // Infinity - Infinity is NaN, so equal distances compare as equal first
+  const closer = (a: number, b: number): number => (a === b ? 0 : a < b ? -1 : 1);
   return rows
-    .map((row, i) => ({ row, i, rank: rank(row), distance: distance(row) }))
+    .map((row, i) => ({ row, i, group: group(row), ranks: ranks(row), points: points(row) }))
     .sort(
       (a, b) =>
-        a.rank - b.rank ||
-        (a.distance === b.distance ? a.row.seconds - b.row.seconds : a.distance < b.distance ? -1 : 1) ||
+        a.group - b.group ||
+        closer(a.ranks, b.ranks) ||
+        closer(a.points, b.points) ||
+        a.row.seconds - b.row.seconds ||
         a.i - b.i,
     )
     .map(x => x.row);

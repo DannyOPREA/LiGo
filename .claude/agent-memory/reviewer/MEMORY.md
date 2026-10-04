@@ -30,11 +30,11 @@
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, Setup.like/rematch bypass, kept chess rematch, vacuous me=None tests (3.15)
 - [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, PLAN-row scope gaps, gated-predicate side readers (isGone), empty sans, Resume index drift, empty steps (3.11–3.16)
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, rematch bypass, vacuous me=None; 4.9: TS TimeControl switches, handicap rematch swap, sg speed formula
-- [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding dead zones, guest seeks, raw reasons (6.7); negative provisional ratingMap, own-by-sri, capped lists (6.5)
+- [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR dead zones, guest seeks (6.7); provisional ratingMap (6.5); guest byo presets, persisted suggestions (6.8)
 - [Mini board review patterns](mini-board-review-patterns.md) — ownerPreview is public API, fen-message ply undercount, DOM-testable miniBoard.ts (3.19)
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, stand-in rating carry-over, checklist words vs data (8.7–8.8)
 - [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, scratch PW probes (8.7)
 - [Correspondence review patterns](correspondence-review-patterns.md) — sorted i18n.d.ts, unrendered notify types, decision rows vs code, alarm races (7.6); flag msg name, post-end tick (7.7)
-- [Review patterns (5.7)](feedback_review_patterns.md) — verify.sh sbt cache (use testFull), two rematch paths, toFriend retarget, licences, vacuous pool test, 25k floor
+- [Review patterns (5.7, 5.8)](feedback_review_patterns.md) — verify.sh sbt cache (use testFull), two rematch paths, toFriend retarget, licences, vacuous pool test, 25k floor, demo checklists vs enforce rules, clueless JSON

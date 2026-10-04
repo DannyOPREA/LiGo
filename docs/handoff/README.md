@@ -44,10 +44,7 @@ LiGo's own code is mostly glue between those parts, plus:
 
 At the time of writing, these units from `docs/PLAN.md` §5 were not merged:
 
-- **Phase 5:** 5.8, the ratings demo.
 - **Phase 6:**
-  - 6.7 part two, the rest of the open-challenges table;
-  - 6.8, one form for custom games and challenges;
   - 6.9, the load test;
   - 6.10, the lobby demo.
   - The lobby player test (see [lobby-research.md](lobby-research.md)) runs after 6.10.

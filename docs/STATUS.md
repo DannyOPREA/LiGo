@@ -18,7 +18,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 - Phase 5 (under the owner's "work until I tell you to stop" delegation): units 5.1–5.8 in
   docs/PLAN.md §5. 5.1 (ADR 0021, PR #37), 5.2 (rating maths, PR #39), 5.4's signup half (PR #70)
   and 5.3 (rated Go games move ratings with handicap, PR #76) merged; 5.4's account page (PR #85) merged;
-  5.5 part 1 (PR #90) and 5.6 (the profile in Go ranks, PR #93) merged, 5.5 part 2 (the one Go leaderboard) in review; 5.7 (rated games: server PR #109, setup windows PR #115) merged; 5.8 after all of them. Log: logs/ratings.md.
+  5.5 part 1 (PR #90), 5.6 (the profile in Go ranks, PR #93), 5.7 (rated games: server PR #109, setup windows PR #115) and 5.5 part 2 (the one Go leaderboard, PR #120) merged; 5.8 (the Phase 5 demo: `lila/tests/e2e-demo/phase5-demo.spec.ts` and your checklist docs/demos/phase-5.md) in review. Log: logs/ratings.md.
 
 - Phase 6 (under the owner's "work until I tell you to stop" delegation): units 6.1–6.10 in
   docs/PLAN.md §5. 6.1 (ADR 0022, PR #41) and 6.2 (auto-handicap pairing in `lila/modules/pool`,
@@ -149,7 +149,7 @@ _Updated at the end of every session (`/status`). Newest information wins._
 | 2. Board integration | done (units 2.1–2.4, PRs #19, #23, #25, #27) |
 | 3. Fork & de-chess | split into units 3.1–3.20 (ADR 0018); 3.1–3.15 merged; 3.19 part 1 in review (you approved the deletions for 3.1–3.7) |
 | 4. Go-native game | split into units 4.1–4.12 (PLAN §5); 4.1–4.11 merged, 4.12 (the demo) in review |
-| 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.2 under way, 5.3–5.8 wait for Phases 3–4 |
+| 5. Accounts & ratings | split into units 5.1–5.8 (PLAN §5); 5.1–5.7 merged, 5.8 (the demo, docs/demos/phase-5.md) in review |
 | 6. The lobby | split into units 6.1–6.10 (PLAN §5); 6.1–6.3 merged (ADR 0022), 6.4 part one in review, the rest wait for Phases 3–5 |
 | 7. Correspondence, SGF, analysis | split into units 7.1–7.8 (PLAN §5); 7.1–7.3 under way, 7.4–7.8 wait for Phases 3–4 |
 | 8. Tsumego | split into units 8.1–8.8 (PLAN §5); 8.1–8.7 and 8.8 part one merged, 8.8 part two in review |

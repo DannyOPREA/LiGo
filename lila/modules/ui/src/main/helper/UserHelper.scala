@@ -246,7 +246,9 @@ trait UserHelper:
       p.key.perfTrans,
       nb,
       provisional,
-      glicko.clueless,
+      // LiGo: a declared Go rank shows before a first game (unit 5.8), as GoRating.rankKnown says; the
+      // ui module can't see lila.rating, so the rule is spelled out: no games and lila's starting deviation
+      if p.key == PerfKey.go then nb == 0 && glicko.deviation >= 500 else glicko.clueless,
       p.key.perfIcon,
       go = p.key == PerfKey.go
     )

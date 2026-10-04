@@ -7,6 +7,8 @@ export interface ClockOpts {
   bothPlayersHavePlayed(): boolean;
   hasGoneBerserk(color: Color): boolean;
   alarmColor?: Color;
+  /** LiGo: every tick of a running clock, with the time it shows (a byo-yomi clock's sounds, unit 4.10). */
+  onTick?(color: Color, millis: Millis): void;
 }
 
 export interface ClockConfig {
@@ -166,7 +168,10 @@ export class ClockCtrl {
 
     this.scheduleTick(millis, 0);
     if (millis === 0) this.opts.onFlag();
-    else updateElements(this, this.elements[color], millis);
+    else {
+      updateElements(this, this.elements[color], millis);
+      this.opts.onTick?.(color, millis);
+    }
 
     if (this.opts.alarmColor === color) {
       if (this.alarmAction && millis < this.alarmAction.seconds * 1000) {
