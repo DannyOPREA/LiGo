@@ -34,11 +34,9 @@ final class Game(env: Env, apiC: => Api) extends LilaController(env):
   private[controllers] def exportGame(gameId: GameId)(using ctx: Context): Fu[Result] =
     given Option[Me] = ctx.isFullAuth.so(ctx.me)
     Found(env.round.proxyRepo.gameIfPresentOrFetch(gameId)): game =>
-      // A Go game's PGN is headers only, so unless JSON is asked for it downloads as SGF (unit 4.11); a game
-      // that isn't Go has no SGF, so it stays PGN.
+      // A Go game's PGN is headers only, so unless JSON is asked for it downloads as SGF (unit 4.11).
       val format = GameApiV2.Format.byRequest match
-        case GameApiV2.Format.PGN if game.isGo => GameApiV2.Format.SGF
-        case GameApiV2.Format.SGF if !game.isGo => GameApiV2.Format.PGN
+        case GameApiV2.Format.PGN => GameApiV2.Format.SGF
         case other => other
       val config = GameApiV2.OneConfig(
         format = format,

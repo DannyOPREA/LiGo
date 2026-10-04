@@ -23,7 +23,7 @@ class SgfDumpTest extends munit.FunSuite:
 
   private def act(g: Game, actions: Action*): Game =
     actions.foldLeft(g): (g, a) =>
-      g.withGo(g.go.get(a).fold(r => fail(s"refused $a: ${r.key}"), identity))
+      g.withGo(g.go(a).fold(r => fail(s"refused $a: ${r.key}"), identity))
 
   private def place(sgf: String) = Action.Place(Point.fromSgf(sgf).get)
 
@@ -111,5 +111,3 @@ class SgfDumpTest extends munit.FunSuite:
     assert(sgf.contains("PW[a\\]b]"), sgf)
     assert(sgf.contains("PB[c\\\\d]"), sgf)
 
-  test("a game that is not Go has no SGF"):
-    assertEquals(SgfDump(played.copy(go = None), names, "x"), None)

@@ -15,9 +15,9 @@ object SgfDump:
 
   val contentType = "application/x-go-sgf"
 
-  /** The record, or `None` for a game that is not a Go game. Like the PGN and JSON exports, it holds back a
-    * game in play's last moves when `flags.delayMoves` asks for it (an untrusted caller), and has no moves
-    * with `moves = false`.
+  /** The record (`None` only if the shown moves fail to replay, which a stored game's don't). Like the PGN
+    * and JSON exports, it holds back a game in play's last moves when `flags.delayMoves` asks for it (an
+    * untrusted caller), and has no moves with `moves = false`.
     */
   def apply(
       game: Game,
@@ -25,13 +25,13 @@ object SgfDump:
       place: String,
       flags: WithFlags = WithFlags()
   ): Option[String] =
-    game.go.flatMap: go =>
-      val shown =
-        if flags.moves then PgnDump.applyDelay(go.actions, flags.keepDelayIf(game.playable)).toVector
-        else Vector.empty
-      // A prefix of a stored game's accepted actions replays; the record is the game as far as it is shown.
-      val record = if shown.size == go.actions.size then Some(go) else GoGame.replay(go.setup, shown).toOption
-      record.map(r => Sgf.write(r, info(game, names, place)))
+    val go = game.go
+    val shown =
+      if flags.moves then PgnDump.applyDelay(go.actions, flags.keepDelayIf(game.playable)).toVector
+      else Vector.empty
+    // A prefix of a stored game's accepted actions replays; the record is the game as far as it is shown.
+    val record = if shown.size == go.actions.size then Some(go) else GoGame.replay(go.setup, shown).toOption
+    record.map(r => Sgf.write(r, info(game, names, place)))
 
   def info(game: Game, names: ByColor[String], place: String): SgfInfo =
     SgfInfo(

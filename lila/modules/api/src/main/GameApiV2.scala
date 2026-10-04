@@ -198,7 +198,7 @@ final class GameApiV2(
       case Format.SGF => sgfFormatter(config)
       case Format.JSON => jsonFormatter(config)
 
-  // Unit 4.11: a Go game as SGF. The bulk formatter keeps a game that isn't Go as PGN.
+  // Unit 4.11: a Go game as SGF; the bulk formatter falls back to PGN if a record can't be written.
   private def sgfOf(game: Game, flags: WithFlags): Fu[Option[String]] =
     gameLightUsers(game).map: users =>
       val names = users.map((p, u) => SgfDump.playerName(p, u))
