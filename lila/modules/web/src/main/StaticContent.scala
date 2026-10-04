@@ -88,7 +88,7 @@ Allow: /game/export/gif/thumbnail/
       case 103 => s"$faq#acpl"
       case 258 => s"$faq#marks"
       case 13 => s"$faq#titles"
-      case 87 => routes.User.ratingDistribution(PerfKey.blitz).url
+      case 87 => routes.User.ratingDistribution(PerfKey.go).url
       case 110 => s"$faq#name"
       case 29 => s"$faq#titles"
       case 4811 => s"$faq#lm"

@@ -24,7 +24,6 @@ export interface Game {
   startedAtTurn?: number;
   source: Source;
   speed: Speed;
-  variant: Variant;
   winner?: Color;
   abortedBy?: Color;
   drawOffers?: number[];

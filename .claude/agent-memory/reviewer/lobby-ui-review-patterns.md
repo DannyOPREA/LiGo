@@ -23,5 +23,10 @@ Things to check in lobby table/card changes (seen in unit 6.7 part one, 2026-09-
   (`SeekApi.forUser` take(13), `noDupsFor` ignoring range) are now cut before the join filter.
 - verify.sh "lila tests" can be Total 0 (testQuick); always run the unit's testOnly yourself.
 
+- (6.6 quick pairing) Client-side "waiting" state vs server truth: check every chip toggle while waiting
+  (Rated->Casual left the user in the rated pool), socket 'cancel' (by sri, via lila-ws/Redis) racing an
+  HTTP hook POST (AddHook already removes the sri's old hook, so the explicit cancel can kill the new one),
+  role=button tiles with aria-label hiding live counts and nesting a Cancel button (axe nested-interactive).
+
 **Why:** these slipped past 43 passing tests and all verify gates.
 **How to apply:** on any lobby view change, trace a tap on each element of the card and a guest viewer.

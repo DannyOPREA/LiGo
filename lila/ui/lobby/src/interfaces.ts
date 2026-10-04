@@ -2,6 +2,7 @@ import type { ColorChoice } from 'lib/setup/color';
 import type { TimeMode } from 'lib/setup/timeControl';
 
 import type { GoRuleset, GoSetupJson, GoSize } from './goSetup';
+import type { CorresTile } from './quickPair';
 
 // Open challenges come in two kinds: real-time hooks ('live') and correspondence seeks.
 export type Mode = 'live' | 'correspondence';
@@ -17,7 +18,6 @@ export interface Hook {
   s: number; // speed
   i: number; // increment (0 for byo-yomi)
   byo?: { limit: number; periods: number; period: number }; // byo-yomi hooks (unit 4.9)
-  variant: VariantKey;
   perf: Exclude<Perf, 'fromPosition'>;
   prov?: true; // is rating provisional
   u?: string; // username
@@ -50,7 +50,6 @@ export interface Seek {
     key: Exclude<Perf, 'fromPosition'>;
   };
   provisional?: boolean;
-  variant?: { key: VariantKey };
   go?: GoSetupJson; // board size, ruleset and komi (unit 3.15)
   rr?: RatingRangeJson; // the rating range its creator asked for (unit 6.5)
   action: 'joinSeek' | 'cancelSeek';
@@ -72,6 +71,7 @@ export interface LobbyOpts {
   tableElement: HTMLElement;
   socketSend: SocketSend;
   pools: Pool[];
+  corres?: CorresTile[]; // the correspondence tiles (unit 6.6)
   playban: boolean;
   showRatings: boolean;
   data: LobbyData;
@@ -107,10 +107,6 @@ export interface NowPlaying {
   color: Color;
   orientation?: Color;
   lastMove: string;
-  variant: {
-    key: string;
-    name: string;
-  };
   speed: string;
   perf: string;
   rated: boolean;
@@ -129,6 +125,7 @@ export interface PoolMember {
   id: PoolId;
   range?: PoolRange;
   blocking?: string;
+  handicap?: boolean; // the Handicap OK chip (ADR 0022 §2, unit 6.6)
 }
 
 export type PoolId = string;

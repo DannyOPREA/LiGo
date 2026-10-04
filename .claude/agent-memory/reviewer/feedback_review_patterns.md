@@ -70,3 +70,8 @@ Patterns seen in LiGo unit reviews; check these every time.
   2026-10-04); rerun `node ui/test <pkg>` to tell it apart from the unit's own failures.
 - Never overwrite MEMORY.md or a memory file with Write without reading it first: the system prompt's
   "MEMORY.md is empty" can be stale. Append with Edit/`>>`.
+- Link retargets (e.g. community menu / FAQ `ratingDistribution(PerfKey.blitz)` -> `go`, unit 5.5 part 2)
+  make dormant lila pages reachable for Go for the first time; check what they render (the
+  distribution page shows bare ratings on a 600-2800 chess axis, against "kyu/dan wherever a rating
+  shows"). Also: `LightPerf` carries no deviation, so a hard-coded `RatingProvisional.No` label is only
+  safe while its sole producer is RankingApi's `stable -> true` query; grep `LightPerf(` producers.

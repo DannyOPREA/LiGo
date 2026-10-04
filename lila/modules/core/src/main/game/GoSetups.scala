@@ -68,11 +68,6 @@ object GoSetups:
 
   def canBeRated(s: GoSetup): Boolean = ratedRefusal(s).isEmpty
 
-  /** The `variant` the browser still reads from game and challenge JSON (as lichess's standard chess) until
-    * 3.19 part 2 takes chess out of it; lila itself has no chess variants since unit 3.17.
-    */
-  val legacyVariantJson: JsObject = Json.obj("key" -> "standard", "name" -> "Standard", "short" -> "Std")
-
   /** `{ size, rules, komi, handicap? }`, the keys of a game's own `go` block (unit 3.12). */
   def json(s: GoSetup): JsObject =
     Json

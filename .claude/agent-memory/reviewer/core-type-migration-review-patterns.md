@@ -73,6 +73,10 @@ Patterns from unit 3.11 (lila Game took ply/startedAtPly/clock off chess.Game; n
   toggles `opening`/`literate`/"PGN tags" now ignored), mod games "Download PGN" button, browser
   download filenames `.json` for NDJSON. Also dead TS/CSS left behind (site.lpvEmbed, bits.lpv,
   pgn-viewer dep) and dead prefs (autoThreefold radio). Grep views + ui for the format name.
+- 3.17 part 3 (dropping scalachess artifacts): replacement givens checked by `javap -c` on the old
+  jar vs lila's compiled `target/out/jvm/scala-3.8.4/<module>/classes` (identical). The miss was a
+  doc claim "lila-ws keeps scalachess-play-json for its neutral types" while nothing in lila-ws
+  imports `chess.json`: grep usage before accepting any "kept for X" dependency claim.
 
 **Why:** 3.11 review found no stale path but these were the places worth checking.
 **How to apply:** 3.12–3.17 (game model, round, chess removal) and any new perf.
