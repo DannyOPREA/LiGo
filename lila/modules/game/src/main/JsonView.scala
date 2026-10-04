@@ -76,6 +76,7 @@ final class JsonView(rematches: Rematches):
           .add("ai" -> pov.opponent.aiLevel),
         "isMyTurn" -> pov.isMyTurn
       )
+      .add("board" -> GoBridge.miniBoard(pov.game.go, pov.player.blindfold).some)
       .add("go" -> JsonView.go(pov.game.go).some)
       .add("secondsLeft" -> pov.remainingSeconds)
       .add("tournamentId" -> pov.game.tournamentId)

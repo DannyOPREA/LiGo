@@ -16,7 +16,8 @@ final class GameUi(helpers: Helpers):
     private val dataLive = attr("data-live")
     private val dataTime = attr("data-time")
     private val dataTimeControl = attr("data-tc")
-    val cgWrap = span(cls := "cg-wrap")(cgWrapContent)
+    // LiGo (unit 3.19, mini-board slice): a Go game's mini board is drawn by ui/lib's goMini.ts.
+    val boardWrap: Tag = span(cls := "go-mini")
 
     def apply(
         pov: Pov,
@@ -53,7 +54,7 @@ final class GameUi(helpers: Helpers):
         renderState(pov)
       )(
         renderPlayer(!pov, withRating = showRatings),
-        cgWrap,
+        boardWrap,
         renderPlayer(pov, withRating = showRatings)
       )
 

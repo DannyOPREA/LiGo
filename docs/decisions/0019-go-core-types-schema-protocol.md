@@ -163,6 +163,12 @@ id and per user add `sz` exists). Server-side forecasts go here rather than in 7
 captcha, GIF export, PGN import (a placeholder until 7.5) and the analysis replay page. Part 2
 removes FEN, PGN, UCI, variants and openings from the remaining signatures; part 3 adds the CI check
 and drops the scalachess pieces. logs/decisions.md, 3.17 row.)
+(Amended in unit 3.19's mini-board slice: game lists, TV, the lobby's current games and profile rows
+draw a Go game's mini board as a small SVG from the compact board (`ui/lib`'s goMini.ts), not a goban;
+lila's mini-game `data-state` for Go is `board,turn,lastMove,plies`. Protocol (§6): the "now playing" JSON
+(`ownerPreview`: the lobby, `/account/now-playing`, the public `/api/account/playing`, the mobile API and
+the event stream's `gameStart`) carries `board` for a Go game and its `lastMove` is the last stone (an SGF
+point) or `pass` instead of `""`. logs/decisions.md, 2026-10-03.)
 (Amended in unit 3.16: the API move stream now streams Go games too, `{board, turn, lm, wc, bc}` per
 position; the bus `MoveGameEvent` carries strings (the FEN or compact board, the last move).
 logs/decisions.md, 3.16 row.)
