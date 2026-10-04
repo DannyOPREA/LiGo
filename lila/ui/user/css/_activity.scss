@@ -19,6 +19,9 @@
     time {
       font-weight: bold;
       text-transform: uppercase;
+
+      // LiGo (unit 9.10): no fade, so the date keeps 4.5:1 contrast in the light theme (WCAG 1.4.3)
+      opacity: 1;
     }
   }
 

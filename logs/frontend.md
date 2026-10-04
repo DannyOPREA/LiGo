@@ -4,6 +4,16 @@
 _none yet_
 
 ## Entries (newest first)
+
+### 2026-10-04 · unit 9.10 CI fix 2 · The last two axe findings
+- **Done:** the second axe run (run 37238255126) found two things on every size. The stored game page's
+  move list scrolls but couldn't take keyboard focus: it now has `tabindex=0` (`ui/round/src/view/replay.ts`).
+  The profile's activity dates read #ac7419 on white (3.98:1): the light theme's brag colour is #a36300,
+  but lila's base `time` rule sets `opacity: 0.9`, which blends it with the white. The activity dates now
+  keep full opacity (`ui/user/css/_activity.scss`).
+- **Worked:** working back from the measured colour to the alpha (0.9) pointed straight at the `time` rule.
+- **Didn't:** the first fix round darkened `--c-brag` but missed the fade.
+- **Lessons:** when axe reports a colour that matches no theme value, suspect opacity on the element or a parent.
 ### 2026-10-04 · unit 9.10 CI fix · What axe found on the real site
 - Did: the first full-site axe run failed 17 pages, desktop and phone. Fixed at the source:
   light theme's dimmed text (47% → 43% grey), accent (orange, 42% → 38%), brag (gold, 48% → 32%
