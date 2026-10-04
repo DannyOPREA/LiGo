@@ -1,0 +1,203 @@
+// The Go analysis board (unit 7.4): the board, the status line, Pass, the SGF box and setup mode.
+
+// libs/board draws goban's board (or the position editor) in this square (the uniboard's main board)
+// and sizes it from the square's width; centred, since goban's board is a whole number of points wide.
+.analyse__go-board {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.analyse__go-board-failed {
+  padding: 2em 1em;
+  text-align: center;
+  color: $c-font-dim;
+}
+
+// Who plays next and each player's prisoners, above the move list.
+.analyse__go-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.3em 1em;
+  padding: 0.4em 1em;
+  border-bottom: $border;
+}
+
+.analyse__go-turn,
+.go-prisoners {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.go-prisoners {
+  color: $c-font-dim;
+}
+
+.go-prisoners__stone {
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  border: 1px solid $c-font-dim;
+
+  &.black {
+    background: #111;
+  }
+
+  &.white {
+    background: #f4f4f4;
+  }
+}
+
+// Pass, and why the rules refused a move.
+.analyse__go-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em 1em;
+  padding: 0.5em 1em;
+  border-top: $border;
+
+  .button {
+    min-height: 44px;
+  }
+}
+
+.analyse__go-notice {
+  margin: 0;
+  color: $c-bad;
+}
+
+// The SGF box, where lila's /analysis has its PGN box.
+.analyse__sgf {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin: 1em 0;
+
+  textarea {
+    @include backdrop-blur-if-transparent;
+
+    width: 100%;
+    min-height: 8em;
+    font-family: monospace;
+    white-space: pre-wrap;
+    overflow-x: hidden;
+
+    &.is-error {
+      box-shadow: 0 0 13px 2px color-mix(in oklab, $c-bad 20%, $c-bg);
+    }
+  }
+}
+
+.analyse__sgf-label {
+  font-weight: bold;
+  color: $c-font-dim;
+}
+
+.analyse__sgf-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+
+  .button {
+    min-height: 44px;
+  }
+}
+
+.analyse__sgf-file {
+  display: none;
+}
+
+.analyse__sgf-error {
+  margin: 0;
+  color: $c-bad;
+
+  &::before {
+    margin-inline-end: 0.4em;
+  }
+}
+
+// The game the tree is played under, and the file's players and result.
+.analyse__go-settings {
+  p {
+    margin: 0.5em 0 0;
+  }
+}
+
+.analyse__go-players {
+  display: flex;
+  flex-direction: column;
+}
+
+// Setup mode: the panel beside the position editor. On a phone it is taller than the move list's
+// row, so the rows take their content's height and nothing covers its buttons.
+main.analyse.analyse--setup {
+  @include mq-is-col1 {
+    grid-template-rows: auto;
+  }
+}
+
+.analyse__setup {
+  overflow-y: auto;
+}
+
+.analyse__setup-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8em;
+  padding: 1em;
+
+  h2 {
+    margin: 0;
+    font-size: 1.2em;
+  }
+
+  p {
+    margin: 0;
+  }
+}
+
+.analyse__setup-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5em;
+
+  .button {
+    min-height: 44px;
+  }
+
+  input[type='number'] {
+    width: 6em;
+  }
+}
+
+.analyse__setup-name {
+  flex: 0 0 5em;
+  font-weight: bold;
+  color: $c-font-dim;
+}
+
+.analyse__setup-hint {
+  color: $c-font-dim;
+  font-size: 0.9em;
+}
+
+.analyse__setup-error {
+  color: $c-bad;
+}
+
+.analyse__setup-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+
+  .button {
+    min-height: 44px;
+  }
+}

@@ -81,8 +81,6 @@ trait AssetHelper:
 
   def fingerprintTag: EsmList = Esm("bits.fipr")
 
-  def analyseNvuiTag(using ctx: Context) = ctx.blind.option(Esm("analyse.nvui"))
-
   def pathUrl(path: String): Url = Url(s"${netBaseUrl}$path")
 
   def fenThumbnailUrl(

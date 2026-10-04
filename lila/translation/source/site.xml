@@ -258,6 +258,10 @@
   <string name="goEven">Even</string>
   <string name="goHandicap">Handicap</string>
   <string name="goNoOpenChallenges">No open challenges match. Try other filters, or create a game.</string>
+  <string name="goFirstMove">First move</string>
+  <string name="goPreviousMove">Previous move</string>
+  <string name="goNextMove">Next move</string>
+  <string name="goLastMove">Last move</string>
   <string name="password">Password</string>
   <string name="showPassword">Show password</string>
   <string name="changePassword">Change password</string>
@@ -863,7 +867,7 @@ Playing rated games will increase stability.</string>
   <string name="contrast">Contrast</string>
   <string name="hue">Hue</string>
   <string name="boardReset">Reset colours to default</string>
-  <string name="pieceSet">Piece set</string>
+  <string name="pieceSet">Stones</string>
   <string name="embedInYourWebsite">Embed in your website</string>
   <string name="usernameAlreadyUsed">This username is already in use, please try another one.</string>
   <string name="usernamePrefixInvalid">The username must start with a letter.</string>

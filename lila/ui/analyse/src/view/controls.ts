@@ -29,7 +29,7 @@ export function renderControls(ctrl: AnalyseCtrl) {
         jumpButton(licon.JumpLast, 'last', ctrl.node !== ctrl.mainline[ctrl.mainline.length - 1]),
       ]),
       hl('button.fbt', {
-        class: { active: ctrl.activeControlBarTool() === 'action-menu' },
+        class: { active: ctrl.actionMenu() },
         attrs: { title: i18n.site.menu, 'data-act': 'menu', 'data-icon': licon.Hamburger },
       }),
     ],

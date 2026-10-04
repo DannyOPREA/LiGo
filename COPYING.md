@@ -116,6 +116,12 @@ users of `@lichess-org/vosk-browser` 0.0.3 (Apache-2.0, speech recognition) and 
 chessground and chessops, which stay in the lockfile for the pages that still use them. No
 third-party package was added.
 
+Unit 7.4 put `libs/board` on the analysis board page: `ui/analyse` now depends on the `@ligo/board`
+workspace package (MIT, §2), and libs/board gained a `./editor` export (LiGo's own wrapper around
+goban's setup placement). `ui/analyse` no longer imports chessground or chessops; its old
+dependency entries stay until unit 3.19 part 2 changes the lockfile. No third-party package was
+added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file

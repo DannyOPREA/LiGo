@@ -1,8 +1,8 @@
 // no side effects allowed due to re-export by index.ts
 
-import type { TreeNodeBase, TreeNodeLite, TreePath } from './types';
+import type { TreeNodeOf, TreeNodeShape, TreePath } from './types';
 
-export function withMainlineChild<U, T extends TreeNodeBase>(
+export function withMainlineChild<U, T extends TreeNodeShape>(
   node: T,
   f: (node: T) => U | undefined,
 ): U | undefined {
@@ -10,7 +10,7 @@ export function withMainlineChild<U, T extends TreeNodeBase>(
   return next ? f(next as T) : undefined;
 }
 
-export function findInMainline<T extends TreeNodeBase>(
+export function findInMainline<T extends TreeNodeShape>(
   fromNode: T,
   predicate: (node: T) => boolean,
 ): T | undefined {
@@ -19,7 +19,7 @@ export function findInMainline<T extends TreeNodeBase>(
 }
 
 // returns a list of nodes collected from the original one
-export function collect<T extends TreeNodeBase>(from: T, pickChild: (node: T) => T | undefined): T[] {
+export function collect<T extends TreeNodeShape>(from: T, pickChild: (node: T) => T | undefined): T[] {
   const nodes = [from];
   let n = from,
     c;
@@ -30,12 +30,12 @@ export function collect<T extends TreeNodeBase>(from: T, pickChild: (node: T) =>
   return nodes;
 }
 
-export const childById = <T extends TreeNodeBase>(node: T, id: string): T | undefined =>
+export const childById = <T extends TreeNodeShape>(node: T, id: string): T | undefined =>
   node.children?.find(child => child.id === id) as T | undefined;
 
-export const last = <T extends TreeNodeBase>(nodeList: T[]): T | undefined => nodeList[nodeList.length - 1];
+export const last = <T extends TreeNodeShape>(nodeList: T[]): T | undefined => nodeList[nodeList.length - 1];
 
-export function takePathWhile<T extends TreeNodeBase>(
+export function takePathWhile<T extends TreeNodeShape>(
   nodeList: T[],
   predicate: (node: T) => boolean,
 ): TreePath {
@@ -47,11 +47,11 @@ export function takePathWhile<T extends TreeNodeBase>(
   return path;
 }
 
-export function removeChild<T extends TreeNodeBase>(parent: T, id: string): void {
+export function removeChild<T extends TreeNodeShape>(parent: T, id: string): void {
   parent.children = parent.children?.filter(n => n.id !== id);
 }
 
-export function countChildrenAndComments<T extends TreeNodeBase>(
+export function countChildrenAndComments<T extends TreeNodeShape>(
   node: T,
 ): {
   nodes: number;
@@ -70,7 +70,7 @@ export function countChildrenAndComments<T extends TreeNodeBase>(
 }
 
 // adds n2 into n1
-export function merge(n1: TreeNodeLite, n2: TreeNodeLite): void {
+export function merge<N extends TreeNodeOf<N>>(n1: N, n2: N): void {
   if (n2.eval) n1.eval = n2.eval;
   if (n2.glyphs) n1.glyphs = n2.glyphs;
   n2.comments?.forEach(c => {
@@ -84,13 +84,13 @@ export function merge(n1: TreeNodeLite, n2: TreeNodeLite): void {
   });
 }
 
-export const hasBranching = (node: TreeNodeLite, maxDepth: number): boolean =>
+export const hasBranching = <N extends TreeNodeOf<N>>(node: N, maxDepth: number): boolean =>
   maxDepth <= 0 || !!node.children[1] || (!!node.children[0] && hasBranching(node.children[0], maxDepth - 1));
 
-export const mainlineNodeList = <T extends TreeNodeBase>(from: T): T[] =>
+export const mainlineNodeList = <T extends TreeNodeShape>(from: T): T[] =>
   collect<T>(from, node => node.children?.[0] as T);
 
-export function updateAll<T extends TreeNodeBase>(root: T, f: (node: T) => void): void {
+export function updateAll<T extends TreeNodeShape>(root: T, f: (node: T) => void): void {
   // applies f recursively to all nodes
   function update(node: T) {
     f(node);
@@ -105,12 +105,12 @@ export function distance(a: TreePath, b: TreePath): number {
   return (a.length + b.length) / 2 - i;
 }
 
-export function contains<T extends TreeNodeBase>(container: T, descendant: T): boolean {
+export function contains<T extends TreeNodeShape>(container: T, descendant: T): boolean {
   return container === descendant || !!container.children?.some(child => contains(child, descendant));
 }
 
 // for serialization
-export function structuredCloneLite(node: TreeNodeBase): TreeNodeLite {
+export function structuredCloneLite<T extends TreeNodeShape>(node: T): T {
   return Object.fromEntries(
     Object.entries(node)
       .filter(([_, v]) => typeof v !== 'function')
@@ -118,5 +118,5 @@ export function structuredCloneLite(node: TreeNodeBase): TreeNodeLite {
         if (k === 'children') return [k, v.map(structuredCloneLite)];
         return [k, structuredClone(v)];
       }),
-  ) as TreeNodeLite;
+  ) as T;
 }
