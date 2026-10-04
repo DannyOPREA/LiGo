@@ -94,6 +94,29 @@ final class Setup(
             JsonBadRequest("Challenge not created")
           )
 
+  /* LiGo: the handicap ADR 0021 §4 suggests for a rated challenge to this player, on each rated board size,
+   * and whether the challenger would take Black (unit 5.7). */
+  def goHandicap(username: UserStr) = Auth { _ ?=> me ?=>
+    for
+      mine <- env.user.perfsRepo.perfOf(me, PerfKey.go)
+      theirs <- env.user.api.enabledWithPerf(username, lila.rating.PerfType.Go)
+    yield theirs.fold(notFoundJson()): dest =>
+      import lila.rating.GoRating
+      def size(n: Int) =
+        val choices = GoRating.ratedStoneChoices(mine, dest.perf, n)
+        Json.obj(
+          "suggested" -> GoRating.suggestedStones(mine, dest.perf, n),
+          "min" -> choices.head,
+          "max" -> choices.last
+        )
+      JsonOk:
+        Json.obj(
+          "19" -> size(19),
+          "9" -> size(9),
+          "black" -> GoRating.handicapColor(mine, dest.perf).black
+        )
+  }
+
   private def hookResponse(res: HookResult) = res match
     case HookResult.Created(id) =>
       JsonOk:

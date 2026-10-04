@@ -1,6 +1,4 @@
-import { opposite } from '@lichess-org/chessground/util';
-
-import { plyColor, type GameData, type Source, type StatusName } from '@/game';
+import { opposite, plyColor, type GameData, type Source, type StatusName } from '@/game';
 
 export function bishopOnColor(expandedFen: string, offset: 0 | 1): boolean {
   if (expandedFen.length !== 64) throw new Error('Expanded FEN expected to be 64 characters');

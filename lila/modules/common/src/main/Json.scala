@@ -6,7 +6,17 @@ import play.api.libs.json.{ Json as PlayJson, * }
 object Json:
 
   export scalalib.json.Json.{ *, given }
-  export chess.json.Json.given
+
+  // The game-neutral writers LiGo used from scalachess-play-json, same output (unit 3.17 part 3).
+  given Writes[chess.Color] = writeAs(_.name)
+  given Writes[chess.Centis] = Writes(c => JsNumber(c.value))
+  given OWrites[chess.CorrespondenceClock] = OWrites: c =>
+    PlayJson.obj(
+      "daysPerTurn" -> c.daysPerTurn,
+      "increment" -> c.increment,
+      "white" -> c.whiteTime,
+      "black" -> c.blackTime
+    )
 
   given userStrReads: Reads[UserStr] = Reads
     .of[String]
@@ -24,8 +34,6 @@ object Json:
   given Writes[lila.core.plan.PatronColorResolved] = writeAs(_.value.id)
 
   given [A: Writes]: OWrites[chess.ByColor[A]] = PlayJson.writes
-
-  given NoJsonHandler[chess.Square] with {}
 
   import lila.core.LightUser
   given lightUserWrites: OWrites[LightUser] = OWrites(lightUser.write)

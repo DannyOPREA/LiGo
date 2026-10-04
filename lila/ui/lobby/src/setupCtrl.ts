@@ -27,6 +27,24 @@ import {
 } from './goSetup';
 import type { ForceSetupOptions, GameMode, GameType, PoolMember, SetupStore } from './interfaces';
 import { fischerPresets, poolForClock } from './poolList';
+import { clampSteps, maxRankSteps, rankRange, type RankRange } from './rankRange';
+
+// The handicap ADR 0021 §4 suggests for a rated challenge to a named player, per rated board size, and
+// whether the challenger takes Black (`/setup/go-handicap/:username`, unit 5.7).
+export interface StoneAdvice {
+  suggested: number;
+  min: number;
+  max: number;
+}
+export interface HandicapAdvice {
+  19: StoneAdvice;
+  9: StoneAdvice;
+  black: boolean;
+}
+
+// the most stones a rated game may have on each board (ADR 0021 §4); 13×13 can't be rated
+export const maxRatedHandicap = (size: GoSize): number | undefined =>
+  size === 19 ? 9 : size === 9 ? 4 : undefined;
 
 const definedOf = (o?: ForceSetupOptions) => ({
   ...(o?.goSize !== undefined && { goSize: o.goSize }),
@@ -45,6 +63,7 @@ export default class SetupController {
   store: Record<GameType, Prop<SetupStore>>;
   gameType: GameType | null = null;
   friendUser = '';
+  handicapAdvice?: HandicapAdvice;
   loading = false;
   color: ColorProp;
   forced?: ForceSetupOptions;
@@ -88,8 +107,9 @@ export default class SetupController {
       handicap: 0,
       gameMode: 'casual',
       color: 'random',
-      ratingMin: -500,
-      ratingMax: 500,
+      // ranks below and above the player's own (unit 5.7)
+      ratingMin: -maxRankSteps,
+      ratingMax: maxRankSteps,
     }));
 
   private readonly loadPropsFromStore = (forceOptions?: ForceSetupOptions) => {
@@ -141,10 +161,11 @@ export default class SetupController {
       this.gameMode = this.propWithApply('casual');
     }
 
-    this.ratingMin = this.propWithApply(Math.min(0, this.ratingMin()));
-    this.ratingMax = this.propWithApply(Math.max(0, this.ratingMax()));
+    // whole ranks (unit 5.7); a value stored in rating points before that becomes the widest range
+    this.ratingMin = this.propWithApply(clampSteps(this.ratingMin(), -1));
+    this.ratingMax = this.propWithApply(clampSteps(this.ratingMax(), 1));
     if (this.ratingMin() === 0 && this.ratingMax() === 0) {
-      this.ratingMax = this.propWithApply(50);
+      this.ratingMax = this.propWithApply(1);
     }
   };
 
@@ -194,8 +215,8 @@ export default class SetupController {
     // Handle rating update here
     this.enforcePropRules();
     if (this.isProvisional()) {
-      this.ratingMin(-500);
-      this.ratingMax(500);
+      this.ratingMin(-maxRankSteps);
+      this.ratingMax(maxRankSteps);
       this.savePropsToStoreExceptRating();
     } else {
       if (this.gameType) {
@@ -219,7 +240,61 @@ export default class SetupController {
     this.loading = false;
     this.friendUser = friendUser || '';
     this.forced = forceOptions;
+    this.handicapAdvice = undefined;
     this.loadPropsFromStore(forceOptions);
+    if (this.friendUser && this.root.me) this.fetchHandicapAdvice(this.friendUser);
+  };
+
+  private readonly fetchHandicapAdvice = async (username: string) => {
+    try {
+      const advice: HandicapAdvice = await xhr.json(`/setup/go-handicap/${encodeURIComponent(username)}`);
+      if (this.friendUser !== username) return;
+      this.handicapAdvice = advice;
+      const stones = this.stoneAdvice();
+      // a rated challenge with stones starts from the suggestion when they are outside the allowed range;
+      // an even game is always allowed, and stones a challenge link fixed stay as they are
+      if (
+        this.gameMode() === 'rated' &&
+        stones &&
+        this.forced?.handicap === undefined &&
+        this.handicap() > 0 &&
+        (this.handicap() < stones.min || this.handicap() > stones.max)
+      )
+        this.setHandicap(stones.suggested);
+      this.root.redraw();
+    } catch (_) {
+      // without advice the form still works; the server checks a rated handicap when it is sent
+    }
+  };
+
+  // the suggestion for the chosen board, when the window challenges a named player
+  stoneAdvice = (): StoneAdvice | undefined => {
+    const size = this.goSize();
+    return size === 13 ? undefined : this.handicapAdvice?.[size];
+  };
+
+  // A rated handicap game's colours come from the ranks (ADR 0021 §4): the window shows them instead of
+  // the colour buttons, and the server sets them.
+  lockedColor = (): Color | undefined =>
+    this.gameMode() === 'rated' && this.gameType === 'friend' && this.handicap() > 0 && this.handicapAdvice
+      ? this.handicapAdvice.black
+        ? 'black'
+        : 'white'
+      : undefined;
+
+  // Why the chosen settings can't make a rated game (ADR 0021 §4–§5, unit 5.7), as the server would refuse.
+  ratedProblem = (): string | undefined => {
+    if (this.gameMode() !== 'rated') return undefined;
+    const max = maxRatedHandicap(this.goSize());
+    const handicap = this.gameType === 'friend' ? this.handicap() : 0;
+    if (max === undefined || this.goKomi() !== komiFor(this.goRuleset(), handicap))
+      return i18n.site.goRatedSetupRule;
+    if (handicap === 0) return undefined;
+    if (!this.friendUser) return i18n.site.goRatedHandicapNeedsOpponent;
+    const advice = this.stoneAdvice();
+    if (advice && (handicap < advice.min || handicap > advice.max))
+      return i18n.site.goRatedStonesXToY(advice.min, advice.max);
+    return handicap > max ? i18n.site.goRatedSetupRule : undefined;
   };
 
   closeModal?: () => void; // managed by view/setup/modal.ts
@@ -250,12 +325,19 @@ export default class SetupController {
     if (validKomi(komi, this.goSize())) this.goKomi(komi);
   };
 
-  // Go games are casual until ratings arrive (unit 5.7); the server refuses a rated one (unit 3.15).
-  ratedModeDisabled = () => true;
+  // Guests play casual games only (ADR 0021 §5): they see a sign-up line instead (gameModeButtons).
+  ratedModeDisabled = () => !this.root.me;
+
+  // the ranks the sliders cover, as ratings (ADR 0021 §3, unit 5.7)
+  rankRange = (): RankRange | undefined => {
+    const rating = this.myRating();
+    const table = this.root.data.rankTable;
+    return rating && table?.length ? rankRange(table, rating, this.ratingMin(), this.ratingMax()) : undefined;
+  };
 
   ratingRange = (): string => {
-    const rating = this.myRating();
-    return rating ? `${Math.max(100, rating + this.ratingMin())}-${rating + this.ratingMax()}` : '';
+    const range = this.rankRange();
+    return range ? `${range.min}-${range.max}` : '';
   };
 
   hookToPoolMember = (color: ColorChoice): PoolMember | null => {
@@ -303,7 +385,10 @@ export default class SetupController {
     });
 
   valid = () =>
-    validKomi(this.goKomi(), this.goSize()) && this.timeControl.valid(0) && this.validConstraints();
+    validKomi(this.goKomi(), this.goSize()) &&
+    this.timeControl.valid(0) &&
+    this.validConstraints() &&
+    !this.ratedProblem();
 
   private readonly invalid = <A>(forced: A | undefined, current: A) =>
     forced !== undefined && forced !== current;

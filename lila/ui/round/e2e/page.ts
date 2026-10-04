@@ -45,8 +45,12 @@ export interface GameOptions {
   handicap?: number;
   color?: Color;
   confirmMoves?: number;
-  /** Seconds on each clock (Fischer, 2 s increment); none for no clock. */
+  /** Seconds on each clock (Fischer, 2 s increment, or main time with `byoyomi`); none for no clock. */
   clock?: number;
+  /** A byo-yomi clock (unit 4.7): periods each side has left and their length in seconds. */
+  byoyomi?: { periods: number; byo: number } | null;
+  /** A game loaded in its scoring phase: the server's `scoring` (ADR 0020 §6). */
+  scoring?: unknown;
   /** The board and stone preferences (`theme`, `pieceSet`) lila puts on <body>: goban's theme names. */
   board?: string;
   stones?: string;
@@ -86,9 +90,10 @@ function roundData(o: Required<GameOptions>) {
         komi: o.handicap >= 2 ? 0.5 : 6.5,
         moves: o.moves.join(' '),
         prisoners: { b: 0, w: 0 },
-        phase: 'play',
+        phase: o.scoring ? 'scoring' : 'play',
         ...(o.handicap >= 2 ? { handicap: o.handicap } : {}),
       },
+      ...(o.scoring ? { scoring: o.scoring } : {}),
     },
     player: { ...person(o.color, o.color === 'black' ? 'Kuro' : 'Shiro'), id: playerId, version: 0 },
     opponent: person(other, other === 'black' ? 'Kuro' : 'Shiro'),
@@ -108,11 +113,14 @@ function roundData(o: Required<GameOptions>) {
           clock: {
             running: o.moves.length >= 2,
             initial: o.clock,
-            increment: 2,
+            increment: o.byoyomi ? 0 : 2,
             white: o.clock,
             black: o.clock,
-            emerg: 30,
+            emerg: o.byoyomi ? Math.min(10, Math.max(3, Math.floor(o.byoyomi.byo / 3))) : 30,
             moretime: 15,
+            ...(o.byoyomi
+              ? { periods: { b: o.byoyomi.periods, w: o.byoyomi.periods }, byo: o.byoyomi.byo }
+              : {}),
           },
         }
       : {}),
@@ -260,6 +268,8 @@ export async function openRound(page: Page, options: GameOptions = {}): Promise<
     color: 'black',
     confirmMoves: ConfirmMoves.NEVER,
     clock: 180,
+    byoyomi: null,
+    scoring: null,
     board: 'Plain',
     stones: 'Plain',
     ...options,

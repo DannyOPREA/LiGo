@@ -72,7 +72,8 @@ Also `lila/modules/round/src/main/GoRatedGame.scala` and its test
 (`lila/modules/round/src/test/GoRatedGameTest.scala`), which apply that maths to rated Go games,
 and `lila/modules/challenge/src/main/GoRatedChallenge.scala` and its test
 (`lila/modules/challenge/src/test/GoRatedChallengeTest.scala`), its handicap rule for rated
-challenges (unit 5.7).
+challenges (unit 5.7), and `lila/ui/lobby/src/rankRange.ts` and its test
+(`lila/ui/lobby/tests/rankRange.test.ts`), the setup window's rank filter (unit 5.7).
 
 ### 1.2 npm packages removed with Phase 3 features
 
@@ -129,6 +130,17 @@ Unit 8.7 put `libs/board` on the puzzle trainer page: `ui/puzzle` now depends on
 workspace package (MIT, §2) in place of `@badrap/result` (MIT), which only its chess code used and
 which stays in the lockfile for `ui/analyse` and `ui/lib`. `ui/puzzle` no longer imports chessground,
 chessops or the chess nvui code. No third-party package was added.
+
+Unit 3.19 part 2 removed the last chess board code from the browser: lila's root `package.json`
+dropped `@lichess-org/chessground` 10.2.0, `chessops` 0.15.1 and `@lichess-org/pgn-viewer` 2.6.4
+(all GPL-3.0-or-later), and `ui/lib` stopped copying `chessground.min.js` to `public/npm`. With them
+went the chess screen-reader code (`ui/lib/src/nvui`), the pgn-viewer embeds and lila's chess piece
+and board stylesheets. No third-party package was added.
+
+Unit 3.17 part 3 dropped three scalachess artifacts from lila's sbt build: `scalachess-tiebreak`,
+`scalachess-test-kit` and `scalachess-play-json` (`com.github.lichess-org.scalachess`, 17.17.1, all
+MIT). lila keeps `scalachess` and `scalachess-rating` (MIT) for game-neutral types and Glicko-2
+(ADR 0019 §1), lila-ws keeps `scalachess` and drops `scalachess-play-json`, which it no longer used. No package was added.
 
 ## 2. LiGo's own code — MIT
 
