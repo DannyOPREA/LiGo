@@ -10,6 +10,28 @@
   (2026-10-04, unit 6.5).
 
 ## Entries (newest first)
+### 2026-10-04 · unit 6.4 part 2 · ADR 0022's seven pools, Handicap OK and handicap pool games
+- Did: `PoolList` is now ADR 0022 §1's seven pools (9×9 1+5×10s, 3+3×20s, 3+2; 19×19 5+5×10s,
+  10+5×30s, 20+5×30s, 10+10), each with a `ClockSettings` clock (Fischer or byo-yomi, unit 4.9) and
+  ids like `19x19-10m-5x30s`. `PoolMember` carries the Handicap OK chip (`poolIn`'s new `handicap`
+  field) and whether the player has a rank; `MatchMaking` gives a pair who both said Handicap OK
+  GoPairing's stones and colours, and `GameStarter` starts the game with them (0.5 komi) and with the
+  pool's byo-yomi or Fischer clock. Hooks reach a pool by their whole clock settings, so rated
+  byo-yomi hooks can now be pulled in. The lobby page reads the pools from the server (`pools` in the
+  page data) instead of a copied list; old `#pool/10+10` links find the Fischer pool with that clock.
+- Worked: GoPairing (6.2) already had stones, colours and the score, so the pool only had to pass the
+  flags in and the stones out.
+- Didn't work / dead ends: none.
+- Lessons: lila joins a provisional player to a pool at a random rating around their own (to spread
+  new players); for handicap that would add up to a stone of noise, so a player with a rank joins at
+  their own rating.
+- Decisions: logs/decisions.md 2026-10-04 row for 6.4 part 2 (Claude, under the owner's 2026-09-28
+  delegation).
+- Verified by Claude: see the PR. · Needs owner verification: the PR's list.
+- Follow-ups: pool games become rated after 5.7 (`GameStarter`); 6.6 sends the Handicap OK chip,
+  draws the tiles in three columns and shows waiting counts; the game page's "new opponent" link and
+  `lib/poolRangeStorage` still build lila's clock-only ids (the lobby maps the Fischer ones).
+
 ### 2026-10-04 · unit 6.5 · Open challenges and correspondence tiles on the server
 - Did: the lobby now sends each player every open game except those from or to players they block or
   who block them, and those of the other "lame" kind (`Biter.visible`); games they can't join (out of

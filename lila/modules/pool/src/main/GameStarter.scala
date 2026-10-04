@@ -43,12 +43,16 @@ final private class GameStarter(
     import couple.*
     (perfs.get(p1.userId), perfs.get(p2.userId)).tupled.traverse: (perf1, perf2) =>
       for
-        p1White <- userApi.firstGetsWhite(p1.userId, p2.userId)
+        // with handicap stones the weaker player takes Black (ADR 0022 §3); otherwise lila's colours
+        p1White <- couple.black.fold(userApi.firstGetsWhite(p1.userId, p2.userId))(b =>
+          fuccess(b != p1.userId)
+        )
         (whitePerf, blackPerf) = if p1White then perf1 -> perf2 else perf2 -> perf1
         (whiteMember, blackMember) = if p1White then p1 -> p2 else p2 -> p1
         game <- makeGame(
           id,
           pool,
+          couple.stones,
           whiteMember.userId -> whitePerf,
           blackMember.userId -> blackPerf
         )
@@ -57,24 +61,34 @@ final private class GameStarter(
         onStart(game.id)
         Pairing(ByColor(whiteMember.sri -> game.fullIds.white, blackMember.sri -> game.fullIds.black))
 
-  /** A Go game on the pool's board size with Japanese rules and standard komi (ADR 0022 §1), casual until
-    * unit 5.7 rates pool games; even until unit 4.9 lets a game start with handicap stones.
+  /** A Go game on the pool's board size and clock with Japanese rules and the spec's komi (ADR 0022 §1), with
+    * the pair's handicap stones (0.5 komi with any handicap, R-KOMI-2); casual until unit 5.7 rates pool
+    * games.
     */
   private def makeGame(
       id: GameId,
       pool: PoolConfig,
+      stones: Int,
       whiteUser: (UserId, Perf),
       blackUser: (UserId, Perf)
   ): Fu[Game] =
     lila.core.game
       .newGoGame(
-        pool.go,
-        pool.clock.toClock.some,
+        GameStarter.setupFor(pool, stones),
+        pool.clock.fischer.map(_.toClock),
         players = ByColor(whiteUser, blackUser).mapWithColor((u, p) => newPlayer(u, p)),
         rated = chess.Rated.No,
-        source = Source.Pool
+        source = Source.Pool,
+        byoyomi = pool.clock.byoyomi
       )
       .fold(
         e => fufail(s"Pool ${pool.id} can't start a Go game: ${e.message}"),
         g => fuccess(g.withId(id).start)
       )
+
+private object GameStarter:
+
+  /* The pool's own setup with the pair's handicap: 0 is an even game, 1 the no-komi game, 2–9 stones; komi
+   * is the spec's for that handicap (6.5 even, 0.5 with any handicap, R-KOMI-1/2). */
+  def setupFor(pool: PoolConfig, stones: Int): ligo.gorules.Setup =
+    pool.go.copy(handicap = stones, komi = ligo.gorules.Komi.standard(pool.go.ruleset, stones))
