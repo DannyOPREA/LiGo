@@ -101,24 +101,22 @@ final class RoundUi(helpers: Helpers, gameUi: lila.game.ui.GameUi):
     chessgroundWrap:
       cgBoard:
         raw:
-          if ctx.pref.is3d then ""
-          else
-            def top(p: Square) = orient.fold(7 - p.rank.value, p.rank.value) * 12.5
-            def left(p: Square) = orient.fold(p.file.value, 7 - p.file.value) * 12.5
-            val highlights = ctx.pref.highlight
-              .so(lastMove.distinct.map { pos =>
-                s"""<square class="last-move" style="top:${top(pos)}%;left:${left(pos)}%"></square>"""
-              })
-              .mkString("")
-            val pieces =
-              if pov.player.blindfold then ""
-              else
-                pov.game.position.pieces
-                  .map: (pos, piece) =>
-                    val klass = s"${piece.color.name} ${piece.role.name}"
-                    s"""<piece class="$klass" style="top:${top(pos)}%;left:${left(pos)}%"></piece>"""
-                  .mkString("")
-            s"$highlights$pieces"
+          def top(p: Square) = orient.fold(7 - p.rank.value, p.rank.value) * 12.5
+          def left(p: Square) = orient.fold(p.file.value, 7 - p.file.value) * 12.5
+          val highlights = ctx.pref.highlight
+            .so(lastMove.distinct.map { pos =>
+              s"""<square class="last-move" style="top:${top(pos)}%;left:${left(pos)}%"></square>"""
+            })
+            .mkString("")
+          val pieces =
+            if pov.player.blindfold then ""
+            else
+              pov.game.position.pieces
+                .map: (pos, piece) =>
+                  val klass = s"${piece.color.name} ${piece.role.name}"
+                  s"""<piece class="$klass" style="top:${top(pos)}%;left:${left(pos)}%"></piece>"""
+                .mkString("")
+          s"$highlights$pieces"
 
   def roundAppPreload(pov: Pov)(using Context): Tag =
     div(cls := "round__app")(

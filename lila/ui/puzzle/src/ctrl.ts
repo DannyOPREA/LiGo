@@ -100,11 +100,8 @@ export default class PuzzleCtrl {
     document.addEventListener('visibilitychange', () =>
       requestIdleCallbackSafe(() => this.jump(this.path), 500),
     );
-    pubsub.on('board.change', (is3d: boolean) => {
-      this.withGround(g => {
-        g.state.addPieceZIndex = is3d;
-        g.redrawAll();
-      });
+    pubsub.on('board.change', () => {
+      this.withGround(g => g.redrawAll());
       this.setAutoShapes();
     });
     pubsub.on('zen', toggleZenMode);

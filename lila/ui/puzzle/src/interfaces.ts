@@ -34,7 +34,6 @@ export interface PuzzleOpts {
 
 export interface PuzzlePrefs {
   coords: Coords;
-  is3d: boolean;
   destination: boolean;
   rookCastle: boolean;
   moveEvent: number;

@@ -31,7 +31,6 @@ export function makeConfig(ctrl: PuzzleCtrl): CgConfig {
     lastMove: opts.lastMove,
     coordinates: ctrl.pref.coords !== Coords.Hidden,
     coordinatesOnSquares: ctrl.pref.coords === Coords.All,
-    addPieceZIndex: ctrl.pref.is3d,
     addDimensionsCssVarsTo: document.body,
     jsHover: isSafari(),
     movable: {
