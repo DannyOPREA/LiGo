@@ -73,10 +73,11 @@ object Fens:
               for
                 white <- (c \ "white").asOpt[Double]
                 black <- (c \ "black").asOpt[Double]
-                periods = for
-                  w <- (c \ "periods" \ "w").asOpt[Int]
-                  b <- (c \ "periods" \ "b").asOpt[Int]
-                yield (w, b)
+                periods =
+                  for
+                    w <- (c \ "periods" \ "w").asOpt[Int]
+                    b <- (c \ "periods" \ "b").asOpt[Int]
+                  yield (w, b)
               yield Clock(white.toInt, black.toInt, periods)
         yield MiniBoard(lastMove, board, clock, moveBy.fold(Color.black)(c => !c))
 
