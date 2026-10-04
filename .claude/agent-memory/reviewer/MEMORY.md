@@ -24,9 +24,12 @@
 - [sbt build wiring review patterns](sbt-build-wiring-review-patterns.md) — resolver order vs Central, ProjectRef exclusions, dup mounts, verify/CI drift (3.10)
 - [Credits page review patterns](credits-page-review-patterns.md) — indexOf -1 vacuity, substring row match, symlink main guard, OFL fonts (9.8)
 - [Round UI review patterns](round-ui-review-patterns.md) — in-flight move lost on remount, flag-race port, scratch ctrl probes, plan-order deps (3.18)
+- [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, gated-predicate readers, Resume drift, Query.go must guard every Game reader (3.11–3.17)
+- [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, Setup.like/rematch bypass, kept chess rematch, vacuous me=None tests (3.15)
 - [Core type migration review patterns](core-type-migration-review-patterns.md) — stale chess copies, tautological tests, opaque PerfKey, PLAN-row scope gaps, gated-predicate side readers (isGone), empty sans, Resume index drift, empty steps (3.11–3.16)
 - [Game creation review patterns](game-creation-review-patterns.md) — form-only rated gates, rematch bypass, vacuous me=None; 4.9: TS TimeControl switches, handicap rematch swap, sg speed formula
 - [Lobby UI review patterns](lobby-ui-review-patterns.md) — TR-padding tap dead zones, guest "Anonymous" seeks, raw reason tokens, vacuous suits (6.7)
 - [Mini board review patterns](mini-board-review-patterns.md) — ownerPreview is public API, fen-message ply undercount, DOM-testable miniBoard.ts (3.19)
 - [Puzzle server review patterns](puzzle-server-review-patterns.md) — path id collisions on real rating clusters, PR dirty/CI not run, lenient BSON numbers, offline scalac (8.6)
 - [Analysis board review patterns](analysis-board-review-patterns.md) — COPYING meta check on workspace links, stale SGF box, remount focus loss, probe loader (7.4)
+- [Puzzle trainer review patterns](puzzle-trainer-review-patterns.md) — tests reading tools/puzzles/data vs ui CI area, vacuous stone asserts, scratch PW probes (8.7)

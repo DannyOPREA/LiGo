@@ -64,7 +64,8 @@ final private class CorrespondenceEmail(gameRepo: GameRepo, userRepo: UserRepo, 
         import lila.game.BSONHandlers.given
         (for
           userId <- doc.getAsOpt[UserId]("_id")
-          games <- doc.getAsOpt[List[Game]]("games")
+          // a chess game stored before unit 3.17 is skipped, not read
+          games <- doc.getAsOpt[List[Bdoc]]("games").map(_.flatMap(gameHandler.readOpt))
           povs = games
             .flatMap(Pov(_, userId))
             .filter(pov => pov.game.isCorrespondence && pov.game.nonAi && pov.isMyTurn)

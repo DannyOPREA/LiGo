@@ -157,6 +157,12 @@ As PLAN §5's Phase 3 table, with lila-ws (3.14) after game creation (3.15):
 3.10 go-rules in lila's build → 3.11 core types → 3.12 `game` + storage → 3.13 `round` →
 3.15 game creation (from here no chess games are created) → 3.14 lila-ws → 3.16 everything else →
 3.17 chess rules and formats removed, CI check added. `core` depends on `libs/go-rules` from 3.11.
+(Amended in unit 3.17, part 1: 3.17 is split in three PRs. Part 1 makes `Game.go` required and
+removes the chess game, chess storage and chess moves; stored chess games are not read (lookups by
+id and per user add `sz` exists). Server-side forecasts go here rather than in 7.6, with the chess
+captcha, GIF export, PGN import (a placeholder until 7.5) and the analysis replay page. Part 2
+removes FEN, PGN, UCI, variants and openings from the remaining signatures; part 3 adds the CI check
+and drops the scalachess pieces. logs/decisions.md, 3.17 row.)
 (Amended in unit 3.19's mini-board slice: game lists, TV, the lobby's current games and profile rows
 draw a Go game's mini board as a small SVG from the compact board (`ui/lib`'s goMini.ts), not a goban;
 lila's mini-game `data-state` for Go is `board,turn,lastMove,plies`. Protocol (§6): the "now playing" JSON

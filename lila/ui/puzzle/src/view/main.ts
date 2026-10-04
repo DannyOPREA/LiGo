@@ -1,108 +1,60 @@
 import { type VNode, h } from 'snabbdom';
 
-import { licon, type LiconValue } from 'lib/licon';
-import { addPointerListeners } from 'lib/pointer';
-import { storage } from 'lib/storage';
-import {
-  toggleButton as boardMenuToggleButton,
-  onInsert,
-  bindNonPassive,
-  hl,
-  type MaybeVNode,
-} from 'lib/view';
-import { renderBlindfoldToggle } from 'lib/view/blindfold';
-import stepwiseScroll from 'lib/view/stepwiseScroll';
+import { Coords } from 'lib/prefs';
+import { type MaybeVNode, bind, hl } from 'lib/view';
 
-import * as control from '@/control';
 import type PuzzleCtrl from '@/ctrl';
-import { view as keyboardView } from '@/keyboard';
+import { boardRatio } from '@/go';
 
-import boardMenu from './boardMenu';
-import chessground from './chessground';
 import feedbackView from './feedback';
 import { replay, puzzleBox, userBox, config } from './side';
+import { controls as solutionControls, moveList } from './solution';
 import theme from './theme';
-import { render as treeView } from './tree';
 
-const renderAnalyse = (ctrl: PuzzleCtrl): VNode => hl('div.puzzle__moves.areplay', [treeView(ctrl)]);
-
-function dataAct(e: Event): string | null {
-  const target = e.target as HTMLElement;
-  return target.getAttribute('data-act') || (target.parentNode as HTMLElement).getAttribute('data-act');
-}
-
-function jumpButton(icon: LiconValue, effect: string, disabled: boolean, glowing = false): VNode {
-  return hl('button.fbt', { class: { glowing }, attrs: { disabled, 'data-act': effect, 'data-icon': icon } });
-}
-
-function controls(ctrl: PuzzleCtrl): VNode {
-  const node = ctrl.node;
-  const nextNode = node.children[0];
-  const notOnLastMove = ctrl.mode === 'play' && nextNode && nextNode.puzzle !== 'fail';
-  return hl('div.puzzle__controls.analyse-controls', [
-    hl(
-      'div.jumps',
-      {
-        hook: onInsert(el =>
-          addPointerListeners(el, {
-            click: e => {
-              const action = dataAct(e);
-              if (action === 'prev') control.prev(ctrl);
-              else if (action === 'next') control.next(ctrl);
-              else if (action === 'first') control.first(ctrl);
-              else if (action === 'last') control.last(ctrl);
-              ctrl.redraw();
+/** The board: libs/board draws goban's puzzle board in the element, mounted by the host's hooks. */
+function renderBoard(ctrl: PuzzleCtrl): VNode {
+  return hl(
+    'div.puzzle__board.main-board',
+    { attrs: { style: `---ratio:${boardRatio(ctrl.data.puzzle, ctrl.opts.pref.coords !== Coords.Hidden)}` } },
+    [
+      ctrl.board.loadFailed
+        ? hl('div.puzzle__go-board-failed', 'The board could not be loaded. Reload the page to try again.')
+        : hl('div.puzzle__go-board', {
+            class: { 'puzzle__go-board--static': ctrl.solutionOpen },
+            hook: {
+              insert: vnode => ctrl.board.attach(vnode.elm as HTMLElement),
+              destroy: vnode => ctrl.board.detach(vnode.elm as HTMLElement),
             },
           }),
-        ),
+    ],
+  );
+}
+
+/** Touch-confirm: the stone previewed on the board is played by this button (or a second tap on it). */
+function renderControls(ctrl: PuzzleCtrl): MaybeVNode {
+  if (ctrl.solutionOpen) return solutionControls(ctrl);
+  if (!ctrl.confirm || ctrl.mode === 'view') return undefined;
+  return hl('div.puzzle__controls.puzzle__confirm-row', [
+    hl(
+      'button.button.puzzle__confirm',
+      {
+        attrs: { disabled: !ctrl.movePending() || ctrl.lastFeedback === 'fail' },
+        hook: bind('click', ctrl.confirmMove, ctrl.redraw),
       },
-      [
-        jumpButton(licon.JumpFirst, 'first', !node.ply),
-        jumpButton(licon.JumpPrev, 'prev', !node.ply),
-        jumpButton(licon.JumpNext, 'next', !nextNode),
-        jumpButton(licon.JumpLast, 'last', !nextNode, notOnLastMove),
-        boardMenuToggleButton(ctrl.menu, i18n.site.menu),
-      ],
+      i18n.site.confirmMove,
     ),
-    boardMenu(ctrl),
   ]);
 }
 
-let evalShown = false;
-
 export default function (ctrl: PuzzleCtrl): VNode {
-  if (evalShown !== ctrl.showEvaluation()) {
-    if (!evalShown) ctrl.autoScrollNow = true;
-    evalShown = ctrl.showEvaluation();
-  }
-
   return hl(`main.puzzle.puzzle-${ctrl.data.replay ? 'replay' : 'play'}`, {}, [
-    renderBlindfoldToggle(ctrl.blindfold),
     hl('aside.puzzle__side', [replay(ctrl), puzzleBox(ctrl), userBox(ctrl), theme(ctrl), config(ctrl)]),
-    hl(
-      'div.puzzle__board.main-board' + (ctrl.blindfold() ? '.blindfold' : ''),
-      {
-        hook:
-          'ontouchstart' in window || !storage.boolean('scrollMoves').getOrDefault(true)
-            ? undefined
-            : bindNonPassive(
-                'wheel',
-                stepwiseScroll(
-                  e => {
-                    if (e.deltaY > 0) control.next(ctrl);
-                    else if (e.deltaY < 0) control.prev(ctrl);
-                    ctrl.redraw();
-                  },
-                  e => !['PIECE', 'SQUARE', 'CG-BOARD'].includes((e.target as HTMLElement).tagName),
-                ),
-              ),
-      },
-      [chessground(ctrl), ctrl.promotion.view()],
-    ),
-    hl('div.puzzle__tools', [renderAnalyse(ctrl), feedbackView(ctrl)]),
-    controls(ctrl),
+    renderBoard(ctrl),
+    // where the puzzle comes from (ADR 0025 §1)
+    hl('p.puzzle__source', ctrl.data.puzzle.source),
+    hl('div.puzzle__tools', [moveList(ctrl), feedbackView(ctrl)]),
+    renderControls(ctrl),
     session(ctrl),
-    ctrl.keyboardHelp() && keyboardView(ctrl),
   ]);
 }
 

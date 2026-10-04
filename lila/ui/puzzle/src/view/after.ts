@@ -1,5 +1,5 @@
 import { licon } from 'lib/licon';
-import { type VNode, bind, icon, div, button, type MaybeVNode } from 'lib/view';
+import { type VNode, bind, icon, div, button, hl, type MaybeVNode } from 'lib/view';
 
 import type PuzzleCtrl from '../ctrl';
 
@@ -26,10 +26,18 @@ const renderVote = (ctrl: PuzzleCtrl): MaybeVNode => {
   ]);
 };
 
+/** Over: the result, "view the solution" until it is open, and the way on to the next puzzle. */
 export default function (ctrl: PuzzleCtrl): VNode {
-  const win = ctrl.lastFeedback === 'win';
-  return div('.puzzle__feedback.after', [
+  const win = ctrl.lastFeedback === 'win' && !ctrl.failed;
+  return hl('div.puzzle__feedback.after', [
     div('.complete', i18n.puzzle[win ? 'puzzleSuccess' : 'puzzleComplete']),
+    !ctrl.solutionOpen &&
+      !ctrl.solutionMissing &&
+      button(
+        '.button.button-empty.puzzle__view-solution',
+        { hook: bind('click', ctrl.viewSolution) },
+        i18n.site.viewTheSolution,
+      ),
     button('.continue', { hook: bind('click', ctrl.nextPuzzle) }, [
       icon(licon.PlayTriangle)(),
       i18n.puzzle.continueTraining,

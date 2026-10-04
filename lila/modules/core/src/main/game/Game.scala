@@ -1,9 +1,6 @@
 package lila.core
 package game
 
-import _root_.chess.Color.White
-import _root_.chess.format.UciDump
-import _root_.chess.format.pgn.SanStr
 import _root_.chess.variant.{ Standard, Variant }
 import _root_.chess.{
   ByColor,
@@ -11,7 +8,6 @@ import _root_.chess.{
   Clock,
   Color,
   CorrespondenceClock,
-  Game as ChessGame,
   Rated,
   Ply,
   Speed,
@@ -31,15 +27,10 @@ import lila.core.game.ClockHistory.bothClockStates
 case class Game(
     id: GameId,
     players: ByColor[Player],
-    chess: ChessGame,
-    // A Go game's rules state (ADR 0019 §3): the position, turn, captures, ko point and phase, from
-    // libs/go-rules. Until unit 3.17 a Go game also carries an unused standard-start `chess` game, so
-    // chess readers keep compiling; 3.17 removes `chess` and makes `go` required.
-    go: Option[GoGame] = None,
-    // The ply count, the ply the game started at and the Fischer clock belong to the game, not to
-    // its chess position (ADR 0019 §3): lila's Game keeps them, and a Go game (unit 3.12) will too.
-    // Until unit 3.17 removes chess, `chess` still carries copies that chess rules read, kept in
-    // step by `withChess` and handed to chess code by `chessState`.
+    // The game's rules state (ADR 0019 §3): the position, turn, captures, ko point and phase, from
+    // libs/go-rules.
+    go: GoGame,
+    // The ply count (placements and passes), the ply the game started at and the Fischer clock.
     ply: Ply,
     startedAtPly: Ply,
     clock: Option[Clock],
@@ -59,7 +50,9 @@ case class Game(
     byoyomi: Option[ByoyomiClock] = None
 ):
 
-  export chess.{ position, sans, history, variant }
+  /** Every game is standard Go; lila's chess variants go in unit 3.17's second part, with this. */
+  def variant: Variant = Standard
+
   export metadata.{ tournamentId, simulId, swissId, drawOffers, source, pgnImport, hasRule }
   export players.{ white as whitePlayer, black as blackPlayer, apply as player }
 
@@ -69,27 +62,13 @@ case class Game(
 
   lazy val clockHistory = gameClock.flatMap(loadClockHistory)
 
-  /** The player to move. A Go game says itself; a chess game uses ply parity, White on even plies, the rule
-    * lila uses when it loads a game (`startedAtPly` makes it hold for Go games that don't start with White
-    * too, ADR 0019 §3).
-    */
-  def turnColor: Color = go.fold(ply.turn)(g => GoBridge.color(g.toMove))
-
-  def isGo: Boolean = go.isDefined
+  /** The player to move, as the Go game says (ADR 0019 §3). */
+  def turnColor: Color = GoBridge.color(go.toMove)
 
   /** Replace the Go game after an action or a takeback, taking its new ply (placements and passes, not
     * resumes, ADR 0019 §3).
     */
-  def withGo(g: GoGame): Game = copy(go = g.some, ply = startedAtPly + GoBridge.plies(g))
-
-  /** The chess game with this game's ply, start and clock, for the chess rules and formats that read them
-    * (moves, FEN) until unit 3.17.
-    */
-  def chessState: ChessGame = chess.copy(ply = ply, startedAtPly = startedAtPly, clock = clock)
-
-  /** Replace the chess game after a chess move or rewind, taking its new ply and clock. */
-  def withChess(c: ChessGame): Game =
-    copy(chess = c, ply = c.ply, startedAtPly = c.startedAtPly, clock = c.clock)
+  def withGo(g: GoGame): Game = copy(go = g, ply = startedAtPly + GoBridge.plies(g))
 
   def player[U: UserIdOf](user: U): Option[Player] = players.find(_.isUser(user))
   def opponentOf[U: UserIdOf](user: U): Option[Player] = player(user).map(opponent)
@@ -107,8 +86,7 @@ case class Game(
   def opponent(p: Player): Player = opponent(p.color)
   def opponent(c: Color): Player = player(!c)
 
-  lazy val naturalOrientation =
-    if variant.racingKings then White else Color.fromWhite(players.reduce(_.before(_)))
+  lazy val naturalOrientation = Color.fromWhite(players.reduce(_.before(_)))
 
   def turnOf(p: Player): Boolean = p == player
   def turnOf(c: Color): Boolean = c == turnColor
@@ -143,15 +121,6 @@ case class Game(
 
   def bothClockStates: Option[Vector[Centis]] = clockHistory.map(_.bothClockStates(startColor))
 
-  def sansOf(color: Color): Vector[SanStr] =
-    val pivot = if color == startColor then 0 else 1
-    sans.zipWithIndex.collect:
-      case (e, i) if (i % 2) == pivot => e
-
-  // not UCI. Only for lastMove display purposes.
-  def lastMoveKeys: Option[String] =
-    history.lastMove.map(UciDump.lastMove(_, position))
-
   def updatePlayer(color: Color, f: Player => Player) =
     copy(players = players.update(color, f))
 
@@ -169,7 +138,7 @@ case class Game(
   def playableCorrespondenceClock: Option[CorrespondenceClock] =
     if playable then correspondenceClock else none
 
-  def perfKey: PerfKey = if isGo then GoBridge.perfKey else PerfKey(variant, speed)
+  def perfKey: PerfKey = GoBridge.perfKey
 
   def ratingVariant: Variant =
     if isTournament && variant.fromPosition then Standard else variant
@@ -207,7 +176,7 @@ case class Game(
     resignable && nonAi && hasClock && !isSwiss && !hasRule(_.noClaimWin)
   def forceResignableNow = forceResignable && bothPlayersHaveMoved
   // Go has no draws (ADR 0019 §6): no offers, claims or forced draws.
-  def drawable = !isGo && playable && !abortable && !swissPreventsDraw && !rulePreventsDraw
+  def drawable = false
 
   def finished = status >= Status.Mate
 
@@ -279,8 +248,6 @@ case class Game(
   def playerHasMoved(color: Color) = playerMoves(color) > 0
 
   def isBeingPlayed = !isPgnImport && !finishedOrAborted
-
-  def forecastable = started && playable && isCorrespondence && !hasAi
 
   def userIds: List[UserId] = players.flatMap(_.userId)
 

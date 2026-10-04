@@ -29,14 +29,14 @@ final class JoinerTest extends munit.FunSuite:
   test("an even Go game from the challenge's setup, Black to move at ply 1"):
     val nine = GoSetup(BoardSize.Nine, Ruleset.Chinese, 7.5)
     val game = created(challenge(nine))
-    assertEquals(game.go.map(_.setup), Some(nine))
+    assertEquals(game.go.setup, nine)
     assertEquals((game.startedAtPly, game.turnColor), (Ply(1), Color.Black))
     assertEquals(game.clock.map(_.color), Some(Color.Black))
     assertEquals(game.perfKey, lila.core.game.GoBridge.perfKey)
 
   test("a challenge made before unit 3.15 has no setup and gets the default"):
     val old = challenge(GoSetups.default).copy(go = None)
-    assertEquals(created(old).go.map(_.setup), Some(GoSetups.default))
+    assertEquals(created(old).go.setup, GoSetups.default)
 
   test("the challenge stores its setup with the game's Go keys"):
     import BSONHandlers.given
@@ -62,9 +62,9 @@ final class JoinerTest extends munit.FunSuite:
   test("a handicap challenge puts Black's stones down and gives White the first move"):
     val four = GoSetup(BoardSize.Nineteen, Ruleset.Japanese, 0.5, handicap = 4)
     val game = created(challenge(four))
-    assertEquals(game.go.map(_.setup.handicap), Some(4))
+    assertEquals(game.go.setup.handicap, 4)
     assertEquals(game.turnColor, Color.White)
-    assertEquals(game.go.map(_.stones.size), Some(4))
+    assertEquals(game.go.stones.size, 4)
 
   test("a byo-yomi challenge is stored with its main time under `l`, so it counts as real-time"):
     import BSONHandlers.given
