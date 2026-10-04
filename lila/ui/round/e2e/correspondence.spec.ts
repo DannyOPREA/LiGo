@@ -114,6 +114,16 @@ for (const [device, options] of Object.entries(viewports))
       expect(server.received.map(m => m.t)).not.toContain('flag');
       expect(problems).toEqual({ requests: [], errors: [] });
     });
+
+    test('once the game is over no days clock is drawn as running', async ({ page }) => {
+      const { server, problems } = await openRound(page, { moves, correspondence: days, clock: 0 });
+      await expect(page.locator('.rclock-correspondence.running')).toHaveCount(1);
+      server.event('endData', { status: { id: 31, name: 'resign' }, winner: 'white', boosted: false });
+      await expect(page.locator('.result-wrap .result')).toBeVisible();
+      await expect(page.locator('.rclock-correspondence')).toHaveCount(2);
+      await expect(page.locator('.rclock-correspondence.running')).toHaveCount(0);
+      expect(problems).toEqual({ requests: [], errors: [] });
+    });
   });
 
 test.describe('answering the count', () => {
