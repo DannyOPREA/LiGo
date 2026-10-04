@@ -3801,8 +3801,14 @@ interface I18n {
     giveNbSeconds: I18nPlural;
     /** Glicko-2 rating */
     glicko2Rating: string;
+    /** Accept score */
+    goAcceptScore: string;
     /** Board size */
     goBoardSize: string;
+    /** Byo-yomi periods */
+    goByoyomiPeriods: string;
+    /** Counting the score… */
+    goCountingTheScore: string;
     /** Go deeper */
     goDeeper: string;
     /** Even */
@@ -3811,6 +3817,10 @@ interface I18n {
     goFirstMove: string;
     /** Handicap */
     goHandicap: string;
+    /** Handicap */
+    goHandicapCompensation: string;
+    /** Jigo: the score is even */
+    goJigo: string;
     /** Komi */
     goKomi: string;
     /** Last move */
@@ -3819,20 +3829,52 @@ interface I18n {
     goNextMove: string;
     /** No open challenges match. Try other filters, or create a game. */
     goNoOpenChallenges: string;
+    /** No result */
+    goNoResult: string;
     /** To that effect, we must ensure that all players follow good practice. */
     goodPractice: string;
+    /** Your opponent accepted this score. */
+    goOpponentAcceptedScore: string;
     /** Previous move */
     goPreviousMove: string;
+    /** Prisoners */
+    goPrisoners: string;
     /** Your Go rating starts there. You can change it until your first rated game starts. */
     goRankChangeHelp: string;
     /** Your Go rank now changes only through rated games. */
     goRankLocked: string;
+    /** Recounting… */
+    goRecounting: string;
+    /** Resume play */
+    goResumePlay: string;
     /** Rules */
     goRules: string;
     /** Chinese */
     goRulesChinese: string;
     /** Japanese */
     goRulesJapanese: string;
+    /** The score could not be counted */
+    goScoreNotCounted: string;
+    /** No dead stones were proposed: mark them yourselves. */
+    goScoringNoProposal: string;
+    /** Points marked with a triangle may still need a move. Resume play to fill them. */
+    goScoringSealHint: string;
+    /** Tap a group to mark it dead, or alive again. */
+    goScoringTapHint: string;
+    /** Stones */
+    goStones: string;
+    /** Territory */
+    goTerritory: string;
+    /** %s left to agree. Then the marks stand as they are. */
+    goTimeLeftToAgree: I18nFormat;
+    /** Total */
+    goTotal: string;
+    /** %s accepted this score. */
+    goXAcceptedScore: I18nFormat;
+    /** %2$s wins by %1$s points */
+    goXWinsByNbPoints: I18nPlural;
+    /** You accepted this score. Waiting for your opponent. */
+    goYouAcceptedWaiting: string;
     /** Graph */
     graph: string;
     /** Hang on! */

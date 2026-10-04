@@ -75,13 +75,15 @@ for (const phone of [false, true]) {
       expect(problems).toEqual({ requests: [], errors: [] });
     });
 
-    test('two passes end the game, said in words', async ({ page }) => {
+    test('two passes open the scoring phase: play stops and the count is awaited', async ({ page }) => {
       const { server, problems } = await openRound(page, { moves: ['ee', 'cc'] });
       await expect(moveList(page)).toHaveText(['E5', 'C7']);
       await page.getByRole('button', { name: 'Pass' }).click();
-      server.move('pass');
-      server.event('endData', { status: { id: 38, name: 'unknownFinish' }, boosted: false });
-      await expect(page.locator('.result-wrap')).toContainText('Both players passed');
+      server.move('pass', { phase: 'scoring' });
+      server.event('scoring', { phase: 1, expiresIn: 600, counting: true });
+      await expect(page.locator('.go-scoring__status')).toHaveText('Counting the score…');
+      await expect(page.getByRole('button', { name: 'Pass' })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Resume play' })).toBeEnabled();
       expect(problems).toEqual({ requests: [], errors: [] });
     });
   });

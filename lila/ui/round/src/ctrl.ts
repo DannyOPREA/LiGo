@@ -4,7 +4,7 @@
 // event plays it on every board watching the game. The board knows the legal points; the server
 // is the referee.
 
-import type { BoardConfig, Move, Played } from '@ligo/board/board';
+import type { BoardConfig, Move, Played, ScoringMarks } from '@ligo/board/board';
 import { themeOf, type Theme } from '@ligo/board/themes';
 
 import { defined, type Toggle, type Prop, toggle, requestIdleCallbackSafe } from 'lib';
@@ -27,9 +27,21 @@ import * as wakeLock from 'lib/wakeLock';
 
 import * as blur from './blur';
 import { RoundBoard } from './board';
+import { Byoyomi } from './byoyomi';
 import { CorresClockController } from './corresClock/corresClockCtrl';
 import { boardGame, eventMove, goStatusText, resolveConfirm, soundOf, stepOf } from './go';
-import type { RoundOpts, RoundData, SocketMove, RoundTour, ApiEnd, GoMoveEvent, Step } from './interfaces';
+import type {
+  RoundOpts,
+  RoundData,
+  SocketMove,
+  RoundTour,
+  ApiEnd,
+  ClockEvent,
+  GoMoveEvent,
+  ResumeEvent,
+  ScoringData,
+  Step,
+} from './interfaces';
 import { init as keyboardInit } from './keyboard';
 import MoveOn from './moveOn';
 import Server from './server';
@@ -43,6 +55,9 @@ import * as xhr from './xhr';
 
 type GoneBerserk = Partial<ByColor<boolean>>;
 
+/** The ply that ends play (ADR 0019 §7): the scoring phase opens there and play can't resume. */
+const MOVE_LIMIT = 1000;
+
 /** The board and stone themes the page was served with, or last chosen in the account menu. */
 const themeOfPage = (): Theme => themeOf(document.body.dataset.board, document.body.dataset.pieceSet);
 
@@ -51,7 +66,15 @@ export default class RoundController {
   socket: RoundSocket;
   board: RoundBoard;
   clock?: ClockCtrl;
+  /** A byo-yomi clock's periods (unit 4.10); undefined for a Fischer clock. */
+  byoyomi?: Byoyomi;
   corresClock?: CorresClockController;
+  /** When the scoring phase times out (or lila stops waiting for the count), as `Date.now()` reads it. */
+  scoringDeadline?: number;
+  /** A toggle or accept sent that the server hasn't answered with a new count yet. */
+  scoringSent = false;
+  private scoringSentTimeout?: number;
+  private scoringTicker?: number;
   moveOn: MoveOn;
   /** The ply the board shows: the last one, or an earlier one while looking back. */
   ply: number;
@@ -103,6 +126,7 @@ export default class RoundController {
     this.board = new RoundBoard(this.boardConfig, this.redraw);
 
     this.updateClockCtrl();
+    this.startScoring();
 
     this.setQuietMode();
     this.moveOn = new MoveOn(this, 'move-on');
@@ -148,6 +172,8 @@ export default class RoundController {
     onPlayed: this.onPlayed,
     onRefused: () => site.sound.play('error'),
     onChange: this.redraw,
+    scoring: this.scoringMarks(),
+    onScoreTap: this.scoreToggle,
   });
 
   /**
@@ -158,7 +184,9 @@ export default class RoundController {
 
   /** Only the player, only on the last position, only while the game goes on and no move is on its way. */
   private readonly movable = (): 'black' | 'white' | 'none' =>
-    this.isPlaying() && !this.replaying() && !this.moveInFlight ? this.data.player.color : 'none';
+    this.isPlaying() && !this.replaying() && !this.moveInFlight && !this.inScoring()
+      ? this.data.player.color
+      : 'none';
 
   /** The board reported the player's stone or pass: send it (the server's `move` event plays it). */
   private readonly onUserMove = (move: Move): void => {
@@ -169,6 +197,152 @@ export default class RoundController {
   private readonly onPlayed = (played: Played): void => {
     site.sound.play(soundOf(played.move, played.captured));
   };
+
+  /** The game is in its scoring phase (ADR 0020 §3): play is stopped, the dead stones are agreed. */
+  inScoring = (): boolean => game.playable(this.data) && this.data.game.go.phase === 'scoring';
+
+  /** The scoring proposal or count on show, once it has arrived (not while "Counting…"). */
+  scoringCount = (): ScoringData | undefined => {
+    const s = this.data.game.scoring;
+    return s && !s.counting && s.v ? s : undefined;
+  };
+
+  /**
+   * The marks the board shows: during the scoring phase, and on a game that ended by counting (the
+   * record of its count), on the last position only.
+   */
+  private readonly scoringMarks = (): ScoringMarks | undefined => {
+    const s = this.scoringCount();
+    if (!s || this.replaying()) return undefined;
+    if (!this.inScoring() && this.data.game.status.name !== 'variantEnd') return undefined;
+    return { dead: s.dead ?? [], owner: s.owner, seal: s.seal, tappable: this.mayMarkDead() };
+  };
+
+  /** The player may tap chains now: a player, in the scoring phase, with no recount on its way. */
+  mayMarkDead = (): boolean =>
+    this.isPlaying() &&
+    this.inScoring() &&
+    !this.replaying() &&
+    !this.scoringSent &&
+    !!this.scoringCount() &&
+    !this.scoringCount()?.pending;
+
+  /** The board reported a tap on a stone: ask the server to toggle its chain (ADR 0020 §3.3). */
+  private readonly scoreToggle = (p: Move): void => {
+    const v = this.scoringCount()?.v;
+    if (!v || !this.mayMarkDead()) return;
+    this.markScoringSent();
+    this.socket.send('score-toggle', { p, v });
+    this.board.board?.set({ scoring: this.scoringMarks() });
+    this.redraw();
+  };
+
+  /** The player has accepted the count on show. */
+  hasAccepted = (): boolean =>
+    !!this.scoringCount()?.accepted?.[this.data.player.color === 'black' ? 'b' : 'w'];
+
+  /** Accepts the count on show (ADR 0020 §3.4); it ends the game once both players have. */
+  acceptScore = (): void => {
+    const v = this.scoringCount()?.v;
+    if (!v || !this.mayMarkDead() || this.hasAccepted()) return;
+    this.markScoringSent();
+    this.socket.send('score-accept', { v });
+    this.redraw();
+  };
+
+  /**
+   * No second toggle or accept until the server answers. lila answers a refused one (a count that
+   * changed meanwhile) with nothing, and a message can be lost on a reconnect: after 5 s the page
+   * takes taps again rather than wait for the next event.
+   */
+  private markScoringSent(): void {
+    this.scoringSent = true;
+    clearTimeout(this.scoringSentTimeout);
+    this.scoringSentTimeout = setTimeout(() => {
+      if (!this.scoringSent) return;
+      this.scoringSent = false;
+      if (!this.replaying()) this.board.board?.set({ scoring: this.scoringMarks() });
+      this.redraw();
+    }, 5000);
+  }
+
+  /** Resume is refused at the move limit (ADR 0019 §7, ADR 0020 §3.5): no stone may follow it. */
+  mayResume = (): boolean => this.isPlaying() && this.inScoring() && this.lastPly() < MOVE_LIMIT;
+
+  /** Takes the game back to play (ADR 0020 §3.5). */
+  resumePlay = (): void => {
+    if (!this.mayResume()) return;
+    this.socket.sendLoading('score-resume');
+  };
+
+  /** Seconds before the scoring phase times out, as last told by the server. */
+  scoringSecondsLeft = (): number =>
+    this.scoringDeadline === undefined
+      ? 0
+      : Math.max(0, Math.ceil((this.scoringDeadline - Date.now()) / 1000));
+
+  /** The countdown redraws every second while the phase lasts. */
+  private startScoring(): void {
+    const s = this.data.game.scoring;
+    this.scoringDeadline = s && this.inScoring() ? Date.now() + s.expiresIn * 1000 : undefined;
+    clearInterval(this.scoringTicker);
+    this.scoringTicker = undefined;
+    if (this.scoringDeadline !== undefined) this.scoringTicker = setInterval(this.redraw, 1000);
+  }
+
+  /**
+   * The server's `scoring` event (ADR 0020 §6): the phase opened ("Counting…"), the proposal or a
+   * recount arrived, a chain was toggled or a player accepted.
+   */
+  apiScoring = (o: ScoringData): void => {
+    const d = this.data;
+    d.game.go.phase = 'scoring';
+    const before = d.game.scoring;
+    d.game.scoring = o;
+    this.scoringSent = false;
+    clearTimeout(this.scoringSentTimeout);
+    this.moveInFlight = false;
+    this.startScoring();
+    if (this.clock?.isRunning()) this.clock.stopClock();
+    if (!this.replaying()) this.board.board?.set({ scoring: this.scoringMarks(), movable: 'none' });
+    if (!o.counting && o.score && (before?.counting || before?.v !== o.v))
+      site.sound.say(`${i18n.site.black} ${o.score.b.total}, ${i18n.site.white} ${o.score.w.total}`);
+    this.redraw();
+    this.onChange();
+  };
+
+  /** The server's `resume` event: a player took the game back from the scoring phase to play. */
+  apiResume = (o: ResumeEvent): void => {
+    const d = this.data;
+    if (o.ply !== this.lastPly()) return this.socket.reload();
+    d.game.go.phase = 'play';
+    d.game.go.moves = d.game.go.moves ? `${d.game.go.moves} resume` : 'resume';
+    d.game.scoring = undefined;
+    d.game.player = o.turn;
+    this.scoringSent = false;
+    this.startScoring();
+    if (o.clock) this.setClockFrom(o.clock, this.isPlaying() && o.turn === d.player.color ? 0 : undefined);
+    if (!this.replaying()) this.board.board?.set({ scoring: undefined, movable: this.movable() });
+    site.sound.play('confirmation');
+    this.setLoading(false);
+    this.setTitle();
+    this.redraw();
+    this.onChange();
+    if (this.isPlaying() && o.turn === d.player.color) this.showYourMoveNotification();
+  };
+
+  /** Sets the clocks from a move or resume event, the byo-yomi periods too. */
+  private setClockFrom(oc: ClockEvent, delay?: number): void {
+    this.byoyomi?.update(oc);
+    if (this.clock)
+      this.clock.setClock({
+        white: oc.white,
+        black: oc.black,
+        ticking: this.tickingClockColor(),
+        delay: delay ?? (oc.lag || 1),
+      });
+    else if (this.corresClock) this.corresClock.update(oc.white, oc.black);
+  }
 
   streamerMode = (v: boolean): void => {
     $('main.round').toggleClass('round--streamer', this.streamer(v));
@@ -198,7 +372,8 @@ export default class RoundController {
   };
 
   /** Whether the player may place a stone now: their turn, on the last position. */
-  canMove = (): boolean => !this.replaying() && !this.moveInFlight && game.isPlayerTurn(this.data);
+  canMove = (): boolean =>
+    !this.replaying() && !this.moveInFlight && !this.inScoring() && game.isPlayerTurn(this.data);
 
   replayEnabledByPref = (): boolean => {
     const d = this.data;
@@ -314,16 +489,7 @@ export default class RoundController {
     this.data.forecastCount = undefined;
     if (o.clock) {
       this.shouldSendMoveTime = true;
-      const oc = o.clock,
-        delay = playing && activeColor ? 0 : oc.lag || 1;
-      if (this.clock)
-        this.clock.setClock({
-          white: oc.white,
-          black: oc.black,
-          ticking: this.tickingClockColor(),
-          delay,
-        });
-      else if (this.corresClock) this.corresClock.update(oc.white, oc.black);
+      this.setClockFrom(o.clock, playing && activeColor ? 0 : undefined);
     }
     if (this.data.expiration) {
       if (game.playedTurns(d) > 1) this.data.expiration = undefined;
@@ -336,7 +502,7 @@ export default class RoundController {
     }
     if (wasLive && playedColor !== d.player.color) {
       if (this.vibration() && 'vibrate' in navigator) navigator.vibrate(100);
-      if (playing) this.showYourMoveNotification();
+      if (playing && o.phase !== 'scoring') this.showYourMoveNotification();
     }
     this.autoScroll();
     this.onChange();
@@ -351,7 +517,9 @@ export default class RoundController {
     this.ply = util.lastPly(d);
     this.moveInFlight = false;
     this.shouldSendMoveTime = false;
+    this.scoringSent = false;
     this.updateClockCtrl();
+    this.startScoring();
     if (this.clock)
       this.clock.setClock({
         white: d.clock!.white,
@@ -378,10 +546,14 @@ export default class RoundController {
     d.game.status = o.status;
     d.game.abortedBy = o.abortedBy;
     d.game.boosted = o.boosted;
+    if (o.result) d.game.result = o.result;
+    this.scoringSent = false;
+    this.startScoring();
     this.jump(this.lastPly());
     // The board still shows the unsent stone, waiting: a fresh board without it (and without moving).
     if (unsent) this.board.remount();
-    else this.board.board?.set({ movable: 'none' });
+    // A game ended by counting keeps its marks on the board; any other ending takes them away.
+    else this.board.board?.set({ movable: 'none', scoring: this.scoringMarks() });
     if (o.ratingDiff) {
       d.player.ratingDiff = o.ratingDiff[d.player.color];
       d.opponent.ratingDiff = o.ratingDiff[d.opponent.color];
@@ -414,8 +586,7 @@ export default class RoundController {
   };
 
   /** How the game ended, in words: Go's own endings first (two passes, the move limit), else lila's. */
-  statusText = (): string =>
-    goStatusText(this.data, util.movesUntil(this.data, this.lastPly())) ?? viewStatus(this.data);
+  statusText = (): string => goStatusText(this.data) ?? viewStatus(this.data);
 
   challengeRematch = async (): Promise<void> => {
     await xhr.challengeRematch(this.data.game.id);
@@ -435,7 +606,19 @@ export default class RoundController {
     const d = this.data;
     if (d.clock) {
       this.corresClock = undefined;
-      this.clock ??= new ClockCtrl(d.clock, d.pref, this.tickingClockColor(), this.makeClockOpts());
+      this.byoyomi =
+        d.clock.byo && d.clock.periods
+          ? new Byoyomi(d.clock.byo, d.clock.initial, d.clock as Required<typeof d.clock>)
+          : undefined;
+      if (!this.clock) {
+        this.clock = new ClockCtrl(d.clock, d.pref, this.tickingClockColor(), this.makeClockOpts());
+        if (this.byoyomi) {
+          // A period is short: the clock turns red in its last third (the server's `emerg`), and the
+          // bar, which measures main time, makes way for the periods.
+          if (d.clock.emerg) this.clock.emergMs = d.clock.emerg * 1000;
+          this.clock.showBar = false;
+        }
+      }
       this.clock.alarmAction = {
         seconds: 60,
         fire: () => this.onTimeTrouble(true),
@@ -447,15 +630,34 @@ export default class RoundController {
     }
   }
 
+  /**
+   * A clock reached zero. With byo-yomi the next period starts (or the first one, after main time)
+   * and only the last one running out is a flag.
+   */
+  private readonly onClockZero = (): void => {
+    const color = this.clock?.times.activeColor;
+    if (!this.clock || !color || !this.byoyomi?.expire(color)) return this.socket.outoftime();
+    const other = color === 'white' ? 'black' : 'white';
+    this.clock.setClock({
+      [color]: this.byoyomi.byo,
+      [other]: this.clock.millisOf(other) / 1000,
+      ticking: color,
+    } as { white: number; black: number; ticking: Color });
+    this.redraw();
+  };
+
   private readonly makeClockOpts: () => ClockOpts = () => ({
-    onFlag: this.socket.outoftime,
+    onFlag: this.onClockZero,
     bothPlayersHavePlayed: () => game.bothPlayersHavePlayed(this.data),
     hasGoneBerserk: this.hasGoneBerserk,
     alarmColor: this.data.player.spectator || !this.data.pref.clockSound ? undefined : this.data.player.color,
   });
 
+  // Clocks stop during the scoring phase (ADR 0020 §3).
   private readonly tickingClockColor = (): Color | undefined =>
-    game.playable(this.data) && (game.playedTurns(this.data) > 1 || this.data.clock?.running)
+    game.playable(this.data) &&
+    this.data.game.go.phase !== 'scoring' &&
+    (game.playedTurns(this.data) > 1 || this.data.clock?.running)
       ? this.data.game.player
       : undefined;
 

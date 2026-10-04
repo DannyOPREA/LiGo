@@ -58,7 +58,9 @@ const renderMove = (step: Step | undefined, curPly: number) =>
     : hl(moveTag, '…');
 
 export function renderResult(ctrl: RoundController): VNode | undefined {
-  const result = finished(ctrl.data) ? resultText(ctrl.data.game.status, ctrl.data.game.winner) : undefined;
+  const result = finished(ctrl.data)
+    ? resultText(ctrl.data.game.status, ctrl.data.game.winner, ctrl.data.game.result)
+    : undefined;
   if (result || aborted(ctrl.data)) {
     return hl('div.result-wrap', [
       hl('p.result', result || ''),

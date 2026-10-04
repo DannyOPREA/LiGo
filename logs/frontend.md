@@ -5,6 +5,41 @@ _none yet_
 
 ## Entries (newest first)
 
+### 2026-10-04 · unit 4.10 · the scoring phase and byo-yomi on the game page
+- Did: libs/board's `mountBoard` takes `scoring` marks (dead stones, owner string, seal points,
+  tappable) and reports taps on stones (`onScoreTap`); goban draws them in its "stone removal" phase,
+  which libs/board sets directly. The round page handles 4.8's `scoring` and `resume` events, sends
+  `score-toggle {p, v}`, `score-accept {v}` and `score-resume`, stops the clocks in the phase, and
+  shows a panel in Pass's place: "Counting the score…", the tap hint, a "no proposal" note, the seal
+  warning, the count table, who accepted, Accept score, Resume play and the time left to agree. A
+  counted game shows `B+2.5` / Jigo with "Black wins by 2.5 points" and keeps its marks and count; a
+  game never counted shows "No result". Byo-yomi periods sit beside each clock ("+5×30s" in main
+  time, "5×30s" after), and the page starts the next period itself when one runs out.
+- Worked: goban's own stone-removal drawing (translucent stone with a cross, territory squares,
+  triangles) needed no drawing code; replacing `engine.toggleSingleGroupRemoval` on the instance
+  turns its tap into a report without touching goban's tap handling, keyboard Enter included.
+  The round e2e harness (unit 3.18) took scoring and byo-yomi games with two new options.
+- Didn't work: the first browser run showed "Counting…" forever: the new controller methods were
+  never registered as socket handlers (`socket.ts`). A unit test now sends both events through
+  `socket.receive`.
+- Tests: 4 libs/board browser tests (taps reported not marked, not tappable, Enter/P, marks
+  removed), 12 controller tests, 4 byo-yomi tests, result/status tests, 7 round page browser tests
+  (desktop and phone: proposal, toggle, accept, result; resume; reload mid-phase; periods rolling
+  over) and two scoring-board screenshot baselines.
+- Lessons: goban's stone removal needs only `engine.phase = 'stone removal'`, `engine.removal`,
+  marks (`score`, `triangle`) and a `player_id` it counts as a player; never send its
+  `game/removed_stones/set` path through a stand-in socket. The ADR 0020 wire doesn't say whether a
+  byo-yomi side is still in main time.
+- Review fixes: `goKomi` already existed in site.xml (lila wouldn't compile: duplicate val in
+  key.scala), so the count table reuses it; a toggle or accept the server ignores no longer locks
+  the panel (taps come back after 5 s); no Resume at the 1,000-ply limit; no "your turn" notice on
+  the second pass; the board's cursor reads out "marked dead" and territory.
+- Open: the wire doesn't say whether a byo-yomi side is still in main time. The page guesses (a
+  clock at or under one period is byo-yomi), which in main time's last seconds shows one period too
+  few and can flag a clock the server then refuses. Asked Phase 4 to add `inByo: {b, w}` to the
+  clock JSON and clock events in 4.8; the page already uses it when present.
+- Decisions: one line in logs/decisions.md.
+
 ### 2026-10-03 · unit 9.7 part one review · Reviewer findings fixed (PR #84)
 - Did: an independent review found nothing blocking; fixed its 5 should-fix and 4 of its 6 nits. 3D now always reads off on the server (`PrefHandlers`, `RequestPref`), since the menu lost its switch and a stored `is3d=true` would have kept lila's 3D board stylesheet squashing the Go board. A test keeps the three copies of the theme names in step (lila's lists, `libs/board`'s, the menu's swatch styles), and the menu's two panes are tested (list, `aria-pressed`, the `/pref/theme` and `/pref/pieceSet` posts, `<body>` and `board.change`). The stones pane reads "Stones" (English text of the `pieceSet` key). The public preferences JSON gives the Go name for a stored chess one. Night's swatch uses goban's own stone colours; the round controller test restores `<body>` in a `finally`; the test page escapes its attributes. Added the PR's row to docs/UPSTREAM.md (new project rule).
 - Worked: reading the Scala lists in a node test with a regex, no Scala build needed.

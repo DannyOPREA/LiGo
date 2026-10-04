@@ -57,3 +57,105 @@
     min-height: 44px;
   }
 }
+
+// A byo-yomi clock's periods beside its time (unit 4.10): dim in main time, then the page's accent
+// colour, red on the last period. Shown at every width, unlike lila's moretime and rank.
+.rclock .byoyomi {
+  @extend %flex-center;
+
+  flex: 0 0 auto;
+  padding: 0 0.5em;
+  font-size: 1.1em;
+  font-weight: bold;
+  white-space: nowrap;
+  color: $c-font-dim;
+
+  &--in {
+    color: $c-accent;
+  }
+
+  &--last {
+    color: $c-bad;
+  }
+}
+
+// The scoring phase beside the board (unit 4.10): what is happening, the count, who accepted, the
+// Accept and Resume buttons (big enough to tap) and the time left to agree.
+.go-scoring {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+  margin: 0.5em 0;
+  line-height: 1.4;
+
+  p {
+    margin: 0;
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    font-weight: bold;
+
+    .ddloader {
+      flex: 0 0 auto;
+    }
+  }
+
+  &__note,
+  &__countdown {
+    color: $c-font-dim;
+    font-size: 0.9em;
+  }
+
+  &__countdown.emerg {
+    color: $c-bad;
+  }
+
+  &__accepted {
+    color: $c-good;
+  }
+
+  &__count {
+    border-collapse: collapse;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+
+    th,
+    td {
+      padding: 0.1em 0.4em;
+      text-align: right;
+    }
+
+    th[scope='row'] {
+      text-align: left;
+      font-weight: normal;
+      color: $c-font-dim;
+    }
+
+    tfoot {
+      font-weight: bold;
+      border-top: 1px solid $c-border;
+    }
+
+    tfoot th[scope='row'] {
+      color: $c-font;
+      font-weight: bold;
+    }
+  }
+
+  &__buttons {
+    display: flex;
+    gap: 0.5em;
+
+    .button {
+      flex: 1 1 auto;
+      min-height: 44px;
+    }
+  }
+
+  &--final {
+    margin: 0.5em 0.5em 0;
+  }
+}

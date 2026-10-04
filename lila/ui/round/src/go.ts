@@ -24,7 +24,7 @@ export function moveName(size: number, move: string): string {
 
 /**
  * The plies of the game, in order: stones (SGF points) and passes. Resuming play from the scoring
- * phase isn't a ply (ADR 0019 §3) and can't happen before Phase 4, so it isn't listed.
+ * phase isn't a ply (ADR 0019 §3), so it isn't listed.
  */
 export const playedMoves = (go: GoData): string[] =>
   go.moves.split(' ').filter(m => m !== '' && m !== 'resume');
@@ -67,33 +67,37 @@ export function boardGame(go: GoData): BoardGame {
   return { ...base, stones: { black: [], white: [] }, toMove: 'black' };
 }
 
-/** Whether play stopped on two passes in a row (Phase 3 ends the game there, ADR 0019 §7). */
-export const endedOnPasses = (moves: string[]): boolean =>
-  moves.length >= 2 && moves[moves.length - 1] === 'pass' && moves[moves.length - 2] === 'pass';
-
 const letter = (c: Color) => (c === 'black' ? 'B' : 'W');
 
 /**
- * The result in Go's usual short form: "B+R" (White resigned), "W+T" (Black ran out of time),
- * "B+F" (forfeit: the opponent left or never moved). A game that ended with no winner (two passes
- * or the move limit, before Phase 4's scoring) shows "?".
+ * The result in Go's usual short form: "B+3.5" or "W+0.5" by counting (ADR 0020 §5, the server's
+ * `result`), "Jigo" for an even count, "B+R" (White resigned), "W+T" (Black ran out of time), "B+F"
+ * (forfeit: the opponent left or never moved). A game that ended without a count it could trust (the
+ * scoring service never answered, ADR 0020 §4) has no result.
  */
-export function resultText(status: Status, winner: Color | undefined): string | undefined {
+export function resultText(status: Status, winner: Color | undefined, result?: string): string | undefined {
   if (status.name === 'aborted' || status.name === 'started' || status.name === 'created') return undefined;
-  if (!winner) return '?';
+  if (status.name === 'variantEnd')
+    return result === '0' ? 'Jigo' : (result ?? (winner ? `${letter(winner)}+?` : 'Jigo'));
+  if (!winner) return i18n.site.goNoResult;
   const how = status.name === 'resign' ? 'R' : status.name === 'outoftime' ? 'T' : 'F';
   return `${letter(winner)}+${how}`;
 }
 
 /**
- * The words under the result, for the endings lila's own status text doesn't know in Go: two
- * passes, and the move limit. Anything else is lila's usual text.
+ * The words under the result, for Go's own endings, which lila's status text doesn't know: a game
+ * decided by counting, and one that ended with no result. Anything else is lila's usual text.
  */
-export function goStatusText(d: RoundData, moves: string[]): string | undefined {
-  if (d.game.status.name !== 'unknownFinish' || d.game.winner) return undefined;
-  return endedOnPasses(moves)
-    ? 'Both players passed. Counting the score comes in a later version.'
-    : 'Move limit reached';
+export function goStatusText(d: RoundData): string | undefined {
+  const { status, winner, result } = d.game;
+  if (status.name === 'variantEnd') {
+    if (result === '0' || (!result && !winner)) return i18n.site.goJigo;
+    const margin = result ? parseFloat(result.slice(2)) : NaN;
+    if (winner && !isNaN(margin)) return i18n.site.goXWinsByNbPoints(margin, i18n.site[winner]);
+    return undefined;
+  }
+  if (status.name === 'unknownFinish' && !winner) return i18n.site.goScoreNotCounted;
+  return undefined;
 }
 
 /** `Pref.ConfirmMoves` (lila/modules/pref), as the playground resolves it (unit 2.3). */
