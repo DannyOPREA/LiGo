@@ -122,6 +122,11 @@ goban's setup placement). `ui/analyse` no longer imports chessground or chessops
 dependency entries stay until unit 3.19 part 2 changes the lockfile. No third-party package was
 added.
 
+Unit 8.7 put `libs/board` on the puzzle trainer page: `ui/puzzle` now depends on the `@ligo/board`
+workspace package (MIT, §2) in place of `@badrap/result` (MIT), which only its chess code used and
+which stays in the lockfile for `ui/analyse` and `ui/lib`. `ui/puzzle` no longer imports chessground,
+chessops or the chess nvui code. No third-party package was added.
+
 ## 2. LiGo's own code — MIT
 
 Everything **not** derived from lila is MIT-licensed ([`LICENSE-MIT`](LICENSE-MIT)) unless a file
