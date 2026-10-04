@@ -1,6 +1,6 @@
-// lila's move tree, for any game (unit 7.4): the chess node's rules (`pos`, `dests`, `check`…) live
-// with the chess puzzle page that still uses them (ui/puzzle `src/chessNode.ts`); the Go analysis
-// board's node is libs/board's `GoNode` (ADR 0023 §1).
+// lila's move tree, for any game (unit 7.4): generic over its node type (`TreeNodeOf`). The Go
+// pages' node is libs/board's `GoNode` (ADR 0023 §1); the chess fields below stay only until the
+// chess leftovers go (unit 3.19 part 2).
 
 export type TreeNodeId = string;
 export type TreePath = string;
