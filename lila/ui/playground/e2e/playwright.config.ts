@@ -19,8 +19,10 @@ export default defineConfig({
   retries: 0,
   // Next to this file, not next to package.json (Playwright's default); CI uploads both on failure.
   outputDir: 'test-results',
+  // On CI, `github` also posts each failure as an annotation on the check, so it can be read without
+  // downloading the report.
   reporter: process.env.CI
-    ? [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
+    ? [['list'], ['github'], ['html', { open: 'never', outputFolder: 'playwright-report' }]]
     : 'list',
   // One baseline for every machine: no browser or platform in the file name, so CI and a
   // contributor compare against the same picture (the tolerance below absorbs anti-aliasing).

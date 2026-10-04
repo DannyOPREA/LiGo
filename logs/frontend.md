@@ -21,6 +21,14 @@ _none yet_
 - Verified by Claude: analysis browser tests 15/15; ui tests; oxlint, oxfmt, stylelint; verify.sh. · Needs owner verification: none.
 - Follow-ups: none.
 
+### 2026-10-03 · unit 9.7 part two (paused, not yet a PR) · Game page and analysis board words into lila's translations
+- Did: moved the round page's and the analysis board's English words (about 60) into `translation/source/site.xml` as `go*` keys, reusing lila's keys where the meaning matched (Black, White, Black to play, Board, Cancel, Clear board); regenerated `key.scala` and `i18n.d.ts`. The analysis e2e page now picks the newest i18n bundle, as the round page's does. Paused on Danny's stop; WIP on branch `wip-9.7-part2-i18n`.
+- Worked: ui tests 243/243, lint and format clean, page browser tests 47 + 13 + 14 pass.
+- Didn't work / dead ends: a template literal to make `san` a string in tests trips oxlint; the tests convert with `String()` instead.
+- Lessons: the unit tests' i18n stand-in returns a function named after the key, so tests compare `String(...)` with `site.<key>`.
+- Decisions: none. Still open: Danny's yes/no on deleting the chess leftovers.
+
+
 ### 2026-10-03 · unit 9.7 part one review · Reviewer findings fixed (PR #84)
 - Did: an independent review found nothing blocking; fixed its 5 should-fix and 4 of its 6 nits. 3D now always reads off on the server (`PrefHandlers`, `RequestPref`), since the menu lost its switch and a stored `is3d=true` would have kept lila's 3D board stylesheet squashing the Go board. A test keeps the three copies of the theme names in step (lila's lists, `libs/board`'s, the menu's swatch styles), and the menu's two panes are tested (list, `aria-pressed`, the `/pref/theme` and `/pref/pieceSet` posts, `<body>` and `board.change`). The stones pane reads "Stones" (English text of the `pieceSet` key). The public preferences JSON gives the Go name for a stored chess one. Night's swatch uses goban's own stone colours; the round controller test restores `<body>` in a `finally`; the test page escapes its attributes. Added the PR's row to docs/UPSTREAM.md (new project rule).
 - Worked: reading the Scala lists in a node test with a regex, no Scala build needed.

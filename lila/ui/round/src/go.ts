@@ -18,7 +18,7 @@ const LETTERS = 'ABCDEFGHJKLMNOPQRSTUVWXYZ';
  * board's keyboard and screen-reader words (libs/board `src/access.ts`, not exported).
  */
 export function moveName(size: number, move: string): string {
-  if (move === 'pass') return 'Pass';
+  if (move === 'pass') return i18n.site.goPass;
   return `${LETTERS[move.charCodeAt(0) - 97]}${size - (move.charCodeAt(1) - 97)}`;
 }
 
@@ -91,9 +91,7 @@ export function resultText(status: Status, winner: Color | undefined): string | 
  */
 export function goStatusText(d: RoundData, moves: string[]): string | undefined {
   if (d.game.status.name !== 'unknownFinish' || d.game.winner) return undefined;
-  return endedOnPasses(moves)
-    ? 'Both players passed. Counting the score comes in a later version.'
-    : 'Move limit reached';
+  return endedOnPasses(moves) ? i18n.site.goBothPlayersPassed : i18n.site.goMoveLimitReached;
 }
 
 /** `Pref.ConfirmMoves` (lila/modules/pref), as the playground resolves it (unit 2.3). */
