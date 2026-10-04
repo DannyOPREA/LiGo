@@ -36,7 +36,8 @@ describe('moveName', () => {
     assert.equal(moveName(19, 'pd'), 'Q16');
     assert.equal(moveName(19, 'dp'), 'D4');
   });
-  test('a pass is "Pass"', () => assert.equal(moveName(19, 'pass'), 'Pass'));
+  test("a pass is the reader's word for Pass", () =>
+    assert.equal(String(moveName(19, 'pass')), 'site.goPass'));
 });
 
 describe('playedMoves and stepsOf', () => {
@@ -46,12 +47,13 @@ describe('playedMoves and stepsOf', () => {
   });
 
   test('an even game starts at ply 1 (Black to move) and numbers each move from there', () => {
-    const steps = stepsOf(go({ moves: 'ee cc pass' }), 1);
+    // String(): the tests' i18n stand-in gives a key's name as a function, not a string.
+    const steps = stepsOf(go({ moves: 'ee cc pass' }), 1).map(s => ({ ...s, san: String(s.san) }));
     assert.deepEqual(steps, [
       { ply: 1, uci: '', san: '' },
       { ply: 2, uci: 'ee', san: 'E5' },
       { ply: 3, uci: 'cc', san: 'C7' },
-      { ply: 4, uci: 'pass', san: 'Pass' },
+      { ply: 4, uci: 'pass', san: 'site.goPass' },
     ]);
   });
 
@@ -120,8 +122,8 @@ describe('the result', () => {
 
   test('says why a game with no winner ended', () => {
     const d = { game: { status: status('unknownFinish') } } as RoundData;
-    assert.match(goStatusText(d, ['ee', 'pass', 'pass'])!, /Both players passed/);
-    assert.equal(goStatusText(d, ['ee', 'pass', 'cc']), 'Move limit reached');
+    assert.equal(String(goStatusText(d, ['ee', 'pass', 'pass'])), 'site.goBothPlayersPassed');
+    assert.equal(String(goStatusText(d, ['ee', 'pass', 'cc'])), 'site.goMoveLimitReached');
     assert.equal(endedOnPasses(['pass']), false);
     const resigned = { game: { status: status('resign'), winner: 'black' } } as RoundData;
     assert.equal(goStatusText(resigned, []), undefined);
