@@ -152,12 +152,9 @@ final class Round(
                 for
                   users <- env.user.api.gamePlayers(pov.game.userIdPair, pov.game.perfKey)
                   data <- env.api.roundApi.watcher(pov, users, tv = none)
-                  analysis <- env.analyse.analyser.get(pov.game)
                   chat <- getWatcherChat(pov.game)
-                yield Ok:
-                  data
-                    .add("chat" -> chat.map(_.lines))
-                    .add("analysis" -> analysis.map(a => lila.analyse.JsonView.mobile(pov.game, a)))
+                // No `analysis`: chess engine analysis went with unit 3.17 (slice b).
+                yield Ok(data.add("chat" -> chat.map(_.lines)))
             ).dmap(_.noCache)
 
   private[controllers] def getWatcherChat(

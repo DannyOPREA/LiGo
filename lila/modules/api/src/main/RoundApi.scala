@@ -3,7 +3,6 @@ package lila.api
 import scalalib.data.Preload
 import play.api.libs.json.*
 
-import lila.analyse.{ Analysis, JsonView as analysisJson }
 import lila.api.Context.given
 import lila.common.HTTPRequest
 import lila.core.perm.Granter
@@ -22,7 +21,8 @@ final private[api] class RoundApi(
 )(using Executor):
 
   // A game's move list is built by the browser from `game.go.moves` (unit 3.18); the chess round UI's
-  // `steps`, the analysis tree, forecasts and openings went with chess games (unit 3.17).
+  // `steps`, the analysis tree, forecasts and openings went with chess games (unit 3.17), and so did the
+  // engine `analysis` (slice b).
 
   def player(
       pov: Pov,
@@ -72,7 +72,6 @@ final private[api] class RoundApi(
   def review(
       pov: Pov,
       users: GameUsers,
-      analysis: Option[Analysis],
       withFlags: ExportOptions,
       tv: Option[lila.round.OnTv] = None
   )(using ctx: Context): Fu[JsObject] =
@@ -91,7 +90,6 @@ final private[api] class RoundApi(
       (
         withNote(note)
           .compose(withBookmark(bookmarked))
-          .compose(withAnalysis(pov.game, analysis))
       )(json)
     .mon(lila.mon.round.api.watcher)
 
@@ -105,6 +103,3 @@ final private[api] class RoundApi(
     if pov.game.speed <= chess.Speed.Bullet then
       json.add("opponentSignal", pov.opponent.userId.flatMap(userLag.getLagRating))
     else json
-
-  private def withAnalysis(g: Game, o: Option[Analysis])(json: JsObject) =
-    json.add("analysis", o.map(analysisJson.bothPlayers(g.startedAtPly, _)))
