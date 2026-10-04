@@ -321,7 +321,9 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
       resultStreakSide(streak.loss, tps.losingStreak(), "red", u)
     )
 
-  private def resultTable(results: lila.perfStat.Results, title: Frag, user: User)(using Translate) =
+  private def resultTable(results: lila.perfStat.Results, title: Frag, user: User, go: Boolean)(using
+      Translate
+  ) =
     div:
       table(
         thead:
@@ -330,7 +332,12 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
         tbody:
           results.results.map: r =>
             tr(
-              td(userIdLink(r.opId.some, withOnline = false), " (", r.opRating, ")"),
+              td(
+                userIdLink(r.opId.some, withOnline = false),
+                " (",
+                if go then goRankTag(r.opRating.value) else r.opRating, // LiGo (unit 5.6)
+                ")"
+              ),
               td:
                 a(
                   cls := "glpt",
@@ -341,13 +348,15 @@ final class PerfStatUi(helpers: Helpers)(communityMenu: Context ?=> Frag):
       )
 
   private def result(stat: PerfStat, user: User)(using Context): Frag =
+    val go = stat.perfType.key == PerfKey.go
     st.section(cls := "result split")(
-      resultTable(stat.bestWins, tps.bestRated(), user),
+      resultTable(stat.bestWins, tps.bestRated(), user, go),
       (Granter.opt(_.BoostHunter) || Granter.opt(_.CheatHunter)).option(
         resultTable(
           stat.worstLosses,
           "Worst rated defeats",
-          user
+          user,
+          go
         )
       )
     )

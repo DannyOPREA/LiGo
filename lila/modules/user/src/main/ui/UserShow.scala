@@ -107,9 +107,9 @@ final class UserShow(helpers: Helpers, bits: UserBits):
     val name = user.titleUsername
     val nbGames = user.count.game
     val createdAt = showEnglishDate(user.createdAt)
-    // LiGo (unit 5.6): the Go rank once rated games have moved it (ADR 0021 §3)
-    val go = user.perfs.go
-    val currentRank = (go.nb > 0).so(s" Current Go rank: ${lila.rating.GoRating.label(go.glicko)}.")
+    // LiGo (unit 5.6): the Go rank once one is known, as the header and title show it (ADR 0021 §3)
+    val go = user.perfs.go.glicko
+    val currentRank = (!go.clueless).so(s" Current Go rank: ${lila.rating.GoRating.label(go)}.")
     s"$name played $nbGames games since $createdAt.$currentRank"
 
   val dataUsername = attr("data-username")

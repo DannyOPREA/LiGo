@@ -18,3 +18,19 @@ class GoHistoryTest extends munit.FunSuite:
   test("a player with no Go games yet has an empty go history"):
     val history = summon[BSONDocumentReader[History]].readTry(BSONDocument()).get
     assertEquals(history(PerfKey.go), Nil)
+
+  test("a rated Go game gives a history point to the go perf only, not chess's standard and speed"):
+    assertEquals(
+      HistoryApi.perfKeysOf(isGo = true, chess.variant.Standard, chess.Speed.Blitz),
+      List(PerfKey.go)
+    )
+
+  test("a chess game keeps lila's points: standard and its speed, or its variant"):
+    assertEquals(
+      HistoryApi.perfKeysOf(isGo = false, chess.variant.Standard, chess.Speed.Blitz),
+      List(PerfKey.standard, PerfKey.blitz)
+    )
+    assertEquals(
+      HistoryApi.perfKeysOf(isGo = false, chess.variant.Chess960, chess.Speed.Blitz),
+      List(PerfKey.chess960)
+    )
