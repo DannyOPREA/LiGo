@@ -42,11 +42,11 @@ LiGo's own code is mostly glue between those parts, plus:
 
 ## What is unfinished
 
-At the time of writing (2026-10-04), every unit in `docs/PLAN.md` §5 had merged except one:
-
-- **Phase 6:** 6.9, the lobby load test. `dev/ligo loadtest` plays many pairs of 9×9 pool games
-  at once over lila's own websockets with k6, and a `loadtest` workflow runs it on demand. It is
-  in review as PR #138.
+By 2026-10-04 every unit in `docs/PLAN.md` §5 had merged. The last was 6.9, the lobby load test:
+`dev/ligo loadtest` plays many pairs of 9×9 pool games at once over lila's own websockets with k6,
+and a `loadtest` workflow runs it on demand (PR #138). One piece of 9.7 is left: the chess board
+and piece pictures nothing uses any more are still in the tree, waiting on the owner's choice of how
+to delete them.
 
 The lobby player test (see [lobby-research.md](lobby-research.md)) can run now that 6.10, the
 lobby demo, has merged. It needs real players, so it hadn't been run.
